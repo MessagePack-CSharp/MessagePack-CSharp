@@ -36,7 +36,7 @@ public static partial class CSharpSourceGeneratorVerifier
         {
             this.CompilerDiagnostics = CompilerDiagnostics.Warnings;
 
-            this.ReferenceAssemblies = ReferenceAssemblies.Net.Net60;
+            this.ReferenceAssemblies = ReferenceAssemblies.Net.Net80;
             this.TestState.AdditionalReferences.Add(typeof(MessagePackObjectAttribute).Assembly);
             this.TestState.AdditionalReferences.Add(typeof(MessagePackSerializer).Assembly);
 

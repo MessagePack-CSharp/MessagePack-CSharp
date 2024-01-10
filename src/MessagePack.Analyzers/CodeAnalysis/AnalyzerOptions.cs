@@ -42,22 +42,15 @@ public record AnalyzerOptions
 
         if (additionalTexts.FirstOrDefault(x => string.Equals(Path.GetFileName(x.Path), JsonOptionsFileName, StringComparison.OrdinalIgnoreCase))?.GetText(cancellationToken)?.ToString() is string configJson)
         {
-            try
-            {
-                result = JsonSerializer.Deserialize<AnalyzerOptions>(
-                    configJson,
-                    new JsonSerializerOptions
-                    {
-                        AllowTrailingCommas = true,
-                        MaxDepth = 5,
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                        ReadCommentHandling = JsonCommentHandling.Skip,
-                    }) ?? Default;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Can't load MessagePackAnalyzer.json: " + ex);
-            }
+            result = JsonSerializer.Deserialize<AnalyzerOptions>(
+                configJson,
+                new JsonSerializerOptions
+                {
+                    AllowTrailingCommas = true,
+                    MaxDepth = 5,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    ReadCommentHandling = JsonCommentHandling.Skip,
+                }) ?? Default;
         }
 
         if (result.Generator.Resolver.Namespace is null)
@@ -145,4 +138,3 @@ public record GeneratorOptions
     /// </summary>
     public FormattersOptions Formatters { get; init; } = new();
 }
-#pragma warning restore SA1402 // File may only contain a single type

@@ -88,7 +88,18 @@ namespace MessagePack.Internal
         {
             if (!reader.TryReadStringSpan(out ReadOnlySpan<byte> result))
             {
-                return GetSpanFromSequence(reader.ReadStringSequence());
+                ReadOnlySequence<byte>? sequence = reader.ReadStringSequence();
+                if (sequence.HasValue)
+                {
+                    if (sequence.Value.IsSingleSegment)
+                    {
+                        return sequence.Value.First.Span;
+                    }
+
+                    return sequence.Value.ToArray();
+                }
+
+                return default;
             }
 
             return result;
@@ -100,10 +111,5 @@ namespace MessagePack.Internal
         /// <param name="sequence">The sequence.</param>
         /// <returns>The byte array or <see langword="null" /> .</returns>
         public static byte[]? GetArrayFromNullableSequence(in ReadOnlySequence<byte>? sequence) => sequence?.ToArray();
-
-        private static ReadOnlySpan<byte> GetSpanFromSequence(in ReadOnlySequence<byte>? sequence)
-        {
-            return sequence.HasValue ? GetSpanFromSequence(sequence.Value) : default;
-        }
     }
 }

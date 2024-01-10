@@ -49,6 +49,9 @@ namespace MessagePack
         {
         }
 
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         protected TinyJsonException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {

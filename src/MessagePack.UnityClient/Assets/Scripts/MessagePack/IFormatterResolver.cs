@@ -122,6 +122,9 @@ namespace MessagePack
         {
         }
 
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         protected FormatterNotRegisteredException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {

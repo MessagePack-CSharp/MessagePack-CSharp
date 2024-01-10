@@ -828,8 +828,8 @@ namespace MessagePack.Tests
                 smallWriter = new MessagePackWriter(small);
                 smallWriter.Write(ushort.MaxValue);
                 smallWriter.Flush();
-                smallReader = new MessagePackReader(small.AsReadOnlySequence);
-                smallReader.ReadInt32().Is(ushort.MaxValue);
+                var smallReader2 = new MessagePackReader(small.AsReadOnlySequence);
+                smallReader2.ReadInt32().Is(ushort.MaxValue);
 
                 target.Reset();
                 targetWriter = new MessagePackWriter(target);
@@ -856,8 +856,8 @@ namespace MessagePack.Tests
                 smallWriter = new MessagePackWriter(small);
                 smallWriter.Write(ushort.MaxValue);
                 smallWriter.Flush();
-                smallReader = new MessagePackReader(small.AsReadOnlySequence);
-                smallReader.ReadInt64().Is(ushort.MaxValue);
+                var smallReader2 = new MessagePackReader(small.AsReadOnlySequence);
+                smallReader2.ReadInt64().Is(ushort.MaxValue);
 
                 target.Reset();
                 targetWriter = new MessagePackWriter(target);
@@ -869,8 +869,8 @@ namespace MessagePack.Tests
                 smallWriter = new MessagePackWriter(small);
                 smallWriter.Write(uint.MaxValue);
                 smallWriter.Flush();
-                smallReader = new MessagePackReader(small.AsReadOnlySequence);
-                smallReader.ReadInt64().Is(uint.MaxValue);
+                var smallReader3 = new MessagePackReader(small.AsReadOnlySequence);
+                smallReader3.ReadInt64().Is(uint.MaxValue);
 
                 target.Reset();
                 targetWriter = new MessagePackWriter(target);
