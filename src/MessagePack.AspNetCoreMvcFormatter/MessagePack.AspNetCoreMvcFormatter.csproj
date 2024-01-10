@@ -1,20 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net6.0;net8.0</TargetFrameworks>
     <Title>ASP.NET Core MVC Input/Output MessagePack formatter</Title>
     <Description>ASP.NET Core MVC Input/Output MessagePack formatter.</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;aspnetcore;aspnetcoremvc</PackageTags>
   </PropertyGroup>
 
   <Choose>
-    <When Condition="'$(TargetFramework)'=='net6.0'">
+    <When Condition="'$(TargetFramework)'=='netstandard2.0'">
       <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" />
       </ItemGroup>
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" />
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
       </ItemGroup>
     </Otherwise>
   </Choose>
