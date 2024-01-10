@@ -145,4 +145,3 @@ public record GeneratorOptions
     /// </summary>
     public FormattersOptions Formatters { get; init; } = new();
 }
-#pragma warning restore SA1402 // File may only contain a single type
