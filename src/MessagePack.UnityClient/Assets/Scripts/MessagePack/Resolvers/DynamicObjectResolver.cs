@@ -2438,6 +2438,9 @@ namespace MessagePack.Internal
         {
         }
 
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         protected InitAccessorInGenericClassNotSupportedException(
           SerializationInfo info,
           StreamingContext context)

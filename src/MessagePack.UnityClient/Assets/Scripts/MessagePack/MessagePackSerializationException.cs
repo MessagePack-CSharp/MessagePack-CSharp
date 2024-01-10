@@ -48,6 +48,9 @@ namespace MessagePack
         /// </summary>
         /// <param name="info">Serialization info.</param>
         /// <param name="context">Serialization context.</param>
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         protected MessagePackSerializationException(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context)
