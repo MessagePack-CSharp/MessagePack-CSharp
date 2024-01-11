@@ -51,12 +51,18 @@ namespace MessagePack
         /// <param name="sequencePool">The pool to rent a <see cref="Sequence{T}"/> object from.</param>
         public MessagePackStreamReader(Stream stream, bool leaveOpen, SequencePool sequencePool)
         {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(sequencePool, nameof(sequencePool));
+            ArgumentNullException.ThrowIfNull(stream, nameof(stream));
+            this.stream = stream;
+#else
             if (sequencePool == null)
             {
                 throw new ArgumentNullException(nameof(sequencePool));
             }
 
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
+#endif
             this.leaveOpen = leaveOpen;
             this.sequenceRental = sequencePool.Rent();
         }

@@ -33,10 +33,14 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IMessagePackFormatter<T> GetFormatterWithVerify<T>(this IFormatterResolver resolver)
         {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(resolver, nameof(resolver));
+#else
             if (resolver is null)
             {
                 throw new ArgumentNullException(nameof(resolver));
             }
+#endif
 
             IMessagePackFormatter<T>? formatter;
             try
@@ -80,6 +84,10 @@ namespace MessagePack
 
         public static object? GetFormatterDynamic(this IFormatterResolver resolver, Type type)
         {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(resolver, nameof(resolver));
+            ArgumentNullException.ThrowIfNull(type, nameof(type));
+#else
             if (resolver is null)
             {
                 throw new ArgumentNullException(nameof(resolver));
@@ -89,6 +97,7 @@ namespace MessagePack
             {
                 throw new ArgumentNullException(nameof(type));
             }
+#endif
 
             if (!FormatterGetters.TryGetValue(type, out var formatterGetter))
             {

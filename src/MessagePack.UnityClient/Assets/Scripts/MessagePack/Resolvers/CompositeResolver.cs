@@ -38,6 +38,10 @@ namespace MessagePack.Resolvers
         /// </returns>
         public static IFormatterResolver Create(IReadOnlyList<IMessagePackFormatter> formatters, IReadOnlyList<IFormatterResolver> resolvers)
         {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(formatters, nameof(formatters));
+            ArgumentNullException.ThrowIfNull(resolvers, nameof(resolvers));
+#else
             if (formatters is null)
             {
                 throw new ArgumentNullException(nameof(formatters));
@@ -47,6 +51,7 @@ namespace MessagePack.Resolvers
             {
                 throw new ArgumentNullException(nameof(resolvers));
             }
+#endif
 
             // Make a copy of the resolvers list provided by the caller to guard against them changing it later.
             var immutableFormatters = formatters.ToArray();

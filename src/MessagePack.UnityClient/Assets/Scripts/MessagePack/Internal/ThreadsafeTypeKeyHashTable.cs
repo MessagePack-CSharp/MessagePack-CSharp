@@ -103,10 +103,14 @@ namespace MessagePack.Internal
                 }
                 else
                 {
+#if NET6_0_OR_GREATER
+                    ArgumentNullException.ThrowIfNull(valueFactory, nameof(valueFactory));
+#else
                     if (valueFactory is null)
                     {
                         throw new ArgumentNullException(nameof(valueFactory));
                     }
+#endif
 
                     resultingValue = valueFactory(newKey);
                     VolatileWrite(ref buckets[h & (buckets.Length - 1)], new Entry(newKey, resultingValue, h));
@@ -132,10 +136,14 @@ namespace MessagePack.Internal
                         }
                         else
                         {
+#if NET6_0_OR_GREATER
+                            ArgumentNullException.ThrowIfNull(valueFactory, nameof(valueFactory));
+#else
                             if (valueFactory is null)
                             {
                                 throw new ArgumentNullException(nameof(valueFactory));
                             }
+#endif
 
                             resultingValue = valueFactory(newKey);
                             VolatileWrite(ref searchLastEntry.Next, new Entry(newKey, resultingValue, h));

@@ -35,15 +35,15 @@ namespace MessagePack.Resolvers
         /// </param>
         public void Register(params IMessagePackFormatter[] formatters)
         {
-            if (this.frozen)
-            {
-                throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
-            }
-
+            ThrowInvalidOperationExceptionIfFrozen(this.frozen);
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(formatters, nameof(formatters));
+#else
             if (formatters is null)
             {
                 throw new ArgumentNullException(nameof(formatters));
             }
+#endif
 
             this.formatters = formatters;
             this.resolvers = Array.Empty<IFormatterResolver>();
@@ -60,15 +60,15 @@ namespace MessagePack.Resolvers
         /// </param>
         public void Register(params IFormatterResolver[] resolvers)
         {
-            if (this.frozen)
-            {
-                throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
-            }
-
+            ThrowInvalidOperationExceptionIfFrozen(this.frozen);
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(resolvers, nameof(resolvers));
+#else
             if (resolvers is null)
             {
                 throw new ArgumentNullException(nameof(resolvers));
             }
+#endif
 
             this.formatters = Array.Empty<IMessagePackFormatter>();
             this.resolvers = resolvers;
@@ -89,11 +89,11 @@ namespace MessagePack.Resolvers
         /// </param>
         public void Register(IReadOnlyList<IMessagePackFormatter> formatters, IReadOnlyList<IFormatterResolver> resolvers)
         {
-            if (this.frozen)
-            {
-                throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
-            }
-
+            ThrowInvalidOperationExceptionIfFrozen(this.frozen);
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(formatters, nameof(formatters));
+            ArgumentNullException.ThrowIfNull(resolvers, nameof(resolvers));
+#else
             if (formatters is null)
             {
                 throw new ArgumentNullException(nameof(formatters));
@@ -103,9 +103,22 @@ namespace MessagePack.Resolvers
             {
                 throw new ArgumentNullException(nameof(resolvers));
             }
+#endif
 
             this.formatters = formatters;
             this.resolvers = resolvers;
+        }
+
+#if NETCOREAPP3_0_OR_GREATER
+        private static void ThrowInvalidOperationExceptionIfFrozen([System.Diagnostics.CodeAnalysis.DoesNotReturnIf(true)] bool isFrozen)
+#else
+        private static void ThrowInvalidOperationExceptionIfFrozen(bool isFrozen)
+#endif
+        {
+            if (isFrozen)
+            {
+                throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
+            }
         }
 
         /// <summary>

@@ -56,7 +56,12 @@ namespace MessagePack
         {
             _buffered = 0;
             _bytesCommitted = 0;
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(output, nameof(output));
+            _output = output;
+#else
             _output = output ?? throw new ArgumentNullException(nameof(output));
+#endif
 
             _sequencePool = default;
             _rental = default;
@@ -76,7 +81,12 @@ namespace MessagePack
         {
             _buffered = 0;
             _bytesCommitted = 0;
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(sequencePool, nameof(sequencePool));
+            _sequencePool = sequencePool;
+#else
             _sequencePool = sequencePool ?? throw new ArgumentNullException(nameof(sequencePool));
+#endif
             _rental = default;
             _output = null;
 

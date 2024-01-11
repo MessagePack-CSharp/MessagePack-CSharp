@@ -40,7 +40,12 @@ namespace MessagePack
         /// </summary>
         public MessagePackSerializerOptions(IFormatterResolver resolver)
         {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(resolver, nameof(resolver));
+            this.Resolver = resolver;
+#else
             this.Resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
+#endif
         }
 
         /// <summary>
@@ -50,10 +55,14 @@ namespace MessagePack
         /// <param name="copyFrom">The options to copy from.</param>
         protected MessagePackSerializerOptions(MessagePackSerializerOptions copyFrom)
         {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(copyFrom, nameof(copyFrom));
+#else
             if (copyFrom == null)
             {
                 throw new ArgumentNullException(nameof(copyFrom));
             }
+#endif
 
             this.Resolver = copyFrom.Resolver;
             this.Compression = copyFrom.Compression;
@@ -228,10 +237,14 @@ namespace MessagePack
                 return this;
             }
 
+#if NET8_0_OR_GREATER
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(compressionMinLength, nameof(compressionMinLength));
+#else
             if (compressionMinLength <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(compressionMinLength));
             }
+#endif
 
             var result = this.Clone();
             result.CompressionMinLength = compressionMinLength;
@@ -250,10 +263,14 @@ namespace MessagePack
                 return this;
             }
 
+#if NET8_0_OR_GREATER
+            ArgumentOutOfRangeException.ThrowIfLessThan(suggestedContiguousMemorySize, 256, nameof(suggestedContiguousMemorySize));
+#else
             if (suggestedContiguousMemorySize < 256)
             {
                 throw new ArgumentOutOfRangeException(nameof(suggestedContiguousMemorySize), "This should be at least 256");
             }
+#endif
 
             var result = this.Clone();
             result.SuggestedContiguousMemorySize = suggestedContiguousMemorySize;
@@ -318,10 +335,14 @@ namespace MessagePack
         /// <returns>The new instance; or the original if the value is unchanged.</returns>
         public MessagePackSerializerOptions WithSecurity(MessagePackSecurity security)
         {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(security, nameof(security));
+#else
             if (security is null)
             {
                 throw new ArgumentNullException(nameof(security));
             }
+#endif
 
             if (this.Security == security)
             {
@@ -340,10 +361,14 @@ namespace MessagePack
         /// <returns>The new instance.</returns>
         public MessagePackSerializerOptions WithPool(SequencePool pool)
         {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(pool, nameof(pool));
+#else
             if (pool is null)
             {
                 throw new ArgumentNullException(nameof(pool));
             }
+#endif
 
             if (this.SequencePool == pool)
             {

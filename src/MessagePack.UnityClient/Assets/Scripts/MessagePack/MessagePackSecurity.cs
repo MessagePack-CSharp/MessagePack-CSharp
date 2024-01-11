@@ -46,10 +46,14 @@ namespace MessagePack
         protected MessagePackSecurity(MessagePackSecurity copyFrom)
             : this()
         {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(copyFrom, nameof(copyFrom));
+#else
             if (copyFrom is null)
             {
                 throw new ArgumentNullException(nameof(copyFrom));
             }
+#endif
 
             this.HashCollisionResistant = copyFrom.HashCollisionResistant;
             this.MaximumObjectGraphDepth = copyFrom.MaximumObjectGraphDepth;
@@ -262,7 +266,12 @@ namespace MessagePack
 
             internal ObjectFallbackEqualityComparer(MessagePackSecurity security)
             {
+#if NET6_0_OR_GREATER
+                ArgumentNullException.ThrowIfNull(security, nameof(security));
+                this.security = security;
+#else
                 this.security = security ?? throw new ArgumentNullException(nameof(security));
+#endif
             }
 
             bool IEqualityComparer<object>.Equals(object? x, object? y) => EqualityComparer<object?>.Default.Equals(x, y);

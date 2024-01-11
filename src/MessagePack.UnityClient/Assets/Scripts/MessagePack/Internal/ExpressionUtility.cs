@@ -11,10 +11,14 @@ namespace MessagePack.Internal
     {
         private static MethodInfo GetMethodInfoCore(LambdaExpression expression)
         {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(expression, nameof(expression));
+#else
             if (expression == null)
             {
-                throw new ArgumentNullException("expression");
+                throw new ArgumentNullException(nameof(expression));
             }
+#endif
 
             return ((MethodCallExpression)expression.Body).Method;
         }
@@ -63,10 +67,14 @@ namespace MessagePack.Internal
 
         private static MemberInfo GetMemberInfoCore<T>(Expression<T> source)
         {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(source, nameof(source));
+#else
             if (source == null)
             {
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             }
+#endif
 
             var memberExpression = (MemberExpression)source.Body;
             return memberExpression.Member;

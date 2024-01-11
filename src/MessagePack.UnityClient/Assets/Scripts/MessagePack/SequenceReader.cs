@@ -234,10 +234,14 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Rewind(long count)
         {
+#if NET8_0_OR_GREATER
+            ArgumentOutOfRangeException.ThrowIfNegative(count, nameof(count));
+#else
             if (count < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(count));
             }
+#endif
 
             this.Consumed -= count;
 
@@ -253,21 +257,27 @@ namespace MessagePack
             }
             else
             {
-                throw new ArgumentOutOfRangeException("Rewind went past the start of the memory.");
+                ThrowRewindWentPastArgumentOutOfRangeException();
             }
+        }
+
+        [System.Diagnostics.CodeAnalysis.DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+        private static void ThrowRewindWentPastArgumentOutOfRangeException()
+        {
+            throw new ArgumentOutOfRangeException("Rewind went past the start of the memory.");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void RetreatToPreviousSpan(long consumed)
         {
-            Debug.Assert(this.usingSequence, "usingSequence");
+            Debug.Assert(this.usingSequence, nameof(usingSequence));
             this.ResetReader();
             this.Advance(consumed);
         }
 
         private void ResetReader()
         {
-            Debug.Assert(this.usingSequence, "usingSequence");
+            Debug.Assert(this.usingSequence, nameof(usingSequence));
             this.CurrentSpanIndex = 0;
             this.Consumed = 0;
             this.currentPosition = this.Sequence.Start;
@@ -302,7 +312,7 @@ namespace MessagePack
         /// </summary>
         private void GetNextSpan()
         {
-            Debug.Assert(this.usingSequence, "usingSequence");
+            Debug.Assert(this.usingSequence, nameof(usingSequence));
             if (!this.Sequence.IsSingleSegment)
             {
                 SequencePosition previousNextPosition = this.nextPosition;
@@ -344,15 +354,20 @@ namespace MessagePack
                 // Can't satisfy from the current span
                 this.AdvanceToNextSpan(count);
             }
-            else if (this.CurrentSpan.Length - this.CurrentSpanIndex == (int)count)
+            else
             {
+#if NET8_0_OR_GREATER
+                ArgumentOutOfRangeException.ThrowIfGreaterThan((int)count, this.CurrentSpan.Length - this.CurrentSpanIndex, nameof(count));
+#else
+                if ((int)count > this.CurrentSpan.Length - this.CurrentSpanIndex)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(count));
+                }
+#endif
+
                 this.CurrentSpanIndex += (int)count;
                 this.Consumed += count;
                 this.moreData = false;
-            }
-            else
-            {
-                throw new ArgumentOutOfRangeException(nameof(count));
             }
         }
 
@@ -405,11 +420,15 @@ namespace MessagePack
 
         private void AdvanceToNextSpan(long count)
         {
-            Debug.Assert(this.usingSequence, "usingSequence");
+            Debug.Assert(this.usingSequence, nameof(usingSequence));
+#if NET8_0_OR_GREATER
+            ArgumentOutOfRangeException.ThrowIfNegative(count, nameof(count));
+#else
             if (count < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(count));
             }
+#endif
 
             this.Consumed += count;
             while (this.moreData)

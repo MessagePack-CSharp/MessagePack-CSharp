@@ -142,35 +142,53 @@ namespace MessagePack.LZ4
                 return;
             }
 
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(input, nameof(input));
+#else
             if (input == null)
             {
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             }
+#endif
 
+#if NET8_0_OR_GREATER
+            ArgumentOutOfRangeException.ThrowIfGreaterThan((uint)inputOffset, (uint)input.Length, nameof(inputOffset));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan((uint)inputLength, (uint)input.Length - (uint)inputOffset, nameof(inputLength));
+#else
             if ((uint)inputOffset > (uint)input.Length)
             {
-                throw new ArgumentOutOfRangeException("inputOffset");
+                throw new ArgumentOutOfRangeException(nameof(inputOffset));
             }
 
             if ((uint)inputLength > (uint)input.Length - (uint)inputOffset)
             {
-                throw new ArgumentOutOfRangeException("inputLength");
+                throw new ArgumentOutOfRangeException(nameof(inputLength));
             }
+#endif
 
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(output, nameof(output));
+#else
             if (output == null)
             {
-                throw new ArgumentNullException("output");
+                throw new ArgumentNullException(nameof(output));
             }
+#endif
 
+#if NET8_0_OR_GREATER
+            ArgumentOutOfRangeException.ThrowIfGreaterThan((uint)outputOffset, (uint)output.Length, nameof(outputOffset));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan((uint)outputLength, (uint)output.Length - (uint)outputOffset, nameof(outputLength));
+#else
             if ((uint)outputOffset > (uint)output.Length)
             {
-                throw new ArgumentOutOfRangeException("outputOffset");
+                throw new ArgumentOutOfRangeException(nameof(outputOffset));
             }
 
             if ((uint)outputLength > (uint)output.Length - (uint)outputOffset)
             {
-                throw new ArgumentOutOfRangeException("outputLength");
+                throw new ArgumentOutOfRangeException(nameof(outputLength));
             }
+#endif
         }
 
         #endregion

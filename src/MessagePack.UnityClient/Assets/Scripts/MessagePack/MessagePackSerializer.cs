@@ -426,10 +426,14 @@ namespace MessagePack
 
         private static T DeserializeFromSequenceAndRewindStreamIfPossible<T>(Stream streamToRewind, MessagePackSerializerOptions? options, ReadOnlySequence<byte> sequence, CancellationToken cancellationToken)
         {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(streamToRewind, nameof(streamToRewind));
+#else
             if (streamToRewind is null)
             {
                 throw new ArgumentNullException(nameof(streamToRewind));
             }
+#endif
 
             var reader = new MessagePackReader(sequence)
             {
