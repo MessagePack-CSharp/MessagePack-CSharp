@@ -535,6 +535,104 @@ namespace MessagePack.Formatters
         }
     }
 
+#if NET6_0_OR_GREATER
+    public sealed class PriorityQueueFormatter<TElement, TPriority> : IMessagePackFormatter<PriorityQueue<TElement, TPriority>?>
+    {
+        private readonly IComparer<TPriority>? comparer;
+
+        public PriorityQueueFormatter()
+        {
+            comparer = default;
+        }
+
+        public PriorityQueueFormatter(IComparer<TPriority>? comparer)
+        {
+            this.comparer = comparer;
+        }
+
+        public void Serialize(ref MessagePackWriter writer, PriorityQueue<TElement, TPriority>? value, MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            // https://github.com/dotnet/runtime/blob/a6bf4e4b94db9c1e28f50393e0a1943892e34bed/src/libraries/System.Collections/src/System/Collections/Generic/PriorityQueue.cs#L172
+            // Count property is reading just private field _size;
+            var count = value.Count;
+            writer.WriteMapHeader(count);
+            if (count == 0)
+            {
+                return;
+            }
+
+            IFormatterResolver resolver = options.Resolver;
+            IMessagePackFormatter<TElement> elementFormatter = resolver.GetFormatterWithVerify<TElement>();
+            IMessagePackFormatter<TPriority> priorityFormatter = resolver.GetFormatterWithVerify<TPriority>();
+            PriorityQueue<TElement, TPriority>.UnorderedItemsCollection items = value.UnorderedItems;
+            using PriorityQueue<TElement, TPriority>.UnorderedItemsCollection.Enumerator e = items.GetEnumerator();
+            while (e.MoveNext())
+            {
+                var pair = e.Current;
+                elementFormatter.Serialize(ref writer, pair.Element, options);
+                priorityFormatter.Serialize(ref writer, pair.Priority, options);
+            }
+        }
+
+        public PriorityQueue<TElement, TPriority>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var count = reader.ReadMapHeader();
+            if (count == 0)
+            {
+                return new PriorityQueue<TElement, TPriority>(comparer);
+            }
+
+            IFormatterResolver resolver = options.Resolver;
+            IMessagePackFormatter<TElement> elementFormatter = resolver.GetFormatterWithVerify<TElement>();
+            IMessagePackFormatter<TPriority> priorityFormatter = resolver.GetFormatterWithVerify<TPriority>();
+
+            // https://github.com/dotnet/runtime/blob/a6bf4e4b94db9c1e28f50393e0a1943892e34bed/src/libraries/System.Collections/src/System/Collections/Generic/PriorityQueue.cs#L160C22-L160C47
+            // EnumerableHelpers.ToArray is called for IEnumerable<ValueTuple<TElement, TPriority>>.
+            var sharedBuffer = ArrayPool<ValueTuple<TElement, TPriority>>.Shared.Rent(count);
+            try
+            {
+                if (sharedBuffer.Length == count)
+                {
+                    for (var i = 0; i < sharedBuffer.Length; i++)
+                    {
+                        sharedBuffer[i].Item1 = elementFormatter.Deserialize(ref reader, options);
+                        sharedBuffer[i].Item2 = priorityFormatter.Deserialize(ref reader, options);
+                    }
+
+                    return new PriorityQueue<TElement, TPriority>(sharedBuffer, comparer);
+                }
+                else
+                {
+                    var segment = new ArraySegment<ValueTuple<TElement, TPriority>>(sharedBuffer, 0, count);
+                    var span = segment.AsSpan();
+                    for (var i = 0; i < span.Length; i++)
+                    {
+                        span[i].Item1 = elementFormatter.Deserialize(ref reader, options);
+                        span[i].Item2 = priorityFormatter.Deserialize(ref reader, options);
+                    }
+
+                    return new PriorityQueue<TElement, TPriority>(segment, comparer);
+                }
+            }
+            finally
+            {
+                ArrayPool<ValueTuple<TElement, TPriority>>.Shared.Return(sharedBuffer);
+            }
+        }
+    }
+#endif
+
     // should deserialize reverse order.
     public sealed class StackFormatter<T> : CollectionFormatterBase<T, T[], Stack<T>.Enumerator, Stack<T>>
     {
