@@ -71,7 +71,6 @@ namespace MessagePack.ImmutableCollection
                 return FrozenDictionary<TKey, TValue>.Empty;
             }
 
-            options.Security.DepthStep(ref reader);
             IFormatterResolver resolver = options.Resolver;
             IMessagePackFormatter<TKey> keyFormatter = resolver.GetFormatterWithVerify<TKey>();
             IMessagePackFormatter<TValue> valueFormatter = resolver.GetFormatterWithVerify<TValue>();
@@ -80,10 +79,18 @@ namespace MessagePack.ImmutableCollection
             // https://github.com/dotnet/runtime/blob/4c500699b938d53993b928b93543b8dbe68f69aa/src/libraries/System.Collections.Immutable/src/System/Collections/Frozen/FrozenDictionary.cs#L87
             // FrozenDictionary.ToFrozenDictionary internally allocates Dictionary<TKey, TValue> object.
             var dictionary = new Dictionary<TKey, TValue>(count, comparer);
-            for (var i = 0; i < count; i++)
+            options.Security.DepthStep(ref reader);
+            try
             {
-                reader.CancellationToken.ThrowIfCancellationRequested();
-                dictionary.Add(keyFormatter.Deserialize(ref reader, options), valueFormatter.Deserialize(ref reader, options));
+                for (var i = 0; i < count; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    dictionary.Add(keyFormatter.Deserialize(ref reader, options), valueFormatter.Deserialize(ref reader, options));
+                }
+            }
+            finally
+            {
+                reader.Depth--;
             }
 
             return dictionary.ToFrozenDictionary(comparer);
