@@ -594,7 +594,6 @@ namespace MessagePack.Formatters
                 return new PriorityQueue<TElement, TPriority>(comparer);
             }
 
-            options.Security.DepthStep(ref reader);
             IFormatterResolver resolver = options.Resolver;
             IMessagePackFormatter<TElement> elementFormatter = resolver.GetFormatterWithVerify<TElement>();
             IMessagePackFormatter<TPriority> priorityFormatter = resolver.GetFormatterWithVerify<TPriority>();
@@ -604,29 +603,38 @@ namespace MessagePack.Formatters
             var sharedBuffer = ArrayPool<ValueTuple<TElement, TPriority>>.Shared.Rent(count);
             try
             {
-                if (sharedBuffer.Length == count)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    for (var i = 0; i < sharedBuffer.Length; i++)
+                    if (sharedBuffer.Length == count)
                     {
-                        reader.CancellationToken.ThrowIfCancellationRequested();
-                        sharedBuffer[i].Item1 = elementFormatter.Deserialize(ref reader, options);
-                        sharedBuffer[i].Item2 = priorityFormatter.Deserialize(ref reader, options);
-                    }
+                        for (var i = 0; i < sharedBuffer.Length; i++)
+                        {
+                            reader.CancellationToken.ThrowIfCancellationRequested();
+                            sharedBuffer[i].Item1 = elementFormatter.Deserialize(ref reader, options);
+                            sharedBuffer[i].Item2 = priorityFormatter.Deserialize(ref reader, options);
+                        }
 
-                    return new PriorityQueue<TElement, TPriority>(sharedBuffer, comparer);
+                        return new PriorityQueue<TElement, TPriority>(sharedBuffer, comparer);
+                    }
+                    else
+                    {
+                        var segment = new ArraySegment<ValueTuple<TElement, TPriority>>(sharedBuffer, 0, count);
+                        var span = segment.AsSpan();
+                        for (var i = 0; i < span.Length; i++)
+                        {
+                            reader.CancellationToken.ThrowIfCancellationRequested();
+                            span[i].Item1 = elementFormatter.Deserialize(ref reader, options);
+                            span[i].Item2 = priorityFormatter.Deserialize(ref reader, options);
+                        }
+
+                        // This constructor box segment. List<KeyValuePair<TElement, TPriority>> instead?
+                        return new PriorityQueue<TElement, TPriority>(segment, comparer);
+                    }
                 }
-                else
+                finally
                 {
-                    var segment = new ArraySegment<ValueTuple<TElement, TPriority>>(sharedBuffer, 0, count);
-                    var span = segment.AsSpan();
-                    for (var i = 0; i < span.Length; i++)
-                    {
-                        reader.CancellationToken.ThrowIfCancellationRequested();
-                        span[i].Item1 = elementFormatter.Deserialize(ref reader, options);
-                        span[i].Item2 = priorityFormatter.Deserialize(ref reader, options);
-                    }
-
-                    return new PriorityQueue<TElement, TPriority>(segment, comparer);
+                    reader.Depth--;
                 }
             }
             finally
