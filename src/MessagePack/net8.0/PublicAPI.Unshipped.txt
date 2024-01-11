@@ -28,7 +28,7 @@ MessagePack.Formatters.Vector4Formatter.Deserialize(ref MessagePack.MessagePackR
 MessagePack.Formatters.Vector4Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Vector4 value, MessagePack.MessagePackSerializerOptions! options) -> void
 MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>
 MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.FrozenDictionaryFormatter() -> void
-MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.FrozenDictionaryFormatter(System.Collections.Generic.IEqualityComparer<TKey>! comparer) -> void
+MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.FrozenDictionaryFormatter(System.Collections.Generic.IEqualityComparer<TKey>? comparer) -> void
 MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Frozen.FrozenDictionary<TKey, TValue>? value, MessagePack.MessagePackSerializerOptions! options) -> void
 MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Frozen.FrozenDictionary<TKey, TValue>?
 MessagePack.ImmutableCollection.FrozenSetFormatter<T>

@@ -22,7 +22,7 @@ namespace MessagePack.ImmutableCollection
             comparer = default;
         }
 
-        public FrozenDictionaryFormatter(IEqualityComparer<TKey> comparer)
+        public FrozenDictionaryFormatter(IEqualityComparer<TKey>? comparer)
         {
             this.comparer = comparer;
         }
@@ -71,6 +71,7 @@ namespace MessagePack.ImmutableCollection
                 return FrozenDictionary<TKey, TValue>.Empty;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver resolver = options.Resolver;
             IMessagePackFormatter<TKey> keyFormatter = resolver.GetFormatterWithVerify<TKey>();
             IMessagePackFormatter<TValue> valueFormatter = resolver.GetFormatterWithVerify<TValue>();
@@ -81,6 +82,7 @@ namespace MessagePack.ImmutableCollection
             var dictionary = new Dictionary<TKey, TValue>(count, comparer);
             for (var i = 0; i < count; i++)
             {
+                reader.CancellationToken.ThrowIfCancellationRequested();
                 dictionary.Add(keyFormatter.Deserialize(ref reader, options), valueFormatter.Deserialize(ref reader, options));
             }
 
