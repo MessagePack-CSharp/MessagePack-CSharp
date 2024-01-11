@@ -574,6 +574,7 @@ namespace MessagePack.Formatters
             using PriorityQueue<TElement, TPriority>.UnorderedItemsCollection.Enumerator e = items.GetEnumerator();
             while (e.MoveNext())
             {
+                writer.CancellationToken.ThrowIfCancellationRequested();
                 var pair = e.Current;
                 elementFormatter.Serialize(ref writer, pair.Element, options);
                 priorityFormatter.Serialize(ref writer, pair.Priority, options);
@@ -593,6 +594,7 @@ namespace MessagePack.Formatters
                 return new PriorityQueue<TElement, TPriority>(comparer);
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver resolver = options.Resolver;
             IMessagePackFormatter<TElement> elementFormatter = resolver.GetFormatterWithVerify<TElement>();
             IMessagePackFormatter<TPriority> priorityFormatter = resolver.GetFormatterWithVerify<TPriority>();
@@ -606,6 +608,7 @@ namespace MessagePack.Formatters
                 {
                     for (var i = 0; i < sharedBuffer.Length; i++)
                     {
+                        reader.CancellationToken.ThrowIfCancellationRequested();
                         sharedBuffer[i].Item1 = elementFormatter.Deserialize(ref reader, options);
                         sharedBuffer[i].Item2 = priorityFormatter.Deserialize(ref reader, options);
                     }
@@ -618,6 +621,7 @@ namespace MessagePack.Formatters
                     var span = segment.AsSpan();
                     for (var i = 0; i < span.Length; i++)
                     {
+                        reader.CancellationToken.ThrowIfCancellationRequested();
                         span[i].Item1 = elementFormatter.Deserialize(ref reader, options);
                         span[i].Item2 = priorityFormatter.Deserialize(ref reader, options);
                     }
