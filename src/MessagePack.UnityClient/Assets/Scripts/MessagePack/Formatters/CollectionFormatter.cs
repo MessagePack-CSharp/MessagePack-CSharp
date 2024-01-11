@@ -263,11 +263,20 @@ namespace MessagePack.Formatters
                 var c = value.Count;
                 writer.WriteArrayHeader(c);
 
+#if NET6_0_OR_GREATER
+                var span = CollectionsMarshal.AsSpan(value);
+                for (int i = 0; i < span.Length; i++)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    formatter.Serialize(ref writer, span[i], options);
+                }
+#else
                 for (int i = 0; i < c; i++)
                 {
                     writer.CancellationToken.ThrowIfCancellationRequested();
                     formatter.Serialize(ref writer, value[i], options);
                 }
+#endif
             }
         }
 
@@ -286,11 +295,21 @@ namespace MessagePack.Formatters
                 options.Security.DepthStep(ref reader);
                 try
                 {
+#if NET8_0_OR_GREATER
+                    CollectionsMarshal.SetCount(list, len);
+                    var span = CollectionsMarshal.AsSpan(list);
+                    for (int i = 0; i < span.Length; i++)
+                    {
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        span[i] = formatter.Deserialize(ref reader, options);
+                    }
+#else
                     for (int i = 0; i < len; i++)
                     {
                         reader.CancellationToken.ThrowIfCancellationRequested();
                         list.Add(formatter.Deserialize(ref reader, options));
                     }
+#endif
                 }
                 finally
                 {
