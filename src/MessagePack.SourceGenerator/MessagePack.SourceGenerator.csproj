@@ -18,9 +18,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataKeyGen.cs" LinkBase="MessagePack\Internal" />
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SafeBitConverter.cs" LinkBase="MessagePack" />
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializationException.cs" LinkBase="MessagePack" />
+    <Compile Include="..\MessagePack\Internal\AutomataKeyGen.cs" LinkBase="MessagePack\Internal" />
+    <Compile Include="..\MessagePack\SafeBitConverter.cs" LinkBase="MessagePack" />
+    <Compile Include="..\MessagePack\MessagePackSerializationException.cs" LinkBase="MessagePack" />
     <Compile Update="Transforms\EnumTemplate.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

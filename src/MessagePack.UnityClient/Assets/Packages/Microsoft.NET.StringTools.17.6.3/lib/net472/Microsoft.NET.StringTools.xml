@@ -1,0 +1,492 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.NET.StringTools</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.NET.StringTools.InternableString">
+            <summary>
+            Represents a string that can be converted to System.String with interning, i.e. by returning an existing string if it has been seen before
+            and is still tracked in the intern table.
+            </summary>
+        </member>
+        <member name="T:Microsoft.NET.StringTools.InternableString.Enumerator">
+            <summary>
+            Enumerator for the top-level struct. Enumerates characters of the string.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.InternableString.Enumerator._string">
+            <summary>
+            The InternableString being enumerated.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.InternableString.Enumerator._spanIndex">
+            <summary>
+            Index of the current span, -1 represents the inline span.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.InternableString.Enumerator._charIndex">
+            <summary>
+            Index of the current character in the current span, -1 if MoveNext has not been called yet.
+            </summary>
+        </member>
+        <member name="P:Microsoft.NET.StringTools.InternableString.Enumerator.Current">
+            <summary>
+            Returns the current character.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.InternableString.Enumerator.MoveNext">
+            <summary>
+            Moves to the next character.
+            </summary>
+            <returns>True if there is another character, false if the enumerator reached the end.</returns>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.InternableString._inlineSpan">
+            <summary>
+            The span held by this struct, inline to be able to represent <see cref="T:System.ReadOnlySpan`1"/>. May be empty.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.InternableString._spans">
+            <summary>
+            Additional spans held by this struct. May be null.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.InternableString.#ctor(System.ReadOnlySpan{System.Char})">
+            <summary>
+            Constructs a new InternableString wrapping the given <see cref="T:System.ReadOnlySpan`1"/>.
+            </summary>
+            <param name="span">The span to wrap.</param>
+            <remarks>
+            When wrapping a span representing an entire System.String, use Internable(string) for optimum performance.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.InternableString.#ctor(System.String)">
+            <summary>
+            Constructs a new InternableString wrapping the given string.
+            </summary>
+            <param name="str">The string to wrap, must be non-null.</param>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.InternableString.#ctor(Microsoft.NET.StringTools.SpanBasedStringBuilder)">
+            <summary>
+            Constructs a new InternableString wrapping the given SpanBasedStringBuilder.
+            </summary>
+        </member>
+        <member name="P:Microsoft.NET.StringTools.InternableString.Length">
+            <summary>
+            Gets the length of the string.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.InternableString.GetEnumerator">
+            <summary>
+            Creates a new enumerator for enumerating characters in this string. Does not allocate.
+            </summary>
+            <returns>The enumerator.</returns>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.InternableString.Equals(System.String)">
+            <summary>
+            Returns true if the string is equal to another string by ordinal comparison.
+            </summary>
+            <param name="other">Another string.</param>
+            <returns>True if this string is equal to <paramref name="other"/>.</returns>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.InternableString.ExpensiveConvertToString">
+            <summary>
+            Returns a System.String representing this string. Allocates memory unless this InternableString was created by wrapping a
+            System.String in which case the original string is returned.
+            </summary>
+            <returns>The string.</returns>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.InternableString.ReferenceEquals(System.String)">
+            <summary>
+            Returns true if this InternableString wraps a System.String and the same System.String is passed as the argument.
+            </summary>
+            <param name="str">The string to compare to.</param>
+            <returns>True is this instance wraps the given string.</returns>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.InternableString.ToString">
+            <summary>
+            Converts this instance to a System.String while first searching for a match in the intern table.
+            </summary>
+            <remarks>
+            May allocate depending on whether the string has already been interned.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.InternableString.GetHashCode">
+            <summary>
+            Implements the simple yet very decently performing djb2-like hash function (xor version) as inspired by
+            https://github.com/dotnet/runtime/blob/6262ae8e6a33abac569ab6086cdccc470c810ea4/src/libraries/System.Private.CoreLib/src/System/String.Comparison.cs#L810-L840
+            </summary>
+            <returns>A stable hashcode of the string represented by this instance.</returns>
+            <remarks>
+            Unlike the BCL method, this implementation works only on two characters at a time to cut on the complexity with
+            characters that feed into the same operation but straddle multiple spans. Note that it must return the same value for
+            a given string regardless of how it's split into spans (e.g. { "AB" } and { "A", "B" } have the same hash code).
+            </remarks>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.InternableString.GetHashCodeHelper(System.Char*,System.Int32,System.UInt32,System.Boolean@)">
+            <summary>
+            Hashes a memory block specified by a pointer and length.
+            </summary>
+            <param name="charPtr">Pointer to the first character.</param>
+            <param name="length">Number of characters at <paramref name="charPtr"/>.</param>
+            <param name="hash">The running hash code.</param>
+            <param name="hashedOddNumberOfCharacters">True if the incoming <paramref name="hash"/> was calculated from an odd number of characters.</param>
+            <returns>The updated running hash code (not passed as a ref parameter to play nicely with JIT optimizations).</returns>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.InternableString.RotateLeft(System.UInt32,System.Int32)">
+            <summary>
+            Rotates an integer by the specified number of bits.
+            </summary>
+            <param name="value">The value to rotate.</param>
+            <param name="offset">The number of bits.</param>
+            <returns>The rotated value.</returns>
+        </member>
+        <member name="T:Microsoft.NET.StringTools.SpanBasedStringBuilder">
+            <summary>
+            A StringBuilder replacement that keeps a list of <see cref="T:System.ReadOnlyMemory`1"/> spans making up the intermediate string rather
+            than a copy of its characters. This has positive impact on both memory (no need to allocate space for the intermediate string)
+            and time (no need to copy characters to the intermediate string).
+            </summary>
+            <remarks>
+            The <see cref="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.ToString"/> method tries to intern the resulting string without even allocating it if it's already interned.
+            Use <see cref="M:Microsoft.NET.StringTools.Strings.GetSpanBasedStringBuilder"/> to take advantage of pooling to eliminate allocation overhead of this class.
+            </remarks>
+        </member>
+        <member name="T:Microsoft.NET.StringTools.SpanBasedStringBuilder.Enumerator">
+            <summary>
+            Enumerator for the top-level class. Enumerates characters of the string.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.SpanBasedStringBuilder.Enumerator._spans">
+            <summary>
+            The spans being enumerated.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.SpanBasedStringBuilder.Enumerator._spanIndex">
+            <summary>
+            Index of the current span.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.SpanBasedStringBuilder.Enumerator._charIndex">
+            <summary>
+            Index of the current character in the current span, -1 if MoveNext has not been called yet.
+            </summary>
+        </member>
+        <member name="P:Microsoft.NET.StringTools.SpanBasedStringBuilder.Enumerator.Current">
+            <summary>
+            Returns the current character.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.Enumerator.MoveNext">
+            <summary>
+            Moves to the next character.
+            </summary>
+            <returns>True if there is another character, false if the enumerator reached the end.</returns>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.SpanBasedStringBuilder._spans">
+            <summary>
+            Spans making up the rope.
+            </summary>
+        </member>
+        <member name="P:Microsoft.NET.StringTools.SpanBasedStringBuilder.Spans">
+            <summary>
+            Internal getter to get the list of spans out of the SpanBasedStringBuilder.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.#ctor(System.String)">
+            <summary>
+            Constructs a new SpanBasedStringBuilder containing the given string.
+            </summary>
+            <param name="str">The string to wrap, must be non-null.</param>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.#ctor(System.Int32)">
+            <summary>
+            Constructs a new empty SpanBasedStringBuilder with the given expected number of spans.
+            </summary>
+        </member>
+        <member name="P:Microsoft.NET.StringTools.SpanBasedStringBuilder.Length">
+            <summary>
+            Gets the length of the string.
+            </summary>
+        </member>
+        <member name="P:Microsoft.NET.StringTools.SpanBasedStringBuilder.Capacity">
+            <summary>
+            Gets the capacity of the SpanBasedStringBuilder in terms of number of spans it can hold without allocating.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.GetEnumerator">
+            <summary>
+            Creates a new enumerator for enumerating characters in this string. Does not allocate.
+            </summary>
+            <returns>The enumerator.</returns>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.ToString">
+            <summary>
+            Converts this instance to a System.String while first searching for a match in the intern table.
+            </summary>
+            <remarks>
+            May allocate depending on whether the string has already been interned.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.Dispose">
+            <summary>
+            Releases this instance.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.Append(System.String)">
+            <summary>
+            Appends a string.
+            </summary>
+            <param name="value">The string to append.</param>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.Append(System.String,System.Int32,System.Int32)">
+            <summary>
+            Appends a substring.
+            </summary>
+            <param name="value">The string to append.</param>
+            <param name="startIndex">The start index of the substring within <paramref name="value"/> to append.</param>
+            <param name="count">The length of the substring to append.</param>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.Append(System.ReadOnlyMemory{System.Char})">
+            <summary>
+            Appends a character span represented by <see cref="T:System.ReadOnlyMemory`1" />.
+            </summary>
+            <param name="span">The character span to append.</param>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.TrimStart">
+            <summary>
+            Removes leading white-space characters from the string.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.TrimEnd">
+            <summary>
+            Removes trailing white-space characters from the string.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.Trim">
+            <summary>
+            Removes leading and trailing white-space characters from the string.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.SpanBasedStringBuilder.Clear">
+            <summary>
+            Clears this instance making it represent an empty string.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.Strings._spanBasedStringBuilder">
+            <summary>
+            Per-thread instance of the SpanBasedStringBuilder, created lazily.
+            </summary>
+            <remarks>
+            This field serves as a per-thread one-item object pool, which is adequate for most use
+            cases as the builder is not expected to be held for extended periods of time.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.Strings.WeakIntern(System.String)">
+            <summary>
+            Interns the given string, keeping only a weak reference to the returned value.
+            </summary>
+            <param name="str">The string to intern.</param>
+            <returns>A string equal to <paramref name="str"/>, could be the same object as <paramref name="str"/>.</returns>
+            <remarks>
+            The intern pool does not retain strong references to the strings it's holding so strings are automatically evicted
+            after they become unrooted. This is in contrast to <c>System.String.Intern</c> which holds strings forever.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.Strings.WeakIntern(System.ReadOnlySpan{System.Char})">
+            <summary>
+            Interns the given readonly span of characters, keeping only a weak reference to the returned value.
+            </summary>
+            <param name="str">The character span to intern.</param>
+            <returns>A string equal to <paramref name="str"/>, could be the result of calling ToString() on <paramref name="str"/>.</returns>
+            <remarks>
+            The intern pool does not retain strong references to the strings it's holding so strings are automatically evicted
+            after they become unrooted. This is in contrast to <c>System.String.Intern</c> which holds strings forever.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.Strings.GetSpanBasedStringBuilder">
+            <summary>
+            Returns a new or recycled <see cref="T:Microsoft.NET.StringTools.SpanBasedStringBuilder"/>.
+            </summary>
+            <returns>The SpanBasedStringBuilder.</returns>
+            <remarks>
+            Call <see cref="M:System.IDisposable.Dispose"/> on the returned instance to recycle it.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.Strings.EnableDiagnostics">
+            <summary>
+            Enables diagnostics in the interner. Call <see cref="M:Microsoft.NET.StringTools.Strings.CreateDiagnosticReport"/> to retrieve the diagnostic data.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.Strings.CreateDiagnosticReport">
+            <summary>
+            Retrieves the diagnostic data describing the current state of the interner. Make sure to call <see cref="M:Microsoft.NET.StringTools.Strings.EnableDiagnostics"/> beforehand.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.Strings.ReturnSpanBasedStringBuilder(Microsoft.NET.StringTools.SpanBasedStringBuilder)">
+            <summary>
+            Returns a <see cref="T:Microsoft.NET.StringTools.SpanBasedStringBuilder"/> instance back to the pool if possible.
+            </summary>
+            <param name="stringBuilder">The instance to return.</param>
+        </member>
+        <member name="T:Microsoft.NET.StringTools.WeakStringCache">
+            <summary>
+            Implements the WeakStringCache functionality on modern .NET versions where ConcurrentDictionary is available.
+            </summary>
+            <summary>
+            A cache of weak GC handles pointing to strings. Weak GC handles are functionally equivalent to WeakReference's but have less overhead
+            (they're a struct as opposed to WR which is a finalizable class) at the expense of requiring manual lifetime management. As long as
+            a string has an ordinary strong GC root elsewhere in the process and another string with the same hashcode hasn't reused the entry,
+            the cache has a reference to it and can match it to an internable. When the string is collected, it is also automatically "removed"
+            from the cache by becoming unrecoverable from the GC handle. GC handles that do not reference a live string anymore are freed lazily.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCache.GetOrCreateEntry(Microsoft.NET.StringTools.InternableString@,System.Boolean@)">
+            <summary>
+            Main entrypoint of this cache. Tries to look up a string that matches the given internable. If it succeeds, returns
+            the string and sets cacheHit to true. If the string is not found, calls ExpensiveConvertToString on the internable,
+            adds the resulting string to the cache, and returns it, setting cacheHit to false.
+            </summary>
+            <param name="internable">The internable describing the string we're looking for.</param>
+            <param name="cacheHit">true if match found in cache, false otherwise.</param>
+            <returns>A string matching the given internable.</returns>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCache.Scavenge">
+            <summary>
+            Iterates over the cache and removes unused GC handles, i.e. handles that don't reference live strings.
+            This is expensive so try to call such that the cost is amortized to O(1) per GetOrCreateEntry() invocation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCache.GetDebugInfo">
+            <summary>
+            Returns internal debug counters calculated based on the current state of the cache.
+            </summary>
+        </member>
+        <member name="T:Microsoft.NET.StringTools.WeakStringCache.DebugInfo">
+            <summary>
+            Debug stats returned by GetDebugInfo().
+            </summary>
+        </member>
+        <member name="T:Microsoft.NET.StringTools.WeakStringCache.StringWeakHandle">
+            <summary>
+            Holds a weak GC handle to a string. Shared by all strings with the same hash code and referencing the last such string we've seen.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.WeakStringCache.StringWeakHandle.WeakHandle">
+            <summary>
+            Weak GC handle to the last string of the given hashcode we've seen.
+            </summary>
+        </member>
+        <member name="P:Microsoft.NET.StringTools.WeakStringCache.StringWeakHandle.IsUsed">
+            <summary>
+            Returns true if the string referenced by the handle is still alive.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCache.StringWeakHandle.GetString(Microsoft.NET.StringTools.InternableString@)">
+            <summary>
+            Returns the string referenced by this handle if it is equal to the given internable.
+            </summary>
+            <param name="internable">The internable describing the string we're looking for.</param>
+            <returns>The string matching the internable or null if the handle is referencing a collected string or the string is different.</returns>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCache.StringWeakHandle.SetString(System.String)">
+            <summary>
+            Sets the handle to the given string. If the handle is still referencing another live string, that string is effectively forgotten.
+            </summary>
+            <param name="str">The string to set.</param>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCache.StringWeakHandle.Free">
+            <summary>
+            Frees the GC handle.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.WeakStringCache._initialCapacity">
+            <summary>
+            Initial capacity of the underlying dictionary.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.WeakStringCache._scavengeThreshold">
+            <summary>
+            The maximum size we let the collection grow before scavenging unused entries.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCache.DisposeImpl">
+            <summary>
+            Frees all GC handles and clears the cache.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCache.GetDebugInfoImpl">
+            <summary>
+            Returns internal debug counters calculated based on the current state of the cache.
+            </summary>
+        </member>
+        <member name="T:Microsoft.NET.StringTools.WeakStringCacheInterner">
+            <summary>
+            Implements interning based on a WeakStringCache.
+            </summary>
+        </member>
+        <member name="T:Microsoft.NET.StringTools.WeakStringCacheInterner.InternResult">
+            <summary>
+            Enumerates the possible interning results.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.WeakStringCacheInterner._weakStringCache">
+            <summary>
+            The cache to keep strings in.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.WeakStringCacheInterner._regularInternHits">
+            <summary>
+            Number of times the regular interning path found the string in the cache.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.WeakStringCacheInterner._regularInternMisses">
+            <summary>
+            Number of times the regular interning path added the string to the cache.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.WeakStringCacheInterner._internEliminatedStrings">
+            <summary>
+            Total number of strings eliminated by interning.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.WeakStringCacheInterner._internEliminatedChars">
+            <summary>
+            Total number of chars eliminated across all strings.
+            </summary>
+        </member>
+        <member name="F:Microsoft.NET.StringTools.WeakStringCacheInterner._internCallCountsByString">
+            <summary>
+            Maps strings that went though the interning path to the number of times they have been
+            seen. The higher the number the better the payoff of interning. Null if statistics
+            gathering has not been enabled.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCacheInterner.Intern(Microsoft.NET.StringTools.InternableString@,System.String@)">
+            <summary>
+            Try to intern the string.
+            The return value indicates the how the string was interned.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCacheInterner.InternableToString(Microsoft.NET.StringTools.InternableString@)">
+            <summary>
+            WeakIntern the given InternableString.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCacheInterner.EnableStatistics">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCacheInterner.FormatStatistics">
+            <summary>
+            Returns a string with human-readable statistics.
+            </summary>
+        </member>
+        <member name="M:Microsoft.NET.StringTools.WeakStringCacheInterner.Dispose">
+            <summary>
+            Releases all strings from the underlying intern table.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,223 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.Bcl.AsyncInterfaces</name>
+    </assembly>
+    <members>
+        <member name="T:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1">
+            <summary>Provides the core logic for implementing a manual-reset <see cref="T:System.Threading.Tasks.Sources.IValueTaskSource"/> or <see cref="T:System.Threading.Tasks.Sources.IValueTaskSource`1"/>.</summary>
+            <typeparam name="TResult"></typeparam>
+        </member>
+        <member name="F:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1._continuation">
+            <summary>
+            The callback to invoke when the operation completes if <see cref="M:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1.OnCompleted(System.Action{System.Object},System.Object,System.Int16,System.Threading.Tasks.Sources.ValueTaskSourceOnCompletedFlags)"/> was called before the operation completed,
+            or <see cref="F:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCoreShared.s_sentinel"/> if the operation completed before a callback was supplied,
+            or null if a callback hasn't yet been provided and the operation hasn't yet completed.
+            </summary>
+        </member>
+        <member name="F:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1._continuationState">
+            <summary>State to pass to <see cref="F:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1._continuation"/>.</summary>
+        </member>
+        <member name="F:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1._executionContext">
+            <summary><see cref="T:System.Threading.ExecutionContext"/> to flow to the callback, or null if no flowing is required.</summary>
+        </member>
+        <member name="F:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1._capturedContext">
+            <summary>
+            A "captured" <see cref="T:System.Threading.SynchronizationContext"/> or <see cref="T:System.Threading.Tasks.TaskScheduler"/> with which to invoke the callback,
+            or null if no special context is required.
+            </summary>
+        </member>
+        <member name="F:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1._completed">
+            <summary>Whether the current operation has completed.</summary>
+        </member>
+        <member name="F:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1._result">
+            <summary>The result with which the operation succeeded, or the default value if it hasn't yet completed or failed.</summary>
+        </member>
+        <member name="F:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1._error">
+            <summary>The exception with which the operation failed, or null if it hasn't yet completed or completed successfully.</summary>
+        </member>
+        <member name="F:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1._version">
+            <summary>The current version of this value, used to help prevent misuse.</summary>
+        </member>
+        <member name="P:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1.RunContinuationsAsynchronously">
+            <summary>Gets or sets whether to force continuations to run asynchronously.</summary>
+            <remarks>Continuations may run asynchronously if this is false, but they'll never run synchronously if this is true.</remarks>
+        </member>
+        <member name="M:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1.Reset">
+            <summary>Resets to prepare for the next operation.</summary>
+        </member>
+        <member name="M:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1.SetResult(`0)">
+            <summary>Completes with a successful result.</summary>
+            <param name="result">The result.</param>
+        </member>
+        <member name="M:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1.SetException(System.Exception)">
+            <summary>Complets with an error.</summary>
+            <param name="error"></param>
+        </member>
+        <member name="P:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1.Version">
+            <summary>Gets the operation version.</summary>
+        </member>
+        <member name="M:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1.GetStatus(System.Int16)">
+            <summary>Gets the status of the operation.</summary>
+            <param name="token">Opaque value that was provided to the <see cref="T:System.Threading.Tasks.ValueTask"/>'s constructor.</param>
+        </member>
+        <member name="M:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1.GetResult(System.Int16)">
+            <summary>Gets the result of the operation.</summary>
+            <param name="token">Opaque value that was provided to the <see cref="T:System.Threading.Tasks.ValueTask"/>'s constructor.</param>
+        </member>
+        <member name="M:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1.OnCompleted(System.Action{System.Object},System.Object,System.Int16,System.Threading.Tasks.Sources.ValueTaskSourceOnCompletedFlags)">
+            <summary>Schedules the continuation action for this operation.</summary>
+            <param name="continuation">The continuation to invoke when the operation has completed.</param>
+            <param name="state">The state object to pass to <paramref name="continuation"/> when it's invoked.</param>
+            <param name="token">Opaque value that was provided to the <see cref="T:System.Threading.Tasks.ValueTask"/>'s constructor.</param>
+            <param name="flags">The flags describing the behavior of the continuation.</param>
+        </member>
+        <member name="M:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1.ValidateToken(System.Int16)">
+            <summary>Ensures that the specified token matches the current version.</summary>
+            <param name="token">The token supplied by <see cref="T:System.Threading.Tasks.ValueTask"/>.</param>
+        </member>
+        <member name="M:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1.SignalCompletion">
+            <summary>Signals that the operation has completed.  Invoked after the result or error has been set.</summary>
+        </member>
+        <member name="M:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1.InvokeContinuation">
+            <summary>
+            Invokes the continuation with the appropriate captured context / scheduler.
+            This assumes that if <see cref="F:System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore`1._executionContext"/> is not null we're already
+            running within that <see cref="T:System.Threading.ExecutionContext"/>.
+            </summary>
+        </member>
+        <member name="T:System.Threading.Tasks.TaskAsyncEnumerableExtensions">
+            <summary>Provides a set of static methods for configuring <see cref="T:System.Threading.Tasks.Task"/>-related behaviors on asynchronous enumerables and disposables.</summary>
+        </member>
+        <member name="M:System.Threading.Tasks.TaskAsyncEnumerableExtensions.ConfigureAwait(System.IAsyncDisposable,System.Boolean)">
+            <summary>Configures how awaits on the tasks returned from an async disposable will be performed.</summary>
+            <param name="source">The source async disposable.</param>
+            <param name="continueOnCapturedContext">Whether to capture and marshal back to the current context.</param>
+            <returns>The configured async disposable.</returns>
+        </member>
+        <member name="M:System.Threading.Tasks.TaskAsyncEnumerableExtensions.ConfigureAwait``1(System.Collections.Generic.IAsyncEnumerable{``0},System.Boolean)">
+            <summary>Configures how awaits on the tasks returned from an async iteration will be performed.</summary>
+            <typeparam name="T">The type of the objects being iterated.</typeparam>
+            <param name="source">The source enumerable being iterated.</param>
+            <param name="continueOnCapturedContext">Whether to capture and marshal back to the current context.</param>
+            <returns>The configured enumerable.</returns>
+        </member>
+        <member name="M:System.Threading.Tasks.TaskAsyncEnumerableExtensions.WithCancellation``1(System.Collections.Generic.IAsyncEnumerable{``0},System.Threading.CancellationToken)">
+            <summary>Sets the <see cref="T:System.Threading.CancellationToken"/> to be passed to <see cref="M:System.Collections.Generic.IAsyncEnumerable`1.GetAsyncEnumerator(System.Threading.CancellationToken)"/> when iterating.</summary>
+            <typeparam name="T">The type of the objects being iterated.</typeparam>
+            <param name="source">The source enumerable being iterated.</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken"/> to use.</param>
+            <returns>The configured enumerable.</returns>
+        </member>
+        <member name="T:System.Runtime.CompilerServices.AsyncIteratorMethodBuilder">
+            <summary>Represents a builder for asynchronous iterators.</summary>
+        </member>
+        <member name="M:System.Runtime.CompilerServices.AsyncIteratorMethodBuilder.Create">
+            <summary>Creates an instance of the <see cref="T:System.Runtime.CompilerServices.AsyncIteratorMethodBuilder"/> struct.</summary>
+            <returns>The initialized instance.</returns>
+        </member>
+        <member name="M:System.Runtime.CompilerServices.AsyncIteratorMethodBuilder.MoveNext``1(``0@)">
+            <summary>Invokes <see cref="M:System.Runtime.CompilerServices.IAsyncStateMachine.MoveNext"/> on the state machine while guarding the <see cref="T:System.Threading.ExecutionContext"/>.</summary>
+            <typeparam name="TStateMachine">The type of the state machine.</typeparam>
+            <param name="stateMachine">The state machine instance, passed by reference.</param>
+        </member>
+        <member name="M:System.Runtime.CompilerServices.AsyncIteratorMethodBuilder.AwaitOnCompleted``2(``0@,``1@)">
+            <summary>Schedules the state machine to proceed to the next action when the specified awaiter completes.</summary>
+            <typeparam name="TAwaiter">The type of the awaiter.</typeparam>
+            <typeparam name="TStateMachine">The type of the state machine.</typeparam>
+            <param name="awaiter">The awaiter.</param>
+            <param name="stateMachine">The state machine.</param>
+        </member>
+        <member name="M:System.Runtime.CompilerServices.AsyncIteratorMethodBuilder.AwaitUnsafeOnCompleted``2(``0@,``1@)">
+            <summary>Schedules the state machine to proceed to the next action when the specified awaiter completes.</summary>
+            <typeparam name="TAwaiter">The type of the awaiter.</typeparam>
+            <typeparam name="TStateMachine">The type of the state machine.</typeparam>
+            <param name="awaiter">The awaiter.</param>
+            <param name="stateMachine">The state machine.</param>
+        </member>
+        <member name="M:System.Runtime.CompilerServices.AsyncIteratorMethodBuilder.Complete">
+            <summary>Marks iteration as being completed, whether successfully or otherwise.</summary>
+        </member>
+        <member name="P:System.Runtime.CompilerServices.AsyncIteratorMethodBuilder.ObjectIdForDebugger">
+            <summary>Gets an object that may be used to uniquely identify this builder to the debugger.</summary>
+        </member>
+        <member name="T:System.Runtime.CompilerServices.AsyncIteratorStateMachineAttribute">
+            <summary>Indicates whether a method is an asynchronous iterator.</summary>
+        </member>
+        <member name="M:System.Runtime.CompilerServices.AsyncIteratorStateMachineAttribute.#ctor(System.Type)">
+            <summary>Initializes a new instance of the <see cref="T:System.Runtime.CompilerServices.AsyncIteratorStateMachineAttribute"/> class.</summary>
+            <param name="stateMachineType">The type object for the underlying state machine type that's used to implement a state machine method.</param>
+        </member>
+        <member name="T:System.Runtime.CompilerServices.ConfiguredAsyncDisposable">
+            <summary>Provides a type that can be used to configure how awaits on an <see cref="T:System.IAsyncDisposable"/> are performed.</summary>
+        </member>
+        <member name="T:System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1">
+            <summary>Provides an awaitable async enumerable that enables cancelable iteration and configured awaits.</summary>
+        </member>
+        <member name="M:System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1.ConfigureAwait(System.Boolean)">
+            <summary>Configures how awaits on the tasks returned from an async iteration will be performed.</summary>
+            <param name="continueOnCapturedContext">Whether to capture and marshal back to the current context.</param>
+            <returns>The configured enumerable.</returns>
+            <remarks>This will replace any previous value set by <see cref="M:System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1.ConfigureAwait(System.Boolean)"/> for this iteration.</remarks>
+        </member>
+        <member name="M:System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1.WithCancellation(System.Threading.CancellationToken)">
+            <summary>Sets the <see cref="T:System.Threading.CancellationToken"/> to be passed to <see cref="M:System.Collections.Generic.IAsyncEnumerable`1.GetAsyncEnumerator(System.Threading.CancellationToken)"/> when iterating.</summary>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken"/> to use.</param>
+            <returns>The configured enumerable.</returns>
+            <remarks>This will replace any previous <see cref="T:System.Threading.CancellationToken"/> set by <see cref="M:System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1.WithCancellation(System.Threading.CancellationToken)"/> for this iteration.</remarks>
+        </member>
+        <member name="T:System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1.Enumerator">
+            <summary>Provides an awaitable async enumerator that enables cancelable iteration and configured awaits.</summary>
+        </member>
+        <member name="M:System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1.Enumerator.MoveNextAsync">
+            <summary>Advances the enumerator asynchronously to the next element of the collection.</summary>
+            <returns>
+            A <see cref="T:System.Runtime.CompilerServices.ConfiguredValueTaskAwaitable`1"/> that will complete with a result of <c>true</c>
+            if the enumerator was successfully advanced to the next element, or <c>false</c> if the enumerator has
+            passed the end of the collection.
+            </returns>
+        </member>
+        <member name="P:System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1.Enumerator.Current">
+            <summary>Gets the element in the collection at the current position of the enumerator.</summary>
+        </member>
+        <member name="M:System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1.Enumerator.DisposeAsync">
+            <summary>
+            Performs application-defined tasks associated with freeing, releasing, or
+            resetting unmanaged resources asynchronously.
+            </summary>
+        </member>
+        <member name="T:System.Collections.Generic.IAsyncEnumerable`1">
+            <summary>Exposes an enumerator that provides asynchronous iteration over values of a specified type.</summary>
+            <typeparam name="T">The type of values to enumerate.</typeparam>
+        </member>
+        <member name="M:System.Collections.Generic.IAsyncEnumerable`1.GetAsyncEnumerator(System.Threading.CancellationToken)">
+            <summary>Returns an enumerator that iterates asynchronously through the collection.</summary>
+            <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken"/> that may be used to cancel the asynchronous iteration.</param>
+            <returns>An enumerator that can be used to iterate asynchronously through the collection.</returns>
+        </member>
+        <member name="T:System.Collections.Generic.IAsyncEnumerator`1">
+            <summary>Supports a simple asynchronous iteration over a generic collection.</summary>
+            <typeparam name="T">The type of objects to enumerate.</typeparam>
+        </member>
+        <member name="M:System.Collections.Generic.IAsyncEnumerator`1.MoveNextAsync">
+            <summary>Advances the enumerator asynchronously to the next element of the collection.</summary>
+            <returns>
+            A <see cref="T:System.Threading.Tasks.ValueTask`1"/> that will complete with a result of <c>true</c> if the enumerator
+            was successfully advanced to the next element, or <c>false</c> if the enumerator has passed the end
+            of the collection.
+            </returns>
+        </member>
+        <member name="P:System.Collections.Generic.IAsyncEnumerator`1.Current">
+            <summary>Gets the element in the collection at the current position of the enumerator.</summary>
+        </member>
+        <member name="T:System.IAsyncDisposable">
+            <summary>Provides a mechanism for releasing unmanaged resources asynchronously.</summary>
+        </member>
+        <member name="M:System.IAsyncDisposable.DisposeAsync">
+            <summary>
+            Performs application-defined tasks associated with freeing, releasing, or
+            resetting unmanaged resources asynchronously.
+            </summary>
+        </member>
+    </members>
+</doc>

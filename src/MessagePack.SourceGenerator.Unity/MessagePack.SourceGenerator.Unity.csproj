@@ -13,9 +13,9 @@
     <Compile Include="..\MessagePack.SourceGenerator\CodeAnalysis\**\*.cs" LinkBase="CodeAnalysis" />
     <Compile Include="..\MessagePack.SourceGenerator\IGeneratorContext.cs" />
     <Compile Include="..\MessagePack.SourceGenerator\MessagePackGenerator.Emit.cs" />
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataKeyGen.cs" LinkBase="MessagePack\Internal" />
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SafeBitConverter.cs" LinkBase="MessagePack" />
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializationException.cs" LinkBase="MessagePack" />
+    <Compile Include="..\MessagePack\Internal\AutomataKeyGen.cs" LinkBase="MessagePack\Internal" />
+    <Compile Include="..\MessagePack\SafeBitConverter.cs" LinkBase="MessagePack" />
+    <Compile Include="..\MessagePack\MessagePackSerializationException.cs" LinkBase="MessagePack" />
   </ItemGroup>
 
   <Target Name="PackZip" BeforeTargets="Pack" DependsOnTargets="Build">
