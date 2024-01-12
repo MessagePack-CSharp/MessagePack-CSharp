@@ -19,7 +19,6 @@ namespace MessagePack.ImmutableCollection
 
         public FrozenDictionaryFormatter()
         {
-            comparer = default;
         }
 
         public FrozenDictionaryFormatter(IEqualityComparer<TKey>? comparer)
@@ -48,11 +47,9 @@ namespace MessagePack.ImmutableCollection
                 return;
             }
 
-            FrozenDictionary<TKey, TValue>.Enumerator e = value.GetEnumerator();
-            while (e.MoveNext())
+            foreach (KeyValuePair<TKey, TValue> item in value)
             {
                 writer.CancellationToken.ThrowIfCancellationRequested();
-                KeyValuePair<TKey, TValue> item = e.Current;
                 keyFormatter.Serialize(ref writer, item.Key, options);
                 valueFormatter.Serialize(ref writer, item.Value, options);
             }
@@ -103,7 +100,6 @@ namespace MessagePack.ImmutableCollection
 
         public FrozenSetFormatter()
         {
-            comparer = default;
         }
 
         public FrozenSetFormatter(IEqualityComparer<T> comparer)
@@ -127,10 +123,10 @@ namespace MessagePack.ImmutableCollection
             }
 
             IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
-            FrozenSet<T>.Enumerator e = value.GetEnumerator();
-            while (e.MoveNext())
+            foreach (var item in value)
             {
-                formatter.Serialize(ref writer, e.Current, options);
+                writer.CancellationToken.ThrowIfCancellationRequested();
+                formatter.Serialize(ref writer, item, options);
             }
         }
 
@@ -153,9 +149,18 @@ namespace MessagePack.ImmutableCollection
             // https://github.com/dotnet/runtime/blob/4c500699b938d53993b928b93543b8dbe68f69aa/src/libraries/System.Collections.Immutable/src/System/Collections/Frozen/FrozenSet.cs#L41
             // FrozenSet.ToFrozenSet internally allocates HashSet<T> object.
             var set = new HashSet<T>(count, comparer);
-            for (var i = 0; i < count; i++)
+            options.Security.DepthStep(ref reader);
+            try
             {
-                set.Add(formatter.Deserialize(ref reader, options));
+                for (var i = 0; i < count; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    set.Add(formatter.Deserialize(ref reader, options));
+                }
+            }
+            finally
+            {
+                reader.Depth--;
             }
 
             return set.ToFrozenSet(comparer);
