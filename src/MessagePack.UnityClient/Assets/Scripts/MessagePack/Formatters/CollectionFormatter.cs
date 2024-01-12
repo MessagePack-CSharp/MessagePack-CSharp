@@ -542,7 +542,6 @@ namespace MessagePack.Formatters
 
         public PriorityQueueFormatter()
         {
-            comparer = default;
         }
 
         public PriorityQueueFormatter(IComparer<TPriority>? comparer)
@@ -561,23 +560,17 @@ namespace MessagePack.Formatters
             // https://github.com/dotnet/runtime/blob/a6bf4e4b94db9c1e28f50393e0a1943892e34bed/src/libraries/System.Collections/src/System/Collections/Generic/PriorityQueue.cs#L172
             // Count property is reading just private field _size;
             var count = value.Count;
-            writer.WriteMapHeader(count);
+            writer.WriteArrayHeader(count);
             if (count == 0)
             {
                 return;
             }
 
-            IFormatterResolver resolver = options.Resolver;
-            IMessagePackFormatter<TElement> elementFormatter = resolver.GetFormatterWithVerify<TElement>();
-            IMessagePackFormatter<TPriority> priorityFormatter = resolver.GetFormatterWithVerify<TPriority>();
-            PriorityQueue<TElement, TPriority>.UnorderedItemsCollection items = value.UnorderedItems;
-            using PriorityQueue<TElement, TPriority>.UnorderedItemsCollection.Enumerator e = items.GetEnumerator();
-            while (e.MoveNext())
+            IMessagePackFormatter<ValueTuple<TElement, TPriority>> pairFormatter = options.Resolver.GetFormatterWithVerify<ValueTuple<TElement, TPriority>>();
+            foreach (var pair in value.UnorderedItems)
             {
                 writer.CancellationToken.ThrowIfCancellationRequested();
-                var pair = e.Current;
-                elementFormatter.Serialize(ref writer, pair.Element, options);
-                priorityFormatter.Serialize(ref writer, pair.Priority, options);
+                pairFormatter.Serialize(ref writer, pair, options);
             }
         }
 
@@ -588,15 +581,13 @@ namespace MessagePack.Formatters
                 return default;
             }
 
-            var count = reader.ReadMapHeader();
+            var count = reader.ReadArrayHeader();
             if (count == 0)
             {
                 return new PriorityQueue<TElement, TPriority>(comparer);
             }
 
-            IFormatterResolver resolver = options.Resolver;
-            IMessagePackFormatter<TElement> elementFormatter = resolver.GetFormatterWithVerify<TElement>();
-            IMessagePackFormatter<TPriority> priorityFormatter = resolver.GetFormatterWithVerify<TPriority>();
+            IMessagePackFormatter<ValueTuple<TElement, TPriority>> pairFormatter = options.Resolver.GetFormatterWithVerify<ValueTuple<TElement, TPriority>>();
 
             // https://github.com/dotnet/runtime/blob/a6bf4e4b94db9c1e28f50393e0a1943892e34bed/src/libraries/System.Collections/src/System/Collections/Generic/PriorityQueue.cs#L160C22-L160C47
             // EnumerableHelpers.ToArray is called for IEnumerable<ValueTuple<TElement, TPriority>>.
@@ -606,35 +597,25 @@ namespace MessagePack.Formatters
                 options.Security.DepthStep(ref reader);
                 try
                 {
-                    if (sharedBuffer.Length == count)
+                    var span = sharedBuffer.AsSpan(0, count);
+                    for (var i = 0; i < span.Length; i++)
                     {
-                        for (var i = 0; i < sharedBuffer.Length; i++)
-                        {
-                            reader.CancellationToken.ThrowIfCancellationRequested();
-                            sharedBuffer[i].Item1 = elementFormatter.Deserialize(ref reader, options);
-                            sharedBuffer[i].Item2 = priorityFormatter.Deserialize(ref reader, options);
-                        }
-
-                        return new PriorityQueue<TElement, TPriority>(sharedBuffer, comparer);
-                    }
-                    else
-                    {
-                        var segment = new ArraySegment<ValueTuple<TElement, TPriority>>(sharedBuffer, 0, count);
-                        var span = segment.AsSpan();
-                        for (var i = 0; i < span.Length; i++)
-                        {
-                            reader.CancellationToken.ThrowIfCancellationRequested();
-                            span[i].Item1 = elementFormatter.Deserialize(ref reader, options);
-                            span[i].Item2 = priorityFormatter.Deserialize(ref reader, options);
-                        }
-
-                        // This constructor box segment. List<KeyValuePair<TElement, TPriority>> instead?
-                        return new PriorityQueue<TElement, TPriority>(segment, comparer);
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        span[i] = pairFormatter.Deserialize(ref reader, options);
                     }
                 }
                 finally
                 {
                     reader.Depth--;
+                }
+
+                if (sharedBuffer.Length == count)
+                {
+                    return new PriorityQueue<TElement, TPriority>(sharedBuffer, comparer);
+                }
+                else
+                {
+                    return new PriorityQueue<TElement, TPriority>(new ArraySegment<ValueTuple<TElement, TPriority>>(sharedBuffer, 0, count), comparer);
                 }
             }
             finally
