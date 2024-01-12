@@ -7,6 +7,11 @@ MessagePack.Formatters.Matrix3x2Formatter.Serialize(ref MessagePack.MessagePackW
 MessagePack.Formatters.Matrix4x4Formatter
 MessagePack.Formatters.Matrix4x4Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Matrix4x4
 MessagePack.Formatters.Matrix4x4Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Matrix4x4 value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>
+MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.PriorityQueueFormatter() -> void
+MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.PriorityQueueFormatter(System.Collections.Generic.IComparer<TPriority>? comparer) -> void
+MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.PriorityQueue<TElement, TPriority>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.PriorityQueue<TElement, TPriority>?
 MessagePack.Formatters.QuaternionFormatter
 MessagePack.Formatters.QuaternionFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Quaternion
 MessagePack.Formatters.QuaternionFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Quaternion value, MessagePack.MessagePackSerializerOptions! options) -> void

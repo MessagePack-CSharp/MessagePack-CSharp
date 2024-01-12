@@ -54,6 +54,9 @@ namespace MessagePack.Internal
               { typeof(List<>), typeof(ListFormatter<>) },
               { typeof(LinkedList<>), typeof(LinkedListFormatter<>) },
               { typeof(Queue<>), typeof(QueueFormatter<>) },
+#if NET6_0_OR_GREATER
+              { typeof(PriorityQueue<,>), typeof(PriorityQueueFormatter<,>) },
+#endif
               { typeof(Stack<>), typeof(StackFormatter<>) },
               { typeof(HashSet<>), typeof(HashSetFormatter<>) },
               { typeof(ReadOnlyCollection<>), typeof(ReadOnlyCollectionFormatter<>) },

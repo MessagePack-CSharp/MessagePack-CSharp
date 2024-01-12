@@ -31,6 +31,9 @@ namespace MessagePack.Tests
             new object[] { new ReadOnlyCollection<int>(new[] { 1, 10, 100 }), null },
             new object[] { new ObservableCollection<int>(new[] { 1, 10, 100 }), null },
             new object[] { new ReadOnlyObservableCollection<int>(new ObservableCollection<int>(new[] { 1, 10, 100 })), null },
+#if NET6_0_OR_GREATER
+            new object[] { new PriorityQueue<string, int>(new[] { ("1", 1), ("10", 10), ("100", 100) }), null },
+#endif
         };
 
         [Theory]
