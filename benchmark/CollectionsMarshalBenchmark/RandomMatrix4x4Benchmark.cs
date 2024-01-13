@@ -58,7 +58,8 @@ public struct Matrix4x4
 [MessagePackObject]
 public struct OldTypeMatrix4x4(List<Matrix4x4> value)
 {
-    public OldTypeMatrix4x4() : this([])
+    public OldTypeMatrix4x4()
+        : this([])
     {
     }
 
@@ -70,7 +71,8 @@ public struct OldTypeMatrix4x4(List<Matrix4x4> value)
 [MessagePackObject]
 public struct NewTypeMatrix4x4(List<Matrix4x4> value)
 {
-    public NewTypeMatrix4x4() : this([])
+    public NewTypeMatrix4x4()
+        : this([])
     {
     }
 

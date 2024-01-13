@@ -17,7 +17,8 @@ namespace Benchmark;
 [MessagePackObject]
 public struct OldTypeByte(List<byte> value)
 {
-    public OldTypeByte() : this([])
+    public OldTypeByte()
+        : this([])
     {
     }
 
@@ -29,7 +30,8 @@ public struct OldTypeByte(List<byte> value)
 [MessagePackObject]
 public struct NewTypeByte(List<byte> value)
 {
-    public NewTypeByte() : this([])
+    public NewTypeByte()
+        : this([])
     {
     }
 
