@@ -106,6 +106,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.SourceGenerator
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Analyzers.CodeFixes", "src\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj", "{7A6CB600-2393-468F-9952-84EC624D57BD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CollectionsMarshalBenchmark", "benchmark\CollectionsMarshalBenchmark\CollectionsMarshalBenchmark.csproj", "{9A31C44C-9C51-4D41-B8E5-2864245F877E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -232,6 +234,10 @@ Global
 		{7A6CB600-2393-468F-9952-84EC624D57BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A6CB600-2393-468F-9952-84EC624D57BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A6CB600-2393-468F-9952-84EC624D57BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A31C44C-9C51-4D41-B8E5-2864245F877E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A31C44C-9C51-4D41-B8E5-2864245F877E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A31C44C-9C51-4D41-B8E5-2864245F877E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A31C44C-9C51-4D41-B8E5-2864245F877E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -267,6 +273,7 @@ Global
 		{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 		{EAC1B79C-F77D-4DEF-BF53-75E700A301A4} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 		{7A6CB600-2393-468F-9952-84EC624D57BD} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
+		{9A31C44C-9C51-4D41-B8E5-2864245F877E} = {51A614B0-E583-4DD2-AC7D-6A65634582E0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B3911209-2DBF-47F8-98F6-BBC0EDFE63DE}
