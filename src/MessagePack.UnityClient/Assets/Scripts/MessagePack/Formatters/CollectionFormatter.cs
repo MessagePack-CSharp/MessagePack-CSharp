@@ -262,21 +262,11 @@ namespace MessagePack.Formatters
 
                 var c = value.Count;
                 writer.WriteArrayHeader(c);
-
-#if NET6_0_OR_GREATER
-                var span = CollectionsMarshal.AsSpan(value);
-                for (int i = 0; i < span.Length; i++)
-                {
-                    writer.CancellationToken.ThrowIfCancellationRequested();
-                    formatter.Serialize(ref writer, span[i], options);
-                }
-#else
                 for (int i = 0; i < c; i++)
                 {
                     writer.CancellationToken.ThrowIfCancellationRequested();
                     formatter.Serialize(ref writer, value[i], options);
                 }
-#endif
             }
         }
 
