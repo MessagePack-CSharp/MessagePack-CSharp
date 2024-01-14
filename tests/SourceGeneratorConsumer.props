@@ -10,6 +10,10 @@
       <OutputItemType>Analyzer</OutputItemType>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
     <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 
