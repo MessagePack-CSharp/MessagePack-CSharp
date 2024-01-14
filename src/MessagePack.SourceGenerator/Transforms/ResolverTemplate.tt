@@ -10,7 +10,7 @@ namespace <#= ResolverNamespace #>
 	using Formatters = global::<#= FormatterNamespace #>;
 
 	/// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
-	<#= PublicResolver ? "public" : "internal" #> class <#= ResolverName #> : MsgPack::IFormatterResolver
+	partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 	{
 		/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
 		public static readonly MsgPack::IFormatterResolver Instance = new <#= ResolverName #>();

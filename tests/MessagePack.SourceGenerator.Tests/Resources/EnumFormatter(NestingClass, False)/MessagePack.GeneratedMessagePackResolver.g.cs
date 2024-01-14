@@ -8,7 +8,7 @@ namespace MessagePack
 	using Formatters = global::Formatters;
 
 	/// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
-	internal class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
+	partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 	{
 		/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
 		public static readonly MsgPack::IFormatterResolver Instance = new GeneratedMessagePackResolver();

@@ -59,8 +59,6 @@ public partial class ResolverTemplate
 
     public string ResolverName => this.Options.Generator.Resolver.Name;
 
-    public bool PublicResolver => this.Options.Generator.Resolver.Public;
-
     public IReadOnlyList<IResolverRegisterInfo> RegisterInfos { get; }
 
     public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.ResolverName, this.ResolverNamespace)}.g.cs";
