@@ -24,7 +24,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{344DC89D-8
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		LICENSE = LICENSE
-		doc\MessagePackAnalyzer.json = doc\MessagePackAnalyzer.json
 		README.md = README.md
 	EndProjectSection
 EndProject

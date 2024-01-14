@@ -168,18 +168,28 @@ The MessagePackAnalyzer package aids with:
 
 ![analyzergif](https://cloud.githubusercontent.com/assets/46207/23837445/ce734eae-07cb-11e7-9758-d69f0f095bc1.gif)
 
-If you want to allow a specific custom type (for example, when registering a custom type), put `MessagePackAnalyzer.json` at the project root.
-If using Unity, you should configure Unity to treat this as an `AdditionalFiles` in the C# compiler.
+You must define a partial class that will host the source generated resolver.
+It can be `internal` or `public` and have any name and namespace.
+It must carry the `[GeneratedMessagePackResolver]` attribute.
+This attribute offers several properties that may be set to customize the generated resolver and formatters.
 
-An example `MessagePackAnalyzer.json`:
+At a minimum, the class might look like this:
 
-```json
+```cs
+[GeneratedMessagePackResolver]
+partial class GeneratedMessagePackResolver
 {
-  "$schema": "https://raw.githubusercontent.com/MessagePack-CSharp/MessagePack-CSharp/develop/MessagePackAnalyzer.schema.json",
-  "customFormattedTypes": [
-    "MyNamespace.MyClass",
-    "MyNamespace.AnotherClass"
-  ]
+}
+```
+
+You can opt into a `public` resolver just by adding that modifier to the class declaration.
+
+If you want to skip source generation of a formatter for specific types, you can list them like this:
+
+```cs
+[GeneratedMessagePackResolver(CustomFormattedTypes = new Type[] { typeof(MyNamespace.MyClass), typeof(MyNamespace.AnotherClass) })]
+partial class GeneratedMessagePackResolver
+{
 }
 ```
 
@@ -1631,34 +1641,7 @@ T after = MessagePackSerializer.Deserialize<T>(serialized);
 
 ### Customizations
 
-You can customize the generated source through a `MessagePackAnalyzer.json` file added to the project root directory.
-If using Unity, you should configure Unity to treat this as an `AdditionalFiles` in the C# compiler.
-
-An example `MessagePackAnalyzer.json`:
-
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/MessagePack-CSharp/MessagePack-CSharp/develop/MessagePackAnalyzer.schema.json",
-  "generator": {
-    "resolver": {
-      "public": false,
-      "name": "GeneratedMessagePackResolver",
-      "namespace": "<your project root namespace>"
-    },
-    "formatters": {
-      "namespace": "Formatters"
-    },
-    "usesMapMode": false
-  },
-  "customFormattedTypes": [
-    "MyNamespace.MyClass",
-    "MyNamespace.AnotherClass"
-  ]
-}
-```
-
-The above example mostly sets defaults.
-You can discover all the available settings, their defaults and meanings in a JSON editor that supports JSON schema, or by reviewing [the JSON schema][AnalyzerJsonSchema] yourself.
+You can customize the generated source through properties on the `GeneratedMessagePackResolverAttribute`.
 
 When exposing the generated resolver publicly, consumers outside the library should aggregate the resolver using its `Instance` property, which contains *only* the generated formatters.
 The `InstanceWithStandardAotResolver` property is a convenience for callers that will not be aggregating the resolver with those from other libraries, since it aggregates built-in AOT friendly resolvers from the MessagePack library itself.
@@ -1716,5 +1699,3 @@ The StreamJsonRpc library is based on [JSON-RPC](https://www.jsonrpc.org/) and i
 ## How to build
 
 See our [contributor's guide](CONTRIBUTING.md).
-
-[AnalyzerJsonSchema]: https://github.com/MessagePack-CSharp/MessagePack-CSharp/blob/develop/MessagePackAnalyzer.schema.json

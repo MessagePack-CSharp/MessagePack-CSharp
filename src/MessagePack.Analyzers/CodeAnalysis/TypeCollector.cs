@@ -21,11 +21,6 @@ public class MessagePackGeneratorResolveFailedException : Exception
     }
 }
 
-internal static class AnalyzerUtilities
-{
-    internal static string GetHelpLink(string diagnosticId) => $"https://github.com/neuecc/MessagePack-CSharp/blob/master/doc/analyzers/{diagnosticId}.md";
-}
-
 public class TypeCollector
 {
     private static readonly SymbolDisplayFormat BinaryWriteFormat = new SymbolDisplayFormat(
@@ -185,7 +180,8 @@ public class TypeCollector
 
     private readonly AnalyzerOptions options;
     private readonly ReferenceSymbols typeReferences;
-    private readonly Action<Diagnostic>? reportDiagnostic;
+    private readonly Action<Diagnostic> reportDiagnostic; // TODO: remove this and have all callers get diagnostics later in the same way.
+    private readonly List<Diagnostic> diagnostics = new();
     private readonly ITypeSymbol? targetType;
     private readonly bool excludeArrayElement;
 
@@ -203,7 +199,7 @@ public class TypeCollector
     private TypeCollector(Compilation compilation, AnalyzerOptions options, ReferenceSymbols referenceSymbols, ITypeSymbol targetType, Action<Diagnostic>? reportDiagnostic)
     {
         this.typeReferences = referenceSymbols;
-        this.reportDiagnostic = reportDiagnostic;
+        this.reportDiagnostic = reportDiagnostic ?? this.diagnostics.Add;
         this.options = options;
         this.compilation = compilation;
         this.excludeArrayElement = true;
@@ -270,6 +266,7 @@ public class TypeCollector
             this.collectedEnumInfo.ToImmutable(),
             this.collectedGenericInfo.ToImmutable(),
             this.collectedUnionInfo.ToImmutable(),
+            this.diagnostics.ToImmutableArray(),
             this.options);
     }
 
@@ -281,7 +278,7 @@ public class TypeCollector
             return result;
         }
 
-        var typeSymbolString = typeSymbol.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToString() ?? throw new InvalidOperationException();
+        var typeSymbolString = typeSymbol.GetCanonicalTypeFullName();
         if (EmbeddedTypes.Contains(typeSymbolString))
         {
             result = true;
@@ -289,7 +286,7 @@ public class TypeCollector
             return result;
         }
 
-        if (this.options.CustomFormattedTypes.Contains(typeSymbolString) is true)
+        if (this.options.AssumedFormattableTypes.Contains(typeSymbolString) is true)
         {
             result = true;
             this.alreadyCollected.Add(typeSymbol, result);
@@ -386,7 +383,7 @@ public class TypeCollector
         ImmutableArray<TypedConstant>[] unionAttrs = type.GetAttributes().Where(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments).ToArray();
         if (unionAttrs.Length == 0)
         {
-            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.UnionAttributeRequired, type.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
+            this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.UnionAttributeRequired, type.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
         }
 
         // 0, Int  1, SubType
@@ -394,7 +391,7 @@ public class TypeCollector
         {
             if (!(x[0] is { Value: int key }) || !(x[1] is { Value: ITypeSymbol typeSymbol }))
             {
-                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.AotUnionAttributeRequiresTypeArg, GetIdentifierLocation(type)));
+                this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.AotUnionAttributeRequiresTypeArg, GetIdentifierLocation(type)));
                 return null;
             }
 
@@ -463,7 +460,7 @@ public class TypeCollector
             };
             if (formatterName is null)
             {
-                ////this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.AotArrayRankTooHigh));
+                ////this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.AotArrayRankTooHigh));
                 return false;
             }
         }
@@ -639,7 +636,7 @@ public class TypeCollector
             {
                 Location? location = ((AttributeSyntax?)formatterAttribute.ApplicationSyntaxReference?.GetSyntax())?.ArgumentList?.Arguments[0].GetLocation();
                 ImmutableDictionary<string, string?> typeInfo = ImmutableDictionary.Create<string, string?>().Add("type", formatterType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
-                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.MessageFormatterMustBeMessagePackFormatter, location, typeInfo));
+                this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.MessageFormatterMustBeMessagePackFormatter, location, typeInfo));
             }
 
             return isMessagePackFormatter;
@@ -656,7 +653,7 @@ public class TypeCollector
         AttributeData? contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute));
         if (contractAttr is null)
         {
-            ////this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject, ((BaseTypeDeclarationSyntax)type.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
+            ////this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject, ((BaseTypeDeclarationSyntax)type.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
         }
 
         var isIntKey = true;
@@ -762,7 +759,7 @@ public class TypeCollector
                             var syntax = item.DeclaringSyntaxReferences[0].GetSyntax();
                             var identifier = (syntax as PropertyDeclarationSyntax)?.Identifier ?? (syntax as ParameterSyntax)?.Identifier;
 
-                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey, identifier?.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
+                            this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey, identifier?.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
                         }
                         else if (type.BaseType is not null)
                         {
@@ -771,7 +768,7 @@ public class TypeCollector
                                 .FirstOrDefault(bt => SymbolEqualityComparer.Default.Equals(this.compilation.GetSemanticModel(bt.SyntaxTree).GetTypeInfo(bt.Type).Type, item.ContainingType));
                             if (baseSyntax is not null)
                             {
-                                this.reportDiagnostic?.Invoke(Diagnostic.Create(
+                                this.reportDiagnostic.Invoke(Diagnostic.Create(
                                     MsgPack00xMessagePackAnalyzer.BaseTypeContainsUnattributedPublicMembers,
                                     baseSyntax.GetLocation(),
                                     item.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -786,7 +783,7 @@ public class TypeCollector
                     var stringKey = key is { Value: string stringKeyValue } ? stringKeyValue : default;
                     if (intKey == null && stringKey == null)
                     {
-                        this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.BothStringAndIntKeyAreNull, ((PropertyDeclarationSyntax)item.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
+                        this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.BothStringAndIntKeyAreNull, ((PropertyDeclarationSyntax)item.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
                     }
 
                     if (searchFirst)
@@ -798,7 +795,7 @@ public class TypeCollector
                     {
                         if ((isIntKey && intKey == null) || (!isIntKey && stringKey == null))
                         {
-                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DoNotMixStringAndIntKeys, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
+                            this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DoNotMixStringAndIntKeys, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
                     }
 
@@ -806,7 +803,7 @@ public class TypeCollector
                     {
                         if (intMembers.ContainsKey(intKey!.Value))
                         {
-                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
+                            this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
                         var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
@@ -816,7 +813,7 @@ public class TypeCollector
                     {
                         if (stringMembers.ContainsKey(stringKey!))
                         {
-                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
+                            this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
                         var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
@@ -837,7 +834,7 @@ public class TypeCollector
                             ?? (syntax as ParameterSyntax)?.Type; // for primary constructor
 
                         // TODO: add the declaration of the referenced type as an additional location.
-                        this.reportDiagnostic?.Invoke(Diagnostic.Create(
+                        this.reportDiagnostic.Invoke(Diagnostic.Create(
                             MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject,
                             typeSyntax?.GetLocation(),
                             item.Type.ToDisplayString(ShortTypeNameFormat)));
@@ -870,7 +867,7 @@ public class TypeCollector
                 {
                     if (contractAttr is not null)
                     {
-                        this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey, item.DeclaringSyntaxReferences[0].GetSyntax().GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
+                        this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey, item.DeclaringSyntaxReferences[0].GetSyntax().GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
                     }
                 }
                 else
@@ -879,7 +876,7 @@ public class TypeCollector
                     var stringKey = key is { Value: string stringKeyValue } ? stringKeyValue : default;
                     if (intKey == null && stringKey == null)
                     {
-                        this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.BothStringAndIntKeyAreNull, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
+                        this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.BothStringAndIntKeyAreNull, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                     }
 
                     if (searchFirst)
@@ -891,7 +888,7 @@ public class TypeCollector
                     {
                         if ((isIntKey && intKey == null) || (!isIntKey && stringKey == null))
                         {
-                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DoNotMixStringAndIntKeys, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
+                            this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DoNotMixStringAndIntKeys, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
                     }
 
@@ -899,7 +896,7 @@ public class TypeCollector
                     {
                         if (intMembers.ContainsKey(intKey!.Value))
                         {
-                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
+                            this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
                         var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
@@ -909,7 +906,7 @@ public class TypeCollector
                     {
                         if (stringMembers.ContainsKey(stringKey!))
                         {
-                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
+                            this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
                         var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
@@ -937,7 +934,7 @@ public class TypeCollector
         // struct allows null ctor
         if (ctor == null && isClass)
         {
-            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.NoDeserializingConstructor, GetIdentifierLocation(type)));
+            this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.NoDeserializingConstructor, GetIdentifierLocation(type)));
         }
 
         var constructorParameters = new List<MemberSerializationInfo>();
@@ -968,7 +965,7 @@ public class TypeCollector
                                 }
                                 else
                                 {
-                                    this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterTypeMismatch, GetLocation(item)));
+                                    this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterTypeMismatch, GetLocation(item)));
                                 }
                             }
                         }
@@ -981,7 +978,7 @@ public class TypeCollector
                             }
                             else
                             {
-                                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterIndexMissing, GetParameterListLocation(ctor)));
+                                this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterIndexMissing, GetParameterListLocation(ctor)));
                             }
                         }
                     }
@@ -995,7 +992,7 @@ public class TypeCollector
                         {
                             if (ctorEnumerator == null)
                             {
-                                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterNameMissing, GetParameterListLocation(ctor)));
+                                this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterNameMissing, GetParameterListLocation(ctor)));
                             }
 
                             ctor = null;
@@ -1009,7 +1006,7 @@ public class TypeCollector
                         {
                             if (ctorEnumerator == null)
                             {
-                                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterNameDuplicate, GetLocation(item)));
+                                this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterNameDuplicate, GetLocation(item)));
                             }
 
                             ctor = null;
@@ -1025,7 +1022,7 @@ public class TypeCollector
                         {
                             if (ctorEnumerator == null)
                             {
-                                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterTypeMismatch, GetLocation(item)));
+                                this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterTypeMismatch, GetLocation(item)));
                             }
 
                             ctor = null;
@@ -1040,7 +1037,7 @@ public class TypeCollector
 
             if (ctor == null)
             {
-                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.NoDeserializingConstructor, GetIdentifierLocation(type)));
+                this.reportDiagnostic.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.NoDeserializingConstructor, GetIdentifierLocation(type)));
             }
         }
 

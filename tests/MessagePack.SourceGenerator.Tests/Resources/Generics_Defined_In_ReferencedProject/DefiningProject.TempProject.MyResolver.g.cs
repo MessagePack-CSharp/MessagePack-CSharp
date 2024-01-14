@@ -2,21 +2,21 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace MessagePack
+namespace TempProject
 {
 	using MsgPack = global::MessagePack;
 	using Formatters = global::Formatters;
 
 	/// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
-	internal class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
+	partial class MyResolver : MsgPack::IFormatterResolver
 	{
 		/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
-		public static readonly MsgPack::IFormatterResolver Instance = new GeneratedMessagePackResolver();
+		public static readonly MsgPack::IFormatterResolver Instance = new MyResolver();
 
 		/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
 		public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
 
-		private GeneratedMessagePackResolver()
+		private MyResolver()
 		{
 		}
 
@@ -31,7 +31,7 @@ namespace MessagePack
 
 			static FormatterCache()
 			{
-				var f = GeneratedMessagePackResolverGetFormatterHelper.GetFormatter(typeof(T));
+				var f = MyResolverGetFormatterHelper.GetFormatter(typeof(T));
 				if (f != null)
 				{
 					Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
@@ -40,18 +40,14 @@ namespace MessagePack
 		}
 	}
 
-	internal static class GeneratedMessagePackResolverGetFormatterHelper
+	internal static class MyResolverGetFormatterHelper
 	{
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
 
-		static GeneratedMessagePackResolverGetFormatterHelper()
+		static MyResolverGetFormatterHelper()
 		{
-			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(4)
+			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(0)
 			{
-				{ typeof(global::TempProject.MyGenericObject<global::TempProject.MyGenericObject<int>>), 0 },
-				{ typeof(global::TempProject.MyGenericObject<int>), 1 },
-				{ typeof(global::TempProject.MyObject), 2 },
-				{ typeof(global::TempProject.MyObjectNested), 3 },
 			};
 		}
 
@@ -65,10 +61,6 @@ namespace MessagePack
 
 			switch (key)
 			{
-				case 0: return new Formatters::TempProject.MyGenericObjectFormatter<global::TempProject.MyGenericObject<int>>();
-				case 1: return new Formatters::TempProject.MyGenericObjectFormatter<int>();
-				case 2: return new Formatters::TempProject.MyObjectFormatter();
-				case 3: return new Formatters::TempProject.MyObjectNestedFormatter();
 				default: return null;
 			}
 		}

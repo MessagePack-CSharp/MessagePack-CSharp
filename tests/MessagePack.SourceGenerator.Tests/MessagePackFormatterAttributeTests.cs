@@ -3,6 +3,13 @@
 
 public class MessagePackFormatterAttributeTests
 {
+    private readonly ITestOutputHelper testOutputHelper;
+
+    public MessagePackFormatterAttributeTests(ITestOutputHelper testOutputHelper)
+    {
+        this.testOutputHelper = testOutputHelper;
+    }
+
     [Fact]
     public async Task CanGenerateMessagePackFormatterAttr()
     {
@@ -41,6 +48,6 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 }

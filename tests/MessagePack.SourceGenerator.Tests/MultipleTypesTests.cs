@@ -26,7 +26,7 @@ class Object2
 {
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource, options: AnalyzerOptions.Default with { Generator = GeneratorOptions.Default with { UsesMapMode = usesMapMode } }, testMethod: $"{nameof(TwoTypes)}({usesMapMode})");
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, options: new() { Generator = new() { UsesMapMode = usesMapMode } }, testMethod: $"{nameof(TwoTypes)}({usesMapMode})");
     }
 
     [Fact]
@@ -35,6 +35,6 @@ class Object2
         string testSource = """
 using MessagePack;
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 }

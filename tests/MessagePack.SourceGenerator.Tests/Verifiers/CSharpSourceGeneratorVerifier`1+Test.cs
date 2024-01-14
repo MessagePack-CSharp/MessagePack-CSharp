@@ -22,6 +22,7 @@ using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
+using Microsoft.CodeAnalysis.Text;
 using AnalyzerOptions = MessagePack.Analyzers.CodeAnalysis.AnalyzerOptions;
 
 public static partial class CSharpSourceGeneratorVerifier
@@ -30,7 +31,6 @@ public static partial class CSharpSourceGeneratorVerifier
     {
         private readonly string? testFile;
         private readonly string testMethod;
-        private AnalyzerOptions options = AnalyzerOptions.Default;
 
         public Test([CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
@@ -50,33 +50,58 @@ public static partial class CSharpSourceGeneratorVerifier
 
         public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.Latest;
 
-        public AnalyzerOptions Options
+        public static Task RunDefaultAsync(ITestOutputHelper logger, string testSource, AnalyzerOptions? options = null, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
-            get => this.options;
-            set
-            {
-                this.options = value;
-                const string filename = "/.globalconfig";
-                if (this.TestState.AnalyzerConfigFiles.FirstOrDefault(t => t.filename == filename) is { } tuple)
-                {
-                    this.TestState.AnalyzerConfigFiles.Remove(tuple);
-                }
+            options ??= new();
 
-                this.TestState.AnalyzerConfigFiles.Add((filename, ConstructGlobalConfigString(value)));
-                this.TestState.AdditionalFiles.Add(($"./{AnalyzerOptions.JsonOptionsFileName}", ConstructConfigJsonString(value)));
-            }
+            // TODO: throw if these attribute collections are non-empty. Tests should use the attributes themselves.
+            string assumedFormattable = string.Join(string.Empty, options.AssumedFormattableTypes.Select(t => $"[assembly: MessagePackAssumedFormattable(typeof({t}))]" + Environment.NewLine));
+            string knownFormatters = string.Join(string.Empty, options.KnownFormatters.Select(t => $"[assembly: MessagePackKnownFormatter(typeof({t}))]" + Environment.NewLine));
+
+            string resolverPartialClassSource = $$"""
+                using MessagePack;
+
+                {{assumedFormattable}}
+                {{knownFormatters}}
+
+                namespace {{options.Generator.Resolver.Namespace}};
+
+                [GeneratedMessagePackResolver(UseMapMode = {{(options.Generator.UsesMapMode ? "true" : "false")}}, FormattersNamespace = "{{options.Generator.Formatters.Namespace}}")]
+                partial class {{options.Generator.Resolver.Name}} { }
+                """;
+            return RunDefaultAsync(logger, testSource, resolverPartialClassSource, testFile, testMethod);
         }
 
-        public static async Task RunDefaultAsync(string testSource, AnalyzerOptions? options = null, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
+        private static async Task RunDefaultAsync(ITestOutputHelper logger, string testSource, string resolverPartialClassSource, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
-            await new Test(testFile, testMethod)
+            Test test = new(testFile, testMethod)
             {
                 TestState =
                 {
-                    Sources = { testSource },
+                    Sources = { testSource, resolverPartialClassSource },
                 },
-                Options = options ?? AnalyzerOptions.Default,
-            }.RunAsync();
+            };
+
+            try
+            {
+                await test.RunAsync();
+            }
+            finally
+            {
+                foreach (var generatedSource in test.TestState.GeneratedSources)
+                {
+                    logger.WriteLine("--------------------------------------------------------------");
+                    logger.WriteLine(generatedSource.filename);
+                    logger.WriteLine("--------------------------------------------------------------");
+                    int lineNumber = 0;
+                    foreach (TextLine line in generatedSource.content.Lines)
+                    {
+                        logger.WriteLine($"{++lineNumber,6}: {generatedSource.content.GetSubText(line.Span)}");
+                    }
+
+                    logger.WriteLine("--------------------------------------------------------------");
+                }
+            }
         }
 
         public Test AddGeneratedSources()
@@ -200,27 +225,6 @@ public static partial class CSharpSourceGeneratorVerifier
             string filePath = Path.Combine(resourceDirectory, name);
             Directory.CreateDirectory(resourceDirectory);
             File.WriteAllText(filePath, tree.GetText().ToString(), tree.Encoding);
-        }
-
-        private static string ConstructConfigJsonString(AnalyzerOptions options)
-        {
-            string json = JsonSerializer.Serialize(
-                options,
-                new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                });
-            return json;
-        }
-
-        private static string ConstructGlobalConfigString(AnalyzerOptions options)
-        {
-            StringBuilder globalConfigBuilder = new();
-            globalConfigBuilder.AppendLine("is_global = true");
-            globalConfigBuilder.AppendLine();
-
-            return globalConfigBuilder.ToString();
         }
     }
 }

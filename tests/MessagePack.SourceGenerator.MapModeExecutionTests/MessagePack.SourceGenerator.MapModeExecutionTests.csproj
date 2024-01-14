@@ -1,15 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\SourceGeneratorConsumer.props" />
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <MessagePackGeneratedUsesMapMode>true</MessagePackGeneratedUsesMapMode>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\MessagePack.SourceGenerator.ExecutionTests\**\*.cs" />
+    <Compile Include="..\MessagePack.SourceGenerator.ExecutionTests\**\*.cs" Exclude="..\MessagePack.SourceGenerator.ExecutionTests\**\GeneratedMessagePackResolver.cs" />
   </ItemGroup>
 
   <ItemGroup>

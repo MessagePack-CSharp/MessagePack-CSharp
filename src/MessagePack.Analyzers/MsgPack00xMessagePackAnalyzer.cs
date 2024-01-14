@@ -6,10 +6,11 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace MessagePack.Analyzers;
 
-[DiagnosticAnalyzer(LanguageNames.CSharp)]
+//[DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
 {
     public const string UseMessagePackObjectAttributeId = "MsgPack003";
@@ -197,13 +198,69 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     {
         context.EnableConcurrentExecution();
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
+        if (false)
+        {
+            context.RegisterOperationAction(
+                ctxt =>
+                {
+                    if (ctxt.Operation is { Syntax: AttributeSyntax, Type: { ContainingNamespace.Name: "MessagePack" } } op)
+                    {
+                        if (op.Children.Count() == 1 && op.Children.First() is ITypeOfOperation typeOp)
+                        {
+                            switch (op.Type.Name)
+                            {
+                                case "MessagePackKnownFormatterAttribute":
+                                    break;
+                                case "MessagePackAssumedFormattableAttribute":
+                                    break;
+                            }
+                        }
+                    }
+                },
+                OperationKind.None);
+        }
+
+        context.RegisterSemanticModelAction(ctxt =>
+        {
+            foreach (SyntaxNode node in ctxt.SemanticModel.SyntaxTree.GetRoot(ctxt.CancellationToken).ChildNodes())
+            {
+                if (node is AttributeListSyntax al)
+                {
+                    foreach (AttributeSyntax att in al.Attributes)
+                    {
+                        if (ctxt.SemanticModel.GetSymbolInfo(att, ctxt.CancellationToken) is { Symbol: IMethodSymbol { ContainingType.ContainingNamespace.Name: "MessagePack" } attSymbol })
+                        {
+                            if (att.ArgumentList?.Arguments.Count == 1)
+                            {
+                                if (att.ArgumentList.Arguments[0].Expression is TypeOfExpressionSyntax { Type: TypeSyntax type } &&
+                                    ctxt.SemanticModel.GetSymbolInfo(type, ctxt.CancellationToken) is { Symbol: ITypeSymbol typeSymbol })
+                                {
+                                    switch (attSymbol.ContainingType.Name)
+                                    {
+                                        case "MessagePackKnownFormatterAttribute":
+                                            break;
+                                        case "MessagePackAssumedFormattableAttribute":
+                                            break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
         context.RegisterCompilationStartAction(ctxt =>
         {
-            CodeAnalysis.AnalyzerOptions options = CodeAnalysis.AnalyzerOptions.Parse(ctxt.Options.AnalyzerConfigOptionsProvider.GlobalOptions, ctxt.Options.AdditionalFiles, ctxt.CancellationToken);
-            if (ReferenceSymbols.TryCreate(ctxt.Compilation, out ReferenceSymbols? typeReferences))
-            {
-                ctxt.RegisterSyntaxNodeAction(c => Analyze(c, typeReferences, options), SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.InterfaceDeclaration, SyntaxKind.RecordDeclaration);
-            }
+            //if (ReferenceSymbols.TryCreate(ctxt.Compilation, out ReferenceSymbols? typeReferences))
+            //{
+            //    ctxt.RegisterSyntaxNodeAction(c => Analyze(c, typeReferences, options), SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.InterfaceDeclaration, SyntaxKind.RecordDeclaration);
+            //}
+        });
+
+        // At the end of compilation, combine the information we've gathered from assembly-level attributes
+        // with the serializable types we've seen to report diagnostics.
+        context.RegisterCompilationAction(ctxt =>
+        {
         });
     }
 

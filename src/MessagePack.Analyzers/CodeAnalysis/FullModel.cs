@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
 
 namespace MessagePack.Analyzers.CodeAnalysis;
 
@@ -10,6 +11,7 @@ public record FullModel(
     ImmutableSortedSet<EnumSerializationInfo> EnumInfos,
     ImmutableSortedSet<GenericSerializationInfo> GenericInfos,
     ImmutableSortedSet<UnionSerializationInfo> UnionInfos,
+    ImmutableArray<Diagnostic> Diagnostics,
     AnalyzerOptions Options)
 {
     public bool IsEmpty => this.ObjectInfos.IsEmpty && this.EnumInfos.IsEmpty && this.GenericInfos.IsEmpty && this.UnionInfos.IsEmpty;
@@ -29,7 +31,8 @@ public record FullModel(
                 ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default),
                 ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
                 ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
-                AnalyzerOptions.Default);
+                ImmutableArray<Diagnostic>.Empty,
+                new AnalyzerOptions());
         }
 
         AnalyzerOptions options = models[0].Options;
@@ -37,6 +40,7 @@ public record FullModel(
         var enumInfos = ImmutableSortedSet.CreateBuilder<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default);
         var genericInfos = ImmutableSortedSet.CreateBuilder<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default);
         var unionInfos = ImmutableSortedSet.CreateBuilder<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default);
+        var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
 
         foreach (FullModel model in models)
         {
@@ -44,6 +48,7 @@ public record FullModel(
             enumInfos.UnionWith(model.EnumInfos);
             genericInfos.UnionWith(model.GenericInfos);
             unionInfos.UnionWith(model.UnionInfos);
+            diagnostics.AddRange(model.Diagnostics);
 
             if (options != model.Options)
             {
@@ -56,6 +61,7 @@ public record FullModel(
             enumInfos.ToImmutable(),
             genericInfos.ToImmutable(),
             unionInfos.ToImmutable(),
+            diagnostics.ToImmutable(),
             options);
     }
 
