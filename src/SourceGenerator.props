@@ -19,6 +19,6 @@
     <!-- Source generators need the analyzers assembly at compile-time and runtime.
          At runtime we need it added as an analyzer, so we must also depend on the project that produces the nuget package. -->
     <ProjectReference Include="..\MessagePack.Analyzers\MessagePack.Analyzers.csproj" PrivateAssets="all" />
-    <ProjectReference Include="..\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj" PrivateAssets="none" />
+    <ProjectReference Include="..\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj" PrivateAssets="none" ExcludeAssets="compile" />
   </ItemGroup>
 </Project>
