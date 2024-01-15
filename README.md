@@ -363,7 +363,7 @@ You can use `[DataContract]` annotations instead of `[MessagePackObject]` ones. 
 
 Then `[DataMember(Order = int)]` will behave the same as `[Key(int)]`, `[DataMember(Name = string)]` the same as `[Key(string)]`, and `[DataMember]` the same as `[Key(nameof(member name)]`.
 
-Using `DataContract`, e.g. in shared libraries, makes your classes/structs independent from MessagePack for C# serialization. 
+Using `DataContract`, e.g. in shared libraries, makes your classes/structs independent from MessagePack for C# serialization.
 However, it is not supported by the analyzers nor source generator.
 Also, features like `UnionAttribute`, `MessagePackFormatter`, `SerializationConstructor`, etc can not be used.
 Due to this, we recommend that you use the specific MessagePack for C# annotations when possible.
@@ -1596,37 +1596,50 @@ If you want to share a class between Unity and a server, you can use `SharedProj
 
 By default, MessagePack for C# serializes custom objects by [generating IL](https://learn.microsoft.com/dotnet/api/system.reflection.emit.ilgenerator) on the fly at runtime to create custom, highly tuned formatters for each type.
 This code generation has a minor upfront performance cost.
-Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime code generation, MessagePack provides a way for you to run a code generator ahead of time as well.
+
+For faster startup performance or to operate in strict-AOT environments such as Xamarin and Unity IL2CPP that forbid runtime code generation, MessagePack provides a way for you to run a code generator ahead of time as well.
+This "source generation" is provided via a roslyn source generator.
 
 > Note: When using Unity, dynamic code generation only works when targeting .NET Framework 4.x + mono runtime.
 For all other Unity targets, AOT is required.
 
-If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation.
+Install the source generator via its NuGet package.
+For MSBuild based projects, you can do this within Visual Studio or at the CLI via this command:
 
 ```ps1
-dotnet add package MessagePack.SourceGenerator
+dotnet add package MessagePackAnalyzer
 ```
 
-Or for Unity, use the source generator that targets the older Roslyn compiler.
-[Setting up a source generator for unity](https://docs.unity3d.com/Manual/roslyn-analyzers.html) is a bit more involved.
+For Unity, using the source generator is a bit more involved.
+Please refer to [Setting up a source generator for unity](https://docs.unity3d.com/Manual/roslyn-analyzers.html).
 The unity instructions describe copying the analyzer .dll into your unity project.
-You should get the analyzer/source generator .dll's from the the `MessagePack.SourceGenerator.Unity.zip` file uploaded on our GitHub releases page.
-For each and every .dll in the .zip, be sure to:
+You should get the analyzer/source generator .dll's from the `MessagePackAnalyzer` nuget package and use the DLLs in the `analyzers/roslyn3.8/cs` directory.
+For each and every .dll in that directory, be sure to:
 
 1. Windows only: Unblock each .dll for use by [removing the "Mark of the Web"](doc/mark_of_the_web.png). If the "Unblock" checkbox does not appear, the mark of the web is not present and you may proceed.
 1. Add to the unity project as an analyzer.
 
-The package (or unity .zip file) adds a roslyn Source Generator that produces `IMessagePackFormatter<T>` implementing classes for each of your `[MessagePackObject]` classes.
+You must then define a `partial class` into which the source generator will create your resolver:
 
-These formatters are aggregated into a generated `IMessagePackResolver` class named `GeneratedMessagePackResolver`.
-This class will be generated into the `$(RootNamespace)` of your project, or the `MessagePack` namespace if `RootNamespace` is empty or undefined (as in Unity).
+```cs
+[GeneratedMessagePackResolver]
+partial class MyResolver
+{
+}
+```
 
-Leveraging these formatters at runtime requires that you opt-in, which typically looks like this:
+This partial class, combined with at least one `[MessagePackObject]`-annotated type, will result in some members being added to your resolver class.
+These members will _not_ be in your own source file, but they will be emitted during the compilation.
+Visual Studio allows you to see these source generated files through a variety of means.
+These members include the following properties `Instance` and `InstanceWithStandardAotResolver`.
+You can use these members to serialize your object graph.
+
+Leveraging this resolver at runtime requires that you opt-in, which typically looks like this:
 
 ```cs
 /// <summary>Options to use MessagePack with AOT-generated formatters.</summary>
 private static readonly MessagePackSerializerOptions SerializerOptions = MessagePackSerializerOptions.Standard
-    .WithResolver(GeneratedMessagePackResolver.InstanceWithStandardAotResolver);
+    .WithResolver(MyResolver.InstanceWithStandardAotResolver);
 
 // Serialize and deserialize using the AOT option.
 byte[] serialized = MessagePackSerializer.Serialize(value, SerializerOptions);
