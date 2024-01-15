@@ -3,8 +3,6 @@
 
 #pragma warning disable SA1402 // File may only contain a single type
 
-using MessagePack.Analyzers.CodeAnalysis;
-
 namespace MessagePack.SourceGenerator.Transforms;
 
 public partial class FormatterTemplate : IFormatterTemplate

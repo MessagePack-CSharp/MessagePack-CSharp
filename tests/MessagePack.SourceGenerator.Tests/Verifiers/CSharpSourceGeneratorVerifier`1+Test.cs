@@ -12,10 +12,9 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Json;
 using MessagePack;
-using MessagePack.Analyzers;
 using MessagePack.SourceGenerator;
+using MessagePack.SourceGenerator.Analyzers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Testing;
@@ -23,7 +22,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Microsoft.CodeAnalysis.Text;
-using AnalyzerOptions = MessagePack.Analyzers.CodeAnalysis.AnalyzerOptions;
+using AnalyzerOptions = MessagePack.SourceGenerator.CodeAnalysis.AnalyzerOptions;
 
 public static partial class CSharpSourceGeneratorVerifier
 {

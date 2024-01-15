@@ -4,12 +4,18 @@
     <RootNamespace>MessagePack.Analyzers</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
 
-    <MicrosoftCodeAnalysisVersion>$(MicrosoftCodeAnalysisVersion)</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisVersion>$(CodeAnalysisVersionForUnity)</MicrosoftCodeAnalysisVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\MessagePack.Analyzers.CodeFixes\CodeFixes\**\*.cs" LinkBase="CodeFixes" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
   </ItemGroup>
+
   <ItemGroup>
-    <ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" />
+    <ProjectReference Include="..\MessagePack.SourceGenerator.Unity\MessagePack.SourceGenerator.Unity.csproj" />
   </ItemGroup>
 </Project>

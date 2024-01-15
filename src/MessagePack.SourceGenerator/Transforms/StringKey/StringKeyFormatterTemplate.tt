@@ -3,7 +3,7 @@
 <#@ import namespace="System" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Collections.Generic" #>
-<#@ import namespace="MessagePack.Analyzers.CodeAnalysis" #>
+<#@ import namespace="MessagePack.SourceGenerator.CodeAnalysis" #>
 
 <# if (ResolverNamespace.Length > 0) { #>
 namespace <#= ResolverNamespace #>;

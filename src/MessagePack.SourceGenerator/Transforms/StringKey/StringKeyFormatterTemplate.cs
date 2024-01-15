@@ -12,7 +12,7 @@ namespace MessagePack.SourceGenerator.Transforms
     using System;
     using System.Linq;
     using System.Collections.Generic;
-    using MessagePack.Analyzers.CodeAnalysis;
+    using MessagePack.SourceGenerator.CodeAnalysis;
     
     /// <summary>
     /// Class to produce the template output
