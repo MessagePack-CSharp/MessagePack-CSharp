@@ -105,6 +105,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.Analyzers.CodeF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.Analyzers", "src\MessagePack.Analyzers\MessagePack.Analyzers.csproj", "{EB77463C-9D06-4AAE-84F0-470988D30DA0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CollectionsMarshalBenchmark", "benchmark\CollectionsMarshalBenchmark\CollectionsMarshalBenchmark.csproj", "{9A31C44C-9C51-4D41-B8E5-2864245F877E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -231,6 +233,10 @@ Global
 		{EB77463C-9D06-4AAE-84F0-470988D30DA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EB77463C-9D06-4AAE-84F0-470988D30DA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EB77463C-9D06-4AAE-84F0-470988D30DA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A31C44C-9C51-4D41-B8E5-2864245F877E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A31C44C-9C51-4D41-B8E5-2864245F877E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A31C44C-9C51-4D41-B8E5-2864245F877E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A31C44C-9C51-4D41-B8E5-2864245F877E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -266,6 +272,7 @@ Global
 		{7A6CB600-2393-468F-9952-84EC624D57BD} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{4E467A70-6188-4409-B29B-E1E7DD8CDA3C} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{EB77463C-9D06-4AAE-84F0-470988D30DA0} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
+		{9A31C44C-9C51-4D41-B8E5-2864245F877E} = {51A614B0-E583-4DD2-AC7D-6A65634582E0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B3911209-2DBF-47F8-98F6-BBC0EDFE63DE}
