@@ -8,8 +8,11 @@ using System.Collections.Immutable;
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
 /// <summary>
-/// Options for the analyzer and source generator, which may be deserialized from a MessagePackAnalyzer.json file.
+/// Options for the analyzer and source generator.
 /// </summary>
+/// <remarks>
+/// These options are typically gathered from attributes in the compilation.
+/// </remarks>
 public record AnalyzerOptions
 {
     /// <summary>
