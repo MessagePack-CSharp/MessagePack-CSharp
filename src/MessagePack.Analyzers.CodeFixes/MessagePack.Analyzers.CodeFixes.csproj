@@ -15,10 +15,6 @@
 
     <MicrosoftCodeAnalysisVersion>$(CodeAnalysisVersionForUnity)</MicrosoftCodeAnalysisVersion>
   </PropertyGroup>
-  <ItemGroup>
-    <Content Include="tools\*.ps1" Pack="true" PackagePath="tools\" />
-    <None Remove="tools\*.ps1" />
-  </ItemGroup>
   <ItemDefinitionGroup>
     <PackageReference>
       <!-- We need this, even with SuppressDependenciesWhenPacking=true because the
