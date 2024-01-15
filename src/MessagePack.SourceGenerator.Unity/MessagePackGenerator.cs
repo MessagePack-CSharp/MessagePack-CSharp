@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePack.SourceGenerator;
@@ -10,8 +11,6 @@ namespace MessagePack.SourceGenerator;
 [Generator]
 public partial class MessagePackGenerator : ISourceGenerator
 {
-    public const string MessagePackObjectAttributeFullName = "MessagePack.MessagePackObjectAttribute";
-
     public void Initialize(GeneratorInitializationContext context)
     {
         context.RegisterForSyntaxNotifications(SyntaxContextReceiver.Create);
@@ -19,21 +18,43 @@ public partial class MessagePackGenerator : ISourceGenerator
 
     public void Execute(GeneratorExecutionContext context)
     {
-        if (context.SyntaxReceiver is not SyntaxContextReceiver receiver || receiver.ClassDeclarations.Count == 0)
+        if (context.SyntaxReceiver is not SyntaxContextReceiver receiver || receiver.TypeDeclarations.Count == 0)
         {
             return;
         }
 
-        Compilation compilation = context.Compilation;
+        CSharpCompilation compilation = (CSharpCompilation)context.Compilation;
         if (!ReferenceSymbols.TryCreate(compilation, out ReferenceSymbols? referenceSymbols))
         {
             return;
         }
 
-        AnalyzerOptions options = new(); //AnalyzerOptions.Parse(context.AnalyzerConfigOptions.GlobalOptions, context.AdditionalFiles, context.CancellationToken) with { IsGeneratingSource = true };
+        // Search for a resolver generator attribute, which may be applied to any type in the compilation.
+        AnalyzerOptions? options = new();
+        foreach (var typeDeclByDocument in receiver.TypeDeclarations.GroupBy(td => td.SyntaxTree))
+        {
+            SemanticModel semanticModel = compilation.GetSemanticModel(typeDeclByDocument.Key, ignoreAccessibility: true);
+            foreach (TypeDeclarationSyntax typeDecl in typeDeclByDocument)
+            {
+                if (semanticModel.GetDeclaredSymbol(typeDecl, context.CancellationToken) is INamedTypeSymbol typeSymbol)
+                {
+                    if (AnalyzerUtilities.ParseGeneratorAttribute(typeSymbol.GetAttributes(), typeSymbol, context.CancellationToken) is AnalyzerOptions resolverOptions)
+                    {
+                        options = resolverOptions;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Collect and apply the assembly-level attributes to the options.
+        ImmutableArray<AttributeData> assemblyAttributes = compilation.Assembly.GetAttributes();
+        ImmutableDictionary<string, ImmutableHashSet<string>> customFormatters = AnalyzerUtilities.ParseKnownFormatterAttribute(assemblyAttributes, context.CancellationToken);
+        ImmutableArray<string> customFormattedTypes = AnalyzerUtilities.ParseAssumedFormattableAttribute(assemblyAttributes, context.CancellationToken);
+        options = options.WithFormatterTypes(customFormattedTypes, customFormatters);
 
         List<FullModel> modelPerType = new();
-        foreach (var syntax in receiver.ClassDeclarations)
+        foreach (var syntax in receiver.TypeDeclarations)
         {
             if (TypeCollector.Collect(compilation, options, referenceSymbols, null, syntax, context.CancellationToken) is FullModel model)
             {
@@ -42,9 +63,18 @@ public partial class MessagePackGenerator : ISourceGenerator
         }
 
         FullModel fullModel = FullModel.Combine(modelPerType.ToImmutableArray());
-        GeneratorContext generateContext = new(context);
-        Generate(generateContext, fullModel);
-        GenerateResolver(generateContext, fullModel);
+
+        foreach (Diagnostic diagnostic in fullModel.Diagnostics)
+        {
+            context.ReportDiagnostic(diagnostic);
+        }
+
+        if (options.IsGeneratingSource)
+        {
+            GeneratorContext generateContext = new(context);
+            Generate(generateContext, fullModel);
+            GenerateResolver(generateContext, fullModel);
+        }
     }
 
     private class SyntaxContextReceiver : ISyntaxReceiver
@@ -54,29 +84,21 @@ public partial class MessagePackGenerator : ISourceGenerator
             return new SyntaxContextReceiver();
         }
 
-        public HashSet<TypeDeclarationSyntax> ClassDeclarations { get; } = new();
+        public HashSet<TypeDeclarationSyntax> TypeDeclarations { get; } = new();
+
+        public HashSet<AttributeSyntax> AssemblyLevelAttributes { get; } = new();
 
         public void OnVisitSyntaxNode(SyntaxNode context)
         {
-            if (context is TypeDeclarationSyntax typeSyntax)
+            switch (context)
             {
-                if (typeSyntax.AttributeLists.Count > 0)
-                {
-                    var hasAttribute = typeSyntax.AttributeLists
-                        .SelectMany(x => x.Attributes)
-                        .Any(x => x.Name.ToString() is "MessagePackObject"
-                            or "MessagePackObjectAttribute"
-                            or "MessagePack.MessagePackObject"
-                            or "MessagePack.MessagePackObjectAttribute"
-                            or "Union"
-                            or "UnionAttribute"
-                            or "MessagePack.Union"
-                            or "MessagePack.UnionAttribute");
-                    if (hasAttribute)
-                    {
-                        ClassDeclarations.Add(typeSyntax);
-                    }
-                }
+                // Any type with attributes warrants a review when we have the semantic model available.
+                case TypeDeclarationSyntax { AttributeLists.Count: > 0 } typeSyntax:
+                    this.TypeDeclarations.Add(typeSyntax);
+                    break;
+                case AttributeSyntax { Parent: AttributeListSyntax { Parent: CompilationUnitSyntax } } attributeSyntax:
+                    this.AssemblyLevelAttributes.Add(attributeSyntax);
+                    break;
             }
         }
     }

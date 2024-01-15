@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using static MessagePack.SourceGenerator.Constants;
 using AnalyzerOptions = MessagePack.SourceGenerator.CodeAnalysis.AnalyzerOptions;
 
 namespace MessagePack.SourceGenerator;
@@ -11,13 +12,6 @@ namespace MessagePack.SourceGenerator;
 [Generator(LanguageNames.CSharp)]
 public partial class MessagePackGenerator : IIncrementalGenerator
 {
-    public const string AttributeNamespace = "MessagePack";
-    public const string GeneratedMessagePackResolverAttributeName = "GeneratedMessagePackResolverAttribute";
-    public const string MessagePackKnownFormatterAttributeName = "MessagePackKnownFormatterAttribute";
-    public const string MessagePackAssumedFormattableAttributeName = "MessagePackAssumedFormattableAttribute";
-    public const string MessagePackObjectAttributeName = "MessagePackObjectAttribute";
-    public const string MessagePackUnionAttributeName = "UnionAttribute";
-
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // TODO: Consider auto-detect formatters declared in this compilation
@@ -25,17 +19,17 @@ public partial class MessagePackGenerator : IIncrementalGenerator
         var customFormatters = context.SyntaxProvider.ForAttributeWithMetadataName(
             $"{AttributeNamespace}.{MessagePackKnownFormatterAttributeName}",
             predicate: static (node, ct) => true,
-            transform: static (context, ct) => ParseKnownFormatterAttribute(context, ct)).Collect();
+            transform: static (context, ct) => AnalyzerUtilities.ParseKnownFormatterAttribute(context.Attributes, ct)).Collect();
 
         var customFormattedTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
             $"{AttributeNamespace}.{MessagePackAssumedFormattableAttributeName}",
             predicate: static (node, ct) => true,
-            transform: static (context, ct) => ParseAssumedFormattableAttribute(context, ct)).SelectMany((a, ct) => a).Collect();
+            transform: static (context, ct) => AnalyzerUtilities.ParseAssumedFormattableAttribute(context.Attributes, ct)).SelectMany((a, ct) => a).Collect();
 
         var resolverOptions = context.SyntaxProvider.ForAttributeWithMetadataName(
             $"{AttributeNamespace}.{GeneratedMessagePackResolverAttributeName}",
             predicate: static (node, ct) => true,
-            transform: static (context, ct) => ParseGeneratorAttribute(context, ct)).Collect().Select((a, ct) => a.SingleOrDefault());
+            transform: static (context, ct) => AnalyzerUtilities.ParseGeneratorAttribute(context.Attributes, context.TargetSymbol, ct)).Collect().Select((a, ct) => a.SingleOrDefault(ao => ao is not null));
 
         var options = resolverOptions.Combine(customFormattedTypes).Combine(customFormatters).Select(static (input, ct) =>
         {
@@ -46,11 +40,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                 ImmutableDictionary<string, ImmutableHashSet<string>>.Empty,
                 (first, second) => first.AddRange(second));
 
-            options = options with
-            {
-                AssumedFormattableTypes = ImmutableHashSet.CreateRange(formattableTypes).Union(formatterTypes.SelectMany(t => t.Value)),
-                KnownFormatters = formatterTypes,
-            };
+            options = options.WithFormatterTypes(formattableTypes, formatterTypes);
 
             return options;
         });
@@ -125,77 +115,6 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                 }
             }
         });
-    }
-
-    private static AnalyzerOptions ParseGeneratorAttribute(GeneratorAttributeSyntaxContext context, CancellationToken cancellationToken)
-    {
-        AttributeData? generatorAttribute = context.Attributes.Single(ad =>
-            ad.AttributeClass?.Name == GeneratedMessagePackResolverAttributeName &&
-            ad.AttributeClass?.ContainingNamespace.Name == AttributeNamespace);
-
-        FormattersOptions formattersOptions = new()
-        {
-            UsesMapMode = generatorAttribute.GetSingleNamedArgumentValue("UseMapMode") is true,
-        };
-
-        ResolverOptions resolverOptions = new()
-        {
-            Name = context.TargetSymbol.Name,
-            Namespace = context.TargetSymbol.ContainingNamespace.GetFullNamespaceName(),
-        };
-
-        GeneratorOptions generatorOptions = new()
-        {
-            Formatters = formattersOptions,
-            Resolver = resolverOptions,
-        };
-
-        AnalyzerOptions options = new()
-        {
-            Generator = generatorOptions,
-            IsGeneratingSource = true,
-        };
-
-        return options;
-    }
-
-    private static ImmutableDictionary<string, ImmutableHashSet<string>> ParseKnownFormatterAttribute(GeneratorAttributeSyntaxContext context, CancellationToken cancellationToken)
-    {
-        var builder = ImmutableDictionary.CreateBuilder<string, ImmutableHashSet<string>>();
-        foreach (AttributeData ad in context.Attributes)
-        {
-            if (ad.AttributeClass?.Name == MessagePackKnownFormatterAttributeName && ad.AttributeClass?.ContainingNamespace.Name == AttributeNamespace)
-            {
-                if (ad.ConstructorArguments[0].Value is INamedTypeSymbol formatter)
-                {
-                    var formattableTypes = ImmutableHashSet.CreateBuilder<string>();
-                    foreach (INamedTypeSymbol iface in formatter.AllInterfaces)
-                    {
-                        if (iface is { IsGenericType: true, MetadataName: "IMessagePackFormatter`1", ContainingNamespace.Name: "Formatters", ContainingNamespace.ContainingNamespace.Name: "MessagePack" })
-                        {
-                            formattableTypes.Add(iface.TypeArguments[0].GetCanonicalTypeFullName());
-                        }
-                    }
-
-                    if (formattableTypes.Count > 0)
-                    {
-                        builder.Add(formatter.GetCanonicalTypeFullName(), formattableTypes.ToImmutable());
-                    }
-                }
-            }
-        }
-
-        return builder.ToImmutable();
-    }
-
-    private static ImmutableArray<string> ParseAssumedFormattableAttribute(GeneratorAttributeSyntaxContext context, CancellationToken cancellationToken)
-    {
-        return ImmutableArray.CreateRange(
-            from ad in context.Attributes
-            where ad.AttributeClass?.Name == MessagePackAssumedFormattableAttributeName && ad.AttributeClass?.ContainingNamespace.Name == AttributeNamespace
-            let type = (INamedTypeSymbol?)ad.ConstructorArguments[0].Value
-            where type is not null
-            select type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
     }
 
     private class Comparer : IEqualityComparer<(TypeDeclarationSyntax, Compilation)>

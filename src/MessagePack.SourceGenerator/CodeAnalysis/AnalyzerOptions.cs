@@ -27,6 +27,15 @@ public record AnalyzerOptions
     /// Gets a value indicating whether the analyzer is generating source code.
     /// </summary>
     public bool IsGeneratingSource { get; init; }
+
+    internal AnalyzerOptions WithFormatterTypes(ImmutableArray<string> formattableTypes, ImmutableDictionary<string, ImmutableHashSet<string>> formatterTypes)
+    {
+        return this with
+        {
+            AssumedFormattableTypes = ImmutableHashSet.CreateRange(formattableTypes).Union(formatterTypes.SelectMany(t => t.Value)),
+            KnownFormatters = formatterTypes,
+        };
+    }
 }
 
 /// <summary>
