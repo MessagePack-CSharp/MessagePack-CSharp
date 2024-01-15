@@ -26,11 +26,5 @@ namespace MessagePack
         /// values in a key=value dictionary, as opposed to an array of values.
         /// </summary>
         public bool UseMapMode { get; set; }
-
-        // TODO: remove this when formatters are nested types of the resolver.
-        /// <summary>
-        /// Gets or sets the namespace that generated formatters will be placed in.
-        /// </summary>
-        public string? FormattersNamespace { get; set; }
     }
 }

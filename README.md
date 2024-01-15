@@ -363,7 +363,10 @@ You can use `[DataContract]` annotations instead of `[MessagePackObject]` ones. 
 
 Then `[DataMember(Order = int)]` will behave the same as `[Key(int)]`, `[DataMember(Name = string)]` the same as `[Key(string)]`, and `[DataMember]` the same as `[Key(nameof(member name)]`.
 
-Using `DataContract`, e.g. in shared libraries, makes your classes/structs independent from MessagePack for C# serialization. However, it is not supported by the analyzers nor in code generation by the `mpc` tool. Also, features like `UnionAttribute`, `MessagePackFormatter`, `SerializationConstructor`, etc can not be used. Due to this, we recommend that you use the specific MessagePack for C# annotations when possible.
+Using `DataContract`, e.g. in shared libraries, makes your classes/structs independent from MessagePack for C# serialization. 
+However, it is not supported by the analyzers nor source generator.
+Also, features like `UnionAttribute`, `MessagePackFormatter`, `SerializationConstructor`, etc can not be used.
+Due to this, we recommend that you use the specific MessagePack for C# annotations when possible.
 
 ## Serializing readonly/immutable object members  (SerializationConstructor)
 

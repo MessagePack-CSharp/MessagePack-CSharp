@@ -23,8 +23,6 @@ public record AnalyzerOptions
 
     public GeneratorOptions Generator { get; init; } = new();
 
-    public string FormatterNamespace => this.Generator.Formatters.Namespace;
-
     /// <summary>
     /// Gets a value indicating whether the analyzer is generating source code.
     /// </summary>
@@ -36,11 +34,10 @@ public record AnalyzerOptions
 /// </summary>
 public record FormattersOptions
 {
-    // TODO: Remove this, since formatters should be generated into the resolver class.
     /// <summary>
-    /// Gets the root namespace into which formatters are emitted.
+    /// Gets a value indicating whether types will be serialized with their property names as well as their values in a key=value dictionary, as opposed to an array of values.
     /// </summary>
-    public string Namespace { get; init; } = "Formatters";
+    public bool UsesMapMode { get; init; }
 }
 
 /// <summary>
@@ -64,11 +61,6 @@ public record ResolverOptions
 /// </summary>
 public record GeneratorOptions
 {
-    /// <summary>
-    /// Gets a value indicating whether types will be serialized with their property names as well as their values in a key=value dictionary, as opposed to an array of values.
-    /// </summary>
-    public bool UsesMapMode { get; init; }
-
     /// <summary>
     /// Gets options for the generated resolver.
     /// </summary>

@@ -4,11 +4,13 @@
 
 #pragma warning disable CS8669 // We may leak nullable annotations into generated code.
 
-namespace Formatters.TempProject
-{
-	using MsgPack = global::MessagePack;
+namespace MessagePack;
 
-	internal sealed class BarFormatter : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.Bar>
+using MsgPack = global::MessagePack;
+
+partial class GeneratedMessagePackResolver
+{
+	private sealed class BarFormatter : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.Bar>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::TempProject.Bar value, MsgPack::MessagePackSerializerOptions options)

@@ -106,6 +106,14 @@ public partial class MessagePackGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(source, static (context, source) =>
         {
+            if (source is { Options.IsGeneratingSource: true })
+            {
+                GenerateResolver(new GeneratorContext(context), source);
+            }
+        });
+
+        context.RegisterSourceOutput(source, static (context, source) =>
+        {
             if (source is not null)
             {
                 foreach (Diagnostic diagnostic in source.Diagnostics)
@@ -119,14 +127,6 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                 }
             }
         });
-
-        context.RegisterSourceOutput(source, static (context, source) =>
-        {
-            if (source is { Options.IsGeneratingSource: true })
-            {
-                GenerateResolver(new GeneratorContext(context), source);
-            }
-        });
     }
 
     private static AnalyzerOptions ParseGeneratorAttribute(GeneratorAttributeSyntaxContext context, CancellationToken cancellationToken)
@@ -135,12 +135,10 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             ad.AttributeClass?.Name == GeneratedMessagePackResolverAttributeName &&
             ad.AttributeClass?.ContainingNamespace.Name == AttributeNamespace);
 
-        FormattersOptions formattersOptions = new();
-
-        if (generatorAttribute.GetSingleNamedArgumentValue("FormattersNamespace") is string formattersNamespace)
+        FormattersOptions formattersOptions = new()
         {
-            formattersOptions = formattersOptions with { Namespace = formattersNamespace };
-        }
+            UsesMapMode = generatorAttribute.GetSingleNamedArgumentValue("UseMapMode") is true,
+        };
 
         ResolverOptions resolverOptions = new()
         {
@@ -152,7 +150,6 @@ public partial class MessagePackGenerator : IIncrementalGenerator
         {
             Formatters = formattersOptions,
             Resolver = resolverOptions,
-            UsesMapMode = generatorAttribute.GetSingleNamedArgumentValue("UseMapMode") is true,
         };
 
         AnalyzerOptions options = new()

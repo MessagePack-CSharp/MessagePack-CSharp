@@ -3,16 +3,20 @@
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
-<#@ import namespace="MessagePackAnalyzer.Transforms" #>
+<#@ import namespace="MessagePack.Analyzers.Transforms" #>
 
 #pragma warning disable CS8669 // We may leak nullable annotations into generated code.
 
-namespace <#= Namespace #>
-{
-	using MsgPack = global::MessagePack;
+<# if (ResolverNamespace.Length > 0) { #>
+namespace <#= ResolverNamespace #>;
+<# } #>
 
+using MsgPack = global::MessagePack;
+
+partial class <#= ResolverName #>
+{
 <#  bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members);#>
-	internal sealed class <#= Info.FormatterNameWithoutNamespace #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+	private sealed class <#= Info.FormatterName #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
 <# foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
 		where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# } #>

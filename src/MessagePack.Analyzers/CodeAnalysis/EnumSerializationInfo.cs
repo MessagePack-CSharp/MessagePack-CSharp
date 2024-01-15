@@ -9,11 +9,9 @@ public sealed record EnumSerializationInfo(string? Namespace, string Name, strin
 {
     public IReadOnlyCollection<Diagnostic> Diagnostics { get; init; } = Array.Empty<Diagnostic>();
 
-    public string FileNameHint => $"{CodeAnalysisUtilities.AppendNameToNamespace("Formatters", this.Namespace)}.{this.FormatterNameWithoutNamespace}";
+    public string FileNameHint => $"{CodeAnalysisUtilities.AppendNameToNamespace("Formatters", this.Namespace)}.{this.FormatterName}";
 
-    public string FormatterName => CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.FormatterNameWithoutNamespace, $"Formatters::{this.Namespace}");
-
-    public string FormatterNameWithoutNamespace => this.Name + "Formatter";
+    public string FormatterName => this.Name + "Formatter";
 
     public string UnderlyingTypeKeyword => this.UnderlyingTypeName switch
     {

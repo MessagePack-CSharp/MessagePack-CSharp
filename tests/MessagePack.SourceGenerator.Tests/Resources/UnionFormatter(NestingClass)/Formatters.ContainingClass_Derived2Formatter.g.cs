@@ -4,11 +4,13 @@
 
 #pragma warning disable CS8669 // We may leak nullable annotations into generated code.
 
-namespace Formatters
-{
-	using MsgPack = global::MessagePack;
+namespace MessagePack;
 
-	internal sealed class ContainingClass_Derived2Formatter : MsgPack::Formatters.IMessagePackFormatter<global::ContainingClass.Derived2>
+using MsgPack = global::MessagePack;
+
+partial class GeneratedMessagePackResolver
+{
+	private sealed class ContainingClass_Derived2Formatter : MsgPack::Formatters.IMessagePackFormatter<global::ContainingClass.Derived2>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::ContainingClass.Derived2 value, MsgPack::MessagePackSerializerOptions options)

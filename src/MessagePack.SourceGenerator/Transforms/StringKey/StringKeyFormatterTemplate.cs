@@ -26,9 +26,15 @@ namespace MessagePack.SourceGenerator.Transforms
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write("\r\nnamespace ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n\tusing MsgPack = global::MessagePack;\r\n\r\n");
+            this.Write("\r\n");
+ if (ResolverNamespace.Length > 0) { 
+            this.Write("namespace ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
+            this.Write(";\r\n");
+ } 
+            this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\npartial class ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            this.Write("\r\n{\r\n");
  var list = new List<ValueTuple<MemberSerializationInfo, byte[]>>();
 	foreach (var member in Info.Members) {
 		var binary = EmbedStringHelper.Utf8.GetBytes(member.StringKey);
@@ -36,8 +42,8 @@ namespace MessagePack.SourceGenerator.Transforms
 	}
 
 	bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members); 
-            this.Write("\tinternal sealed class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterNameWithoutNamespace));
+            this.Write("\tprivate sealed class ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterName));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
             this.Write(">\r\n");

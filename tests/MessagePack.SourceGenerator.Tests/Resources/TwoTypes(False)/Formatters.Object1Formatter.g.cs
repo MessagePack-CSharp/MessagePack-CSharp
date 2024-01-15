@@ -4,11 +4,13 @@
 
 #pragma warning disable CS8669 // We may leak nullable annotations into generated code.
 
-namespace Formatters
-{
-	using MsgPack = global::MessagePack;
+namespace MessagePack;
 
-	internal sealed class Object1Formatter : MsgPack::Formatters.IMessagePackFormatter<global::Object1>
+using MsgPack = global::MessagePack;
+
+partial class GeneratedMessagePackResolver
+{
+	private sealed class Object1Formatter : MsgPack::Formatters.IMessagePackFormatter<global::Object1>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::Object1 value, MsgPack::MessagePackSerializerOptions options)

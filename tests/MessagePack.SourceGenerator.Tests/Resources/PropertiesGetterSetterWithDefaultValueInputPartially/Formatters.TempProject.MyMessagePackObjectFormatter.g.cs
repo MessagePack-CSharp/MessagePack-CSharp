@@ -2,11 +2,13 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace Formatters.TempProject
-{
-	using MsgPack = global::MessagePack;
+namespace MessagePack;
 
-	internal sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TempProject.MyMessagePackObject>
+using MsgPack = global::MessagePack;
+
+partial class GeneratedMessagePackResolver
+{
+	private sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TempProject.MyMessagePackObject>
 	{
 		// A
 		private static global::System.ReadOnlySpan<byte> GetSpan_A() => new byte[1 + 1] { 161, 65 };

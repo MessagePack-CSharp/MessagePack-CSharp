@@ -4,11 +4,13 @@
 
 #pragma warning disable CS8669 // We may leak nullable annotations into generated code.
 
-namespace Formatters
-{
-	using MsgPack = global::MessagePack;
+namespace MessagePack;
 
-	internal sealed class HasPropertyWithCustomFormatterAttributeFormatter : MsgPack::Formatters.IMessagePackFormatter<global::HasPropertyWithCustomFormatterAttribute>
+using MsgPack = global::MessagePack;
+
+partial class GeneratedMessagePackResolver
+{
+	private sealed class HasPropertyWithCustomFormatterAttributeFormatter : MsgPack::Formatters.IMessagePackFormatter<global::HasPropertyWithCustomFormatterAttribute>
 	{
 		private readonly global::UnserializableRecordFormatter __CustomValueCustomFormatter__ = new global::UnserializableRecordFormatter();
 

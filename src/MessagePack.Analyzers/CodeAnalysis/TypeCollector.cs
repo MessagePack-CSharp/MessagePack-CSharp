@@ -587,11 +587,6 @@ public class TypeCollector
         }
 
         var formatterBuilder = new StringBuilder();
-        if (!type.ContainingNamespace.IsGlobalNamespace)
-        {
-            formatterBuilder.Append(type.ContainingNamespace.ToDisplayString() + ".");
-        }
-
         formatterBuilder.Append(type.Name);
         formatterBuilder.Append("Formatter<");
         var typeArgumentIterator = type.TypeArguments.GetEnumerator();
@@ -610,7 +605,7 @@ public class TypeCollector
 
         formatterBuilder.Append('>');
 
-        var genericSerializationInfo = new GenericSerializationInfo(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), $"Formatters::{formatterBuilder}", isOpenGenericType);
+        var genericSerializationInfo = new GenericSerializationInfo(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), formatterBuilder.ToString(), isOpenGenericType);
         this.collectedGenericInfo.Add(genericSerializationInfo);
         return true;
     }
@@ -660,7 +655,7 @@ public class TypeCollector
         var intMembers = new Dictionary<int, MemberSerializationInfo>();
         var stringMembers = new Dictionary<string, MemberSerializationInfo>();
 
-        if (this.options.Generator.UsesMapMode || (contractAttr?.ConstructorArguments[0] is { Value: bool firstConstructorArgument } && firstConstructorArgument))
+        if (this.options.Generator.Formatters.UsesMapMode || (contractAttr?.ConstructorArguments[0] is { Value: bool firstConstructorArgument } && firstConstructorArgument))
         {
             // All public members are serialize target except [Ignore] member.
             isIntKey = false;

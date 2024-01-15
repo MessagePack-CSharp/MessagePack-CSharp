@@ -9,7 +9,9 @@ public interface IFormatterTemplate
 {
     string FileName { get; }
 
-    string Namespace { get; }
+    string ResolverNamespace { get; }
+
+    string ResolverName { get; }
 
     ObjectSerializationInfo Info { get; }
 

@@ -2,21 +2,22 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace Formatters.TempProject
-{
-	using MsgPack = global::MessagePack;
-	using MyEnum = global::TempProject.MyEnum;
+namespace MessagePack;
 
-	internal sealed class MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<MyEnum>
+using MsgPack = global::MessagePack;
+
+partial class GeneratedMessagePackResolver
+{
+	private sealed class MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyEnum>
 	{
-		public void Serialize(ref MsgPack::MessagePackWriter writer, MyEnum value, MsgPack::MessagePackSerializerOptions options)
+		public void Serialize(ref MsgPack::MessagePackWriter writer, global::TempProject.MyEnum value, MsgPack::MessagePackSerializerOptions options)
 		{
 			writer.Write((int)value);
 		}
 
-		public MyEnum Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
+		public global::TempProject.MyEnum Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
 		{
-			return (MyEnum)reader.ReadInt32();
+			return (global::TempProject.MyEnum)reader.ReadInt32();
 		}
 	}
 }

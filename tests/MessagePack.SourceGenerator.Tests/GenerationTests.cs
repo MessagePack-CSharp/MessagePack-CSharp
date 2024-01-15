@@ -34,7 +34,7 @@ internal enum MyEnum
 """;
         testSource = TestUtilities.WrapTestSource(testSource, container);
 
-        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, options: new() { Generator = new() { UsesMapMode = usesMapMode } }, testMethod: $"{nameof(EnumFormatter)}({container}, {usesMapMode})");
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, options: new() { Generator = new() { Formatters = new() { UsesMapMode = usesMapMode } } }, testMethod: $"{nameof(EnumFormatter)}({container}, {usesMapMode})");
     }
 
     [Theory, PairwiseData]
@@ -69,7 +69,7 @@ class UnserializableRecordFormatter : IMessagePackFormatter<UnserializableRecord
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, options: new() { Generator = new() { UsesMapMode = usesMapMode } }, testMethod: $"{nameof(CustomFormatterViaAttributeOnProperty)}({usesMapMode})");
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, options: new() { Generator = new() { Formatters = new() { UsesMapMode = usesMapMode } } }, testMethod: $"{nameof(CustomFormatterViaAttributeOnProperty)}({usesMapMode})");
     }
 
     [Theory, PairwiseData]

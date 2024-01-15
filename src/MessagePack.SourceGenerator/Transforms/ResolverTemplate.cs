@@ -29,44 +29,43 @@ namespace MessagePack.SourceGenerator.Transforms
  if (ResolverNamespace.Length > 0) { 
             this.Write("namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
-            this.Write("\r\n{\r\n");
+            this.Write(";\r\n");
  } 
-            this.Write("\tusing MsgPack = global::MessagePack;\r\n\tusing Formatters = global::");
-            this.Write(this.ToStringHelper.ToStringWithCulture(FormatterNamespace));
-            this.Write(";\r\n\r\n\t/// <summary>A MessagePack resolver that uses generated formatters for type" +
-                    "s in this assembly.</summary>\r\n\tpartial class ");
+            this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\n/// <summary>A MessagePack resolver tha" +
+                    "t uses generated formatters for types in this assembly.</summary>\r\npartial class" +
+                    " ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write(" : MsgPack::IFormatterResolver\r\n\t{\r\n\t\t/// <summary>An instance of this resolver t" +
-                    "hat only returns formatters specifically generated for types in this assembly.</" +
-                    "summary>\r\n\t\tpublic static readonly MsgPack::IFormatterResolver Instance = new ");
+            this.Write(" : MsgPack::IFormatterResolver\r\n{\r\n\t/// <summary>An instance of this resolver tha" +
+                    "t only returns formatters specifically generated for types in this assembly.</su" +
+                    "mmary>\r\n\tpublic static readonly MsgPack::IFormatterResolver Instance = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(@"();
 
-		/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
-		public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
+	/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
+	public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
 
-		private ");
+	private ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(@"()
-		{
-		}
+	{
+	}
 
-		public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-		{
-			return FormatterCache<T>.Formatter;
-		}
+	public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+	{
+		return FormatterCache<T>.Formatter;
+	}
 
-		private static class FormatterCache<T>
-		{
-			internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
+	private static class FormatterCache<T>
+	{
+		internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
 
-			static FormatterCache()
-			{
-				var f = ");
+		static FormatterCache()
+		{
+			var f = ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("GetFormatterHelper.GetFormatter(typeof(T));\r\n\t\t\t\tif (f != null)\r\n\t\t\t\t{\r\n\t\t\t\t\tForm" +
-                    "atter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n" +
-                    "\r\n\tinternal static class ");
+            this.Write("GetFormatterHelper.GetFormatter(typeof(T));\r\n\t\t\tif (f != null)\r\n\t\t\t{\r\n\t\t\t\tFormatt" +
+                    "er = (MsgPack::Formatters.IMessagePackFormatter<T>)f;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n\r\n\tprivate" +
+                    " static class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write("GetFormatterHelper\r\n\t{\r\n\t\tprivate static readonly global::System.Collections.Gene" +
                     "ric.Dictionary<global::System.Type, int> lookup;\r\n\r\n\t\tstatic ");
@@ -74,28 +73,25 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("GetFormatterHelper()\r\n\t\t{\r\n\t\t\tlookup = new global::System.Collections.Generic.Dic" +
                     "tionary<global::System.Type, int>(");
             this.Write(this.ToStringHelper.ToStringWithCulture(RegisterInfos.Count));
-            this.Write(")\r\n\t\t\t{\r\n");
+            this.Write(")\r\n\t\t\t{\r\n\t");
  for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; 
             this.Write("\t\t\t\t{ typeof(");
             this.Write(this.ToStringHelper.ToStringWithCulture(x.FullName));
             this.Write("), ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(" },\r\n");
+            this.Write(" },\r\n\t");
  } 
             this.Write("\t\t\t};\r\n\t\t}\r\n\r\n\t\tinternal static object GetFormatter(global::System.Type t)\r\n\t\t{\r\n" +
                     "\t\t\tint key;\r\n\t\t\tif (!lookup.TryGetValue(t, out key))\r\n\t\t\t{\r\n\t\t\t\treturn null;\r\n\t\t" +
-                    "\t}\r\n\r\n\t\t\tswitch (key)\r\n\t\t\t{\r\n");
+                    "\t}\r\n\r\n\t\t\tswitch (key)\r\n\t\t\t{\r\n\t");
  for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; 
             this.Write("\t\t\t\tcase ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(": return new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName));
-            this.Write("();\r\n");
+            this.Write("();\r\n\t");
  } 
-            this.Write("\t\t\t\tdefault: return null;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n");
- if (ResolverNamespace.Length > 0) { 
-            this.Write("}\r\n");
- } 
+            this.Write("\t\t\t\tdefault: return null;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}\r\n");
             return this.GenerationEnvironment.ToString();
         }
     }

@@ -3,13 +3,17 @@
 <#@ import namespace="System" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Collections.Generic" #>
-<#@ import namespace="MessagePackAnalyzer.CodeAnalysis" #>
-<#@ import namespace="MessagePackAnalyzer.Transforms" #>
+<#@ import namespace="MessagePack.Analyzers.CodeAnalysis" #>
+<#@ import namespace="MessagePack.Analyzers.Transforms" #>
 
-namespace <#= Namespace #>
+<# if (ResolverNamespace.Length > 0) { #>
+namespace <#= ResolverNamespace #>;
+<# } #>
+
+using MsgPack = global::MessagePack;
+
+partial class <#= ResolverName #>
 {
-	using MsgPack = global::MessagePack;
-
 <# var list = new List<ValueTuple<MemberSerializationInfo, byte[]>>();
 	foreach (var member in Info.Members) {
 		var binary = EmbedStringHelper.Utf8.GetBytes(member.StringKey);
@@ -17,7 +21,7 @@ namespace <#= Namespace #>
 	}
 
 	bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members); #>
-	internal sealed class <#= Info.FormatterNameWithoutNamespace #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+	private sealed class <#= Info.FormatterName #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= Info.FullName #>>
 <# foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) {#>
 		where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# }#>

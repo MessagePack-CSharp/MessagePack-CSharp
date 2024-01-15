@@ -66,7 +66,7 @@ public static partial class CSharpSourceGeneratorVerifier
 
                 namespace {{options.Generator.Resolver.Namespace}};
 
-                [GeneratedMessagePackResolver(UseMapMode = {{(options.Generator.UsesMapMode ? "true" : "false")}}, FormattersNamespace = "{{options.Generator.Formatters.Namespace}}")]
+                [GeneratedMessagePackResolver(UseMapMode = {{(options.Generator.Formatters.UsesMapMode ? "true" : "false")}})]
                 partial class {{options.Generator.Resolver.Name}} { }
                 """;
             return RunDefaultAsync(logger, testSource, resolverPartialClassSource, testFile, testMethod);
