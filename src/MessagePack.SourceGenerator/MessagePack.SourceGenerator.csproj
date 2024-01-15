@@ -4,7 +4,7 @@
   
   <PropertyGroup>
     <DebugType>embedded</DebugType>
-
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
   
   <ItemGroup>

@@ -1,17 +1,11 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Operations;
 
 namespace MessagePack.SourceGenerator.Analyzers;
 
-//[DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
+public class MsgPack00xMessagePackAnalyzer
 {
     public const string UseMessagePackObjectAttributeId = "MsgPack003";
     public const string AttributeMessagePackObjectMembersId = "MsgPack004";
@@ -22,11 +16,10 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
 
     internal const string Category = "Usage";
 
-    internal const string MessagePackObjectAttributeShortName = "MessagePackObjectAttribute";
+    internal const string MessagePackObjectAttributeShortName = Constants.MessagePackObjectAttributeName;
     internal const string KeyAttributeShortName = "KeyAttribute";
     internal const string IgnoreShortName = "IgnoreMemberAttribute";
     internal const string IgnoreDataMemberShortName = "IgnoreDataMemberAttribute";
-    internal const string UnionAttributeShortName = "UnionAttribute";
 
     internal static readonly DiagnosticDescriptor TypeMustBeMessagePackObject = new DiagnosticDescriptor(
         id: UseMessagePackObjectAttributeId,
@@ -187,98 +180,4 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTLimitationsId));
-
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
-        TypeMustBeMessagePackObject,
-        PublicMemberNeedsKey,
-        InvalidMessagePackObject,
-        MessageFormatterMustBeMessagePackFormatter);
-
-    public override void Initialize(AnalysisContext context)
-    {
-        context.EnableConcurrentExecution();
-        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
-        if (false)
-        {
-            context.RegisterOperationAction(
-                ctxt =>
-                {
-                    if (ctxt.Operation is { Syntax: AttributeSyntax, Type: { ContainingNamespace.Name: "MessagePack" } } op)
-                    {
-                        if (op.Children.Count() == 1 && op.Children.First() is ITypeOfOperation typeOp)
-                        {
-                            switch (op.Type.Name)
-                            {
-                                case "MessagePackKnownFormatterAttribute":
-                                    break;
-                                case "MessagePackAssumedFormattableAttribute":
-                                    break;
-                            }
-                        }
-                    }
-                },
-                OperationKind.None);
-        }
-
-        context.RegisterSemanticModelAction(ctxt =>
-        {
-            foreach (SyntaxNode node in ctxt.SemanticModel.SyntaxTree.GetRoot(ctxt.CancellationToken).ChildNodes())
-            {
-                if (node is AttributeListSyntax al)
-                {
-                    foreach (AttributeSyntax att in al.Attributes)
-                    {
-                        if (ctxt.SemanticModel.GetSymbolInfo(att, ctxt.CancellationToken) is { Symbol: IMethodSymbol { ContainingType.ContainingNamespace.Name: "MessagePack" } attSymbol })
-                        {
-                            if (att.ArgumentList?.Arguments.Count == 1)
-                            {
-                                if (att.ArgumentList.Arguments[0].Expression is TypeOfExpressionSyntax { Type: TypeSyntax type } &&
-                                    ctxt.SemanticModel.GetSymbolInfo(type, ctxt.CancellationToken) is { Symbol: ITypeSymbol typeSymbol })
-                                {
-                                    switch (attSymbol.ContainingType.Name)
-                                    {
-                                        case "MessagePackKnownFormatterAttribute":
-                                            break;
-                                        case "MessagePackAssumedFormattableAttribute":
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        context.RegisterCompilationStartAction(ctxt =>
-        {
-            //if (ReferenceSymbols.TryCreate(ctxt.Compilation, out ReferenceSymbols? typeReferences))
-            //{
-            //    ctxt.RegisterSyntaxNodeAction(c => Analyze(c, typeReferences, options), SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.InterfaceDeclaration, SyntaxKind.RecordDeclaration);
-            //}
-        });
-
-        // At the end of compilation, combine the information we've gathered from assembly-level attributes
-        // with the serializable types we've seen to report diagnostics.
-        context.RegisterCompilationAction(ctxt =>
-        {
-        });
-    }
-
-    private static void Analyze(SyntaxNodeAnalysisContext context, ReferenceSymbols typeReferences, CodeAnalysis.AnalyzerOptions options)
-    {
-        TypeDeclarationSyntax typeDeclaration = (TypeDeclarationSyntax)context.Node;
-        INamedTypeSymbol? declaredSymbol = context.SemanticModel.GetDeclaredSymbol(typeDeclaration);
-        if (declaredSymbol is null)
-        {
-            return;
-        }
-
-        if (
-           ((declaredSymbol.TypeKind == TypeKind.Interface) && declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.UnionAttribute)))
-        || ((declaredSymbol.TypeKind == TypeKind.Class) && declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.MessagePackObjectAttribute)))
-        || ((declaredSymbol.TypeKind == TypeKind.Struct) && declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.MessagePackObjectAttribute))))
-        {
-            TypeCollector.Collect(context.Compilation, options, typeReferences, context.ReportDiagnostic, declaredSymbol);
-        }
-    }
 }

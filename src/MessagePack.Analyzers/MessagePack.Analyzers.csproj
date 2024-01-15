@@ -24,18 +24,20 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MessagePack.Analyzers.CodeFixes.Unity\MessagePack.Analyzers.CodeFixes.Unity.csproj" ExcludeAssets="compile" />
+    <ProjectReference Include="..\MessagePack.Analyzers.CodeFixes.Unity\MessagePack.Analyzers.CodeFixes.Unity.csproj" ExcludeAssets="compile" ForUnity="true" />
     <ProjectReference Include="..\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj" ExcludeAssets="compile" />
-    <ProjectReference Include="..\MessagePack.SourceGenerator.Unity\MessagePack.SourceGenerator.Unity.csproj" ExcludeAssets="compile" />
+    <ProjectReference Include="..\MessagePack.SourceGenerator.Unity\MessagePack.SourceGenerator.Unity.csproj" ExcludeAssets="compile" ForUnity="true" />
     <ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" ExcludeAssets="compile" />
   </ItemGroup>
 
-  <Target Name="PackBuildOutputs" DependsOnTargets="ResolveProjectReferences;SatelliteDllsProjectOutputGroup;DebugSymbolsProjectOutputGroup">
+  <Target Name="PackBuildOutputs" DependsOnTargets="ResolveProjectReferences;DebugSymbolsProjectOutputGroup">
+    <PropertyGroup>
+      <RoslynVersionForUnityMajorMinor>$(CodeAnalysisVersionForUnity.Substring(0, $(CodeAnalysisVersionForUnity.LastIndexOf('.'))))</RoslynVersionForUnityMajorMinor>
+      <RoslynVersionForVSMajorMinor>$(MicrosoftCodeAnalysisVersion.Substring(0, $(MicrosoftCodeAnalysisVersion.LastIndexOf('.'))))</RoslynVersionForVSMajorMinor>
+    </PropertyGroup>
     <ItemGroup>
-      <TfmSpecificPackageFile Include="$(TargetPath)" PackagePath="analyzers\cs\" />
-      <TfmSpecificPackageFile Include="@(SatelliteDllsProjectOutputGroupDependency)" PackagePath="analyzers\cs\%(SatelliteDllsProjectOutputGroupDependency.DestinationSubDirectory)" Condition=" '%(SatelliteDllsProjectOutputGroupDependency.DestinationSubDirectory)' != '' " />
-      <TfmSpecificPackageFile Include="@(SatelliteDllsProjectOutputGroupOutput->'%(FinalOutputPath)')" PackagePath="analyzers\cs\%(SatelliteDllsProjectOutputGroupOutput.Culture)\" />
-      <TfmSpecificPackageFile Include="%(_ResolvedProjectReferencePaths.Identity)" PackagePath="analyzers\cs\" />
+      <TfmSpecificPackageFile Include="%(_ResolvedProjectReferencePaths.Identity)" PackagePath="analyzers\roslyn$(RoslynVersionForUnityMajorMinor)\cs\" Condition="'%(_ResolvedProjectReferencePaths.ForUnity)'=='true'" />
+      <TfmSpecificPackageFile Include="%(_ResolvedProjectReferencePaths.Identity)" PackagePath="analyzers\roslyn$(RoslynVersionForVSMajorMinor)\cs\" Condition="'%(_ResolvedProjectReferencePaths.ForUnity)'!='true'" />
     </ItemGroup>
   </Target>
 </Project>

@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>MessagePack.Analyzers</RootNamespace>
+    <IsPackable>false</IsPackable>
     <ImplicitUsings>enable</ImplicitUsings>
 
     <MicrosoftCodeAnalysisVersion>$(CodeAnalysisVersionForUnity)</MicrosoftCodeAnalysisVersion>
