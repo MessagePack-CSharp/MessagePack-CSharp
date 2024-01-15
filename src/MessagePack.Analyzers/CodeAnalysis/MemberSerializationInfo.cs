@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using MessagePack.Analyzers.Transforms;
-
 namespace MessagePack.Analyzers.CodeAnalysis;
 
 public record MemberSerializationInfo(
@@ -16,7 +14,7 @@ public record MemberSerializationInfo(
     string ShortTypeName,
     string? CustomFormatterTypeName)
 {
-    private static readonly IReadOnlyCollection<string> PrimitiveTypes = new HashSet<string>(ShouldUseFormatterResolverHelper.PrimitiveTypes);
+    private static readonly IReadOnlyCollection<string> PrimitiveTypes = new HashSet<string>(AnalyzerUtilities.PrimitiveTypes);
 
     public string GetSerializeMethodString()
     {

@@ -4,7 +4,6 @@
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="MessagePack.Analyzers.CodeAnalysis" #>
-<#@ import namespace="MessagePack.Analyzers.Transforms" #>
 
 <# if (ResolverNamespace.Length > 0) { #>
 namespace <#= ResolverNamespace #>;
@@ -20,7 +19,7 @@ partial class <#= ResolverName #>
 		list.Add(new ValueTuple<MemberSerializationInfo, byte[]>(member, binary));
 	}
 
-	bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members); #>
+	bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members); #>
 	private sealed class <#= Info.FormatterName #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= Info.FullName #>>
 <# foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) {#>
 		where <#= typeArg.Name #> : <#= typeArg.Constraints #>

@@ -12,7 +12,6 @@ namespace MessagePack.SourceGenerator.Transforms
     using System.Linq;
     using System.Text;
     using System.Collections.Generic;
-    using MessagePack.Analyzers.Transforms;
     using System;
     
     /// <summary>
@@ -36,7 +35,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\npartial class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write("\r\n{\r\n");
-  bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members);
+  bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members);
             this.Write("\tprivate sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterName));
             this.Write(" : MsgPack::Formatters.IMessagePackFormatter<");

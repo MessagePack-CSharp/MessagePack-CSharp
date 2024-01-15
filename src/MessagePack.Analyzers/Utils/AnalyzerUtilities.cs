@@ -7,6 +7,30 @@ namespace MessagePack.Analyzers;
 
 public static class AnalyzerUtilities
 {
+    /// <devremarks>
+    /// Keep this list in sync with DynamicObjectTypeBuilder.IsOptimizeTargetType.
+    /// </devremarks>
+    public static readonly string[] PrimitiveTypes =
+    {
+        "short",
+        "int",
+        "long",
+        "ushort",
+        "uint",
+        "ulong",
+        "float",
+        "double",
+        "bool",
+        "byte",
+        "sbyte",
+        "char",
+        "byte[]",
+
+        // Do not include types that resolvers are allowed to modify.
+        ////"global::System.DateTime",  // OldSpec has no support, so for that and perf reasons a .NET native DateTime resolver exists.
+        ////"string", // https://github.com/Cysharp/MasterMemory provides custom formatter for string interning.
+    };
+
     public static string GetFullNamespaceName(this INamespaceSymbol namespaceSymbol)
     {
         if (namespaceSymbol.IsGlobalNamespace)

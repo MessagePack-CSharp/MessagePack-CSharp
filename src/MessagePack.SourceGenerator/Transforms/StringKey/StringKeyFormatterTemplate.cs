@@ -13,7 +13,6 @@ namespace MessagePack.SourceGenerator.Transforms
     using System.Linq;
     using System.Collections.Generic;
     using MessagePack.Analyzers.CodeAnalysis;
-    using MessagePack.Analyzers.Transforms;
     
     /// <summary>
     /// Class to produce the template output
@@ -41,7 +40,7 @@ namespace MessagePack.SourceGenerator.Transforms
 		list.Add(new ValueTuple<MemberSerializationInfo, byte[]>(member, binary));
 	}
 
-	bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members); 
+	bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members); 
             this.Write("\tprivate sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterName));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
