@@ -1,26 +1,37 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Testing;
-using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
 
-public static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
-    where TAnalyzer : DiagnosticAnalyzer, new()
+internal class CSharpSourceGeneratorCodeFixVerifier<TSourceGenerator, TCodeFix>
     where TCodeFix : CodeFixProvider, new()
 {
-    public static DiagnosticResult Diagnostic()
-        => CSharpCodeFixVerifier<TAnalyzer, TCodeFix, XUnitVerifier>.Diagnostic();
+    public class Test : CSharpCodeFixTest<EmptyDiagnosticAnalyzer, TCodeFix, XUnitVerifier>
+    {
+        public Test()
+        {
+            this.ReferenceAssemblies = ReferencesHelper.DefaultReferences;
+            this.CompilerDiagnostics = CompilerDiagnostics.Warnings;
+        }
 
-    public static DiagnosticResult Diagnostic(string diagnosticId)
-        => CSharpCodeFixVerifier<TAnalyzer, TCodeFix, XUnitVerifier>.Diagnostic(diagnosticId);
+        protected override CompilationOptions CreateCompilationOptions()
+        {
+            var compilationOptions = (CSharpCompilationOptions)base.CreateCompilationOptions();
+            return compilationOptions
+               .WithWarningLevel(99)
+               .WithSpecificDiagnosticOptions(compilationOptions.SpecificDiagnosticOptions.SetItem("CS1591", ReportDiagnostic.Suppress));
+        }
 
-    public static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor)
-        => new DiagnosticResult(descriptor);
+        protected override IEnumerable<Type> GetSourceGenerators()
+        {
+            yield return typeof(TSourceGenerator);
+        }
+    }
 
     public static Task VerifyAnalyzerWithoutMessagePackReferenceAsync(string source)
     {

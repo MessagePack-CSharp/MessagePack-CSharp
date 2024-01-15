@@ -1,12 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Testing;
-using Xunit;
-using VerifyCS =
-    CSharpCodeFixVerifier<MessagePack.SourceGenerator.Analyzers.MsgPack00xMessagePackAnalyzer, MessagePack.Analyzers.CodeFixes.MessagePackCodeFixProvider>;
+using VerifyCS = CSharpSourceGeneratorCodeFixVerifier<MessagePack.SourceGenerator.MessagePackGenerator, MessagePack.Analyzers.CodeFixes.MessagePackCodeFixProvider>;
 
 public class MessagePackAnalyzerTests
 {

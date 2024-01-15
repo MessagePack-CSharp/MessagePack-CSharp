@@ -9,8 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\MessagePack.SourceGenerator.Tests\**\*.cs" />
-    <Compile Remove="..\MessagePack.SourceGenerator.Tests\Resources\**\*.cs" />
+    <Compile Include="..\MessagePack.SourceGenerator.Tests\**\*.cs" Exclude="..\MessagePack.SourceGenerator.Tests\Resources\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
