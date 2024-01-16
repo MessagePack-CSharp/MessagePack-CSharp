@@ -163,35 +163,21 @@ By default, a `MessagePackObject` annotation is required. This can be made optio
 
 The MessagePackAnalyzer package aids with:
 
-1. Automating definitions for your serializable objects.
 1. Produces compiler warnings upon incorrect attribute use, member accessibility, and more.
+1. Automating attributing of your serializable classes and members.
+1. Optionally improving startup time through [AOT formatter generation](#aot).
+
+The first two of these features is demonstrated below:
 
 ![analyzergif](https://cloud.githubusercontent.com/assets/46207/23837445/ce734eae-07cb-11e7-9758-d69f0f095bc1.gif)
 
-You must define a partial class that will host the source generated resolver.
-It can be `internal` or `public` and have any name and namespace.
-It must carry the `[GeneratedMessagePackResolver]` attribute.
-This attribute offers several properties that may be set to customize the generated resolver and formatters.
+Two assembly-level attributes exist to help with mixing in your own custom formatters with the automatically generated ones:
+- `MessagePackKnownFormatterAttribute` - Identifies classes that implement `IMessagePackFormatter<T>`.
+The `T` type argument will _not_ produce an analyzer warning when `T` is used elsewhere in a serializable object.
+When using a source generated resolver, the resolver will refer to this formatter for the appropriate type(s).
+- `MessagePackAssumedFormattableAttribute` - Identifies types that are assumed to have an `IMessagePackFormatter<T>` *somewhere*, and that will be combined within an `IFormatterResolver` at runtime to ensure the specified type can be serialized.
+This attribute will suppress the analyzer warning from using that type although the type does not have a `[MessagePackObject]` attribute on it.
 
-At a minimum, the class might look like this:
-
-```cs
-[GeneratedMessagePackResolver]
-partial class GeneratedMessagePackResolver
-{
-}
-```
-
-You can opt into a `public` resolver just by adding that modifier to the class declaration.
-
-If you want to skip source generation of a formatter for specific types, you can list them like this:
-
-```cs
-[GeneratedMessagePackResolver(CustomFormattedTypes = new Type[] { typeof(MyNamespace.MyClass), typeof(MyNamespace.AnotherClass) })]
-partial class GeneratedMessagePackResolver
-{
-}
-```
 
 ## Built-in supported types
 
@@ -1661,6 +1647,12 @@ You can customize the generated source through properties on the `GeneratedMessa
 
 When exposing the generated resolver publicly, consumers outside the library should aggregate the resolver using its `Instance` property, which contains *only* the generated formatters.
 The `InstanceWithStandardAotResolver` property is a convenience for callers that will not be aggregating the resolver with those from other libraries, since it aggregates built-in AOT friendly resolvers from the MessagePack library itself.
+
+Two assembly-level attributes exist to help with mixing in your own custom formatters with the automatically generated ones:
+- `MessagePackKnownFormatterAttribute`
+- `MessagePackAssumedFormattableAttribute`
+
+Learn more about using a mix of your own custom formatters and automatically generated ones in [the Analyzer section](#analyzer).
 
 ### Unity-specific AOT concerns
 
