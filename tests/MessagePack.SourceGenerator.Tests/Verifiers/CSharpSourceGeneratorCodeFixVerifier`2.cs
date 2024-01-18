@@ -19,12 +19,19 @@ internal class CSharpSourceGeneratorCodeFixVerifier<TSourceGenerator, TCodeFix>
             this.CompilerDiagnostics = CompilerDiagnostics.Warnings;
         }
 
+        public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.CSharp9;
+
         protected override CompilationOptions CreateCompilationOptions()
         {
             var compilationOptions = (CSharpCompilationOptions)base.CreateCompilationOptions();
             return compilationOptions
                .WithWarningLevel(99)
                .WithSpecificDiagnosticOptions(compilationOptions.SpecificDiagnosticOptions.SetItem("CS1591", ReportDiagnostic.Suppress));
+        }
+
+        protected override ParseOptions CreateParseOptions()
+        {
+            return ((CSharpParseOptions)base.CreateParseOptions()).WithLanguageVersion(this.LanguageVersion);
         }
 
         protected override IEnumerable<Type> GetSourceGenerators()

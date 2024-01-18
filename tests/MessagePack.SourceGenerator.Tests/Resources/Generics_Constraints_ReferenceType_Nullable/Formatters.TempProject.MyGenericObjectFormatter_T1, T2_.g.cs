@@ -4,7 +4,7 @@
 
 #pragma warning disable CS8669 // We may leak nullable annotations into generated code.
 
-namespace MessagePack;
+namespace MessagePack {
 
 using MsgPack = global::MessagePack;
 
@@ -61,4 +61,6 @@ partial class GeneratedMessagePackResolver
 			return ____result;
 		}
 	}
+}
+
 }

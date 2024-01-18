@@ -5,7 +5,7 @@
 <#@ import namespace="System.Collections.Generic" #>
 
 <# if (ResolverNamespace.Length > 0) { #>
-namespace <#= ResolverNamespace #>;
+namespace <#= ResolverNamespace #> {
 <# } #>
 
 using MsgPack = global::MessagePack;
@@ -74,3 +74,7 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 		}
 	}
 }
+
+<# if (ResolverNamespace.Length > 0) { #>
+}
+<# } #>

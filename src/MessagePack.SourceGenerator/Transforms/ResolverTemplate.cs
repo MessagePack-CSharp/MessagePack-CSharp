@@ -29,7 +29,7 @@ namespace MessagePack.SourceGenerator.Transforms
  if (ResolverNamespace.Length > 0) { 
             this.Write("namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
-            this.Write(";\r\n");
+            this.Write(" {\r\n");
  } 
             this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\n/// <summary>A MessagePack resolver tha" +
                     "t uses generated formatters for types in this assembly.</summary>\r\npartial class" +
@@ -91,7 +91,10 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName));
             this.Write("();\r\n\t");
  } 
-            this.Write("\t\t\t\tdefault: return null;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}\r\n");
+            this.Write("\t\t\t\tdefault: return null;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}\r\n\r\n");
+ if (ResolverNamespace.Length > 0) { 
+            this.Write("}\r\n");
+ } 
             return this.GenerationEnvironment.ToString();
         }
     }

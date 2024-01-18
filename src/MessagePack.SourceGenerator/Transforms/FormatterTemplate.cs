@@ -30,7 +30,7 @@ namespace MessagePack.SourceGenerator.Transforms
  if (ResolverNamespace.Length > 0) { 
             this.Write("namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
-            this.Write(";\r\n");
+            this.Write(" {\r\n");
  } 
             this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\npartial class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
@@ -187,7 +187,10 @@ namespace MessagePack.SourceGenerator.Transforms
  } 
             this.Write("\t\t\treader.Depth--;\r\n\t\t\treturn ____result;\r\n");
  } 
-            this.Write("\t\t}\r\n\t}\r\n}\r\n");
+            this.Write("\t\t}\r\n\t}\r\n}\r\n\r\n");
+ if (ResolverNamespace.Length > 0) { 
+            this.Write("}\r\n");
+ } 
             return this.GenerationEnvironment.ToString();
         }
     }

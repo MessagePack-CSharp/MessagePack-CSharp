@@ -6,7 +6,7 @@
 <#@ import namespace="MessagePack.SourceGenerator.CodeAnalysis" #>
 
 <# if (ResolverNamespace.Length > 0) { #>
-namespace <#= ResolverNamespace #>;
+namespace <#= ResolverNamespace #> {
 <# } #>
 
 using MsgPack = global::MessagePack;
@@ -139,3 +139,7 @@ partial class <#= ResolverName #>
 		}
 	}
 }
+
+<# if (ResolverNamespace.Length > 0) { #>
+}
+<# } #>

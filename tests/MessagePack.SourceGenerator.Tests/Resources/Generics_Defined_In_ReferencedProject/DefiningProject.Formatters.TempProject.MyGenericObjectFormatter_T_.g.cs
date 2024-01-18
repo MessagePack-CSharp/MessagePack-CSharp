@@ -4,7 +4,7 @@
 
 #pragma warning disable CS8669 // We may leak nullable annotations into generated code.
 
-namespace TempProject;
+namespace TempProject {
 
 using MsgPack = global::MessagePack;
 
@@ -55,4 +55,6 @@ partial class MyResolver
 			return ____result;
 		}
 	}
+}
+
 }

@@ -2,7 +2,7 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace TempProject;
+namespace TempProject {
 
 using MsgPack = global::MessagePack;
 
@@ -63,4 +63,6 @@ partial class MyResolver : MsgPack::IFormatterResolver
 			}
 		}
 	}
+}
+
 }

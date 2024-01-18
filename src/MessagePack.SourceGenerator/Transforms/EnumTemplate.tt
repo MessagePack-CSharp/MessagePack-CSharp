@@ -2,7 +2,7 @@
 <#@ assembly name="System.Core" #>
 
 <# if (ResolverNamespace.Length > 0) { #>
-namespace <#= ResolverNamespace #>;
+namespace <#= ResolverNamespace #> {
 <# } #>
 
 using MsgPack = global::MessagePack;
@@ -22,3 +22,7 @@ partial class <#= ResolverName #>
 		}
 	}
 }
+
+<# if (ResolverNamespace.Length > 0) { #>
+}
+<# } #>

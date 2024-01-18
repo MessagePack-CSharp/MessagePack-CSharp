@@ -47,7 +47,7 @@ public static partial class CSharpSourceGeneratorVerifier
 #endif
         }
 
-        public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.Latest;
+        public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.CSharp9;
 
         public static Task RunDefaultAsync(ITestOutputHelper logger, string testSource, AnalyzerOptions? options = null, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
@@ -63,10 +63,10 @@ public static partial class CSharpSourceGeneratorVerifier
                 {{assumedFormattable}}
                 {{knownFormatters}}
 
-                namespace {{options.Generator.Resolver.Namespace}};
-
-                [GeneratedMessagePackResolver(UseMapMode = {{(options.Generator.Formatters.UsesMapMode ? "true" : "false")}})]
-                partial class {{options.Generator.Resolver.Name}} { }
+                namespace {{options.Generator.Resolver.Namespace}} {
+                    [GeneratedMessagePackResolver(UseMapMode = {{(options.Generator.Formatters.UsesMapMode ? "true" : "false")}})]
+                    partial class {{options.Generator.Resolver.Name}} { }
+                }
                 """;
             return RunDefaultAsync(logger, testSource, resolverPartialClassSource, testFile, testMethod);
         }
