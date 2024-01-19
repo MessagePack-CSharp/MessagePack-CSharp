@@ -8,7 +8,8 @@ using MsgPack = global::MessagePack;
 
 partial class GeneratedMessagePackResolver
 {
-	private sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::MyTestNamespace.MyMessagePackObject>
+private partial class MyTestNamespace { 
+	internal sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::MyTestNamespace.MyMessagePackObject>
 	{
 		// EnumValue
 		private static global::System.ReadOnlySpan<byte> GetSpan_EnumValue() => new byte[1 + 9] { 169, 69, 110, 117, 109, 86, 97, 108, 117, 101 };
@@ -61,6 +62,6 @@ partial class GeneratedMessagePackResolver
 			return ____result;
 		}
 	}
-}
+}}
 
 }

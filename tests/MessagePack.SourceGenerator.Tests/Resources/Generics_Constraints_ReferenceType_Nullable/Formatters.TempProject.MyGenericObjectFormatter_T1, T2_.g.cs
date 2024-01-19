@@ -10,7 +10,8 @@ using MsgPack = global::MessagePack;
 
 partial class GeneratedMessagePackResolver
 {
-	private sealed class MyGenericObjectFormatter<T1, T2> : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyGenericObject<T1, T2>>
+private partial class TempProject { 
+	internal sealed class MyGenericObjectFormatter<T1, T2> : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyGenericObject<T1, T2>>
 		where T1 : class?
 		where T2 : class
 	{
@@ -61,6 +62,7 @@ partial class GeneratedMessagePackResolver
 			return ____result;
 		}
 	}
-}
+
+}}
 
 }

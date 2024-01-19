@@ -10,7 +10,8 @@ using MsgPack = global::MessagePack;
 
 partial class GeneratedMessagePackResolver
 {
-	private sealed class Derived2Formatter : MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.Derived2>
+private partial class MyTestNamespace { 
+	internal sealed class Derived2Formatter : MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.Derived2>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::MyTestNamespace.Derived2 value, MsgPack::MessagePackSerializerOptions options)
@@ -35,6 +36,7 @@ partial class GeneratedMessagePackResolver
 			return new global::MyTestNamespace.Derived2();
 		}
 	}
-}
+
+}}
 
 }

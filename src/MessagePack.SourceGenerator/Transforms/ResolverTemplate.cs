@@ -88,7 +88,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\t\t\t\tcase ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(": return new ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(CodeAnalysisUtilities.QualifyWithOptionalNamespace(x.FormatterName, x.Namespace)));
             this.Write("();\r\n\t");
  } 
             this.Write("\t\t\t\tdefault: return null;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}\r\n\r\n");

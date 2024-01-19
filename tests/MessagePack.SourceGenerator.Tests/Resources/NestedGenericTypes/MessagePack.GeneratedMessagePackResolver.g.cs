@@ -66,11 +66,11 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			switch (key)
 			{
 					case 0: return new MsgPack::Formatters.ListFormatter<global::TempProject.MyObject2>();
-					case 1: return new MyGenericObjectFormatter<global::TempProject.MyObject2>();
-					case 2: return new MyInnerGenericObjectFormatter<global::TempProject.MyObject2>();
+					case 1: return new TempProject.MyGenericObjectFormatter<global::TempProject.MyObject2>();
+					case 2: return new TempProject.MyInnerGenericObjectFormatter<global::TempProject.MyObject2>();
 					case 3: return new MsgPack::Formatters.ArrayFormatter<global::TempProject.MyObject2>();
-					case 4: return new MyObjectFormatter();
-					case 5: return new MyObject2Formatter();
+					case 4: return new TempProject.MyObjectFormatter();
+					case 5: return new TempProject.MyObject2Formatter();
 					default: return null;
 			}
 		}

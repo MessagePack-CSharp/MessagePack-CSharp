@@ -67,8 +67,8 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 0: return new MsgPack::Formatters.ValueTupleFormatter<int, long>();
 					case 1: return new MsgPack::Formatters.NullableFormatter<(int, long)>();
 					case 2: return new MsgPack::Formatters.NullableFormatter<global::TempProject.MyEnum>();
-					case 3: return new MyEnumFormatter();
-					case 4: return new MyObjectFormatter();
+					case 3: return new TempProject.MyEnumFormatter();
+					case 4: return new TempProject.MyObjectFormatter();
 					default: return null;
 			}
 		}

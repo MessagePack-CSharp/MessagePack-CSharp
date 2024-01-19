@@ -8,7 +8,8 @@ using MsgPack = global::MessagePack;
 
 partial class GeneratedMessagePackResolver
 {
-	private sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TempProject.MyMessagePackObject>
+private partial class TempProject { 
+	internal sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TempProject.MyMessagePackObject>
 	{
 		// A
 		private static global::System.ReadOnlySpan<byte> GetSpan_A() => new byte[1 + 1] { 161, 65 };
@@ -60,6 +61,6 @@ partial class GeneratedMessagePackResolver
 			return ____result;
 		}
 	}
-}
+}}
 
 }

@@ -67,7 +67,7 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 			switch (key)
 			{
 	<# for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; #>
-				case <#= i #>: return new <#= x.FormatterName #>();
+				case <#= i #>: return new <#= CodeAnalysisUtilities.QualifyWithOptionalNamespace(x.FormatterName, x.Namespace) #>();
 	<# } #>
 				default: return null;
 			}

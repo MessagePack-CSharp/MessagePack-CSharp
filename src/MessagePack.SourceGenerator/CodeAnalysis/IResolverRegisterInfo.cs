@@ -11,5 +11,7 @@ public interface IResolverRegisterInfo
 
     string FormatterName { get; }
 
+    string? Namespace { get; }
+
     IReadOnlyCollection<Diagnostic> Diagnostics { get; }
 }

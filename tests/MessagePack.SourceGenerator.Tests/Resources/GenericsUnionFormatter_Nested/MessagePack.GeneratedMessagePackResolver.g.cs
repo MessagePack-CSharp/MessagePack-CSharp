@@ -76,15 +76,15 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 1: return new MsgPack::Formatters.ListFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
 					case 2: return new MsgPack::Formatters.ListFormatter<int[]>();
 					case 3: return new MsgPack::Formatters.ListFormatter<string>();
-					case 4: return new MyGenericObjectFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
-					case 5: return new MyGenericObjectFormatter<int[]>();
-					case 6: return new MyGenericObjectFormatter<string>();
-					case 7: return new MyInnerGenericObjectFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
-					case 8: return new MyInnerGenericObjectFormatter<int[]>();
-					case 9: return new MyInnerGenericObjectFormatter<string>();
-					case 10: return new WrapperFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
-					case 11: return new WrapperFormatter<int[]>();
-					case 12: return new WrapperFormatter<string>();
+					case 4: return new TempProject.MyGenericObjectFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
+					case 5: return new TempProject.MyGenericObjectFormatter<int[]>();
+					case 6: return new TempProject.MyGenericObjectFormatter<string>();
+					case 7: return new TempProject.MyInnerGenericObjectFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
+					case 8: return new TempProject.MyInnerGenericObjectFormatter<int[]>();
+					case 9: return new TempProject.MyInnerGenericObjectFormatter<string>();
+					case 10: return new TempProject.WrapperFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
+					case 11: return new TempProject.WrapperFormatter<int[]>();
+					case 12: return new TempProject.WrapperFormatter<string>();
 					default: return null;
 			}
 		}

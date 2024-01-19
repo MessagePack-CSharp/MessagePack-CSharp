@@ -8,7 +8,8 @@ using MsgPack = global::MessagePack;
 
 partial class GeneratedMessagePackResolver
 {
-	private sealed class MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.MyEnum>
+private partial class MyTestNamespace { 
+	internal sealed class MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.MyEnum>
 	{
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::MyTestNamespace.MyEnum value, MsgPack::MessagePackSerializerOptions options)
 		{
@@ -20,6 +21,6 @@ partial class GeneratedMessagePackResolver
 			return (global::MyTestNamespace.MyEnum)reader.ReadInt32();
 		}
 	}
-}
+}}
 
 }

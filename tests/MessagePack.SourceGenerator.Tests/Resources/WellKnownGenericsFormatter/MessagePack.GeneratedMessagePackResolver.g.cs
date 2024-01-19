@@ -66,7 +66,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 0: return new MsgPack::Formatters.ValueTupleFormatter<int, string, long>();
 					case 1: return new MsgPack::Formatters.ListFormatter<global::System.Collections.Generic.List<int>>();
 					case 2: return new MsgPack::Formatters.ListFormatter<int>();
-					case 3: return new MyObjectFormatter();
+					case 3: return new TempProject.MyObjectFormatter();
 					default: return null;
 			}
 		}

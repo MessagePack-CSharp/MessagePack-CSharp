@@ -63,10 +63,10 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 			switch (key)
 			{
-					case 0: return new MyGenericObjectFormatter<global::TempProject.MyGenericObject<int, string>, global::TempProject.MyGenericObject<int, string>>();
-					case 1: return new MyGenericObjectFormatter<int, string>();
-					case 2: return new MyObjectFormatter();
-					case 3: return new MyObjectNestedFormatter();
+					case 0: return new TempProject.MyGenericObjectFormatter<global::TempProject.MyGenericObject<int, string>, global::TempProject.MyGenericObject<int, string>>();
+					case 1: return new TempProject.MyGenericObjectFormatter<int, string>();
+					case 2: return new TempProject.MyObjectFormatter();
+					case 3: return new TempProject.MyObjectNestedFormatter();
 					default: return null;
 			}
 		}

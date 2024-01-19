@@ -35,6 +35,7 @@ partial class GeneratedMessagePackResolver
 			return new global::ContainingClass.Derived1();
 		}
 	}
+
 }
 
 }

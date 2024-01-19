@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
-public sealed record GenericSerializationInfo(string FullName, string FormatterName, bool IsOpenGenericType) : IResolverRegisterInfo
+public sealed record GenericSerializationInfo(string FullName, string FormatterName, string? Namespace, bool IsOpenGenericType) : IResolverRegisterInfo
 {
     public IReadOnlyCollection<Diagnostic> Diagnostics { get; init; } = Array.Empty<Diagnostic>();
 

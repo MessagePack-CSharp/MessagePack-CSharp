@@ -15,7 +15,8 @@ using MsgPack = global::MessagePack;
 partial class <#= ResolverName #>
 {
 <#  bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members);#>
-	private sealed class <#= Info.FormatterName #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+<# using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { #>
+	<#=classVisibility#> sealed class <#= Info.FormatterName #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
 <# foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
 		where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# } #>
@@ -144,6 +145,8 @@ partial class <#= ResolverName #>
 <# } #>
 		}
 	}
+
+<# } // close EmitClassesForNamespace #>
 }
 
 <# if (ResolverNamespace.Length > 0) { #>

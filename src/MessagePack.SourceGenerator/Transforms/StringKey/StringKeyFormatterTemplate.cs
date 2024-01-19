@@ -41,7 +41,10 @@ namespace MessagePack.SourceGenerator.Transforms
 	}
 
 	bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members); 
-            this.Write("\tprivate sealed class ");
+ using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { 
+            this.Write("\t");
+            this.Write(this.ToStringHelper.ToStringWithCulture(classVisibility));
+            this.Write(" sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterName));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
@@ -182,7 +185,9 @@ namespace MessagePack.SourceGenerator.Transforms
  if (Info.Members.Length != 0) { 
             this.Write("\t\t\treader.Depth--;\r\n");
  } 
-            this.Write("\t\t\treturn ____result;\r\n\t\t}\r\n\t}\r\n}\r\n\r\n");
+            this.Write("\t\t\treturn ____result;\r\n\t\t}\r\n\t}\r\n");
+ } // close EmitClassesForNamespace 
+            this.Write("}\r\n\r\n");
  if (ResolverNamespace.Length > 0) { 
             this.Write("}\r\n");
  } 

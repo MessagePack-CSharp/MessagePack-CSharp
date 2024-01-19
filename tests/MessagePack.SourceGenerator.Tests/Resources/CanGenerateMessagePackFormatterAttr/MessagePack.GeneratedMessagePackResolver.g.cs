@@ -60,7 +60,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 			switch (key)
 			{
-					case 0: return new BarFormatter();
+					case 0: return new TempProject.BarFormatter();
 					default: return null;
 			}
 		}

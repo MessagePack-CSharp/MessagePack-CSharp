@@ -465,7 +465,7 @@ public class TypeCollector
             }
         }
 
-        var info = new GenericSerializationInfo(fullName, formatterName, elemType is ITypeParameterSymbol);
+        var info = new GenericSerializationInfo(fullName, formatterName, null, elemType is ITypeParameterSymbol);
         this.collectedGenericInfo.Add(info);
         return true;
     }
@@ -496,6 +496,7 @@ public class TypeCollector
     {
         INamedTypeSymbol genericType = type.ConstructUnboundGenericType();
         var genericTypeString = genericType.ToDisplayString();
+        string? genericTypeNamespace = genericType.ContainingNamespace?.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         var fullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var isOpenGenericType = this.IsOpenGenericTypeRecursively(type);
 
@@ -519,7 +520,11 @@ public class TypeCollector
                 return true;
             }
 
-            var info = new GenericSerializationInfo(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), "MsgPack::Formatters.NullableFormatter<" + firstTypeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + ">", isOpenGenericType);
+            var info = new GenericSerializationInfo(
+                type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                "MsgPack::Formatters.NullableFormatter<" + firstTypeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + ">",
+                Namespace: null,
+                isOpenGenericType);
             this.collectedGenericInfo.Add(info);
             return true;
         }
@@ -535,7 +540,11 @@ public class TypeCollector
             var typeArgs = string.Join(", ", type.TypeArguments.Select(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
             var f = formatter.Replace("TREPLACE", typeArgs);
 
-            var info = new GenericSerializationInfo(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), f, isOpenGenericType);
+            var info = new GenericSerializationInfo(
+                type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                f,
+                null,
+                isOpenGenericType);
 
             this.collectedGenericInfo.Add(info);
 
@@ -547,14 +556,22 @@ public class TypeCollector
             formatter = KnownGenericTypes["System.Linq.IGrouping<,>"];
             f = formatter.Replace("TREPLACE", typeArgs);
 
-            var groupingInfo = new GenericSerializationInfo("global::System.Linq.IGrouping<" + typeArgs + ">", f, isOpenGenericType);
+            var groupingInfo = new GenericSerializationInfo(
+                "global::System.Linq.IGrouping<" + typeArgs + ">",
+                f,
+                genericTypeNamespace,
+                isOpenGenericType);
             this.collectedGenericInfo.Add(groupingInfo);
 
             formatter = KnownGenericTypes["System.Collections.Generic.IEnumerable<>"];
             typeArgs = type.TypeArguments[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             f = formatter.Replace("TREPLACE", typeArgs);
 
-            var enumerableInfo = new GenericSerializationInfo("global::System.Collections.Generic.IEnumerable<" + typeArgs + ">", f, isOpenGenericType);
+            var enumerableInfo = new GenericSerializationInfo(
+                "global::System.Collections.Generic.IEnumerable<" + typeArgs + ">",
+                f,
+                genericTypeNamespace,
+                isOpenGenericType);
             this.collectedGenericInfo.Add(enumerableInfo);
             return true;
         }
@@ -605,7 +622,11 @@ public class TypeCollector
 
         formatterBuilder.Append('>');
 
-        var genericSerializationInfo = new GenericSerializationInfo(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), formatterBuilder.ToString(), isOpenGenericType);
+        var genericSerializationInfo = new GenericSerializationInfo(
+            type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            formatterBuilder.ToString(),
+            genericTypeNamespace,
+            isOpenGenericType);
         this.collectedGenericInfo.Add(genericSerializationInfo);
         return true;
     }

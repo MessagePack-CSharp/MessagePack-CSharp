@@ -15,6 +15,8 @@ public partial class FormatterTemplate : IFormatterTemplate
 
     public AnalyzerOptions Options { get; }
 
+    public string? FormattedTypeNamespace => this.Info.Namespace;
+
     public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
 
     public string ResolverName => this.Options.Generator.Resolver.Name;
@@ -33,6 +35,8 @@ public partial class StringKeyFormatterTemplate : IFormatterTemplate
     }
 
     public AnalyzerOptions Options { get; }
+
+    public string? FormattedTypeNamespace => this.Info.Namespace;
 
     public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
 
@@ -62,7 +66,7 @@ public partial class ResolverTemplate
     public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.ResolverName, this.ResolverNamespace)}.g.cs";
 }
 
-public partial class EnumTemplate
+public partial class EnumTemplate : IFormatterTemplate
 {
     public EnumTemplate(AnalyzerOptions options, EnumSerializationInfo info)
     {
@@ -71,6 +75,8 @@ public partial class EnumTemplate
     }
 
     public AnalyzerOptions Options { get; }
+
+    public string? FormattedTypeNamespace => this.Info.Namespace;
 
     public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
 
@@ -81,7 +87,7 @@ public partial class EnumTemplate
     public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
 
-public partial class UnionTemplate
+public partial class UnionTemplate : IFormatterTemplate
 {
     public UnionTemplate(AnalyzerOptions options, UnionSerializationInfo info)
     {
@@ -90,6 +96,8 @@ public partial class UnionTemplate
     }
 
     public AnalyzerOptions Options { get; }
+
+    public string? FormattedTypeNamespace => this.Info.Namespace;
 
     public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
 

@@ -63,10 +63,10 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 			switch (key)
 			{
-					case 0: return new IMyTypeFormatter();
-					case 1: return new Derived1Formatter();
-					case 2: return new Derived2Formatter();
-					case 3: return new MyMessagePackObjectFormatter();
+					case 0: return new MyTestNamespace.IMyTypeFormatter();
+					case 1: return new MyTestNamespace.Derived1Formatter();
+					case 2: return new MyTestNamespace.Derived2Formatter();
+					case 3: return new MyTestNamespace.MyMessagePackObjectFormatter();
 					default: return null;
 			}
 		}

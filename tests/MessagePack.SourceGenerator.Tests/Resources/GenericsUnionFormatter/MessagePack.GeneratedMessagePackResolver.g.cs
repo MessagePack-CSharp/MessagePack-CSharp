@@ -64,9 +64,9 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			switch (key)
 			{
 					case 0: return new MsgPack::Formatters.InterfaceEnumerableFormatter<global::System.Guid>();
-					case 1: return new WrapperFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
-					case 2: return new WrapperFormatter<int[]>();
-					case 3: return new WrapperFormatter<string>();
+					case 1: return new TempProject.WrapperFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
+					case 2: return new TempProject.WrapperFormatter<int[]>();
+					case 3: return new TempProject.WrapperFormatter<string>();
 					default: return null;
 			}
 		}

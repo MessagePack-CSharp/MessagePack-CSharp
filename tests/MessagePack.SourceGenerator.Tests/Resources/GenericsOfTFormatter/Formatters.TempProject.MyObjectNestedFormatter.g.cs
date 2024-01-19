@@ -10,7 +10,8 @@ using MsgPack = global::MessagePack;
 
 partial class GeneratedMessagePackResolver
 {
-	private sealed class MyObjectNestedFormatter : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyObjectNested>
+private partial class TempProject { 
+	internal sealed class MyObjectNestedFormatter : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyObjectNested>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::TempProject.MyObjectNested value, MsgPack::MessagePackSerializerOptions options)
@@ -55,6 +56,7 @@ partial class GeneratedMessagePackResolver
 			return ____result;
 		}
 	}
-}
+
+}}
 
 }

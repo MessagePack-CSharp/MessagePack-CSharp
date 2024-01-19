@@ -65,8 +65,8 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 					case 0: return new MsgPack::Formatters.ListFormatter<global::TempProject.MyObject2>();
 					case 1: return new MsgPack::Formatters.ArrayFormatter<global::TempProject.MyObject2>();
-					case 2: return new MyObjectFormatter();
-					case 3: return new MyObject2Formatter();
+					case 2: return new TempProject.MyObjectFormatter();
+					case 3: return new TempProject.MyObject2Formatter();
 					default: return null;
 			}
 		}

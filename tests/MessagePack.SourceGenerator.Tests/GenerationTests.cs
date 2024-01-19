@@ -38,6 +38,164 @@ internal enum MyEnum
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, options: new() { Generator = new() { Formatters = new() { UsesMapMode = usesMapMode } } }, testMethod: $"{nameof(EnumFormatter)}({container}, {usesMapMode})");
     }
 
+    [Fact]
+    public async Task EnumFormatter_CollidingTypeNames()
+    {
+        string testSource = """
+using MessagePack;
+
+[MessagePackObject]
+internal class MyMessagePackObject
+{
+    [Key(0)]
+    internal NS1.MyEnum EnumValue1 { get; set; }
+
+    [Key(1)]
+    internal NS2.MyEnum EnumValue2 { get; set; }
+}
+
+namespace NS1 {
+    internal enum MyEnum
+    {
+        A, B, C
+    }
+}
+
+namespace NS2 {
+    internal enum MyEnum
+    {
+        D, E
+    }
+}
+""";
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task GenericType_CollidingTypeNames()
+    {
+        string testSource = """
+using MessagePack;
+
+[MessagePackObject]
+internal class MyMessagePackObject
+{
+    [Key(0)]
+    internal NS1.MyType<int> Value1 { get; set; }
+
+    [Key(1)]
+    internal NS2.MyType<int> Value2 { get; set; }
+}
+
+namespace NS1 {
+    [MessagePackObject]
+    internal class MyType<T>
+    {
+        [Key(0)]
+        internal string Foo { get; set; }
+    }
+}
+
+namespace NS2 {
+    [MessagePackObject]
+    internal class MyType<T>
+    {
+        [Key(0)]
+        internal string Foo { get; set; }
+    }
+}
+""";
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task NonGenericType_CollidingTypeNames()
+    {
+        string testSource = """
+using MessagePack;
+
+[MessagePackObject]
+internal class MyMessagePackObject
+{
+    [Key(0)]
+    internal NS1.MyType Value1 { get; set; }
+
+    [Key(1)]
+    internal NS2.MyType Value2 { get; set; }
+}
+
+namespace NS1 {
+    [MessagePackObject]
+    internal class MyType
+    {
+        [Key(0)]
+        internal string Foo { get; set; }
+    }
+}
+
+namespace NS2 {
+    [MessagePackObject]
+    internal class MyType
+    {
+        [Key(0)]
+        internal string Foo { get; set; }
+    }
+}
+""";
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task MixType_CollidingTypeNames()
+    {
+        string testSource = """
+using MessagePack;
+
+[MessagePackObject]
+internal class MyMessagePackObject
+{
+    [Key(0)]
+    internal NS1.MyType Value1 { get; set; }
+
+    [Key(1)]
+    internal NS2.MyType Value2 { get; set; }
+
+    [Key(2)]
+    internal NS3.MyType<int> Value3 { get; set; }
+}
+
+namespace NS1 {
+    internal enum MyType
+    {
+        A, B
+    }
+}
+
+namespace NS2 {
+    [MessagePackObject]
+    internal class MyType
+    {
+        [Key(0)]
+        internal string Foo { get; set; }
+    }
+}
+
+namespace NS3 {
+    [MessagePackObject]
+    internal class MyType<T>
+    {
+        [Key(0)]
+        internal string Foo { get; set; }
+    }
+}
+""";
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
     [Theory, PairwiseData]
     public async Task CustomFormatterViaAttributeOnProperty(bool usesMapMode)
     {

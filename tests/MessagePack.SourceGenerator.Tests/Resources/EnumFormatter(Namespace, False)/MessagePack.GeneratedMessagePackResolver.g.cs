@@ -61,8 +61,8 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 			switch (key)
 			{
-					case 0: return new MyEnumFormatter();
-					case 1: return new MyMessagePackObjectFormatter();
+					case 0: return new MyTestNamespace.MyEnumFormatter();
+					case 1: return new MyTestNamespace.MyMessagePackObjectFormatter();
 					default: return null;
 			}
 		}

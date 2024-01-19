@@ -9,7 +9,8 @@ using MsgPack = global::MessagePack;
 
 partial class <#= ResolverName #>
 {
-	private sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+<# using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { #>
+	<#= classVisibility #> sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
 	{
 		public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.FullName #> value, MsgPack::MessagePackSerializerOptions options)
 		{
@@ -21,6 +22,7 @@ partial class <#= ResolverName #>
 			return (<#= Info.FullName #>)reader.Read<#= Info.UnderlyingTypeName #>();
 		}
 	}
+<# } #>
 }
 
 <# if (ResolverNamespace.Length > 0) { #>

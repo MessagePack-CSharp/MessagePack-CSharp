@@ -55,6 +55,7 @@ partial class GeneratedMessagePackResolver
 			return ____result;
 		}
 	}
+
 }
 
 }

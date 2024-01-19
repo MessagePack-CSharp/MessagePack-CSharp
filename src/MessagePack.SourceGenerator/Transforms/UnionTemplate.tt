@@ -12,7 +12,8 @@ using MsgPack = global::MessagePack;
 
 partial class <#= ResolverName #>
 {
-	private sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+<# using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { #>
+	<#= classVisibility #> sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
 	{
 		private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
 		private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
@@ -94,6 +95,7 @@ partial class <#= ResolverName #>
 			return result;
 		}
 	}
+<# } // close EmitClassesForNamespace #>
 }
 
 <# if (ResolverNamespace.Length > 0) { #>
