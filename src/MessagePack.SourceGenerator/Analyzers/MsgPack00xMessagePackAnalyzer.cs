@@ -8,7 +8,7 @@ using AnalyzerOptions = MessagePack.SourceGenerator.CodeAnalysis.AnalyzerOptions
 
 namespace MessagePack.SourceGenerator.Analyzers;
 
-[DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic, LanguageNames.FSharp)]
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
 {
     public const string UseMessagePackObjectAttributeId = "MsgPack003";

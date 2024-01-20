@@ -11,7 +11,7 @@ namespace MessagePack.SourceGenerator.Analyzers;
 /// <summary>
 /// An analyzer that guards against calling APIs that rely on static, mutable fields defining "default" options.
 /// </summary>
-[DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic, LanguageNames.FSharp)]
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class MsgPack001SpecifyOptionsAnalyzer : DiagnosticAnalyzer
 {
     public const string MissingOptionsId = "MsgPack001";
