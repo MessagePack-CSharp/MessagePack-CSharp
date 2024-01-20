@@ -32,8 +32,4 @@
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Resources\Generics_Defined_In_ReferencedProject\" />
-  </ItemGroup>
-
 </Project>
