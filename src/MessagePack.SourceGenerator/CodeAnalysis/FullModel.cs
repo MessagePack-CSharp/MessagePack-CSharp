@@ -11,7 +11,6 @@ public record FullModel(
     ImmutableSortedSet<EnumSerializationInfo> EnumInfos,
     ImmutableSortedSet<GenericSerializationInfo> GenericInfos,
     ImmutableSortedSet<UnionSerializationInfo> UnionInfos,
-    ImmutableArray<Diagnostic> Diagnostics,
     AnalyzerOptions Options)
 {
     public bool IsEmpty => this.ObjectInfos.IsEmpty && this.EnumInfos.IsEmpty && this.GenericInfos.IsEmpty && this.UnionInfos.IsEmpty;
@@ -31,7 +30,6 @@ public record FullModel(
                 ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default),
                 ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
                 ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
-                ImmutableArray<Diagnostic>.Empty,
                 new AnalyzerOptions());
         }
 
@@ -48,7 +46,6 @@ public record FullModel(
             enumInfos.UnionWith(model.EnumInfos);
             genericInfos.UnionWith(model.GenericInfos);
             unionInfos.UnionWith(model.UnionInfos);
-            diagnostics.AddRange(model.Diagnostics);
 
             if (options != model.Options)
             {
@@ -61,7 +58,6 @@ public record FullModel(
             enumInfos.ToImmutable(),
             genericInfos.ToImmutable(),
             unionInfos.ToImmutable(),
-            diagnostics.ToImmutable(),
             options);
     }
 

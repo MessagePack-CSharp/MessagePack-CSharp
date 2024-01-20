@@ -51,8 +51,6 @@ public record ObjectSerializationInfo(
         }
     }
 
-    public IReadOnlyCollection<Diagnostic> Diagnostics { get; init; } = Array.Empty<Diagnostic>();
-
     public MemberSerializationInfo? GetMember(int index)
     {
         return this.Members.FirstOrDefault(x => x.IntKey == index);

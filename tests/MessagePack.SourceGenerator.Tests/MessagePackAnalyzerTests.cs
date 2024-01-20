@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Microsoft.CodeAnalysis.Testing;
-using VerifyCS = CSharpSourceGeneratorCodeFixVerifier<MessagePack.SourceGenerator.MessagePackGenerator, MessagePack.Analyzers.CodeFixes.MessagePackCodeFixProvider>;
+using VerifyCS = CSharpCodeFixVerifier<MessagePack.SourceGenerator.Analyzers.MsgPack00xMessagePackAnalyzer, MessagePack.Analyzers.CodeFixes.MessagePackCodeFixProvider>;
 
 public class MessagePackAnalyzerTests
 {

@@ -11,7 +11,7 @@ namespace MessagePack.SourceGenerator.Analyzers;
 /// <summary>
 /// An analyzer to guide callers to avoid use of mutable static fields for MessagePackSerializerOptions.
 /// </summary>
-[DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
+[DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic, LanguageNames.FSharp)]
 public class MsgPack002UseConstantOptionsAnalyzer : DiagnosticAnalyzer
 {
     public const string MutableSharedOptionsId = "MsgPack002";

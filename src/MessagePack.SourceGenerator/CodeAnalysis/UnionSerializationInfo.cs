@@ -11,8 +11,6 @@ public record UnionSerializationInfo(
     string FullName,
     UnionSubTypeInfo[] SubTypes) : IResolverRegisterInfo
 {
-    public IReadOnlyCollection<Diagnostic> Diagnostics { get; init; } = Array.Empty<Diagnostic>();
-
     public string FileNameHint => $"{CodeAnalysisUtilities.AppendNameToNamespace("Formatters", this.Namespace)}.{this.FormatterName}";
 
     public string FormatterName => this.Name + "Formatter";

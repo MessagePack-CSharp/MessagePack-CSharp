@@ -7,8 +7,6 @@ namespace MessagePack.SourceGenerator.CodeAnalysis;
 
 public sealed record EnumSerializationInfo(string? Namespace, string Name, string FullName, string UnderlyingTypeName) : IResolverRegisterInfo
 {
-    public IReadOnlyCollection<Diagnostic> Diagnostics { get; init; } = Array.Empty<Diagnostic>();
-
     public string FileNameHint => $"{CodeAnalysisUtilities.AppendNameToNamespace("Formatters", this.Namespace)}.{this.FormatterName}";
 
     public string FormatterName => this.Name + "Formatter";

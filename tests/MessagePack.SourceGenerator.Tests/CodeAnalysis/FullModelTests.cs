@@ -13,7 +13,6 @@ public class FullModelTests
             ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
-            ImmutableArray<Diagnostic>.Empty,
             new AnalyzerOptions());
 
         Assert.False(model1.Equals(null));
@@ -28,14 +27,12 @@ public class FullModelTests
             ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default).Add(new(null, "MyEnum", "My.MyEnum", "System.Int32")),
             ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
-            ImmutableArray<Diagnostic>.Empty,
             new AnalyzerOptions());
         FullModel model1b = new(
             ImmutableSortedSet.Create<ObjectSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default).Add(new(null, "MyEnum", "My.MyEnum", "System.Int32")),
             ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
-            ImmutableArray<Diagnostic>.Empty,
             new AnalyzerOptions());
 
         FullModel model2 = new(
@@ -43,7 +40,6 @@ public class FullModelTests
             ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
-            ImmutableArray<Diagnostic>.Empty,
             new AnalyzerOptions());
 
         Assert.Equal(model1b, model1a);

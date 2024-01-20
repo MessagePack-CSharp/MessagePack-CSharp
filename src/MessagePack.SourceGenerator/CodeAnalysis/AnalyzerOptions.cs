@@ -4,6 +4,7 @@
 #pragma warning disable SA1402 // File may only contain a single type
 
 using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
@@ -40,6 +41,19 @@ public record AnalyzerOptions
             AssumedFormattableTypes = ImmutableHashSet.CreateRange(formattableTypes).Union(formatterTypes.SelectMany(t => t.Value)),
             KnownFormatters = formatterTypes,
         };
+    }
+
+    /// <summary>
+    /// Modifies these options based on the attributes on the assembly being compiled.
+    /// </summary>
+    /// <param name="assemblyAttributes">The assembly-level attributes.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The modified set of options.</returns>
+    internal AnalyzerOptions WithAssemblyAttributes(ImmutableArray<AttributeData> assemblyAttributes, CancellationToken cancellationToken)
+    {
+        ImmutableDictionary<string, ImmutableHashSet<string>> customFormatters = AnalyzerUtilities.ParseKnownFormatterAttribute(assemblyAttributes, cancellationToken);
+        ImmutableArray<string> customFormattedTypes = AnalyzerUtilities.ParseAssumedFormattableAttribute(assemblyAttributes, cancellationToken);
+        return this.WithFormatterTypes(customFormattedTypes, customFormatters);
     }
 }
 

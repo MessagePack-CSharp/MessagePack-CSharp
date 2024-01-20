@@ -1,11 +1,15 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
+using AnalyzerOptions = MessagePack.SourceGenerator.CodeAnalysis.AnalyzerOptions;
 
 namespace MessagePack.SourceGenerator.Analyzers;
 
-public class MsgPack00xMessagePackAnalyzer
+[DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic, LanguageNames.FSharp)]
+public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
 {
     public const string UseMessagePackObjectAttributeId = "MsgPack003";
     public const string AttributeMessagePackObjectMembersId = "MsgPack004";
@@ -180,4 +184,36 @@ public class MsgPack00xMessagePackAnalyzer
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTLimitationsId));
+
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
+        TypeMustBeMessagePackObject,
+        PublicMemberNeedsKey,
+        InvalidMessagePackObject,
+        MessageFormatterMustBeMessagePackFormatter);
+
+    public override void Initialize(AnalysisContext context)
+    {
+        context.EnableConcurrentExecution();
+        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
+        context.RegisterCompilationStartAction(context =>
+        {
+            if (ReferenceSymbols.TryCreate(context.Compilation, out ReferenceSymbols? typeReferences))
+            {
+                AnalyzerOptions options = new AnalyzerOptions().WithAssemblyAttributes(context.Compilation.Assembly.GetAttributes(), context.CancellationToken);
+                context.RegisterSymbolAction(context => this.AnalyzeSymbol(context, typeReferences, options), SymbolKind.NamedType);
+            }
+        });
+    }
+
+    private void AnalyzeSymbol(SymbolAnalysisContext context, ReferenceSymbols typeReferences, AnalyzerOptions options)
+    {
+        INamedTypeSymbol declaredSymbol = (INamedTypeSymbol)context.Symbol;
+        switch (declaredSymbol.TypeKind)
+        {
+            case TypeKind.Interface when declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.UnionAttribute)):
+            case TypeKind.Class or TypeKind.Struct when declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.MessagePackObjectAttribute)):
+                TypeCollector.Collect(context.Compilation, options, typeReferences, context.ReportDiagnostic, declaredSymbol);
+                break;
+        }
+    }
 }

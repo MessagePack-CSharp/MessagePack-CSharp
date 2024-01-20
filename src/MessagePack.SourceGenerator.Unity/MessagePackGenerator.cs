@@ -48,26 +48,18 @@ public partial class MessagePackGenerator : ISourceGenerator
         }
 
         // Collect and apply the assembly-level attributes to the options.
-        ImmutableArray<AttributeData> assemblyAttributes = compilation.Assembly.GetAttributes();
-        ImmutableDictionary<string, ImmutableHashSet<string>> customFormatters = AnalyzerUtilities.ParseKnownFormatterAttribute(assemblyAttributes, context.CancellationToken);
-        ImmutableArray<string> customFormattedTypes = AnalyzerUtilities.ParseAssumedFormattableAttribute(assemblyAttributes, context.CancellationToken);
-        options = options.WithFormatterTypes(customFormattedTypes, customFormatters);
+        options = options.WithAssemblyAttributes(compilation.Assembly.GetAttributes(), context.CancellationToken);
 
         List<FullModel> modelPerType = new();
         foreach (var syntax in receiver.TypeDeclarations)
         {
-            if (TypeCollector.Collect(compilation, options, referenceSymbols, null, syntax, context.CancellationToken) is FullModel model)
+            if (TypeCollector.Collect(compilation, options, referenceSymbols, reportAnalyzerDiagnostic: null, syntax, context.CancellationToken) is FullModel model)
             {
                 modelPerType.Add(model);
             }
         }
 
         FullModel fullModel = FullModel.Combine(modelPerType.ToImmutableArray());
-
-        foreach (Diagnostic diagnostic in fullModel.Diagnostics)
-        {
-            context.ReportDiagnostic(diagnostic);
-        }
 
         if (options.IsGeneratingSource)
         {

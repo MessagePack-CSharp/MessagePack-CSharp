@@ -7,8 +7,6 @@ namespace MessagePack.SourceGenerator.CodeAnalysis;
 
 public sealed record GenericSerializationInfo(string FullName, string FormatterName, string? Namespace, bool IsOpenGenericType) : IResolverRegisterInfo
 {
-    public IReadOnlyCollection<Diagnostic> Diagnostics { get; init; } = Array.Empty<Diagnostic>();
-
     public bool Equals(GenericSerializationInfo? other)
     {
         return this.FullName.Equals(other?.FullName);

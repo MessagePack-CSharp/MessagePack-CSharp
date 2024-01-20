@@ -67,13 +67,13 @@ public partial class MessagePackGenerator : IIncrementalGenerator
 
                 if (!ReferenceSymbols.TryCreate(s.Left.Right, out ReferenceSymbols? referenceSymbols))
                 {
-                    return null;
+                    return default;
                 }
 
                 List<FullModel> modelPerType = new();
                 void Collect(TypeDeclarationSyntax typeDecl)
                 {
-                    if (TypeCollector.Collect(s.Left.Right, options, referenceSymbols, reportDiagnostic: null, typeDecl, ct) is FullModel model)
+                    if (TypeCollector.Collect(s.Left.Right, options, referenceSymbols, reportAnalyzerDiagnostic: null, typeDecl, ct) is FullModel model)
                     {
                         modelPerType.Add(model);
                     }
@@ -102,17 +102,9 @@ public partial class MessagePackGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(source, static (context, source) =>
         {
-            if (source is not null)
+            if (source is { Options.IsGeneratingSource: true })
             {
-                foreach (Diagnostic diagnostic in source.Diagnostics)
-                {
-                    context.ReportDiagnostic(diagnostic);
-                }
-
-                if (source.Options.IsGeneratingSource)
-                {
-                    Generate(new GeneratorContext(context), source);
-                }
+                Generate(new GeneratorContext(context), source);
             }
         });
     }
