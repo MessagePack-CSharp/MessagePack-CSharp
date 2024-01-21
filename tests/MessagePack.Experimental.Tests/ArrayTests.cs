@@ -351,6 +351,122 @@ namespace MessagePack.Experimental.Tests
             }
         }
 
+        [TestCase(1)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        [TestCase(128)]
+        [TestCase(4096)]
+        public void RandomValueSingleArrayTests(int length)
+        {
+            var array = new Single[length];
+            for (var index = 0; index < array.Length; index++)
+            {
+                array[index] = Random.Shared.NextSingle();
+            }
+
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<Single[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(length, decoded.Length);
+            for (var index = 0; index < array.Length; index++)
+            {
+                Assert.AreEqual(array[index], decoded[index]);
+            }
+        }
+
+        [Test]
+        public void EmptyDoubleArrayTests()
+        {
+            var array = Array.Empty<Double>();
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<Double[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(0, decoded.Length);
+        }
+
+        [Test]
+        public void NullDoubleArrayTests()
+        {
+            var array = default(Double[]);
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<Double[]>(encoded, options);
+            Assert.IsNull(decoded);
+        }
+
+        [TestCase(1)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        [TestCase(128)]
+        [TestCase(4096)]
+        public void DefaultDoubleArrayTests(int length)
+        {
+            var array = new Double[length];
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<Double[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(length, decoded.Length);
+            for (var index = 0; index < array.Length; index++)
+            {
+                Assert.AreEqual(array[index], decoded[index]);
+            }
+        }
+
+        [TestCase(1)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        [TestCase(128)]
+        [TestCase(4096)]
+        public void MinValueDoubleArrayTests(int length)
+        {
+            var array = new Double[length];
+            for (var index = 0; index < array.Length; index++)
+            {
+                array[index] = Double.MinValue;
+            }
+
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<Double[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(length, decoded.Length);
+            for (var index = 0; index < array.Length; index++)
+            {
+                Assert.AreEqual(array[index], decoded[index]);
+            }
+        }
+
+        [TestCase(1)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        [TestCase(128)]
+        [TestCase(4096)]
+        public void RandomValueDoubleArrayTests(int length)
+        {
+            var array = new Double[length];
+            for (var index = 0; index < array.Length; index++)
+            {
+                array[index] = Random.Shared.NextDouble();
+            }
+
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<Double[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(length, decoded.Length);
+            for (var index = 0; index < array.Length; index++)
+            {
+                Assert.AreEqual(array[index], decoded[index]);
+            }
+        }
+
         [Test]
         public void EmptyBooleanArrayTests()
         {

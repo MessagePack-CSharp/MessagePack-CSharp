@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <Title>MessagePack for C#, Experimental Plugins</Title>
@@ -10,6 +10,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="HardwareIntrinsics\DoubleArrayFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>DoubleArrayFormatter.tt</DependentUpon>
+    </None>
+    <None Include="HardwareIntrinsics\SingleArrayFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SingleArrayFormatter.tt</DependentUpon>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="HardwareIntrinsics\DoubleArrayFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>DoubleArrayFormatter.cs</LastGenOutput>
+    </None>
     <None Update="HardwareIntrinsics\FormatterHelpers.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>FormatterHelpers.cs</LastGenOutput>
@@ -18,9 +35,18 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>PrimitiveArrayGetFormatterHelper.cs</LastGenOutput>
     </None>
+    <None Update="HardwareIntrinsics\SingleArrayFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>SingleArrayFormatter.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="HardwareIntrinsics\DoubleArrayFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>DoubleArrayFormatter.tt</DependentUpon>
+    </Compile>
     <Compile Update="HardwareIntrinsics\FormatterHelpers.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -30,6 +56,11 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>PrimitiveArrayGetFormatterHelper.tt</DependentUpon>
+    </Compile>
+    <Compile Update="HardwareIntrinsics\SingleArrayFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SingleArrayFormatter.tt</DependentUpon>
     </Compile>
     <Compile Update="ResolverHelper.cs">
       <DesignTime>True</DesignTime>

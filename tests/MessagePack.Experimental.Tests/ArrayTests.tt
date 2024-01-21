@@ -11,6 +11,7 @@ var types = new Type[]
     typeof(short),
     typeof(int),
     typeof(float),
+    typeof(double),
     typeof(bool),
 };
 #>
@@ -112,7 +113,39 @@ foreach (var type in types)
     }
 #>
 <#
-    if (type != typeof(float) && type != typeof(bool))
+    if (type == typeof(float) || type == typeof(double))
+    {
+#>
+
+        [TestCase(1)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        [TestCase(128)]
+        [TestCase(4096)]
+        public void RandomValue<#= name #>ArrayTests(int length)
+        {
+            var array = new <#= name #>[length];
+            for (var index = 0; index < array.Length; index++)
+            {
+                array[index] = Random.Shared.Next<#= name #>();
+            }
+
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<<#= name #>[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(length, decoded.Length);
+            for (var index = 0; index < array.Length; index++)
+            {
+                Assert.AreEqual(array[index], decoded[index]);
+            }
+        }
+<#
+    }
+#>
+<#
+    if (type != typeof(float)  && type != typeof(double) && type != typeof(bool))
     {
 #>
 

@@ -1,0 +1,98 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+
+namespace MessagePack.Formatters;
+
+public sealed partial class DoubleArrayFormatter : IMessagePackFormatter<double[]?>
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ref byte WriteFloat64(ref byte destination, ulong value)
+    {
+        destination = MessagePackCode.Float64;
+        Unsafe.As<byte, ulong>(ref Unsafe.AddByteOffset(ref destination, 1)) = value;
+        return ref Unsafe.AddByteOffset(ref destination, 9);
+    }
+
+    public void Serialize(ref MessagePackWriter writer, double[]? value, MessagePackSerializerOptions options)
+    {
+        if (value is null)
+        {
+            writer.WriteNil();
+            return;
+        }
+
+        var inputLength = value.Length;
+        writer.WriteArrayHeader(inputLength);
+        if (inputLength == 0)
+        {
+            return;
+        }
+
+        var outputLength = inputLength * 9;
+        var destination = writer.GetSpan(outputLength);
+        ref var outputIterator = ref MemoryMarshal.GetReference(destination);
+        ref var inputIterator = ref Unsafe.As<double, ulong>(ref MemoryMarshal.GetArrayDataReference(value));
+        ref var inputEnd = ref Unsafe.Add(ref inputIterator, inputLength);
+
+<#
+(int BitWidth, int ShiftCount)[] array = new (int BitWidth, int ShiftCount)[3] { (512, 3), (256, 2), (128, 1) };
+for (int i = 0; i < array.Length; i++)
+{
+  var (BitWidth, ShiftCount) = array[i];
+#>
+        <# if (i != 0) {#>else <#} #>if (Vector<#= BitWidth #>.IsHardwareAccelerated && inputLength >= <#= 2 << ShiftCount #>)
+        {
+            const int ShiftCount = <#= ShiftCount #>;
+            const int Stride = 1 << ShiftCount;
+
+            for (ref var vectorizedEnd = ref Unsafe.Add(ref inputIterator, (inputLength >> ShiftCount) << ShiftCount);
+                !Unsafe.AreSame(ref inputIterator, ref vectorizedEnd);
+                inputIterator = ref Unsafe.Add(ref inputIterator, Stride))
+            {
+                // Fetch <#= (1 << ShiftCount) #> doubles.
+                var current = Vector<#= BitWidth #>.LoadUnsafe(ref inputIterator).AsByte();
+
+                // Reorder Little Endian bytes to Big Endian.
+                var answer = Vector<#= BitWidth #>.Shuffle(current, Vector<#= BitWidth #>.Create(<# for (int j = 0; j < (1 << (ShiftCount - 1)); j++){ #><# if (j == 0) { #>(byte)<# } else {#> <#}#><#= 7 + j * 16 #>, <#= 6 + j * 16 #>, <#= 5 + j * 16 #>, <#= 4 + j * 16 #>, <#= 3 + j * 16 #>, <#= 2 + j * 16 #>, <#= 1 + j * 16 #>, <#= 0 + j * 16 #>, <#= 15 + j * 16 #>, <#= 14 + j * 16 #>, <#= 13 + j * 16 #>, <#= 12 + j * 16 #>, <#= 11 + j * 16 #>, <#= 10 + j * 16 #>, <#= 9 + j * 16 #>, <#= 8 + j * 16 #><# if (j + 1 != (1 << (ShiftCount - 1))) { #>,<# } #><# }#>)).AsUInt64();
+
+                // Write <#= (1 << ShiftCount) #> Big-Endian doubles.
+<# for (int j = 0; j < (1 << ShiftCount); j++) {#>
+                outputIterator = ref WriteFloat64(ref outputIterator, answer.GetElement(<#= j #>));
+<#}#>
+            }
+        }
+<#
+}
+#>
+
+        for (;
+            !Unsafe.AreSame(ref inputIterator, ref inputEnd);
+            inputIterator = ref Unsafe.Add(ref inputIterator, 1),
+            outputIterator = ref Unsafe.AddByteOffset(ref outputIterator, 9))
+        {
+            var current = inputIterator;
+            outputIterator = MessagePackCode.Float64;
+            Unsafe.AddByteOffset(ref outputIterator, 1) = (byte)(current >> 56);
+            Unsafe.AddByteOffset(ref outputIterator, 2) = (byte)(current >> 48);
+            Unsafe.AddByteOffset(ref outputIterator, 3) = (byte)(current >> 40);
+            Unsafe.AddByteOffset(ref outputIterator, 4) = (byte)(current >> 32);
+            Unsafe.AddByteOffset(ref outputIterator, 5) = (byte)(current >> 24);
+            Unsafe.AddByteOffset(ref outputIterator, 6) = (byte)(current >> 16);
+            Unsafe.AddByteOffset(ref outputIterator, 7) = (byte)(current >> 8);
+            Unsafe.AddByteOffset(ref outputIterator, 8) = (byte)current;
+        }
+
+        writer.Advance(outputLength);
+    }
+}

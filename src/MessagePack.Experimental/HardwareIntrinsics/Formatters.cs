@@ -3,6 +3,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
@@ -107,7 +108,7 @@ namespace MessagePack.Formatters
                     }
                 }
 
-            ProcessEach:
+ProcessEach:
                 while (inputIterator != inputEnd)
                 {
                     writer.Write(*inputIterator++);
@@ -234,7 +235,7 @@ namespace MessagePack.Formatters
                     }
                 }
 
-            ProcessEach:
+ProcessEach:
                 while (inputIterator != inputEnd)
                 {
                     writer.Write(*inputIterator++);
@@ -363,186 +364,12 @@ namespace MessagePack.Formatters
                     }
                 }
 
-            ProcessEach:
+ProcessEach:
                 while (inputIterator != inputEnd)
                 {
                     writer.Write(*inputIterator++);
                 }
             }
-        }
-    }
-
-    public sealed partial class SingleArrayFormatter : IMessagePackFormatter<float[]?>
-    {
-        public unsafe void Serialize(ref MessagePackWriter writer, float[]? value, MessagePackSerializerOptions options)
-        {
-            if (value == null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            var inputLength = value.Length;
-            writer.WriteArrayHeader(inputLength);
-            if (inputLength == 0)
-            {
-                return;
-            }
-
-            // output byte[] length can be calculated from input float[] length.
-            var outputLength = inputLength * 5;
-            var destination = writer.GetSpan(outputLength);
-            fixed (byte* pDestination = &destination[0])
-            {
-                var outputIterator = pDestination;
-                fixed (float* pSource = &value[0])
-                {
-                    var inputEnd = pSource + inputLength;
-                    var inputIterator = (uint*)pSource;
-
-                    if (Sse42.IsSupported)
-                    {
-                        if (inputLength < 6)
-                        {
-                            goto ProcessEach;
-                        }
-
-                        // Process 3 floats at once.
-                        // From 12 bytes to 15 bytes.
-                        var vectorConstant = Vector128.Create(MessagePackCode.Float32, 0, 0, 0, 0, MessagePackCode.Float32, 0, 0, 0, 0, MessagePackCode.Float32, 0, 0, 0, 0, 0);
-                        var vectorShuffle = Vector128.Create(0x80, 3, 2, 1, 0, 0x80, 7, 6, 5, 4, 0x80, 11, 10, 9, 8, 0x80);
-                        var vectorLoopLength = ((inputLength / 3) - 1) * 3;
-                        for (var vectorizedEnd = inputIterator + vectorLoopLength; inputIterator != vectorizedEnd; inputIterator += 3, outputIterator += 15)
-                        {
-                            // new float[] { 1.0, -2.0, 3.5, } is byte[12] { 00, 00, 80, 3f, 00, 00, 00, c0, 00, 00, 60, 40 } in binary expression;
-                            var current = Sse2.LoadVector128((byte*)inputIterator);
-
-                            // Output binary should be byte[15] { ca, 3f, 80, 00, 00, ca, c0, 00, 00, 00, ca, 40, 60, 00, 00 };
-                            Sse2.Store(outputIterator, Sse2.Or(Ssse3.Shuffle(current, vectorShuffle), vectorConstant));
-                        }
-                    }
-
-                ProcessEach:
-                    while (inputIterator != inputEnd)
-                    {
-                        // Encode float as Big Endian
-                        *outputIterator++ = MessagePackCode.Float32;
-                        var current = *inputIterator++;
-                        *outputIterator++ = (byte)(current >> 24);
-                        *outputIterator++ = (byte)(current >> 16);
-                        *outputIterator++ = (byte)(current >> 8);
-                        *outputIterator++ = (byte)current;
-                    }
-                }
-            }
-
-            writer.Advance(outputLength);
-        }
-    }
-
-    public sealed partial class DoubleArrayFormatter : IMessagePackFormatter<double[]?>
-    {
-        public unsafe void Serialize(ref MessagePackWriter writer, double[]? value, MessagePackSerializerOptions options)
-        {
-            if (value == null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            var inputLength = value.Length;
-            writer.WriteArrayHeader(inputLength);
-            if (inputLength == 0)
-            {
-                return;
-            }
-
-            var outputLength = inputLength * 9;
-            var destination = writer.GetSpan(outputLength);
-            fixed (byte* pDestination = &destination[0])
-            {
-                var outputIterator = pDestination;
-                fixed (double* pSource = &value[0])
-                {
-                    var inputEnd = pSource + inputLength;
-                    var inputIterator = (ulong*)pSource;
-
-                    if (Avx2.IsSupported)
-                    {
-                        const int ShiftCount = 2;
-                        const int Stride = 1 << ShiftCount;
-
-                        if (inputLength < Stride << 1)
-                        {
-                            goto ProcessEach;
-                        }
-
-                        var vectorShuffle = Vector256.Create((byte)7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
-                        for (var vectorizedEnd = inputIterator + ((inputLength >> ShiftCount) << ShiftCount); inputIterator != vectorizedEnd; inputIterator += Stride)
-                        {
-                            // Fetch 4 doubles.
-                            var current = Avx.LoadVector256((byte*)inputIterator);
-
-                            // Reorder Little Endian bytes to Big Endian.
-                            var answer = Avx2.Shuffle(current, vectorShuffle).AsUInt64();
-
-                            // Write 4 Big-Endian doubles.
-                            *outputIterator++ = MessagePackCode.Float64;
-                            *(ulong*)outputIterator = answer.GetElement(0);
-                            outputIterator += 8;
-                            *outputIterator++ = MessagePackCode.Float64;
-                            *(ulong*)outputIterator = answer.GetElement(1);
-                            outputIterator += 8;
-                            *outputIterator++ = MessagePackCode.Float64;
-                            *(ulong*)outputIterator = answer.GetElement(2);
-                            outputIterator += 8;
-                            *outputIterator++ = MessagePackCode.Float64;
-                            *(ulong*)outputIterator = answer.GetElement(3);
-                            outputIterator += 8;
-                        }
-                    }
-                    else if (Ssse3.IsSupported)
-                    {
-                        const int ShiftCount = 1;
-                        const int Stride = 1 << ShiftCount;
-
-                        if (inputLength < Stride << 1)
-                        {
-                            goto ProcessEach;
-                        }
-
-                        var vectorShuffle = Vector128.Create((byte)7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
-                        for (var vectorizedEnd = inputIterator + ((inputLength >> ShiftCount) << ShiftCount); inputIterator != vectorizedEnd; inputIterator += Stride)
-                        {
-                            var current = Sse2.LoadVector128((byte*)inputIterator);
-                            var answer = Ssse3.Shuffle(current, vectorShuffle).AsUInt64();
-                            *outputIterator++ = MessagePackCode.Float64;
-                            *(ulong*)outputIterator = answer.GetElement(0);
-                            outputIterator += 8;
-                            *outputIterator++ = MessagePackCode.Float64;
-                            *(ulong*)outputIterator = answer.GetElement(1);
-                            outputIterator += 8;
-                        }
-                    }
-
-                ProcessEach:
-                    while (inputIterator != inputEnd)
-                    {
-                        *outputIterator++ = MessagePackCode.Float64;
-                        var current = *inputIterator++;
-                        *outputIterator++ = (byte)(current >> 56);
-                        *outputIterator++ = (byte)(current >> 48);
-                        *outputIterator++ = (byte)(current >> 40);
-                        *outputIterator++ = (byte)(current >> 32);
-                        *outputIterator++ = (byte)(current >> 24);
-                        *outputIterator++ = (byte)(current >> 16);
-                        *outputIterator++ = (byte)(current >> 8);
-                        *outputIterator++ = (byte)current;
-                    }
-                }
-            }
-
-            writer.Advance(outputLength);
         }
     }
 
@@ -651,7 +478,7 @@ namespace MessagePack.Formatters
                         }
                     }
 
-                ProcessEach:
+ProcessEach:
                     while (inputIterator != inputEnd)
                     {
                         *outputIterator++ = *inputIterator++ ? MessagePackCode.True : MessagePackCode.False;
@@ -749,7 +576,7 @@ namespace MessagePack.Formatters
                             }
                         }
 
-                    ProcessEach:
+ProcessEach:
                         while (inputIterator != inputEnd)
                         {
                             switch (*inputIterator++)
