@@ -48,12 +48,12 @@ public partial class MessagePackGenerator : IIncrementalGenerator
         var messagePackObjectTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
             $"{AttributeNamespace}.{MessagePackObjectAttributeName}",
             predicate: static (node, _) => node is TypeDeclarationSyntax,
-            transform: static (context, _) => (TypeDeclarationSyntax)context.TargetNode);
+            transform: static (context, _) => (ITypeSymbol)context.TargetSymbol);
 
         var unionTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
             $"{AttributeNamespace}.{MessagePackUnionAttributeName}",
             predicate: static (node, _) => node is InterfaceDeclarationSyntax,
-            transform: static (context, _) => (TypeDeclarationSyntax)context.TargetNode);
+            transform: static (context, _) => (ITypeSymbol)context.TargetSymbol);
 
         var combined =
             messagePackObjectTypes.Collect().Combine(unionTypes.Collect());
@@ -71,22 +71,22 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                 }
 
                 List<FullModel> modelPerType = new();
-                void Collect(TypeDeclarationSyntax typeDecl)
+                void Collect(ITypeSymbol typeSymbol)
                 {
-                    if (TypeCollector.Collect(s.Left.Right, options, referenceSymbols, reportAnalyzerDiagnostic: null, typeDecl, ct) is FullModel model)
+                    if (TypeCollector.Collect(s.Left.Right, options, referenceSymbols, reportAnalyzerDiagnostic: null, typeSymbol) is FullModel model)
                     {
                         modelPerType.Add(model);
                     }
                 }
 
-                foreach (TypeDeclarationSyntax typeDecl in s.Left.Left.Left)
+                foreach (var typeSymbol in s.Left.Left.Left)
                 {
-                    Collect(typeDecl);
+                    Collect(typeSymbol);
                 }
 
-                foreach (TypeDeclarationSyntax typeDecl in s.Left.Left.Right)
+                foreach (var typeSymbol in s.Left.Left.Right)
                 {
-                    Collect(typeDecl);
+                    Collect(typeSymbol);
                 }
 
                 return FullModel.Combine(modelPerType.ToImmutableArray());
