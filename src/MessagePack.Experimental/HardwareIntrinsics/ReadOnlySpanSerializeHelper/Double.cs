@@ -133,10 +133,10 @@ internal static partial class ReadOnlySpanSerializeHelper
             var outputLength = inputLength * (sizeof(double) + 1);
             var destination = writer.GetSpan(outputLength);
             ref var outputIterator = ref MemoryMarshal.GetReference(destination);
-            for (nuint index = 0; index < (nuint)inputLength; index++)
+            for (nuint index = 0, outputOffset = 0; index < (nuint)inputLength; index++, outputOffset += sizeof(double) + 1)
             {
                 writer.CancellationToken.ThrowIfCancellationRequested();
-                outputIterator = ref ReverseWriteFloat64(ref outputIterator, Unsafe.Add(ref inputIterator, index));
+                ReverseWriteFloat64(ref Unsafe.AddByteOffset(ref outputIterator, outputOffset), Unsafe.Add(ref inputIterator, index));
             }
 
             length -= inputLength;

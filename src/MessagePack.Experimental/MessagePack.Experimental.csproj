@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net8.0</TargetFrameworks>
@@ -16,15 +16,15 @@
     </None>
     <None Update="HardwareIntrinsics\PrimitiveArrayGetFormatterHelper.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>ReadOnlySpanSerializeHelper.double.cs</LastGenOutput>
+      <LastGenOutput>PrimitiveArrayGetFormatterHelper.cs</LastGenOutput>
     </None>
-    <None Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper.double.tt">
+    <None Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper\Double.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>ReadOnlySpanSerializeHelper.double.cs</LastGenOutput>
+      <LastGenOutput>Double.cs</LastGenOutput>
     </None>
-    <None Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper.single.tt">
+    <None Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper\Single.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>ReadOnlySpanSerializeHelper.single.cs</LastGenOutput>
+      <LastGenOutput>Single.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
@@ -34,20 +34,20 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>FormatterHelpers.tt</DependentUpon>
     </Compile>
-    <Compile Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper.double.cs">
+    <Compile Update="HardwareIntrinsics\PrimitiveArrayGetFormatterHelper.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>PrimitiveArrayGetFormatterHelper.tt</DependentUpon>
     </Compile>
-    <Compile Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper.double.cs">
+    <Compile Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper\Double.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>ReadOnlySpanSerializeHelper.double.tt</DependentUpon>
+      <DependentUpon>Double.tt</DependentUpon>
     </Compile>
-    <Compile Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper.single.cs">
+    <Compile Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper\Single.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>ReadOnlySpanSerializeHelper.single.tt</DependentUpon>
+      <DependentUpon>Single.tt</DependentUpon>
     </Compile>
   </ItemGroup>
 

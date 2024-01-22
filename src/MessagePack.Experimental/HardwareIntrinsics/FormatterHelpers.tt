@@ -430,6 +430,7 @@ for (var i1 = 0; i1 < range; i1++)
       typeof(sbyte),
       typeof(short),
       typeof(int),
+      typeof(long),
       typeof(float),
       typeof(double),
       typeof(bool),

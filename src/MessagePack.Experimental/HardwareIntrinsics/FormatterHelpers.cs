@@ -325,6 +325,37 @@ namespace MessagePack.Formatters
         }
     }
 
+    public sealed partial class Int64ArrayFormatter
+    {
+        public static readonly Int64ArrayFormatter Instance = new Int64ArrayFormatter();
+
+        private Int64ArrayFormatter()
+        {
+        }
+
+        public Int64[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<Int64>();
+            }
+
+            var array = new Int64[len];
+            for (var i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadInt64();
+            }
+
+            return array;
+        }
+    }
+
     public sealed partial class SingleArrayFormatter
     {
         public static readonly SingleArrayFormatter Instance = new SingleArrayFormatter();

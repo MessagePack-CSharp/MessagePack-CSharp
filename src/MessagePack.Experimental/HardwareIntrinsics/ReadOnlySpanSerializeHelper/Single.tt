@@ -16,7 +16,7 @@ namespace MessagePack.Formatters;
 
 internal static partial class ReadOnlySpanSerializeHelper
 {
-    internal static void Serialize(ref MessagePackWriter writer, ref readonly double input, int length)
+    internal static void Serialize(ref MessagePackWriter writer, ref readonly float input, int length)
     {
         writer.WriteArrayHeader(length);
         if (length == 0)
@@ -30,14 +30,14 @@ internal static partial class ReadOnlySpanSerializeHelper
             return;
         }
 
-        ref var inputIterator = ref Unsafe.As<double, ulong>(ref Unsafe.AsRef(in input));
-        const int maxInputSize = int.MaxValue / (sizeof(double) + 1);
+        ref var inputIterator = ref Unsafe.As<float, uint>(ref Unsafe.AsRef(in input));
+        const int maxInputSize = int.MaxValue / (sizeof(float) + 1);
 <#
-var array = new int[] { 8, 4, 2 };
+var array = new int[] { 16, 8, 4 };
 for (int i = 0; i < array.Length; i++)
 {
     var Count = array[i];
-    var BitWidth = Count * sizeof(double) * 8;
+    var BitWidth = Count * sizeof(float) * 8;
 #>
         <#if (i != 0){#>else <#}#>if (Vector<#= BitWidth #>.IsHardwareAccelerated)
         {
@@ -48,21 +48,21 @@ for (int i = 0; i < array.Length; i++)
                     alignedInputLength = maxInputSize & (~<#= Count - 1 #>);
                 }
 
-                var outputLength = (int)alignedInputLength * (sizeof(double) + 1);
+                var outputLength = (int)alignedInputLength * (sizeof(float) + 1);
                 var destination = writer.GetSpan(outputLength);
                 ref var outputIterator = ref MemoryMarshal.GetReference(destination);
-                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector<#= BitWidth #><ulong>.Count, outputOffset += (nuint)Vector<#= BitWidth #><ulong>.Count * (sizeof(double) + 1))
+                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector<#= BitWidth #><uint>.Count, outputOffset += (nuint)Vector<#= BitWidth #><uint>.Count * (sizeof(float) + 1))
                 {
                     writer.CancellationToken.ThrowIfCancellationRequested();
 
                     // Reorder Little Endian bytes to Big Endian.
-                    var shuffled = Vector<#= BitWidth #>.Shuffle(Vector<#= BitWidth #>.LoadUnsafe(ref inputIterator, inputOffset).AsByte(), Vector<#= BitWidth #>.Create(<# for (int j = 0; j * 8 < BitWidth; j += 16) { if (j == 0) { #>(byte)<# } else { #>, <# } #><#= j + 7 #>, <#= j + 6 #>, <#= j + 5 #>, <#= j + 4 #>, <#= j + 3 #>, <#= j + 2 #>, <#= j + 1 #>, <#= j #>, <#= j + 15 #>, <#= j + 14 #>, <#= j + 13 #>, <#= j + 12 #>, <#= j + 11 #>, <#= j + 10 #>, <#= j + 9 #>, <#= j + 8 #><# } #>)).AsUInt<#= sizeof(double) * 8 #>();
+                    var shuffled = Vector<#= BitWidth #>.Shuffle(Vector<#= BitWidth #>.LoadUnsafe(ref inputIterator, inputOffset).AsByte(), Vector<#= BitWidth #>.Create(<# for (int j = 0; j * 8 < BitWidth; j += 16) { if (j == 0) { #>(byte)<# } else { #>, <# } #><#= j + 3 #>, <#= j + 2 #>, <#= j + 1 #>, <#= j #>, <#= j + 7 #>, <#= j + 6 #>, <#= j + 5 #>, <#= j + 4 #>, <#= j + 11 #>, <#= j + 10 #>, <#= j + 9 #>, <#= j + 8 #>, <#= j + 15 #>, <#= j + 14 #>, <#= j + 13 #>, <#= j + 12 #><# } #>)).AsUInt<#= sizeof(float) * 8 #>();
 
-                    // Write <#= Count #> Big-Endian doubles.
+                    // Write <#= Count #> Big-Endian floats.
 <#for (int j = 0; j < Count; j++)
   {
 #>
-                    WriteFloat<#= sizeof(double) * 8 #>(ref Unsafe.AddByteOffset(ref outputIterator, outputOffset<# if (j != 0) { #> + <#= j * (sizeof(double) + 1) #><# } #>), shuffled.GetElement(<#= j #>));
+                    WriteFloat<#= sizeof(float) * 8 #>(ref Unsafe.AddByteOffset(ref outputIterator, outputOffset<# if (j != 0) { #> + <#= j * (sizeof(float) + 1) #><# } #>), shuffled.GetElement(<#= j #>));
 <#}#>
                 }
 
@@ -81,13 +81,13 @@ for (int i = 0; i < array.Length; i++)
                 inputLength = maxInputSize;
             }
 
-            var outputLength = inputLength * (sizeof(double) + 1);
+            var outputLength = inputLength * (sizeof(float) + 1);
             var destination = writer.GetSpan(outputLength);
             ref var outputIterator = ref MemoryMarshal.GetReference(destination);
-            for (nuint index = 0; index < (nuint)inputLength; index++)
+            for (nuint index = 0, outputOffset = 0; index < (nuint)inputLength; index++, outputOffset += sizeof(float) + 1)
             {
                 writer.CancellationToken.ThrowIfCancellationRequested();
-                outputIterator = ref ReverseWriteFloat<#= sizeof(double) * 8 #>(ref outputIterator, Unsafe.Add(ref inputIterator, index));
+                ReverseWriteFloat<#= sizeof(float) * 8 #>(ref Unsafe.AddByteOffset(ref outputIterator, outputOffset), Unsafe.Add(ref inputIterator, index));
             }
 
             length -= inputLength;

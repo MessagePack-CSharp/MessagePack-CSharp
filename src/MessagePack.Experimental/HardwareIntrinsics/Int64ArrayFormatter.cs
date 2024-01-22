@@ -5,9 +5,9 @@ using System.Runtime.InteropServices;
 
 namespace MessagePack.Formatters;
 
-public sealed partial class Int16ArrayFormatter : IMessagePackFormatter<short[]?>
+public sealed partial class Int64ArrayFormatter : IMessagePackFormatter<long[]?>
 {
-    public void Serialize(ref MessagePackWriter writer, short[]? value, MessagePackSerializerOptions options)
+    public void Serialize(ref MessagePackWriter writer, long[]? value, MessagePackSerializerOptions options)
     {
         if (value is null)
         {
