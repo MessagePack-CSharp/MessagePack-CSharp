@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,6 +6,9 @@
     <RootNamespace>Benchmark</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>$(NoWarn);MSB3243</NoWarn>
+    <Nullable>enable</Nullable>
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,23 +18,23 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack.Experimental\MessagePack.Experimental.csproj">
-      <Aliases>newmsgpack</Aliases>
+      <aliases>e</aliases>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\MessagePack.Annotations\MessagePack.Annotations.csproj">
-      <Aliases>newmsgpack</Aliases>
-    </ProjectReference>
-    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj">
-      <Aliases>newmsgpack</Aliases>
-    </ProjectReference>
+    <ProjectReference Include="..\..\src\MessagePack.Annotations\MessagePack.Annotations.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="MessagePack_2_1_165">
-      <HintPath>MessagePack_2_1_165.dll</HintPath>
-      <Aliases>oldmsgpack</Aliases>
-      <Private>true</Private>
-      <SpecificVersion>false</SpecificVersion>
-    </Reference>
+    <Using Include="System" />
+    <Using Include="System.Buffers" />
+    <Using Include="System.Runtime.InteropServices" />
+    <Using Include="BenchmarkDotNet.Attributes" />
+    <Using Include="MessagePack" />
+    <Using Include="MessagePack.Formatters" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
 </Project>
