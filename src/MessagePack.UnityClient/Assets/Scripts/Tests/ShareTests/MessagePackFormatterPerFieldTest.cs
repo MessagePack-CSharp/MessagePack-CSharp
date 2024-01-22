@@ -120,37 +120,37 @@ namespace MessagePack.Tests
         [MessagePackObject]
         public class BlockFormattedIntegers
         {
-            [Key(0)] [MessagePackFormatter(typeof(ForceByteBlockFormatter))] public byte UInt8Property { get; set; }
+            [Key(0)][MessagePackFormatter(typeof(ForceByteBlockFormatter))] public byte UInt8Property { get; set; }
 
-            [Key(1)] [MessagePackFormatter(typeof(ForceUInt16BlockFormatter))] public ushort UInt16Property { get; set; }
+            [Key(1)][MessagePackFormatter(typeof(ForceUInt16BlockFormatter))] public ushort UInt16Property { get; set; }
 
-            [Key(2)] [MessagePackFormatter(typeof(ForceUInt32BlockFormatter))] public uint UInt32Property { get; set; }
+            [Key(2)][MessagePackFormatter(typeof(ForceUInt32BlockFormatter))] public uint UInt32Property { get; set; }
 
-            [Key(3)] [MessagePackFormatter(typeof(ForceUInt64BlockFormatter))] public ulong UInt64Property { get; set; }
+            [Key(3)][MessagePackFormatter(typeof(ForceUInt64BlockFormatter))] public ulong UInt64Property { get; set; }
 
-            [Key(4)] [MessagePackFormatter(typeof(ForceSByteBlockFormatter))] public sbyte Int8Property { get; set; }
+            [Key(4)][MessagePackFormatter(typeof(ForceSByteBlockFormatter))] public sbyte Int8Property { get; set; }
 
-            [Key(5)] [MessagePackFormatter(typeof(ForceInt16BlockFormatter))] public short Int16Property { get; set; }
+            [Key(5)][MessagePackFormatter(typeof(ForceInt16BlockFormatter))] public short Int16Property { get; set; }
 
-            [Key(6)] [MessagePackFormatter(typeof(ForceInt32BlockFormatter))] public int Int32Property { get; set; }
+            [Key(6)][MessagePackFormatter(typeof(ForceInt32BlockFormatter))] public int Int32Property { get; set; }
 
-            [Key(7)] [MessagePackFormatter(typeof(ForceInt64BlockFormatter))] public long Int64Property { get; set; }
+            [Key(7)][MessagePackFormatter(typeof(ForceInt64BlockFormatter))] public long Int64Property { get; set; }
 
-            [Key(8)] [MessagePackFormatter(typeof(NullableForceByteBlockFormatter))] public byte? NullableUInt8Property { get; set; }
+            [Key(8)][MessagePackFormatter(typeof(NullableForceByteBlockFormatter))] public byte? NullableUInt8Property { get; set; }
 
-            [Key(9)] [MessagePackFormatter(typeof(NullableForceUInt16BlockFormatter))] public ushort? NullableUInt16Property { get; set; }
+            [Key(9)][MessagePackFormatter(typeof(NullableForceUInt16BlockFormatter))] public ushort? NullableUInt16Property { get; set; }
 
-            [Key(10)] [MessagePackFormatter(typeof(NullableForceUInt32BlockFormatter))] public uint? NullableUInt32Property { get; set; }
+            [Key(10)][MessagePackFormatter(typeof(NullableForceUInt32BlockFormatter))] public uint? NullableUInt32Property { get; set; }
 
-            [Key(11)] [MessagePackFormatter(typeof(NullableForceUInt64BlockFormatter))] public ulong? NullableUInt64Property { get; set; }
+            [Key(11)][MessagePackFormatter(typeof(NullableForceUInt64BlockFormatter))] public ulong? NullableUInt64Property { get; set; }
 
-            [Key(12)] [MessagePackFormatter(typeof(NullableForceSByteBlockFormatter))] public sbyte? NullableInt8Property { get; set; }
+            [Key(12)][MessagePackFormatter(typeof(NullableForceSByteBlockFormatter))] public sbyte? NullableInt8Property { get; set; }
 
-            [Key(13)] [MessagePackFormatter(typeof(NullableForceInt16BlockFormatter))] public short? NullableInt16Property { get; set; }
+            [Key(13)][MessagePackFormatter(typeof(NullableForceInt16BlockFormatter))] public short? NullableInt16Property { get; set; }
 
-            [Key(14)] [MessagePackFormatter(typeof(NullableForceInt32BlockFormatter))] public int? NullableInt32Property { get; set; }
+            [Key(14)][MessagePackFormatter(typeof(NullableForceInt32BlockFormatter))] public int? NullableInt32Property { get; set; }
 
-            [Key(15)] [MessagePackFormatter(typeof(NullableForceInt64BlockFormatter))] public long? NullableInt64Property { get; set; }
+            [Key(15)][MessagePackFormatter(typeof(NullableForceInt64BlockFormatter))] public long? NullableInt64Property { get; set; }
         }
 
         /// <summary>

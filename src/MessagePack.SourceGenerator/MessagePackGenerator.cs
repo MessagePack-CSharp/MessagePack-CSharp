@@ -2,32 +2,56 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using MessagePack.Analyzers.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
-using AnalyzerOptions = MessagePack.Analyzers.CodeAnalysis.AnalyzerOptions;
+using static MessagePack.SourceGenerator.Constants;
+using AnalyzerOptions = MessagePack.SourceGenerator.CodeAnalysis.AnalyzerOptions;
 
 namespace MessagePack.SourceGenerator;
 
 [Generator(LanguageNames.CSharp)]
 public partial class MessagePackGenerator : IIncrementalGenerator
 {
-    public const string MessagePackObjectAttributeFullName = "MessagePack.MessagePackObjectAttribute";
-    public const string MessagePackUnionAttributeFullName = "MessagePack.UnionAttribute";
-
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var options = context.AdditionalTextsProvider.Collect().Combine(context.AnalyzerConfigOptionsProvider).Select(
-            ((ImmutableArray<AdditionalText> AdditionalFiles, AnalyzerConfigOptionsProvider Options) t, CancellationToken ct) => AnalyzerOptions.Parse(t.Options.GlobalOptions, t.AdditionalFiles, ct) with { IsGeneratingSource = true });
+        // TODO: Consider auto-detect formatters declared in this compilation
+        // so attributes are only required to use formatters from other assemblies.
+        var customFormatters = context.SyntaxProvider.ForAttributeWithMetadataName(
+            $"{AttributeNamespace}.{MessagePackKnownFormatterAttributeName}",
+            predicate: static (node, ct) => true,
+            transform: static (context, ct) => AnalyzerUtilities.ParseKnownFormatterAttribute(context.Attributes, ct)).Collect();
+
+        var customFormattedTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+            $"{AttributeNamespace}.{MessagePackAssumedFormattableAttributeName}",
+            predicate: static (node, ct) => true,
+            transform: static (context, ct) => AnalyzerUtilities.ParseAssumedFormattableAttribute(context.Attributes, ct)).SelectMany((a, ct) => a).Collect();
+
+        var resolverOptions = context.SyntaxProvider.ForAttributeWithMetadataName(
+            $"{AttributeNamespace}.{GeneratedMessagePackResolverAttributeName}",
+            predicate: static (node, ct) => true,
+            transform: static (context, ct) => AnalyzerUtilities.ParseGeneratorAttribute(context.Attributes, context.TargetSymbol, ct)).Collect().Select((a, ct) => a.SingleOrDefault(ao => ao is not null));
+
+        var options = resolverOptions.Combine(customFormattedTypes).Combine(customFormatters).Select(static (input, ct) =>
+        {
+            AnalyzerOptions? options = input.Left.Left ?? new();
+
+            var formattableTypes = input.Left.Right;
+            var formatterTypes = input.Right.Aggregate(
+                ImmutableDictionary<string, ImmutableHashSet<string>>.Empty,
+                (first, second) => first.AddRange(second));
+
+            options = options.WithFormatterTypes(formattableTypes, formatterTypes);
+
+            return options;
+        });
 
         var messagePackObjectTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
-            MessagePackObjectAttributeFullName,
+            $"{AttributeNamespace}.{MessagePackObjectAttributeName}",
             predicate: static (node, _) => node is TypeDeclarationSyntax,
             transform: static (context, _) => (TypeDeclarationSyntax)context.TargetNode);
 
         var unionTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
-            MessagePackUnionAttributeFullName,
+            $"{AttributeNamespace}.{MessagePackUnionAttributeName}",
             predicate: static (node, _) => node is InterfaceDeclarationSyntax,
             transform: static (context, _) => (TypeDeclarationSyntax)context.TargetNode);
 
@@ -39,15 +63,17 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             .Combine(options)
             .Select(static (s, ct) =>
             {
+                AnalyzerOptions options = s.Right;
+
                 if (!ReferenceSymbols.TryCreate(s.Left.Right, out ReferenceSymbols? referenceSymbols))
                 {
-                    return null;
+                    return default;
                 }
 
                 List<FullModel> modelPerType = new();
                 void Collect(TypeDeclarationSyntax typeDecl)
                 {
-                    if (TypeCollector.Collect(s.Left.Right, s.Right, referenceSymbols, reportDiagnostic: null, typeDecl, ct) is FullModel model)
+                    if (TypeCollector.Collect(s.Left.Right, options, referenceSymbols, reportAnalyzerDiagnostic: null, typeDecl, ct) is FullModel model)
                     {
                         modelPerType.Add(model);
                     }
@@ -68,17 +94,17 @@ public partial class MessagePackGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(source, static (context, source) =>
         {
-            if (source is not null)
+            if (source is { Options.IsGeneratingSource: true })
             {
-                Generate(new GeneratorContext(context), source);
+                GenerateResolver(new GeneratorContext(context), source);
             }
         });
 
         context.RegisterSourceOutput(source, static (context, source) =>
         {
-            if (source is not null)
+            if (source is { Options.IsGeneratingSource: true })
             {
-                GenerateResolver(new GeneratorContext(context), source);
+                Generate(new GeneratorContext(context), source);
             }
         });
     }

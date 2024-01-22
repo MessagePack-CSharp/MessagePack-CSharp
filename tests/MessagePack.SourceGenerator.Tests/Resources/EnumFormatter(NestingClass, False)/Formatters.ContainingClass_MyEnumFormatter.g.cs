@@ -2,21 +2,24 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace Formatters
-{
-	using MsgPack = global::MessagePack;
-	using ContainingClass_MyEnum = global::ContainingClass.MyEnum;
+namespace MessagePack {
 
-	internal sealed class ContainingClass_MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<ContainingClass_MyEnum>
+using MsgPack = global::MessagePack;
+
+partial class GeneratedMessagePackResolver
+{
+	private sealed class ContainingClass_MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<global::ContainingClass.MyEnum>
 	{
-		public void Serialize(ref MsgPack::MessagePackWriter writer, ContainingClass_MyEnum value, MsgPack::MessagePackSerializerOptions options)
+		public void Serialize(ref MsgPack::MessagePackWriter writer, global::ContainingClass.MyEnum value, MsgPack::MessagePackSerializerOptions options)
 		{
 			writer.Write((int)value);
 		}
 
-		public ContainingClass_MyEnum Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
+		public global::ContainingClass.MyEnum Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
 		{
-			return (ContainingClass_MyEnum)reader.ReadInt32();
+			return (global::ContainingClass.MyEnum)reader.ReadInt32();
 		}
 	}
+}
+
 }

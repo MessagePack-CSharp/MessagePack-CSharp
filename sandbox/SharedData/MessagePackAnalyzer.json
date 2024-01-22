@@ -1,8 +1,0 @@
-{
-  "$schema": "../../MessagePackAnalyzer.schema.json",
-  "generator": {
-    "resolver": {
-      "public": true
-    }
-  }
-}

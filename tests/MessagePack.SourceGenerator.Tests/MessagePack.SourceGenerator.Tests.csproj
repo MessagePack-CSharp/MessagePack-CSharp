@@ -14,8 +14,11 @@
 
   <ItemGroup>
     <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing.XUnit" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.CodeFix.Testing.XUnit" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Nerdbank.Streams" />
     <PackageReference Include="xunit" />
@@ -25,12 +28,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" />
-    <ProjectReference Include="..\..\src\MessagePack.Analyzers\MessagePack.Analyzers.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj" />
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Resources\Generics_Defined_In_ReferencedProject\" />
   </ItemGroup>
 
 </Project>

@@ -4,10 +4,13 @@
 
 #pragma warning disable CS8669 // We may leak nullable annotations into generated code.
 
-namespace Formatters.TempProject
-{
-	using MsgPack = global::MessagePack;
+namespace MessagePack {
 
+using MsgPack = global::MessagePack;
+
+partial class GeneratedMessagePackResolver
+{
+private partial class TempProject { 
 	internal sealed class MyGenericObjectFormatter<T> : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyGenericObject<T>>
 	{
 
@@ -53,4 +56,7 @@ namespace Formatters.TempProject
 			return ____result;
 		}
 	}
+
+}}
+
 }

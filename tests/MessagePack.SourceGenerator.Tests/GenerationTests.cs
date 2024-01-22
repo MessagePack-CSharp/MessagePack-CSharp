@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using MessagePack.SourceGenerator.Tests;
+using VerifyCS = CSharpSourceGeneratorVerifier;
 
 public class GenerationTests
 {
@@ -34,7 +35,165 @@ internal enum MyEnum
 """;
         testSource = TestUtilities.WrapTestSource(testSource, container);
 
-        await VerifyCS.Test.RunDefaultAsync(testSource, options: AnalyzerOptions.Default with { Generator = GeneratorOptions.Default with { UsesMapMode = usesMapMode } }, testMethod: $"{nameof(EnumFormatter)}({container}, {usesMapMode})");
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, options: new() { Generator = new() { Formatters = new() { UsesMapMode = usesMapMode } } }, testMethod: $"{nameof(EnumFormatter)}({container}, {usesMapMode})");
+    }
+
+    [Fact]
+    public async Task EnumFormatter_CollidingTypeNames()
+    {
+        string testSource = """
+using MessagePack;
+
+[MessagePackObject]
+internal class MyMessagePackObject
+{
+    [Key(0)]
+    internal NS1.MyEnum EnumValue1 { get; set; }
+
+    [Key(1)]
+    internal NS2.MyEnum EnumValue2 { get; set; }
+}
+
+namespace NS1 {
+    internal enum MyEnum
+    {
+        A, B, C
+    }
+}
+
+namespace NS2 {
+    internal enum MyEnum
+    {
+        D, E
+    }
+}
+""";
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task GenericType_CollidingTypeNames()
+    {
+        string testSource = """
+using MessagePack;
+
+[MessagePackObject]
+internal class MyMessagePackObject
+{
+    [Key(0)]
+    internal NS1.MyType<int> Value1 { get; set; }
+
+    [Key(1)]
+    internal NS2.MyType<int> Value2 { get; set; }
+}
+
+namespace NS1 {
+    [MessagePackObject]
+    internal class MyType<T>
+    {
+        [Key(0)]
+        internal string Foo { get; set; }
+    }
+}
+
+namespace NS2 {
+    [MessagePackObject]
+    internal class MyType<T>
+    {
+        [Key(0)]
+        internal string Foo { get; set; }
+    }
+}
+""";
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task NonGenericType_CollidingTypeNames()
+    {
+        string testSource = """
+using MessagePack;
+
+[MessagePackObject]
+internal class MyMessagePackObject
+{
+    [Key(0)]
+    internal NS1.MyType Value1 { get; set; }
+
+    [Key(1)]
+    internal NS2.MyType Value2 { get; set; }
+}
+
+namespace NS1 {
+    [MessagePackObject]
+    internal class MyType
+    {
+        [Key(0)]
+        internal string Foo { get; set; }
+    }
+}
+
+namespace NS2 {
+    [MessagePackObject]
+    internal class MyType
+    {
+        [Key(0)]
+        internal string Foo { get; set; }
+    }
+}
+""";
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task MixType_CollidingTypeNames()
+    {
+        string testSource = """
+using MessagePack;
+
+[MessagePackObject]
+internal class MyMessagePackObject
+{
+    [Key(0)]
+    internal NS1.MyType Value1 { get; set; }
+
+    [Key(1)]
+    internal NS2.MyType Value2 { get; set; }
+
+    [Key(2)]
+    internal NS3.MyType<int> Value3 { get; set; }
+}
+
+namespace NS1 {
+    internal enum MyType
+    {
+        A, B
+    }
+}
+
+namespace NS2 {
+    [MessagePackObject]
+    internal class MyType
+    {
+        [Key(0)]
+        internal string Foo { get; set; }
+    }
+}
+
+namespace NS3 {
+    [MessagePackObject]
+    internal class MyType<T>
+    {
+        [Key(0)]
+        internal string Foo { get; set; }
+    }
+}
+""";
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Theory, PairwiseData]
@@ -69,7 +228,7 @@ class UnserializableRecordFormatter : IMessagePackFormatter<UnserializableRecord
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource, options: AnalyzerOptions.Default with { Generator = GeneratorOptions.Default with { UsesMapMode = usesMapMode } }, testMethod: $"{nameof(CustomFormatterViaAttributeOnProperty)}({usesMapMode})");
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, options: new() { Generator = new() { Formatters = new() { UsesMapMode = usesMapMode } } }, testMethod: $"{nameof(CustomFormatterViaAttributeOnProperty)}({usesMapMode})");
     }
 
     [Theory, PairwiseData]
@@ -97,7 +256,7 @@ internal class MyMessagePackObject
 """;
         testSource = TestUtilities.WrapTestSource(testSource, container);
 
-        await VerifyCS.Test.RunDefaultAsync(testSource, testMethod: $"{nameof(UnionFormatter)}({container})");
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, testMethod: $"{nameof(UnionFormatter)}({container})");
     }
 
     [Fact]
@@ -118,7 +277,7 @@ internal class SubObject
 {
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -142,7 +301,7 @@ internal class MyGenericType<T>
     internal T Value { get; set; }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -162,7 +321,7 @@ public class GenericClass<T1, T2>
     public T2 MyProperty1 { get; set; }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -178,6 +337,37 @@ class TypeWithAutoGeneratedFormatter
     public MyCustomType Value { get; set; }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource, options: AnalyzerOptions.Default with { CustomFormattedTypes = ImmutableHashSet<string>.Empty.Add("MyCustomType") });
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, options: new() { AssumedFormattableTypes = ImmutableHashSet<string>.Empty.Add("MyCustomType") });
+    }
+
+    [Fact]
+    public async Task AdditionalFormatterTypes()
+    {
+        string testSource = Preamble + """
+[assembly: MessagePackKnownFormatterAttribute(typeof(MyCustomTypeFormatter))]
+
+class MyCustomType { }
+
+class MyCustomTypeFormatter : MessagePack.Formatters.IMessagePackFormatter<MyCustomType>
+{
+    public void Serialize(ref MessagePackWriter writer, MyCustomType value, MessagePackSerializerOptions options)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public MyCustomType Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+    {
+        throw new System.NotImplementedException();
+    }
+}
+
+[MessagePackObject]
+class TypeWithAutoGeneratedFormatter
+{
+    [Key(0)]
+    public MyCustomType Value { get; set; }
+}
+""";
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 }

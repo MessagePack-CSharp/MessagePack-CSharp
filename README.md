@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
 [![NuGet](https://img.shields.io/nuget/vpre/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
-[![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)][Releases]
+[![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases)
 
 [![Join the chat at https://gitter.im/MessagePack-CSharp/Lobby](https://badges.gitter.im/MessagePack-CSharp/Lobby.svg)](https://gitter.im/MessagePack-CSharp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://dev.azure.com/ils0086/MessagePack-CSharp/_apis/build/status/MessagePack-CSharp-CI?branchName=master)](https://dev.azure.com/ils0086/MessagePack-CSharp/_build/latest?definitionId=2&branchName=master)
@@ -95,7 +95,7 @@ Install-Package MessagePack.AspNetCoreMvcFormatter
 
 ### Unity
 
-For Unity projects, the [releases][Releases] page provides downloadable `.unitypackage` files. When using in Unity IL2CPP or Xamarin AOT environments, please carefully read the [pre-code generation section](#aot).
+For Unity projects, the [Releases](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases) page provides downloadable `.unitypackage` files. When using in Unity IL2CPP or Xamarin AOT environments, please carefully read the [pre-code generation section](#aot).
 
 ### Migration notes from v1.x
 
@@ -163,25 +163,21 @@ By default, a `MessagePackObject` annotation is required. This can be made optio
 
 The MessagePackAnalyzer package aids with:
 
-1. Automating definitions for your serializable objects.
 1. Produces compiler warnings upon incorrect attribute use, member accessibility, and more.
+1. Automating attributing of your serializable classes and members.
+1. Optionally improving startup time through [AOT formatter generation](#aot).
+
+The first two of these features is demonstrated below:
 
 ![analyzergif](https://cloud.githubusercontent.com/assets/46207/23837445/ce734eae-07cb-11e7-9758-d69f0f095bc1.gif)
 
-If you want to allow a specific custom type (for example, when registering a custom type), put `MessagePackAnalyzer.json` at the project root.
-If using Unity, you should configure Unity to treat this as an `AdditionalFiles` in the C# compiler.
+Two assembly-level attributes exist to help with mixing in your own custom formatters with the automatically generated ones:
+- `MessagePackKnownFormatterAttribute` - Identifies classes that implement `IMessagePackFormatter<T>`.
+The `T` type argument will _not_ produce an analyzer warning when `T` is used elsewhere in a serializable object.
+When using a source generated resolver, the resolver will refer to this formatter for the appropriate type(s).
+- `MessagePackAssumedFormattableAttribute` - Identifies types that are assumed to have an `IMessagePackFormatter<T>` *somewhere*, and that will be combined within an `IFormatterResolver` at runtime to ensure the specified type can be serialized.
+This attribute will suppress the analyzer warning from using that type although the type does not have a `[MessagePackObject]` attribute on it.
 
-An example `MessagePackAnalyzer.json`:
-
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/MessagePack-CSharp/MessagePack-CSharp/develop/MessagePackAnalyzer.schema.json",
-  "customFormattedTypes": [
-    "MyNamespace.MyClass",
-    "MyNamespace.AnotherClass"
-  ]
-}
-```
 
 ## Built-in supported types
 
@@ -353,7 +349,10 @@ You can use `[DataContract]` annotations instead of `[MessagePackObject]` ones. 
 
 Then `[DataMember(Order = int)]` will behave the same as `[Key(int)]`, `[DataMember(Name = string)]` the same as `[Key(string)]`, and `[DataMember]` the same as `[Key(nameof(member name)]`.
 
-Using `DataContract`, e.g. in shared libraries, makes your classes/structs independent from MessagePack for C# serialization. However, it is not supported by the analyzers nor in code generation by the `mpc` tool. Also, features like `UnionAttribute`, `MessagePackFormatter`, `SerializationConstructor`, etc can not be used. Due to this, we recommend that you use the specific MessagePack for C# annotations when possible.
+Using `DataContract`, e.g. in shared libraries, makes your classes/structs independent from MessagePack for C# serialization.
+However, it is not supported by the analyzers nor source generator.
+Also, features like `UnionAttribute`, `MessagePackFormatter`, `SerializationConstructor`, etc can not be used.
+Due to this, we recommend that you use the specific MessagePack for C# annotations when possible.
 
 ## Serializing readonly/immutable object members  (SerializationConstructor)
 
@@ -1536,7 +1535,7 @@ Within the *reserved* ranges, this library defines or implements extensions that
 
 Unity lowest supported version is `2018.3`, API Compatibility Level supports both `.NET 4.x` and `.NET Standard 2.0`.
 
-You can install the `unitypackage` from the [releases][Releases] page.
+You can install the `unitypackage` from the [Releases](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases) page.
 If your build targets .NET Framework 4.x and runs on mono, you can use it as is.
 But if your build targets IL2CPP, you can not use `Dynamic***Resolver`, so it is required to use pre-code generation. Please see [pre-code generation section](#aot).
 
@@ -1583,37 +1582,50 @@ If you want to share a class between Unity and a server, you can use `SharedProj
 
 By default, MessagePack for C# serializes custom objects by [generating IL](https://learn.microsoft.com/dotnet/api/system.reflection.emit.ilgenerator) on the fly at runtime to create custom, highly tuned formatters for each type.
 This code generation has a minor upfront performance cost.
-Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime code generation, MessagePack provides a way for you to run a code generator ahead of time as well.
+
+For faster startup performance or to operate in strict-AOT environments such as Xamarin and Unity IL2CPP that forbid runtime code generation, MessagePack provides a way for you to run a code generator ahead of time as well.
+This "source generation" is provided via a roslyn source generator.
 
 > Note: When using Unity, dynamic code generation only works when targeting .NET Framework 4.x + mono runtime.
 For all other Unity targets, AOT is required.
 
-If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation.
+Install the source generator via its NuGet package.
+For MSBuild based projects, you can do this within Visual Studio or at the CLI via this command:
 
 ```ps1
-dotnet add package MessagePack.SourceGenerator
+dotnet add package MessagePackAnalyzer
 ```
 
-Or for Unity, use the source generator that targets the older Roslyn compiler.
-[Setting up a source generator for unity](https://docs.unity3d.com/Manual/roslyn-analyzers.html) is a bit more involved.
+For Unity, using the source generator is a bit more involved.
+Please refer to [Setting up a source generator for unity](https://docs.unity3d.com/Manual/roslyn-analyzers.html).
 The unity instructions describe copying the analyzer .dll into your unity project.
-You should get the analyzer/source generator .dll's from the the `MessagePack.SourceGenerator.Unity.zip` file uploaded on our GitHub releases page.
-For each and every .dll in the .zip, be sure to:
+You should get the analyzer/source generator .dll's from the `MessagePackAnalyzer` nuget package and use the DLLs in the `analyzers/roslyn3.8/cs` directory.
+For each and every .dll in that directory, be sure to:
 
 1. Windows only: Unblock each .dll for use by [removing the "Mark of the Web"](doc/mark_of_the_web.png). If the "Unblock" checkbox does not appear, the mark of the web is not present and you may proceed.
 1. Add to the unity project as an analyzer.
 
-The package (or unity .zip file) adds a roslyn Source Generator that produces `IMessagePackFormatter<T>` implementing classes for each of your `[MessagePackObject]` classes.
+You must then define a `partial class` into which the source generator will create your resolver:
 
-These formatters are aggregated into a generated `IMessagePackResolver` class named `GeneratedMessagePackResolver`.
-This class will be generated into the `$(RootNamespace)` of your project, or the `MessagePack` namespace if `RootNamespace` is empty or undefined (as in Unity).
+```cs
+[GeneratedMessagePackResolver]
+partial class MyResolver
+{
+}
+```
 
-Leveraging these formatters at runtime requires that you opt-in, which typically looks like this:
+This partial class, combined with at least one `[MessagePackObject]`-annotated type, will result in some members being added to your resolver class.
+These members will _not_ be in your own source file, but they will be emitted during the compilation.
+Visual Studio allows you to see these source generated files through a variety of means.
+These members include the following properties `Instance` and `InstanceWithStandardAotResolver`.
+You can use these members to serialize your object graph.
+
+Leveraging this resolver at runtime requires that you opt-in, which typically looks like this:
 
 ```cs
 /// <summary>Options to use MessagePack with AOT-generated formatters.</summary>
 private static readonly MessagePackSerializerOptions SerializerOptions = MessagePackSerializerOptions.Standard
-    .WithResolver(GeneratedMessagePackResolver.InstanceWithStandardAotResolver);
+    .WithResolver(MyResolver.InstanceWithStandardAotResolver);
 
 // Serialize and deserialize using the AOT option.
 byte[] serialized = MessagePackSerializer.Serialize(value, SerializerOptions);
@@ -1631,37 +1643,16 @@ T after = MessagePackSerializer.Deserialize<T>(serialized);
 
 ### Customizations
 
-You can customize the generated source through a `MessagePackAnalyzer.json` file added to the project root directory.
-If using Unity, you should configure Unity to treat this as an `AdditionalFiles` in the C# compiler.
-
-An example `MessagePackAnalyzer.json`:
-
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/MessagePack-CSharp/MessagePack-CSharp/develop/MessagePackAnalyzer.schema.json",
-  "generator": {
-    "resolver": {
-      "public": false,
-      "name": "GeneratedMessagePackResolver",
-      "namespace": "<your project root namespace>"
-    },
-    "formatters": {
-      "namespace": "Formatters"
-    },
-    "usesMapMode": false
-  },
-  "customFormattedTypes": [
-    "MyNamespace.MyClass",
-    "MyNamespace.AnotherClass"
-  ]
-}
-```
-
-The above example mostly sets defaults.
-You can discover all the available settings, their defaults and meanings in a JSON editor that supports JSON schema, or by reviewing [the JSON schema][AnalyzerJsonSchema] yourself.
+You can customize the generated source through properties on the `GeneratedMessagePackResolverAttribute`.
 
 When exposing the generated resolver publicly, consumers outside the library should aggregate the resolver using its `Instance` property, which contains *only* the generated formatters.
 The `InstanceWithStandardAotResolver` property is a convenience for callers that will not be aggregating the resolver with those from other libraries, since it aggregates built-in AOT friendly resolvers from the MessagePack library itself.
+
+Two assembly-level attributes exist to help with mixing in your own custom formatters with the automatically generated ones:
+- `MessagePackKnownFormatterAttribute`
+- `MessagePackAssumedFormattableAttribute`
+
+Learn more about using a mix of your own custom formatters and automatically generated ones in [the Analyzer section](#analyzer).
 
 ### Unity-specific AOT concerns
 
@@ -1716,5 +1707,3 @@ The StreamJsonRpc library is based on [JSON-RPC](https://www.jsonrpc.org/) and i
 ## How to build
 
 See our [contributor's guide](CONTRIBUTING.md).
-
-[AnalyzerJsonSchema]: https://github.com/MessagePack-CSharp/MessagePack-CSharp/blob/develop/MessagePackAnalyzer.schema.json

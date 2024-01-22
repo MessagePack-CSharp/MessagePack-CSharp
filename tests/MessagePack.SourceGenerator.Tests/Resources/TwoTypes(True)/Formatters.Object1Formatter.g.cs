@@ -2,11 +2,13 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace Formatters
-{
-	using MsgPack = global::MessagePack;
+namespace MessagePack {
 
-	internal sealed class Object1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Object1>
+using MsgPack = global::MessagePack;
+
+partial class GeneratedMessagePackResolver
+{
+	private sealed class Object1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Object1>
 	{
 		public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Object1 value, global::MessagePack.MessagePackSerializerOptions options)
 		{
@@ -31,4 +33,6 @@ namespace Formatters
 			return ____result;
 		}
 	}
+}
+
 }

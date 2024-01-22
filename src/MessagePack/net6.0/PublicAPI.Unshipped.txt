@@ -31,6 +31,10 @@ MessagePack.Formatters.Vector3Formatter.Serialize(ref MessagePack.MessagePackWri
 MessagePack.Formatters.Vector4Formatter
 MessagePack.Formatters.Vector4Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Vector4
 MessagePack.Formatters.Vector4Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Vector4 value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.GeneratedMessagePackResolverAttribute
+MessagePack.GeneratedMessagePackResolverAttribute.GeneratedMessagePackResolverAttribute() -> void
+MessagePack.GeneratedMessagePackResolverAttribute.UseMapMode.get -> bool
+MessagePack.GeneratedMessagePackResolverAttribute.UseMapMode.set -> void
 MessagePack.MessagePackSerializerOptions.CompressionMinLength.get -> int
 MessagePack.MessagePackSerializerOptions.SuggestedContiguousMemorySize.get -> int
 MessagePack.MessagePackSerializerOptions.WithCompressionMinLength(int compressionMinLength) -> MessagePack.MessagePackSerializerOptions!

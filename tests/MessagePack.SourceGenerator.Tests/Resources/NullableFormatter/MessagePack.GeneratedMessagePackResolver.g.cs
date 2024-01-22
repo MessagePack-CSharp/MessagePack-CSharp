@@ -2,45 +2,43 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace MessagePack
+namespace MessagePack {
+
+using MsgPack = global::MessagePack;
+
+/// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
+partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 {
-	using MsgPack = global::MessagePack;
-	using Formatters = global::Formatters;
+	/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
+	public static readonly MsgPack::IFormatterResolver Instance = new GeneratedMessagePackResolver();
 
-	/// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
-	internal class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
+	/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
+	public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = new WithStandardAotResolver();
+
+	private GeneratedMessagePackResolver()
 	{
-		/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
-		public static readonly MsgPack::IFormatterResolver Instance = new GeneratedMessagePackResolver();
+	}
 
-		/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
-		public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
+	public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+	{
+		return FormatterCache<T>.Formatter;
+	}
 
-		private GeneratedMessagePackResolver()
+	private static class FormatterCache<T>
+	{
+		internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
+
+		static FormatterCache()
 		{
-		}
-
-		public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-		{
-			return FormatterCache<T>.Formatter;
-		}
-
-		private static class FormatterCache<T>
-		{
-			internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
-
-			static FormatterCache()
+			var f = GeneratedMessagePackResolverGetFormatterHelper.GetFormatter(typeof(T));
+			if (f != null)
 			{
-				var f = GeneratedMessagePackResolverGetFormatterHelper.GetFormatter(typeof(T));
-				if (f != null)
-				{
-					Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
-				}
+				Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
 			}
 		}
 	}
 
-	internal static class GeneratedMessagePackResolverGetFormatterHelper
+	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
 
@@ -48,12 +46,12 @@ namespace MessagePack
 		{
 			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(5)
 			{
-				{ typeof((int, long)), 0 },
-				{ typeof((int, long)?), 1 },
-				{ typeof(global::TempProject.MyEnum?), 2 },
-				{ typeof(global::TempProject.MyEnum), 3 },
-				{ typeof(global::TempProject.MyObject), 4 },
-			};
+					{ typeof((int, long)), 0 },
+					{ typeof((int, long)?), 1 },
+					{ typeof(global::TempProject.MyEnum?), 2 },
+					{ typeof(global::TempProject.MyEnum), 3 },
+					{ typeof(global::TempProject.MyObject), 4 },
+				};
 		}
 
 		internal static object GetFormatter(global::System.Type t)
@@ -66,13 +64,28 @@ namespace MessagePack
 
 			switch (key)
 			{
-				case 0: return new MsgPack::Formatters.ValueTupleFormatter<int, long>();
-				case 1: return new MsgPack::Formatters.NullableFormatter<(int, long)>();
-				case 2: return new MsgPack::Formatters.NullableFormatter<global::TempProject.MyEnum>();
-				case 3: return new Formatters::TempProject.MyEnumFormatter();
-				case 4: return new Formatters::TempProject.MyObjectFormatter();
-				default: return null;
+					case 0: return new MsgPack::Formatters.ValueTupleFormatter<int, long>();
+					case 1: return new MsgPack::Formatters.NullableFormatter<(int, long)>();
+					case 2: return new MsgPack::Formatters.NullableFormatter<global::TempProject.MyEnum>();
+					case 3: return new TempProject.MyEnumFormatter();
+					case 4: return new TempProject.MyObjectFormatter();
+					default: return null;
 			}
 		}
 	}
+
+	private class WithStandardAotResolver : MsgPack::IFormatterResolver
+	{
+		public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+		{
+			return FormatterCache<T>.Formatter;
+		}
+
+		private static class FormatterCache<T>
+		{
+			internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter = Instance.GetFormatter<T>() ?? MsgPack::Resolvers.StandardAotResolver.Instance.GetFormatter<T>();
+		}
+	}
+}
+
 }

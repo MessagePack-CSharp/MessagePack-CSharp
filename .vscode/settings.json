@@ -5,5 +5,9 @@
   "omnisharp.enableEditorConfigSupport": true,
   "omnisharp.enableRoslynAnalyzers": true,
   "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+  "editor.formatOnSave": true,
+  "[xml]": {
+    "editor.wordWrap": "off"
+  },
   "dotnet.defaultSolution": "MessagePack.sln"
 }

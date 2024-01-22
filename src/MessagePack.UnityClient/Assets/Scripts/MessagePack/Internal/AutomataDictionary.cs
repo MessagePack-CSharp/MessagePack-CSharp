@@ -308,7 +308,7 @@ namespace MessagePack.Internal
                     Label gotoNotFound = il.DefineLabel();
 
                     {
-                              // bytesSpan.Length
+                        // bytesSpan.Length
                         il.EmitLdloca(bytesSpan);
                         il.EmitCall(typeof(ReadOnlySpan<byte>).GetRuntimeProperty(nameof(ReadOnlySpan<byte>.Length))!.GetMethod!);
                         if (childrenExists.Length != 0 && valueExists.Length == 0)
