@@ -16,18 +16,23 @@ public class SingleTest
     public void SetUp()
     {
         input = new float[Size];
-
-        var r = new Random();
         for (var i = 0; i < input.Length; i++)
         {
-            input[i] = r.NextSingle();
+            input[i] = Random.Shared.NextSingle();
         }
+    }
+
+    private ArrayBufferWriter<byte> bufferWriter = default!;
+
+    [IterationSetup]
+    public void IterationSetUp()
+    {
+        bufferWriter = new();
     }
 
     [Benchmark]
     public ReadOnlyMemory<byte> Simd()
     {
-        var bufferWriter = new ArrayBufferWriter<byte>();
         var writer = new MessagePackWriter(bufferWriter);
         e::MessagePack.Formatters.SingleArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
@@ -37,7 +42,6 @@ public class SingleTest
     [Benchmark]
     public ReadOnlyMemory<byte> Old()
     {
-        var bufferWriter = new ArrayBufferWriter<byte>();
         var writer = new MessagePackWriter(bufferWriter);
         SingleArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();

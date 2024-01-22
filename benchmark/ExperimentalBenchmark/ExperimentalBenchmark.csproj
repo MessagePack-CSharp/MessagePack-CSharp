@@ -15,6 +15,8 @@
     <Compile Remove="BoolSerializeTest.cs" />
     <Compile Remove="SByteTest.cs" />
     <Compile Remove="ShortTest.cs" />
+    <Compile Remove="IntTest.cs" />
+    <Compile Remove="SingleTest.cs" />
   </ItemGroup>
 
   <ItemGroup>

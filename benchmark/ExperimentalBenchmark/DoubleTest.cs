@@ -16,18 +16,23 @@ public class DoubleTest
     public void SetUp()
     {
         input = new double[Size];
-
-        var r = new Random();
         for (var i = 0; i < input.Length; i++)
         {
-            input[i] = r.NextDouble();
+            input[i] = Random.Shared.NextDouble();
         }
+    }
+
+    private ArrayBufferWriter<byte> bufferWriter = default!;
+
+    [IterationSetup]
+    public void IterationSetUp()
+    {
+        bufferWriter = new();
     }
 
     [Benchmark]
     public ReadOnlyMemory<byte> Simd()
     {
-        var bufferWriter = new ArrayBufferWriter<byte>();
         var writer = new MessagePackWriter(bufferWriter);
         e::MessagePack.Formatters.DoubleArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
@@ -37,7 +42,6 @@ public class DoubleTest
     [Benchmark]
     public ReadOnlyMemory<byte> Old()
     {
-        var bufferWriter = new ArrayBufferWriter<byte>();
         var writer = new MessagePackWriter(bufferWriter);
         DoubleArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();

@@ -32,10 +32,17 @@ public class SByteTest
         }
     }
 
+    private ArrayBufferWriter<byte> bufferWriter = default!;
+
+    [IterationSetup]
+    public void IterationSetUp()
+    {
+        bufferWriter = new();
+    }
+
     [Benchmark]
     public ReadOnlyMemory<byte> Simd()
     {
-        var bufferWriter = new ArrayBufferWriter<byte>();
         var writer = new MessagePackWriter(bufferWriter);
         e::MessagePack.Formatters.SByteArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
@@ -45,7 +52,6 @@ public class SByteTest
     [Benchmark]
     public ReadOnlyMemory<byte> Old()
     {
-        var bufferWriter = new ArrayBufferWriter<byte>();
         var writer = new MessagePackWriter(bufferWriter);
         SByteArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();

@@ -5,35 +5,30 @@ extern alias e;
 
 namespace Benchmark;
 
-public class BoolSerializeTest
+public class LongTest
 {
-    [Params(64, 1024, 16 * 1024 * 1024)]
+    [Params(0, 1, 2, 3, 4, 8, 16, 64, 1024, 16 * 1024 * 1024)]
     public int Size { get; set; }
 
-    [Params(true, false)]
-    public bool Canonical { get; set; }
+    [Params(0L, -1L, long.MinValue, (long)int.MinValue, (long)uint.MaxValue)]
+    public long Value { get; set; }
 
-    private bool[] input = [];
+    private long[] input = [];
 
     [GlobalSetup]
     public void SetUp()
     {
-        input = new bool[Size];
-        var span = MemoryMarshal.AsBytes(input.AsSpan());
-        Random.Shared.NextBytes(span);
-        foreach (ref var item in span)
+        input = new long[Size];
+        switch (Value)
         {
-            if (Canonical)
-            {
-                item = ((item & 1) == 1) ? (byte)1 : (byte)0;
-            }
-            else
-            {
-                if ((item & 1) == 0)
-                {
-                    item = default;
-                }
-            }
+            case 0:
+                break;
+            case -1:
+                Random.Shared.NextBytes(MemoryMarshal.AsBytes(input.AsSpan()));
+                break;
+            default:
+                Array.Fill(input, Value);
+                break;
         }
     }
 
@@ -49,7 +44,7 @@ public class BoolSerializeTest
     public ReadOnlyMemory<byte> Simd()
     {
         var writer = new MessagePackWriter(bufferWriter);
-        e::MessagePack.Formatters.BooleanArrayFormatter.Instance.Serialize(ref writer, input, default!);
+        e::MessagePack.Formatters.Int64ArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;
     }
@@ -58,7 +53,7 @@ public class BoolSerializeTest
     public ReadOnlyMemory<byte> Old()
     {
         var writer = new MessagePackWriter(bufferWriter);
-        BooleanArrayFormatter.Instance.Serialize(ref writer, input, default!);
+        Int64ArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;
     }
