@@ -1,6 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#define DYNAMIC_GENERATION
+#endif
+
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -45,7 +49,7 @@ namespace MessagePack.Tests
             return result;
         }
 
-#if !ENABLE_IL2CPP
+#if DYNAMIC_GENERATION
 
         [Fact]
         public void OrderTest()
