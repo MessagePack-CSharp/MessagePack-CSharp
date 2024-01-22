@@ -4,45 +4,45 @@
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 
-namespace <#= ResolverNamespace #>
+<# if (ResolverNamespace.Length > 0) { #>
+namespace <#= ResolverNamespace #> {
+<# } #>
+
+using MsgPack = global::MessagePack;
+
+/// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
+partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 {
-	using MsgPack = global::MessagePack;
-	using Formatters = global::<#= FormatterNamespace #>;
+	/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
+	public static readonly MsgPack::IFormatterResolver Instance = new <#= ResolverName #>();
 
-	/// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
-	<#= PublicResolver ? "public" : "internal" #> class <#= ResolverName #> : MsgPack::IFormatterResolver
+	/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
+	public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = new WithStandardAotResolver();
+
+	private <#= ResolverName #>()
 	{
-		/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
-		public static readonly MsgPack::IFormatterResolver Instance = new <#= ResolverName #>();
+	}
 
-		/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
-		public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
+	public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+	{
+		return FormatterCache<T>.Formatter;
+	}
 
-		private <#= ResolverName #>()
+	private static class FormatterCache<T>
+	{
+		internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
+
+		static FormatterCache()
 		{
-		}
-
-		public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-		{
-			return FormatterCache<T>.Formatter;
-		}
-
-		private static class FormatterCache<T>
-		{
-			internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
-
-			static FormatterCache()
+			var f = <#= ResolverName #>GetFormatterHelper.GetFormatter(typeof(T));
+			if (f != null)
 			{
-				var f = <#= ResolverName #>GetFormatterHelper.GetFormatter(typeof(T));
-				if (f != null)
-				{
-					Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
-				}
+				Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
 			}
 		}
 	}
 
-	internal static class <#= ResolverName #>GetFormatterHelper
+	private static class <#= ResolverName #>GetFormatterHelper
 	{
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
 
@@ -50,9 +50,9 @@ namespace <#= ResolverNamespace #>
 		{
 			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(<#= RegisterInfos.Count #>)
 			{
-<# for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; #>
+	<# for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; #>
 				{ typeof(<#= x.FullName #>), <#= i #> },
-<# } #>
+	<# } #>
 			};
 		}
 
@@ -66,11 +66,28 @@ namespace <#= ResolverNamespace #>
 
 			switch (key)
 			{
-<# for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; #>
-				case <#= i #>: return new <#= x.FormatterName #>();
-<# } #>
+	<# for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; #>
+				case <#= i #>: return new <#= CodeAnalysisUtilities.QualifyWithOptionalNamespace(x.FormatterName, x.Namespace) #>();
+	<# } #>
 				default: return null;
 			}
 		}
 	}
+
+	private class WithStandardAotResolver : MsgPack::IFormatterResolver
+	{
+		public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+		{
+			return FormatterCache<T>.Formatter;
+		}
+
+		private static class FormatterCache<T>
+		{
+			internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter = Instance.GetFormatter<T>() ?? MsgPack::Resolvers.StandardAotResolver.Instance.GetFormatter<T>();
+		}
+	}
 }
+
+<# if (ResolverNamespace.Length > 0) { #>
+}
+<# } #>

@@ -1,8 +1,0 @@
-<Project>
-  <ItemGroup>
-    <CompilerVisibleProperty Include="RootNamespace" />
-  </ItemGroup>
-  <ItemGroup>
-    <AdditionalFiles Include="MessagePackAnalyzer.json" Condition="Exists('MessagePackAnalyzer.json')" />
-  </ItemGroup>
-</Project>

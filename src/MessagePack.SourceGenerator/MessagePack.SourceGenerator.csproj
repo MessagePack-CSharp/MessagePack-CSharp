@@ -3,19 +3,19 @@
   <Import Project="..\SourceGenerator.props" />
   
   <PropertyGroup>
-    <!-- Special properties for analyzer packages. -->
-    <DevelopmentDependency>true</DevelopmentDependency>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
     <DebugType>embedded</DebugType>
-    <IncludeSymbols>false</IncludeSymbols>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackBuildOutputs</TargetsForTfmSpecificContentInPackage>
-    <NoWarn>$(NoWarn);NU5128</NoWarn>
-
-    <Title>MessagePack Source Generator</Title>
-    <Description>A roslyn source generator for AOT or faster startup of applications that use the MessagePack nuget package.</Description>
-    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer</PackageTags>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <None Remove="AnalyzerReleases.Shipped.md" />
+    <None Remove="AnalyzerReleases.Unshipped.md" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataKeyGen.cs" LinkBase="MessagePack\Internal" />
@@ -75,6 +75,10 @@
       <LastGenOutput>UnionTemplate.cs</LastGenOutput>
       <Generator>TextTemplatingFilePreprocessor</Generator>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" />
   </ItemGroup>
 
   <ItemGroup>

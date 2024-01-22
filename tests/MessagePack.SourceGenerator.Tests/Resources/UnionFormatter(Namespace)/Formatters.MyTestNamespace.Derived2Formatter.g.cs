@@ -4,10 +4,13 @@
 
 #pragma warning disable CS8669 // We may leak nullable annotations into generated code.
 
-namespace Formatters.MyTestNamespace
-{
-	using MsgPack = global::MessagePack;
+namespace MessagePack {
 
+using MsgPack = global::MessagePack;
+
+partial class GeneratedMessagePackResolver
+{
+private partial class MyTestNamespace { 
 	internal sealed class Derived2Formatter : MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.Derived2>
 	{
 
@@ -33,4 +36,7 @@ namespace Formatters.MyTestNamespace
 			return new global::MyTestNamespace.Derived2();
 		}
 	}
+
+}}
+
 }

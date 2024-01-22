@@ -4,11 +4,16 @@
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 
-namespace <#= Namespace #>
-{
-	using MsgPack = global::MessagePack;
+<# if (ResolverNamespace.Length > 0) { #>
+namespace <#= ResolverNamespace #> {
+<# } #>
 
-	internal sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+using MsgPack = global::MessagePack;
+
+partial class <#= ResolverName #>
+{
+<# using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { #>
+	<#= classVisibility #> sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
 	{
 		private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
 		private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
@@ -90,4 +95,9 @@ namespace <#= Namespace #>
 			return result;
 		}
 	}
+<# } // close EmitClassesForNamespace #>
 }
+
+<# if (ResolverNamespace.Length > 0) { #>
+}
+<# } #>

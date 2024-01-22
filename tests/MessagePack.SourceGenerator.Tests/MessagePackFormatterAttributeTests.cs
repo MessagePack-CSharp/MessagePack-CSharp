@@ -1,8 +1,17 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using VerifyCS = CSharpSourceGeneratorVerifier;
+
 public class MessagePackFormatterAttributeTests
 {
+    private readonly ITestOutputHelper testOutputHelper;
+
+    public MessagePackFormatterAttributeTests(ITestOutputHelper testOutputHelper)
+    {
+        this.testOutputHelper = testOutputHelper;
+    }
+
     [Fact]
     public async Task CanGenerateMessagePackFormatterAttr()
     {
@@ -41,6 +50,6 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 }

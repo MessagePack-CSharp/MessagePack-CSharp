@@ -2,11 +2,13 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace Formatters
-{
-	using MsgPack = global::MessagePack;
+namespace MessagePack {
 
-	internal sealed class HasPropertyWithCustomFormatterAttributeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::HasPropertyWithCustomFormatterAttribute>
+using MsgPack = global::MessagePack;
+
+partial class GeneratedMessagePackResolver
+{
+	private sealed class HasPropertyWithCustomFormatterAttributeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::HasPropertyWithCustomFormatterAttribute>
 	{
 		private readonly global::UnserializableRecordFormatter __CustomValueCustomFormatter__ = new global::UnserializableRecordFormatter();
 		// CustomValue
@@ -58,4 +60,6 @@ namespace Formatters
 			return ____result;
 		}
 	}
+}
+
 }
