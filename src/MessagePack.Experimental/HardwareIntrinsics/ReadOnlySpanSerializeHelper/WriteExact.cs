@@ -31,7 +31,7 @@ internal static partial class ReadOnlySpanSerializeHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void WriteUInt8(ref byte destination, byte value)
     {
-        destination = MessagePackCode.Int8;
+        destination = MessagePackCode.UInt8;
         Unsafe.WriteUnaligned(ref Unsafe.AddByteOffset(ref destination, 1), value);
     }
 

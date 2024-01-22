@@ -76,9 +76,9 @@ internal static partial class ReadOnlySpanSerializeHelper
         Unsafe.AddByteOffset(ref destination, 3) = (byte)(value >> 40);
         Unsafe.AddByteOffset(ref destination, 4) = (byte)(value >> 32);
         Unsafe.AddByteOffset(ref destination, 5) = (byte)(value >> 24);
-        Unsafe.AddByteOffset(ref destination, 5) = (byte)(value >> 16);
-        Unsafe.AddByteOffset(ref destination, 6) = (byte)(value >> 8);
-        Unsafe.AddByteOffset(ref destination, 7) = (byte)value;
+        Unsafe.AddByteOffset(ref destination, 6) = (byte)(value >> 16);
+        Unsafe.AddByteOffset(ref destination, 7) = (byte)(value >> 8);
+        Unsafe.AddByteOffset(ref destination, 8) = (byte)value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -90,8 +90,8 @@ internal static partial class ReadOnlySpanSerializeHelper
         Unsafe.AddByteOffset(ref destination, 3) = (byte)(value >> 40);
         Unsafe.AddByteOffset(ref destination, 4) = (byte)(value >> 32);
         Unsafe.AddByteOffset(ref destination, 5) = (byte)(value >> 24);
-        Unsafe.AddByteOffset(ref destination, 5) = (byte)(value >> 16);
-        Unsafe.AddByteOffset(ref destination, 6) = (byte)(value >> 8);
-        Unsafe.AddByteOffset(ref destination, 7) = (byte)value;
+        Unsafe.AddByteOffset(ref destination, 6) = (byte)(value >> 16);
+        Unsafe.AddByteOffset(ref destination, 7) = (byte)(value >> 8);
+        Unsafe.AddByteOffset(ref destination, 8) = (byte)value;
     }
 }

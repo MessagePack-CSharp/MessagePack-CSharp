@@ -286,6 +286,95 @@ namespace MessagePack.Experimental.Tests
         }
 
         [Test]
+        public void EmptyInt64ArrayTests()
+        {
+            var array = Array.Empty<Int64>();
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<Int64[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(0, decoded.Length);
+        }
+
+        [Test]
+        public void NullInt64ArrayTests()
+        {
+            var array = default(Int64[]);
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<Int64[]>(encoded, options);
+            Assert.IsNull(decoded);
+        }
+
+        [TestCase(1)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        [TestCase(128)]
+        [TestCase(4096)]
+        public void DefaultInt64ArrayTests(int length)
+        {
+            var array = new Int64[length];
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<Int64[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(length, decoded.Length);
+            for (var index = 0; index < array.Length; index++)
+            {
+                Assert.AreEqual(array[index], decoded[index]);
+            }
+        }
+
+        [TestCase(1)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        [TestCase(128)]
+        [TestCase(4096)]
+        public void MinValueInt64ArrayTests(int length)
+        {
+            var array = new Int64[length];
+            for (var index = 0; index < array.Length; index++)
+            {
+                array[index] = Int64.MinValue;
+            }
+
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<Int64[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(length, decoded.Length);
+            for (var index = 0; index < array.Length; index++)
+            {
+                Assert.AreEqual(array[index], decoded[index]);
+            }
+        }
+
+        [TestCase(1)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        [TestCase(128)]
+        [TestCase(4096)]
+        public void RandomValueInt64ArrayTests(int length)
+        {
+            var array = new Int64[length];
+            var r = new Random();
+            r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
+
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<Int64[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(length, decoded.Length);
+            for (var index = 0; index < array.Length; index++)
+            {
+                Assert.AreEqual(array[index], decoded[index]);
+            }
+        }
+
+        [Test]
         public void EmptySingleArrayTests()
         {
             var array = Array.Empty<Single>();

@@ -10,6 +10,7 @@ var types = new Type[]
     typeof(sbyte),
     typeof(short),
     typeof(int),
+    typeof(long),
     typeof(float),
     typeof(double),
     typeof(bool),

@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <Compile Remove="BoolSerializeTest.cs" />
-    <Compile Remove="IntTest.cs" />
     <Compile Remove="SByteTest.cs" />
     <Compile Remove="ShortTest.cs" />
   </ItemGroup>
