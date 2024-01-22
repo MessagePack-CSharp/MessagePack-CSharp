@@ -1,0 +1,90 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+
+namespace MessagePack.Formatters;
+
+internal static partial class ReadOnlySpanSerializeHelper
+{
+    internal static void Serialize(ref MessagePackWriter writer, ref readonly double input, int length)
+    {
+        writer.WriteArrayHeader(length);
+        if (length == 0)
+        {
+            return;
+        }
+
+        if (!BitConverter.IsLittleEndian)
+        {
+            BigEndianSerialize(ref writer, ref Unsafe.AsRef(in input), length, writer.CancellationToken);
+            return;
+        }
+
+        ref var inputIterator = ref Unsafe.As<double, ulong>(ref Unsafe.AsRef(in input));
+        const int maxInputSize = int.MaxValue / (sizeof(double) + 1);
+<#
+var array = new int[] { 8, 4, 2 };
+for (int i = 0; i < array.Length; i++)
+{
+    var Count = array[i];
+    var BitWidth = Count * sizeof(double) * 8;
+#>
+        <#if (i != 0){#>else <#}#>if (Vector<#= BitWidth #>.IsHardwareAccelerated)
+        {
+            for (var alignedInputLength = (nuint)(length & (~<#= Count - 1 #>)); alignedInputLength > 0; alignedInputLength = (nuint)(length & (~<#= Count - 1 #>)))
+            {
+                if (alignedInputLength >= maxInputSize)
+                {
+                    alignedInputLength = maxInputSize & (~<#= Count - 1 #>);
+                }
+
+                var outputLength = (int)alignedInputLength * (sizeof(double) + 1);
+                var destination = writer.GetSpan(outputLength);
+                ref var outputIterator = ref MemoryMarshal.GetReference(destination);
+                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector<#= BitWidth #><ulong>.Count, outputOffset += (nuint)Vector<#= BitWidth #><ulong>.Count * (sizeof(double) + 1))
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+
+                    // Reorder Little Endian bytes to Big Endian.
+                    var shuffled = Vector<#= BitWidth #>.Shuffle(Vector<#= BitWidth #>.LoadUnsafe(ref inputIterator, inputOffset).AsByte(), Vector<#= BitWidth #>.Create(<# for (int j = 0; j * 8 < BitWidth; j += 16) { if (j == 0) { #>(byte)<# } else { #>, <# } #><#= j + 7 #>, <#= j + 6 #>, <#= j + 5 #>, <#= j + 4 #>, <#= j + 3 #>, <#= j + 2 #>, <#= j + 1 #>, <#= j #>, <#= j + 15 #>, <#= j + 14 #>, <#= j + 13 #>, <#= j + 12 #>, <#= j + 11 #>, <#= j + 10 #>, <#= j + 9 #>, <#= j + 8 #><# } #>)).AsUInt<#= sizeof(double) * 8 #>();
+
+                    // Write <#= Count #> Big-Endian doubles.
+<#for (int j = 0; j < Count; j++)
+  {
+#>
+                    WriteFloat<#= sizeof(double) * 8 #>(ref Unsafe.AddByteOffset(ref outputIterator, outputOffset<# if (j != 0) { #> + <#= j * (sizeof(double) + 1) #><# } #>), shuffled.GetElement(<#= j #>));
+<#}#>
+                }
+
+                writer.Advance(outputLength);
+                length -= (int)alignedInputLength;
+                inputIterator = ref Unsafe.Add(ref inputIterator, alignedInputLength);
+            }
+        }
+<#}#>
+
+        {
+            var outputLength = length * (sizeof(double) + 1);
+            var destination = writer.GetSpan(outputLength);
+            ref var outputIterator = ref MemoryMarshal.GetReference(destination);
+            for (var index = 0; index < length; index++)
+            {
+                writer.CancellationToken.ThrowIfCancellationRequested();
+                outputIterator = ref ReverseWriteFloat<#= sizeof(double) * 8 #>(ref outputIterator, inputIterator);
+                inputIterator = ref Unsafe.Add(ref inputIterator, 1);
+            }
+
+            writer.Advance(outputLength);
+        }
+    }
+}
