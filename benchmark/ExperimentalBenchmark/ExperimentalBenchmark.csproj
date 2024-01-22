@@ -12,6 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="BoolSerializeTest.cs" />
+    <Compile Remove="IntTest.cs" />
+    <Compile Remove="SByteTest.cs" />
+    <Compile Remove="ShortTest.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />
     <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" />
   </ItemGroup>
@@ -35,6 +42,10 @@
 
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="BenchmarkDotNet.Artifacts\" />
   </ItemGroup>
 
 </Project>

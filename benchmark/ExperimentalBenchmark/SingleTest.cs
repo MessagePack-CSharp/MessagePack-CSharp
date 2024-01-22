@@ -29,7 +29,7 @@ public class SingleTest
     {
         var bufferWriter = new ArrayBufferWriter<byte>();
         var writer = new MessagePackWriter(bufferWriter);
-        e::MessagePack.Formatters.DoubleArrayFormatter.Instance.Serialize(ref writer, input, default!);
+        e::MessagePack.Formatters.SingleArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;
     }
@@ -39,7 +39,7 @@ public class SingleTest
     {
         var bufferWriter = new ArrayBufferWriter<byte>();
         var writer = new MessagePackWriter(bufferWriter);
-        DoubleArrayFormatter.Instance.Serialize(ref writer, input, default!);
+        SingleArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;
     }
