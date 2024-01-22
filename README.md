@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
 [![NuGet](https://img.shields.io/nuget/vpre/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
-[![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)][Releases]
+[![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases)
 
 [![Join the chat at https://gitter.im/MessagePack-CSharp/Lobby](https://badges.gitter.im/MessagePack-CSharp/Lobby.svg)](https://gitter.im/MessagePack-CSharp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://dev.azure.com/ils0086/MessagePack-CSharp/_apis/build/status/MessagePack-CSharp-CI?branchName=master)](https://dev.azure.com/ils0086/MessagePack-CSharp/_build/latest?definitionId=2&branchName=master)
@@ -95,7 +95,7 @@ Install-Package MessagePack.AspNetCoreMvcFormatter
 
 ### Unity
 
-For Unity projects, the [releases][Releases] page provides downloadable `.unitypackage` files. When using in Unity IL2CPP or Xamarin AOT environments, please carefully read the [pre-code generation section](#aot).
+For Unity projects, the [Releases](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases) page provides downloadable `.unitypackage` files. When using in Unity IL2CPP or Xamarin AOT environments, please carefully read the [pre-code generation section](#aot).
 
 ### Migration notes from v1.x
 
@@ -1535,7 +1535,7 @@ Within the *reserved* ranges, this library defines or implements extensions that
 
 Unity lowest supported version is `2018.3`, API Compatibility Level supports both `.NET 4.x` and `.NET Standard 2.0`.
 
-You can install the `unitypackage` from the [releases][Releases] page.
+You can install the `unitypackage` from the [Releases](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases) page.
 If your build targets .NET Framework 4.x and runs on mono, you can use it as is.
 But if your build targets IL2CPP, you can not use `Dynamic***Resolver`, so it is required to use pre-code generation. Please see [pre-code generation section](#aot).
 
