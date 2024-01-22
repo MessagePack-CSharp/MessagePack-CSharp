@@ -24,13 +24,13 @@ public partial class MessagePackGenerator : ISourceGenerator
         }
 
         CSharpCompilation compilation = (CSharpCompilation)context.Compilation;
-        if (!ReferenceSymbols.TryCreate(compilation, out ReferenceSymbols? referenceSymbols))
+        if (!ReferenceSymbols.TryCreate(compilation, out ReferenceSymbols? referenceSymbols) || referenceSymbols.MessagePackFormatter is null)
         {
             return;
         }
 
         // Search for a resolver generator attribute, which may be applied to any type in the compilation.
-        AnalyzerOptions? options = new();
+        AnalyzerOptions? options = new() { IsGeneratingSource = true };
         foreach (var typeDeclByDocument in receiver.TypeDeclarations.GroupBy(td => td.SyntaxTree))
         {
             SemanticModel semanticModel = compilation.GetSemanticModel(typeDeclByDocument.Key, ignoreAccessibility: true);

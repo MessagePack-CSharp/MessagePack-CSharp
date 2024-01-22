@@ -25,15 +25,21 @@ namespace MessagePack.SourceGenerator.Transforms
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write("\r\n");
+            this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\n[assembly: MsgPack::Internal.GeneratedA" +
+                    "ssemblyMessagePackResolverAttribute(typeof(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(CodeAnalysisUtilities.QualifyWithOptionalNamespace(ResolverName, ResolverNamespace)));
+            this.Write("), ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Version.Parse(ThisAssembly.AssemblyFileVersion).Major));
+            this.Write(", ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Version.Parse(ThisAssembly.AssemblyFileVersion).Minor));
+            this.Write(")]\r\n\r\n");
  if (ResolverNamespace.Length > 0) { 
             this.Write("namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
             this.Write(" {\r\n");
  } 
-            this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\n/// <summary>A MessagePack resolver tha" +
-                    "t uses generated formatters for types in this assembly.</summary>\r\npartial class" +
-                    " ");
+            this.Write("\r\n/// <summary>A MessagePack resolver that uses generated formatters for types in" +
+                    " this assembly.</summary>\r\npartial class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(" : MsgPack::IFormatterResolver\r\n{\r\n\t/// <summary>An instance of this resolver tha" +
                     "t only returns formatters specifically generated for types in this assembly.</su" +

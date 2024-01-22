@@ -323,6 +323,7 @@ namespace MessagePack.Internal
         {
             BuiltinResolver.Instance, // Try Builtin
             AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
+            SourceGeneratedFormatterResolver.Instance, // Prefer source generated formatters over dynamic ones.
 
 #if UNITY_2018_3_OR_NEWER
             MessagePack.Unity.UnityResolver.Instance,

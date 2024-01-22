@@ -2,9 +2,11 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace TempProject {
-
 using MsgPack = global::MessagePack;
+
+[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(TempProject.MyResolver), 3, 0)]
+
+namespace TempProject {
 
 /// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
 partial class MyResolver : MsgPack::IFormatterResolver

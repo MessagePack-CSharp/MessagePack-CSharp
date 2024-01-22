@@ -33,7 +33,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
 
         var options = resolverOptions.Combine(customFormattedTypes).Combine(customFormatters).Select(static (input, ct) =>
         {
-            AnalyzerOptions? options = input.Left.Left ?? new();
+            AnalyzerOptions? options = input.Left.Left ?? new() { IsGeneratingSource = true };
 
             var formattableTypes = input.Left.Right;
             var formatterTypes = input.Right.Aggregate(
@@ -65,7 +65,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             {
                 AnalyzerOptions options = s.Right;
 
-                if (!ReferenceSymbols.TryCreate(s.Left.Right, out ReferenceSymbols? referenceSymbols))
+                if (!ReferenceSymbols.TryCreate(s.Left.Right, out ReferenceSymbols? referenceSymbols) || referenceSymbols.MessagePackFormatter is null)
                 {
                     return default;
                 }

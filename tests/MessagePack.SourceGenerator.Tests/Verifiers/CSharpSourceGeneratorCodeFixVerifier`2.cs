@@ -15,11 +15,13 @@ internal class CSharpSourceGeneratorCodeFixVerifier<TSourceGenerator, TCodeFix>
     {
         public Test()
         {
-            this.ReferenceAssemblies = ReferencesHelper.DefaultReferences;
+            this.ReferenceAssemblies = ReferencesHelper.DefaultTargetFrameworkReferences;
             this.CompilerDiagnostics = CompilerDiagnostics.Warnings;
         }
 
         public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.CSharp9;
+
+        public ReferencesSet MessagePackReferences { get; set; } = ReferencesSet.MessagePack;
 
         protected override CompilationOptions CreateCompilationOptions()
         {
@@ -27,6 +29,15 @@ internal class CSharpSourceGeneratorCodeFixVerifier<TSourceGenerator, TCodeFix>
             return compilationOptions
                .WithWarningLevel(99)
                .WithSpecificDiagnosticOptions(compilationOptions.SpecificDiagnosticOptions.SetItem("CS1591", ReportDiagnostic.Suppress));
+        }
+
+#pragma warning disable SA1316 // https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3781
+        protected override async Task<(Compilation compilation, ImmutableArray<Diagnostic> generatorDiagnostics)> GetProjectCompilationAsync(Project project, IVerifier verifier, CancellationToken cancellationToken)
+#pragma warning restore SA1316 // https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3781
+        {
+            var (compilation, generatorDiagnostics) = await base.GetProjectCompilationAsync(project, verifier, cancellationToken);
+            compilation = ReferencesHelper.AddMessagePackReferences(compilation, this.MessagePackReferences);
+            return (compilation, generatorDiagnostics);
         }
 
         protected override ParseOptions CreateParseOptions()
@@ -42,7 +53,7 @@ internal class CSharpSourceGeneratorCodeFixVerifier<TSourceGenerator, TCodeFix>
 
     public static Task VerifyAnalyzerWithoutMessagePackReferenceAsync(string source)
     {
-        var test = new Test { TestCode = source, ReferenceAssemblies = ReferenceAssemblies.NetFramework.Net472.Default };
+        var test = new Test { TestCode = source, MessagePackReferences = ReferencesSet.None };
         return test.RunAsync();
     }
 

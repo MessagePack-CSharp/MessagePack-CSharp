@@ -4,11 +4,13 @@
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 
+using MsgPack = global::MessagePack;
+
+[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(<#= CodeAnalysisUtilities.QualifyWithOptionalNamespace(ResolverName, ResolverNamespace) #>), <#= Version.Parse(ThisAssembly.AssemblyFileVersion).Major #>, <#= Version.Parse(ThisAssembly.AssemblyFileVersion).Minor #>)]
+
 <# if (ResolverNamespace.Length > 0) { #>
 namespace <#= ResolverNamespace #> {
 <# } #>
-
-using MsgPack = global::MessagePack;
 
 /// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
 partial class <#= ResolverName #> : MsgPack::IFormatterResolver
