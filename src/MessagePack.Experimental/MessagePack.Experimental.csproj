@@ -10,62 +10,44 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="HardwareIntrinsics\DoubleArrayFormatter.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>DoubleArrayFormatter.tt</DependentUpon>
-    </None>
-    <None Include="HardwareIntrinsics\SingleArrayFormatter.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>SingleArrayFormatter.tt</DependentUpon>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="HardwareIntrinsics\DoubleArrayFormatter.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>DoubleArrayFormatter.cs</LastGenOutput>
-    </None>
     <None Update="HardwareIntrinsics\FormatterHelpers.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>FormatterHelpers.cs</LastGenOutput>
     </None>
     <None Update="HardwareIntrinsics\PrimitiveArrayGetFormatterHelper.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>PrimitiveArrayGetFormatterHelper.cs</LastGenOutput>
+      <LastGenOutput>ReadOnlySpanSerializeHelper.double.cs</LastGenOutput>
     </None>
-    <None Update="HardwareIntrinsics\SingleArrayFormatter.tt">
+    <None Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper.double.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>SingleArrayFormatter.cs</LastGenOutput>
+      <LastGenOutput>ReadOnlySpanSerializeHelper.double.cs</LastGenOutput>
+    </None>
+    <None Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper.single.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ReadOnlySpanSerializeHelper.single.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="HardwareIntrinsics\DoubleArrayFormatter.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>DoubleArrayFormatter.tt</DependentUpon>
-    </Compile>
     <Compile Update="HardwareIntrinsics\FormatterHelpers.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>FormatterHelpers.tt</DependentUpon>
     </Compile>
-    <Compile Update="HardwareIntrinsics\PrimitiveArrayGetFormatterHelper.cs">
+    <Compile Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper.double.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>PrimitiveArrayGetFormatterHelper.tt</DependentUpon>
     </Compile>
-    <Compile Update="HardwareIntrinsics\SingleArrayFormatter.cs">
+    <Compile Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper.double.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>SingleArrayFormatter.tt</DependentUpon>
+      <DependentUpon>ReadOnlySpanSerializeHelper.double.tt</DependentUpon>
     </Compile>
-    <Compile Update="ResolverHelper.cs">
+    <Compile Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper.single.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>ResolverHelper.tt</DependentUpon>
+      <DependentUpon>ReadOnlySpanSerializeHelper.single.tt</DependentUpon>
     </Compile>
   </ItemGroup>
 

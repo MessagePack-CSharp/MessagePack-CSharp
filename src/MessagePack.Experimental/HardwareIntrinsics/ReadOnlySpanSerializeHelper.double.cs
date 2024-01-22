@@ -122,17 +122,24 @@ internal static partial class ReadOnlySpanSerializeHelper
             }
         }
 
+        while (length > 0)
         {
-            var outputLength = length * (sizeof(double) + 1);
-            var destination = writer.GetSpan(outputLength);
-            ref var outputIterator = ref MemoryMarshal.GetReference(destination);
-            for (var index = 0; index < length; index++)
+            var inputLength = length;
+            if (inputLength > maxInputSize)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
-                outputIterator = ref ReverseWriteFloat64(ref outputIterator, inputIterator);
-                inputIterator = ref Unsafe.Add(ref inputIterator, 1);
+                inputLength = maxInputSize;
             }
 
+            var outputLength = inputLength * (sizeof(double) + 1);
+            var destination = writer.GetSpan(outputLength);
+            ref var outputIterator = ref MemoryMarshal.GetReference(destination);
+            for (nuint index = 0; index < (nuint)inputLength; index++)
+            {
+                writer.CancellationToken.ThrowIfCancellationRequested();
+                outputIterator = ref ReverseWriteFloat64(ref outputIterator, Unsafe.Add(ref inputIterator, index));
+            }
+
+            length -= inputLength;
             writer.Advance(outputLength);
         }
     }
