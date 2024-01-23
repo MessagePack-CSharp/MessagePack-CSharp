@@ -22,18 +22,11 @@ public class SingleTest
         }
     }
 
-    private ArrayBufferWriter<byte> bufferWriter = default!;
-
-    [IterationSetup]
-    public void IterationSetUp()
-    {
-        bufferWriter = new();
-    }
-
     [Benchmark]
     public ReadOnlyMemory<byte> Simd()
     {
-        var writer = new MessagePackWriter(bufferWriter);
+        ArrayBufferWriter<byte> bufferWriter = new();
+        MessagePackWriter writer = new(bufferWriter);
         e::MessagePack.Formatters.SingleArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;
@@ -42,7 +35,8 @@ public class SingleTest
     [Benchmark]
     public ReadOnlyMemory<byte> Old()
     {
-        var writer = new MessagePackWriter(bufferWriter);
+        ArrayBufferWriter<byte> bufferWriter = new();
+        MessagePackWriter writer = new(bufferWriter);
         SingleArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;

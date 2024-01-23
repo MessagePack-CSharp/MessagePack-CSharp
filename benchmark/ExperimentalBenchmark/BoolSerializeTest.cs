@@ -37,18 +37,11 @@ public class BoolSerializeTest
         }
     }
 
-    private ArrayBufferWriter<byte> bufferWriter = default!;
-
-    [IterationSetup]
-    public void IterationSetUp()
-    {
-        bufferWriter = new();
-    }
-
     [Benchmark]
     public ReadOnlyMemory<byte> Simd()
     {
-        var writer = new MessagePackWriter(bufferWriter);
+        ArrayBufferWriter<byte> bufferWriter = new();
+        MessagePackWriter writer = new(bufferWriter);
         e::MessagePack.Formatters.BooleanArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;
@@ -57,7 +50,8 @@ public class BoolSerializeTest
     [Benchmark]
     public ReadOnlyMemory<byte> Old()
     {
-        var writer = new MessagePackWriter(bufferWriter);
+        ArrayBufferWriter<byte> bufferWriter = new();
+        MessagePackWriter writer = new(bufferWriter);
         BooleanArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;

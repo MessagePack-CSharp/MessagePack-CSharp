@@ -32,18 +32,11 @@ public class LongTest
         }
     }
 
-    private ArrayBufferWriter<byte> bufferWriter = default!;
-
-    [IterationSetup]
-    public void IterationSetUp()
-    {
-        bufferWriter = new();
-    }
-
     [Benchmark]
     public ReadOnlyMemory<byte> Simd()
     {
-        var writer = new MessagePackWriter(bufferWriter);
+        ArrayBufferWriter<byte> bufferWriter = new();
+        MessagePackWriter writer = new(bufferWriter);
         e::MessagePack.Formatters.Int64ArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;
@@ -52,7 +45,8 @@ public class LongTest
     [Benchmark]
     public ReadOnlyMemory<byte> Old()
     {
-        var writer = new MessagePackWriter(bufferWriter);
+        ArrayBufferWriter<byte> bufferWriter = new();
+        MessagePackWriter writer = new(bufferWriter);
         Int64ArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;

@@ -19,18 +19,11 @@ public class ShortTest
         Random.Shared.NextBytes(MemoryMarshal.AsBytes(input.AsSpan()));
     }
 
-    private ArrayBufferWriter<byte> bufferWriter = default!;
-
-    [IterationSetup]
-    public void IterationSetUp()
-    {
-        bufferWriter = new();
-    }
-
     [Benchmark]
     public ReadOnlyMemory<byte> Simd()
     {
-        var writer = new MessagePackWriter(bufferWriter);
+        ArrayBufferWriter<byte> bufferWriter = new();
+        MessagePackWriter writer = new(bufferWriter);
         e::MessagePack.Formatters.Int16ArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;
@@ -39,7 +32,8 @@ public class ShortTest
     [Benchmark]
     public ReadOnlyMemory<byte> Old()
     {
-        var writer = new MessagePackWriter(bufferWriter);
+        ArrayBufferWriter<byte> bufferWriter = new();
+        MessagePackWriter writer = new(bufferWriter);
         Int16ArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;
