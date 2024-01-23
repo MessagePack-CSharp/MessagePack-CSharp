@@ -4,6 +4,7 @@
     <LangVersion>12</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsAnalyzerProject>true</IsAnalyzerProject>
     <AnalyzerLanguage>cs</AnalyzerLanguage>
   </PropertyGroup>
 
