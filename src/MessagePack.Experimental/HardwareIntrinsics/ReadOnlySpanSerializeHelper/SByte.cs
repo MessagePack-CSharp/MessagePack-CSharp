@@ -29,8 +29,7 @@ internal static partial class ReadOnlySpanSerializeHelper
                     alignedInputLength = maxInputSize & mask;
                 }
 
-                var outputLength = (int)alignedInputLength * (sizeof(sbyte) + 1);
-                var destination = writer.GetSpan(outputLength);
+                var destination = writer.GetSpan((int)alignedInputLength * (sizeof(sbyte) + 1));
                 ref var outputIterator = ref MemoryMarshal.GetReference(destination);
                 nuint outputOffset = 0;
                 for (nuint inputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector256<sbyte>.Count)
@@ -65,7 +64,7 @@ internal static partial class ReadOnlySpanSerializeHelper
                     }
                 }
 
-                writer.Advance(outputLength);
+                writer.Advance((int)outputOffset);
                 length -= (int)alignedInputLength;
                 inputIterator = ref Unsafe.Add(ref inputIterator, alignedInputLength);
             }
@@ -80,8 +79,7 @@ internal static partial class ReadOnlySpanSerializeHelper
                     alignedInputLength = maxInputSize & mask;
                 }
 
-                var outputLength = (int)alignedInputLength * (sizeof(sbyte) + 1);
-                var destination = writer.GetSpan(outputLength);
+                var destination = writer.GetSpan((int)alignedInputLength * (sizeof(sbyte) + 1));
                 ref var outputIterator = ref MemoryMarshal.GetReference(destination);
                 nuint outputOffset = 0;
                 for (nuint inputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<sbyte>.Count)
@@ -116,7 +114,7 @@ internal static partial class ReadOnlySpanSerializeHelper
                     }
                 }
 
-                writer.Advance(outputLength);
+                writer.Advance((int)outputOffset);
                 length -= (int)alignedInputLength;
                 inputIterator = ref Unsafe.Add(ref inputIterator, alignedInputLength);
             }
