@@ -32,12 +32,13 @@ using NUnit.Framework;
 namespace MessagePack.Experimental.Tests;
 
 public class ArrayTests
-{
-<#
+{<#
 foreach (var type in types)
 {
     var name = type.Name;
 #>
+
+    private static readonly MessagePack.Formatters.ArrayFormatter<<#= name #>> <#= name #>ArrayFormatter = new();
 
     [Test]
     public void Empty<#= name #>ArrayTests()
@@ -99,7 +100,7 @@ foreach (var type in types)
         bufferWriter.Clear();
         {
             MessagePackWriter writer = new(bufferWriter);
-            MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, default!);
+            <#= name #>ArrayFormatter.Serialize(ref writer, array, default!);
             writer.Flush();
         }
 
@@ -143,7 +144,7 @@ foreach (var type in types)
         bufferWriter.Clear();
         {
             MessagePackWriter writer = new(bufferWriter);
-            MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, default!);
+            <#= name #>ArrayFormatter.Serialize(ref writer, array, default!);
             writer.Flush();
         }
 
@@ -190,7 +191,7 @@ foreach (var type in types)
         bufferWriter.Clear();
         {
             MessagePackWriter writer = new(bufferWriter);
-            MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, default!);
+            <#= name #>ArrayFormatter.Serialize(ref writer, array, default!);
             writer.Flush();
         }
 
@@ -235,7 +236,7 @@ foreach (var type in types)
         bufferWriter.Clear();
         {
             MessagePackWriter writer = new(bufferWriter);
-            MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, default!);
+            <#= name #>ArrayFormatter.Serialize(ref writer, array, default!);
             writer.Flush();
         }
 
