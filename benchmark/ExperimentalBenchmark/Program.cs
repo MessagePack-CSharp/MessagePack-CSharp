@@ -25,7 +25,7 @@ internal class Program
             ]).WithId("Scalar").AsBaseline());
 #pragma warning restore SA1515 // Single-line comment should be preceded by blank line
 
-        // Currently Vector256 Intrinsics is not used.
+        // Currently Vector256 Intrinsics is not used so no need to test.
         // if (Vector256.IsHardwareAccelerated)
         // {
         //     config = config

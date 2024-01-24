@@ -17,8 +17,7 @@ public class SByteTest
         "31 rand", "31 127", "31 -35",
         "64 rand", "64 127", "64 -35",
         "4096 rand", "4096 127", "4096 -35",
-        "4194304 rand", "4194304 127", "4194304 -35"
-        )]
+        "4194304 rand", "4194304 127", "4194304 -35")]
     public string Setting { get; set; } = string.Empty;
 #pragma warning restore SA1117
 

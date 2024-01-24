@@ -17,8 +17,7 @@ public class IntTest
         "31 rand", "31 0",
         "64 rand", "64 0",
         "4096 rand", "4096 0",
-        "4194304 rand", "4194304 0"
-        )]
+        "4194304 rand", "4194304 0")]
     public string Setting { get; set; } = string.Empty;
 #pragma warning restore SA1117
 
