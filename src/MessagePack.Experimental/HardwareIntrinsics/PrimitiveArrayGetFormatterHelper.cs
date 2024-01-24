@@ -39,6 +39,21 @@ namespace MessagePack.Resolvers
                 return Formatters.Int64ArrayFormatter.Instance;
             }
 
+            if (t == typeof(UInt16[]))
+            {
+                return Formatters.UInt16ArrayFormatter.Instance;
+            }
+
+            if (t == typeof(UInt32[]))
+            {
+                return Formatters.UInt32ArrayFormatter.Instance;
+            }
+
+            if (t == typeof(UInt64[]))
+            {
+                return Formatters.UInt64ArrayFormatter.Instance;
+            }
+
             if (t == typeof(Single[]))
             {
                 return Formatters.SingleArrayFormatter.Instance;

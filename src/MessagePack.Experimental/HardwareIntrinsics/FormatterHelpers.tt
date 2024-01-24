@@ -4,18 +4,6 @@
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ output extension=".cs" #>
-<#const string Zero = " 0,";
-const string I8 = " MessagePackCode.Int8,";
-const string I16 = " MessagePackCode.Int16,";
-const string I32 = " MessagePackCode.Int32,";
-const string U8 = " MessagePackCode.UInt8,";
-const string U16 = " MessagePackCode.UInt16,";
-const string U32 = " MessagePackCode.UInt32,";
-
-var constantBuffer = new StringBuilder(16 * 32);
-var lengthBuffer = new StringBuilder(256);
-var accumulatedLength = 0;
-int range;#>
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
@@ -126,304 +114,14 @@ int range;#>
 */
 
 using System;
+using System.Runtime.InteropServices;
 
 #pragma warning disable SA1402 // File may only contain a single type
-#pragma warning disable SA1649 // File name should match first type name
 #pragma warning disable CS0436 // The same name of the primary package
+#pragma warning disable IDE0049
+#pragma warning disable SA1121
 
-namespace MessagePack.Formatters
-{
-    internal static class SingleInstructionMultipleDataPrimitiveArrayFormatterHelper
-    {
-        /*
-            Sse2.MaskMove(src, mask, dest);
-            Vector128<byte> is a byte array consists of 16 elements.
-            This function stores the byte element of src at the corresponding position of mask if it is greater than or equal to 0x80 and does nothing if it is less than that.
-
-            See : https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=maskmove&expand=3555
-        */
-
-        /// <summary>
-        /// Gets Mask Vector Table.
-        /// MessagePack SIMD Serialization needs to store the output bytes to the destination memory.
-        /// <example>
-        /// <code>
-        /// /* Vector128&lt;byte&gt; vector128; int outputLength; byte* destination; */
-        /// var maskTable = SingleInstructionMultipleDataPrimitiveArrayFormatterHelper.StoreMaskTable;
-        /// fixed (byte* maskTablePointer = &amp;maskTable[0])
-        /// {
-        ///     var mask = Sse2.LoadVector128(maskTablePointer + (outputLength &lt;&lt; 4));
-        ///     Sse2.MaskMove(vector128, mask, destination);
-        /// }
-        /// </code>
-        /// </example>
-        /// </summary>
-        public static ReadOnlySpan<byte> StoreMaskTable => new byte[17 * 16] { <#
-for (int count = 0; count <= 16; count++)
-{
-    int index = 0;
-    for (; index < count; index++)
-    {
-        #>0x80, <#
-    }
-    for (; index < 16; index++)
-    {
-        #>0, <#
-    }
-}
-#>};
-    }
-
-    public sealed partial class SByteArrayFormatter
-    {
-        /*
-            1(2) : -32 > i >= short.MinValue
-            0(1) : sbyte.MaxValue >= i >= -32
-
-            2 ^ 8 == 256
-
-            Values of sbyte type can be classified into two types by MessagePack Code(FixNum and Int8).
-            If 16 Input Values are all in the range of FixNum, they can be just copied to the destination span.
-            If not, `shuffle` is needed.
-
-            Vector<byte> ShuffleAndMaskTable[256].
-            C# doesn't allow the above expression.
-            So ShuffleAndMaskTable is written as byte[4096].
-
-            Sse2.CompareGreaterThan(-32, i) can classify them.
-
-            Sse2.MoveMask gathers highest bits of Vector128<sbyte>.
-            In other words, this API compiles the comparison results of 16 sbyte numbers into 16 bits.
-            Lower 8bits represents the results of the first 8 sbyte values.
-
-            Total Output Byte Sequence Length can be calculated by Popcnt.PopCount static method.
-                See : https://docs.microsoft.com/en-us/cpp/intrinsics/popcnt16-popcnt-popcnt64?view=vs-2019
-
-            Since there is only one type of MessagePack code(==Int8) in the case of sbyte, I used Sse41.BlendVariable static method to synthesize the Output Byte Sequence.
-
-            Pseudo Code:
-                public static System.Runtime.Intrinsics.Vector128<sbyte> BlendVariable (System.Runtime.Intrinsics.Vector128<sbyte> left, System.Runtime.Intrinsics.Vector128<sbyte> right, System.Runtime.Intrinsics.Vector128<sbyte> mask)
-                {
-                    Vector128<sbyte> answer = default;
-                    sbyte* leftPointer = (sbyte*)&left;
-                    sbyte* rightPointer = (sbyte*)&right;
-                    sbyte* maskPointer = (sbyte*)&mask;
-                    sbyte* answerPointer = (sbyte*)&answer;
-                    for (int i = 0; i < 16; i++)
-                    {
-                        bool shouldSelectLeft = mask[i] >= 0;
-                        if (shouldSelectLeft)
-                        {
-                            answer[i] = left[i];
-                        }
-                        else
-                        {
-                            answer[i] = right[i];
-                        }
-                    }
-
-                    return answer;
-                }
-        */
-
-        private static ReadOnlySpan<byte> ShuffleAndMaskTable => new byte[256 * 16] {<#
-for (uint bitPattern = 0; bitPattern < 256; bitPattern++)
-{
-    // Examples
-    //     bitPattern == 0b00000000 then shuffleVector == <0, 1, 2, 3, 4, 5, 6, 7, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80>
-    //     bitPattern == 0b10101011 then shuffleVector == <0x80, 0, 0x80, 1, 2, 0x80, 3, 4, 0x80, 5, 6, 0x80, 7, 0x80, 0x80, 0x80>
-
-    accumulatedLength = 0;
-    for (var j = 0; j < 8; j++)
-    {
-        var isFixNum = ((bitPattern >> j) & 1) == 0;
-        if (isFixNum)
-        {
-            #> <#=j#>,<#
-            accumulatedLength++;
-        }
-        else
-        {
-            #> 0x80, <#=j#>,<#
-            accumulatedLength += 2;
-        }
-    }
-
-    // fill zero
-    for (; accumulatedLength < 16; accumulatedLength++)
-    {
-        #> 0x80,<#
-    }
-}
-#> };
-    }
-
-    public sealed partial class Int16ArrayFormatter
-    {
-        /*
-            0(3) : sbyte.MinValue > i >= short.MinValue
-           -1(2) : MessagePackRange.MinFixNegativeInt > i > sbyte.MinValue - 1
-           -2(1) : sbyte.MaxValue + 1 > i > MessagePackRange.MinFixNegativeInt - 1
-           -3(2) : byte.MaxValue + 1 > i > sbyte.MaxValue
-           -4(3) : ushort.MaxValue >= i > byte.MaxValue
-
-            5 ^ 4 == 625
-        */
-<#
-Action<int, int> EmbedInt16 = (int i, int baseIndex) =>
-{
-    switch (i)
-    {
-        case 4:
-            accumulatedLength += 3;
-            constantBuffer.Append(U16).Append(Zero).Append(Zero);
-            #> 0x80, <#=baseIndex + 1#>, <#=baseIndex#>,<#
-            break;
-        case 3:
-            accumulatedLength += 2;
-            constantBuffer.Append(U8).Append(Zero);
-            #> 0x80, <#=baseIndex#>,<#
-            break;
-        case 2:
-            accumulatedLength++;
-            constantBuffer.Append(Zero);
-            #> <#=baseIndex#>,<#
-            break;
-        case 1:
-            accumulatedLength += 2;
-            constantBuffer.Append(I8).Append(Zero);
-            #> 0x80, <#=baseIndex#>,<#
-            break;
-        case 0:
-            accumulatedLength += 3;
-            constantBuffer.Append(I16).Append(Zero).Append(Zero);
-            #> 0x80, <#=baseIndex + 1#>, <#=baseIndex#>,<#
-            break;
-    }
-};
-#>
-        private const int CountTableOffset = 625 * 32;
-
-        private static ReadOnlySpan<byte> ShuffleAndMaskTable => new byte[625 * 36] {<#
-lengthBuffer.Clear();
-range = 5;
-for (var i3 = 0; i3 < range; i3++)
-{
-    for (var i2 = 0; i2 < range; i2++)
-    {
-        for (var i1 = 0; i1 < range; i1++)
-        {
-            for (var i0 = 0; i0 < range; i0++)
-            {
-                constantBuffer.Clear();
-                accumulatedLength = 0;
-                EmbedInt16(i0, 0);
-                EmbedInt16(i1, 2);
-                EmbedInt16(i2, 4);
-                EmbedInt16(i3, 6);
-                lengthBuffer.Append(' ').Append(accumulatedLength).Append(", 0, 0, 0");
-                if (i1 != range - 1 || i0 != range - 1 || i2 != range - 1 || i3 != range - 1)
-                {
-                    lengthBuffer.Append(',');
-                }
-                for (; accumulatedLength < 16; accumulatedLength++)
-                {
-                    #> 0x80,<#
-                    constantBuffer.Append(Zero);
-                }
-                #><#=constantBuffer.ToString()#><#
-            }
-        }
-    }
-}
-#><#=lengthBuffer.ToString()#> };
-    }
-
-    public sealed partial class Int32ArrayFormatter
-    {
-        /*
-             0(5) : short.MinValue > i >= int.MinValue
-            -1(3) : sbyte.MinValue > i >= short.MinValue
-            -2(2) : -32 > i >= sbyte.MinValue
-            -3(1) : sbyte.MaxValue + 1 > i >= -32
-            -4(2) : byte.MaxValue + 1 > i > sbyte.MaxValue
-            -5(3) : ushort.MaxValue + 1 > i > byte.MaxValue
-            -6(5) : int.MaxValue >= i > ushort.MaxValue
-
-            7 ^ 2 == 49
-        */
-<#
-Action<int, int> EmbedInt32 = (int i, int baseIndex) =>
-{
-    switch (i)
-    {
-        case 6:
-            accumulatedLength += 5;
-            constantBuffer.Append(U32).Append(Zero).Append(Zero).Append(Zero).Append(Zero);
-            #> 0x80, <#=baseIndex+3#>, <#=baseIndex+2#>, <#=baseIndex+1#>, <#=baseIndex#>,<#
-            break;
-        case 5:
-            accumulatedLength += 3;
-            constantBuffer.Append(U16).Append(Zero).Append(Zero);
-            #> 0x80, <#=baseIndex+1#>, <#=baseIndex#>,<#
-            break;
-        case 4:
-            accumulatedLength += 2;
-            constantBuffer.Append(U8).Append(Zero);
-            #> 0x80, <#=baseIndex#>,<#
-            break;
-        case 3:
-            accumulatedLength++;
-            constantBuffer.Append(Zero);
-            #> <#=baseIndex#>,<#
-            break;
-        case 2:
-            accumulatedLength += 2;
-            constantBuffer.Append(I8).Append(Zero);
-            #> 0x80, <#=baseIndex#>,<#
-            break;
-        case 1:
-            accumulatedLength += 3;
-            constantBuffer.Append(I16).Append(Zero).Append(Zero);
-            #> 0x80, <#=baseIndex+1#>, <#=baseIndex#>,<#
-            break;
-        case 0:
-            accumulatedLength += 5;
-            constantBuffer.Append(I32).Append(Zero).Append(Zero).Append(Zero).Append(Zero);
-            #> 0x80, <#=baseIndex+3#>, <#=baseIndex+2#>, <#=baseIndex+1#>, <#=baseIndex#>,<#
-            break;
-    }
-};
-#>
-        private const int CountTableOffset = 49 * 32;
-
-        private static ReadOnlySpan<byte> ShuffleAndMaskTable => new byte[49 * 36] {<#
-lengthBuffer.Clear();
-range = 7;
-for (var i1 = 0; i1 < range; i1++)
-{
-    for (var i0 = 0; i0 < range; i0++)
-    {
-        constantBuffer.Clear();
-        accumulatedLength = 0;
-        EmbedInt32(i0, 0);
-        EmbedInt32(i1, 4);
-
-        lengthBuffer.Append(' ').Append(accumulatedLength).Append(", 0, 0, 0");
-        if (i1 != range - 1 || i0 != range - 1)
-        {
-            lengthBuffer.Append(',');
-        }
-        for (; accumulatedLength < 16; accumulatedLength++)
-        {
-            #> 0x80,<#
-            constantBuffer.Append(Zero);
-        }
-        #><#=constantBuffer.ToString()#><#
-    }
-}
-#><#=lengthBuffer.ToString()#> };
-    }
+namespace MessagePack.Formatters;
 <#
     Type[] types = new []
     {
@@ -431,6 +129,9 @@ for (var i1 = 0; i1 < range; i1++)
       typeof(short),
       typeof(int),
       typeof(long),
+      typeof(ushort),
+      typeof(uint),
+      typeof(ulong),
       typeof(float),
       typeof(double),
       typeof(bool),
@@ -442,44 +143,54 @@ for (var i1 = 0; i1 < range; i1++)
         var formatter = name + "ArrayFormatter";
 #>
 
-    public sealed partial class <#= formatter #>
-    {
-        public static readonly <#= formatter #> Instance = new <#= formatter #>();
+public sealed partial class <#= formatter #> : IMessagePackFormatter<<#= name #>[]?>
+{
+    public static readonly <#= formatter #> Instance = new();
 
-        private <#= formatter #>()
+    private <#= formatter #>()
+    {
+    }
+
+    public void Serialize(ref MessagePackWriter writer, <#= name #>[]? value, MessagePackSerializerOptions options)
+    {
+        if (value is null)
         {
+            writer.WriteNil();
+            return;
         }
+
+        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+    }
 <#
         if (type != typeof(bool))
         {
 #>
 
-        public <#= name #>[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+    public <#= name #>[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+    {
+        if (reader.TryReadNil())
         {
-            if (reader.TryReadNil())
-            {
-                return default;
-            }
-
-            var len = reader.ReadArrayHeader();
-            if (len == 0)
-            {
-                return Array.Empty<<#= name #>>();
-            }
-
-            var array = new <#= name #>[len];
-            for (var i = 0; i < array.Length; i++)
-            {
-                array[i] = reader.Read<#= name #>();
-            }
-
-            return array;
+            return default;
         }
-<#
+
+        var len = reader.ReadArrayHeader();
+        if (len == 0)
+        {
+            return [];
         }
-#>
+
+        var array = new <#= name #>[len];
+        for (var i = 0; i < array.Length; i++)
+        {
+            array[i] = reader.Read<#= name #>();
+        }
+
+        return array;
     }
 <#
-    }
+        }
 #>
 }
+<#
+    }
+#>

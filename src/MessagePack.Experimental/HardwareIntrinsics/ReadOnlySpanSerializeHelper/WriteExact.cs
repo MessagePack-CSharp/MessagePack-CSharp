@@ -22,7 +22,7 @@ internal static partial class ReadOnlySpanSerializeHelper
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void WriteInt8(ref byte destination, byte value)
+    private static void WriteInt8(ref byte destination, sbyte value)
     {
         destination = MessagePackCode.Int8;
         Unsafe.WriteUnaligned(ref Unsafe.AddByteOffset(ref destination, 1), value);
@@ -36,7 +36,7 @@ internal static partial class ReadOnlySpanSerializeHelper
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void WriteInt16(ref byte destination, ushort value)
+    private static void WriteInt16(ref byte destination, short value)
     {
         destination = MessagePackCode.Int16;
         Unsafe.WriteUnaligned(ref Unsafe.AddByteOffset(ref destination, 1), value);
@@ -50,7 +50,7 @@ internal static partial class ReadOnlySpanSerializeHelper
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void WriteInt32(ref byte destination, uint value)
+    private static void WriteInt32(ref byte destination, int value)
     {
         destination = MessagePackCode.Int32;
         Unsafe.WriteUnaligned(ref Unsafe.AddByteOffset(ref destination, 1), value);
@@ -64,7 +64,7 @@ internal static partial class ReadOnlySpanSerializeHelper
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void WriteInt64(ref byte destination, ulong value)
+    private static void WriteInt64(ref byte destination, long value)
     {
         destination = MessagePackCode.Int64;
         Unsafe.WriteUnaligned(ref Unsafe.AddByteOffset(ref destination, 1), value);

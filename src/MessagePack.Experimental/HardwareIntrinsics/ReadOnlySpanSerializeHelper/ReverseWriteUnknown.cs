@@ -25,22 +25,15 @@ internal static partial class ReadOnlySpanSerializeHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static nuint ReverseWriteUnknown(ref byte destination, sbyte value)
     {
-        if (value < 0)
+        if (value < MessagePackRange.MinFixNegativeInt)
         {
-            if (value >= MessagePackRange.MinFixNegativeInt)
-            {
-                destination = (byte)value;
-                return 1;
-            }
-            else
-            {
-                WriteInt8(ref destination, (byte)value);
-                return 2;
-            }
+            WriteInt8(ref destination, value);
+            return 2;
         }
         else
         {
-            return ReverseWriteUnknown(ref destination, (byte)value);
+            destination = (byte)value;
+            return 1;
         }
     }
 
