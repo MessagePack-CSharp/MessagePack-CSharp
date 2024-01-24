@@ -7,7 +7,7 @@ namespace Benchmark;
 
 public class DoubleTest
 {
-    [Params(0, 1, 3, 4, 8, 64, 1024, 16 * 1024 * 1024)]
+    [Params(0, 1, 3, 8, 31, 64, 1024, 16777216)]
     public int Size { get; set; }
 
     private double[] input = [];
@@ -22,22 +22,22 @@ public class DoubleTest
         }
     }
 
+    [Benchmark(Baseline = true)]
+    public ReadOnlyMemory<byte> Old()
+    {
+        ArrayBufferWriter<byte> bufferWriter = new();
+        MessagePackWriter writer = new(bufferWriter);
+        DoubleArrayFormatter.Instance.Serialize(ref writer, input, default!);
+        writer.Flush();
+        return bufferWriter.WrittenMemory;
+    }
+
     [Benchmark]
     public ReadOnlyMemory<byte> Simd()
     {
         ArrayBufferWriter<byte> bufferWriter = new();
         MessagePackWriter writer = new(bufferWriter);
         e::MessagePack.Formatters.DoubleArrayFormatter.Instance.Serialize(ref writer, input, default!);
-        writer.Flush();
-        return bufferWriter.WrittenMemory;
-    }
-
-    [Benchmark]
-    public ReadOnlyMemory<byte> Old()
-    {
-        ArrayBufferWriter<byte> bufferWriter = new();
-        MessagePackWriter writer = new(bufferWriter);
-        DoubleArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;
     }

@@ -12,11 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="BoolSerializeTest.cs" />
+    <!--<Compile Remove="BoolSerializeTest.cs" />
     <Compile Remove="SByteTest.cs" />
     <Compile Remove="ShortTest.cs" />
     <Compile Remove="IntTest.cs" />
+    <Compile Remove="LongTest.cs" />
     <Compile Remove="SingleTest.cs" />
+    <Compile Remove="DoubleTest.cs" />-->
   </ItemGroup>
 
   <ItemGroup>

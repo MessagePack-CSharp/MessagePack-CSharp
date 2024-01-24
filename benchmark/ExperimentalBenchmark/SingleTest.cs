@@ -22,22 +22,22 @@ public class SingleTest
         }
     }
 
+    [Benchmark(Baseline = true)]
+    public ReadOnlyMemory<byte> Old()
+    {
+        ArrayBufferWriter<byte> bufferWriter = new();
+        MessagePackWriter writer = new(bufferWriter);
+        SingleArrayFormatter.Instance.Serialize(ref writer, input, default!);
+        writer.Flush();
+        return bufferWriter.WrittenMemory;
+    }
+
     [Benchmark]
     public ReadOnlyMemory<byte> Simd()
     {
         ArrayBufferWriter<byte> bufferWriter = new();
         MessagePackWriter writer = new(bufferWriter);
         e::MessagePack.Formatters.SingleArrayFormatter.Instance.Serialize(ref writer, input, default!);
-        writer.Flush();
-        return bufferWriter.WrittenMemory;
-    }
-
-    [Benchmark]
-    public ReadOnlyMemory<byte> Old()
-    {
-        ArrayBufferWriter<byte> bufferWriter = new();
-        MessagePackWriter writer = new(bufferWriter);
-        SingleArrayFormatter.Instance.Serialize(ref writer, input, default!);
         writer.Flush();
         return bufferWriter.WrittenMemory;
     }
