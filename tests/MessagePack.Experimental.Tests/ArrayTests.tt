@@ -47,7 +47,7 @@ foreach (var type in types)
         ArrayBufferWriter<byte> bufferWriter = new();
         {
             MessagePackWriter writer = new(bufferWriter);
-            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, default!);
+            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
             writer.Flush();
         }
 
@@ -55,7 +55,7 @@ foreach (var type in types)
         Assert.IsNotNull(encoded);
 
         MessagePackReader reader = new(encoded);
-        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, default!);
+        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
         Assert.AreEqual(0, decoded!.Length);
     }
@@ -67,14 +67,14 @@ foreach (var type in types)
         ArrayBufferWriter<byte> bufferWriter = new();
         {
             MessagePackWriter writer = new(bufferWriter);
-            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, default!);
+            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
             writer.Flush();
         }
 
         var encoded = bufferWriter.WrittenMemory.ToArray();
         Assert.IsNotNull(encoded);
         MessagePackReader reader = new(encoded);
-        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, default!);
+        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNull(decoded);
     }
 
@@ -90,7 +90,7 @@ foreach (var type in types)
         ArrayBufferWriter<byte> bufferWriter = new();
         {
             MessagePackWriter writer = new(bufferWriter);
-            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, default!);
+            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
             writer.Flush();
         }
 
@@ -100,7 +100,7 @@ foreach (var type in types)
         bufferWriter.Clear();
         {
             MessagePackWriter writer = new(bufferWriter);
-            <#= name #>ArrayFormatter.Serialize(ref writer, array, default!);
+            <#= name #>ArrayFormatter.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
             writer.Flush();
         }
 
@@ -108,8 +108,9 @@ foreach (var type in types)
         Assert.AreEqual(encoded.Length, defaultEncoded.Length);
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
         MessagePackReader reader = new(encoded);
-        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, default!);
+        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
+        Assert.AreEqual(decoded!.Length, array.Length);
         Assert.That(decoded.AsSpan().SequenceEqual(array));
     }
 <#
@@ -134,7 +135,7 @@ foreach (var type in types)
         ArrayBufferWriter<byte> bufferWriter = new();
         {
             MessagePackWriter writer = new(bufferWriter);
-            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, default!);
+            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
             writer.Flush();
         }
 
@@ -144,7 +145,7 @@ foreach (var type in types)
         bufferWriter.Clear();
         {
             MessagePackWriter writer = new(bufferWriter);
-            <#= name #>ArrayFormatter.Serialize(ref writer, array, default!);
+            <#= name #>ArrayFormatter.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
             writer.Flush();
         }
 
@@ -152,8 +153,9 @@ foreach (var type in types)
         Assert.AreEqual(encoded.Length, defaultEncoded.Length);
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
         MessagePackReader reader = new(encoded);
-        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, default!);
+        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
+        Assert.AreEqual(decoded!.Length, array.Length);
         Assert.That(decoded.AsSpan().SequenceEqual(array));
     }
 <#
@@ -181,7 +183,7 @@ foreach (var type in types)
         ArrayBufferWriter<byte> bufferWriter = new();
         {
             MessagePackWriter writer = new(bufferWriter);
-            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, default!);
+            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
             writer.Flush();
         }
 
@@ -191,7 +193,7 @@ foreach (var type in types)
         bufferWriter.Clear();
         {
             MessagePackWriter writer = new(bufferWriter);
-            <#= name #>ArrayFormatter.Serialize(ref writer, array, default!);
+            <#= name #>ArrayFormatter.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
             writer.Flush();
         }
 
@@ -199,15 +201,60 @@ foreach (var type in types)
         Assert.AreEqual(encoded.Length, defaultEncoded.Length);
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
         MessagePackReader reader = new(encoded);
-        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, default!);
+        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
+        Assert.AreEqual(decoded!.Length, array.Length);
         Assert.That(decoded.AsSpan().SequenceEqual(array));
     }
 <#
     }
+    else if (type == typeof(bool))
+    {
 #>
+
+    [TestCase(1)]
+    [TestCase(8)]
+    [TestCase(16)]
+    [TestCase(32)]
+    [TestCase(128)]
+    [TestCase(4096)]
+    public void RandomValue<#= name #>ArrayTests(int length)
+    {
+        var array = new <#= name #>[length];
+        for (var index = 0; index < array.Length; index++)
+        {
+            array[index] = (Random.Shared.Next(0, 2) & 1) == 1;
+        }
+
+        ArrayBufferWriter<byte> bufferWriter = new();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var encoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.IsNotNull(encoded);
+
+        bufferWriter.Clear();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            <#= name #>ArrayFormatter.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.AreEqual(encoded.Length, defaultEncoded.Length);
+        Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader reader = new(encoded);
+        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        Assert.IsNotNull(decoded);
+        Assert.AreEqual(decoded!.Length, array.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(array));
+    }
 <#
-    if (type != typeof(float) && type != typeof(double) && type != typeof(bool))
+    }
+    else
     {
 #>
 
@@ -226,7 +273,7 @@ foreach (var type in types)
         ArrayBufferWriter<byte> bufferWriter = new();
         {
             MessagePackWriter writer = new(bufferWriter);
-            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, default!);
+            e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
             writer.Flush();
         }
 
@@ -236,7 +283,7 @@ foreach (var type in types)
         bufferWriter.Clear();
         {
             MessagePackWriter writer = new(bufferWriter);
-            <#= name #>ArrayFormatter.Serialize(ref writer, array, default!);
+            <#= name #>ArrayFormatter.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
             writer.Flush();
         }
 
@@ -244,7 +291,7 @@ foreach (var type in types)
         Assert.AreEqual(encoded.Length, defaultEncoded.Length);
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
         MessagePackReader reader = new(encoded);
-        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, default!);
+        <#= name #>[]? decoded = e::MessagePack.Formatters.<#= name #>ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
         Assert.AreEqual(length, decoded!.Length);
         Assert.That(decoded.AsSpan().SequenceEqual(array));
