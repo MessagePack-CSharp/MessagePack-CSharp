@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using MessagePack.Formatters;
@@ -18,6 +19,8 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly SourceGeneratedFormatterResolver Instance = new();
 
+        private static readonly ConcurrentDictionary<Assembly, IFormatterResolver?> AssemblyResolverCache = new();
+
         private SourceGeneratedFormatterResolver()
         {
         }
@@ -31,13 +34,17 @@ namespace MessagePack.Resolvers
 
             private static IMessagePackFormatter<T>? FindPrecompiledFormatter()
             {
-                if (typeof(T).Assembly.GetCustomAttributes<GeneratedAssemblyMessagePackResolverAttribute>().FirstOrDefault() is { } att)
+                IFormatterResolver? resolver = AssemblyResolverCache.GetOrAdd(typeof(T).Assembly, static assembly =>
                 {
-                    IFormatterResolver? resolver = (IFormatterResolver?)att.ResolverType.GetField("Instance", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
-                    return resolver?.GetFormatter<T>();
-                }
+                    if (typeof(T).Assembly.GetCustomAttributes<GeneratedAssemblyMessagePackResolverAttribute>().FirstOrDefault() is { } att)
+                    {
+                        return (IFormatterResolver?)att.ResolverType.GetField("Instance", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
+                    }
 
-                return null;
+                    return null;
+                });
+
+                return resolver?.GetFormatter<T>();
             }
         }
     }
