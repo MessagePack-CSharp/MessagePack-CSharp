@@ -1,7 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net8.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,7 +36,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MessagePack.Experimental\MessagePack.Experimental.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.Experimental\MessagePack.Experimental.csproj">
+      <aliases>e</aliases>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>
