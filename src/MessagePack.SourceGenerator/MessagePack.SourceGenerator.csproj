@@ -21,6 +21,11 @@
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataKeyGen.cs" LinkBase="MessagePack\Internal" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SafeBitConverter.cs" LinkBase="MessagePack" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializationException.cs" LinkBase="MessagePack" />
+    <Compile Update="Transforms\CompositeResolverTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CompositeResolverTemplate.tt</DependentUpon>
+    </Compile>
     <Compile Update="Transforms\EnumTemplate.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -54,6 +59,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Transforms\CompositeResolverTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>CompositeResolverTemplate.cs</LastGenOutput>
+    </None>
     <None Update="Transforms\EnumTemplate.tt">
       <LastGenOutput>EnumTemplate.cs</LastGenOutput>
       <Generator>TextTemplatingFilePreprocessor</Generator>

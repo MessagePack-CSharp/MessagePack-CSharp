@@ -107,3 +107,16 @@ public partial class UnionTemplate : IFormatterTemplate
 
     public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
+
+public partial class CompositeResolverTemplate : IFormatterTemplate
+{
+    public string FileName => $"{this.ResolverName}.g.cs";
+
+    public string? FormattedTypeNamespace => null;
+
+    public required string ResolverNamespace { get; init; }
+
+    public required string ResolverName { get; init; }
+
+    public required string[] ResolverInstanceExpressions { get; init; }
+}
