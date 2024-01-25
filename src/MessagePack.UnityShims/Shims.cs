@@ -21,12 +21,12 @@ namespace UnityEngine
         [Key(1)]
         public float y;
 
-        private static readonly Vector2 zeroVector = new(0.0f, 0.0f);
-        private static readonly Vector2 oneVector = new(1f, 1f);
-        private static readonly Vector2 upVector = new(0.0f, 1f);
-        private static readonly Vector2 downVector = new(0.0f, -1f);
-        private static readonly Vector2 leftVector = new(-1f, 0.0f);
-        private static readonly Vector2 rightVector = new(1f, 0.0f);
+        private static readonly Vector2 ZeroVector = new(0.0f, 0.0f);
+        private static readonly Vector2 OneVector = new(1f, 1f);
+        private static readonly Vector2 UpVector = new(0.0f, 1f);
+        private static readonly Vector2 DownVector = new(0.0f, -1f);
+        private static readonly Vector2 LeftVector = new(-1f, 0.0f);
+        private static readonly Vector2 RightVector = new(1f, 0.0f);
 
         [SerializationConstructor]
         public Vector2(float x, float y)
@@ -36,29 +36,46 @@ namespace UnityEngine
         }
 
         public override bool Equals(object other) => other is Vector2 other1 && this.Equals(other1);
+
         public bool Equals(Vector2 other) => this.x == (double)other.x && this.y == (double)other.y;
 
-        public static Vector2 zero = zeroVector;
-        public static Vector2 one => oneVector;
-        public static Vector2 up => upVector;
-        public static Vector2 down => downVector;
-        public static Vector2 left => leftVector;
-        public static Vector2 right => rightVector;
+        public override int GetHashCode() => this.x.GetHashCode() ^ this.y.GetHashCode() << 2;
+
+        public static Vector2 zero = ZeroVector;
+
+        public static Vector2 one => OneVector;
+
+        public static Vector2 up => UpVector;
+
+        public static Vector2 down => DownVector;
+
+        public static Vector2 left => LeftVector;
+
+        public static Vector2 right => RightVector;
 
         public static Vector2 operator +(Vector2 a, Vector2 b) => new(a.x + b.x, a.y + b.y);
+
         public static Vector2 operator -(Vector2 a, Vector2 b) => new(a.x - b.x, a.y - b.y);
+
         public static Vector2 operator *(Vector2 a, Vector2 b) => new(a.x * b.x, a.y * b.y);
+
         public static Vector2 operator /(Vector2 a, Vector2 b) => new(a.x / b.x, a.y / b.y);
+
         public static Vector2 operator -(Vector2 a) => new(-a.x, -a.y);
+
         public static Vector2 operator *(Vector2 a, float d) => new(a.x * d, a.y * d);
+
         public static Vector2 operator *(float d, Vector2 a) => new(a.x * d, a.y * d);
+
         public static Vector2 operator /(Vector2 a, float d) => new(a.x / d, a.y / d);
+
         public static bool operator ==(Vector2 lhs, Vector2 rhs)
         {
             float num1 = lhs.x - rhs.x;
             float num2 = lhs.y - rhs.y;
-            return num1 * (double)num1 + num2 * (double)num2 < 9.9999994396249292E-11;
+            return (num1 * (double)num1) + (num2 * (double)num2) < 9.9999994396249292E-11;
         }
+
         public static bool operator !=(Vector2 lhs, Vector2 rhs) => !(lhs == rhs);
     }
 
@@ -72,14 +89,14 @@ namespace UnityEngine
         [Key(2)]
         public float z;
 
-        private static readonly Vector3 zeroVector = new(0.0f, 0.0f, 0.0f);
-        private static readonly Vector3 oneVector = new(1f, 1f, 1f);
-        private static readonly Vector3 upVector = new(0.0f, 1f, 0.0f);
-        private static readonly Vector3 downVector = new(0.0f, -1f, 0.0f);
-        private static readonly Vector3 leftVector = new(-1f, 0.0f, 0.0f);
-        private static readonly Vector3 rightVector = new(1f, 0.0f, 0.0f);
-        private static readonly Vector3 forwardVector = new(0.0f, 0.0f, 1f);
-        private static readonly Vector3 backVector = new(0.0f, 0.0f, -1f);
+        private static readonly Vector3 ZeroVector = new(0.0f, 0.0f, 0.0f);
+        private static readonly Vector3 OneVector = new(1f, 1f, 1f);
+        private static readonly Vector3 UpVector = new(0.0f, 1f, 0.0f);
+        private static readonly Vector3 DownVector = new(0.0f, -1f, 0.0f);
+        private static readonly Vector3 LeftVector = new(-1f, 0.0f, 0.0f);
+        private static readonly Vector3 RightVector = new(1f, 0.0f, 0.0f);
+        private static readonly Vector3 ForwardVector = new(0.0f, 0.0f, 1f);
+        private static readonly Vector3 BackVector = new(0.0f, 0.0f, -1f);
 
         [SerializationConstructor]
         public Vector3(float x, float y, float z)
@@ -90,30 +107,47 @@ namespace UnityEngine
         }
 
         public override bool Equals(object other) => other is Vector3 other1 && this.Equals(other1);
+
         public bool Equals(Vector3 other) => this.x == (double)other.x && this.y == (double)other.y && this.z == (double)other.z;
 
-        public static Vector3 zero => zeroVector;
-        public static Vector3 one => oneVector;
-        public static Vector3 forward => forwardVector;
-        public static Vector3 back => backVector;
-        public static Vector3 up => upVector;
-        public static Vector3 down => downVector;
-        public static Vector3 left => leftVector;
-        public static Vector3 right => rightVector;
+        public override int GetHashCode() => this.x.GetHashCode() ^ this.y.GetHashCode() << 2 ^ this.z.GetHashCode() >> 2;
+
+        public static Vector3 zero => ZeroVector;
+
+        public static Vector3 one => OneVector;
+
+        public static Vector3 forward => ForwardVector;
+
+        public static Vector3 back => BackVector;
+
+        public static Vector3 up => UpVector;
+
+        public static Vector3 down => DownVector;
+
+        public static Vector3 left => LeftVector;
+
+        public static Vector3 right => RightVector;
 
         public static Vector3 operator +(Vector3 a, Vector3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z);
+
         public static Vector3 operator -(Vector3 a, Vector3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
+
         public static Vector3 operator -(Vector3 a) => new(-a.x, -a.y, -a.z);
+
         public static Vector3 operator *(Vector3 a, float d) => new(a.x * d, a.y * d, a.z * d);
+
         public static Vector3 operator *(float d, Vector3 a) => new(a.x * d, a.y * d, a.z * d);
+
         public static Vector3 operator /(Vector3 a, float d) => new(a.x / d, a.y / d, a.z / d);
+
         public static bool operator ==(Vector3 lhs, Vector3 rhs)
         {
             float num1 = lhs.x - rhs.x;
             float num2 = lhs.y - rhs.y;
             float num3 = lhs.z - rhs.z;
-            return num1 * (double)num1 + num2 * (double)num2 + num3 * (double)num3 < 9.9999994396249292E-11;
+            return (num1 * (double)num1) + (num2 * (double)num2) + (num3 * (double)num3) < 9.9999994396249292E-11;
         }
+
         public static bool operator !=(Vector3 lhs, Vector3 rhs) => !(lhs == rhs);
     }
 
@@ -125,8 +159,8 @@ namespace UnityEngine
         [Key(2)] public float z;
         [Key(3)] public float w;
 
-        private static readonly Vector4 zeroVector = new(0.0f, 0.0f, 0.0f, 0.0f);
-        private static readonly Vector4 oneVector = new(1f, 1f, 1f, 1f);
+        private static readonly Vector4 ZeroVector = new(0.0f, 0.0f, 0.0f, 0.0f);
+        private static readonly Vector4 OneVector = new(1f, 1f, 1f, 1f);
 
         [SerializationConstructor]
         public Vector4(float x, float y, float z, float w)
@@ -138,26 +172,37 @@ namespace UnityEngine
         }
 
         public override bool Equals(object other) => other is Vector4 other1 && this.Equals(other1);
+
         public bool Equals(Vector4 other) => this.x == (double)other.x && this.y == (double)other.y && this.z == (double)other.z && this.w == (double)other.w;
 
-        public static Vector4 zero => zeroVector;
-        public static Vector4 one = oneVector;
+        public override int GetHashCode() => this.x.GetHashCode() ^ this.y.GetHashCode() << 2 ^ this.z.GetHashCode() >> 2 ^ this.w.GetHashCode() >> 1;
+
+        public static Vector4 zero => ZeroVector;
+
+        public static Vector4 one = OneVector;
 
         public static Vector4 operator +(Vector4 a, Vector4 b) => new(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+
         public static Vector4 operator -(Vector4 a, Vector4 b) => new(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w);
+
         public static Vector4 operator -(Vector4 a) => new(-a.x, -a.y, -a.z, -a.w);
+
         public static Vector4 operator *(Vector4 a, float d) => new(a.x * d, a.y * d, a.z * d, a.w * d);
+
         public static Vector4 operator *(float d, Vector4 a) => new(a.x * d, a.y * d, a.z * d, a.w * d);
+
         public static Vector4 operator /(Vector4 a, float d) => new(a.x / d, a.y / d, a.z / d, a.w / d);
+
         public static bool operator ==(Vector4 lhs, Vector4 rhs)
         {
             float num1 = lhs.x - rhs.x;
             float num2 = lhs.y - rhs.y;
             float num3 = lhs.z - rhs.z;
             float num4 = lhs.w - rhs.w;
-            return num1 * (double)num1 + num2 * (double)num2 + num3 * (double)num3 +
-                num4 * (double)num4 < 9.9999994396249292E-11;
+            return (num1 * (double)num1) + (num2 * (double)num2) + (num3 * (double)num3) +
+                (num4 * (double)num4) < 9.9999994396249292E-11;
         }
+
         public static bool operator !=(Vector4 lhs, Vector4 rhs) => !(lhs == rhs);
     }
 
@@ -173,7 +218,7 @@ namespace UnityEngine
         [Key(3)]
         public float w;
 
-        private static readonly Quaternion identityQuaternion = new(0.0f, 0.0f, 0.0f, 1f);
+        private static readonly Quaternion IdentityQuaternion = new(0.0f, 0.0f, 0.0f, 1f);
 
         [SerializationConstructor]
         public Quaternion(float x, float y, float z, float w)
@@ -184,7 +229,7 @@ namespace UnityEngine
             this.w = w;
         }
 
-        public static Quaternion identity => identityQuaternion;
+        public static Quaternion identity => IdentityQuaternion;
     }
 
     [MessagePackObject]
@@ -214,29 +259,49 @@ namespace UnityEngine
         }
 
         public override bool Equals(object other) => other is Color other1 && this.Equals(other1);
+
+        public override int GetHashCode() => this.r.GetHashCode() ^ this.g.GetHashCode() << 2 ^ this.b.GetHashCode() >> 2 ^ this.a.GetHashCode() >> 1;
+
         public bool Equals(Color other) => this.r.Equals(other.r) && this.g.Equals(other.g) && this.b.Equals(other.b) && this.a.Equals(other.a);
 
         public static Color operator +(Color a, Color b) => new(a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a);
+
         public static Color operator -(Color a, Color b) => new(a.r - b.r, a.g - b.g, a.b - b.b, a.a - b.a);
+
         public static Color operator *(Color a, Color b) => new(a.r * b.r, a.g * b.g, a.b * b.b, a.a * b.a);
+
         public static Color operator *(Color a, float b) => new(a.r * b, a.g * b, a.b * b, a.a * b);
+
         public static Color operator *(float b, Color a) => new(a.r * b, a.g * b, a.b * b, a.a * b);
+
         public static Color operator /(Color a, float b) => new(a.r / b, a.g / b, a.b / b, a.a / b);
+
         public static bool operator ==(Color lhs, Color rhs) => (Vector4)lhs == (Vector4)rhs;
+
         public static bool operator !=(Color lhs, Color rhs) => !(lhs == rhs);
 
         public static Color red => new(1f, 0.0f, 0.0f, 1f);
+
         public static Color green => new(0.0f, 1f, 0.0f, 1f);
+
         public static Color blue => new(0.0f, 0.0f, 1f, 1f);
+
         public static Color white => new(1f, 1f, 1f, 1f);
+
         public static Color black => new(0.0f, 0.0f, 0.0f, 1f);
+
         public static Color yellow => new(1f, 0.921568632f, 0.0156862754f, 1f);
+
         public static Color cyan => new(0.0f, 1f, 1f, 1f);
+
         public static Color magenta => new(1f, 0.0f, 1f, 1f);
+
         public static Color gray => new(0.5f, 0.5f, 0.5f, 1f);
+
         public static Color clear => new(0.0f, 0.0f, 0.0f, 0.0f);
 
         public static implicit operator Vector4(Color c) => new(c.r, c.g, c.b, c.a);
+
         public static implicit operator Color(Vector4 v) => new(v.x, v.y, v.z, v.w);
     }
 
