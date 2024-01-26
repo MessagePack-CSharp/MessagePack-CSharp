@@ -134,7 +134,7 @@ public sealed partial class SByteArrayFormatter : IMessagePackFormatter<SByte[]?
             return;
         }
 
-        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+        RefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
     }
 
     public SByte[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -176,7 +176,7 @@ public sealed partial class Int16ArrayFormatter : IMessagePackFormatter<Int16[]?
             return;
         }
 
-        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+        RefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
     }
 
     public Int16[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -218,7 +218,7 @@ public sealed partial class Int32ArrayFormatter : IMessagePackFormatter<Int32[]?
             return;
         }
 
-        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+        RefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
     }
 
     public Int32[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -260,7 +260,7 @@ public sealed partial class Int64ArrayFormatter : IMessagePackFormatter<Int64[]?
             return;
         }
 
-        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+        RefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
     }
 
     public Int64[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -302,7 +302,7 @@ public sealed partial class UInt16ArrayFormatter : IMessagePackFormatter<UInt16[
             return;
         }
 
-        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+        RefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
     }
 
     public UInt16[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -344,7 +344,7 @@ public sealed partial class UInt32ArrayFormatter : IMessagePackFormatter<UInt32[
             return;
         }
 
-        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+        RefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
     }
 
     public UInt32[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -386,7 +386,7 @@ public sealed partial class UInt64ArrayFormatter : IMessagePackFormatter<UInt64[
             return;
         }
 
-        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+        RefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
     }
 
     public UInt64[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -428,7 +428,7 @@ public sealed partial class SingleArrayFormatter : IMessagePackFormatter<Single[
             return;
         }
 
-        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+        RefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
     }
 
     public Single[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -470,7 +470,7 @@ public sealed partial class DoubleArrayFormatter : IMessagePackFormatter<Double[
             return;
         }
 
-        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+        RefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
     }
 
     public Double[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -512,7 +512,7 @@ public sealed partial class BooleanArrayFormatter : IMessagePackFormatter<Boolea
             return;
         }
 
-        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+        RefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
     }
 }
 
@@ -532,7 +532,7 @@ public sealed partial class CharArrayFormatter : IMessagePackFormatter<Char[]?>
             return;
         }
 
-        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref Unsafe.As<char, ushort>(ref MemoryMarshal.GetArrayDataReference(value)), value.Length);
+        RefSerializeHelper.Serialize(ref writer, ref Unsafe.As<char, ushort>(ref MemoryMarshal.GetArrayDataReference(value)), value.Length);
     }
 
     public Char[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -574,7 +574,7 @@ public sealed partial class DateTimeArrayFormatter : IMessagePackFormatter<DateT
             return;
         }
 
-        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+        RefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
     }
 
     public DateTime[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)

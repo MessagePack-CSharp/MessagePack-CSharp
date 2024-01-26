@@ -8,7 +8,7 @@ using System.Runtime.Intrinsics;
 
 namespace MessagePack.Formatters;
 
-internal static partial class ReadOnlySpanSerializeHelper
+internal static partial class RefSerializeHelper
 {
     internal static void Serialize(ref MessagePackWriter writer, ref readonly int input, int length)
     {

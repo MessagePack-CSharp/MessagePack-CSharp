@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace MessagePack.Formatters;
 
-internal static partial class ReadOnlySpanSerializeHelper
+internal static partial class RefSerializeHelper
 {
     private static void BigEndianSerialize(ref MessagePackWriter writer, ref double input, int length, CancellationToken cancellationToken)
     {

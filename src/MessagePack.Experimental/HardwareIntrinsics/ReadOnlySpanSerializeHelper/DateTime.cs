@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace MessagePack.Formatters;
 
-internal static partial class ReadOnlySpanSerializeHelper
+internal static partial class RefSerializeHelper
 {
     internal static void Serialize(ref MessagePackWriter writer, ref readonly DateTime input, int length)
     {

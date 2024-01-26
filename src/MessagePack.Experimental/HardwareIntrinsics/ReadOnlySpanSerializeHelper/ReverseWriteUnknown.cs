@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace MessagePack.Formatters;
 
-internal static partial class ReadOnlySpanSerializeHelper
+internal static partial class RefSerializeHelper
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static nuint ReverseWriteUnknown(ref byte destination, byte value)
