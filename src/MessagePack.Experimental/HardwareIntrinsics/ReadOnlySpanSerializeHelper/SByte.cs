@@ -9,7 +9,7 @@ namespace MessagePack.Formatters;
 
 internal static partial class RefSerializeHelper
 {
-    internal static void Serialize(ref MessagePackWriter writer, ref readonly sbyte input, int length)
+    internal static void Serialize(ref MessagePackWriter writer, ref sbyte input, int length)
     {
         writer.WriteArrayHeader(length);
         if (length == 0)
@@ -17,7 +17,7 @@ internal static partial class RefSerializeHelper
             return;
         }
 
-        ref var inputIterator = ref Unsafe.AsRef(in input);
+        ref var inputIterator = ref input;
         const int maxInputSize = int.MaxValue / (sizeof(sbyte) + 1);
         if (Vector256.IsHardwareAccelerated)
         {

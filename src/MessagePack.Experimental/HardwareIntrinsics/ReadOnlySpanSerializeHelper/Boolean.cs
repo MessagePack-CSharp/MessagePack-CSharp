@@ -9,7 +9,7 @@ namespace MessagePack.Formatters;
 
 internal static partial class RefSerializeHelper
 {
-    internal static void Serialize(ref MessagePackWriter writer, ref readonly bool input, int length)
+    internal static void Serialize(ref MessagePackWriter writer, ref bool input, int length)
     {
         writer.WriteArrayHeader(length);
         if (length == 0)
@@ -17,7 +17,7 @@ internal static partial class RefSerializeHelper
             return;
         }
 
-        ref var inputIterator = ref Unsafe.AsRef(in input);
+        ref var inputIterator = ref input;
         if (length == 0)
         {
             return;

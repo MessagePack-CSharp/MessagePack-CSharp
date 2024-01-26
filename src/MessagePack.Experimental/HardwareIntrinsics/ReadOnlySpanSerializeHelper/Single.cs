@@ -10,7 +10,7 @@ namespace MessagePack.Formatters;
 
 internal static partial class RefSerializeHelper
 {
-    internal static void Serialize(ref MessagePackWriter writer, ref readonly float input, int length)
+    internal static void Serialize(ref MessagePackWriter writer, ref float input, int length)
     {
         writer.WriteArrayHeader(length);
         if (length == 0)
@@ -20,7 +20,7 @@ internal static partial class RefSerializeHelper
 
         if (!BitConverter.IsLittleEndian)
         {
-            BigEndianSerialize(ref writer, ref Unsafe.AsRef(in input), length, writer.CancellationToken);
+            BigEndianSerialize(ref writer, ref input, length, writer.CancellationToken);
             return;
         }
 

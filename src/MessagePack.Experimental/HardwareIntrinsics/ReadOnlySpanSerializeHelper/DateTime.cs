@@ -9,7 +9,7 @@ namespace MessagePack.Formatters;
 
 internal static partial class RefSerializeHelper
 {
-    internal static void Serialize(ref MessagePackWriter writer, ref readonly DateTime input, int length)
+    internal static void Serialize(ref MessagePackWriter writer, ref DateTime input, int length)
     {
         ThrowIfOldSpec(ref writer);
         writer.WriteArrayHeader(length);
@@ -18,7 +18,7 @@ internal static partial class RefSerializeHelper
             return;
         }
 
-        ref var inputIterator = ref Unsafe.AsRef(in input);
+        ref var inputIterator = ref input;
         if (!BitConverter.IsLittleEndian)
         {
             BigEndianSerialize(ref writer, ref inputIterator, length, writer.CancellationToken);
