@@ -44,8 +44,9 @@ internal static partial class RefSerializeHelper
                 outputOffset += ReverseWriteUnknown(ref Unsafe.AddByteOffset(ref outputIterator, outputOffset), Unsafe.Add(ref inputIterator, index));
             }
 
-            length -= inputLength;
             writer.Advance((int)outputOffset);
+            length -= inputLength;
+            inputIterator = ref Unsafe.Add(ref inputIterator, inputLength);
         }
     }
 

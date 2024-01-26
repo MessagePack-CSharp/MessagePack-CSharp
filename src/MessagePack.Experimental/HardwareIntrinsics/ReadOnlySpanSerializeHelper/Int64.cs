@@ -25,7 +25,8 @@ internal static partial class RefSerializeHelper
         }
 
         ref var inputIterator = ref input;
-        const int maxInputSize = int.MaxValue / (sizeof(long) + 1);
+        const int maxOutputElementSize = sizeof(long) + 1;
+        const int maxInputSize = int.MaxValue / maxOutputElementSize;
         if (Vector128.IsHardwareAccelerated)
         {
             const int mask = ~1;
@@ -36,7 +37,7 @@ internal static partial class RefSerializeHelper
                     alignedInputLength = maxInputSize & mask;
                 }
 
-                var destination = writer.GetSpan((int)alignedInputLength * (sizeof(long) + 1));
+                var destination = writer.GetSpan((int)alignedInputLength * maxOutputElementSize);
                 ref var outputIterator = ref MemoryMarshal.GetReference(destination);
                 nuint outputOffset = 0;
                 for (nuint inputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<long>.Count)
@@ -79,7 +80,7 @@ internal static partial class RefSerializeHelper
                     // 7 -> UInt32, 5byte
                     // 8 -> UInt64, 9byte
                     var kinds = -(gteInt32MinValue + gteInt16MinValue + gteSByteMinValue + gteMinFixNegativeInt + gtMaxFixPositiveInt + gtByteMaxValue + gtUInt16MaxValue + gtUInt32MaxValue);
-                    if (kinds == Vector128.Create((long)4))
+                    if (kinds == Vector128.Create(4L))
                     {
                         // Reorder Big-Endian and Narrowing
                         var shuffled = Vector128.Shuffle(loaded.AsByte(), Vector128.Create((byte)0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)).AsUInt16().GetElement(0);
@@ -149,7 +150,7 @@ internal static partial class RefSerializeHelper
                 inputLength = maxInputSize;
             }
 
-            var destination = writer.GetSpan(inputLength * (sizeof(long) + 1));
+            var destination = writer.GetSpan(inputLength * maxOutputElementSize);
             ref var outputIterator = ref MemoryMarshal.GetReference(destination);
             nuint outputOffset = 0;
             for (nuint index = 0; index < (nuint)inputLength; index++)
@@ -158,8 +159,9 @@ internal static partial class RefSerializeHelper
                 outputOffset += ReverseWriteUnknown(ref Unsafe.AddByteOffset(ref outputIterator, outputOffset), Unsafe.Add(ref inputIterator, index));
             }
 
-            length -= inputLength;
             writer.Advance((int)outputOffset);
+            length -= inputLength;
+            inputIterator = ref Unsafe.Add(ref inputIterator, inputLength);
         }
     }
 }

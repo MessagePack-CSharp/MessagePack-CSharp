@@ -24,8 +24,9 @@ internal static partial class RefSerializeHelper
             return;
         }
 
-        ref var inputIterator = ref Unsafe.As<double, ulong>(ref Unsafe.AsRef(in input));
-        const int maxInputSize = int.MaxValue / (sizeof(double) + 1);
+        ref var inputIterator = ref Unsafe.As<double, ulong>(ref input);
+        const int maxOutputElementSize = sizeof(double) + 1;
+        const int maxInputSize = int.MaxValue / maxOutputElementSize;
         if (Vector512.IsHardwareAccelerated)
         {
             for (var alignedInputLength = (nuint)(length & (~7)); alignedInputLength > 0; alignedInputLength = (nuint)(length & (~7)))
@@ -35,10 +36,10 @@ internal static partial class RefSerializeHelper
                     alignedInputLength = maxInputSize & (~7);
                 }
 
-                var outputLength = (int)alignedInputLength * (sizeof(double) + 1);
+                var outputLength = (int)alignedInputLength * maxOutputElementSize;
                 var destination = writer.GetSpan(outputLength);
                 ref var outputIterator = ref MemoryMarshal.GetReference(destination);
-                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector512<ulong>.Count, outputOffset += (nuint)Vector512<ulong>.Count * (sizeof(double) + 1))
+                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector512<ulong>.Count, outputOffset += (nuint)Vector512<ulong>.Count * maxOutputElementSize)
                 {
                     writer.CancellationToken.ThrowIfCancellationRequested();
 
@@ -70,10 +71,10 @@ internal static partial class RefSerializeHelper
                     alignedInputLength = maxInputSize & (~3);
                 }
 
-                var outputLength = (int)alignedInputLength * (sizeof(double) + 1);
+                var outputLength = (int)alignedInputLength * maxOutputElementSize;
                 var destination = writer.GetSpan(outputLength);
                 ref var outputIterator = ref MemoryMarshal.GetReference(destination);
-                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector256<ulong>.Count, outputOffset += (nuint)Vector256<ulong>.Count * (sizeof(double) + 1))
+                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector256<ulong>.Count, outputOffset += (nuint)Vector256<ulong>.Count * maxOutputElementSize)
                 {
                     writer.CancellationToken.ThrowIfCancellationRequested();
 
@@ -101,10 +102,10 @@ internal static partial class RefSerializeHelper
                     alignedInputLength = maxInputSize & (~1);
                 }
 
-                var outputLength = (int)alignedInputLength * (sizeof(double) + 1);
+                var outputLength = (int)alignedInputLength * maxOutputElementSize;
                 var destination = writer.GetSpan(outputLength);
                 ref var outputIterator = ref MemoryMarshal.GetReference(destination);
-                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<ulong>.Count, outputOffset += (nuint)Vector128<ulong>.Count * (sizeof(double) + 1))
+                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<ulong>.Count, outputOffset += (nuint)Vector128<ulong>.Count * maxOutputElementSize)
                 {
                     writer.CancellationToken.ThrowIfCancellationRequested();
 
@@ -130,17 +131,18 @@ internal static partial class RefSerializeHelper
                 inputLength = maxInputSize;
             }
 
-            var outputLength = inputLength * (sizeof(double) + 1);
+            var outputLength = inputLength * maxOutputElementSize;
             var destination = writer.GetSpan(outputLength);
             ref var outputIterator = ref MemoryMarshal.GetReference(destination);
-            for (nuint index = 0, outputOffset = 0; index < (nuint)inputLength; index++, outputOffset += sizeof(double) + 1)
+            for (nuint index = 0, outputOffset = 0; index < (nuint)inputLength; index++, outputOffset += maxOutputElementSize)
             {
                 writer.CancellationToken.ThrowIfCancellationRequested();
                 ReverseWriteFloat64(ref Unsafe.AddByteOffset(ref outputIterator, outputOffset), Unsafe.Add(ref inputIterator, index));
             }
 
-            length -= inputLength;
             writer.Advance(outputLength);
+            length -= inputLength;
+            inputIterator = ref Unsafe.Add(ref inputIterator, inputLength);
         }
     }
 }
