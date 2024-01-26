@@ -39,7 +39,7 @@ internal static partial class RefSerializeHelper
                 var outputLength = (int)alignedInputLength * maxOutputElementSize;
                 var destination = writer.GetSpan(outputLength);
                 ref var outputIterator = ref MemoryMarshal.GetReference(destination);
-                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector512<uint>.Count, outputOffset += (System.nuint)Vector512<uint>.Count * maxOutputElementSize)
+                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector512<uint>.Count, outputOffset += (nuint)Vector512<uint>.Count * maxOutputElementSize)
                 {
                     writer.CancellationToken.ThrowIfCancellationRequested();
 
@@ -82,7 +82,7 @@ internal static partial class RefSerializeHelper
                 var outputLength = (int)alignedInputLength * maxOutputElementSize;
                 var destination = writer.GetSpan(outputLength);
                 ref var outputIterator = ref MemoryMarshal.GetReference(destination);
-                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector256<uint>.Count, outputOffset += (System.nuint)Vector256<uint>.Count * maxOutputElementSize)
+                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector256<uint>.Count, outputOffset += (nuint)Vector256<uint>.Count * maxOutputElementSize)
                 {
                     writer.CancellationToken.ThrowIfCancellationRequested();
 
@@ -117,7 +117,7 @@ internal static partial class RefSerializeHelper
                 var outputLength = (int)alignedInputLength * maxOutputElementSize;
                 var destination = writer.GetSpan(outputLength);
                 ref var outputIterator = ref MemoryMarshal.GetReference(destination);
-                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<uint>.Count, outputOffset += (System.nuint)Vector128<uint>.Count * maxOutputElementSize)
+                for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<uint>.Count, outputOffset += (nuint)Vector128<uint>.Count * maxOutputElementSize)
                 {
                     writer.CancellationToken.ThrowIfCancellationRequested();
 

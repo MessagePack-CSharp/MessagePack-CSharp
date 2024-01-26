@@ -58,10 +58,8 @@ internal static partial class RefSerializeHelper
             dateTime = TimeZoneInfo.ConvertTimeToUtc(dateTime);
         }
 
-        var ticksSinceBclEpoch = dateTime.Ticks - (BclSecondsAtUnixEpoch * TimeSpan.TicksPerSecond);
-        var seconds = ticksSinceBclEpoch / TimeSpan.TicksPerSecond;
-        var nanoseconds = (ticksSinceBclEpoch % TimeSpan.TicksPerSecond) * NanosecondsPerTick;
-
+        var seconds = (dateTime.Ticks / TimeSpan.TicksPerSecond) - BclSecondsAtUnixEpoch;
+        var nanoseconds = (dateTime.Ticks % TimeSpan.TicksPerSecond) * NanosecondsPerTick;
         if ((seconds >>> 34) == 0)
         {
             var data64 = unchecked((ulong)((nanoseconds << 34) | seconds));
