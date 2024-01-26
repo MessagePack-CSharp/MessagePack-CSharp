@@ -138,8 +138,7 @@ public class ArrayTests
     public void RandomValueSByteArrayTests(int length)
     {
         var array = new SByte[length];
-        var r = new Random();
-        r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
+        Random.Shared.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
 
         ArrayBufferWriter<byte> bufferWriter = new();
         {
@@ -161,11 +160,13 @@ public class ArrayTests
         var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
         Assert.AreEqual(encoded.Length, defaultEncoded.Length);
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader defaultReader = new(encoded);
+        SByte[]? defaultDecoded = SByteArrayFormatter.Deserialize(ref defaultReader, MessagePackSerializerOptions.Standard);
         MessagePackReader reader = new(encoded);
         SByte[]? decoded = e::MessagePack.Formatters.SByteArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
-        Assert.AreEqual(length, decoded!.Length);
-        Assert.That(decoded.AsSpan().SequenceEqual(array));
+        Assert.AreEqual(defaultDecoded!.Length, decoded!.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(defaultDecoded));
     }
 
     private static readonly MessagePack.Formatters.ArrayFormatter<Int16> Int16ArrayFormatter = new();
@@ -294,8 +295,7 @@ public class ArrayTests
     public void RandomValueInt16ArrayTests(int length)
     {
         var array = new Int16[length];
-        var r = new Random();
-        r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
+        Random.Shared.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
 
         ArrayBufferWriter<byte> bufferWriter = new();
         {
@@ -317,11 +317,13 @@ public class ArrayTests
         var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
         Assert.AreEqual(encoded.Length, defaultEncoded.Length);
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader defaultReader = new(encoded);
+        Int16[]? defaultDecoded = Int16ArrayFormatter.Deserialize(ref defaultReader, MessagePackSerializerOptions.Standard);
         MessagePackReader reader = new(encoded);
         Int16[]? decoded = e::MessagePack.Formatters.Int16ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
-        Assert.AreEqual(length, decoded!.Length);
-        Assert.That(decoded.AsSpan().SequenceEqual(array));
+        Assert.AreEqual(defaultDecoded!.Length, decoded!.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(defaultDecoded));
     }
 
     private static readonly MessagePack.Formatters.ArrayFormatter<Int32> Int32ArrayFormatter = new();
@@ -450,8 +452,7 @@ public class ArrayTests
     public void RandomValueInt32ArrayTests(int length)
     {
         var array = new Int32[length];
-        var r = new Random();
-        r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
+        Random.Shared.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
 
         ArrayBufferWriter<byte> bufferWriter = new();
         {
@@ -473,11 +474,13 @@ public class ArrayTests
         var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
         Assert.AreEqual(encoded.Length, defaultEncoded.Length);
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader defaultReader = new(encoded);
+        Int32[]? defaultDecoded = Int32ArrayFormatter.Deserialize(ref defaultReader, MessagePackSerializerOptions.Standard);
         MessagePackReader reader = new(encoded);
         Int32[]? decoded = e::MessagePack.Formatters.Int32ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
-        Assert.AreEqual(length, decoded!.Length);
-        Assert.That(decoded.AsSpan().SequenceEqual(array));
+        Assert.AreEqual(defaultDecoded!.Length, decoded!.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(defaultDecoded));
     }
 
     private static readonly MessagePack.Formatters.ArrayFormatter<Int64> Int64ArrayFormatter = new();
@@ -606,8 +609,7 @@ public class ArrayTests
     public void RandomValueInt64ArrayTests(int length)
     {
         var array = new Int64[length];
-        var r = new Random();
-        r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
+        Random.Shared.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
 
         ArrayBufferWriter<byte> bufferWriter = new();
         {
@@ -629,11 +631,13 @@ public class ArrayTests
         var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
         Assert.AreEqual(encoded.Length, defaultEncoded.Length);
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader defaultReader = new(encoded);
+        Int64[]? defaultDecoded = Int64ArrayFormatter.Deserialize(ref defaultReader, MessagePackSerializerOptions.Standard);
         MessagePackReader reader = new(encoded);
         Int64[]? decoded = e::MessagePack.Formatters.Int64ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
-        Assert.AreEqual(length, decoded!.Length);
-        Assert.That(decoded.AsSpan().SequenceEqual(array));
+        Assert.AreEqual(defaultDecoded!.Length, decoded!.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(defaultDecoded));
     }
 
     private static readonly MessagePack.Formatters.ArrayFormatter<UInt16> UInt16ArrayFormatter = new();
@@ -762,8 +766,7 @@ public class ArrayTests
     public void RandomValueUInt16ArrayTests(int length)
     {
         var array = new UInt16[length];
-        var r = new Random();
-        r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
+        Random.Shared.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
 
         ArrayBufferWriter<byte> bufferWriter = new();
         {
@@ -785,11 +788,13 @@ public class ArrayTests
         var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
         Assert.AreEqual(encoded.Length, defaultEncoded.Length);
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader defaultReader = new(encoded);
+        UInt16[]? defaultDecoded = UInt16ArrayFormatter.Deserialize(ref defaultReader, MessagePackSerializerOptions.Standard);
         MessagePackReader reader = new(encoded);
         UInt16[]? decoded = e::MessagePack.Formatters.UInt16ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
-        Assert.AreEqual(length, decoded!.Length);
-        Assert.That(decoded.AsSpan().SequenceEqual(array));
+        Assert.AreEqual(defaultDecoded!.Length, decoded!.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(defaultDecoded));
     }
 
     private static readonly MessagePack.Formatters.ArrayFormatter<UInt32> UInt32ArrayFormatter = new();
@@ -918,8 +923,7 @@ public class ArrayTests
     public void RandomValueUInt32ArrayTests(int length)
     {
         var array = new UInt32[length];
-        var r = new Random();
-        r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
+        Random.Shared.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
 
         ArrayBufferWriter<byte> bufferWriter = new();
         {
@@ -941,11 +945,13 @@ public class ArrayTests
         var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
         Assert.AreEqual(encoded.Length, defaultEncoded.Length);
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader defaultReader = new(encoded);
+        UInt32[]? defaultDecoded = UInt32ArrayFormatter.Deserialize(ref defaultReader, MessagePackSerializerOptions.Standard);
         MessagePackReader reader = new(encoded);
         UInt32[]? decoded = e::MessagePack.Formatters.UInt32ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
-        Assert.AreEqual(length, decoded!.Length);
-        Assert.That(decoded.AsSpan().SequenceEqual(array));
+        Assert.AreEqual(defaultDecoded!.Length, decoded!.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(defaultDecoded));
     }
 
     private static readonly MessagePack.Formatters.ArrayFormatter<UInt64> UInt64ArrayFormatter = new();
@@ -1074,8 +1080,7 @@ public class ArrayTests
     public void RandomValueUInt64ArrayTests(int length)
     {
         var array = new UInt64[length];
-        var r = new Random();
-        r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
+        Random.Shared.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
 
         ArrayBufferWriter<byte> bufferWriter = new();
         {
@@ -1097,11 +1102,13 @@ public class ArrayTests
         var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
         Assert.AreEqual(encoded.Length, defaultEncoded.Length);
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader defaultReader = new(encoded);
+        UInt64[]? defaultDecoded = UInt64ArrayFormatter.Deserialize(ref defaultReader, MessagePackSerializerOptions.Standard);
         MessagePackReader reader = new(encoded);
         UInt64[]? decoded = e::MessagePack.Formatters.UInt64ArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
-        Assert.AreEqual(length, decoded!.Length);
-        Assert.That(decoded.AsSpan().SequenceEqual(array));
+        Assert.AreEqual(defaultDecoded!.Length, decoded!.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(defaultDecoded));
     }
 
     private static readonly MessagePack.Formatters.ArrayFormatter<Single> SingleArrayFormatter = new();
@@ -1257,9 +1264,11 @@ public class ArrayTests
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
         MessagePackReader reader = new(encoded);
         Single[]? decoded = e::MessagePack.Formatters.SingleArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        MessagePackReader reader2 = new(encoded);
+        Single[]? defaultDecoded = SingleArrayFormatter.Deserialize(ref reader2, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
-        Assert.AreEqual(decoded!.Length, array.Length);
-        Assert.That(decoded.AsSpan().SequenceEqual(array));
+        Assert.AreEqual(decoded!.Length, defaultDecoded!.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(defaultDecoded));
     }
 
     private static readonly MessagePack.Formatters.ArrayFormatter<Double> DoubleArrayFormatter = new();
@@ -1415,9 +1424,11 @@ public class ArrayTests
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
         MessagePackReader reader = new(encoded);
         Double[]? decoded = e::MessagePack.Formatters.DoubleArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        MessagePackReader reader2 = new(encoded);
+        Double[]? defaultDecoded = DoubleArrayFormatter.Deserialize(ref reader2, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
-        Assert.AreEqual(decoded!.Length, array.Length);
-        Assert.That(decoded.AsSpan().SequenceEqual(array));
+        Assert.AreEqual(decoded!.Length, defaultDecoded!.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(defaultDecoded));
     }
 
     private static readonly MessagePack.Formatters.ArrayFormatter<Boolean> BooleanArrayFormatter = new();
@@ -1532,8 +1543,327 @@ public class ArrayTests
         Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
         MessagePackReader reader = new(encoded);
         Boolean[]? decoded = e::MessagePack.Formatters.BooleanArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        MessagePackReader reader2 = new(encoded);
+        Boolean[]? defaultDecoded = BooleanArrayFormatter.Deserialize(ref reader2, MessagePackSerializerOptions.Standard);
+        Assert.IsNotNull(decoded);
+        Assert.AreEqual(decoded!.Length, defaultDecoded!.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(defaultDecoded));
+    }
+
+    private static readonly MessagePack.Formatters.ArrayFormatter<Char> CharArrayFormatter = new();
+
+    [Test]
+    public void EmptyCharArrayTests()
+    {
+        var array = Array.Empty<Char>();
+        ArrayBufferWriter<byte> bufferWriter = new();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            e::MessagePack.Formatters.CharArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var encoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.IsNotNull(encoded);
+
+        MessagePackReader reader = new(encoded);
+        Char[]? decoded = e::MessagePack.Formatters.CharArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        Assert.IsNotNull(decoded);
+        Assert.AreEqual(0, decoded!.Length);
+    }
+
+    [Test]
+    public void NullCharArrayTests()
+    {
+        var array = default(Char[]);
+        ArrayBufferWriter<byte> bufferWriter = new();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            e::MessagePack.Formatters.CharArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var encoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.IsNotNull(encoded);
+        MessagePackReader reader = new(encoded);
+        Char[]? decoded = e::MessagePack.Formatters.CharArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        Assert.IsNull(decoded);
+    }
+
+    [TestCase(1)]
+    [TestCase(8)]
+    [TestCase(16)]
+    [TestCase(32)]
+    [TestCase(128)]
+    [TestCase(4096)]
+    public void DefaultCharArrayTests(int length)
+    {
+        var array = new Char[length];
+        ArrayBufferWriter<byte> bufferWriter = new();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            e::MessagePack.Formatters.CharArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var encoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.IsNotNull(encoded);
+
+        bufferWriter.Clear();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            CharArrayFormatter.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.AreEqual(encoded.Length, defaultEncoded.Length);
+        Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader reader = new(encoded);
+        Char[]? decoded = e::MessagePack.Formatters.CharArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
         Assert.IsNotNull(decoded);
         Assert.AreEqual(decoded!.Length, array.Length);
         Assert.That(decoded.AsSpan().SequenceEqual(array));
+    }
+
+    [TestCase(1)]
+    [TestCase(8)]
+    [TestCase(16)]
+    [TestCase(32)]
+    [TestCase(128)]
+    [TestCase(4096)]
+    public void MinValueCharArrayTests(int length)
+    {
+        var array = new Char[length];
+        for (var index = 0; index < array.Length; index++)
+        {
+            array[index] = Char.MinValue;
+        }
+
+        ArrayBufferWriter<byte> bufferWriter = new();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            e::MessagePack.Formatters.CharArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var encoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.IsNotNull(encoded);
+
+        bufferWriter.Clear();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            CharArrayFormatter.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.AreEqual(encoded.Length, defaultEncoded.Length);
+        Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader reader = new(encoded);
+        Char[]? decoded = e::MessagePack.Formatters.CharArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        Assert.IsNotNull(decoded);
+        Assert.AreEqual(decoded!.Length, array.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(array));
+    }
+
+    [TestCase(1)]
+    [TestCase(8)]
+    [TestCase(16)]
+    [TestCase(32)]
+    [TestCase(128)]
+    [TestCase(4096)]
+    public void RandomValueCharArrayTests(int length)
+    {
+        var array = new Char[length];
+        Random.Shared.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
+
+        ArrayBufferWriter<byte> bufferWriter = new();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            e::MessagePack.Formatters.CharArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var encoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.IsNotNull(encoded);
+
+        bufferWriter.Clear();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            CharArrayFormatter.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.AreEqual(encoded.Length, defaultEncoded.Length);
+        Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader defaultReader = new(encoded);
+        Char[]? defaultDecoded = CharArrayFormatter.Deserialize(ref defaultReader, MessagePackSerializerOptions.Standard);
+        MessagePackReader reader = new(encoded);
+        Char[]? decoded = e::MessagePack.Formatters.CharArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        Assert.IsNotNull(decoded);
+        Assert.AreEqual(defaultDecoded!.Length, decoded!.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(defaultDecoded));
+    }
+
+    private static readonly MessagePack.Formatters.ArrayFormatter<DateTime> DateTimeArrayFormatter = new();
+
+    [Test]
+    public void EmptyDateTimeArrayTests()
+    {
+        var array = Array.Empty<DateTime>();
+        ArrayBufferWriter<byte> bufferWriter = new();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            e::MessagePack.Formatters.DateTimeArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var encoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.IsNotNull(encoded);
+
+        MessagePackReader reader = new(encoded);
+        DateTime[]? decoded = e::MessagePack.Formatters.DateTimeArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        Assert.IsNotNull(decoded);
+        Assert.AreEqual(0, decoded!.Length);
+    }
+
+    [Test]
+    public void NullDateTimeArrayTests()
+    {
+        var array = default(DateTime[]);
+        ArrayBufferWriter<byte> bufferWriter = new();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            e::MessagePack.Formatters.DateTimeArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var encoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.IsNotNull(encoded);
+        MessagePackReader reader = new(encoded);
+        DateTime[]? decoded = e::MessagePack.Formatters.DateTimeArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        Assert.IsNull(decoded);
+    }
+
+    [TestCase(1)]
+    [TestCase(8)]
+    [TestCase(16)]
+    [TestCase(32)]
+    [TestCase(128)]
+    [TestCase(4096)]
+    public void DefaultDateTimeArrayTests(int length)
+    {
+        var array = new DateTime[length];
+        ArrayBufferWriter<byte> bufferWriter = new();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            e::MessagePack.Formatters.DateTimeArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var encoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.IsNotNull(encoded);
+
+        bufferWriter.Clear();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            DateTimeArrayFormatter.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.AreEqual(encoded.Length, defaultEncoded.Length);
+        Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader reader = new(encoded);
+        DateTime[]? decoded = e::MessagePack.Formatters.DateTimeArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        Assert.IsNotNull(decoded);
+        Assert.AreEqual(decoded!.Length, array.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(array));
+    }
+
+    [TestCase(1)]
+    [TestCase(8)]
+    [TestCase(16)]
+    [TestCase(32)]
+    [TestCase(128)]
+    [TestCase(4096)]
+    public void MinValueDateTimeArrayTests(int length)
+    {
+        var array = new DateTime[length];
+        for (var index = 0; index < array.Length; index++)
+        {
+            array[index] = DateTime.MinValue;
+        }
+
+        ArrayBufferWriter<byte> bufferWriter = new();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            e::MessagePack.Formatters.DateTimeArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var encoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.IsNotNull(encoded);
+
+        bufferWriter.Clear();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            DateTimeArrayFormatter.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.AreEqual(encoded.Length, defaultEncoded.Length);
+        Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader reader = new(encoded);
+        DateTime[]? decoded = e::MessagePack.Formatters.DateTimeArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        Assert.IsNotNull(decoded);
+        Assert.AreEqual(decoded!.Length, array.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(array));
+    }
+
+    [TestCase(1)]
+    [TestCase(8)]
+    [TestCase(16)]
+    [TestCase(32)]
+    [TestCase(128)]
+    [TestCase(4096)]
+    public void RandomValueDateTimeArrayTests(int length)
+    {
+        var array = new DateTime[length];
+        foreach (ref var item in array.AsSpan())
+        {
+            item = DateTime.UnixEpoch.AddSeconds((Random.Shared.NextDouble() - 0.5) * 315537897d);
+        }
+
+        ArrayBufferWriter<byte> bufferWriter = new();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            e::MessagePack.Formatters.DateTimeArrayFormatter.Instance.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var encoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.IsNotNull(encoded);
+
+        bufferWriter.Clear();
+        {
+            MessagePackWriter writer = new(bufferWriter);
+            DateTimeArrayFormatter.Serialize(ref writer, array, MessagePackSerializerOptions.Standard);
+            writer.Flush();
+        }
+
+        var defaultEncoded = bufferWriter.WrittenMemory.ToArray();
+        Assert.AreEqual(encoded.Length, defaultEncoded.Length);
+        Assert.That(encoded.AsSpan().SequenceEqual(defaultEncoded));
+        MessagePackReader defaultReader = new(encoded);
+        DateTime[]? defaultDecoded = DateTimeArrayFormatter.Deserialize(ref defaultReader, MessagePackSerializerOptions.Standard);
+        MessagePackReader reader = new(encoded);
+        DateTime[]? decoded = e::MessagePack.Formatters.DateTimeArrayFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+        Assert.IsNotNull(decoded);
+        Assert.AreEqual(defaultDecoded!.Length, decoded!.Length);
+        Assert.That(decoded.AsSpan().SequenceEqual(defaultDecoded));
     }
 }

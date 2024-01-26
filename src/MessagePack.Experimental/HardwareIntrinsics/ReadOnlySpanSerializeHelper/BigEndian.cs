@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -86,6 +87,17 @@ internal static partial class ReadOnlySpanSerializeHelper
     }
 
     private static void BigEndianSerialize(ref MessagePackWriter writer, ref ushort input, int length, CancellationToken cancellationToken)
+    {
+        var i = 0;
+        do
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            writer.Write(Unsafe.Add(ref input, i));
+        }
+        while (++i < length);
+    }
+
+    private static void BigEndianSerialize(ref MessagePackWriter writer, ref DateTime input, int length, CancellationToken cancellationToken)
     {
         var i = 0;
         do

@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <Compile Remove="*Test.cs" />
-    <Compile Include="ULongTest.cs" />
+    <Compile Include="DateTimeTest.cs" />
   </ItemGroup>
 
   <ItemGroup>

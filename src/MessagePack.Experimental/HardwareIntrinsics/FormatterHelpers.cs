@@ -108,6 +108,7 @@
 */
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 #pragma warning disable SA1402 // File may only contain a single type
@@ -512,5 +513,89 @@ public sealed partial class BooleanArrayFormatter : IMessagePackFormatter<Boolea
         }
 
         ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+    }
+}
+
+public sealed partial class CharArrayFormatter : IMessagePackFormatter<Char[]?>
+{
+    public static readonly CharArrayFormatter Instance = new();
+
+    private CharArrayFormatter()
+    {
+    }
+
+    public void Serialize(ref MessagePackWriter writer, Char[]? value, MessagePackSerializerOptions options)
+    {
+        if (value is null)
+        {
+            writer.WriteNil();
+            return;
+        }
+
+        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref Unsafe.As<char, ushort>(ref MemoryMarshal.GetArrayDataReference(value)), value.Length);
+    }
+
+    public Char[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+    {
+        if (reader.TryReadNil())
+        {
+            return default;
+        }
+
+        var len = reader.ReadArrayHeader();
+        if (len == 0)
+        {
+            return [];
+        }
+
+        var array = new Char[len];
+        for (var i = 0; i < array.Length; i++)
+        {
+            array[i] = reader.ReadChar();
+        }
+
+        return array;
+    }
+}
+
+public sealed partial class DateTimeArrayFormatter : IMessagePackFormatter<DateTime[]?>
+{
+    public static readonly DateTimeArrayFormatter Instance = new();
+
+    private DateTimeArrayFormatter()
+    {
+    }
+
+    public void Serialize(ref MessagePackWriter writer, DateTime[]? value, MessagePackSerializerOptions options)
+    {
+        if (value is null)
+        {
+            writer.WriteNil();
+            return;
+        }
+
+        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+    }
+
+    public DateTime[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+    {
+        if (reader.TryReadNil())
+        {
+            return default;
+        }
+
+        var len = reader.ReadArrayHeader();
+        if (len == 0)
+        {
+            return [];
+        }
+
+        var array = new DateTime[len];
+        for (var i = 0; i < array.Length; i++)
+        {
+            array[i] = reader.ReadDateTime();
+        }
+
+        return array;
     }
 }

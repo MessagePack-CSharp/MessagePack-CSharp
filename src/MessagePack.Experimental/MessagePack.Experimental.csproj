@@ -18,11 +18,11 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>PrimitiveArrayGetFormatterHelper.cs</LastGenOutput>
     </None>
-    <None Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper\Double.tt">
+    <None Update="HardwareIntrinsics\RefSerializeHelper\Double.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Double.cs</LastGenOutput>
     </None>
-    <None Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper\Single.tt">
+    <None Update="HardwareIntrinsics\RefSerializeHelper\Single.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Single.cs</LastGenOutput>
     </None>
@@ -39,12 +39,12 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>PrimitiveArrayGetFormatterHelper.tt</DependentUpon>
     </Compile>
-    <Compile Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper\Double.cs">
+    <Compile Update="HardwareIntrinsics\RefSerializeHelper\Double.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Double.tt</DependentUpon>
     </Compile>
-    <Compile Update="HardwareIntrinsics\ReadOnlySpanSerializeHelper\Single.cs">
+    <Compile Update="HardwareIntrinsics\RefSerializeHelper\Single.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Single.tt</DependentUpon>

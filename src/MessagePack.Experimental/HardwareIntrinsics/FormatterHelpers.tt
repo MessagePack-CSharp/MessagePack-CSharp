@@ -114,6 +114,7 @@
 */
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 #pragma warning disable SA1402 // File may only contain a single type
@@ -135,6 +136,8 @@ namespace MessagePack.Formatters;
       typeof(float),
       typeof(double),
       typeof(bool),
+      typeof(char),
+      typeof(DateTime),
     };
 
     foreach (var type in types)
@@ -159,7 +162,20 @@ public sealed partial class <#= formatter #> : IMessagePackFormatter<<#= name #>
             return;
         }
 
+<#
+        if (type == typeof(char))
+        {
+#>
+        ReadOnlySpanSerializeHelper.Serialize(ref writer, ref Unsafe.As<char, ushort>(ref MemoryMarshal.GetArrayDataReference(value)), value.Length);
+<#
+        }
+        else
+        {
+#>
         ReadOnlySpanSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+<#
+        }
+#>
     }
 <#
         if (type != typeof(bool))
