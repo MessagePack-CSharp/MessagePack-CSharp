@@ -297,6 +297,10 @@ namespace MessagePack.Internal
             CompositeResolver.Create(ExpandoObjectFormatter.Instance),
 #endif
 
+#if NET8_0_OR_GREATER
+            FrozenCollection.FrozenCollectionResolver.Instance,
+#endif
+
 #if DYNAMIC_GENERATION
             DynamicGenericResolver.Instance, // Try Array, Tuple, Collection, Enum(Generic Fallback)
 #endif
