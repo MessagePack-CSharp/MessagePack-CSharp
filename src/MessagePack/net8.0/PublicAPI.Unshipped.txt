@@ -1,6 +1,3 @@
-MessagePack.Formatters.DateOnlyFormatter
-MessagePack.Formatters.DateOnlyFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.DateOnly
-MessagePack.Formatters.DateOnlyFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.DateOnly value, MessagePack.MessagePackSerializerOptions! options) -> void
 MessagePack.Formatters.Matrix3x2Formatter
 MessagePack.Formatters.Matrix3x2Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Matrix3x2
 MessagePack.Formatters.Matrix3x2Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Matrix3x2 value, MessagePack.MessagePackSerializerOptions! options) -> void
@@ -8,20 +5,13 @@ MessagePack.Formatters.Matrix4x4Formatter
 MessagePack.Formatters.Matrix4x4Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Matrix4x4
 MessagePack.Formatters.Matrix4x4Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Matrix4x4 value, MessagePack.MessagePackSerializerOptions! options) -> void
 MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>
+MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.PriorityQueue<TElement, TPriority>?
 MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.PriorityQueueFormatter() -> void
 MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.PriorityQueueFormatter(System.Collections.Generic.IComparer<TPriority>? comparer) -> void
 MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.PriorityQueue<TElement, TPriority>? value, MessagePack.MessagePackSerializerOptions! options) -> void
-MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.PriorityQueue<TElement, TPriority>?
 MessagePack.Formatters.QuaternionFormatter
 MessagePack.Formatters.QuaternionFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Quaternion
 MessagePack.Formatters.QuaternionFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Quaternion value, MessagePack.MessagePackSerializerOptions! options) -> void
-MessagePack.Formatters.StringInterningFormatter
-MessagePack.Formatters.StringInterningFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> string?
-MessagePack.Formatters.StringInterningFormatter.Serialize(ref MessagePack.MessagePackWriter writer, string? value, MessagePack.MessagePackSerializerOptions! options) -> void
-MessagePack.Formatters.StringInterningFormatter.StringInterningFormatter() -> void
-MessagePack.Formatters.TimeOnlyFormatter
-MessagePack.Formatters.TimeOnlyFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.TimeOnly
-MessagePack.Formatters.TimeOnlyFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.TimeOnly value, MessagePack.MessagePackSerializerOptions! options) -> void
 MessagePack.Formatters.Vector2Formatter
 MessagePack.Formatters.Vector2Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Vector2
 MessagePack.Formatters.Vector2Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Vector2 value, MessagePack.MessagePackSerializerOptions! options) -> void
@@ -36,27 +26,19 @@ MessagePack.GeneratedMessagePackResolverAttribute.GeneratedMessagePackResolverAt
 MessagePack.GeneratedMessagePackResolverAttribute.UseMapMode.get -> bool
 MessagePack.GeneratedMessagePackResolverAttribute.UseMapMode.set -> void
 MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>
+MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Frozen.FrozenDictionary<TKey, TValue>?
 MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.FrozenDictionaryFormatter() -> void
 MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.FrozenDictionaryFormatter(System.Collections.Generic.IEqualityComparer<TKey>? comparer) -> void
 MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Frozen.FrozenDictionary<TKey, TValue>? value, MessagePack.MessagePackSerializerOptions! options) -> void
-MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Frozen.FrozenDictionary<TKey, TValue>?
 MessagePack.ImmutableCollection.FrozenSetFormatter<T>
+MessagePack.ImmutableCollection.FrozenSetFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Frozen.FrozenSet<T>?
 MessagePack.ImmutableCollection.FrozenSetFormatter<T>.FrozenSetFormatter() -> void
 MessagePack.ImmutableCollection.FrozenSetFormatter<T>.FrozenSetFormatter(System.Collections.Generic.IEqualityComparer<T>! comparer) -> void
 MessagePack.ImmutableCollection.FrozenSetFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Frozen.FrozenSet<T>? value, MessagePack.MessagePackSerializerOptions! options) -> void
-MessagePack.ImmutableCollection.FrozenSetFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Frozen.FrozenSet<T>?
-MessagePack.MessagePackSerializerOptions.CompressionMinLength.get -> int
-MessagePack.MessagePackSerializerOptions.SuggestedContiguousMemorySize.get -> int
-MessagePack.MessagePackSerializerOptions.WithCompressionMinLength(int compressionMinLength) -> MessagePack.MessagePackSerializerOptions!
-MessagePack.MessagePackSerializerOptions.WithSuggestedContiguousMemorySize(int suggestedContiguousMemorySize) -> MessagePack.MessagePackSerializerOptions!
 MessagePack.Resolvers.StandardAotResolver
-static MessagePack.MessagePackWriter.GetEncodedLength(long value) -> int
-static MessagePack.MessagePackWriter.GetEncodedLength(ulong value) -> int
-static readonly MessagePack.Formatters.DateOnlyFormatter.Instance -> MessagePack.Formatters.DateOnlyFormatter!
 static readonly MessagePack.Formatters.Matrix3x2Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Matrix3x2>!
 static readonly MessagePack.Formatters.Matrix4x4Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Matrix4x4>!
 static readonly MessagePack.Formatters.QuaternionFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Quaternion>!
-static readonly MessagePack.Formatters.TimeOnlyFormatter.Instance -> MessagePack.Formatters.TimeOnlyFormatter!
 static readonly MessagePack.Formatters.Vector2Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Vector2>!
 static readonly MessagePack.Formatters.Vector3Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Vector3>!
 static readonly MessagePack.Formatters.Vector4Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Vector4>!

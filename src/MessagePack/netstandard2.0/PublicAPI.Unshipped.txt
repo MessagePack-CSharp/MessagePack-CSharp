@@ -7,10 +7,6 @@ MessagePack.Formatters.Matrix4x4Formatter.Serialize(ref MessagePack.MessagePackW
 MessagePack.Formatters.QuaternionFormatter
 MessagePack.Formatters.QuaternionFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Quaternion
 MessagePack.Formatters.QuaternionFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Quaternion value, MessagePack.MessagePackSerializerOptions! options) -> void
-MessagePack.Formatters.StringInterningFormatter
-MessagePack.Formatters.StringInterningFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> string?
-MessagePack.Formatters.StringInterningFormatter.Serialize(ref MessagePack.MessagePackWriter writer, string? value, MessagePack.MessagePackSerializerOptions! options) -> void
-MessagePack.Formatters.StringInterningFormatter.StringInterningFormatter() -> void
 MessagePack.Formatters.Vector2Formatter
 MessagePack.Formatters.Vector2Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Vector2
 MessagePack.Formatters.Vector2Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Vector2 value, MessagePack.MessagePackSerializerOptions! options) -> void
@@ -24,13 +20,7 @@ MessagePack.GeneratedMessagePackResolverAttribute
 MessagePack.GeneratedMessagePackResolverAttribute.GeneratedMessagePackResolverAttribute() -> void
 MessagePack.GeneratedMessagePackResolverAttribute.UseMapMode.get -> bool
 MessagePack.GeneratedMessagePackResolverAttribute.UseMapMode.set -> void
-MessagePack.MessagePackSerializerOptions.CompressionMinLength.get -> int
-MessagePack.MessagePackSerializerOptions.SuggestedContiguousMemorySize.get -> int
-MessagePack.MessagePackSerializerOptions.WithCompressionMinLength(int compressionMinLength) -> MessagePack.MessagePackSerializerOptions!
-MessagePack.MessagePackSerializerOptions.WithSuggestedContiguousMemorySize(int suggestedContiguousMemorySize) -> MessagePack.MessagePackSerializerOptions!
 MessagePack.Resolvers.StandardAotResolver
-static MessagePack.MessagePackWriter.GetEncodedLength(long value) -> int
-static MessagePack.MessagePackWriter.GetEncodedLength(ulong value) -> int
 static readonly MessagePack.Formatters.Matrix3x2Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Matrix3x2>!
 static readonly MessagePack.Formatters.Matrix4x4Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Matrix4x4>!
 static readonly MessagePack.Formatters.QuaternionFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Quaternion>!
