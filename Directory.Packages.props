@@ -11,9 +11,6 @@
     <MicrosoftCodeAnalysisVersion>4.8.0</MicrosoftCodeAnalysisVersion>
     <MicrosoftCodeAnalysisVersion Condition="'$(IsAnalyzerProject)'=='true'">4.3.0</MicrosoftCodeAnalysisVersion>
     <MicrosoftCodeAnalysisTestingVersion>1.1.2-beta1.23509.1</MicrosoftCodeAnalysisTestingVersion>
-
-    <!-- Unity 2021.3 has Roslyn 3.8.0 (https://docs.unity3d.com/Manual/roslyn-analyzers.html) -->
-    <CodeAnalysisVersionForUnity>3.8.0</CodeAnalysisVersionForUnity>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet.Diagnostics.Windows" Version="$(BenchmarkDotNetVersion)" />
@@ -80,12 +77,6 @@
     <PackageVersion Update="System.Reflection.Metadata" Version="6.0.0" />
     <PackageVersion Update="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
     <PackageVersion Update="System.Text.Json" Version="6.0.0" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(MicrosoftCodeAnalysisVersion)'=='$(CodeAnalysisVersionForUnity)'">
-    <!-- These versions carefully chosen to support Unity. -->
-    <PackageVersion Update="System.CodeDom" Version="5.0.0" />
-    <PackageVersion Update="System.Collections.Immutable" Version="5.0.0" />
-    <PackageVersion Update="System.Text.Json" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
     <GlobalPackageReference Include="CSharpIsNullAnalyzer" Version="0.1.495" />
