@@ -51,8 +51,8 @@ public record AnalyzerOptions
     /// <returns>The modified set of options.</returns>
     internal AnalyzerOptions WithAssemblyAttributes(ImmutableArray<AttributeData> assemblyAttributes, CancellationToken cancellationToken)
     {
-        ImmutableDictionary<string, ImmutableHashSet<string>> customFormatters = AnalyzerUtilities.ParseKnownFormatterAttribute(assemblyAttributes, cancellationToken);
-        ImmutableArray<string> customFormattedTypes = AnalyzerUtilities.ParseAssumedFormattableAttribute(assemblyAttributes, cancellationToken);
+        ImmutableDictionary<string, ImmutableHashSet<string>> customFormatters = AnalyzerUtilities.ParseKnownFormatterAttribute(assemblyAttributes, cancellationToken).SetItems(this.KnownFormatters);
+        ImmutableArray<string> customFormattedTypes = this.AssumedFormattableTypes.Union(AnalyzerUtilities.ParseAssumedFormattableAttribute(assemblyAttributes, cancellationToken)).ToImmutableArray();
         return this.WithFormatterTypes(customFormattedTypes, customFormatters);
     }
 }

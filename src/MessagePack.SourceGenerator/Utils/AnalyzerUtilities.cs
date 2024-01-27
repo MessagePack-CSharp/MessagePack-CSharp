@@ -154,4 +154,20 @@ public static class AnalyzerUtilities
             return $"#error No accessible default constructor or static Instance member on {r}.";
         });
     }
+
+    internal static ImmutableHashSet<string> SearchTypeForFormatterImplementations(INamedTypeSymbol symbol)
+    {
+        ImmutableHashSet<string> formattableTypes = ImmutableHashSet<string>.Empty;
+
+        foreach (INamedTypeSymbol iface in symbol.AllInterfaces)
+        {
+            if (iface.IsGenericType && iface.TypeArguments.Length == 1 &&
+                iface.Name == IMessagePackFormatterInterfaceName && iface.ContainingNamespace.GetFullNamespaceName() == IMessagePackFormatterInterfaceNamespace)
+            {
+                formattableTypes = formattableTypes.Add(iface.TypeArguments[0].GetCanonicalTypeFullName());
+            }
+        }
+
+        return formattableTypes;
+    }
 }

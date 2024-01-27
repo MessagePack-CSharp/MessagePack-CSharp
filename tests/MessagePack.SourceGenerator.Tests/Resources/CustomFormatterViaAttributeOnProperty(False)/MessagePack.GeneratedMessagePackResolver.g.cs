@@ -43,9 +43,10 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 		static GeneratedMessagePackResolverGetFormatterHelper()
 		{
-			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(1)
+			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(2)
 			{
 					{ typeof(global::HasPropertyWithCustomFormatterAttribute), 0 },
+					{ typeof(global::UnserializableRecord), 1 },
 				};
 		}
 
@@ -60,6 +61,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			switch (key)
 			{
 					case 0: return new HasPropertyWithCustomFormatterAttributeFormatter();
+					case 1: return new global::UnserializableRecordFormatter();
 					default: return null;
 			}
 		}

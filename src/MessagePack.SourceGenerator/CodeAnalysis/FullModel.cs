@@ -11,9 +11,18 @@ public record FullModel(
     ImmutableSortedSet<EnumSerializationInfo> EnumInfos,
     ImmutableSortedSet<GenericSerializationInfo> GenericInfos,
     ImmutableSortedSet<UnionSerializationInfo> UnionInfos,
+    ImmutableSortedSet<CustomFormatterRegisterInfo> CustomFormatterInfos,
     AnalyzerOptions Options)
 {
-    public bool IsEmpty => this.ObjectInfos.IsEmpty && this.EnumInfos.IsEmpty && this.GenericInfos.IsEmpty && this.UnionInfos.IsEmpty;
+    public static readonly FullModel Empty = new(
+        ImmutableSortedSet.Create<ObjectSerializationInfo>(ResolverRegisterInfoComparer.Default),
+        ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default),
+        ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
+        ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
+        ImmutableSortedSet.Create<CustomFormatterRegisterInfo>(ResolverRegisterInfoComparer.Default),
+        new AnalyzerOptions());
+
+    public bool IsEmpty => this.ObjectInfos.IsEmpty && this.EnumInfos.IsEmpty && this.GenericInfos.IsEmpty && this.UnionInfos.IsEmpty && this.CustomFormatterInfos.IsEmpty;
 
     /// <summary>
     /// Returns a new model that contains all the content of a collection of models.
@@ -25,12 +34,7 @@ public record FullModel(
     {
         if (models.Length == 0)
         {
-            return new FullModel(
-                ImmutableSortedSet.Create<ObjectSerializationInfo>(ResolverRegisterInfoComparer.Default),
-                ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default),
-                ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
-                ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
-                new AnalyzerOptions());
+            return Empty;
         }
 
         AnalyzerOptions options = models[0].Options;
@@ -38,7 +42,7 @@ public record FullModel(
         var enumInfos = ImmutableSortedSet.CreateBuilder<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default);
         var genericInfos = ImmutableSortedSet.CreateBuilder<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default);
         var unionInfos = ImmutableSortedSet.CreateBuilder<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default);
-        var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
+        var customFormatterInfos = ImmutableSortedSet.CreateBuilder<CustomFormatterRegisterInfo>(ResolverRegisterInfoComparer.Default);
 
         foreach (FullModel model in models)
         {
@@ -46,6 +50,7 @@ public record FullModel(
             enumInfos.UnionWith(model.EnumInfos);
             genericInfos.UnionWith(model.GenericInfos);
             unionInfos.UnionWith(model.UnionInfos);
+            customFormatterInfos.UnionWith(model.CustomFormatterInfos);
 
             if (options != model.Options)
             {
@@ -58,6 +63,7 @@ public record FullModel(
             enumInfos.ToImmutable(),
             genericInfos.ToImmutable(),
             unionInfos.ToImmutable(),
+            customFormatterInfos.ToImmutable(),
             options);
     }
 
@@ -82,6 +88,7 @@ public record FullModel(
             && EnumInfos.SequenceEqual(other.EnumInfos)
             && GenericInfos.SequenceEqual(other.GenericInfos)
             && UnionInfos.SequenceEqual(other.UnionInfos)
+            && CustomFormatterInfos.SequenceEqual(other.CustomFormatterInfos)
             && Options.Equals(other.Options);
     }
 

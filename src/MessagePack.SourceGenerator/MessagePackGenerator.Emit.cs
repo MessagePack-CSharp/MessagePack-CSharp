@@ -74,6 +74,7 @@ public partial class MessagePackGenerator
             .Concat(model.EnumInfos)
             .Concat(model.UnionInfos)
             .Concat(model.ObjectInfos.Where(x => !x.IsOpenGenericType))
+            .Concat(model.CustomFormatterInfos)
             .ToArray();
         ResolverTemplate resolverTemplate = new(options, registerInfos);
         sb.Append(FileHeader);

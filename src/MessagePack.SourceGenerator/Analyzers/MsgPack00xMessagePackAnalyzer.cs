@@ -199,7 +199,12 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         {
             if (ReferenceSymbols.TryCreate(context.Compilation, out ReferenceSymbols? typeReferences))
             {
-                AnalyzerOptions options = new AnalyzerOptions().WithAssemblyAttributes(context.Compilation.Assembly.GetAttributes(), context.CancellationToken);
+                // Search the compilation for implementations of IMessagePackFormatter<T>.
+                ImmutableDictionary<string, ImmutableHashSet<string>> formatterTypes = this.SearchNamespaceForFormatters(context.Compilation.Assembly.GlobalNamespace);
+
+                AnalyzerOptions options = new AnalyzerOptions()
+                    .WithFormatterTypes(ImmutableArray<string>.Empty, formatterTypes)
+                    .WithAssemblyAttributes(context.Compilation.Assembly.GetAttributes(), context.CancellationToken);
                 context.RegisterSymbolAction(context => this.AnalyzeSymbol(context, typeReferences, options), SymbolKind.NamedType);
             }
         });
@@ -215,5 +220,26 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
                 TypeCollector.Collect(context.Compilation, options, typeReferences, context.ReportDiagnostic, declaredSymbol);
                 break;
         }
+    }
+
+    private ImmutableDictionary<string, ImmutableHashSet<string>> SearchNamespaceForFormatters(INamespaceSymbol ns)
+    {
+        ImmutableDictionary<string, ImmutableHashSet<string>> result = ImmutableDictionary<string, ImmutableHashSet<string>>.Empty;
+
+        foreach (INamespaceSymbol childNamespace in ns.GetNamespaceMembers())
+        {
+            result = result.AddRange(this.SearchNamespaceForFormatters(childNamespace));
+        }
+
+        foreach (INamedTypeSymbol type in ns.GetTypeMembers())
+        {
+            ImmutableHashSet<string> formatters = AnalyzerUtilities.SearchTypeForFormatterImplementations(type);
+            if (!formatters.IsEmpty)
+            {
+                result = result.Add(type.GetCanonicalTypeFullName(), formatters);
+            }
+        }
+
+        return result;
     }
 }

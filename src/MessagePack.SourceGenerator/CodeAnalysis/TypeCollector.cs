@@ -271,6 +271,7 @@ public class TypeCollector
             this.collectedEnumInfo.ToImmutable(),
             this.collectedGenericInfo.ToImmutable(),
             this.collectedUnionInfo.ToImmutable(),
+            ImmutableSortedSet<CustomFormatterRegisterInfo>.Empty,
             this.options);
     }
 
