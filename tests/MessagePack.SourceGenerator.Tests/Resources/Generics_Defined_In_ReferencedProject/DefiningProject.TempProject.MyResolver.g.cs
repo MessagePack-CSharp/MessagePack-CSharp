@@ -14,9 +14,6 @@ partial class MyResolver : MsgPack::IFormatterResolver
 	/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
 	public static readonly MsgPack::IFormatterResolver Instance = new MyResolver();
 
-	/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
-	public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = new WithStandardAotResolver();
-
 	private MyResolver()
 	{
 	}
@@ -63,19 +60,6 @@ partial class MyResolver : MsgPack::IFormatterResolver
 			{
 					default: return null;
 			}
-		}
-	}
-
-	private class WithStandardAotResolver : MsgPack::IFormatterResolver
-	{
-		public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-		{
-			return FormatterCache<T>.Formatter;
-		}
-
-		private static class FormatterCache<T>
-		{
-			internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter = Instance.GetFormatter<T>() ?? MsgPack::Resolvers.StandardAotResolver.Instance.GetFormatter<T>();
 		}
 	}
 }

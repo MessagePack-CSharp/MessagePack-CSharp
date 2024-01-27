@@ -3,8 +3,7 @@
 
 public class ExecutionTests
 {
-    private static readonly MessagePackSerializerOptions SerializerOptions = MessagePackSerializerOptions.Standard
-        .WithResolver(GeneratedMessagePackResolver.InstanceWithStandardAotResolver);
+    private static readonly MessagePackSerializerOptions SerializerOptions = MessagePackSerializerOptions.Standard;
 
     private readonly ITestOutputHelper logger;
 

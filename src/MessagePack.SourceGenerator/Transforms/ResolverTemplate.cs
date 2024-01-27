@@ -45,12 +45,7 @@ namespace MessagePack.SourceGenerator.Transforms
                     "t only returns formatters specifically generated for types in this assembly.</su" +
                     "mmary>\r\n\tpublic static readonly MsgPack::IFormatterResolver Instance = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write(@"();
-
-	/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
-	public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = new WithStandardAotResolver();
-
-	private ");
+            this.Write("();\r\n\r\n\tprivate ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(@"()
 	{
@@ -97,26 +92,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(this.ToStringHelper.ToStringWithCulture(CodeAnalysisUtilities.QualifyWithOptionalNamespace(x.FormatterName, x.Namespace)));
             this.Write("();\r\n\t");
  } 
-            this.Write(@"				default: return null;
-			}
-		}
-	}
-
-	private class WithStandardAotResolver : MsgPack::IFormatterResolver
-	{
-		public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-		{
-			return FormatterCache<T>.Formatter;
-		}
-
-		private static class FormatterCache<T>
-		{
-			internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter = Instance.GetFormatter<T>() ?? MsgPack::Resolvers.StandardAotResolver.Instance.GetFormatter<T>();
-		}
-	}
-}
-
-");
+            this.Write("\t\t\t\tdefault: return null;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}\r\n\r\n");
  if (ResolverNamespace.Length > 0) { 
             this.Write("}\r\n");
  } 
