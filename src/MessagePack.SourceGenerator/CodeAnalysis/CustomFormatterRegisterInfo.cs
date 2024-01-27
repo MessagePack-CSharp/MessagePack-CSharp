@@ -10,4 +10,6 @@ public class CustomFormatterRegisterInfo : IResolverRegisterInfo
     public required string FormatterName { get; init; }
 
     public required string? Namespace { get; init; }
+
+    public required bool IsOpenGenericType { get; init; }
 }

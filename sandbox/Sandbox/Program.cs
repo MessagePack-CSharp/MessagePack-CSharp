@@ -253,8 +253,8 @@ namespace Sandbox
             this.internalId = Guid.NewGuid().ToString();
         }
 
-        // serialize/deserialize internal field.
-        private class CustomObjectFormatter : IMessagePackFormatter<CustomObject>
+        // serialize/deserialize private field.
+        internal class CustomObjectFormatter : IMessagePackFormatter<CustomObject>
         {
             public void Serialize(ref MessagePackWriter writer, CustomObject value, MessagePackSerializerOptions options)
             {

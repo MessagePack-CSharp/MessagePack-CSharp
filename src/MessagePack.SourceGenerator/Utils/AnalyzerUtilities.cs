@@ -85,9 +85,9 @@ public static class AnalyzerUtilities
         return options;
     }
 
-    internal static ImmutableDictionary<string, ImmutableHashSet<string>> ParseKnownFormatterAttribute(ImmutableArray<AttributeData> attributes, CancellationToken cancellationToken)
+    internal static ImmutableHashSet<CustomFormatter> ParseKnownFormatterAttribute(ImmutableArray<AttributeData> attributes, CancellationToken cancellationToken)
     {
-        var builder = ImmutableDictionary.CreateBuilder<string, ImmutableHashSet<string>>();
+        var builder = ImmutableHashSet<CustomFormatter>.Empty.ToBuilder();
         foreach (AttributeData ad in attributes)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -106,7 +106,7 @@ public static class AnalyzerUtilities
 
                     if (formattableTypes.Count > 0)
                     {
-                        builder.Add(formatter.GetCanonicalTypeFullName(), formattableTypes.ToImmutable());
+                        builder.Add(new CustomFormatter(formatter.GetCanonicalTypeFullName(), formattableTypes.ToImmutable(), formatter.Arity));
                     }
                 }
             }

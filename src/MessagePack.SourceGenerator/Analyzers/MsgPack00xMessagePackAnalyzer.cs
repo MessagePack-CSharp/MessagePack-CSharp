@@ -200,7 +200,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
             if (ReferenceSymbols.TryCreate(context.Compilation, out ReferenceSymbols? typeReferences))
             {
                 // Search the compilation for implementations of IMessagePackFormatter<T>.
-                ImmutableDictionary<string, ImmutableHashSet<string>> formatterTypes = this.SearchNamespaceForFormatters(context.Compilation.Assembly.GlobalNamespace);
+                ImmutableHashSet<CustomFormatter> formatterTypes = this.SearchNamespaceForFormatters(context.Compilation.Assembly.GlobalNamespace);
 
                 AnalyzerOptions options = new AnalyzerOptions()
                     .WithFormatterTypes(ImmutableArray<string>.Empty, formatterTypes)
@@ -222,13 +222,13 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private ImmutableDictionary<string, ImmutableHashSet<string>> SearchNamespaceForFormatters(INamespaceSymbol ns)
+    private ImmutableHashSet<CustomFormatter> SearchNamespaceForFormatters(INamespaceSymbol ns)
     {
-        ImmutableDictionary<string, ImmutableHashSet<string>> result = ImmutableDictionary<string, ImmutableHashSet<string>>.Empty;
+        ImmutableHashSet<CustomFormatter> result = ImmutableHashSet<CustomFormatter>.Empty;
 
         foreach (INamespaceSymbol childNamespace in ns.GetNamespaceMembers())
         {
-            result = result.AddRange(this.SearchNamespaceForFormatters(childNamespace));
+            result = result.Union(this.SearchNamespaceForFormatters(childNamespace));
         }
 
         foreach (INamedTypeSymbol type in ns.GetTypeMembers())
@@ -236,7 +236,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
             ImmutableHashSet<string> formatters = AnalyzerUtilities.SearchTypeForFormatterImplementations(type);
             if (!formatters.IsEmpty)
             {
-                result = result.Add(type.GetCanonicalTypeFullName(), formatters);
+                result = result.Add(new CustomFormatter(type.GetCanonicalTypeFullName(), formatters, type.Arity));
             }
         }
 

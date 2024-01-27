@@ -22,10 +22,9 @@ public record AnalyzerOptions
     public ImmutableHashSet<string> AssumedFormattableTypes { get; init; } = ImmutableHashSet<string>.Empty;
 
     /// <summary>
-    /// Gets the set fully qualified names of custom formatters that should be considered by the analyzer and included in the generated resolver,
-    /// and the collection of types that they can format.
+    /// Gets the set of custom formatters that should be considered by the analyzer and included in the generated resolver.
     /// </summary>
-    public ImmutableDictionary<string, ImmutableHashSet<string>> KnownFormatters { get; init; } = ImmutableDictionary<string, ImmutableHashSet<string>>.Empty;
+    public ImmutableHashSet<CustomFormatter> KnownFormatters { get; init; } = ImmutableHashSet<CustomFormatter>.Empty;
 
     public GeneratorOptions Generator { get; init; } = new();
 
@@ -34,12 +33,12 @@ public record AnalyzerOptions
     /// </summary>
     public bool IsGeneratingSource { get; init; }
 
-    internal AnalyzerOptions WithFormatterTypes(ImmutableArray<string> formattableTypes, ImmutableDictionary<string, ImmutableHashSet<string>> formatterTypes)
+    internal AnalyzerOptions WithFormatterTypes(ImmutableArray<string> formattableTypes, ImmutableHashSet<CustomFormatter> customFormatters)
     {
         return this with
         {
-            AssumedFormattableTypes = ImmutableHashSet.CreateRange(formattableTypes).Union(formatterTypes.SelectMany(t => t.Value)),
-            KnownFormatters = formatterTypes,
+            AssumedFormattableTypes = ImmutableHashSet.CreateRange(formattableTypes).Union(customFormatters.SelectMany(t => t.FormattableTypes)),
+            KnownFormatters = customFormatters,
         };
     }
 
@@ -51,7 +50,7 @@ public record AnalyzerOptions
     /// <returns>The modified set of options.</returns>
     internal AnalyzerOptions WithAssemblyAttributes(ImmutableArray<AttributeData> assemblyAttributes, CancellationToken cancellationToken)
     {
-        ImmutableDictionary<string, ImmutableHashSet<string>> customFormatters = AnalyzerUtilities.ParseKnownFormatterAttribute(assemblyAttributes, cancellationToken).SetItems(this.KnownFormatters);
+        ImmutableHashSet<CustomFormatter> customFormatters = AnalyzerUtilities.ParseKnownFormatterAttribute(assemblyAttributes, cancellationToken).Union(this.KnownFormatters);
         ImmutableArray<string> customFormattedTypes = this.AssumedFormattableTypes.Union(AnalyzerUtilities.ParseAssumedFormattableAttribute(assemblyAttributes, cancellationToken)).ToImmutableArray();
         return this.WithFormatterTypes(customFormattedTypes, customFormatters);
     }
@@ -99,3 +98,11 @@ public record GeneratorOptions
     /// </summary>
     public FormattersOptions Formatters { get; init; } = new();
 }
+
+/// <summary>
+/// Describes a custom formatter.
+/// </summary>
+/// <param name="FormatterFullName">The full name of the type that implements at least one <c>IMessagePackFormatter</c> interface.</param>
+/// <param name="FormattableTypes">The type arguments that appear in each implemented <c>IMessagePackFormatter</c> interface.</param>
+/// <param name="Arity">The number of generic type parameters on the formatter. This must match the generic type parameters on all the <paramref name="FormattableTypes"/> too.</param>
+public record CustomFormatter(string FormatterFullName, ImmutableHashSet<string> FormattableTypes, int Arity);

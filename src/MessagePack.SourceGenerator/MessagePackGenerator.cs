@@ -36,7 +36,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                     ImmutableHashSet<string> formattableTypes = AnalyzerUtilities.SearchTypeForFormatterImplementations(symbol);
                     if (!formattableTypes.IsEmpty)
                     {
-                        return (KeyValuePair<string, ImmutableHashSet<string>>?)new KeyValuePair<string, ImmutableHashSet<string>>(symbol.GetCanonicalTypeFullName(), formattableTypes);
+                        return (CustomFormatter?)new CustomFormatter(symbol.GetCanonicalTypeFullName(), formattableTypes, symbol.Arity);
                     }
                 }
 
@@ -54,18 +54,18 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             .Select(static (input, ct) =>
         {
             AnalyzerOptions? options = input.Left.Left.Left ?? new() { IsGeneratingSource = true };
-            ImmutableArray<KeyValuePair<string, ImmutableHashSet<string>>?> formatterImplementations = input.Right;
+            ImmutableArray<CustomFormatter?> formatterImplementations = input.Right;
 
             ImmutableArray<string> formattableTypes = input.Left.Left.Right;
-            ImmutableDictionary<string, ImmutableHashSet<string>> formatterTypes = input.Left.Right.Aggregate(
-                ImmutableDictionary<string, ImmutableHashSet<string>>.Empty,
-                (first, second) => first.AddRange(second));
+            ImmutableHashSet<CustomFormatter> formatterTypes = input.Left.Right.Aggregate(
+                ImmutableHashSet<CustomFormatter>.Empty,
+                (first, second) => first.Union(second));
 
             // Merge the formatters discovered through attributes (which need only reference formatters from other assemblies),
             // with formatters discovered in the project being compiled.
             formatterTypes = formatterImplementations.Aggregate(
                 formatterTypes,
-                (first, second) => second.HasValue ? first.SetItem(second.Value.Key, second.Value.Value) : first);
+                (first, second) => second is not null ? first.Add(second) : first);
 
             options = options.WithFormatterTypes(formattableTypes, formatterTypes);
 
@@ -120,8 +120,8 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                 {
                     var customFormatterInfos = FullModel.Empty.CustomFormatterInfos.Union(
                         from known in options.KnownFormatters
-                        from formatted in known.Value
-                        select new CustomFormatterRegisterInfo { FormatterName = known.Key, Namespace = string.Empty, FullName = formatted });
+                        from formatted in known.FormattableTypes
+                        select new CustomFormatterRegisterInfo { FormatterName = known.FormatterFullName, Namespace = string.Empty, FullName = formatted, IsOpenGenericType = known.Arity > 0 });
                     modelPerType.Add(FullModel.Empty with { CustomFormatterInfos = customFormatterInfos, Options = options });
                 }
 
