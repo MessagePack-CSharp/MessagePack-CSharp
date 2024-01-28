@@ -1617,36 +1617,21 @@ partial class MyResolver
 This partial class, combined with at least one `[MessagePackObject]`-annotated type, will result in some members being added to your resolver class.
 These members will _not_ be in your own source file, but they will be emitted during the compilation.
 Visual Studio allows you to see these source generated files through a variety of means.
-These members include the following properties `Instance` and `InstanceWithStandardAotResolver`.
-You can use these members to serialize your object graph.
+These members include the property `Instance`.
+You can use this property to access the resolver for your specific types' formatters,
+but you'll almost certainly need to combine this resolver with the standard resolver to get a fully functional serializer.
+In fact the *default* resolver in this library will automatically discover this resolver in your assembly,
+so you should only need to interact with this resolver directly for advanced scenarios.
 
-Leveraging this resolver at runtime requires that you opt-in, which typically looks like this:
-
-```cs
-/// <summary>Options to use MessagePack with AOT-generated formatters.</summary>
-private static readonly MessagePackSerializerOptions SerializerOptions = MessagePackSerializerOptions.Standard
-    .WithResolver(MyResolver.InstanceWithStandardAotResolver);
-
-// Serialize and deserialize using the AOT option.
-byte[] serialized = MessagePackSerializer.Serialize(value, SerializerOptions);
-T after = MessagePackSerializer.Deserialize<T>(serialized, SerializerOptions);
-```
-
-Alternatively if you run in a highly-focused process, you can set the default options, and then use the simpler overloads to serialize.
-Do NOT do this if you're in a shared process where other code may be using MessagePack with their own options.
-
-```cs
-MessagePackSerializer.DefaultOptions = SerializerOptions; // WARNING: mutates a static shared by all MessagePack users in the process
-byte[] serialized = MessagePackSerializer.Serialize(value);
-T after = MessagePackSerializer.Deserialize<T>(serialized);
-```
+Leveraging this resolver at runtime happens automatically by default,
+since the `StandardResolver` includes the `SourceGeneratedFormatterResolver`
+which discovers and your source generated resolver.
 
 ### Customizations
 
 You can customize the generated source through properties on the `GeneratedMessagePackResolverAttribute`.
 
 When exposing the generated resolver publicly, consumers outside the library should aggregate the resolver using its `Instance` property, which contains *only* the generated formatters.
-The `InstanceWithStandardAotResolver` property is a convenience for callers that will not be aggregating the resolver with those from other libraries, since it aggregates built-in AOT friendly resolvers from the MessagePack library itself.
 
 Two assembly-level attributes exist to help with mixing in your own custom formatters with the automatically generated ones:
 - `MessagePackKnownFormatterAttribute`
