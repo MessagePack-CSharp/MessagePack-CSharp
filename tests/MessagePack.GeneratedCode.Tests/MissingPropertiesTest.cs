@@ -18,7 +18,7 @@ namespace MessagePack.GeneratedCode.Tests
                 CompositeResolver.Create(
                     Sandbox.GeneratedMessagePackResolver.Instance,
                     SharedData.GeneratedMessagePackResolver.Instance,
-                    StandardAotResolver.Instance));
+                    StandardResolver.Instance));
         }
 
         [Fact]

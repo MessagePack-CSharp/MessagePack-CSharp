@@ -414,18 +414,22 @@ namespace MessagePack.Formatters
         // abstraction for serialize
         protected virtual int? GetCount(TCollection sequence)
         {
+#if NET6_0_OR_GREATER
+            if (Enumerable.TryGetNonEnumeratedCount(sequence, out var count))
+            {
+                return count;
+            }
+#else
             var collection = sequence as ICollection<TElement>;
             if (collection != null)
             {
                 return collection.Count;
             }
-            else
+#endif
+            var c2 = sequence as IReadOnlyCollection<TElement>;
+            if (c2 != null)
             {
-                var c2 = sequence as IReadOnlyCollection<TElement>;
-                if (c2 != null)
-                {
-                    return c2.Count;
-                }
+                return c2.Count;
             }
 
             return null;
