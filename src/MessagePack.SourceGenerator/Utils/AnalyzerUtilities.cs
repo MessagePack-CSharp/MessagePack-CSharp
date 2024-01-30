@@ -124,4 +124,34 @@ public static class AnalyzerUtilities
             where type is not null
             select type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
     }
+
+    internal static IEnumerable<string> ResolverSymbolToInstanceExpression(SemanticModel semanticModel, IEnumerable<INamedTypeSymbol?> resolverTypes)
+    {
+        return resolverTypes.Select(r =>
+        {
+            if (r is not null)
+            {
+                // Prefer to get the resolver by its static Instance property/field, if available.
+                if (r.GetMembers("Instance").FirstOrDefault() is ISymbol { IsStatic: true } instanceMember)
+                {
+                    if (instanceMember is IFieldSymbol or IPropertySymbol && semanticModel.IsAccessible(0, instanceMember))
+                    {
+                        return $"{r.GetCanonicalTypeFullName()}.Instance";
+                    }
+                }
+
+                // Fallback to instantiating the resolver, if a constructor is available.
+                if (r.InstanceConstructors.FirstOrDefault(c => c.Parameters.Length == 0) is IMethodSymbol ctor)
+                {
+                    if (semanticModel.IsAccessible(0, ctor))
+                    {
+                        return $"new {r.GetCanonicalTypeFullName()}()";
+                    }
+                }
+            }
+
+            // No way to access an instance of the resolver. Produce something that will error out with direction for the user.
+            return $"#error No accessible default constructor or static Instance member on {r}.";
+        });
+    }
 }

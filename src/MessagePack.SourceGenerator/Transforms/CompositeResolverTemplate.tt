@@ -1,0 +1,48 @@
+<#@ template debug="false" hostspecific="false" linePragmas="false" language="C#" #>
+
+using MsgPack = global::MessagePack;
+
+<# if (ResolverNamespace.Length > 0) { #>
+namespace <#= ResolverNamespace #> {
+<# } #>
+
+partial class <#= ResolverName #> : MsgPack::IFormatterResolver
+{
+	public static readonly <#= ResolverName #> Instance = new <#= ResolverName #>();
+
+	private static readonly MsgPack::IFormatterResolver[] ResolverList = new MsgPack::IFormatterResolver[]
+	{
+<# foreach (string expr in ResolverInstanceExpressions) { #>
+		<#= expr #>,
+<# } #>
+	};
+
+	private <#= ResolverName #>() { }
+
+	public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+	{
+		return FormatterCache<T>.Formatter;
+	}
+
+	static class FormatterCache<T>
+	{
+		internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
+
+		static FormatterCache()
+		{
+			foreach (var resolver in ResolverList)
+			{
+				var f = resolver.GetFormatter<T>();
+				if (f != null)
+				{
+					Formatter = f;
+					return;
+				}
+			}
+		}
+	}
+}
+
+<# if (ResolverNamespace.Length > 0) { #>
+}
+<# } #>

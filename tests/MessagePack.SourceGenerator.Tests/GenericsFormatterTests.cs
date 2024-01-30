@@ -3,7 +3,7 @@
 
 using MessagePack;
 using Microsoft.CodeAnalysis;
-using VerifyCS = CSharpSourceGeneratorVerifier;
+using VerifyCS = CSharpSourceGeneratorVerifier<MessagePack.SourceGenerator.MessagePackGenerator>;
 
 public class GenericsFormatterTests
 {

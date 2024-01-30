@@ -1,3 +1,5 @@
+MessagePack.CompositeResolverAttribute
+MessagePack.CompositeResolverAttribute.CompositeResolverAttribute(params System.Type![]! resolvers) -> void
 MessagePack.Formatters.Matrix3x2Formatter
 MessagePack.Formatters.Matrix3x2Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Matrix3x2
 MessagePack.Formatters.Matrix3x2Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Matrix3x2 value, MessagePack.MessagePackSerializerOptions! options) -> void
