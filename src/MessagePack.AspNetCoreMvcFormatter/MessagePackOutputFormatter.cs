@@ -27,7 +27,7 @@ namespace MessagePack.AspNetCoreMvcFormatter
         {
             if (context.Object == null)
             {
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0_OR_GREATER
                 context.HttpContext.Response.Body.WriteByte(MessagePackCode.Nil);
                 return Task.CompletedTask;
 #else
@@ -47,7 +47,7 @@ namespace MessagePack.AspNetCoreMvcFormatter
             else
             {
                 var objectType = context.ObjectType == null || context.ObjectType == typeof(object) ? context.Object.GetType() : context.ObjectType;
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0_OR_GREATER
                 return MessagePackSerializer.SerializeAsync(objectType, context.HttpContext.Response.Body, context.Object, this.options, context.HttpContext.RequestAborted);
 #else
                 var writer = context.HttpContext.Response.BodyWriter;

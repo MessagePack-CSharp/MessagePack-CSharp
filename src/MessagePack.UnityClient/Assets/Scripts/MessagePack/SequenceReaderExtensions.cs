@@ -42,13 +42,13 @@ namespace MessagePack
             return true;
         }
 
-#if UNITY_ANDROID
+#if NETSTANDARD2_1
 
         /// <summary>
         /// In Android 32bit device(armv7) + IL2CPP does not work correctly on Unsafe.ReadUnaligned.
         /// Perhaps it is about memory alignment bug of Unity's IL2CPP VM.
         /// For a workaround, read memory manually.
-        /// https://github.com/neuecc/MessagePack-CSharp/issues/748
+        /// https://github.com/neuecc/MessagePack-CSharp/issues/748.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static unsafe bool TryRead(ref this SequenceReader<byte> reader, out long value)
@@ -86,7 +86,7 @@ namespace MessagePack
             return true;
         }
 
-#if UNITY_ANDROID
+#if NETSTANDARD2_1
 
         private static unsafe bool TryReadMultisegment(ref SequenceReader<byte> reader, out long value)
         {
