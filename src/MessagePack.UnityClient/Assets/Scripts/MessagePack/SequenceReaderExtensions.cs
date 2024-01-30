@@ -59,7 +59,15 @@ namespace MessagePack
                 return TryReadMultisegment(ref reader, out value);
             }
 
-            value = MessagePack.SafeBitConverter.ToInt64(span);
+            if (RuntimeInformation.ProcessArchitecture == Architecture.Arm)
+            {
+                value = MessagePack.SafeBitConverter.ToInt64(span);
+            }
+            else
+            {
+                value = Unsafe.ReadUnaligned<long>(ref MemoryMarshal.GetReference(span));
+            }
+
             reader.Advance(sizeof(long));
             return true;
         }
@@ -102,7 +110,15 @@ namespace MessagePack
                 return false;
             }
 
-            value = MessagePack.SafeBitConverter.ToInt64(tempSpan);
+            if (RuntimeInformation.ProcessArchitecture == Architecture.Arm)
+            {
+                value = MessagePack.SafeBitConverter.ToInt64(tempSpan);
+            }
+            else
+            {
+                value = Unsafe.ReadUnaligned<long>(ref MemoryMarshal.GetReference(tempSpan));
+            }
+
             reader.Advance(sizeof(long));
             return true;
         }
