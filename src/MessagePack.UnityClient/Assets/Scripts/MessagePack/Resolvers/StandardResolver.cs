@@ -83,40 +83,6 @@ namespace MessagePack.Resolvers
         }
     }
 
-    /// <summary>
-    /// The standard resolver to use when targeting AOT platforms or when avoiding runtime code generation is undesirable for perf reasons.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This resolver <em>may</em> invoke reflection at runtime, but only for types that are not known at compile time.
-    /// </para>
-    /// <para>
-    /// This resolver is meant to be combined with a <c>GeneratedResolver</c> produced by our source generator.
-    /// This is done automatically in the <c>GeneratedResolver.InstanceWithStandardAotResolver</c> property.
-    /// </para>
-    /// </remarks>
-    public static class StandardAotResolver
-    {
-        /// <summary>
-        /// The singleton instance that can be used.
-        /// </summary>
-        public static readonly IFormatterResolver Instance = CompositeResolver.Create(
-            new IMessagePackFormatter[]
-            {
-                ExpandoObjectFormatter.Instance,
-            },
-            new IFormatterResolver[]
-            {
-                BuiltinResolver.Instance, // Try Builtin
-                AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
-#if UNITY_2018_3_OR_NEWER
-                MessagePack.Unity.UnityResolver.Instance,
-#else
-                ImmutableCollection.ImmutableCollectionResolver.Instance,
-#endif
-            });
-    }
-
     public sealed class ContractlessStandardResolver : IFormatterResolver
     {
         /// <summary>
@@ -323,6 +289,7 @@ namespace MessagePack.Internal
         {
             BuiltinResolver.Instance, // Try Builtin
             AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
+            SourceGeneratedFormatterResolver.Instance, // Prefer source generated formatters over dynamic ones.
 
 #if UNITY_2018_3_OR_NEWER
             MessagePack.Unity.UnityResolver.Instance,

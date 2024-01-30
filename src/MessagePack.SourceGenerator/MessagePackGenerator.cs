@@ -33,7 +33,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
 
         var options = resolverOptions.Combine(customFormattedTypes).Combine(customFormatters).Select(static (input, ct) =>
         {
-            AnalyzerOptions? options = input.Left.Left ?? new();
+            AnalyzerOptions? options = input.Left.Left ?? new() { IsGeneratingSource = true };
 
             var formattableTypes = input.Left.Right;
             var formatterTypes = input.Right.Aggregate(
@@ -48,12 +48,12 @@ public partial class MessagePackGenerator : IIncrementalGenerator
         var messagePackObjectTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
             $"{AttributeNamespace}.{MessagePackObjectAttributeName}",
             predicate: static (node, _) => node is TypeDeclarationSyntax,
-            transform: static (context, _) => (TypeDeclarationSyntax)context.TargetNode);
+            transform: static (context, _) => (ITypeSymbol)context.TargetSymbol);
 
         var unionTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
             $"{AttributeNamespace}.{MessagePackUnionAttributeName}",
             predicate: static (node, _) => node is InterfaceDeclarationSyntax,
-            transform: static (context, _) => (TypeDeclarationSyntax)context.TargetNode);
+            transform: static (context, _) => (ITypeSymbol)context.TargetSymbol);
 
         var combined =
             messagePackObjectTypes.Collect().Combine(unionTypes.Collect());
@@ -65,28 +65,28 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             {
                 AnalyzerOptions options = s.Right;
 
-                if (!ReferenceSymbols.TryCreate(s.Left.Right, out ReferenceSymbols? referenceSymbols))
+                if (!ReferenceSymbols.TryCreate(s.Left.Right, out ReferenceSymbols? referenceSymbols) || referenceSymbols.MessagePackFormatter is null)
                 {
                     return default;
                 }
 
                 List<FullModel> modelPerType = new();
-                void Collect(TypeDeclarationSyntax typeDecl)
+                void Collect(ITypeSymbol typeSymbol)
                 {
-                    if (TypeCollector.Collect(s.Left.Right, options, referenceSymbols, reportAnalyzerDiagnostic: null, typeDecl, ct) is FullModel model)
+                    if (TypeCollector.Collect(s.Left.Right, options, referenceSymbols, reportAnalyzerDiagnostic: null, typeSymbol) is FullModel model)
                     {
                         modelPerType.Add(model);
                     }
                 }
 
-                foreach (TypeDeclarationSyntax typeDecl in s.Left.Left.Left)
+                foreach (var typeSymbol in s.Left.Left.Left)
                 {
-                    Collect(typeDecl);
+                    Collect(typeSymbol);
                 }
 
-                foreach (TypeDeclarationSyntax typeDecl in s.Left.Left.Right)
+                foreach (var typeSymbol in s.Left.Left.Right)
                 {
-                    Collect(typeDecl);
+                    Collect(typeSymbol);
                 }
 
                 return FullModel.Combine(modelPerType.ToImmutableArray());

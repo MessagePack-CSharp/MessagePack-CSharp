@@ -1,25 +1,23 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Testing;
+using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Microsoft.CodeAnalysis.Text;
-using Xunit;
 
-public static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
+internal static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
 {
-    public class Test : CSharpCodeFixTest<TAnalyzer, TCodeFix, XUnitVerifier>
+    internal class Test : CSharpCodeFixTest<TAnalyzer, TCodeFix, XUnitVerifier>
     {
-        public Test()
+        internal Test(ReferencesSet references = ReferencesSet.MessagePack)
         {
-            this.ReferenceAssemblies = ReferencesHelper.DefaultReferences;
-            this.CompilerDiagnostics = Microsoft.CodeAnalysis.Testing.CompilerDiagnostics.Warnings;
+            this.ReferenceAssemblies = ReferencesHelper.DefaultTargetFrameworkReferences;
+            this.CompilerDiagnostics = CompilerDiagnostics.Warnings;
+            this.TestState.AdditionalReferences.AddRange(ReferencesHelper.GetReferences(references));
 
             this.TestState.AdditionalFilesFactories.Add(() =>
             {

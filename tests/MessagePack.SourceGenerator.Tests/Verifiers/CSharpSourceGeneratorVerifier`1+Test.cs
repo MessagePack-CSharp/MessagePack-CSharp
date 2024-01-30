@@ -24,20 +24,18 @@ using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Microsoft.CodeAnalysis.Text;
 using AnalyzerOptions = MessagePack.SourceGenerator.CodeAnalysis.AnalyzerOptions;
 
-public static partial class CSharpSourceGeneratorVerifier
+internal static partial class CSharpSourceGeneratorVerifier
 {
-    public class Test : CSharpSourceGeneratorTest<EmptySourceGeneratorProvider, XUnitVerifier>
+    internal class Test : CSharpSourceGeneratorTest<EmptySourceGeneratorProvider, XUnitVerifier>
     {
         private readonly string? testFile;
         private readonly string testMethod;
 
-        public Test([CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
+        public Test(ReferencesSet references = ReferencesSet.MessagePack, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
             this.CompilerDiagnostics = CompilerDiagnostics.Warnings;
-
             this.ReferenceAssemblies = ReferenceAssemblies.Net.Net80;
-            this.TestState.AdditionalReferences.Add(typeof(MessagePackObjectAttribute).Assembly);
-            this.TestState.AdditionalReferences.Add(typeof(MessagePackSerializer).Assembly);
+            this.TestState.AdditionalReferences.AddRange(ReferencesHelper.GetReferences(references));
 
             this.testFile = testFile;
             this.testMethod = testMethod;
@@ -73,7 +71,7 @@ public static partial class CSharpSourceGeneratorVerifier
 
         private static async Task RunDefaultAsync(ITestOutputHelper logger, string testSource, string resolverPartialClassSource, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
-            Test test = new(testFile, testMethod)
+            Test test = new(testFile: testFile, testMethod: testMethod)
             {
                 TestState =
                 {

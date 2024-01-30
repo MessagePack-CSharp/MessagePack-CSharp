@@ -2,18 +2,17 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace MessagePack {
-
 using MsgPack = global::MessagePack;
+
+[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(MessagePack.GeneratedMessagePackResolver), 3, 0)]
+
+namespace MessagePack {
 
 /// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
 partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 {
 	/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
 	public static readonly MsgPack::IFormatterResolver Instance = new GeneratedMessagePackResolver();
-
-	/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
-	public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = new WithStandardAotResolver();
 
 	private GeneratedMessagePackResolver()
 	{
@@ -69,19 +68,6 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 3: return new ContainingClass_MyMessagePackObjectFormatter();
 					default: return null;
 			}
-		}
-	}
-
-	private class WithStandardAotResolver : MsgPack::IFormatterResolver
-	{
-		public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-		{
-			return FormatterCache<T>.Formatter;
-		}
-
-		private static class FormatterCache<T>
-		{
-			internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter = Instance.GetFormatter<T>() ?? MsgPack::Resolvers.StandardAotResolver.Instance.GetFormatter<T>();
 		}
 	}
 }

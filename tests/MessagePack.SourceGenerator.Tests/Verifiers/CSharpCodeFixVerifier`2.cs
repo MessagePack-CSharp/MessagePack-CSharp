@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
 
-public static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
+internal static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
     where TAnalyzer : DiagnosticAnalyzer, new()
     where TCodeFix : CodeFixProvider, new()
 {
@@ -30,7 +30,7 @@ public static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
 
     public static Task VerifyAnalyzerWithoutMessagePackReferenceAsync(string source)
     {
-        var test = new Test { TestCode = source, ReferenceAssemblies = ReferenceAssemblies.NetFramework.Net472.Default };
+        var test = new Test(ReferencesSet.None) { TestCode = source };
         return test.RunAsync();
     }
 
