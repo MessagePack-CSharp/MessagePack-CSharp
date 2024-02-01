@@ -17,7 +17,7 @@
     <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" />
     <PackageReference Include="Hyperion" />
     <PackageReference Include="Jil" />
-    <PackageReference Include="MessagePack" VersionOverride="1.4.3" />
+    <PackageReference Include="MessagePack" VersionOverride="2.1.90" />
     <PackageReference Include="MsgPack.Cli" />
     <PackageReference Include="Nerdbank.Streams" />
     <PackageReference Include="Newtonsoft.Json" />
