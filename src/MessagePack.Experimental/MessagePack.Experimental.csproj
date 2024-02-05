@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <Title>MessagePack for C#, Experimental Plugins</Title>
@@ -18,6 +18,14 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>PrimitiveArrayGetFormatterHelper.cs</LastGenOutput>
     </None>
+    <None Update="HardwareIntrinsics\RefSerializeHelper\Double.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Double.cs</LastGenOutput>
+    </None>
+    <None Update="HardwareIntrinsics\RefSerializeHelper\Single.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Single.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -31,10 +39,15 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>PrimitiveArrayGetFormatterHelper.tt</DependentUpon>
     </Compile>
-    <Compile Update="ResolverHelper.cs">
+    <Compile Update="HardwareIntrinsics\RefSerializeHelper\Double.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>ResolverHelper.tt</DependentUpon>
+      <DependentUpon>Double.tt</DependentUpon>
+    </Compile>
+    <Compile Update="HardwareIntrinsics\RefSerializeHelper\Single.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Single.tt</DependentUpon>
     </Compile>
   </ItemGroup>
 

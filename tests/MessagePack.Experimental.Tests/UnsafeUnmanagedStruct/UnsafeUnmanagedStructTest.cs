@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+extern alias e;
+
 using System;
 using System.Numerics;
 using MessagePack.Formatters;
@@ -11,14 +13,12 @@ namespace MessagePack.Experimental.Tests
 {
     public class UnsafeUnmanagedStructTest
     {
-        private MessagePackSerializerOptions options;
-        private Random random;
+        private MessagePackSerializerOptions? options;
 
         [OneTimeSetUp]
         public void SetUp()
         {
-            random = new Random();
-            var resolver = CompositeResolver.Create(new IMessagePackFormatter[] { new UnsafeUnmanagedStructFormatter<Matrix4x4>(50), new UnsafeUnmanagedStructArrayFormatter<Matrix4x4>(51) }, new[] { StandardResolver.Instance });
+            var resolver = CompositeResolver.Create(new IMessagePackFormatter[] { new e::MessagePack.Formatters.UnsafeUnmanagedStructFormatter<Matrix4x4>(50), new e::MessagePack.Formatters.UnsafeUnmanagedStructArrayFormatter<Matrix4x4>(51) }, new[] { StandardResolver.Instance });
             options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
         }
 
@@ -67,22 +67,22 @@ namespace MessagePack.Experimental.Tests
             var original = new Matrix4x4[length];
             for (var i = 0; i < original.Length; i++)
             {
-                original[i].M11 = (float)random.NextDouble();
-                original[i].M12 = (float)random.NextDouble();
-                original[i].M13 = (float)random.NextDouble();
-                original[i].M14 = (float)random.NextDouble();
-                original[i].M21 = (float)random.NextDouble();
-                original[i].M22 = (float)random.NextDouble();
-                original[i].M23 = (float)random.NextDouble();
-                original[i].M24 = (float)random.NextDouble();
-                original[i].M31 = (float)random.NextDouble();
-                original[i].M32 = (float)random.NextDouble();
-                original[i].M33 = (float)random.NextDouble();
-                original[i].M34 = (float)random.NextDouble();
-                original[i].M41 = (float)random.NextDouble();
-                original[i].M42 = (float)random.NextDouble();
-                original[i].M43 = (float)random.NextDouble();
-                original[i].M44 = (float)random.NextDouble();
+                original[i].M11 = (float)Random.Shared.NextDouble();
+                original[i].M12 = (float)Random.Shared.NextDouble();
+                original[i].M13 = (float)Random.Shared.NextDouble();
+                original[i].M14 = (float)Random.Shared.NextDouble();
+                original[i].M21 = (float)Random.Shared.NextDouble();
+                original[i].M22 = (float)Random.Shared.NextDouble();
+                original[i].M23 = (float)Random.Shared.NextDouble();
+                original[i].M24 = (float)Random.Shared.NextDouble();
+                original[i].M31 = (float)Random.Shared.NextDouble();
+                original[i].M32 = (float)Random.Shared.NextDouble();
+                original[i].M33 = (float)Random.Shared.NextDouble();
+                original[i].M34 = (float)Random.Shared.NextDouble();
+                original[i].M41 = (float)Random.Shared.NextDouble();
+                original[i].M42 = (float)Random.Shared.NextDouble();
+                original[i].M43 = (float)Random.Shared.NextDouble();
+                original[i].M44 = (float)Random.Shared.NextDouble();
             }
 
             var binary = MessagePackSerializer.Serialize(original, options);
@@ -98,7 +98,7 @@ namespace MessagePack.Experimental.Tests
         [Test]
         public void MatrixTest()
         {
-            var original = new Matrix4x4((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble());
+            var original = new Matrix4x4((float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble());
             var binary = MessagePackSerializer.Serialize(original, options);
             var decoded = MessagePackSerializer.Deserialize<Matrix4x4>(binary, options);
             Assert.IsTrue(original == decoded);
