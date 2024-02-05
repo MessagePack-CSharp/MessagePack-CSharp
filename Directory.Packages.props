@@ -73,7 +73,7 @@
   <ItemGroup Condition="'$(IsAnalyzerProject)'=='true'">
     <PackageVersion Update="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
     <PackageVersion Update="System.Collections.Immutable" Version="6.0.0" />
-    <PackageVersion Update="System.Memory" Version="4.5.4" />
+    <PackageVersion Update="System.Memory" Version="4.5.5" />
     <PackageVersion Update="System.Reflection.Metadata" Version="6.0.0" />
     <PackageVersion Update="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
     <PackageVersion Update="System.Text.Json" Version="6.0.0" />
