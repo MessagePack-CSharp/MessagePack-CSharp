@@ -10,7 +10,7 @@
     <!-- https://learn.microsoft.com/en-us/visualstudio/extensibility/roslyn-version-support?view=vs-2022 -->
     <MicrosoftCodeAnalysisVersion>4.8.0</MicrosoftCodeAnalysisVersion>
     <MicrosoftCodeAnalysisVersion Condition="'$(IsAnalyzerProject)'=='true'">4.3.0</MicrosoftCodeAnalysisVersion>
-    <MicrosoftCodeAnalysisTestingVersion>1.1.2-beta1.24074.2</MicrosoftCodeAnalysisTestingVersion>
+    <MicrosoftCodeAnalysisTestingVersion>1.1.2-beta1.24121.1</MicrosoftCodeAnalysisTestingVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet.Diagnostics.Windows" Version="$(BenchmarkDotNetVersion)" />
