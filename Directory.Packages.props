@@ -37,7 +37,7 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces" version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.NET.StringTools" Version="17.8.3" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
     <PackageVersion Include="Microsoft.NETCore.Portable.Compatibility" Version="1.0.1" />
     <PackageVersion Include="Moq" Version="4.20.70" />
     <PackageVersion Include="MsgPack.Cli" Version="1.0.1" />
@@ -65,9 +65,9 @@
     <PackageVersion Include="Utf8Json" Version="1.3.7" />
     <PackageVersion Include="Xunit.Combinatorial" Version="1.6.24" />
     <PackageVersion Include="xunit.runner.console" Version="2.6.5" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.6" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.7" />
     <PackageVersion Include="Xunit.SkippableFact" Version="1.4.13" />
-    <PackageVersion Include="xunit" Version="2.6.6" />
+    <PackageVersion Include="xunit" Version="2.7.0" />
     <PackageVersion Include="ZeroFormatter" Version="1.6.4" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsAnalyzerProject)'=='true'">
