@@ -90,9 +90,7 @@ namespace MessagePack.Tests
             private Guid x;
             private Guid y;
 
-            public TestConstructor3(
-                Guid x,
-                Guid y)
+            public TestConstructor3(Guid x, Guid y)
             {
                 this.x = x;
                 this.y = y;
@@ -104,13 +102,13 @@ namespace MessagePack.Tests
             public Guid X
             {
                 get => this.x;
-                set { this.x = value; }
+                set => this.x = value;
             }
 
             public Guid Y
             {
                 get => this.y;
-                set { this.y = value; }
+                set => this.y = value;
             }
         }
 

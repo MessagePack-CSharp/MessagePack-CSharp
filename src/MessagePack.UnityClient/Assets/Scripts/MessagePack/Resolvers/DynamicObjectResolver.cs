@@ -2019,22 +2019,6 @@ namespace MessagePack.Internal
 
                             if (len != 0)
                             {
-                                // if there is a backing field that is named same way as property this will be true.
-                                // Name/name.  backing field is name, property is Name.
-                                // and should not fail here
-                                /*if (len != 1)
-                                {
-                                    if (ctorEnumerator != null)
-                                    {
-                                        ctor = null;
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        throw new MessagePackDynamicObjectResolverException("duplicate matched constructor parameter name:" + type.FullName + " parameterName:" + item.Name + " parameterType:" + item.ParameterType.Name);
-                                    }
-                                }*/
-
                                 paramMember = hasKey.First().Value;
                                 if (item.ParameterType.IsAssignableFrom(paramMember.Type) && paramMember.IsReadable)
                                 {
