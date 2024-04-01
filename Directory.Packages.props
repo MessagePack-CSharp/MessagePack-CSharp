@@ -8,8 +8,8 @@
     <BenchmarkDotNetVersion>0.13.12</BenchmarkDotNetVersion>
 
     <!-- https://learn.microsoft.com/en-us/visualstudio/extensibility/roslyn-version-support?view=vs-2022 -->
-    <MicrosoftCodeAnalysisVersion>4.8.0</MicrosoftCodeAnalysisVersion>
-    <MicrosoftCodeAnalysisVersion Condition="'$(IsAnalyzerProject)'=='true'">4.3.0</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisVersion>4.9.2</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisVersion Condition="'$(IsAnalyzerProject)'=='true'">4.9.2</MicrosoftCodeAnalysisVersion>
     <MicrosoftCodeAnalysisTestingVersion>1.1.2-beta1.24121.1</MicrosoftCodeAnalysisTestingVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -72,9 +72,9 @@
   </ItemGroup>
   <ItemGroup Condition="'$(IsAnalyzerProject)'=='true'">
     <PackageVersion Update="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
-    <PackageVersion Update="System.Collections.Immutable" Version="6.0.0" />
+    <PackageVersion Update="System.Collections.Immutable" Version="8.0.0" />
     <PackageVersion Update="System.Memory" Version="4.5.5" />
-    <PackageVersion Update="System.Reflection.Metadata" Version="6.0.0" />
+    <PackageVersion Update="System.Reflection.Metadata" Version="8.0.0" />
     <PackageVersion Update="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
     <PackageVersion Update="System.Text.Json" Version="6.0.0" />
   </ItemGroup>
