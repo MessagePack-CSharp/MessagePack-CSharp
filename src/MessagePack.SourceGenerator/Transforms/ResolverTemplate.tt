@@ -47,9 +47,10 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 
 		static <#= ResolverName #>GetFormatterHelper()
 		{
-			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(<#= RegisterInfos.Count #>)
+<# var constructedRegistrations = ConstructedTypeRegistrations.ToArray(); #>
+			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(<#= constructedRegistrations.Length #>)
 			{
-	<# for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; #>
+	<# for(var i = 0; i < constructedRegistrations.Length; i++) { var x = constructedRegistrations[i]; #>
 				{ typeof(<#= x.FullName #>), <#= i #> },
 	<# } #>
 			};
@@ -65,7 +66,7 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 
 			switch (key)
 			{
-	<# for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; #>
+	<# for(var i = 0; i < constructedRegistrations.Length; i++) { var x = constructedRegistrations[i]; #>
 				case <#= i #>: return new <#= CodeAnalysisUtilities.QualifyWithOptionalNamespace(x.FormatterName, x.Namespace) #>();
 	<# } #>
 				default: return null;

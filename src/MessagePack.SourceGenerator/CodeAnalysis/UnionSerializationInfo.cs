@@ -15,6 +15,8 @@ public record UnionSerializationInfo(
 
     public string FormatterName => this.Name + "Formatter";
 
+    public int UnboundArity => 0;
+
     public virtual bool Equals(UnionSerializationInfo? other)
     {
         if (other is null)

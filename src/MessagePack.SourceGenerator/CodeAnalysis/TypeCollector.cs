@@ -470,7 +470,7 @@ public class TypeCollector
             }
         }
 
-        var info = new GenericSerializationInfo(fullName, formatterName, null, elemType is ITypeParameterSymbol);
+        var info = new GenericSerializationInfo(fullName, formatterName, null, elemType is ITypeParameterSymbol ? 1 : 0);
         this.collectedGenericInfo.Add(info);
         return true;
     }
@@ -503,7 +503,7 @@ public class TypeCollector
         var genericTypeString = genericType.ToDisplayString();
         string? genericTypeNamespace = genericType.ContainingNamespace?.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         var fullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var isOpenGenericType = this.IsOpenGenericTypeRecursively(type);
+        int unboundArity = this.IsOpenGenericTypeRecursively(type) ? type.Arity : 0;
 
         // special case
         if (fullName == "global::System.ArraySegment<byte>" || fullName == "global::System.ArraySegment<byte>?")
@@ -529,7 +529,7 @@ public class TypeCollector
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 "MsgPack::Formatters.NullableFormatter<" + firstTypeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + ">",
                 Namespace: null,
-                isOpenGenericType);
+                unboundArity);
             this.collectedGenericInfo.Add(info);
             return true;
         }
@@ -549,7 +549,7 @@ public class TypeCollector
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 f,
                 null,
-                isOpenGenericType);
+                unboundArity);
 
             this.collectedGenericInfo.Add(info);
 
@@ -565,7 +565,7 @@ public class TypeCollector
                 "global::System.Linq.IGrouping<" + typeArgs + ">",
                 f,
                 genericTypeNamespace,
-                isOpenGenericType);
+                unboundArity);
             this.collectedGenericInfo.Add(groupingInfo);
 
             formatter = KnownGenericTypes["System.Collections.Generic.IEnumerable<>"];
@@ -576,7 +576,7 @@ public class TypeCollector
                 "global::System.Collections.Generic.IEnumerable<" + typeArgs + ">",
                 f,
                 genericTypeNamespace,
-                isOpenGenericType);
+                unboundArity);
             this.collectedGenericInfo.Add(enumerableInfo);
             return true;
         }
@@ -631,7 +631,7 @@ public class TypeCollector
             type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             formatterBuilder.ToString(),
             genericTypeNamespace,
-            isOpenGenericType);
+            unboundArity);
         this.collectedGenericInfo.Add(genericSerializationInfo);
         return true;
     }
@@ -669,7 +669,6 @@ public class TypeCollector
     private ObjectSerializationInfo? GetObjectInfo(INamedTypeSymbol type)
     {
         var isClass = !type.IsValueType;
-        var isOpenGenericType = type.IsGenericType;
 
         AttributeData? contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute));
         if (contractAttr is null)
@@ -1084,7 +1083,19 @@ public class TypeCollector
             return null;
         }
 
-        ObjectSerializationInfo info = new(isClass, isOpenGenericType, isOpenGenericType ? type.TypeParameters.Select(ToGenericTypeParameterInfo).ToArray() : Array.Empty<GenericTypeParameterInfo>(), constructorParameters.ToArray(), isIntKey, isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(), isOpenGenericType ? GetGenericFormatterClassName(type) : GetMinimallyQualifiedClassName(type), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(), hasSerializationConstructor, needsCastOnAfter, needsCastOnBefore)
+        ObjectSerializationInfo info = new(
+            isClass,
+            type.Arity,
+            type.IsGenericType ? type.TypeParameters.Select(ToGenericTypeParameterInfo).ToArray() : Array.Empty<GenericTypeParameterInfo>(),
+            constructorParameters.ToArray(),
+            isIntKey,
+            isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
+            type.Arity > 0 ? GetGenericFormatterClassName(type) : GetMinimallyQualifiedClassName(type),
+            type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
+            hasSerializationConstructor,
+            needsCastOnAfter,
+            needsCastOnBefore)
         {
         };
 

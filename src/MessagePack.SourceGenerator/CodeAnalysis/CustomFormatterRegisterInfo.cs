@@ -11,5 +11,5 @@ public class CustomFormatterRegisterInfo : IResolverRegisterInfo
 
     public required string? Namespace { get; init; }
 
-    public required bool IsOpenGenericType { get; init; }
+    public required int UnboundArity { get; init; }
 }

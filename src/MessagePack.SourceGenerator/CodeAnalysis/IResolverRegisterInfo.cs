@@ -19,4 +19,9 @@ public interface IResolverRegisterInfo
     /// Gets the namespace of the formatter.
     /// </summary>
     string? Namespace { get; }
+
+    /// <summary>
+    /// Gets the number of unbound generic type parameters in the formatter and formatted type (which must match).
+    /// </summary>
+    int UnboundArity { get; }
 }

@@ -121,7 +121,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                     var customFormatterInfos = FullModel.Empty.CustomFormatterInfos.Union(
                         from known in options.KnownFormatters
                         from formatted in known.FormattableTypes
-                        select new CustomFormatterRegisterInfo { FormatterName = known.FormatterFullName, Namespace = string.Empty, FullName = formatted, IsOpenGenericType = known.Arity > 0 });
+                        select new CustomFormatterRegisterInfo { FormatterName = known.FormatterFullName, Namespace = string.Empty, FullName = formatted, UnboundArity = known.Arity });
                     modelPerType.Add(FullModel.Empty with { CustomFormatterInfos = customFormatterInfos, Options = options });
                 }
 

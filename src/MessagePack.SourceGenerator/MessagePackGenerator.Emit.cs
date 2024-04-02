@@ -69,11 +69,11 @@ public partial class MessagePackGenerator
         StringBuilder sb = new();
 
         IResolverRegisterInfo[] registerInfos = [
-                ..model.GenericInfos.Where(x => !x.IsOpenGenericType),
+                ..model.GenericInfos,
                 ..model.EnumInfos,
                 ..model.UnionInfos,
-                ..model.ObjectInfos.Where(x => !x.IsOpenGenericType),
-                ..model.CustomFormatterInfos.Where(x => !x.IsOpenGenericType),
+                ..model.ObjectInfos,
+                ..model.CustomFormatterInfos,
             ];
         ResolverTemplate resolverTemplate = new(options, registerInfos);
         sb.Append(FileHeader);

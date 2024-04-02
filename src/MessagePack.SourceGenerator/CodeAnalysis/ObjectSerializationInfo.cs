@@ -7,7 +7,7 @@ namespace MessagePack.SourceGenerator.CodeAnalysis;
 
 public record ObjectSerializationInfo(
     bool IsClass,
-    bool IsOpenGenericType,
+    int UnboundArity,
     GenericTypeParameterInfo[] GenericTypeParameters,
     MemberSerializationInfo[] ConstructorParameters,
     bool IsIntKey,
@@ -23,6 +23,8 @@ public record ObjectSerializationInfo(
     {
         get { return !this.IsIntKey; }
     }
+
+    public bool IsOpenGenericType => this.UnboundArity > 0;
 
     public string FileNameHint => $"{CodeAnalysisUtilities.AppendNameToNamespace("Formatters", this.Namespace)}.{this.FormatterName}";
 

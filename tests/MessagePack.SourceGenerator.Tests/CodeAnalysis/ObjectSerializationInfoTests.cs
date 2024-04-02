@@ -9,7 +9,7 @@ public class ObjectSerializationInfoTests
         // Initialize an object with non-default data.
         ObjectSerializationInfo info1a = new(
             true,
-            true,
+            1,
             new GenericTypeParameterInfo[0],
             new MemberSerializationInfo[0],
             false,
@@ -22,7 +22,7 @@ public class ObjectSerializationInfoTests
             false);
         ObjectSerializationInfo info1b = new(
             true,
-            true,
+            1,
             new GenericTypeParameterInfo[0],
             new MemberSerializationInfo[0],
             false,
@@ -36,7 +36,7 @@ public class ObjectSerializationInfoTests
 
         ObjectSerializationInfo info2 = new(
             true,
-            false,
+            0,
             new GenericTypeParameterInfo[0],
             new MemberSerializationInfo[0],
             false,

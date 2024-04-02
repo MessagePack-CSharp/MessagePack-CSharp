@@ -71,11 +71,13 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("GetFormatterHelper\r\n\t{\r\n\t\tprivate static readonly global::System.Collections.Gene" +
                     "ric.Dictionary<global::System.Type, int> lookup;\r\n\r\n\t\tstatic ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("GetFormatterHelper()\r\n\t\t{\r\n\t\t\tlookup = new global::System.Collections.Generic.Dic" +
-                    "tionary<global::System.Type, int>(");
-            this.Write(this.ToStringHelper.ToStringWithCulture(RegisterInfos.Count));
+            this.Write("GetFormatterHelper()\r\n\t\t{\r\n");
+ var constructedRegistrations = ConstructedTypeRegistrations.ToArray(); 
+            this.Write("\t\t\tlookup = new global::System.Collections.Generic.Dictionary<global::System.Type" +
+                    ", int>(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(constructedRegistrations.Length));
             this.Write(")\r\n\t\t\t{\r\n\t");
- for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; 
+ for(var i = 0; i < constructedRegistrations.Length; i++) { var x = constructedRegistrations[i]; 
             this.Write("\t\t\t\t{ typeof(");
             this.Write(this.ToStringHelper.ToStringWithCulture(x.FullName));
             this.Write("), ");
@@ -85,7 +87,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\t\t\t};\r\n\t\t}\r\n\r\n\t\tinternal static object GetFormatter(global::System.Type t)\r\n\t\t{\r\n" +
                     "\t\t\tint key;\r\n\t\t\tif (!lookup.TryGetValue(t, out key))\r\n\t\t\t{\r\n\t\t\t\treturn null;\r\n\t\t" +
                     "\t}\r\n\r\n\t\t\tswitch (key)\r\n\t\t\t{\r\n\t");
- for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; 
+ for(var i = 0; i < constructedRegistrations.Length; i++) { var x = constructedRegistrations[i]; 
             this.Write("\t\t\t\tcase ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(": return new ");

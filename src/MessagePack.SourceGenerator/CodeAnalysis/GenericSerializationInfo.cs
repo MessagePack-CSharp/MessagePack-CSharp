@@ -3,7 +3,7 @@
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
-public sealed record GenericSerializationInfo(string FullName, string FormatterName, string? Namespace, bool IsOpenGenericType) : IResolverRegisterInfo
+public sealed record GenericSerializationInfo(string FullName, string FormatterName, string? Namespace, int UnboundArity) : IResolverRegisterInfo
 {
     public bool Equals(GenericSerializationInfo? other)
     {

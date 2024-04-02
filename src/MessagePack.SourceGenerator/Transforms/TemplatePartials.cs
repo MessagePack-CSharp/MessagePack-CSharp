@@ -52,7 +52,7 @@ public partial class ResolverTemplate
     public ResolverTemplate(AnalyzerOptions options, IReadOnlyList<IResolverRegisterInfo> registerInfos)
     {
         this.Options = options;
-        this.RegisterInfos = registerInfos;
+        this.AllRegisterRegistrations = registerInfos;
     }
 
     public AnalyzerOptions Options { get; init; }
@@ -61,7 +61,11 @@ public partial class ResolverTemplate
 
     public string ResolverName => this.Options.Generator.Resolver.Name;
 
-    public IReadOnlyList<IResolverRegisterInfo> RegisterInfos { get; }
+    public IReadOnlyList<IResolverRegisterInfo> AllRegisterRegistrations { get; }
+
+    public IEnumerable<IResolverRegisterInfo> OpenGenericRegistrations => this.AllRegisterRegistrations.Where(r => r.UnboundArity > 0);
+
+    public IEnumerable<IResolverRegisterInfo> ConstructedTypeRegistrations => this.AllRegisterRegistrations.Where(r => r.UnboundArity == 0);
 
     public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.ResolverName, this.ResolverNamespace)}.g.cs";
 }
