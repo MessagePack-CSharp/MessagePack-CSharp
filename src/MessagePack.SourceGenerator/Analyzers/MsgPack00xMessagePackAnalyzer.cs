@@ -200,10 +200,10 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
             if (ReferenceSymbols.TryCreate(context.Compilation, out ReferenceSymbols? typeReferences))
             {
                 // Search the compilation for implementations of IMessagePackFormatter<T>.
-                ImmutableHashSet<CustomFormatter> formatterTypes = this.SearchNamespaceForFormatters(context.Compilation.Assembly.GlobalNamespace);
+                ImmutableHashSet<CustomFormatter> formatterTypes = this.SearchNamespaceForFormatters(context.Compilation.Assembly.GlobalNamespace).ToImmutableHashSet();
 
                 AnalyzerOptions options = new AnalyzerOptions()
-                    .WithFormatterTypes(ImmutableArray<string>.Empty, formatterTypes)
+                    .WithFormatterTypes(ImmutableArray<FormattableType>.Empty, formatterTypes)
                     .WithAssemblyAttributes(context.Compilation.Assembly.GetAttributes(), context.CancellationToken);
                 context.RegisterSymbolAction(context => this.AnalyzeSymbol(context, typeReferences, options), SymbolKind.NamedType);
             }
@@ -222,24 +222,22 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private ImmutableHashSet<CustomFormatter> SearchNamespaceForFormatters(INamespaceSymbol ns)
+    private IEnumerable<CustomFormatter> SearchNamespaceForFormatters(INamespaceSymbol ns)
     {
-        ImmutableHashSet<CustomFormatter> result = ImmutableHashSet<CustomFormatter>.Empty;
-
         foreach (INamespaceSymbol childNamespace in ns.GetNamespaceMembers())
         {
-            result = result.Union(this.SearchNamespaceForFormatters(childNamespace));
+            foreach (CustomFormatter x in this.SearchNamespaceForFormatters(childNamespace))
+            {
+                yield return x;
+            }
         }
 
         foreach (INamedTypeSymbol type in ns.GetTypeMembers())
         {
-            ImmutableHashSet<string> formatters = AnalyzerUtilities.SearchTypeForFormatterImplementations(type);
-            if (!formatters.IsEmpty)
+            if (CustomFormatter.TryCreate(type, out CustomFormatter? formatter))
             {
-                result = result.Add(new CustomFormatter(type.GetCanonicalTypeFullName(), formatters, type.Arity));
+                yield return formatter;
             }
         }
-
-        return result;
     }
 }

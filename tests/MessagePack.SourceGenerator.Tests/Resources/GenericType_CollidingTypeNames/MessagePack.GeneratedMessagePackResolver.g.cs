@@ -39,33 +39,41 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
-
-		static GeneratedMessagePackResolverGetFormatterHelper()
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(3)
 		{
-			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(3)
-			{
-					{ typeof(global::NS1.MyType<int>), 0 },
-					{ typeof(global::NS2.MyType<int>), 1 },
-					{ typeof(global::MyMessagePackObject), 2 },
-				};
-		}
+			{ typeof(global::NS1.MyType<int>), 0 },
+			{ typeof(global::NS2.MyType<int>), 1 },
+			{ typeof(global::MyMessagePackObject), 2 },
+		};
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new(2)
+		{
+			{ typeof(global::NS1.MyType<>), 0 },
+			{ typeof(global::NS2.MyType<>), 1 },
+		};
 
 		internal static object GetFormatter(global::System.Type t)
 		{
-			int key;
-			if (!lookup.TryGetValue(t, out key))
+			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return null;
+				return closedKey switch
+				{
+					0 => new NS1.MyTypeFormatter<int>(),
+					1 => new NS2.MyTypeFormatter<int>(),
+					2 => new MyMessagePackObjectFormatter(),
+					_ => null, // unreachable
+				};
+			}
+			if (t.IsGenericType && openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))
+			{
+				return openKey switch
+				{
+					0 => global::System.Activator.CreateInstance(typeof(NS1.MyTypeFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					1 => global::System.Activator.CreateInstance(typeof(NS2.MyTypeFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					_ => null, // unreachable
+				};
 			}
 
-			switch (key)
-			{
-					case 0: return new NS1.MyTypeFormatter<int>();
-					case 1: return new NS2.MyTypeFormatter<int>();
-					case 2: return new MyMessagePackObjectFormatter();
-					default: return null;
-			}
+			return null;
 		}
 	}
 }

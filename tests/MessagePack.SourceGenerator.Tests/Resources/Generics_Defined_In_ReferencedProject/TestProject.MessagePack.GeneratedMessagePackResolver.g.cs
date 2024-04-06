@@ -39,35 +39,39 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
-
-		static GeneratedMessagePackResolverGetFormatterHelper()
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(3)
 		{
-			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(4)
-			{
-					{ typeof(global::TempProject.MyGenericObject<global::TempProject.MyGenericObject<int>>), 0 },
-					{ typeof(global::TempProject.MyGenericObject<int>), 1 },
-					{ typeof(global::TempProject.MyObject), 2 },
-					{ typeof(global::TempProject.MyObjectNested), 3 },
-				};
-		}
+			{ typeof(global::TempProject.MyGenericObject<int>), 0 },
+			{ typeof(global::TempProject.MyObject), 1 },
+			{ typeof(global::TempProject.MyObjectNested), 2 },
+		};
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new(1)
+		{
+			{ typeof(global::TempProject.MyGenericObject<>), 0 },
+		};
 
 		internal static object GetFormatter(global::System.Type t)
 		{
-			int key;
-			if (!lookup.TryGetValue(t, out key))
+			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return null;
+				return closedKey switch
+				{
+					0 => new TempProject.MyGenericObjectFormatter<int>(),
+					1 => new TempProject.MyObjectFormatter(),
+					2 => new TempProject.MyObjectNestedFormatter(),
+					_ => null, // unreachable
+				};
+			}
+			if (t.IsGenericType && openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))
+			{
+				return openKey switch
+				{
+					0 => global::System.Activator.CreateInstance(typeof(TempProject.MyGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					_ => null, // unreachable
+				};
 			}
 
-			switch (key)
-			{
-					case 0: return new TempProject.MyGenericObjectFormatter<global::TempProject.MyGenericObject<int>>();
-					case 1: return new TempProject.MyGenericObjectFormatter<int>();
-					case 2: return new TempProject.MyObjectFormatter();
-					case 3: return new TempProject.MyObjectNestedFormatter();
-					default: return null;
-			}
+			return null;
 		}
 	}
 }

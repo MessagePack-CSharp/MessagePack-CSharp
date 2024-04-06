@@ -8,12 +8,12 @@ using MsgPack = global::MessagePack;
 
 partial class GeneratedMessagePackResolver
 {
-	private sealed class IMyTypeFormatter : MsgPack::Formatters.IMessagePackFormatter<global::ContainingClass.IMyType>
+	private sealed class ContainingClass_IMyTypeFormatter: MsgPack::Formatters.IMessagePackFormatter<global::ContainingClass.IMyType>
 	{
 		private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
 		private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
-		public IMyTypeFormatter()
+		public ContainingClass_IMyTypeFormatter()
 		{
 			this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(2, MsgPack::Internal.RuntimeTypeHandleEqualityComparer.Default)
 			{

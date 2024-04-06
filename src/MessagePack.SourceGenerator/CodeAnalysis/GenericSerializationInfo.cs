@@ -1,17 +1,27 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
+
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
-public sealed record GenericSerializationInfo(string FullName, string FormatterName, string? Namespace, int UnboundArity) : IResolverRegisterInfo
+/// <summary>
+/// Describes a constructed generic type (one that has known type arguments)
+/// that must be serializable.
+/// </summary>
+public sealed record GenericSerializationInfo : ResolverRegisterInfo
 {
-    public bool Equals(GenericSerializationInfo? other)
-    {
-        return this.FullName.Equals(other?.FullName);
-    }
+    public override bool IsUnboundGenericType => false;
 
-    public override int GetHashCode()
+    public static new GenericSerializationInfo Create(ITypeSymbol dataType)
     {
-        return this.FullName.GetHashCode();
+        ResolverRegisterInfo basicInfo = ResolverRegisterInfo.Create(dataType);
+        ImmutableArray<string> typeArguments = CodeAnalysisUtilities.GetTypeArguments(dataType);
+        return new GenericSerializationInfo
+        {
+            DataType = basicInfo.DataType with { TypeParameters = typeArguments },
+            Formatter = basicInfo.Formatter with { TypeParameters = typeArguments },
+        };
     }
 }

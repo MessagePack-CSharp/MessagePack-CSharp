@@ -14,17 +14,24 @@ public class FullModelTests
     [Fact]
     public void Equals_ByValue()
     {
+        EnumSerializationInfo enumInfo = new()
+        {
+            DataType = new("My", "MyEnum"),
+            UnderlyingTypeName = "System.Int32",
+            Formatter = new("some", "some"),
+        };
+
         // Construct a FullModel with a non-default value for each property.
         FullModel model1a = new(
             ImmutableSortedSet.Create<ObjectSerializationInfo>(ResolverRegisterInfoComparer.Default),
-            ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default).Add(new(null, "MyEnum", "My.MyEnum", "System.Int32")),
+            ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default).Add(enumInfo),
             ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<CustomFormatterRegisterInfo>(ResolverRegisterInfoComparer.Default),
             new AnalyzerOptions());
         FullModel model1b = new(
             ImmutableSortedSet.Create<ObjectSerializationInfo>(ResolverRegisterInfoComparer.Default),
-            ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default).Add(new(null, "MyEnum", "My.MyEnum", "System.Int32")),
+            ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default).Add(enumInfo),
             ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<CustomFormatterRegisterInfo>(ResolverRegisterInfoComparer.Default),

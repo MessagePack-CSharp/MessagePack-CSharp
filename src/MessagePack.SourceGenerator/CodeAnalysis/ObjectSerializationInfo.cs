@@ -1,34 +1,30 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
-public record ObjectSerializationInfo(
-    bool IsClass,
-    int UnboundArity,
-    GenericTypeParameterInfo[] GenericTypeParameters,
-    MemberSerializationInfo[] ConstructorParameters,
-    bool IsIntKey,
-    MemberSerializationInfo[] Members,
-    string Name,
-    string FullName,
-    string? Namespace,
-    bool HasIMessagePackSerializationCallbackReceiver,
-    bool NeedsCastOnAfter,
-    bool NeedsCastOnBefore) : IResolverRegisterInfo
+public record ObjectSerializationInfo : ResolverRegisterInfo
 {
-    public bool IsStringKey
-    {
-        get { return !this.IsIntKey; }
-    }
+    public required bool IsClass { get; init; }
 
-    public bool IsOpenGenericType => this.UnboundArity > 0;
+    public required GenericTypeParameterInfo[] GenericTypeParameters { get; init; }
 
-    public string FileNameHint => $"{CodeAnalysisUtilities.AppendNameToNamespace("Formatters", this.Namespace)}.{this.FormatterName}";
+    public required MemberSerializationInfo[] ConstructorParameters { get; init; }
 
-    public string FormatterName => this.Name + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(", ", this.GenericTypeParameters.Select(x => x.Name))}>" : string.Empty);
+    public required bool IsIntKey { get; init; }
+
+    public required MemberSerializationInfo[] Members { get; init; }
+
+    public required bool HasIMessagePackSerializationCallbackReceiver { get; init; }
+
+    public required bool NeedsCastOnAfter { get; init; }
+
+    public required bool NeedsCastOnBefore { get; init; }
+
+    public bool IsStringKey => !this.IsIntKey;
 
     public int WriteCount
     {
@@ -53,6 +49,33 @@ public record ObjectSerializationInfo(
         }
     }
 
+    public static ObjectSerializationInfo Create(
+        INamedTypeSymbol dataType,
+        bool isClass,
+        GenericTypeParameterInfo[] genericTypeParameters,
+        MemberSerializationInfo[] constructorParameters,
+        bool isIntKey,
+        MemberSerializationInfo[] members,
+        bool hasIMessagePackSerializationCallbackReceiver,
+        bool needsCastOnAfter,
+        bool needsCastOnBefore)
+    {
+        ResolverRegisterInfo basicInfo = ResolverRegisterInfo.Create(dataType);
+        return new ObjectSerializationInfo
+        {
+            DataType = basicInfo.DataType,
+            Formatter = basicInfo.Formatter,
+            IsClass = isClass,
+            GenericTypeParameters = genericTypeParameters,
+            ConstructorParameters = constructorParameters,
+            IsIntKey = isIntKey,
+            Members = members,
+            HasIMessagePackSerializationCallbackReceiver = hasIMessagePackSerializationCallbackReceiver,
+            NeedsCastOnAfter = needsCastOnAfter,
+            NeedsCastOnBefore = needsCastOnBefore,
+        };
+    }
+
     public MemberSerializationInfo? GetMember(int index)
     {
         return this.Members.FirstOrDefault(x => x.IntKey == index);
@@ -61,7 +84,7 @@ public record ObjectSerializationInfo(
     public string GetConstructorString()
     {
         var args = string.Join(", ", this.ConstructorParameters.Select(x => "__" + x.Name + "__"));
-        return $"{this.FullName}({args})";
+        return $"{this.DataType.GetQualifiedName(Qualifiers.GlobalNamespace, GenericParameterStyle.Identifiers)}({args})";
     }
 
     public virtual bool Equals(ObjectSerializationInfo? other)
@@ -82,18 +105,15 @@ public record ObjectSerializationInfo(
         }
 
         // Compare all the properties by value
-        return IsClass == other.IsClass &&
-               IsOpenGenericType == other.IsOpenGenericType &&
-               GenericTypeParameters.SequenceEqual(other.GenericTypeParameters) &&
-               ConstructorParameters.SequenceEqual(other.ConstructorParameters) &&
-               IsIntKey == other.IsIntKey &&
-               Members.SequenceEqual(other.Members) &&
-               Name == other.Name &&
-               FullName == other.FullName &&
-               Namespace == other.Namespace &&
-               HasIMessagePackSerializationCallbackReceiver == other.HasIMessagePackSerializationCallbackReceiver &&
-               NeedsCastOnAfter == other.NeedsCastOnAfter &&
-               NeedsCastOnBefore == other.NeedsCastOnBefore;
+        return base.Equals(other)
+            && IsClass == other.IsClass
+            && GenericTypeParameters.SequenceEqual(other.GenericTypeParameters)
+            && ConstructorParameters.SequenceEqual(other.ConstructorParameters)
+            && IsIntKey == other.IsIntKey
+            && Members.SequenceEqual(other.Members)
+            && HasIMessagePackSerializationCallbackReceiver == other.HasIMessagePackSerializationCallbackReceiver
+            && NeedsCastOnAfter == other.NeedsCastOnAfter
+            && NeedsCastOnBefore == other.NeedsCastOnBefore;
     }
 
     public override int GetHashCode() => throw new NotImplementedException();

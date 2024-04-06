@@ -3,13 +3,7 @@
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
-public class CustomFormatterRegisterInfo : IResolverRegisterInfo
+public record CustomFormatterRegisterInfo : ResolverRegisterInfo
 {
-    public required string FullName { get; init; }
-
-    public required string FormatterName { get; init; }
-
-    public required string? Namespace { get; init; }
-
-    public required int UnboundArity { get; init; }
+    public override string GetFormatterNameForResolver(GenericParameterStyle style) => this.Formatter.GetQualifiedName(Qualifiers.GlobalNamespace, style);
 }

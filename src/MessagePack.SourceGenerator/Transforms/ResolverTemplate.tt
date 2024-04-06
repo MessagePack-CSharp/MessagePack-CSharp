@@ -43,34 +43,55 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 
 	private static class <#= ResolverName #>GetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
-
-		static <#= ResolverName #>GetFormatterHelper()
+<#
+   var constructedRegistrations = ConstructedTypeRegistrations.ToArray();
+   if (constructedRegistrations.Length > 0) { #>
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(<#= constructedRegistrations.Length #>)
 		{
-<# var constructedRegistrations = ConstructedTypeRegistrations.ToArray(); #>
-			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(<#= constructedRegistrations.Length #>)
-			{
-	<# for(var i = 0; i < constructedRegistrations.Length; i++) { var x = constructedRegistrations[i]; #>
-				{ typeof(<#= x.FullName #>), <#= i #> },
-	<# } #>
-			};
-		}
+<# for(var i = 0; i < constructedRegistrations.Length; i++) { #>
+			{ typeof(<#= constructedRegistrations[i].DataType.GetQualifiedName() #>), <#= i #> },
+<# } #>
+		};
+<# }
+   var openGenericRegistrations = OpenGenericRegistrations.ToArray();
+   if (openGenericRegistrations.Length > 0) { #>
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new(<#= openGenericRegistrations.Length #>)
+		{
+<# for(var i = 0; i < openGenericRegistrations.Length; i++) { #>
+			{ typeof(<#= openGenericRegistrations[i].DataType.GetQualifiedName(genericStyle: GenericParameterStyle.TypeDefinition) #>), <#= i #> },
+<# } #>
+		};
+<# } #>
 
 		internal static object GetFormatter(global::System.Type t)
 		{
-			int key;
-			if (!lookup.TryGetValue(t, out key))
+<# if (constructedRegistrations.Length > 0) { #>
+			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return null;
+				return closedKey switch
+				{
+<# for(var i = 0; i < constructedRegistrations.Length; i++) { var x = constructedRegistrations[i]; #>
+					<#= i #> => new <#= x.GetFormatterNameForResolver() #>(),
+<# } #>
+					_ => null, // unreachable
+				};
 			}
+<# }
 
-			switch (key)
+   if (openGenericRegistrations.Length > 0) { #>
+			if (t.IsGenericType && openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))
 			{
-	<# for(var i = 0; i < constructedRegistrations.Length; i++) { var x = constructedRegistrations[i]; #>
-				case <#= i #>: return new <#= CodeAnalysisUtilities.QualifyWithOptionalNamespace(x.FormatterName, x.Namespace) #>();
-	<# } #>
-				default: return null;
+				return openKey switch
+				{
+<#     for(var i = 0; i < openGenericRegistrations.Length; i++) { var x = openGenericRegistrations[i]; #>
+					<#= i #> => global::System.Activator.CreateInstance(typeof(<#= x.GetFormatterNameForResolver(GenericParameterStyle.TypeDefinition) #>).MakeGenericType(t.GenericTypeArguments)),
+<#     } #>
+					_ => null, // unreachable
+				};
 			}
+<# } #>
+
+			return null;
 		}
 	}
 }

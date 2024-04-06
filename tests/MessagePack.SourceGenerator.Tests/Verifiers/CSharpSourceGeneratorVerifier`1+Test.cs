@@ -53,8 +53,8 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
             options ??= new();
 
             // TODO: throw if these attribute collections are non-empty. Tests should use the attributes themselves.
-            string assumedFormattable = string.Join(string.Empty, options.AssumedFormattableTypes.Select(t => $"[assembly: MessagePackAssumedFormattable(typeof({t}))]" + Environment.NewLine));
-            string knownFormatters = string.Join(string.Empty, options.KnownFormatters.Select(t => $"[assembly: MessagePackKnownFormatter(typeof({t}))]" + Environment.NewLine));
+            string assumedFormattable = string.Join(string.Empty, options.AssumedFormattableTypes.Select(t => $"[assembly: MessagePackAssumedFormattable(typeof({t.Name.GetQualifiedName(Qualifiers.Namespace)}))]" + Environment.NewLine));
+            string knownFormatters = string.Join(string.Empty, options.KnownFormatters.Select(t => $"[assembly: MessagePackKnownFormatter(typeof({t.Name.GetQualifiedName(Qualifiers.Namespace)}))]" + Environment.NewLine));
 
             string resolverPartialClassSource = $$"""
                 using MessagePack;

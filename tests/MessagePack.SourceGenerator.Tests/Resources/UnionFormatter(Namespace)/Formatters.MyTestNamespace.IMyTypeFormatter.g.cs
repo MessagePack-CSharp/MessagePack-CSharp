@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 partial class GeneratedMessagePackResolver
 {
 private partial class MyTestNamespace { 
-	internal sealed class IMyTypeFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.IMyType>
+	internal sealed class IMyTypeFormatter: MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.IMyType>
 	{
 		private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
 		private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;

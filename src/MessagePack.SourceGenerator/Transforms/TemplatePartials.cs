@@ -15,13 +15,13 @@ public partial class FormatterTemplate : IFormatterTemplate
 
     public AnalyzerOptions Options { get; }
 
-    public string? FormattedTypeNamespace => this.Info.Namespace;
-
     public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
 
     public string ResolverName => this.Options.Generator.Resolver.Name;
 
     public ObjectSerializationInfo Info { get; }
+
+    ResolverRegisterInfo IFormatterTemplate.Info => this.Info;
 
     public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
@@ -36,20 +36,20 @@ public partial class StringKeyFormatterTemplate : IFormatterTemplate
 
     public AnalyzerOptions Options { get; }
 
-    public string? FormattedTypeNamespace => this.Info.Namespace;
-
     public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
 
     public string ResolverName => this.Options.Generator.Resolver.Name;
 
     public ObjectSerializationInfo Info { get; }
 
+    ResolverRegisterInfo IFormatterTemplate.Info => this.Info;
+
     public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
 
 public partial class ResolverTemplate
 {
-    public ResolverTemplate(AnalyzerOptions options, IReadOnlyList<IResolverRegisterInfo> registerInfos)
+    public ResolverTemplate(AnalyzerOptions options, IReadOnlyList<ResolverRegisterInfo> registerInfos)
     {
         this.Options = options;
         this.AllRegisterRegistrations = registerInfos;
@@ -61,11 +61,11 @@ public partial class ResolverTemplate
 
     public string ResolverName => this.Options.Generator.Resolver.Name;
 
-    public IReadOnlyList<IResolverRegisterInfo> AllRegisterRegistrations { get; }
+    public IReadOnlyList<ResolverRegisterInfo> AllRegisterRegistrations { get; }
 
-    public IEnumerable<IResolverRegisterInfo> OpenGenericRegistrations => this.AllRegisterRegistrations.Where(r => r.UnboundArity > 0);
+    public IEnumerable<ResolverRegisterInfo> OpenGenericRegistrations => this.AllRegisterRegistrations.Where(r => r.IsUnboundGenericType);
 
-    public IEnumerable<IResolverRegisterInfo> ConstructedTypeRegistrations => this.AllRegisterRegistrations.Where(r => r.UnboundArity == 0);
+    public IEnumerable<ResolverRegisterInfo> ConstructedTypeRegistrations => this.AllRegisterRegistrations.Where(r => !r.IsUnboundGenericType);
 
     public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.ResolverName, this.ResolverNamespace)}.g.cs";
 }
@@ -80,13 +80,13 @@ public partial class EnumTemplate : IFormatterTemplate
 
     public AnalyzerOptions Options { get; }
 
-    public string? FormattedTypeNamespace => this.Info.Namespace;
-
     public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
 
     public string ResolverName => this.Options.Generator.Resolver.Name;
 
     public EnumSerializationInfo Info { get; }
+
+    ResolverRegisterInfo IFormatterTemplate.Info => this.Info;
 
     public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
@@ -101,13 +101,13 @@ public partial class UnionTemplate : IFormatterTemplate
 
     public AnalyzerOptions Options { get; }
 
-    public string? FormattedTypeNamespace => this.Info.Namespace;
-
     public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
 
     public string ResolverName => this.Options.Generator.Resolver.Name;
 
     public UnionSerializationInfo Info { get; }
+
+    ResolverRegisterInfo IFormatterTemplate.Info => this.Info;
 
     public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
@@ -116,11 +116,11 @@ public partial class CompositeResolverTemplate : IFormatterTemplate
 {
     public string FileName => $"{this.ResolverName}.g.cs";
 
-    public string? FormattedTypeNamespace => null;
-
     public required string ResolverNamespace { get; init; }
 
     public required string ResolverName { get; init; }
+
+    ResolverRegisterInfo IFormatterTemplate.Info => throw new NotImplementedException();
 
     public required string[] ResolverInstanceExpressions { get; init; }
 }

@@ -31,16 +31,9 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             predicate: static (node, ct) => node is ClassDeclarationSyntax { BaseList.Types.Count: > 0 },
             transform: (ctxt, ct) =>
             {
-                if (ctxt.SemanticModel.GetDeclaredSymbol(ctxt.Node, ct) is INamedTypeSymbol symbol)
-                {
-                    ImmutableHashSet<string> formattableTypes = AnalyzerUtilities.SearchTypeForFormatterImplementations(symbol);
-                    if (!formattableTypes.IsEmpty)
-                    {
-                        return (CustomFormatter?)new CustomFormatter(symbol.GetCanonicalTypeFullName(), formattableTypes, symbol.Arity);
-                    }
-                }
-
-                return null;
+                return ctxt.SemanticModel.GetDeclaredSymbol(ctxt.Node, ct) is INamedTypeSymbol symbol && CustomFormatter.TryCreate(symbol, out CustomFormatter? formatter)
+                    ? formatter
+                    : null;
             }).Collect();
 
         // Search for an [GeneratedMessagePackResolver] attribute (presumably on a partial class).
@@ -56,7 +49,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             AnalyzerOptions? options = input.Left.Left.Left ?? new() { IsGeneratingSource = true };
             ImmutableArray<CustomFormatter?> formatterImplementations = input.Right;
 
-            ImmutableArray<string> formattableTypes = input.Left.Left.Right;
+            ImmutableArray<FormattableType> formattableTypes = input.Left.Left.Right;
             ImmutableHashSet<CustomFormatter> formatterTypes = input.Left.Right.Aggregate(
                 ImmutableHashSet<CustomFormatter>.Empty,
                 (first, second) => first.Union(second));
@@ -121,7 +114,11 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                     var customFormatterInfos = FullModel.Empty.CustomFormatterInfos.Union(
                         from known in options.KnownFormatters
                         from formatted in known.FormattableTypes
-                        select new CustomFormatterRegisterInfo { FormatterName = known.FormatterFullName, Namespace = string.Empty, FullName = formatted, UnboundArity = known.Arity });
+                        select new CustomFormatterRegisterInfo
+                        {
+                            Formatter = known.Name,
+                            DataType = formatted.Name,
+                        });
                     modelPerType.Add(FullModel.Empty with { CustomFormatterInfos = customFormatterInfos, Options = options });
                 }
 

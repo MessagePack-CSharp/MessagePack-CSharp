@@ -4,6 +4,7 @@
 #pragma warning disable SA1402 // File may only contain a single type
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
@@ -19,7 +20,7 @@ public record AnalyzerOptions
     /// <summary>
     /// Gets the set fully qualified names of types that are assumed to have custom formatters written that will be included by a resolver by the program.
     /// </summary>
-    public ImmutableHashSet<string> AssumedFormattableTypes { get; init; } = ImmutableHashSet<string>.Empty;
+    public ImmutableHashSet<FormattableType> AssumedFormattableTypes { get; init; } = ImmutableHashSet<FormattableType>.Empty;
 
     /// <summary>
     /// Gets the set of custom formatters that should be considered by the analyzer and included in the generated resolver.
@@ -33,7 +34,7 @@ public record AnalyzerOptions
     /// </summary>
     public bool IsGeneratingSource { get; init; }
 
-    internal AnalyzerOptions WithFormatterTypes(ImmutableArray<string> formattableTypes, ImmutableHashSet<CustomFormatter> customFormatters)
+    internal AnalyzerOptions WithFormatterTypes(ImmutableArray<FormattableType> formattableTypes, ImmutableHashSet<CustomFormatter> customFormatters)
     {
         return this with
         {
@@ -51,7 +52,7 @@ public record AnalyzerOptions
     internal AnalyzerOptions WithAssemblyAttributes(ImmutableArray<AttributeData> assemblyAttributes, CancellationToken cancellationToken)
     {
         ImmutableHashSet<CustomFormatter> customFormatters = AnalyzerUtilities.ParseKnownFormatterAttribute(assemblyAttributes, cancellationToken).Union(this.KnownFormatters);
-        ImmutableArray<string> customFormattedTypes = this.AssumedFormattableTypes.Union(AnalyzerUtilities.ParseAssumedFormattableAttribute(assemblyAttributes, cancellationToken)).ToImmutableArray();
+        ImmutableArray<FormattableType> customFormattedTypes = this.AssumedFormattableTypes.Union(AnalyzerUtilities.ParseAssumedFormattableAttribute(assemblyAttributes, cancellationToken)).ToImmutableArray();
         return this.WithFormatterTypes(customFormattedTypes, customFormatters);
     }
 }
@@ -102,7 +103,35 @@ public record GeneratorOptions
 /// <summary>
 /// Describes a custom formatter.
 /// </summary>
-/// <param name="FormatterFullName">The full name of the type that implements at least one <c>IMessagePackFormatter</c> interface.</param>
-/// <param name="FormattableTypes">The type arguments that appear in each implemented <c>IMessagePackFormatter</c> interface.</param>
-/// <param name="Arity">The number of generic type parameters on the formatter. This must match the generic type parameters on all the <paramref name="FormattableTypes"/> too.</param>
-public record CustomFormatter(string FormatterFullName, ImmutableHashSet<string> FormattableTypes, int Arity);
+/// <param name="Name">The name (without namespace) of the type that implements at least one <c>IMessagePackFormatter</c> interface. If the formatter is a generic type, this should <em>not</em> include any generic type parameters.</param>
+/// <param name="FormattableTypes">The type arguments that appear in each implemented <c>IMessagePackFormatter</c> interface. When generic, these should be the full name of their type definitions.</param>
+public record CustomFormatter(QualifiedTypeName Name, ImmutableHashSet<FormattableType> FormattableTypes)
+{
+    public static bool TryCreate(INamedTypeSymbol type, [NotNullWhen(true)] out CustomFormatter? formatter)
+    {
+        var formattedTypes =
+            AnalyzerUtilities.SearchTypeForFormatterImplementations(type)
+            .Select(i => new FormattableType(i))
+            .ToImmutableHashSet();
+        if (formattedTypes.IsEmpty)
+        {
+            formatter = null;
+            return false;
+        }
+
+        formatter = new CustomFormatter(new QualifiedTypeName(type), formattedTypes);
+        return true;
+    }
+}
+
+/// <summary>
+/// Describes a formattable type.
+/// </summary>
+/// <param name="Name">The name of the formattable type.</param>
+public record FormattableType(QualifiedTypeName Name)
+{
+    public FormattableType(ITypeSymbol type)
+        : this(new QualifiedTypeName(type))
+    {
+    }
+}
