@@ -186,6 +186,15 @@ public record CustomFormatter(QualifiedTypeName Name, ImmutableHashSet<Formattab
     }
 
     public bool IsInaccessible { get; init; }
+
+    public virtual bool Equals(CustomFormatter other)
+    {
+        return this.Name.Equals(other.Name)
+            && this.FormattableTypes.SetEquals(other.FormattableTypes)
+            && this.IsInaccessible == other.IsInaccessible;
+    }
+
+    public override int GetHashCode() => this.Name.GetHashCode();
 }
 
 /// <summary>
