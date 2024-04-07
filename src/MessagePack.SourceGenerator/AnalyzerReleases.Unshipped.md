@@ -14,3 +14,4 @@ MsgPack006 | Usage | Error | MsgPack00xMessagePackAnalyzer
 MsgPack007 | Usage | Error | MsgPack00xMessagePackAnalyzer
 MsgPack008 | Usage | Error | MsgPack00xMessagePackAnalyzer
 MsgPack009 | Usage | Error | MsgPack00xMessagePackAnalyzer
+MsgPack010 | Usage | Warning | MsgPack00xMessagePackAnalyzer

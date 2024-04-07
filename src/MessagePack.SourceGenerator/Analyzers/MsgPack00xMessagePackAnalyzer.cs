@@ -18,6 +18,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string DeserializingConstructorId = "MsgPack007";
     public const string AOTLimitationsId = "MsgPack008";
     public const string CollidingFormattersId = "MsgPack009";
+    public const string InaccessibleFormatterId = "MsgPack010";
 
     internal const string Category = "Usage";
 
@@ -196,12 +197,23 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(CollidingFormattersId));
 
+    internal static readonly DiagnosticDescriptor InaccessibleFormatter = new(
+        id: InaccessibleFormatterId,
+        title: "Inaccessible formatter",
+        category: Category,
+        messageFormat: "Formatter should declare a default constructor with at least internal visibility",
+        description: "The auto-generated resolver cannot construct this formatter without a constructor.",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleFormatterId));
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         TypeMustBeMessagePackObject,
         PublicMemberNeedsKey,
         InvalidMessagePackObject,
         MessageFormatterMustBeMessagePackFormatter,
-        CollidingFormatters);
+        CollidingFormatters,
+        InaccessibleFormatter);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -225,10 +237,21 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     private void AnalyzeSymbol(SymbolAnalysisContext context, ReferenceSymbols typeReferences, AnalyzerOptions options)
     {
         INamedTypeSymbol declaredSymbol = (INamedTypeSymbol)context.Symbol;
+        QualifiedTypeName typeName = new(declaredSymbol);
 
-        foreach (FormattableType formattableType in options.GetCollidingFormatterDataTypes(new QualifiedTypeName(declaredSymbol)))
+        // If this is a formatter, confirm that it meets requirements.
+        if (options.KnownFormattersByName.TryGetValue(typeName, out CustomFormatter? formatter))
         {
-            context.ReportDiagnostic(Diagnostic.Create(CollidingFormatters, declaredSymbol.Locations[0], formattableType.Name.GetQualifiedName(Qualifiers.Namespace)));
+            // Look for colliding formatters (multiple formatters that want to format the same type).
+            foreach (FormattableType formattableType in options.GetCollidingFormatterDataTypes(typeName))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(CollidingFormatters, declaredSymbol.Locations[0], formattableType.Name.GetQualifiedName(Qualifiers.Namespace)));
+            }
+
+            if (formatter.IsInaccessible)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(InaccessibleFormatter, declaredSymbol.Locations[0]));
+            }
         }
 
         switch (declaredSymbol.TypeKind)

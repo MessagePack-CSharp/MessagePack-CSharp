@@ -113,6 +113,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                 {
                     var customFormatterInfos = FullModel.Empty.CustomFormatterInfos.Union(
                         from known in options.KnownFormatters
+                        where !known.IsInaccessible
                         from formatted in known.FormattableTypes
                         where !options.GetCollidingFormatterDataTypes(known.Name).Contains(formatted) // skip formatters with colliding types to avoid non-deterministic code generation
                         select new CustomFormatterRegisterInfo

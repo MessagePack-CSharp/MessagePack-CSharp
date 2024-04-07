@@ -19,7 +19,7 @@ public record AnalyzerOptions
 {
     private readonly ImmutableHashSet<CustomFormatter> knownFormatters = ImmutableHashSet<CustomFormatter>.Empty;
 
-    private ImmutableDictionary<QualifiedTypeName, ImmutableArray<FormattableType>> collidingFormatters = ImmutableDictionary<QualifiedTypeName, ImmutableArray<FormattableType>>.Empty;
+    private readonly ImmutableDictionary<QualifiedTypeName, ImmutableArray<FormattableType>> collidingFormatters = ImmutableDictionary<QualifiedTypeName, ImmutableArray<FormattableType>>.Empty;
 
     /// <summary>
     /// Gets the set fully qualified names of types that are assumed to have custom formatters written that will be included by a resolver by the program.
@@ -35,6 +35,7 @@ public record AnalyzerOptions
         init
         {
             this.knownFormatters = value;
+            this.KnownFormattersByName = value.ToImmutableDictionary(f => f.Name);
 
             Dictionary<FormattableType, ImmutableArray<CustomFormatter>> formattableTypes = new();
             bool collisionsEncountered = false;
@@ -79,6 +80,8 @@ public record AnalyzerOptions
             this.collidingFormatters = collidingFormatters;
         }
     }
+
+    public ImmutableDictionary<QualifiedTypeName, CustomFormatter> KnownFormattersByName { get; private init; } = ImmutableDictionary<QualifiedTypeName, CustomFormatter>.Empty;
 
     public GeneratorOptions Generator { get; init; } = new();
 
@@ -174,9 +177,15 @@ public record CustomFormatter(QualifiedTypeName Name, ImmutableHashSet<Formattab
             return false;
         }
 
-        formatter = new CustomFormatter(new QualifiedTypeName(type), formattedTypes);
+        formatter = new CustomFormatter(new QualifiedTypeName(type), formattedTypes)
+        {
+            IsInaccessible = !type.InstanceConstructors.Any(ctor => ctor.Parameters.Length == 0 && ctor.DeclaredAccessibility >= Accessibility.Internal),
+        };
+
         return true;
     }
+
+    public bool IsInaccessible { get; init; }
 }
 
 /// <summary>

@@ -103,4 +103,24 @@ public class ImplicitResolverForCustomFormattersTests
 
         await VerifyCS.Test.RunDefaultAsync(this.logger, testSource);
     }
+
+    [Fact]
+    public async Task CustomFormatterWithoutDefaultConstructor()
+    {
+        string testSource = """
+            using System;
+            using MessagePack;
+            using MessagePack.Formatters;
+            using MessagePack.Resolvers;
+
+            internal class {|MsgPack010:IntFormatter|} : IMessagePackFormatter<int>
+            {
+                public IntFormatter(int value) { } // non-default constructor causes problem
+                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
+                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.logger, testSource);
+    }
 }
