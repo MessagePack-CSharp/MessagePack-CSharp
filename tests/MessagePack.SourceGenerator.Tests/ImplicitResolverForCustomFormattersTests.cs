@@ -51,4 +51,56 @@ public class ImplicitResolverForCustomFormattersTests
             """;
         await VerifyCS.Test.RunDefaultAsync(this.logger, testSource);
     }
+
+    [Fact]
+    public async Task MultipleFunctionalCustomFormattersForType()
+    {
+        string testSource = """
+            using System;
+            using MessagePack;
+            using MessagePack.Formatters;
+            using MessagePack.Resolvers;
+
+            internal class {|MsgPack009:IntFormatter1|} : IMessagePackFormatter<int>
+            {
+                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
+                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+            }
+
+            internal class {|MsgPack009:IntFormatter2|} : IMessagePackFormatter<int>
+            {
+                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
+                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.logger, testSource);
+    }
+
+    [Fact]
+    public async Task MultipleFunctionalCustomFormattersForType_MultiFormatter()
+    {
+        string testSource = """
+            using System;
+            using MessagePack;
+            using MessagePack.Formatters;
+            using MessagePack.Resolvers;
+
+            internal class {|MsgPack009:IntFormatter|} : IMessagePackFormatter<int>
+            {
+                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
+                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+            }
+
+            internal class {|MsgPack009:MultiFormatter|} : IMessagePackFormatter<int>, IMessagePackFormatter<bool>
+            {
+                void IMessagePackFormatter<int>.Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
+                int IMessagePackFormatter<int>.Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+                void IMessagePackFormatter<bool>.Serialize(ref MessagePackWriter writer, bool value, MessagePackSerializerOptions options) => writer.Write(value);
+                bool IMessagePackFormatter<bool>.Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadBoolean();
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.logger, testSource);
+    }
 }

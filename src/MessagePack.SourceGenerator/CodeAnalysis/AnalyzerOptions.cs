@@ -17,6 +17,10 @@ namespace MessagePack.SourceGenerator.CodeAnalysis;
 /// </remarks>
 public record AnalyzerOptions
 {
+    private readonly ImmutableHashSet<CustomFormatter> knownFormatters = ImmutableHashSet<CustomFormatter>.Empty;
+
+    private ImmutableDictionary<QualifiedTypeName, ImmutableArray<FormattableType>> collidingFormatters = ImmutableDictionary<QualifiedTypeName, ImmutableArray<FormattableType>>.Empty;
+
     /// <summary>
     /// Gets the set fully qualified names of types that are assumed to have custom formatters written that will be included by a resolver by the program.
     /// </summary>
@@ -25,7 +29,56 @@ public record AnalyzerOptions
     /// <summary>
     /// Gets the set of custom formatters that should be considered by the analyzer and included in the generated resolver.
     /// </summary>
-    public ImmutableHashSet<CustomFormatter> KnownFormatters { get; init; } = ImmutableHashSet<CustomFormatter>.Empty;
+    public ImmutableHashSet<CustomFormatter> KnownFormatters
+    {
+        get => this.knownFormatters;
+        init
+        {
+            this.knownFormatters = value;
+
+            Dictionary<FormattableType, ImmutableArray<CustomFormatter>> formattableTypes = new();
+            bool collisionsEncountered = false;
+            foreach (CustomFormatter formatter in value)
+            {
+                foreach (FormattableType dataType in formatter.FormattableTypes)
+                {
+                    if (formattableTypes.ContainsKey(dataType))
+                    {
+                        formattableTypes[dataType] = formattableTypes[dataType].Add(formatter);
+                        collisionsEncountered = true;
+                    }
+                    else
+                    {
+                        formattableTypes.Add(dataType, ImmutableArray.Create(formatter));
+                    }
+                }
+            }
+
+            var collidingFormatters = ImmutableDictionary<QualifiedTypeName, ImmutableArray<FormattableType>>.Empty;
+            if (collisionsEncountered)
+            {
+                foreach (KeyValuePair<FormattableType, ImmutableArray<CustomFormatter>> kvp in formattableTypes)
+                {
+                    if (kvp.Value.Length > 1)
+                    {
+                        foreach (CustomFormatter collidingFormatter in kvp.Value)
+                        {
+                            if (collidingFormatters.TryGetValue(collidingFormatter.Name, out ImmutableArray<FormattableType> collidingTypes))
+                            {
+                                collidingFormatters = collidingFormatters.SetItem(collidingFormatter.Name, collidingTypes.Add(kvp.Key));
+                            }
+                            else
+                            {
+                                collidingFormatters = collidingFormatters.Add(collidingFormatter.Name, ImmutableArray.Create(kvp.Key));
+                            }
+                        }
+                    }
+                }
+            }
+
+            this.collidingFormatters = collidingFormatters;
+        }
+    }
 
     public GeneratorOptions Generator { get; init; } = new();
 
@@ -55,6 +108,8 @@ public record AnalyzerOptions
         ImmutableArray<FormattableType> customFormattedTypes = this.AssumedFormattableTypes.Union(AnalyzerUtilities.ParseAssumedFormattableAttribute(assemblyAttributes, cancellationToken)).ToImmutableArray();
         return this.WithFormatterTypes(customFormattedTypes, customFormatters);
     }
+
+    internal ImmutableArray<FormattableType> GetCollidingFormatterDataTypes(QualifiedTypeName formatter) => this.collidingFormatters.GetValueOrDefault(formatter, ImmutableArray<FormattableType>.Empty);
 }
 
 /// <summary>

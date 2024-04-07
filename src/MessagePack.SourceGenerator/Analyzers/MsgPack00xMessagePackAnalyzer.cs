@@ -17,6 +17,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string MessagePackFormatterMustBeMessagePackFormatterId = "MsgPack006";
     public const string DeserializingConstructorId = "MsgPack007";
     public const string AOTLimitationsId = "MsgPack008";
+    public const string CollidingFormattersId = "MsgPack009";
 
     internal const string Category = "Usage";
 
@@ -185,11 +186,22 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTLimitationsId));
 
+    internal static readonly DiagnosticDescriptor CollidingFormatters = new(
+        id: CollidingFormattersId,
+        title: "Colliding formatters",
+        category: Category,
+        messageFormat: "Multiple formatters for type {0} found",
+        description: "Only one formatter per type is allowed.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(CollidingFormattersId));
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         TypeMustBeMessagePackObject,
         PublicMemberNeedsKey,
         InvalidMessagePackObject,
-        MessageFormatterMustBeMessagePackFormatter);
+        MessageFormatterMustBeMessagePackFormatter,
+        CollidingFormatters);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -213,6 +225,12 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     private void AnalyzeSymbol(SymbolAnalysisContext context, ReferenceSymbols typeReferences, AnalyzerOptions options)
     {
         INamedTypeSymbol declaredSymbol = (INamedTypeSymbol)context.Symbol;
+
+        foreach (FormattableType formattableType in options.GetCollidingFormatterDataTypes(new QualifiedTypeName(declaredSymbol)))
+        {
+            context.ReportDiagnostic(Diagnostic.Create(CollidingFormatters, declaredSymbol.Locations[0], formattableType.Name.GetQualifiedName(Qualifiers.Namespace)));
+        }
+
         switch (declaredSymbol.TypeKind)
         {
             case TypeKind.Interface when declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.UnionAttribute)):
