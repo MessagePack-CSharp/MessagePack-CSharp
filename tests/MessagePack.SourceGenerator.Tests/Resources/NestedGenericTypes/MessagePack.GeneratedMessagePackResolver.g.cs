@@ -39,39 +39,47 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
-
-		static GeneratedMessagePackResolverGetFormatterHelper()
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(5)
 		{
-			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(6)
-			{
-					{ typeof(global::System.Collections.Generic.List<global::TempProject.MyObject2>), 0 },
-					{ typeof(global::TempProject.MyGenericObject<global::TempProject.MyObject2>), 1 },
-					{ typeof(global::TempProject.MyInnerGenericObject<global::TempProject.MyObject2>), 2 },
-					{ typeof(global::TempProject.MyObject2[]), 3 },
-					{ typeof(global::TempProject.MyObject), 4 },
-					{ typeof(global::TempProject.MyObject2), 5 },
-				};
-		}
+			{ typeof(global::System.Collections.Generic.List<global::TempProject.MyObject2>), 0 },
+			{ typeof(global::TempProject.MyGenericObject<global::TempProject.MyObject2>), 1 },
+			{ typeof(global::TempProject.MyInnerGenericObject<global::TempProject.MyObject2>), 2 },
+			{ typeof(global::TempProject.MyObject), 3 },
+			{ typeof(global::TempProject.MyObject2), 4 },
+		};
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new(3)
+		{
+			{ typeof(global::TempProject.MyGenericObject<>), 0 },
+			{ typeof(global::TempProject.MyInnerGenericObject<>), 1 },
+			{ typeof(global::TempProject.Wrapper<>), 2 },
+		};
 
 		internal static object GetFormatter(global::System.Type t)
 		{
-			int key;
-			if (!lookup.TryGetValue(t, out key))
+			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return null;
+				return closedKey switch
+				{
+					0 => new MsgPack::Formatters.ListFormatter<global::TempProject.MyObject2>(),
+					1 => new TempProject.MyGenericObjectFormatter<global::TempProject.MyObject2>(),
+					2 => new TempProject.MyInnerGenericObjectFormatter<global::TempProject.MyObject2>(),
+					3 => new TempProject.MyObjectFormatter(),
+					4 => new TempProject.MyObject2Formatter(),
+					_ => null, // unreachable
+				};
+			}
+			if (t.IsGenericType && openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))
+			{
+				return openKey switch
+				{
+					0 => global::System.Activator.CreateInstance(typeof(TempProject.MyGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					1 => global::System.Activator.CreateInstance(typeof(TempProject.MyInnerGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					2 => global::System.Activator.CreateInstance(typeof(TempProject.WrapperFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					_ => null, // unreachable
+				};
 			}
 
-			switch (key)
-			{
-					case 0: return new MsgPack::Formatters.ListFormatter<global::TempProject.MyObject2>();
-					case 1: return new TempProject.MyGenericObjectFormatter<global::TempProject.MyObject2>();
-					case 2: return new TempProject.MyInnerGenericObjectFormatter<global::TempProject.MyObject2>();
-					case 3: return new MsgPack::Formatters.ArrayFormatter<global::TempProject.MyObject2>();
-					case 4: return new TempProject.MyObjectFormatter();
-					case 5: return new TempProject.MyObject2Formatter();
-					default: return null;
-			}
+			return null;
 		}
 	}
 }

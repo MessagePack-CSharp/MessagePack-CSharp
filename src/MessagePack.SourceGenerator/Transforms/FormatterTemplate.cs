@@ -40,9 +40,9 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\t");
             this.Write(this.ToStringHelper.ToStringWithCulture(classVisibility));
             this.Write(" sealed class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Formatter.GetQualifiedName(Qualifiers.None)));
             this.Write(" : MsgPack::Formatters.IMessagePackFormatter<");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers)));
             this.Write(">\r\n");
  foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) { 
             this.Write("\t\twhere ");
@@ -64,7 +64,7 @@ namespace MessagePack.SourceGenerator.Transforms
  } 
  } 
             this.Write("\r\n\t\tpublic void Serialize(ref MsgPack::MessagePackWriter writer, ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers)));
             this.Write(" value, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n");
  if (Info.IsClass) { 
             this.Write("\t\t\tif (value == null)\r\n\t\t\t{\r\n\t\t\t\twriter.WriteNil();\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n");
@@ -96,7 +96,7 @@ namespace MessagePack.SourceGenerator.Transforms
  } 
  } 
             this.Write("\t\t}\r\n\r\n\t\tpublic ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers)));
             this.Write(" Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerialize" +
                     "rOptions options)\r\n\t\t{\r\n\t\t\tif (reader.TryReadNil())\r\n\t\t\t{\r\n");
  if (Info.IsClass) { 

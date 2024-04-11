@@ -35,18 +35,18 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\t");
             this.Write(this.ToStringHelper.ToStringWithCulture(classVisibility));
             this.Write(" sealed class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Name));
-            this.Write("Formatter : MsgPack::Formatters.IMessagePackFormatter<");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Formatter.Name));
+            this.Write(" : MsgPack::Formatters.IMessagePackFormatter<");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(">\r\n\t{\r\n\t\tpublic void Serialize(ref MsgPack::MessagePackWriter writer, ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(" value, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\twriter.Write((");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.UnderlyingTypeKeyword));
             this.Write(")value);\r\n\t\t}\r\n\r\n\t\tpublic ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(" Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerialize" +
                     "rOptions options)\r\n\t\t{\r\n\t\t\treturn (");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(")reader.Read");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.UnderlyingTypeName));
             this.Write("();\r\n\t\t}\r\n\t}\r\n");

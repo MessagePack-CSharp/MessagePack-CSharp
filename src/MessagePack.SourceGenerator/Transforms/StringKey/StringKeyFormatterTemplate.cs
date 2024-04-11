@@ -45,9 +45,9 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\t");
             this.Write(this.ToStringHelper.ToStringWithCulture(classVisibility));
             this.Write(" sealed class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Formatter.GetQualifiedName(Qualifiers.None)));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(">\r\n");
  foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) {
             this.Write("\t\twhere ");
@@ -83,7 +83,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\r\n");
  } 
             this.Write("\t\tpublic void Serialize(ref global::MessagePack.MessagePackWriter writer, ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(" value, global::MessagePack.MessagePackSerializerOptions options)\r\n\t\t{\r\n");
  if (Info.IsClass) { 
             this.Write("\t\t\tif (value is null)\r\n\t\t\t{\r\n\t\t\t\twriter.WriteNil();\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n");
@@ -113,7 +113,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(";\r\n");
  } 
             this.Write("\t\t}\r\n\r\n\t\tpublic ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(" Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePac" +
                     "k.MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (reader.TryReadNil())\r\n\t\t\t{\r" +
                     "\n");

@@ -1,21 +1,27 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
-public record UnionSerializationInfo(
-    string? Namespace,
-    string Name,
-    string FullName,
-    UnionSubTypeInfo[] SubTypes) : IResolverRegisterInfo
+public sealed record UnionSerializationInfo : ResolverRegisterInfo
 {
-    public string FileNameHint => $"{CodeAnalysisUtilities.AppendNameToNamespace("Formatters", this.Namespace)}.{this.FormatterName}";
+    public required ImmutableArray<UnionSubTypeInfo> SubTypes { get; init; }
 
-    public string FormatterName => this.Name + "Formatter";
+    public static UnionSerializationInfo Create(INamedTypeSymbol dataType, ImmutableArray<UnionSubTypeInfo> subTypes)
+    {
+        ResolverRegisterInfo basicInfo = Create(dataType);
+        return new UnionSerializationInfo
+        {
+            DataType = basicInfo.DataType,
+            Formatter = basicInfo.Formatter,
+            SubTypes = subTypes,
+        };
+    }
 
-    public virtual bool Equals(UnionSerializationInfo? other)
+    public bool Equals(UnionSerializationInfo? other)
     {
         if (other is null)
         {
@@ -27,11 +33,9 @@ public record UnionSerializationInfo(
             return true;
         }
 
-        return FullName == other.FullName
-            && Name == other.Name
-            && Namespace == other.Namespace
+        return base.Equals(other)
             && SubTypes.SequenceEqual(other.SubTypes);
     }
 
-    public override int GetHashCode() => throw new NotImplementedException();
+    public override int GetHashCode() => base.GetHashCode();
 }

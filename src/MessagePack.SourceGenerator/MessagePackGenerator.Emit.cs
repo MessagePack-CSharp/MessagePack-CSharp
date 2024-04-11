@@ -68,13 +68,13 @@ public partial class MessagePackGenerator
         AnalyzerOptions options = model.Options;
         StringBuilder sb = new();
 
-        IResolverRegisterInfo[] registerInfos = model.GenericInfos
-            .Where(x => !x.IsOpenGenericType)
-            .Cast<IResolverRegisterInfo>()
-            .Concat(model.EnumInfos)
-            .Concat(model.UnionInfos)
-            .Concat(model.ObjectInfos.Where(x => !x.IsOpenGenericType))
-            .ToArray();
+        ResolverRegisterInfo[] registerInfos = [
+            .. model.GenericInfos,
+            .. model.EnumInfos,
+            .. model.UnionInfos,
+            .. model.ObjectInfos,
+            .. model.CustomFormatterInfos,
+        ];
         ResolverTemplate resolverTemplate = new(options, registerInfos);
         sb.Append(FileHeader);
         sb.Append(resolverTemplate.TransformText());

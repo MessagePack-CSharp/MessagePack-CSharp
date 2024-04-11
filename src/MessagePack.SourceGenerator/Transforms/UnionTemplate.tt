@@ -13,12 +13,12 @@ using MsgPack = global::MessagePack;
 partial class <#= ResolverName #>
 {
 <# using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { #>
-	<#= classVisibility #> sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+	<#= classVisibility #> sealed class <#= Info.Formatter.GetQualifiedName(Qualifiers.None) #>: MsgPack::Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName() #>>
 	{
 		private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
 		private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
-		public <#= Info.Name #>Formatter()
+		public <#= Info.Formatter.Name #>()
 		{
 			this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(<#= Info.SubTypes.Length #>, MsgPack::Internal.RuntimeTypeHandleEqualityComparer.Default)
 			{
@@ -34,7 +34,7 @@ partial class <#= ResolverName #>
 			};
 		}
 
-		public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.FullName #> value, MsgPack::MessagePackSerializerOptions options)
+		public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.DataType.GetQualifiedName() #> value, MsgPack::MessagePackSerializerOptions options)
 		{
 			global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
 			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
@@ -58,7 +58,7 @@ partial class <#= ResolverName #>
 			writer.WriteNil();
 		}
 
-		public <#= Info.FullName #> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
+		public <#= Info.DataType.GetQualifiedName() #> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
 		{
 			if (reader.TryReadNil())
 			{
@@ -67,7 +67,7 @@ partial class <#= ResolverName #>
 
 			if (reader.ReadArrayHeader() != 2)
 			{
-				throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:<#= Info.FullName #>");
+				throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:<#= Info.DataType.GetQualifiedName() #>");
 			}
 
 			options.Security.DepthStep(ref reader);
@@ -78,12 +78,12 @@ partial class <#= ResolverName #>
 				key = -1;
 			}
 
-			<#= Info.FullName #> result = null;
+			<#= Info.DataType.GetQualifiedName() #> result = null;
 			switch (key)
 			{
 <# for(var i = 0; i < Info.SubTypes.Length; i++) { var item = Info.SubTypes[i]; #>
 				case <#= i #>:
-					result = (<#= Info.FullName #>)MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<<#= item.Type #>>(options.Resolver).Deserialize(ref reader, options);
+					result = (<#= Info.DataType.GetQualifiedName() #>)MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<<#= item.Type #>>(options.Resolver).Deserialize(ref reader, options);
 					break;
 <# } #>
 				default:

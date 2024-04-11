@@ -16,7 +16,7 @@ partial class <#= ResolverName #>
 {
 <#  bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members);#>
 <# using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { #>
-	<#=classVisibility#> sealed class <#= Info.FormatterName #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+	<#=classVisibility#> sealed class <#= Info.Formatter.GetQualifiedName(Qualifiers.None) #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #>>
 <# foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
 		where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# } #>
@@ -27,7 +27,7 @@ partial class <#= ResolverName #>
 <# } #>
 <# } #>
 
-		public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.FullName #> value, MsgPack::MessagePackSerializerOptions options)
+		public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #> value, MsgPack::MessagePackSerializerOptions options)
 		{
 <# if (Info.IsClass) { #>
 			if (value == null)
@@ -60,7 +60,7 @@ partial class <#= ResolverName #>
 <# } #>
 		}
 
-		public <#= Info.FullName #> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
+		public <#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
 		{
 			if (reader.TryReadNil())
 			{

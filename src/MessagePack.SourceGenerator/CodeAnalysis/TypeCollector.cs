@@ -105,76 +105,76 @@ public class TypeCollector
     private static readonly Dictionary<string, string> KnownGenericTypes = new()
     {
 #pragma warning disable SA1509 // Opening braces should not be preceded by blank line
-        { "System.Collections.Generic.List<>", "MsgPack::Formatters.ListFormatter<TREPLACE>" },
-        { "System.Collections.Generic.LinkedList<>", "MsgPack::Formatters.LinkedListFormatter<TREPLACE>" },
-        { "System.Collections.Generic.Queue<>", "MsgPack::Formatters.QueueFormatter<TREPLACE>" },
-        { "System.Collections.Generic.Stack<>", "MsgPack::Formatters.StackFormatter<TREPLACE>" },
-        { "System.Collections.Generic.HashSet<>", "MsgPack::Formatters.HashSetFormatter<TREPLACE>" },
-        { "System.Collections.ObjectModel.ReadOnlyCollection<>", "MsgPack::Formatters.ReadOnlyCollectionFormatter<TREPLACE>" },
-        { "System.Collections.Generic.IList<>", "MsgPack::Formatters.InterfaceListFormatter2<TREPLACE>" },
-        { "System.Collections.Generic.ICollection<>", "MsgPack::Formatters.InterfaceCollectionFormatter2<TREPLACE>" },
-        { "System.Collections.Generic.IEnumerable<>", "MsgPack::Formatters.InterfaceEnumerableFormatter<TREPLACE>" },
-        { "System.Collections.Generic.Dictionary<,>", "MsgPack::Formatters.DictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Generic.IDictionary<,>", "MsgPack::Formatters.InterfaceDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Generic.SortedDictionary<,>", "MsgPack::Formatters.SortedDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Generic.SortedList<,>", "MsgPack::Formatters.SortedListFormatter<TREPLACE>" },
-        { "System.Linq.ILookup<,>", "MsgPack::Formatters.InterfaceLookupFormatter<TREPLACE>" },
-        { "System.Linq.IGrouping<,>", "MsgPack::Formatters.InterfaceGroupingFormatter<TREPLACE>" },
-        { "System.Collections.ObjectModel.ObservableCollection<>", "MsgPack::Formatters.ObservableCollectionFormatter<TREPLACE>" },
-        { "System.Collections.ObjectModel.ReadOnlyObservableCollection<>", "MsgPack::Formatters.ReadOnlyObservableCollectionFormatter<TREPLACE>" },
-        { "System.Collections.Generic.IReadOnlyList<>", "MsgPack::Formatters.InterfaceReadOnlyListFormatter<TREPLACE>" },
-        { "System.Collections.Generic.IReadOnlyCollection<>", "MsgPack::Formatters.InterfaceReadOnlyCollectionFormatter<TREPLACE>" },
-        { "System.Collections.Generic.ISet<>", "MsgPack::Formatters.InterfaceSetFormatter<TREPLACE>" },
-        { "System.Collections.Concurrent.ConcurrentBag<>", "MsgPack::Formatters.ConcurrentBagFormatter<TREPLACE>" },
-        { "System.Collections.Concurrent.ConcurrentQueue<>", "MsgPack::Formatters.ConcurrentQueueFormatter<TREPLACE>" },
-        { "System.Collections.Concurrent.ConcurrentStack<>", "MsgPack::Formatters.ConcurrentStackFormatter<TREPLACE>" },
-        { "System.Collections.ObjectModel.ReadOnlyDictionary<,>", "MsgPack::Formatters.ReadOnlyDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Generic.IReadOnlyDictionary<,>", "MsgPack::Formatters.InterfaceReadOnlyDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Concurrent.ConcurrentDictionary<,>", "MsgPack::Formatters.ConcurrentDictionaryFormatter<TREPLACE>" },
-        { "System.Lazy<>", "MsgPack::Formatters.LazyFormatter<TREPLACE>" },
-        { "System.Threading.Tasks<>", "MsgPack::Formatters.TaskValueFormatter<TREPLACE>" },
+        { "System.Collections.Generic.List<>", "MsgPack::Formatters.ListFormatter" },
+        { "System.Collections.Generic.LinkedList<>", "MsgPack::Formatters.LinkedListFormatter" },
+        { "System.Collections.Generic.Queue<>", "MsgPack::Formatters.QueueFormatter" },
+        { "System.Collections.Generic.Stack<>", "MsgPack::Formatters.StackFormatter" },
+        { "System.Collections.Generic.HashSet<>", "MsgPack::Formatters.HashSetFormatter" },
+        { "System.Collections.ObjectModel.ReadOnlyCollection<>", "MsgPack::Formatters.ReadOnlyCollectionFormatter" },
+        { "System.Collections.Generic.IList<>", "MsgPack::Formatters.InterfaceListFormatter2" },
+        { "System.Collections.Generic.ICollection<>", "MsgPack::Formatters.InterfaceCollectionFormatter2" },
+        { "System.Collections.Generic.IEnumerable<>", "MsgPack::Formatters.InterfaceEnumerableFormatter" },
+        { "System.Collections.Generic.Dictionary<,>", "MsgPack::Formatters.DictionaryFormatter" },
+        { "System.Collections.Generic.IDictionary<,>", "MsgPack::Formatters.InterfaceDictionaryFormatter" },
+        { "System.Collections.Generic.SortedDictionary<,>", "MsgPack::Formatters.SortedDictionaryFormatter" },
+        { "System.Collections.Generic.SortedList<,>", "MsgPack::Formatters.SortedListFormatter" },
+        { "System.Linq.ILookup<,>", "MsgPack::Formatters.InterfaceLookupFormatter" },
+        { "System.Linq.IGrouping<,>", "MsgPack::Formatters.InterfaceGroupingFormatter" },
+        { "System.Collections.ObjectModel.ObservableCollection<>", "MsgPack::Formatters.ObservableCollectionFormatter" },
+        { "System.Collections.ObjectModel.ReadOnlyObservableCollection<>", "MsgPack::Formatters.ReadOnlyObservableCollectionFormatter" },
+        { "System.Collections.Generic.IReadOnlyList<>", "MsgPack::Formatters.InterfaceReadOnlyListFormatter" },
+        { "System.Collections.Generic.IReadOnlyCollection<>", "MsgPack::Formatters.InterfaceReadOnlyCollectionFormatter" },
+        { "System.Collections.Generic.ISet<>", "MsgPack::Formatters.InterfaceSetFormatter" },
+        { "System.Collections.Concurrent.ConcurrentBag<>", "MsgPack::Formatters.ConcurrentBagFormatter" },
+        { "System.Collections.Concurrent.ConcurrentQueue<>", "MsgPack::Formatters.ConcurrentQueueFormatter" },
+        { "System.Collections.Concurrent.ConcurrentStack<>", "MsgPack::Formatters.ConcurrentStackFormatter" },
+        { "System.Collections.ObjectModel.ReadOnlyDictionary<,>", "MsgPack::Formatters.ReadOnlyDictionaryFormatter" },
+        { "System.Collections.Generic.IReadOnlyDictionary<,>", "MsgPack::Formatters.InterfaceReadOnlyDictionaryFormatter" },
+        { "System.Collections.Concurrent.ConcurrentDictionary<,>", "MsgPack::Formatters.ConcurrentDictionaryFormatter" },
+        { "System.Lazy<>", "MsgPack::Formatters.LazyFormatter" },
+        { "System.Threading.Tasks<>", "MsgPack::Formatters.TaskValueFormatter" },
 
-        { "System.Tuple<>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,,,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,,,,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,,,,,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,,,,,,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,,,,,,,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
+        { "System.Tuple<>", "MsgPack::Formatters.TupleFormatter" },
+        { "System.Tuple<,>", "MsgPack::Formatters.TupleFormatter" },
+        { "System.Tuple<,,>", "MsgPack::Formatters.TupleFormatter" },
+        { "System.Tuple<,,,>", "MsgPack::Formatters.TupleFormatter" },
+        { "System.Tuple<,,,,>", "MsgPack::Formatters.TupleFormatter" },
+        { "System.Tuple<,,,,,>", "MsgPack::Formatters.TupleFormatter" },
+        { "System.Tuple<,,,,,,>", "MsgPack::Formatters.TupleFormatter" },
+        { "System.Tuple<,,,,,,,>", "MsgPack::Formatters.TupleFormatter" },
 
-        { "System.ValueTuple<>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,,,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,,,,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,,,,,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,,,,,,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,,,,,,,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
+        { "System.ValueTuple<>", "MsgPack::Formatters.ValueTupleFormatter" },
+        { "System.ValueTuple<,>", "MsgPack::Formatters.ValueTupleFormatter" },
+        { "System.ValueTuple<,,>", "MsgPack::Formatters.ValueTupleFormatter" },
+        { "System.ValueTuple<,,,>", "MsgPack::Formatters.ValueTupleFormatter" },
+        { "System.ValueTuple<,,,,>", "MsgPack::Formatters.ValueTupleFormatter" },
+        { "System.ValueTuple<,,,,,>", "MsgPack::Formatters.ValueTupleFormatter" },
+        { "System.ValueTuple<,,,,,,>", "MsgPack::Formatters.ValueTupleFormatter" },
+        { "System.ValueTuple<,,,,,,,>", "MsgPack::Formatters.ValueTupleFormatter" },
 
-        { "System.Collections.Generic.KeyValuePair<,>", "MsgPack::Formatters.KeyValuePairFormatter<TREPLACE>" },
-        { "System.Threading.Tasks.ValueTask<>", "MsgPack::Formatters.KeyValuePairFormatter<TREPLACE>" },
-        { "System.ArraySegment<>", "MsgPack::Formatters.ArraySegmentFormatter<TREPLACE>" },
+        { "System.Collections.Generic.KeyValuePair<,>", "MsgPack::Formatters.KeyValuePairFormatter" },
+        { "System.Threading.Tasks.ValueTask<>", "MsgPack::Formatters.KeyValuePairFormatter" },
+        { "System.ArraySegment<>", "MsgPack::Formatters.ArraySegmentFormatter" },
 
         // extensions
-        { "System.Collections.Immutable.ImmutableArray<>", "MsgPack::ImmutableCollection.ImmutableArrayFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableList<>", "MsgPack::ImmutableCollection.ImmutableListFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableDictionary<,>", "MsgPack::ImmutableCollection.ImmutableDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableHashSet<>", "MsgPack::ImmutableCollection.ImmutableHashSetFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableSortedDictionary<,>", "MsgPack::ImmutableCollection.ImmutableSortedDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableSortedSet<>", "MsgPack::ImmutableCollection.ImmutableSortedSetFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableQueue<>", "MsgPack::ImmutableCollection.ImmutableQueueFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableStack<>", "MsgPack::ImmutableCollection.ImmutableStackFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.IImmutableList<>", "MsgPack::ImmutableCollection.InterfaceImmutableListFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.IImmutableDictionary<,>", "MsgPack::ImmutableCollection.InterfaceImmutableDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.IImmutableQueue<>", "MsgPack::ImmutableCollection.InterfaceImmutableQueueFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.IImmutableSet<>", "MsgPack::ImmutableCollection.InterfaceImmutableSetFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.IImmutableStack<>", "MsgPack::ImmutableCollection.InterfaceImmutableStackFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.ImmutableArray<>", "MsgPack::ImmutableCollection.ImmutableArrayFormatter" },
+        { "System.Collections.Immutable.ImmutableList<>", "MsgPack::ImmutableCollection.ImmutableListFormatter" },
+        { "System.Collections.Immutable.ImmutableDictionary<,>", "MsgPack::ImmutableCollection.ImmutableDictionaryFormatter" },
+        { "System.Collections.Immutable.ImmutableHashSet<>", "MsgPack::ImmutableCollection.ImmutableHashSetFormatter" },
+        { "System.Collections.Immutable.ImmutableSortedDictionary<,>", "MsgPack::ImmutableCollection.ImmutableSortedDictionaryFormatter" },
+        { "System.Collections.Immutable.ImmutableSortedSet<>", "MsgPack::ImmutableCollection.ImmutableSortedSetFormatter" },
+        { "System.Collections.Immutable.ImmutableQueue<>", "MsgPack::ImmutableCollection.ImmutableQueueFormatter" },
+        { "System.Collections.Immutable.ImmutableStack<>", "MsgPack::ImmutableCollection.ImmutableStackFormatter" },
+        { "System.Collections.Immutable.IImmutableList<>", "MsgPack::ImmutableCollection.InterfaceImmutableListFormatter" },
+        { "System.Collections.Immutable.IImmutableDictionary<,>", "MsgPack::ImmutableCollection.InterfaceImmutableDictionaryFormatter" },
+        { "System.Collections.Immutable.IImmutableQueue<>", "MsgPack::ImmutableCollection.InterfaceImmutableQueueFormatter" },
+        { "System.Collections.Immutable.IImmutableSet<>", "MsgPack::ImmutableCollection.InterfaceImmutableSetFormatter" },
+        { "System.Collections.Immutable.IImmutableStack<>", "MsgPack::ImmutableCollection.InterfaceImmutableStackFormatter" },
 
-        { "Reactive.Bindings.ReactiveProperty<>", "MsgPack::ReactivePropertyExtension.ReactivePropertyFormatter<TREPLACE>" },
-        { "Reactive.Bindings.IReactiveProperty<>", "MsgPack::ReactivePropertyExtension.InterfaceReactivePropertyFormatter<TREPLACE>" },
-        { "Reactive.Bindings.IReadOnlyReactiveProperty<>", "MsgPack::ReactivePropertyExtension.InterfaceReadOnlyReactivePropertyFormatter<TREPLACE>" },
-        { "Reactive.Bindings.ReactiveCollection<>", "MsgPack::ReactivePropertyExtension.ReactiveCollectionFormatter<TREPLACE>" },
+        { "Reactive.Bindings.ReactiveProperty<>", "MsgPack::ReactivePropertyExtension.ReactivePropertyFormatter" },
+        { "Reactive.Bindings.IReactiveProperty<>", "MsgPack::ReactivePropertyExtension.InterfaceReactivePropertyFormatter" },
+        { "Reactive.Bindings.IReadOnlyReactiveProperty<>", "MsgPack::ReactivePropertyExtension.InterfaceReadOnlyReactivePropertyFormatter" },
+        { "Reactive.Bindings.ReactiveCollection<>", "MsgPack::ReactivePropertyExtension.ReactiveCollectionFormatter" },
 #pragma warning restore SA1509 // Opening braces should not be preceded by blank line
     };
 
@@ -191,9 +191,7 @@ public class TypeCollector
     private readonly bool excludeArrayElement;
 
     // visitor workspace:
-#pragma warning disable RS1024 // Compare symbols correctly (https://github.com/dotnet/roslyn-analyzers/issues/5246)
     private readonly Dictionary<ITypeSymbol, bool> alreadyCollected = new(SymbolEqualityComparer.Default);
-#pragma warning restore RS1024 // Compare symbols correctly
     private readonly ImmutableSortedSet<ObjectSerializationInfo>.Builder collectedObjectInfo = ImmutableSortedSet.CreateBuilder<ObjectSerializationInfo>(ResolverRegisterInfoComparer.Default);
     private readonly ImmutableSortedSet<EnumSerializationInfo>.Builder collectedEnumInfo = ImmutableSortedSet.CreateBuilder<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default);
     private readonly ImmutableSortedSet<GenericSerializationInfo>.Builder collectedGenericInfo = ImmutableSortedSet.CreateBuilder<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default);
@@ -271,6 +269,7 @@ public class TypeCollector
             this.collectedEnumInfo.ToImmutable(),
             this.collectedGenericInfo.ToImmutable(),
             this.collectedUnionInfo.ToImmutable(),
+            ImmutableSortedSet<CustomFormatterRegisterInfo>.Empty,
             this.options);
     }
 
@@ -282,15 +281,15 @@ public class TypeCollector
             return result;
         }
 
-        var typeSymbolString = typeSymbol.GetCanonicalTypeFullName();
-        if (EmbeddedTypes.Contains(typeSymbolString))
+        FormattableType formattableType = new(typeSymbol);
+        if (EmbeddedTypes.Contains(formattableType.Name.Name))
         {
             result = true;
             this.alreadyCollected.Add(typeSymbol, result);
             return result;
         }
 
-        if (this.options.AssumedFormattableTypes.Contains(typeSymbolString) is true)
+        if (this.options.AssumedFormattableTypes.Contains(formattableType))
         {
             result = true;
             this.alreadyCollected.Add(typeSymbol, result);
@@ -367,12 +366,7 @@ public class TypeCollector
 
     private bool CollectEnum(INamedTypeSymbol type, ISymbol enumUnderlyingType)
     {
-        EnumSerializationInfo info = new(
-            type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
-            type.ToDisplayString(ShortTypeNameFormat).Replace(".", "_"),
-            type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-            enumUnderlyingType.ToDisplayString(BinaryWriteFormat));
-        this.collectedEnumInfo.Add(info);
+        this.collectedEnumInfo.Add(EnumSerializationInfo.Create(type, enumUnderlyingType));
         return true;
     }
 
@@ -405,11 +399,9 @@ public class TypeCollector
             return new UnionSubTypeInfo(key, typeName);
         }
 
-        var info = new UnionSerializationInfo(
-            type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
-            type.Name,
-            type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-            unionAttrs.Select(UnionSubTypeInfoSelector).Where(i => i is not null).OrderBy(x => x!.Key).ToArray()!);
+        var info = UnionSerializationInfo.Create(
+            type,
+            unionAttrs.Select(UnionSubTypeInfoSelector).Where(i => i is not null).OrderBy(x => x!.Key).ToImmutableArray()!);
 
         this.collectedUnionInfo.Add(info);
         return true;
@@ -446,30 +438,36 @@ public class TypeCollector
             }
         }
 
-        var fullName = array.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var elementTypeDisplayName = elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        string? formatterName;
-        if (array.IsSZArray)
+        if (this.alreadyCollected.ContainsKey(elemType))
         {
-            formatterName = "MsgPack::Formatters.ArrayFormatter<" + elementTypeDisplayName + ">";
-        }
-        else
-        {
-            formatterName = array.Rank switch
-            {
-                2 => "MsgPack::Formatters.TwoDimensionalArrayFormatter<" + elementTypeDisplayName + ">",
-                3 => "MsgPack::Formatters.ThreeDimensionalArrayFormatter<" + elementTypeDisplayName + ">",
-                4 => "MsgPack::Formatters.FourDimensionalArrayFormatter<" + elementTypeDisplayName + ">",
-                _ => null,
-            };
-            if (formatterName is null)
-            {
-                ////this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.AotArrayRankTooHigh));
-                return false;
-            }
+            return true;
         }
 
-        var info = new GenericSerializationInfo(fullName, formatterName, null, elemType is ITypeParameterSymbol);
+        if (elemType is ITypeParameterSymbol)
+        {
+            this.alreadyCollected.Add(elemType, true);
+            return true;
+        }
+
+        QualifiedTypeName elementTypeName = new(elemType);
+        string? formatterName = array.Rank switch
+        {
+            1 => "ArrayFormatter",
+            2 => "TwoDimensionalArrayFormatter",
+            3 => "ThreeDimensionalArrayFormatter",
+            4 => "FourDimensionalArrayFormatter",
+            _ => null,
+        };
+        if (formatterName is null)
+        {
+            ////this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.AotArrayRankTooHigh));
+            return false;
+        }
+
+        var info = GenericSerializationInfo.Create(array) with
+        {
+            Formatter = new QualifiedTypeName("MsgPack::Formatters", null, formatterName, ImmutableArray.Create(elementTypeName.GetQualifiedName())),
+        };
         this.collectedGenericInfo.Add(info);
         return true;
     }
@@ -498,11 +496,13 @@ public class TypeCollector
 
     private bool CollectGeneric(INamedTypeSymbol type)
     {
-        INamedTypeSymbol genericType = type.ConstructUnboundGenericType();
-        var genericTypeString = genericType.ToDisplayString();
-        string? genericTypeNamespace = genericType.ContainingNamespace?.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        INamedTypeSymbol typeDefinition = type.ConstructUnboundGenericType();
+        var genericTypeDefinitionString = typeDefinition.ToDisplayString();
+        string? genericTypeNamespace = type.ContainingNamespace?.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         var fullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var isOpenGenericType = this.IsOpenGenericTypeRecursively(type);
+        int unboundArity = this.IsOpenGenericTypeRecursively(type) ? type.Arity : 0;
+        string formattedTypeFullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        string? formatterName;
 
         // special case
         if (fullName == "global::System.ArraySegment<byte>" || fullName == "global::System.ArraySegment<byte>?")
@@ -511,7 +511,7 @@ public class TypeCollector
         }
 
         // nullable
-        if (genericTypeString == "T?")
+        if (genericTypeDefinitionString == "T?")
         {
             var firstTypeArgument = type.TypeArguments[0];
             if (!this.CollectCore(firstTypeArgument))
@@ -524,58 +524,55 @@ public class TypeCollector
                 return true;
             }
 
-            var info = new GenericSerializationInfo(
-                type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                "MsgPack::Formatters.NullableFormatter<" + firstTypeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + ">",
-                Namespace: null,
-                isOpenGenericType);
+            formatterName = $"NullableFormatter<{firstTypeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
+            var info = GenericSerializationInfo.Create(type) with
+            {
+                Formatter = new QualifiedTypeName("MsgPack::Formatters", formatterName),
+            };
             this.collectedGenericInfo.Add(info);
             return true;
         }
 
         // collection
-        if (KnownGenericTypes.TryGetValue(genericTypeString, out var formatter))
+        if (KnownGenericTypes.TryGetValue(genericTypeDefinitionString, out string formatterFullName))
         {
             foreach (ITypeSymbol item in type.TypeArguments)
             {
                 this.CollectCore(item);
             }
 
-            var typeArgs = string.Join(", ", type.TypeArguments.Select(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
-            var f = formatter.Replace("TREPLACE", typeArgs);
-
-            var info = new GenericSerializationInfo(
-                type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                f,
-                null,
-                isOpenGenericType);
+            GenericSerializationInfo info = GenericSerializationInfo.Create(type);
+            int indexOfLastPeriod = formatterFullName.LastIndexOf('.');
+            info = info with
+            {
+                Formatter = new(formatterFullName.Substring(0, indexOfLastPeriod), formatterFullName.Substring(indexOfLastPeriod + 1), info.DataType.TypeParameters),
+            };
 
             this.collectedGenericInfo.Add(info);
 
-            if (genericTypeString != "System.Linq.ILookup<,>")
+            if (genericTypeDefinitionString != "System.Linq.ILookup<,>")
             {
                 return true;
             }
 
-            formatter = KnownGenericTypes["System.Linq.IGrouping<,>"];
-            f = formatter.Replace("TREPLACE", typeArgs);
+            formatterName = KnownGenericTypes["System.Linq.IGrouping<,>"];
 
-            var groupingInfo = new GenericSerializationInfo(
-                "global::System.Linq.IGrouping<" + typeArgs + ">",
-                f,
-                genericTypeNamespace,
-                isOpenGenericType);
+            var groupingInfo = GenericSerializationInfo.Create(type);
+            groupingInfo = groupingInfo with
+            {
+                DataType = new QualifiedTypeName("global::System.Linq", $"IGrouping", info.DataType.TypeParameters),
+                Formatter = groupingInfo.Formatter with { Name = formatterName },
+            };
             this.collectedGenericInfo.Add(groupingInfo);
 
-            formatter = KnownGenericTypes["System.Collections.Generic.IEnumerable<>"];
-            typeArgs = type.TypeArguments[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            f = formatter.Replace("TREPLACE", typeArgs);
+            formatterName = KnownGenericTypes["System.Collections.Generic.IEnumerable<>"];
 
-            var enumerableInfo = new GenericSerializationInfo(
-                "global::System.Collections.Generic.IEnumerable<" + typeArgs + ">",
-                f,
-                genericTypeNamespace,
-                isOpenGenericType);
+            GenericSerializationInfo enumerableInfo = GenericSerializationInfo.Create(type);
+            enumerableInfo = enumerableInfo with
+            {
+                DataType = new QualifiedTypeName("System.Collections.Generic", $"IEnumerable", ImmutableArray.Create(info.DataType.TypeParameters[1])),
+                Formatter = enumerableInfo.Formatter with { Name = formatterName },
+            };
             this.collectedGenericInfo.Add(enumerableInfo);
             return true;
         }
@@ -607,30 +604,7 @@ public class TypeCollector
             }
         }
 
-        var formatterBuilder = new StringBuilder();
-        formatterBuilder.Append(type.Name);
-        formatterBuilder.Append("Formatter<");
-        var typeArgumentIterator = type.TypeArguments.GetEnumerator();
-        {
-            if (typeArgumentIterator.MoveNext())
-            {
-                formatterBuilder.Append(typeArgumentIterator.Current.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
-            }
-
-            while (typeArgumentIterator.MoveNext())
-            {
-                formatterBuilder.Append(", ");
-                formatterBuilder.Append(typeArgumentIterator.Current.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
-            }
-        }
-
-        formatterBuilder.Append('>');
-
-        var genericSerializationInfo = new GenericSerializationInfo(
-            type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-            formatterBuilder.ToString(),
-            genericTypeNamespace,
-            isOpenGenericType);
+        GenericSerializationInfo genericSerializationInfo = GenericSerializationInfo.Create(type);
         this.collectedGenericInfo.Add(genericSerializationInfo);
         return true;
     }
@@ -665,12 +639,11 @@ public class TypeCollector
         return false;
     }
 
-    private ObjectSerializationInfo? GetObjectInfo(INamedTypeSymbol type)
+    private ObjectSerializationInfo? GetObjectInfo(INamedTypeSymbol formattedType)
     {
-        var isClass = !type.IsValueType;
-        var isOpenGenericType = type.IsGenericType;
+        var isClass = !formattedType.IsValueType;
 
-        AttributeData? contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute));
+        AttributeData? contractAttr = formattedType.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute));
         if (contractAttr is null)
         {
             ////this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject, ((BaseTypeDeclarationSyntax)type.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
@@ -687,7 +660,7 @@ public class TypeCollector
 
             var hiddenIntKey = 0;
 
-            foreach (IPropertySymbol item in type.GetAllMembers().OfType<IPropertySymbol>().Where(x => !x.IsOverride))
+            foreach (IPropertySymbol item in formattedType.GetAllMembers().OfType<IPropertySymbol>().Where(x => !x.IsOverride))
             {
                 if (item.GetAttributes().Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)))
                 {
@@ -711,7 +684,7 @@ public class TypeCollector
                 }
             }
 
-            foreach (IFieldSymbol item in type.GetAllMembers().OfType<IFieldSymbol>())
+            foreach (IFieldSymbol item in formattedType.GetAllMembers().OfType<IFieldSymbol>())
             {
                 if (item.GetAttributes().Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)))
                 {
@@ -745,7 +718,7 @@ public class TypeCollector
             var searchFirst = true;
             var hiddenIntKey = 0;
 
-            foreach (IPropertySymbol item in type.GetAllMembers().OfType<IPropertySymbol>())
+            foreach (IPropertySymbol item in formattedType.GetAllMembers().OfType<IPropertySymbol>())
             {
                 if (item.IsIndexer)
                 {
@@ -774,17 +747,17 @@ public class TypeCollector
                 {
                     if (contractAttr is not null)
                     {
-                        if (SymbolEqualityComparer.Default.Equals(item.ContainingType, type))
+                        if (SymbolEqualityComparer.Default.Equals(item.ContainingType, formattedType))
                         {
                             var syntax = item.DeclaringSyntaxReferences[0].GetSyntax();
                             var identifier = (syntax as PropertyDeclarationSyntax)?.Identifier ?? (syntax as ParameterSyntax)?.Identifier;
 
-                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey, identifier?.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
+                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey, identifier?.GetLocation(), formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
                         }
-                        else if (type.BaseType is not null)
+                        else if (formattedType.BaseType is not null)
                         {
                             // The member was inherited, so we raise a special error at the location of the base type reference.
-                            BaseTypeSyntax? baseSyntax = type.DeclaringSyntaxReferences.SelectMany(sr => (IEnumerable<BaseTypeSyntax>?)((BaseTypeDeclarationSyntax)sr.GetSyntax()).BaseList?.Types ?? Array.Empty<BaseTypeSyntax>())
+                            BaseTypeSyntax? baseSyntax = formattedType.DeclaringSyntaxReferences.SelectMany(sr => (IEnumerable<BaseTypeSyntax>?)((BaseTypeDeclarationSyntax)sr.GetSyntax()).BaseList?.Types ?? Array.Empty<BaseTypeSyntax>())
                                 .FirstOrDefault(bt => SymbolEqualityComparer.Default.Equals(this.compilation.GetSemanticModel(bt.SyntaxTree).GetTypeInfo(bt.Type).Type, item.ContainingType));
                             if (baseSyntax is not null)
                             {
@@ -803,7 +776,7 @@ public class TypeCollector
                     var stringKey = key is { Value: string stringKeyValue } ? stringKeyValue : default;
                     if (intKey == null && stringKey == null)
                     {
-                        this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.BothStringAndIntKeyAreNull, ((PropertyDeclarationSyntax)item.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
+                        this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.BothStringAndIntKeyAreNull, ((PropertyDeclarationSyntax)item.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
                     }
 
                     if (searchFirst)
@@ -862,7 +835,7 @@ public class TypeCollector
                 }
             }
 
-            foreach (IFieldSymbol item in type.GetAllMembers().OfType<IFieldSymbol>())
+            foreach (IFieldSymbol item in formattedType.GetAllMembers().OfType<IFieldSymbol>())
             {
                 if (item.IsImplicitlyDeclared)
                 {
@@ -887,7 +860,7 @@ public class TypeCollector
                 {
                     if (contractAttr is not null)
                     {
-                        this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey, item.DeclaringSyntaxReferences[0].GetSyntax().GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
+                        this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey, item.DeclaringSyntaxReferences[0].GetSyntax().GetLocation(), formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
                     }
                 }
                 else
@@ -940,10 +913,10 @@ public class TypeCollector
 
         // GetConstructor
         var ctorEnumerator = default(IEnumerator<IMethodSymbol>);
-        var ctor = type.Constructors.Where(x => IsAllowedAccessibility(x.DeclaredAccessibility)).SingleOrDefault(x => x.GetAttributes().Any(y => y.AttributeClass != null && y.AttributeClass.ApproximatelyEqual(this.typeReferences.SerializationConstructorAttribute)));
+        var ctor = formattedType.Constructors.Where(x => IsAllowedAccessibility(x.DeclaredAccessibility)).SingleOrDefault(x => x.GetAttributes().Any(y => y.AttributeClass != null && y.AttributeClass.ApproximatelyEqual(this.typeReferences.SerializationConstructorAttribute)));
         if (ctor == null)
         {
-            ctorEnumerator = type.Constructors.Where(x => IsAllowedAccessibility(x.DeclaredAccessibility)).OrderByDescending(x => x.Parameters.Length).GetEnumerator();
+            ctorEnumerator = formattedType.Constructors.Where(x => IsAllowedAccessibility(x.DeclaredAccessibility)).OrderByDescending(x => x.Parameters.Length).GetEnumerator();
 
             if (ctorEnumerator.MoveNext())
             {
@@ -954,7 +927,7 @@ public class TypeCollector
         // struct allows null ctor
         if (ctor == null && isClass)
         {
-            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.NoDeserializingConstructor, GetIdentifierLocation(type)));
+            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.NoDeserializingConstructor, GetIdentifierLocation(formattedType)));
         }
 
         var constructorParameters = new List<MemberSerializationInfo>();
@@ -1057,17 +1030,17 @@ public class TypeCollector
 
             if (ctor == null)
             {
-                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.NoDeserializingConstructor, GetIdentifierLocation(type)));
+                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.NoDeserializingConstructor, GetIdentifierLocation(formattedType)));
             }
         }
 
-        var hasSerializationConstructor = type.AllInterfaces.Any(x => x.ApproximatelyEqual(this.typeReferences.IMessagePackSerializationCallbackReceiver));
+        var hasSerializationConstructor = formattedType.AllInterfaces.Any(x => x.ApproximatelyEqual(this.typeReferences.IMessagePackSerializationCallbackReceiver));
         var needsCastOnBefore = true;
         var needsCastOnAfter = true;
         if (hasSerializationConstructor)
         {
-            needsCastOnBefore = !type.GetMembers("OnBeforeSerialize").Any();
-            needsCastOnAfter = !type.GetMembers("OnAfterDeserialize").Any();
+            needsCastOnBefore = !formattedType.GetMembers("OnBeforeSerialize").Any();
+            needsCastOnAfter = !formattedType.GetMembers("OnAfterDeserialize").Any();
         }
 
         if (contractAttr is null)
@@ -1083,9 +1056,17 @@ public class TypeCollector
             return null;
         }
 
-        ObjectSerializationInfo info = new(isClass, isOpenGenericType, isOpenGenericType ? type.TypeParameters.Select(ToGenericTypeParameterInfo).ToArray() : Array.Empty<GenericTypeParameterInfo>(), constructorParameters.ToArray(), isIntKey, isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(), isOpenGenericType ? GetGenericFormatterClassName(type) : GetMinimallyQualifiedClassName(type), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(), hasSerializationConstructor, needsCastOnAfter, needsCastOnBefore)
-        {
-        };
+        INamedTypeSymbol? formattedTypeDefinition = formattedType.IsGenericType ? formattedType.ConstructUnboundGenericType() : null;
+        ObjectSerializationInfo info = ObjectSerializationInfo.Create(
+            formattedType,
+            isClass: isClass,
+            genericTypeParameters: formattedType.IsGenericType ? formattedType.TypeParameters.Select(ToGenericTypeParameterInfo).ToArray() : Array.Empty<GenericTypeParameterInfo>(),
+            constructorParameters: constructorParameters.ToArray(),
+            isIntKey: isIntKey,
+            members: isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
+            hasIMessagePackSerializationCallbackReceiver: hasSerializationConstructor,
+            needsCastOnAfter: needsCastOnAfter,
+            needsCastOnBefore: needsCastOnBefore);
 
         return info;
     }

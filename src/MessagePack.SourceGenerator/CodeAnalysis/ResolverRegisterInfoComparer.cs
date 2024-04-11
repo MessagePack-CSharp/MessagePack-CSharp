@@ -3,7 +3,7 @@
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
-public class ResolverRegisterInfoComparer : IComparer<IResolverRegisterInfo>
+public class ResolverRegisterInfoComparer : IComparer<ResolverRegisterInfo>
 {
     public static readonly ResolverRegisterInfoComparer Default = new();
 
@@ -11,5 +11,5 @@ public class ResolverRegisterInfoComparer : IComparer<IResolverRegisterInfo>
     {
     }
 
-    public int Compare(IResolverRegisterInfo x, IResolverRegisterInfo y) => StringComparer.Ordinal.Compare(x.FullName, y.FullName);
+    public int Compare(ResolverRegisterInfo x, ResolverRegisterInfo y) => x.DataType.CompareTo(y.DataType);
 }

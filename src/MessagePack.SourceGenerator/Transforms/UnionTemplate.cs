@@ -38,19 +38,19 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\t");
             this.Write(this.ToStringHelper.ToStringWithCulture(classVisibility));
             this.Write(" sealed class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Name));
-            this.Write("Formatter : MsgPack::Formatters.IMessagePackFormatter<");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Formatter.GetQualifiedName(Qualifiers.None)));
+            this.Write(": MsgPack::Formatters.IMessagePackFormatter<");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(@">
 	{
 		private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
 		private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
 		public ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Name));
-            this.Write("Formatter()\r\n\t\t{\r\n\t\t\tthis.typeToKeyAndJumpMap = new global::System.Collections.Ge" +
-                    "neric.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Ge" +
-                    "neric.KeyValuePair<int, int>>(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Formatter.Name));
+            this.Write("()\r\n\t\t{\r\n\t\t\tthis.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dic" +
+                    "tionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.Key" +
+                    "ValuePair<int, int>>(");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.SubTypes.Length));
             this.Write(", MsgPack::Internal.RuntimeTypeHandleEqualityComparer.Default)\r\n\t\t\t{\r\n");
  for(var i = 0; i < Info.SubTypes.Length; i++) { var item = Info.SubTypes[i]; 
@@ -74,7 +74,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(" },\r\n");
  } 
             this.Write("\t\t\t};\r\n\t\t}\r\n\r\n\t\tpublic void Serialize(ref MsgPack::MessagePackWriter writer, ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(@" value, MsgPack::MessagePackSerializerOptions options)
 		{
 			global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
@@ -96,7 +96,7 @@ namespace MessagePack.SourceGenerator.Transforms
  } 
             this.Write("\t\t\t\t\tdefault:\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\twriter.WriteNil();\r" +
                     "\n\t\t}\r\n\r\n\t\tpublic ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(@" Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
 		{
 			if (reader.TryReadNil())
@@ -107,17 +107,17 @@ namespace MessagePack.SourceGenerator.Transforms
 			if (reader.ReadArrayHeader() != 2)
 			{
 				throw new global::System.InvalidOperationException(""Invalid Union data was detected. Type:");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write("\");\r\n\t\t\t}\r\n\r\n\t\t\toptions.Security.DepthStep(ref reader);\r\n\t\t\tvar key = reader.Read" +
                     "Int32();\r\n\r\n\t\t\tif (!this.keyToJumpMap.TryGetValue(key, out key))\r\n\t\t\t{\r\n\t\t\t\tkey " +
                     "= -1;\r\n\t\t\t}\r\n\r\n\t\t\t");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(" result = null;\r\n\t\t\tswitch (key)\r\n\t\t\t{\r\n");
  for(var i = 0; i < Info.SubTypes.Length; i++) { var item = Info.SubTypes[i]; 
             this.Write("\t\t\t\tcase ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(":\r\n\t\t\t\t\tresult = (");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(")MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
             this.Write(">(options.Resolver).Deserialize(ref reader, options);\r\n\t\t\t\t\tbreak;\r\n");

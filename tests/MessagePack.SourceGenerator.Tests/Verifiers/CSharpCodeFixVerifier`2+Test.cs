@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis.Text;
 
 internal static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
 {
-    internal class Test : CSharpCodeFixTest<TAnalyzer, TCodeFix, XUnitVerifier>
+    internal class Test : CSharpCodeFixTest<TAnalyzer, TCodeFix, DefaultVerifier>
     {
         internal Test(ReferencesSet references = ReferencesSet.MessagePack)
         {

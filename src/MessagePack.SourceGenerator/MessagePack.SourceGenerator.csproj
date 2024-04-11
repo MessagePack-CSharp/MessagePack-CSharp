@@ -1,12 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\SourceGenerator.props" />
-  
   <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAnalyzerProject>true</IsAnalyzerProject>
+    <AnalyzerLanguage>cs</AnalyzerLanguage>
     <DebugType>embedded</DebugType>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <None Remove="AnalyzerReleases.Shipped.md" />
     <None Remove="AnalyzerReleases.Unshipped.md" />
@@ -87,7 +91,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="IsExternalInit" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" />
+    <PackageReference Include="Required" PrivateAssets="all" />
+    <PackageReference Include="System.CodeDom" PrivateAssets="all" />
+    <PackageReference Include="System.Text.Json" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

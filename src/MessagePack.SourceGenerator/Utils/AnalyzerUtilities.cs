@@ -33,15 +33,15 @@ public static class AnalyzerUtilities
         ////"string", // https://github.com/Cysharp/MasterMemory provides custom formatter for string interning.
     };
 
-    public static string GetFullNamespaceName(this INamespaceSymbol namespaceSymbol)
+    public static string? GetFullNamespaceName(this INamespaceSymbol? namespaceSymbol)
     {
-        if (namespaceSymbol.IsGlobalNamespace)
+        if (namespaceSymbol is null or { IsGlobalNamespace: true })
         {
-            return string.Empty;
+            return null;
         }
 
-        string baseName = GetFullNamespaceName(namespaceSymbol.ContainingNamespace);
-        return string.IsNullOrEmpty(baseName) ? namespaceSymbol.Name : baseName + "." + namespaceSymbol.Name;
+        string? baseName = GetFullNamespaceName(namespaceSymbol.ContainingNamespace);
+        return baseName is null ? namespaceSymbol.Name : baseName + "." + namespaceSymbol.Name;
     }
 
     public static string GetCanonicalTypeFullName(this ITypeSymbol typeSymbol) => typeSymbol.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -85,29 +85,17 @@ public static class AnalyzerUtilities
         return options;
     }
 
-    internal static ImmutableDictionary<string, ImmutableHashSet<string>> ParseKnownFormatterAttribute(ImmutableArray<AttributeData> attributes, CancellationToken cancellationToken)
+    internal static ImmutableHashSet<CustomFormatter> ParseKnownFormatterAttribute(ImmutableArray<AttributeData> attributes, CancellationToken cancellationToken)
     {
-        var builder = ImmutableDictionary.CreateBuilder<string, ImmutableHashSet<string>>();
+        var builder = ImmutableHashSet<CustomFormatter>.Empty.ToBuilder();
         foreach (AttributeData ad in attributes)
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (ad.AttributeClass?.Name == MessagePackKnownFormatterAttributeName && ad.AttributeClass?.ContainingNamespace.Name == AttributeNamespace)
             {
-                if (ad.ConstructorArguments[0].Value is INamedTypeSymbol formatter)
+                if (ad.ConstructorArguments[0].Value is INamedTypeSymbol formatterType && CustomFormatter.TryCreate(formatterType, out CustomFormatter? formatter))
                 {
-                    var formattableTypes = ImmutableHashSet.CreateBuilder<string>();
-                    foreach (INamedTypeSymbol iface in formatter.AllInterfaces)
-                    {
-                        if (iface is { IsGenericType: true, MetadataName: "IMessagePackFormatter`1", ContainingNamespace.Name: "Formatters", ContainingNamespace.ContainingNamespace.Name: "MessagePack" })
-                        {
-                            formattableTypes.Add(iface.TypeArguments[0].GetCanonicalTypeFullName());
-                        }
-                    }
-
-                    if (formattableTypes.Count > 0)
-                    {
-                        builder.Add(formatter.GetCanonicalTypeFullName(), formattableTypes.ToImmutable());
-                    }
+                    builder.Add(formatter);
                 }
             }
         }
@@ -115,14 +103,14 @@ public static class AnalyzerUtilities
         return builder.ToImmutable();
     }
 
-    internal static ImmutableArray<string> ParseAssumedFormattableAttribute(ImmutableArray<AttributeData> attributes, CancellationToken cancellationToken)
+    internal static ImmutableArray<FormattableType> ParseAssumedFormattableAttribute(ImmutableArray<AttributeData> attributes, CancellationToken cancellationToken)
     {
         return ImmutableArray.CreateRange(
             from ad in attributes
             where ad.AttributeClass?.Name == MessagePackAssumedFormattableAttributeName && ad.AttributeClass?.ContainingNamespace.Name == AttributeNamespace
             let type = (INamedTypeSymbol?)ad.ConstructorArguments[0].Value
             where type is not null
-            select type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+            select new FormattableType(type));
     }
 
     internal static IEnumerable<string> ResolverSymbolToInstanceExpression(SemanticModel semanticModel, IEnumerable<INamedTypeSymbol?> resolverTypes)
@@ -153,5 +141,18 @@ public static class AnalyzerUtilities
             // No way to access an instance of the resolver. Produce something that will error out with direction for the user.
             return $"#error No accessible default constructor or static Instance member on {r}.";
         });
+    }
+
+    internal static IEnumerable<INamedTypeSymbol> SearchTypeForFormatterImplementations(INamedTypeSymbol symbol)
+    {
+        foreach (INamedTypeSymbol iface in symbol.AllInterfaces)
+        {
+            if (iface.IsGenericType && iface.TypeArguments.Length == 1 &&
+                iface.Name == IMessagePackFormatterInterfaceName && iface.ContainingNamespace.GetFullNamespaceName() == IMessagePackFormatterInterfaceNamespace &&
+                iface.TypeArguments[0] is INamedTypeSymbol formattedType)
+            {
+                yield return formattedType;
+            }
+        }
     }
 }

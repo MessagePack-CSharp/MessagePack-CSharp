@@ -39,31 +39,25 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
-
-		static GeneratedMessagePackResolverGetFormatterHelper()
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(2)
 		{
-			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(2)
-			{
-					{ typeof(global::Object1), 0 },
-					{ typeof(global::Object2), 1 },
-				};
-		}
+			{ typeof(global::Object1), 0 },
+			{ typeof(global::Object2), 1 },
+		};
 
 		internal static object GetFormatter(global::System.Type t)
 		{
-			int key;
-			if (!lookup.TryGetValue(t, out key))
+			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return null;
+				return closedKey switch
+				{
+					0 => new Object1Formatter(),
+					1 => new Object2Formatter(),
+					_ => null, // unreachable
+				};
 			}
 
-			switch (key)
-			{
-					case 0: return new Object1Formatter();
-					case 1: return new Object2Formatter();
-					default: return null;
-			}
+			return null;
 		}
 	}
 }

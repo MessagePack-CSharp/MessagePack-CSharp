@@ -7,7 +7,7 @@ internal static class TransformUtilities
 {
     internal static IDisposable? EmitClassesForNamespace(this IFormatterTemplate template, out string formatterVisibility, Action<string> writer)
     {
-        string? ns = template.FormattedTypeNamespace;
+        string? ns = template.Info.DataType.Namespace;
         if (ns is null)
         {
             formatterVisibility = "private";

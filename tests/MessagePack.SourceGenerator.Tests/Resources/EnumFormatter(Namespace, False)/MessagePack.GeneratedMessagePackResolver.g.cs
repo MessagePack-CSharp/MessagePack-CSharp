@@ -39,31 +39,25 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
-
-		static GeneratedMessagePackResolverGetFormatterHelper()
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(2)
 		{
-			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(2)
-			{
-					{ typeof(global::MyTestNamespace.MyEnum), 0 },
-					{ typeof(global::MyTestNamespace.MyMessagePackObject), 1 },
-				};
-		}
+			{ typeof(global::MyTestNamespace.MyEnum), 0 },
+			{ typeof(global::MyTestNamespace.MyMessagePackObject), 1 },
+		};
 
 		internal static object GetFormatter(global::System.Type t)
 		{
-			int key;
-			if (!lookup.TryGetValue(t, out key))
+			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return null;
+				return closedKey switch
+				{
+					0 => new MyTestNamespace.MyEnumFormatter(),
+					1 => new MyTestNamespace.MyMessagePackObjectFormatter(),
+					_ => null, // unreachable
+				};
 			}
 
-			switch (key)
-			{
-					case 0: return new MyTestNamespace.MyEnumFormatter();
-					case 1: return new MyTestNamespace.MyMessagePackObjectFormatter();
-					default: return null;
-			}
+			return null;
 		}
 	}
 }

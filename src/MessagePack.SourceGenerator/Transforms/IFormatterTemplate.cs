@@ -7,17 +7,11 @@ public interface IFormatterTemplate
 {
     string FileName { get; }
 
-    /// <summary>
-    /// Gets the namespace of the formatter type.
-    /// </summary>
-    /// <remarks>
-    /// This must <em>not</em> begin with <c>global::</c>.
-    /// </remarks>
-    string? FormattedTypeNamespace { get; }
-
     string ResolverNamespace { get; }
 
     string ResolverName { get; }
+
+    ResolverRegisterInfo Info { get; }
 
     string TransformText();
 }

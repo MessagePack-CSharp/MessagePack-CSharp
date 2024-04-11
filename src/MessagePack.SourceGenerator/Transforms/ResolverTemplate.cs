@@ -68,31 +68,65 @@ namespace MessagePack.SourceGenerator.Transforms
                     "er = (MsgPack::Formatters.IMessagePackFormatter<T>)f;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n\r\n\tprivate" +
                     " static class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("GetFormatterHelper\r\n\t{\r\n\t\tprivate static readonly global::System.Collections.Gene" +
-                    "ric.Dictionary<global::System.Type, int> lookup;\r\n\r\n\t\tstatic ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("GetFormatterHelper()\r\n\t\t{\r\n\t\t\tlookup = new global::System.Collections.Generic.Dic" +
-                    "tionary<global::System.Type, int>(");
-            this.Write(this.ToStringHelper.ToStringWithCulture(RegisterInfos.Count));
-            this.Write(")\r\n\t\t\t{\r\n\t");
- for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; 
-            this.Write("\t\t\t\t{ typeof(");
-            this.Write(this.ToStringHelper.ToStringWithCulture(x.FullName));
+            this.Write("GetFormatterHelper\r\n\t{\r\n");
+
+   var constructedRegistrations = ConstructedTypeRegistrations.ToArray();
+   if (constructedRegistrations.Length > 0) { 
+            this.Write("\t\tprivate static readonly global::System.Collections.Generic.Dictionary<global::S" +
+                    "ystem.Type, int> closedTypeLookup = new(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(constructedRegistrations.Length));
+            this.Write(")\r\n\t\t{\r\n");
+ for(var i = 0; i < constructedRegistrations.Length; i++) { 
+            this.Write("\t\t\t{ typeof(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(constructedRegistrations[i].DataType.GetQualifiedName()));
             this.Write("), ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(" },\r\n\t");
+            this.Write(" },\r\n");
  } 
-            this.Write("\t\t\t};\r\n\t\t}\r\n\r\n\t\tinternal static object GetFormatter(global::System.Type t)\r\n\t\t{\r\n" +
-                    "\t\t\tint key;\r\n\t\t\tif (!lookup.TryGetValue(t, out key))\r\n\t\t\t{\r\n\t\t\t\treturn null;\r\n\t\t" +
-                    "\t}\r\n\r\n\t\t\tswitch (key)\r\n\t\t\t{\r\n\t");
- for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; 
-            this.Write("\t\t\t\tcase ");
+            this.Write("\t\t};\r\n");
+ }
+   var openGenericRegistrations = OpenGenericRegistrations.ToArray();
+   if (openGenericRegistrations.Length > 0) { 
+            this.Write("\t\tprivate static readonly global::System.Collections.Generic.Dictionary<global::S" +
+                    "ystem.Type, int> openTypeLookup = new(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(openGenericRegistrations.Length));
+            this.Write(")\r\n\t\t{\r\n");
+ for(var i = 0; i < openGenericRegistrations.Length; i++) { 
+            this.Write("\t\t\t{ typeof(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(openGenericRegistrations[i].DataType.GetQualifiedName(genericStyle: GenericParameterStyle.TypeDefinition)));
+            this.Write("), ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(": return new ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(CodeAnalysisUtilities.QualifyWithOptionalNamespace(x.FormatterName, x.Namespace)));
-            this.Write("();\r\n\t");
+            this.Write(" },\r\n");
  } 
-            this.Write("\t\t\t\tdefault: return null;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}\r\n\r\n");
+            this.Write("\t\t};\r\n");
+ } 
+            this.Write("\r\n\t\tinternal static object GetFormatter(global::System.Type t)\r\n\t\t{\r\n");
+ if (constructedRegistrations.Length > 0) { 
+            this.Write("\t\t\tif (closedTypeLookup.TryGetValue(t, out int closedKey))\r\n\t\t\t{\r\n\t\t\t\treturn clos" +
+                    "edKey switch\r\n\t\t\t\t{\r\n");
+ for(var i = 0; i < constructedRegistrations.Length; i++) { var x = constructedRegistrations[i]; 
+            this.Write("\t\t\t\t\t");
+            this.Write(this.ToStringHelper.ToStringWithCulture(i));
+            this.Write(" => new ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(x.GetFormatterNameForResolver()));
+            this.Write("(),\r\n");
+ } 
+            this.Write("\t\t\t\t\t_ => null, // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n");
+ }
+
+   if (openGenericRegistrations.Length > 0) { 
+            this.Write("\t\t\tif (t.IsGenericType && openTypeLookup.TryGetValue(t.GetGenericTypeDefinition()" +
+                    ", out int openKey))\r\n\t\t\t{\r\n\t\t\t\treturn openKey switch\r\n\t\t\t\t{\r\n");
+     for(var i = 0; i < openGenericRegistrations.Length; i++) { var x = openGenericRegistrations[i]; 
+            this.Write("\t\t\t\t\t");
+            this.Write(this.ToStringHelper.ToStringWithCulture(i));
+            this.Write(" => global::System.Activator.CreateInstance(typeof(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(x.GetFormatterNameForResolver(GenericParameterStyle.TypeDefinition)));
+            this.Write(").MakeGenericType(t.GenericTypeArguments)),\r\n");
+     } 
+            this.Write("\t\t\t\t\t_ => null, // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n");
+ } 
+            this.Write("\r\n\t\t\treturn null;\r\n\t\t}\r\n\t}\r\n}\r\n\r\n");
  if (ResolverNamespace.Length > 0) { 
             this.Write("}\r\n");
  } 

@@ -1,18 +1,2 @@
 <Project>
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>12</LangVersion>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <IsAnalyzerProject>true</IsAnalyzerProject>
-    <AnalyzerLanguage>cs</AnalyzerLanguage>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="IsExternalInit" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
-    <PackageReference Include="Required" PrivateAssets="all" />
-    <PackageReference Include="System.CodeDom" PrivateAssets="all" />
-    <PackageReference Include="System.Text.Json" PrivateAssets="all" />
-  </ItemGroup>
 </Project>

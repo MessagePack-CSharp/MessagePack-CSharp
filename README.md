@@ -1625,7 +1625,7 @@ so you should only need to interact with this resolver directly for advanced sce
 
 Leveraging this resolver at runtime happens automatically by default,
 since the `StandardResolver` includes the `SourceGeneratedFormatterResolver`
-which discovers and your source generated resolver.
+which discovers and uses your source generated resolver.
 
 ### Customizations
 

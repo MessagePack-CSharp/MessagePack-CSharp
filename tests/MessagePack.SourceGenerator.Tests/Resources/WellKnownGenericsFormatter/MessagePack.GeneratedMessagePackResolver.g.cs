@@ -39,35 +39,27 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
-
-		static GeneratedMessagePackResolverGetFormatterHelper()
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(3)
 		{
-			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(4)
-			{
-					{ typeof((int, string, long)), 0 },
-					{ typeof(global::System.Collections.Generic.List<global::System.Collections.Generic.List<int>>), 1 },
-					{ typeof(global::System.Collections.Generic.List<int>), 2 },
-					{ typeof(global::TempProject.MyObject), 3 },
-				};
-		}
+			{ typeof(global::System.ValueTuple<int, string, long>), 0 },
+			{ typeof(global::System.Collections.Generic.List<int>), 1 },
+			{ typeof(global::TempProject.MyObject), 2 },
+		};
 
 		internal static object GetFormatter(global::System.Type t)
 		{
-			int key;
-			if (!lookup.TryGetValue(t, out key))
+			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return null;
+				return closedKey switch
+				{
+					0 => new MsgPack::Formatters.ValueTupleFormatter<int, string, long>(),
+					1 => new MsgPack::Formatters.ListFormatter<int>(),
+					2 => new TempProject.MyObjectFormatter(),
+					_ => null, // unreachable
+				};
 			}
 
-			switch (key)
-			{
-					case 0: return new MsgPack::Formatters.ValueTupleFormatter<int, string, long>();
-					case 1: return new MsgPack::Formatters.ListFormatter<global::System.Collections.Generic.List<int>>();
-					case 2: return new MsgPack::Formatters.ListFormatter<int>();
-					case 3: return new TempProject.MyObjectFormatter();
-					default: return null;
-			}
+			return null;
 		}
 	}
 }
