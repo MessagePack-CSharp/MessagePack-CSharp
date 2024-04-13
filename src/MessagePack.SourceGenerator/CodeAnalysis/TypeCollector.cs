@@ -933,7 +933,7 @@ public class TypeCollector
         var constructorParameters = new List<MemberSerializationInfo>();
         if (ctor != null)
         {
-            var constructorLookupDictionary = stringMembers.ToLookup(x => x.Key, x => x, StringComparer.OrdinalIgnoreCase);
+            var constructorLookupDictionary = stringMembers.ToLookup(x => x.Value.Name, x => x, StringComparer.OrdinalIgnoreCase);
             do
             {
                 constructorParameters.Clear();
