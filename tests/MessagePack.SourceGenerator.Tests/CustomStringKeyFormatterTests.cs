@@ -3,11 +3,11 @@
 
 using VerifyCS = CSharpSourceGeneratorVerifier<MessagePack.SourceGenerator.MessagePackGenerator>;
 
-public class CustomStringKeyFormatterTest
+public class CustomStringKeyFormatterTests
 {
     private readonly ITestOutputHelper testOutputHelper;
 
-    public CustomStringKeyFormatterTest(ITestOutputHelper testOutputHelper)
+    public CustomStringKeyFormatterTests(ITestOutputHelper testOutputHelper)
     {
         this.testOutputHelper = testOutputHelper;
     }
