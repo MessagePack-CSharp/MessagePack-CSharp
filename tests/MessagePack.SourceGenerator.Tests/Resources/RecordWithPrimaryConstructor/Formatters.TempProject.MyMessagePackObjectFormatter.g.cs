@@ -8,15 +8,15 @@ using MsgPack = global::MessagePack;
 
 partial class GeneratedMessagePackResolver
 {
-private partial class TempProject {
-	internal sealed class MyMessagePackRecordFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TempProject.MyMessagePackRecord>
+private partial class TempProject { 
+	internal sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TempProject.MyMessagePackObject>
 	{
 		// p
 		private static global::System.ReadOnlySpan<byte> GetSpan_PhoneNumber() => new byte[1 + 1] { 161, 112 };
 		// c
 		private static global::System.ReadOnlySpan<byte> GetSpan_Count() => new byte[1 + 1] { 161, 99 };
 
-		public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TempProject.MyMessagePackRecord value, global::MessagePack.MessagePackSerializerOptions options)
+		public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TempProject.MyMessagePackObject value, global::MessagePack.MessagePackSerializerOptions options)
 		{
 			if (value is null)
 			{
@@ -32,7 +32,7 @@ private partial class TempProject {
 			writer.Write(value.Count);
 		}
 
-		public global::TempProject.MyMessagePackRecord Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+		public global::TempProject.MyMessagePackObject Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
 		{
 			if (reader.TryReadNil())
 			{
@@ -69,7 +69,7 @@ private partial class TempProject {
 				}
 			}
 
-			var ____result = new global::TempProject.MyMessagePackRecord(__PhoneNumber__, __Count__);
+			var ____result = new global::TempProject.MyMessagePackObject(__PhoneNumber__, __Count__);
 			reader.Depth--;
 			return ____result;
 		}
