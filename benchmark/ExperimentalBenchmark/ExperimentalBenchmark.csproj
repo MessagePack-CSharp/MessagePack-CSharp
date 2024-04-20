@@ -7,7 +7,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>$(NoWarn);MSB3243</NoWarn>
     <Nullable>enable</Nullable>
-    <LangVersion>12</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
