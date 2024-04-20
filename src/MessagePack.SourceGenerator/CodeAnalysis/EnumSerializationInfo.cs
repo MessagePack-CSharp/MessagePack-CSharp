@@ -22,9 +22,9 @@ public sealed record EnumSerializationInfo : ResolverRegisterInfo
         _ => this.UnderlyingTypeName,
     };
 
-    public static EnumSerializationInfo Create(INamedTypeSymbol dataType, ISymbol enumUnderlyingType)
+    public static EnumSerializationInfo Create(INamedTypeSymbol dataType, ISymbol enumUnderlyingType, ResolverOptions resolverOptions)
     {
-        ResolverRegisterInfo basicInfo = ResolverRegisterInfo.Create(dataType);
+        ResolverRegisterInfo basicInfo = ResolverRegisterInfo.Create(dataType, resolverOptions);
         return new EnumSerializationInfo
         {
             DataType = basicInfo.DataType,

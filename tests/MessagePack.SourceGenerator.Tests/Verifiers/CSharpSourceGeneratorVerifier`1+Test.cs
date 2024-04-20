@@ -12,15 +12,12 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using MessagePack;
-using MessagePack.SourceGenerator;
 using MessagePack.SourceGenerator.Analyzers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
-using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Microsoft.CodeAnalysis.Text;
 using AnalyzerOptions = MessagePack.SourceGenerator.CodeAnalysis.AnalyzerOptions;
 
@@ -70,23 +67,15 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
             return RunDefaultAsync(logger, testSource, resolverPartialClassSource, testFile, testMethod);
         }
 
-        private static async Task RunDefaultAsync(ITestOutputHelper logger, string testSource, string resolverPartialClassSource, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
+        public async Task RunDefaultAsync(ITestOutputHelper logger)
         {
-            Test test = new(testFile: testFile, testMethod: testMethod)
-            {
-                TestState =
-                {
-                    Sources = { testSource, resolverPartialClassSource },
-                },
-            };
-
             try
             {
-                await test.RunAsync();
+                await this.RunAsync();
             }
             finally
             {
-                foreach (var generatedSource in test.TestState.GeneratedSources)
+                foreach (var generatedSource in this.TestState.GeneratedSources)
                 {
                     logger.WriteLine("--------------------------------------------------------------");
                     logger.WriteLine(generatedSource.filename);
@@ -100,6 +89,19 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
                     logger.WriteLine("--------------------------------------------------------------");
                 }
             }
+        }
+
+        private static Task RunDefaultAsync(ITestOutputHelper logger, string testSource, string resolverPartialClassSource, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
+        {
+            Test test = new(testFile: testFile, testMethod: testMethod)
+            {
+                TestState =
+                {
+                    Sources = { testSource, resolverPartialClassSource },
+                },
+            };
+
+            return test.RunDefaultAsync(logger);
         }
 
         public Test AddGeneratedSources()

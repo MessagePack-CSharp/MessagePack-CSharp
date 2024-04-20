@@ -53,10 +53,10 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return closedKey switch
 				{
-					0 => new ContainingClass_IMyTypeFormatter(),
-					1 => new ContainingClass_Derived1Formatter(),
-					2 => new ContainingClass_Derived2Formatter(),
-					3 => new ContainingClass_MyMessagePackObjectFormatter(),
+					0 => new global::MessagePack.GeneratedMessagePackResolver.ContainingClass.IMyTypeFormatter(),
+					1 => new global::MessagePack.GeneratedMessagePackResolver.ContainingClass.Derived1Formatter(),
+					2 => new global::MessagePack.GeneratedMessagePackResolver.ContainingClass.Derived2Formatter(),
+					3 => new global::MessagePack.GeneratedMessagePackResolver.ContainingClass.MyMessagePackObjectFormatter(),
 					_ => null, // unreachable
 				};
 			}

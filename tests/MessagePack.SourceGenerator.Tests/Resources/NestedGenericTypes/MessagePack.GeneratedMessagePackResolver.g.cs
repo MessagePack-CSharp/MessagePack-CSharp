@@ -61,10 +61,10 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 				return closedKey switch
 				{
 					0 => new MsgPack::Formatters.ListFormatter<global::TempProject.MyObject2>(),
-					1 => new TempProject.MyGenericObjectFormatter<global::TempProject.MyObject2>(),
-					2 => new TempProject.MyInnerGenericObjectFormatter<global::TempProject.MyObject2>(),
-					3 => new TempProject.MyObjectFormatter(),
-					4 => new TempProject.MyObject2Formatter(),
+					1 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<global::TempProject.MyObject2>(),
+					2 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyInnerGenericObjectFormatter<global::TempProject.MyObject2>(),
+					3 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter(),
+					4 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObject2Formatter(),
 					_ => null, // unreachable
 				};
 			}
@@ -72,9 +72,9 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return openKey switch
 				{
-					0 => global::System.Activator.CreateInstance(typeof(TempProject.MyGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
-					1 => global::System.Activator.CreateInstance(typeof(TempProject.MyInnerGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
-					2 => global::System.Activator.CreateInstance(typeof(TempProject.WrapperFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					0 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					1 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.TempProject.MyInnerGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					2 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<>).MakeGenericType(t.GenericTypeArguments)),
 					_ => null, // unreachable
 				};
 			}

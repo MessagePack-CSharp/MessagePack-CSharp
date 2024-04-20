@@ -59,6 +59,14 @@ public class ExecutionTests
         this.AssertRoundtrip(new MyCustomType2());
     }
 
+#if !FORCE_MAP_MODE // forced map mode simply doesn't support private fields at all as it only notices internal and public members.
+    [Fact]
+    public void PrivateFieldIsSerialized()
+    {
+        this.AssertRoundtrip(new HasPrivateSerializedMembers { ValueAccessor = 3 });
+    }
+#endif
+
     private T AssertRoundtrip<T>(T value)
     {
         byte[] serialized = MessagePackSerializer.Serialize(value, SerializerOptions);

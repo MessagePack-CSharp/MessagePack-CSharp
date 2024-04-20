@@ -50,7 +50,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return closedKey switch
 				{
-					0 => new TempProject.MyMessagePackObjectFormatter(),
+					0 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyMessagePackObjectFormatter(),
 					_ => null, // unreachable
 				};
 			}

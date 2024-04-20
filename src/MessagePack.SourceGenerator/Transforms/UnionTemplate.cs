@@ -25,19 +25,9 @@ namespace MessagePack.SourceGenerator.Transforms
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write("\r\n");
- if (ResolverNamespace.Length > 0) { 
-            this.Write("namespace ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
-            this.Write(" {\r\n");
- } 
-            this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\npartial class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("\r\n{\r\n");
- using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { 
-            this.Write("\t");
-            this.Write(this.ToStringHelper.ToStringWithCulture(classVisibility));
-            this.Write(" sealed class ");
+            this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\n");
+ using (this.EmitNestingTypesAndNamespaces(this.Write)) { 
+            this.Write("\tinternal sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.Formatter.GetQualifiedName(Qualifiers.None)));
             this.Write(": MsgPack::Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
@@ -123,11 +113,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(">(options.Resolver).Deserialize(ref reader, options);\r\n\t\t\t\t\tbreak;\r\n");
  } 
             this.Write("\t\t\t\tdefault:\r\n\t\t\t\t\treader.Skip();\r\n\t\t\t\t\tbreak;\r\n\t\t\t}\r\n\r\n\t\t\treader.Depth--;\r\n\t\t\tre" +
-                    "turn result;\r\n\t\t}\r\n\t}\r\n");
- } // close EmitClassesForNamespace 
-            this.Write("}\r\n\r\n");
- if (ResolverNamespace.Length > 0) { 
-            this.Write("}\r\n");
+                    "turn result;\r\n\t\t}\r\n\t}\r\n\r\n");
  } 
             return this.GenerationEnvironment.ToString();
         }
