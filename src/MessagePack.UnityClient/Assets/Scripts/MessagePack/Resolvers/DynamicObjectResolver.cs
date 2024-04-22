@@ -1766,7 +1766,7 @@ namespace MessagePack.Internal
 
             EmittableMember? CreateEmittableMember(MemberInfo m)
             {
-                if (m.IsDefined(typeof(IgnoreMemberAttribute), true) || m.IsDefined(typeof(IgnoreDataMemberAttribute), true))
+                if (m.IsDefined(typeof(IgnoreMemberAttribute), true) || m.IsDefined(typeof(IgnoreDataMemberAttribute), true) || m.IsDefined(typeof(NonSerializedAttribute), true))
                 {
                     return null;
                 }
