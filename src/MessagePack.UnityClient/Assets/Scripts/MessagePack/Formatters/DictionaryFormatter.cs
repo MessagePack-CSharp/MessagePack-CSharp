@@ -88,6 +88,8 @@ namespace MessagePack.Formatters
                 options.Security.DepthStep(ref reader);
                 try
                 {
+                    if (len > 0)
+                    {
                     for (int i = 0; i < len; i++)
                     {
                         reader.CancellationToken.ThrowIfCancellationRequested();
@@ -96,6 +98,7 @@ namespace MessagePack.Formatters
                         TValue value = valueFormatter.Deserialize(ref reader, options);
 
                         this.Add(dict, i, key, value, options);
+                    }
                     }
                 }
                 finally
