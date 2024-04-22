@@ -78,10 +78,6 @@ namespace MessagePack.Formatters
             }
             else
             {
-                IFormatterResolver resolver = options.Resolver;
-                IMessagePackFormatter<TKey>? keyFormatter = resolver.GetFormatterWithVerify<TKey>();
-                IMessagePackFormatter<TValue>? valueFormatter = resolver.GetFormatterWithVerify<TValue>();
-
                 var len = reader.ReadMapHeader();
 
                 TIntermediate dict = this.Create(len, options);
@@ -90,6 +86,9 @@ namespace MessagePack.Formatters
                 {
                     if (len > 0)
                     {
+                        IFormatterResolver resolver = options.Resolver;
+                        IMessagePackFormatter<TKey>? keyFormatter = resolver.GetFormatterWithVerify<TKey>();
+                        IMessagePackFormatter<TValue>? valueFormatter = resolver.GetFormatterWithVerify<TValue>();
                         for (int i = 0; i < len; i++)
                         {
                             reader.CancellationToken.ThrowIfCancellationRequested();
