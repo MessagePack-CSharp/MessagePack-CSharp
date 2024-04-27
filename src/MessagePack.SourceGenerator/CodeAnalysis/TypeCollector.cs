@@ -5,7 +5,6 @@
 #pragma warning disable SA1649 // File name should match first type name
 
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -199,7 +198,7 @@ public class TypeCollector
 
     private readonly Compilation compilation;
 
-    private TypeCollector(Compilation compilation, AnalyzerOptions options, ReferenceSymbols referenceSymbols, ITypeSymbol targetType, Action<Diagnostic>? reportAnalyzerDiagnostic)
+    private TypeCollector(Compilation compilation, AnalyzerOptions options, ReferenceSymbols referenceSymbols, ITypeSymbol targetType, Action<Diagnostic>? reportAnalyzerDiagnostic, CancellationToken cancellationToken)
     {
         this.typeReferences = referenceSymbols;
         this.reportDiagnostic = reportAnalyzerDiagnostic;
@@ -207,7 +206,14 @@ public class TypeCollector
         this.compilation = compilation;
         this.excludeArrayElement = true;
 
-        if (IsAllowedAccessibility(targetType.DeclaredAccessibility))
+        bool isInaccessible = false;
+        foreach (BaseTypeDeclarationSyntax? decl in FindInaccessibleTypes(targetType))
+        {
+            isInaccessible = true;
+            reportAnalyzerDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.InaccessibleDataType, decl.Identifier.GetLocation()));
+        }
+
+        if (!isInaccessible)
         {
             if (((targetType.TypeKind == TypeKind.Interface) && targetType.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)))
                 || ((targetType.TypeKind == TypeKind.Class && targetType.IsAbstract) && targetType.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)))
@@ -219,23 +225,9 @@ public class TypeCollector
         }
     }
 
-    public static FullModel? Collect(Compilation compilation, AnalyzerOptions options, ReferenceSymbols referenceSymbols, Action<Diagnostic>? reportAnalyzerDiagnostic, TypeDeclarationSyntax typeDeclaration, CancellationToken cancellationToken)
+    public static FullModel? Collect(Compilation compilation, AnalyzerOptions options, ReferenceSymbols referenceSymbols, Action<Diagnostic>? reportAnalyzerDiagnostic, ITypeSymbol targetType, CancellationToken cancellationToken)
     {
-        SemanticModel semanticModel = compilation.GetSemanticModel(typeDeclaration.SyntaxTree);
-        if (semanticModel.GetDeclaredSymbol(typeDeclaration, cancellationToken) is ITypeSymbol typeSymbol)
-        {
-            if (Collect(compilation, options, referenceSymbols, reportAnalyzerDiagnostic, typeSymbol) is FullModel model)
-            {
-                return model;
-            }
-        }
-
-        return null;
-    }
-
-    public static FullModel? Collect(Compilation compilation, AnalyzerOptions options, ReferenceSymbols referenceSymbols, Action<Diagnostic>? reportAnalyzerDiagnostic, ITypeSymbol targetType)
-    {
-        TypeCollector collector = new(compilation, options, referenceSymbols, targetType, reportAnalyzerDiagnostic);
+        TypeCollector collector = new(compilation, options, referenceSymbols, targetType, reportAnalyzerDiagnostic, cancellationToken);
         if (collector.targetType is null)
         {
             return null;
@@ -1061,9 +1053,15 @@ public class TypeCollector
         {
             // If the data type or any nesting types are not declared with partial, we cannot emit the formatter as a nested type within the data type
             // as required in order to access the private members.
-            if (!IsDeeplyPartial(formattedType, out BaseTypeDeclarationSyntax? nonPartialType))
+            bool anyNonPartialTypesFound = false;
+            foreach (BaseTypeDeclarationSyntax? decl in FindNonPartialTypes(formattedType))
             {
-                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PartialTypeRequired, nonPartialType.Identifier.GetLocation()));
+                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PartialTypeRequired, decl.Identifier.GetLocation()));
+                anyNonPartialTypesFound = true;
+            }
+
+            if (anyNonPartialTypesFound)
+            {
                 return null;
             }
         }
@@ -1085,22 +1083,28 @@ public class TypeCollector
         return info;
     }
 
-    private static bool IsDeeplyPartial(ITypeSymbol typeSymbol, [NotNullWhen(false)] out BaseTypeDeclarationSyntax? nonPartialType)
+    private static IEnumerable<BaseTypeDeclarationSyntax> FindNonPartialTypes(ITypeSymbol target)
     {
-        ITypeSymbol? focusedSymbol = typeSymbol;
+        return from x in EnumerateTypeAndContainingTypes(target)
+               where x.FirstDeclaration?.Modifiers.Any(SyntaxKind.PartialKeyword) is false
+               select x.FirstDeclaration;
+    }
+
+    private static IEnumerable<BaseTypeDeclarationSyntax> FindInaccessibleTypes(ITypeSymbol target)
+    {
+        return from x in EnumerateTypeAndContainingTypes(target)
+               where !IsAllowedAccessibility(x.Symbol.DeclaredAccessibility)
+               select x.FirstDeclaration;
+    }
+
+    private static IEnumerable<(ITypeSymbol Symbol, BaseTypeDeclarationSyntax? FirstDeclaration)> EnumerateTypeAndContainingTypes(ITypeSymbol target)
+    {
+        ITypeSymbol? focusedSymbol = target;
         while (focusedSymbol is not null)
         {
-            if (focusedSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is BaseTypeDeclarationSyntax baseTypeDeclarationSyntax && !baseTypeDeclarationSyntax.Modifiers.Any(SyntaxKind.PartialKeyword))
-            {
-                nonPartialType = baseTypeDeclarationSyntax;
-                return false;
-            }
-
+            yield return (focusedSymbol, focusedSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as BaseTypeDeclarationSyntax);
             focusedSymbol = focusedSymbol.ContainingType;
         }
-
-        nonPartialType = null;
-        return true;
     }
 
     private static GenericTypeParameterInfo ToGenericTypeParameterInfo(ITypeParameterSymbol typeParameter)
