@@ -90,10 +90,10 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
             using System;
             using MessagePack;
 
-            {|MsgPack011:{{type}} Outer|}
+            {{type}} {|MsgPack011:Outer|}
             {
                 [MessagePackObject]
-                partial {{type}} MyObject
+                internal partial {{type}} MyObject
                 {
                     [Key(0)]
                     private int value;

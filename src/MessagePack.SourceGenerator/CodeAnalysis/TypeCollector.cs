@@ -5,11 +5,11 @@
 #pragma warning disable SA1649 // File name should match first type name
 
 using System.Collections.Immutable;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Operations;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
@@ -1057,6 +1057,17 @@ public class TypeCollector
             return null;
         }
 
+        if (includesPrivateMembers)
+        {
+            // If the data type or any nesting types are not declared with partial, we cannot emit the formatter as a nested type within the data type
+            // as required in order to access the private members.
+            if (!IsDeeplyPartial(formattedType, out BaseTypeDeclarationSyntax? nonPartialType))
+            {
+                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PartialTypeRequired, nonPartialType.Identifier.GetLocation()));
+                return null;
+            }
+        }
+
         INamedTypeSymbol? formattedTypeDefinition = formattedType.IsGenericType ? formattedType.ConstructUnboundGenericType() : null;
         ObjectSerializationInfo info = ObjectSerializationInfo.Create(
             formattedType,
@@ -1072,6 +1083,24 @@ public class TypeCollector
             this.options.Generator.Resolver);
 
         return info;
+    }
+
+    private static bool IsDeeplyPartial(ITypeSymbol typeSymbol, [NotNullWhen(false)] out BaseTypeDeclarationSyntax? nonPartialType)
+    {
+        ITypeSymbol? focusedSymbol = typeSymbol;
+        while (focusedSymbol is not null)
+        {
+            if (focusedSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is BaseTypeDeclarationSyntax baseTypeDeclarationSyntax && !baseTypeDeclarationSyntax.Modifiers.Any(SyntaxKind.PartialKeyword))
+            {
+                nonPartialType = baseTypeDeclarationSyntax;
+                return false;
+            }
+
+            focusedSymbol = focusedSymbol.ContainingType;
+        }
+
+        nonPartialType = null;
+        return true;
     }
 
     private static GenericTypeParameterInfo ToGenericTypeParameterInfo(ITypeParameterSymbol typeParameter)

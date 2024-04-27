@@ -224,7 +224,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleFormatterId));
 
-    internal static readonly DiagnosticDescriptor PartialClassRequired = new(
+    internal static readonly DiagnosticDescriptor PartialTypeRequired = new(
         id: PartialTypeRequiredId,
         title: "Partial type required",
         category: Category,
@@ -246,11 +246,26 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         TypeMustBeMessagePackObject,
-        PublicMemberNeedsKey,
-        InvalidMessagePackObject,
         MessageFormatterMustBeMessagePackFormatter,
+        PublicMemberNeedsKey,
+        BaseTypeContainsUnattributedPublicMembers,
+        InvalidMessagePackObject,
+        BothStringAndIntKeyAreNull,
+        DoNotMixStringAndIntKeys,
+        KeysMustBeUnique,
+        UnionAttributeRequired,
+        KeyAnnotatedMemberInMapMode,
+        NoDeserializingConstructor,
+        DeserializingConstructorParameterTypeMismatch,
+        DeserializingConstructorParameterIndexMissing,
+        DeserializingConstructorParameterNameMissing,
+        DeserializingConstructorParameterNameDuplicate,
+        AotUnionAttributeRequiresTypeArg,
+        AotArrayRankTooHigh,
         CollidingFormatters,
-        InaccessibleFormatter);
+        InaccessibleFormatter,
+        PartialTypeRequired,
+        InaccessibleDataType);
 
     public override void Initialize(AnalysisContext context)
     {
