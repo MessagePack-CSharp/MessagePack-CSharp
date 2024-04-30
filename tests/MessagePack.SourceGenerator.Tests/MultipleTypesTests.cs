@@ -1,6 +1,8 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using VerifyCS = CSharpSourceGeneratorVerifier<MessagePack.SourceGenerator.MessagePackGenerator>;
+
 public class MultipleTypesTests
 {
     private readonly ITestOutputHelper testOutputHelper;
@@ -26,7 +28,7 @@ class Object2
 {
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource, options: AnalyzerOptions.Default with { Generator = GeneratorOptions.Default with { UsesMapMode = usesMapMode } }, testMethod: $"{nameof(TwoTypes)}({usesMapMode})");
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, options: new() { Generator = new() { Formatters = new() { UsesMapMode = usesMapMode } } }, testMethod: $"{nameof(TwoTypes)}({usesMapMode})");
     }
 
     [Fact]
@@ -35,6 +37,6 @@ class Object2
         string testSource = """
 using MessagePack;
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 }

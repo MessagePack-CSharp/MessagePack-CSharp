@@ -3,16 +3,20 @@
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
-<#@ import namespace="MessagePackAnalyzer.Transforms" #>
 
 #pragma warning disable CS8669 // We may leak nullable annotations into generated code.
 
-namespace <#= Namespace #>
-{
-	using MsgPack = global::MessagePack;
+<# if (ResolverNamespace.Length > 0) { #>
+namespace <#= ResolverNamespace #> {
+<# } #>
 
-<#  bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members);#>
-	internal sealed class <#= Info.FormatterNameWithoutNamespace #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+using MsgPack = global::MessagePack;
+
+partial class <#= ResolverName #>
+{
+<#  bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members);#>
+<# using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { #>
+	<#=classVisibility#> sealed class <#= Info.Formatter.GetQualifiedName(Qualifiers.None) #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #>>
 <# foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
 		where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# } #>
@@ -23,7 +27,7 @@ namespace <#= Namespace #>
 <# } #>
 <# } #>
 
-		public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.FullName #> value, MsgPack::MessagePackSerializerOptions options)
+		public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #> value, MsgPack::MessagePackSerializerOptions options)
 		{
 <# if (Info.IsClass) { #>
 			if (value == null)
@@ -56,7 +60,7 @@ namespace <#= Namespace #>
 <# } #>
 		}
 
-		public <#= Info.FullName #> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
+		public <#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
 		{
 			if (reader.TryReadNil())
 			{
@@ -141,4 +145,10 @@ namespace <#= Namespace #>
 <# } #>
 		}
 	}
+
+<# } // close EmitClassesForNamespace #>
 }
+
+<# if (ResolverNamespace.Length > 0) { #>
+}
+<# } #>

@@ -3,24 +3,25 @@
 
 #pragma warning disable SA1402 // File may only contain a single type
 
-using MessagePack.Analyzers.CodeAnalysis;
-
 namespace MessagePack.SourceGenerator.Transforms;
 
 public partial class FormatterTemplate : IFormatterTemplate
 {
     public FormatterTemplate(AnalyzerOptions options, ObjectSerializationInfo info)
     {
-        this.Namespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
         this.Options = options;
         this.Info = info;
     }
 
-    public string Namespace { get; }
-
     public AnalyzerOptions Options { get; }
 
+    public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
+
+    public string ResolverName => this.Options.Generator.Resolver.Name;
+
     public ObjectSerializationInfo Info { get; }
+
+    ResolverRegisterInfo IFormatterTemplate.Info => this.Info;
 
     public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
@@ -29,75 +30,97 @@ public partial class StringKeyFormatterTemplate : IFormatterTemplate
 {
     public StringKeyFormatterTemplate(AnalyzerOptions options, ObjectSerializationInfo info)
     {
-        this.Namespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
         this.Options = options;
         this.Info = info;
     }
 
-    public string Namespace { get; }
-
     public AnalyzerOptions Options { get; }
 
+    public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
+
+    public string ResolverName => this.Options.Generator.Resolver.Name;
+
     public ObjectSerializationInfo Info { get; }
+
+    ResolverRegisterInfo IFormatterTemplate.Info => this.Info;
 
     public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
 
 public partial class ResolverTemplate
 {
-    public ResolverTemplate(AnalyzerOptions options, IReadOnlyList<IResolverRegisterInfo> registerInfos)
+    public ResolverTemplate(AnalyzerOptions options, IReadOnlyList<ResolverRegisterInfo> registerInfos)
     {
         this.Options = options;
-        this.RegisterInfos = registerInfos;
+        this.AllRegisterRegistrations = registerInfos;
     }
 
     public AnalyzerOptions Options { get; init; }
 
     public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
 
-    public string FormatterNamespace => this.Options.FormatterNamespace;
-
     public string ResolverName => this.Options.Generator.Resolver.Name;
 
-    public bool PublicResolver => this.Options.Generator.Resolver.Public;
+    public IReadOnlyList<ResolverRegisterInfo> AllRegisterRegistrations { get; }
 
-    public IReadOnlyList<IResolverRegisterInfo> RegisterInfos { get; }
+    public IEnumerable<ResolverRegisterInfo> OpenGenericRegistrations => this.AllRegisterRegistrations.Where(r => r.IsUnboundGenericType);
+
+    public IEnumerable<ResolverRegisterInfo> ConstructedTypeRegistrations => this.AllRegisterRegistrations.Where(r => !r.IsUnboundGenericType);
 
     public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.ResolverName, this.ResolverNamespace)}.g.cs";
 }
 
-public partial class EnumTemplate
+public partial class EnumTemplate : IFormatterTemplate
 {
     public EnumTemplate(AnalyzerOptions options, EnumSerializationInfo info)
     {
-        this.Namespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
         this.Options = options;
         this.Info = info;
     }
 
-    public string Namespace { get; }
-
     public AnalyzerOptions Options { get; }
 
+    public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
+
+    public string ResolverName => this.Options.Generator.Resolver.Name;
+
     public EnumSerializationInfo Info { get; }
+
+    ResolverRegisterInfo IFormatterTemplate.Info => this.Info;
 
     public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
 
-public partial class UnionTemplate
+public partial class UnionTemplate : IFormatterTemplate
 {
     public UnionTemplate(AnalyzerOptions options, UnionSerializationInfo info)
     {
-        this.Namespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
         this.Options = options;
         this.Info = info;
     }
 
-    public string Namespace { get; }
-
     public AnalyzerOptions Options { get; }
+
+    public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
+
+    public string ResolverName => this.Options.Generator.Resolver.Name;
 
     public UnionSerializationInfo Info { get; }
 
+    ResolverRegisterInfo IFormatterTemplate.Info => this.Info;
+
     public string FileName => $"{this.Info.FileNameHint}.g.cs";
+}
+
+public partial class CompositeResolverTemplate : IFormatterTemplate
+{
+    public string FileName => $"{this.ResolverName}.g.cs";
+
+    public required string ResolverNamespace { get; init; }
+
+    public required string ResolverName { get; init; }
+
+    ResolverRegisterInfo IFormatterTemplate.Info => throw new NotImplementedException();
+
+    public required string[] ResolverInstanceExpressions { get; init; }
 }

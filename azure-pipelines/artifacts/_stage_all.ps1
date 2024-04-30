@@ -7,7 +7,8 @@
 
 [CmdletBinding()]
 param (
-    [string]$ArtifactNameSuffix
+    [string]$ArtifactNameSuffix,
+    [switch]$AvoidSymbolicLinks
 )
 
 $ArtifactStagingFolder = & "$PSScriptRoot/../Get-ArtifactsStagingDirectory.ps1" -CleanIfLocal
@@ -30,6 +31,12 @@ function Create-SymbolicLink {
     } else {
         cmd /c "mklink `"$Link`" `"$Target`"" | Out-Null
     }
+
+    if ($LASTEXITCODE -ne 0) {
+        # Windows requires admin privileges to create symbolic links
+        # unless Developer Mode has been enabled.
+        throw "Failed to create symbolic link at $Link that points to $Target"
+    }
 }
 
 # Stage all artifacts
@@ -42,7 +49,12 @@ $Artifacts |% {
 
     if (-not (Test-Path $DestinationFolder)) { New-Item -ItemType Directory -Path $DestinationFolder | Out-Null }
     if (Test-Path -PathType Leaf $_.Source) { # skip folders
-        Create-SymbolicLink -Link (Join-Path $DestinationFolder $Name) -Target $_.Source
+        $TargetPath = Join-Path $DestinationFolder $Name
+        if ($AvoidSymbolicLinks) {
+            Copy-Item -Path $_.Source -Destination $TargetPath
+        } else {
+            Create-SymbolicLink -Link $TargetPath -Target $_.Source
+        }
     }
 }
 

@@ -2,11 +2,14 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace Formatters.MyTestNamespace
-{
-	using MsgPack = global::MessagePack;
+namespace MessagePack {
 
-	internal sealed class IMyTypeFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.IMyType>
+using MsgPack = global::MessagePack;
+
+partial class GeneratedMessagePackResolver
+{
+private partial class MyTestNamespace { 
+	internal sealed class IMyTypeFormatter: MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.IMyType>
 	{
 		private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
 		private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
@@ -88,4 +91,6 @@ namespace Formatters.MyTestNamespace
 			return result;
 		}
 	}
+}}
+
 }

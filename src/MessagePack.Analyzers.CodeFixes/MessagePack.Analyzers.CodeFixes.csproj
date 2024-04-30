@@ -2,43 +2,16 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>MessagePack.Analyzers</RootNamespace>
+    <IsPackable>false</IsPackable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <PackageId>MessagePackAnalyzer</PackageId>
+    <IsAnalyzerProject>true</IsAnalyzerProject>
 
-    <Description>Analyzer of MessagePack for C#, verify rule for [MessagePackObject] and code fix for [Key].</Description>
-    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Analyzer</PackageTags>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
-    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackBuildOutputs</TargetsForTfmSpecificContentInPackage>
-    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
-    <IncludeSymbols>false</IncludeSymbols>
-    <DevelopmentDependency>true</DevelopmentDependency>
-
-    <MicrosoftCodeAnalysisVersion>$(CodeAnalysisVersionForUnity)</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisVersion>$(MicrosoftCodeAnalysisVersion)</MicrosoftCodeAnalysisVersion>
   </PropertyGroup>
-  <ItemGroup>
-    <Content Include="tools\*.ps1" Pack="true" PackagePath="tools\" />
-    <None Remove="tools\*.ps1" />
-  </ItemGroup>
-  <ItemDefinitionGroup>
-    <PackageReference>
-      <!-- We need this, even with SuppressDependenciesWhenPacking=true because the
-           dependencies will otherwise show up as dependencies in packages built by projects
-           that reference this one. Probably due to transitive pinning. -->
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-  </ItemDefinitionGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MessagePack.Analyzers\MessagePack.Analyzers.csproj" />
+    <ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" />
   </ItemGroup>
-  <Target Name="PackBuildOutputs" DependsOnTargets="ResolveProjectReferences;SatelliteDllsProjectOutputGroup;DebugSymbolsProjectOutputGroup">
-    <ItemGroup>
-      <TfmSpecificPackageFile Include="$(TargetPath)" PackagePath="analyzers\cs\" />
-      <TfmSpecificPackageFile Include="@(SatelliteDllsProjectOutputGroupDependency)" PackagePath="analyzers\cs\%(SatelliteDllsProjectOutputGroupDependency.DestinationSubDirectory)" Condition=" '%(SatelliteDllsProjectOutputGroupDependency.DestinationSubDirectory)' != '' " />
-      <TfmSpecificPackageFile Include="@(SatelliteDllsProjectOutputGroupOutput->'%(FinalOutputPath)')" PackagePath="analyzers\cs\%(SatelliteDllsProjectOutputGroupOutput.Culture)\" />
-      <TfmSpecificPackageFile Include="%(_ResolvedProjectReferencePaths.Identity)" PackagePath="analyzers\cs\" />
-    </ItemGroup>
-  </Target>
 </Project>

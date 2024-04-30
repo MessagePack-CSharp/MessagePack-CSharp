@@ -1,24 +1,2 @@
 <Project>
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>11</LangVersion>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AnalyzerLanguage>cs</AnalyzerLanguage>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="IsExternalInit" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
-    <PackageReference Include="Required" PrivateAssets="all" />
-    <PackageReference Include="System.CodeDom" PrivateAssets="all" />
-    <PackageReference Include="System.Text.Json" PrivateAssets="all" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Source generators need the analyzers assembly at compile-time and runtime.
-         At runtime we need it added as an analyzer, so we must also depend on the project that produces the nuget package. -->
-    <ProjectReference Include="..\MessagePack.Analyzers\MessagePack.Analyzers.csproj" PrivateAssets="all" />
-    <ProjectReference Include="..\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj" PrivateAssets="none" />
-  </ItemGroup>
 </Project>

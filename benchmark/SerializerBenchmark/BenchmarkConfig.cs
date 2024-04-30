@@ -27,7 +27,7 @@ namespace Benchmark
             Job baseConfig = Job.ShortRun.WithIterationCount(1).WithWarmupCount(1);
 
             // Add(baseConfig.With(Runtime.Clr).With(Jit.RyuJit).With(Platform.X64));
-            this.AddJob(baseConfig.WithRuntime(CoreRuntime.Core31).WithJit(Jit.RyuJit).WithPlatform(Platform.X64));
+            this.AddJob(baseConfig.WithEnvironmentVariable(new("DOTNET_TieredPGO", "0")).WithRuntime(CoreRuntime.Core80).WithJit(Jit.RyuJit).WithPlatform(Platform.X64));
 
             this.AddExporter(MarkdownExporter.GitHub);
             this.AddExporter(CsvExporter.Default);

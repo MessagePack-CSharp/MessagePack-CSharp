@@ -3,9 +3,17 @@
 
 using MessagePack;
 using Microsoft.CodeAnalysis;
+using VerifyCS = CSharpSourceGeneratorVerifier<MessagePack.SourceGenerator.MessagePackGenerator>;
 
 public class GenericsFormatterTests
 {
+    private readonly ITestOutputHelper testOutputHelper;
+
+    public GenericsFormatterTests(ITestOutputHelper testOutputHelper)
+    {
+        this.testOutputHelper = testOutputHelper;
+    }
+
     [Fact]
     public async Task NullableFormatter()
     {
@@ -33,7 +41,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -58,7 +66,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -82,7 +90,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -120,7 +128,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -166,7 +174,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -198,7 +206,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -233,7 +241,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -270,7 +278,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -293,7 +301,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -315,7 +323,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -346,7 +354,7 @@ namespace TempProject
     public interface IMyInterface {}
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -368,7 +376,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -399,7 +407,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -426,7 +434,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
     [Fact]
@@ -445,6 +453,9 @@ namespace TempProject
         [Key(0)]
         public T Content { get; set; }
     }
+
+    [GeneratedMessagePackResolver]
+    partial class MyResolver { }
 }
 """;
 

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <!-- https://learn.microsoft.com/nuget/consume-packages/central-package-management -->
   <PropertyGroup>
@@ -7,12 +8,9 @@
     <BenchmarkDotNetVersion>0.13.12</BenchmarkDotNetVersion>
 
     <!-- https://learn.microsoft.com/en-us/visualstudio/extensibility/roslyn-version-support?view=vs-2022 -->
-    <MicrosoftCodeAnalysisVersion>4.3.0</MicrosoftCodeAnalysisVersion>
-    <MicrosoftCodeAnalysisVersion Condition="'$(IsAnalyzerProject)'!='true'">4.3.0</MicrosoftCodeAnalysisVersion>
-    <MicrosoftCodeAnalysisTestingVersion>1.1.2-beta1.23509.1</MicrosoftCodeAnalysisTestingVersion>
-
-    <!-- Unity 2021.3 has Roslyn 3.8.0 (https://docs.unity3d.com/Manual/roslyn-analyzers.html) -->
-    <CodeAnalysisVersionForUnity>3.8.0</CodeAnalysisVersionForUnity>
+    <MicrosoftCodeAnalysisVersion>4.8.0</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisVersion Condition="'$(IsAnalyzerProject)'=='true'">4.3.0</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisTestingVersion>1.1.2-beta1.24121.1</MicrosoftCodeAnalysisTestingVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet.Diagnostics.Windows" Version="$(BenchmarkDotNetVersion)" />
@@ -27,22 +25,19 @@
     <PackageVersion Include="MessagePack" Version="2.1.90" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
-    <PackageVersion Include="Microsoft.Build.Framework" Version="16.5.0" ExcludeAssets="runtime" />
-    <PackageVersion Include="Microsoft.Build.Locator" Version="1.5.5" />
-    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="16.5.0" />
-    <PackageVersion Include="Microsoft.Build" Version="16.5.0" ExcludeAssets="runtime" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" version="3.3.4" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Common" version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" Version="$(MicrosoftCodeAnalysisTestingVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing.XUnit" Version="$(MicrosoftCodeAnalysisTestingVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" version="$(MicrosoftCodeAnalysisVersion)" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" PrivateAssets="all" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.ResxSourceGenerator" Version="3.11.0-beta1.24122.1" />
     <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic.CodeFix.Testing.XUnit" Version="$(MicrosoftCodeAnalysisTestingVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces" version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(MicrosoftCodeAnalysisVersion)" />
-    <PackageVersion Include="Microsoft.NET.StringTools" Version="17.8.3" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageVersion Include="Microsoft.NET.StringTools" Version="17.9.5" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
     <PackageVersion Include="Microsoft.NETCore.Portable.Compatibility" Version="1.0.1" />
     <PackageVersion Include="Moq" Version="4.20.70" />
     <PackageVersion Include="MsgPack.Cli" Version="1.0.1" />
@@ -54,7 +49,7 @@
     <PackageVersion Include="NUnit3TestAdapter" Version="4.5.0" />
     <PackageVersion Include="protobuf-net" Version="3.2.30" />
     <PackageVersion Include="RandomFixtureKit" Version="1.0.1" />
-    <PackageVersion Include="ReactiveProperty" Version="9.3.4" />
+    <PackageVersion Include="ReactiveProperty" Version="9.5.0" />
     <PackageVersion Include="Required" Version="1.0.0" />
     <PackageVersion Include="Sigil" version="5.0.0" />
     <PackageVersion Include="SpanJson" Version="4.0.1" />
@@ -69,29 +64,22 @@
     <PackageVersion Include="System.ValueTuple" Version="4.5.0" />
     <PackageVersion Include="Utf8Json" Version="1.3.7" />
     <PackageVersion Include="Xunit.Combinatorial" Version="1.6.24" />
-    <PackageVersion Include="xunit.runner.console" Version="2.6.5" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.6" />
+    <PackageVersion Include="xunit.runner.console" Version="2.7.0" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.7" />
     <PackageVersion Include="Xunit.SkippableFact" Version="1.4.13" />
-    <PackageVersion Include="xunit" Version="2.4.2" />
+    <PackageVersion Include="xunit" Version="2.7.0" />
     <PackageVersion Include="ZeroFormatter" Version="1.6.4" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsAnalyzerProject)'=='true'">
     <PackageVersion Update="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
     <PackageVersion Update="System.Collections.Immutable" Version="6.0.0" />
-    <PackageVersion Update="System.Memory" Version="4.5.4" />
+    <PackageVersion Update="System.Memory" Version="4.5.5" />
     <PackageVersion Update="System.Reflection.Metadata" Version="6.0.0" />
     <PackageVersion Update="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
     <PackageVersion Update="System.Text.Json" Version="6.0.0" />
   </ItemGroup>
-  <ItemGroup Condition="'$(MicrosoftCodeAnalysisVersion)'=='$(CodeAnalysisVersionForUnity)'">
-    <!-- These versions carefully chosen to support Unity. -->
-    <PackageVersion Update="System.CodeDom" Version="5.0.0" />
-    <PackageVersion Update="System.Collections.Immutable" Version="5.0.0" />
-    <PackageVersion Update="System.Text.Json" Version="5.0.0" />
-  </ItemGroup>
   <ItemGroup>
     <GlobalPackageReference Include="CSharpIsNullAnalyzer" Version="0.1.495" />
-    <GlobalPackageReference Include="DotNetAnalyzers.DocumentationAnalyzers" Version="1.0.0-beta.59" />
     <GlobalPackageReference Include="Nerdbank.GitVersioning" Version="3.6.133" />
     <GlobalPackageReference Include="Nullable" Version="1.3.1" />
     <GlobalPackageReference Include="StyleCop.Analyzers.Unstable" Version="1.2.0.556" />

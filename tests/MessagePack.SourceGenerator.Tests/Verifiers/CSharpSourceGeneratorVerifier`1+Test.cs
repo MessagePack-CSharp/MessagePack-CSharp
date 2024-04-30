@@ -12,33 +12,31 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Json;
 using MessagePack;
-using MessagePack.Analyzers;
 using MessagePack.SourceGenerator;
+using MessagePack.SourceGenerator.Analyzers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
-using AnalyzerOptions = MessagePack.Analyzers.CodeAnalysis.AnalyzerOptions;
+using Microsoft.CodeAnalysis.Text;
+using AnalyzerOptions = MessagePack.SourceGenerator.CodeAnalysis.AnalyzerOptions;
 
-public static partial class CSharpSourceGeneratorVerifier
+internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
+    where TSourceGenerator : new()
 {
-    public class Test : CSharpSourceGeneratorTest<EmptySourceGeneratorProvider, XUnitVerifier>
+    internal class Test : CSharpSourceGeneratorTest<TSourceGenerator, DefaultVerifier>
     {
         private readonly string? testFile;
         private readonly string testMethod;
-        private AnalyzerOptions options = AnalyzerOptions.Default;
 
-        public Test([CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
+        public Test(ReferencesSet references = ReferencesSet.MessagePack, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
             this.CompilerDiagnostics = CompilerDiagnostics.Warnings;
-
             this.ReferenceAssemblies = ReferenceAssemblies.Net.Net80;
-            this.TestState.AdditionalReferences.Add(typeof(MessagePackObjectAttribute).Assembly);
-            this.TestState.AdditionalReferences.Add(typeof(MessagePackSerializer).Assembly);
+            this.TestState.AdditionalReferences.AddRange(ReferencesHelper.GetReferences(references));
 
             this.testFile = testFile;
             this.testMethod = testMethod;
@@ -48,35 +46,60 @@ public static partial class CSharpSourceGeneratorVerifier
 #endif
         }
 
-        public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.Latest;
+        public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.CSharp9;
 
-        public AnalyzerOptions Options
+        public static Task RunDefaultAsync(ITestOutputHelper logger, string testSource, AnalyzerOptions? options = null, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
-            get => this.options;
-            set
-            {
-                this.options = value;
-                const string filename = "/.globalconfig";
-                if (this.TestState.AnalyzerConfigFiles.FirstOrDefault(t => t.filename == filename) is { } tuple)
-                {
-                    this.TestState.AnalyzerConfigFiles.Remove(tuple);
-                }
+            options ??= new();
 
-                this.TestState.AnalyzerConfigFiles.Add((filename, ConstructGlobalConfigString(value)));
-                this.TestState.AdditionalFiles.Add(($"./{AnalyzerOptions.JsonOptionsFileName}", ConstructConfigJsonString(value)));
-            }
+            // TODO: throw if these attribute collections are non-empty. Tests should use the attributes themselves.
+            string assumedFormattable = string.Join(string.Empty, options.AssumedFormattableTypes.Select(t => $"[assembly: MessagePackAssumedFormattable(typeof({t.Name.GetQualifiedName(Qualifiers.Namespace)}))]" + Environment.NewLine));
+            string knownFormatters = string.Join(string.Empty, options.KnownFormatters.Select(t => $"[assembly: MessagePackKnownFormatter(typeof({t.Name.GetQualifiedName(Qualifiers.Namespace)}))]" + Environment.NewLine));
+
+            string resolverPartialClassSource = $$"""
+                using MessagePack;
+
+                {{assumedFormattable}}
+                {{knownFormatters}}
+
+                namespace {{options.Generator.Resolver.Namespace}} {
+                    [GeneratedMessagePackResolver(UseMapMode = {{(options.Generator.Formatters.UsesMapMode ? "true" : "false")}})]
+                    partial class {{options.Generator.Resolver.Name}} { }
+                }
+                """;
+            return RunDefaultAsync(logger, testSource, resolverPartialClassSource, testFile, testMethod);
         }
 
-        public static async Task RunDefaultAsync(string testSource, AnalyzerOptions? options = null, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
+        private static async Task RunDefaultAsync(ITestOutputHelper logger, string testSource, string resolverPartialClassSource, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
-            await new Test(testFile, testMethod)
+            Test test = new(testFile: testFile, testMethod: testMethod)
             {
                 TestState =
                 {
-                    Sources = { testSource },
+                    Sources = { testSource, resolverPartialClassSource },
                 },
-                Options = options ?? AnalyzerOptions.Default,
-            }.RunAsync();
+            };
+
+            try
+            {
+                await test.RunAsync();
+            }
+            finally
+            {
+                foreach (var generatedSource in test.TestState.GeneratedSources)
+                {
+                    logger.WriteLine("--------------------------------------------------------------");
+                    logger.WriteLine(generatedSource.filename);
+                    logger.WriteLine("--------------------------------------------------------------");
+                    int lineNumber = 0;
+                    foreach (TextLine line in generatedSource.content.Lines)
+                    {
+                        logger.WriteLine($"{++lineNumber,6}: {generatedSource.content.GetSubText(line.Span)}");
+                    }
+
+                    logger.WriteLine("--------------------------------------------------------------");
+                }
+            }
         }
 
         public Test AddGeneratedSources()
@@ -105,7 +128,7 @@ public static partial class CSharpSourceGeneratorVerifier
 
                     using var reader = new StreamReader(resourceStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: true);
                     var name = resourceName.Substring(expectedPrefix.Length);
-                    project.GeneratedSources.Add((typeof(MessagePackGenerator), name, reader.ReadToEnd()));
+                    project.GeneratedSources.Add((typeof(TSourceGenerator), name, reader.ReadToEnd()));
                 }
             }
 
@@ -133,7 +156,7 @@ public static partial class CSharpSourceGeneratorVerifier
 
         protected override IEnumerable<Type> GetSourceGenerators()
         {
-            yield return typeof(MessagePackGenerator);
+            yield return typeof(TSourceGenerator);
         }
 
         protected override IEnumerable<DiagnosticAnalyzer> GetDiagnosticAnalyzers()
@@ -200,27 +223,6 @@ public static partial class CSharpSourceGeneratorVerifier
             string filePath = Path.Combine(resourceDirectory, name);
             Directory.CreateDirectory(resourceDirectory);
             File.WriteAllText(filePath, tree.GetText().ToString(), tree.Encoding);
-        }
-
-        private static string ConstructConfigJsonString(AnalyzerOptions options)
-        {
-            string json = JsonSerializer.Serialize(
-                options,
-                new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                });
-            return json;
-        }
-
-        private static string ConstructGlobalConfigString(AnalyzerOptions options)
-        {
-            StringBuilder globalConfigBuilder = new();
-            globalConfigBuilder.AppendLine("is_global = true");
-            globalConfigBuilder.AppendLine();
-
-            return globalConfigBuilder.ToString();
         }
     }
 }

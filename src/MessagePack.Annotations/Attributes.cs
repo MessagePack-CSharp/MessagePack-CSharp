@@ -17,6 +17,20 @@ namespace MessagePack
         {
             this.KeyAsPropertyName = keyAsPropertyName;
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the source generator should <em>not</em>
+        /// generate a formatter for this type at compile-time.
+        /// </summary>
+        /// <remarks>
+        /// By default, source generators will generate a formatter for every type that is annotated with
+        /// this attribute to improve startup performance.
+        /// However if this leads to malfunctions during code generation or at runtime,
+        /// it can be disabled by setting this property to <see langword="true"/>.
+        /// When no precompiled formatter is found at runtime, the <c>DynamicObjectResolver</c>
+        /// will generate a formatter at runtime instead.
+        /// </remarks>
+        public bool SuppressSourceGeneration { get; set; }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = true)]

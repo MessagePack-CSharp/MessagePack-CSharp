@@ -5,12 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PublicMessagePackGeneratedResolver>true</PublicMessagePackGeneratedResolver>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Using Include="$(RootNamespace)"/>
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

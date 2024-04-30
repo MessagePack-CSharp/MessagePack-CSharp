@@ -6,9 +6,17 @@ public class UnionSerializationInfoTests
     [Fact]
     public void Equals_ByValue()
     {
-        UnionSerializationInfo info1a = new(null, "name", "full.name", new UnionSubTypeInfo[0]);
-        UnionSerializationInfo info1b = new(null, "name", "full.name", new UnionSubTypeInfo[0]);
-        UnionSerializationInfo info2 = new(null, "name", "full.name", new UnionSubTypeInfo[] { new(1, "String") });
+        UnionSerializationInfo info1a = new()
+        {
+            DataType = new("full", "name"),
+            Formatter = new("some", "other"),
+            SubTypes = ImmutableArray.Create(new UnionSubTypeInfo(1, "hey")),
+        };
+        UnionSerializationInfo info1b = info1a with
+        {
+            SubTypes = ImmutableArray.Create(new UnionSubTypeInfo(1, "hey")),
+        };
+        UnionSerializationInfo info2 = info1a with { SubTypes = ImmutableArray.Create(new UnionSubTypeInfo(1, "String")) };
 
         Assert.Equal(info1a, info1b);
         Assert.NotEqual(info1a, info2);

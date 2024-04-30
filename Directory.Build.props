@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -5,8 +6,7 @@
     <BaseIntermediateOutputPath>$(RepoRootPath)obj\$([MSBuild]::MakeRelative($(RepoRootPath), $(MSBuildProjectDirectory)))\</BaseIntermediateOutputPath>
     <BaseOutputPath Condition=" '$(BaseOutputPath)' == '' ">$(RepoRootPath)bin\$(MSBuildProjectName)\</BaseOutputPath>
     <PackageOutputPath>$(RepoRootPath)bin\Packages\$(Configuration)\</PackageOutputPath>
-    <LangVersion>10</LangVersion>
-    <LangVersion Condition=" '$(TargetFramework)' == 'net8.0' ">12</LangVersion>
+    <LangVersion>12</LangVersion>
     <AnalysisLevel>latest</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

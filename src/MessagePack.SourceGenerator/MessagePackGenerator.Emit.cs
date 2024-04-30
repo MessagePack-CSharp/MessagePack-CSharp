@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text;
-using MessagePack.Analyzers.CodeAnalysis;
 using MessagePack.SourceGenerator.Transforms;
 using Microsoft.CodeAnalysis;
 
@@ -33,14 +32,12 @@ public partial class MessagePackGenerator
         {
             EnumTemplate transform = new(options, info);
             AddTransform(transform.TransformText(), transform.FileName);
-            TransferDiagnostics(info);
         }
 
         foreach (UnionSerializationInfo info in model.UnionInfos)
         {
             UnionTemplate transform = new(options, info);
             AddTransform(transform.TransformText(), transform.FileName);
-            TransferDiagnostics(info);
         }
 
         foreach (ObjectSerializationInfo info in model.ObjectInfos)
@@ -49,15 +46,6 @@ public partial class MessagePackGenerator
                 ? new StringKeyFormatterTemplate(options, info)
                 : new FormatterTemplate(options, info);
             AddTransform(transform.TransformText(), transform.FileName);
-            TransferDiagnostics(info);
-        }
-
-        void TransferDiagnostics(IResolverRegisterInfo info)
-        {
-            foreach (Diagnostic diagnostic in info.Diagnostics)
-            {
-                context.ReportDiagnostic(diagnostic);
-            }
         }
 
         void AddTransform(string transformOutput, string uniqueFileName)
@@ -80,13 +68,13 @@ public partial class MessagePackGenerator
         AnalyzerOptions options = model.Options;
         StringBuilder sb = new();
 
-        IResolverRegisterInfo[] registerInfos = model.GenericInfos
-            .Where(x => !x.IsOpenGenericType)
-            .Cast<IResolverRegisterInfo>()
-            .Concat(model.EnumInfos)
-            .Concat(model.UnionInfos)
-            .Concat(model.ObjectInfos.Where(x => !x.IsOpenGenericType))
-            .ToArray();
+        ResolverRegisterInfo[] registerInfos = [
+            .. model.GenericInfos,
+            .. model.EnumInfos,
+            .. model.UnionInfos,
+            .. model.ObjectInfos,
+            .. model.CustomFormatterInfos,
+        ];
         ResolverTemplate resolverTemplate = new(options, registerInfos);
         sb.Append(FileHeader);
         sb.Append(resolverTemplate.TransformText());

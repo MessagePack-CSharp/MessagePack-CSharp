@@ -4,6 +4,7 @@ parameters:
   default:
     vmImage: windows-2022
 - name: includeMacOS
+  type: boolean
 - name: RunTests
   type: boolean
   default: true
@@ -17,7 +18,7 @@ jobs:
     clean: true
   - template: install-dependencies.yml
 
-  - script: dotnet tool run nbgv cloud -c
+  - script: dotnet nbgv cloud -c
     displayName: ⚙ Set build number
 
   - template: dotnet.yml
@@ -35,6 +36,8 @@ jobs:
   - template: dotnet.yml
     parameters:
       RunTests: ${{ parameters.RunTests }}
+  - script: dotnet format --verify-no-changes --no-restore
+    displayName: 💅 Verify formatted code
 
 - job: macOS
   condition: ${{ parameters.includeMacOS }}
