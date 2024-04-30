@@ -20,11 +20,6 @@ Alternatively you may build from the command line using `msbuild.exe` or:
 
     dotnet build /p:platform=NoVSIX
 
-## Unity
-
-Unity Project requires several dependency DLL's. At first, run `copy_assets.bat` under `src\MessagePack.UnityClient`.
-Then open that directory in the Unity Editor.
-
 ## Where to find our CI feed
 
 Once a change is in a shipping branch (e.g. `v1.8`, `v2.0`, `master`), our CI will build it and push the built package
