@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
@@ -12,32 +13,40 @@ namespace MessagePack.SourceGenerator.CodeAnalysis;
 /// </summary>
 public record QualifiedTypeName : IComparable<QualifiedTypeName>
 {
+    private QualifiedTypeName? nestingType;
+    private string? @namespace;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="QualifiedTypeName"/> class.
     /// </summary>
     /// <param name="symbol">The symbol this instance will identify.</param>
     public QualifiedTypeName(ITypeSymbol symbol)
     {
+        this.Kind = symbol.TypeKind;
+        this.IsRecord = symbol.IsRecord;
+        ITypeSymbol symbolToConsider = symbol;
         if (symbol is IArrayTypeSymbol arrayType)
         {
             this.ArrayRank = arrayType.Rank;
-            this.Namespace = arrayType.ElementType.ContainingNamespace.GetFullNamespaceName();
-            this.Name = arrayType.ElementType.Name;
-            this.NestingTypes = GetNestingTypes(arrayType.ElementType);
+            symbolToConsider = arrayType.ElementType;
+        }
+
+        this.Name = symbolToConsider.Name;
+        if (symbolToConsider.ContainingType is not null)
+        {
+            this.NestingType = new(symbolToConsider.ContainingType);
         }
         else
         {
-            this.Namespace = symbol.ContainingNamespace.GetFullNamespaceName();
-            this.Name = symbol.Name;
-            this.NestingTypes = GetNestingTypes(symbol);
+            this.Namespace = symbolToConsider.ContainingNamespace.GetFullNamespaceName();
         }
 
-        this.TypeParameters = CodeAnalysisUtilities.GetTypeParameters(symbol);
+        this.TypeParameters = CodeAnalysisUtilities.GetTypeParameters(symbolToConsider);
     }
 
-    /// <inheritdoc cref="QualifiedTypeName(string?, string?, string, ImmutableArray{string})"/>
-    public QualifiedTypeName(string? @namespace, string name, ImmutableArray<string>? typeParameters = default)
-        : this(@namespace, nestingTypes: null, name, typeParameters ?? ImmutableArray<string>.Empty)
+    /// <inheritdoc cref="QualifiedTypeName(string?, QualifiedTypeName?, TypeKind, string, ImmutableArray{string})"/>
+    public QualifiedTypeName(string? @namespace, TypeKind kind, string name, ImmutableArray<string>? typeParameters = default)
+        : this(@namespace, nestingType: null, kind, name, typeParameters ?? ImmutableArray<string>.Empty)
     {
     }
 
@@ -45,31 +54,76 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
     /// Initializes a new instance of the <see cref="QualifiedTypeName"/> class.
     /// </summary>
     /// <param name="namespace">The full namespace of the type. Must not be empty, but may be <see langword="null" />.</param>
-    /// <param name="nestingTypes">All the nesting types that contain the target type.</param>
+    /// <param name="nestingType">The type that contains this one, if any.</param>
+    /// <param name="kind">The C# keyword that identifies the kind of the type (e.g. "class", "struct").</param>
     /// <param name="name">The simple name of the type.</param>
     /// <param name="typeParameters">The generic type identifiers.</param>
-    public QualifiedTypeName(string? @namespace, string? nestingTypes, string name, ImmutableArray<string> typeParameters)
+    public QualifiedTypeName(string? @namespace, QualifiedTypeName? nestingType, TypeKind kind, string name, ImmutableArray<string> typeParameters)
     {
         if (@namespace == string.Empty)
         {
             throw new ArgumentException("May be null but not empty.", nameof(@namespace));
         }
 
-        if (nestingTypes == string.Empty)
+        if (@namespace is not null && nestingType is not null)
         {
-            throw new ArgumentException("May be null but not empty.", nameof(nestingTypes));
+            throw new ArgumentException("A type cannot have both a namespace and a containing type.", nameof(@namespace));
         }
 
         this.Namespace = @namespace;
-        this.NestingTypes = nestingTypes;
+        this.NestingType = nestingType;
+        this.Kind = kind;
         this.Name = name;
         this.TypeParameters = typeParameters;
     }
 
-    public string? Namespace { get; init; }
+    public string? Namespace
+    {
+        get => this.@namespace;
+        init
+        {
+            if (value is not null && this.NestingType is not null)
+            {
+                throw new InvalidOperationException("Namespace cannot be specified while NestingType is not null.");
+            }
 
-    public string? NestingTypes { get; init; }
+            @namespace = value;
+        }
+    }
 
+    public QualifiedTypeName? NestingType
+    {
+        get => this.nestingType;
+        init
+        {
+            if (value is not null && this.Namespace is not null)
+            {
+                throw new InvalidOperationException("Nesting type cannot be specified while Namespace is not null.");
+            }
+
+            nestingType = value;
+        }
+    }
+
+    /// <summary>
+    /// Gets the kind of type.
+    /// </summary>
+    public TypeKind Kind { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the type is a record type.
+    /// </summary>
+    public bool IsRecord { get; init; }
+
+    /// <summary>
+    /// Gets the access modifier that should accompany any declaration of this type, if any.
+    /// </summary>
+    public Accessibility? AccessModifier { get; init; }
+
+    /// <summary>
+    /// Gets the simple name of the type (unqualified by namespace or containing types),
+    /// and without any generic type parameters.
+    /// </summary>
     public string Name { get; init; }
 
     public ImmutableArray<string> TypeParameters { get; init; }
@@ -84,21 +138,34 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
     public string GetQualifiedName(Qualifiers qualifier = Qualifiers.GlobalNamespace, GenericParameterStyle genericStyle = GenericParameterStyle.Identifiers)
     {
         StringBuilder builder = new();
-        if (qualifier is Qualifiers.GlobalNamespace)
+
+        // No type should have both a namespace and a containing type.
+        if (this.NestingType is not null && this.Namespace is not null)
         {
-            builder.Append("global::");
+            throw new InvalidOperationException("No type has both a namespace and containing type.");
         }
 
-        if (this.Namespace is not null && qualifier >= Qualifiers.Namespace)
+        if (this.NestingType is not null)
         {
-            builder.Append(this.Namespace);
-            builder.Append('.');
+            if (qualifier >= Qualifiers.ContainingTypes)
+            {
+                builder.Append(this.NestingType.GetQualifiedName(qualifier, genericStyle));
+                builder.Append('.');
+            }
         }
-
-        if (this.NestingTypes is not null && qualifier >= Qualifiers.ContainingTypes)
+        else
         {
-            builder.Append(this.NestingTypes);
-            builder.Append('.');
+            // Only add the global:: prefix if an alias prefix is not already present.
+            if (qualifier is Qualifiers.GlobalNamespace && this.Namespace?.Contains("::") is not true)
+            {
+                builder.Append("global::");
+            }
+
+            if (this.Namespace is not null && qualifier >= Qualifiers.Namespace)
+            {
+                builder.Append(this.Namespace);
+                builder.Append('.');
+            }
         }
 
         builder.Append(this.Name);
@@ -136,41 +203,7 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
         };
     }
 
-    private static string? GetNestingTypes(ITypeSymbol symbol)
-    {
-        string? nestingTypes = null;
-        INamedTypeSymbol? nestingType = symbol.ContainingType;
-        while (nestingType is not null)
-        {
-            nestingTypes = nestingTypes is null ? nestingType.Name : $"{nestingType.Name}.{nestingTypes}";
-            nestingType = nestingType.ContainingType;
-        }
-
-        return nestingTypes;
-    }
-
-    public int CompareTo(QualifiedTypeName other)
-    {
-        int result = StringComparer.Ordinal.Compare(this.Namespace, other.Namespace);
-        if (result != 0)
-        {
-            return result;
-        }
-
-        result = StringComparer.Ordinal.Compare(this.Name, other.Name);
-        if (result != 0)
-        {
-            return result;
-        }
-
-        result = StringComparer.Ordinal.Compare(this.NestingTypes, other.NestingTypes);
-        if (result != 0)
-        {
-            return result;
-        }
-
-        return StringComparer.Ordinal.Compare(this.Name, other.Name);
-    }
+    public int CompareTo(QualifiedTypeName other) => Compare(this, other);
 
     public virtual bool Equals(QualifiedTypeName? other)
     {
@@ -180,12 +213,60 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
         }
 
         return this.Namespace == other.Namespace &&
-               this.NestingTypes == other.NestingTypes &&
+               this.NestingType == other.NestingType &&
+               this.AccessModifier == other.AccessModifier &&
+               this.Kind == other.Kind &&
                this.Name == other.Name &&
                this.TypeParameters.SequenceEqual(other.TypeParameters);
     }
 
     public override int GetHashCode() => this.Name.GetHashCode();
+
+    public override string ToString() => this.GetQualifiedName(Qualifiers.Namespace);
+
+    private static int Compare(QualifiedTypeName? left, QualifiedTypeName? right)
+    {
+        if (left is null && right is null)
+        {
+            return 0;
+        }
+
+        if (left is null)
+        {
+            return -1;
+        }
+
+        if (right is null)
+        {
+            return 1;
+        }
+
+        int result = StringComparer.Ordinal.Compare(left.Namespace, right.Namespace);
+        if (result != 0)
+        {
+            return result;
+        }
+
+        result = StringComparer.Ordinal.Compare(left.Kind, right.Kind);
+        if (result != 0)
+        {
+            return result;
+        }
+
+        result = StringComparer.Ordinal.Compare(left.Name, right.Name);
+        if (result != 0)
+        {
+            return result;
+        }
+
+        result = Compare(left.NestingType, right.NestingType);
+        if (result != 0)
+        {
+            return result;
+        }
+
+        return StringComparer.Ordinal.Compare(left.Name, right.Name);
+    }
 }
 
 public enum GenericParameterStyle

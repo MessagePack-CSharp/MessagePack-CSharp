@@ -10,9 +10,9 @@ public sealed record UnionSerializationInfo : ResolverRegisterInfo
 {
     public required ImmutableArray<UnionSubTypeInfo> SubTypes { get; init; }
 
-    public static UnionSerializationInfo Create(INamedTypeSymbol dataType, ImmutableArray<UnionSubTypeInfo> subTypes)
+    public static UnionSerializationInfo Create(INamedTypeSymbol dataType, ImmutableArray<UnionSubTypeInfo> subTypes, ResolverOptions resolverOptions)
     {
-        ResolverRegisterInfo basicInfo = Create(dataType);
+        ResolverRegisterInfo basicInfo = Create(dataType, resolverOptions);
         return new UnionSerializationInfo
         {
             DataType = basicInfo.DataType,

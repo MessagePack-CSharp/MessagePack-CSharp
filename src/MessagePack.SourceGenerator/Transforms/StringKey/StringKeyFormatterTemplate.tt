@@ -5,14 +5,8 @@
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="MessagePack.SourceGenerator.CodeAnalysis" #>
 
-<# if (ResolverNamespace.Length > 0) { #>
-namespace <#= ResolverNamespace #> {
-<# } #>
-
 using MsgPack = global::MessagePack;
 
-partial class <#= ResolverName #>
-{
 <# var list = new List<ValueTuple<MemberSerializationInfo, byte[]>>();
 	foreach (var member in Info.Members) {
 		var binary = EmbedStringHelper.Utf8.GetBytes(member.StringKey);
@@ -20,8 +14,8 @@ partial class <#= ResolverName #>
 	}
 
 	bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members); #>
-<# using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { #>
-	<#= classVisibility #> sealed class <#= Info.Formatter.GetQualifiedName(Qualifiers.None) #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName() #>>
+<# using (this.EmitNestingTypesAndNamespaces(this.Write)) { #>
+	internal sealed class <#= Info.Formatter.GetQualifiedName(Qualifiers.None) #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName() #>>
 <# foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) {#>
 		where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# }#>
@@ -139,9 +133,5 @@ partial class <#= ResolverName #>
 			return ____result;
 		}
 	}
-<# } // close EmitClassesForNamespace #>
-}
 
-<# if (ResolverNamespace.Length > 0) { #>
-}
 <# } #>

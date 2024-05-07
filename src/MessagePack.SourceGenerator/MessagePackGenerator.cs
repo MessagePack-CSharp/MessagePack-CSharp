@@ -93,7 +93,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                 List<FullModel> modelPerType = new();
                 void Collect(ITypeSymbol typeSymbol)
                 {
-                    if (TypeCollector.Collect(s.Left.Right, options, referenceSymbols, reportAnalyzerDiagnostic: null, typeSymbol) is FullModel model)
+                    if (TypeCollector.Collect(s.Left.Right, options, referenceSymbols, reportAnalyzerDiagnostic: null, typeSymbol, ct) is FullModel model)
                     {
                         modelPerType.Add(model);
                     }

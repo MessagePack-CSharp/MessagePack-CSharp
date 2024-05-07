@@ -58,7 +58,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 				{
 					0 => new MsgPack::Formatters.ArrayFormatter<global::System.Int32>(),
 					1 => new MsgPack::Formatters.InterfaceEnumerableFormatter<global::System.Guid>(),
-					2 => new TempProject.WrapperFormatter<string>(),
+					2 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<string>(),
 					_ => null, // unreachable
 				};
 			}
@@ -66,7 +66,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return openKey switch
 				{
-					0 => global::System.Activator.CreateInstance(typeof(TempProject.WrapperFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					0 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<>).MakeGenericType(t.GenericTypeArguments)),
 					_ => null, // unreachable
 				};
 			}

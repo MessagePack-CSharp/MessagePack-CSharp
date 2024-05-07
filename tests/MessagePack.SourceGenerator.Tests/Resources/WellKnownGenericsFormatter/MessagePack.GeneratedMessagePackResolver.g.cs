@@ -54,7 +54,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 				{
 					0 => new MsgPack::Formatters.ValueTupleFormatter<int, string, long>(),
 					1 => new MsgPack::Formatters.ListFormatter<int>(),
-					2 => new TempProject.MyObjectFormatter(),
+					2 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter(),
 					_ => null, // unreachable
 				};
 			}

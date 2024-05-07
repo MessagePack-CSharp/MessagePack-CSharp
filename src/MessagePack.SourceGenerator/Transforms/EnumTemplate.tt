@@ -1,16 +1,11 @@
 ﻿<#@ template debug="false" hostspecific="false" linePragmas="false" language="C#" #>
 <#@ assembly name="System.Core" #>
 
-<# if (ResolverNamespace.Length > 0) { #>
-namespace <#= ResolverNamespace #> {
-<# } #>
-
 using MsgPack = global::MessagePack;
 
-partial class <#= ResolverName #>
-{
-<# using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { #>
-	<#= classVisibility #> sealed class <#= Info.Formatter.Name #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName() #>>
+<# using (this.EmitNestingTypesAndNamespaces(this.Write)) { #>
+
+	internal sealed class <#= Info.Formatter.Name #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName() #>>
 	{
 		public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.DataType.GetQualifiedName() #> value, MsgPack::MessagePackSerializerOptions options)
 		{
@@ -22,9 +17,5 @@ partial class <#= ResolverName #>
 			return (<#= Info.DataType.GetQualifiedName() #>)reader.Read<#= Info.UnderlyingTypeName #>();
 		}
 	}
-<# } #>
-}
 
-<# if (ResolverNamespace.Length > 0) { #>
-}
 <# } #>

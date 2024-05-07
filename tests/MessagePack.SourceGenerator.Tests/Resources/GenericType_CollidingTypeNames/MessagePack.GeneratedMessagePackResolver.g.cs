@@ -57,9 +57,9 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return closedKey switch
 				{
-					0 => new NS1.MyTypeFormatter<int>(),
-					1 => new NS2.MyTypeFormatter<int>(),
-					2 => new MyMessagePackObjectFormatter(),
+					0 => new global::MessagePack.GeneratedMessagePackResolver.NS1.MyTypeFormatter<int>(),
+					1 => new global::MessagePack.GeneratedMessagePackResolver.NS2.MyTypeFormatter<int>(),
+					2 => new global::MessagePack.GeneratedMessagePackResolver.MyMessagePackObjectFormatter(),
 					_ => null, // unreachable
 				};
 			}
@@ -67,8 +67,8 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return openKey switch
 				{
-					0 => global::System.Activator.CreateInstance(typeof(NS1.MyTypeFormatter<>).MakeGenericType(t.GenericTypeArguments)),
-					1 => global::System.Activator.CreateInstance(typeof(NS2.MyTypeFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					0 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.NS1.MyTypeFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					1 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.NS2.MyTypeFormatter<>).MakeGenericType(t.GenericTypeArguments)),
 					_ => null, // unreachable
 				};
 			}

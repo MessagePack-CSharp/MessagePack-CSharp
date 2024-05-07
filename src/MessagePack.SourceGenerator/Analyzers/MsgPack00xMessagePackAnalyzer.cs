@@ -19,6 +19,8 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string AOTLimitationsId = "MsgPack008";
     public const string CollidingFormattersId = "MsgPack009";
     public const string InaccessibleFormatterId = "MsgPack010";
+    public const string PartialTypeRequiredId = "MsgPack011";
+    public const string InaccessibleDataTypeId = "MsgPack012";
 
     internal const string Category = "Usage";
 
@@ -26,6 +28,9 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     internal const string KeyAttributeShortName = "KeyAttribute";
     internal const string IgnoreShortName = "IgnoreMemberAttribute";
     internal const string IgnoreDataMemberShortName = "IgnoreDataMemberAttribute";
+
+    private const string InvalidMessagePackObjectTitle = "MessagePackObject validation";
+    private const DiagnosticSeverity InvalidMessagePackObjectSeverity = DiagnosticSeverity.Error;
 
     internal static readonly DiagnosticDescriptor TypeMustBeMessagePackObject = new DiagnosticDescriptor(
         id: UseMessagePackObjectAttributeId,
@@ -69,51 +74,63 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
 
     internal static readonly DiagnosticDescriptor InvalidMessagePackObject = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
-        title: "MessagePackObject validation",
+        title: InvalidMessagePackObjectTitle,
         category: Category,
         messageFormat: "Invalid MessagePackObject definition: {0}", // details
         description: "Invalid MessagePackObject definition.",
-        defaultSeverity: DiagnosticSeverity.Error,
+        defaultSeverity: InvalidMessagePackObjectSeverity,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
     internal static readonly DiagnosticDescriptor BothStringAndIntKeyAreNull = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
-        title: "Attribute public members of MessagePack objects",
+        title: InvalidMessagePackObjectTitle,
         category: Category,
         messageFormat: "Both int and string keys are null: {0}.{1}", // type.Name + "." + item.Name
         description: "An int or string key must be supplied to the KeyAttribute.",
-        defaultSeverity: DiagnosticSeverity.Error,
+        defaultSeverity: InvalidMessagePackObjectSeverity,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
     internal static readonly DiagnosticDescriptor DoNotMixStringAndIntKeys = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
-        title: "Attribute public members of MessagePack objects",
+        title: InvalidMessagePackObjectTitle,
         category: Category,
         messageFormat: "All KeyAttribute arguments must be of the same type (either string or int)",
         description: "Use string or int keys consistently.",
-        defaultSeverity: DiagnosticSeverity.Error,
+        defaultSeverity: InvalidMessagePackObjectSeverity,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
     internal static readonly DiagnosticDescriptor KeysMustBeUnique = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
-        title: "Attribute public members of MessagePack objects",
+        title: InvalidMessagePackObjectTitle,
         category: Category,
         messageFormat: "All KeyAttribute arguments must be unique",
         description: "Each key must be unique.",
-        defaultSeverity: DiagnosticSeverity.Error,
+        defaultSeverity: InvalidMessagePackObjectSeverity,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
     internal static readonly DiagnosticDescriptor UnionAttributeRequired = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
-        title: "Attribute public members of MessagePack objects",
+        title: InvalidMessagePackObjectTitle,
         category: Category,
         messageFormat: "This type must carry a UnionAttribute",
         description: "A UnionAttribute is required on interfaces and abstract base classes used as serialized types.",
-        defaultSeverity: DiagnosticSeverity.Error,
+        defaultSeverity: InvalidMessagePackObjectSeverity,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
+
+    // This is important because [Key] on a private member still will not be serialized, which is very confusing until
+    // one realizes the type is serializing in map mode.
+    internal static readonly DiagnosticDescriptor KeyAnnotatedMemberInMapMode = new DiagnosticDescriptor(
+        id: InvalidMessagePackObjectId,
+        title: InvalidMessagePackObjectTitle,
+        category: Category,
+        messageFormat: "Types in map mode should not annotate members with KeyAttribute",
+        description: "When in map mode (by compilation setting or with [MessagePackObject(true)]), internal and public members are automatically included in serialization and should not be annotated with KeyAttribute.",
+        defaultSeverity: InvalidMessagePackObjectSeverity,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
@@ -207,13 +224,48 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleFormatterId));
 
+    internal static readonly DiagnosticDescriptor PartialTypeRequired = new(
+        id: PartialTypeRequiredId,
+        title: "Partial type required",
+        category: Category,
+        messageFormat: "Types with private, serializable members must be declared as partial",
+        description: "When a data type has serializable members that may only be accessible to the class itself (e.g. private or protected members), the type must be declared as partial to allow source generation of the formatter as a nested type.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(PartialTypeRequiredId));
+
+    internal static readonly DiagnosticDescriptor InaccessibleDataType = new(
+        id: InaccessibleDataTypeId,
+        title: "Internally accessible data type required",
+        category: Category,
+        messageFormat: "This MessagePack formattable type must have at least internal visibility",
+        description: "MessagePack serializable objects must be at least internally accessible so a source-generated formatter can access it.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleDataTypeId));
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         TypeMustBeMessagePackObject,
-        PublicMemberNeedsKey,
-        InvalidMessagePackObject,
         MessageFormatterMustBeMessagePackFormatter,
+        PublicMemberNeedsKey,
+        BaseTypeContainsUnattributedPublicMembers,
+        InvalidMessagePackObject,
+        BothStringAndIntKeyAreNull,
+        DoNotMixStringAndIntKeys,
+        KeysMustBeUnique,
+        UnionAttributeRequired,
+        KeyAnnotatedMemberInMapMode,
+        NoDeserializingConstructor,
+        DeserializingConstructorParameterTypeMismatch,
+        DeserializingConstructorParameterIndexMissing,
+        DeserializingConstructorParameterNameMissing,
+        DeserializingConstructorParameterNameDuplicate,
+        AotUnionAttributeRequiresTypeArg,
+        AotArrayRankTooHigh,
         CollidingFormatters,
-        InaccessibleFormatter);
+        InaccessibleFormatter,
+        PartialTypeRequired,
+        InaccessibleDataType);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -258,7 +310,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         {
             case TypeKind.Interface when declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.UnionAttribute)):
             case TypeKind.Class or TypeKind.Struct when declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.MessagePackObjectAttribute)):
-                TypeCollector.Collect(context.Compilation, options, typeReferences, context.ReportDiagnostic, declaredSymbol);
+                TypeCollector.Collect(context.Compilation, options, typeReferences, context.ReportDiagnostic, declaredSymbol, context.CancellationToken);
                 break;
         }
     }

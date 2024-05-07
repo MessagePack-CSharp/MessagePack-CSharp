@@ -51,7 +51,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return closedKey switch
 				{
-					0 => new TempProject.BarFormatter(),
+					0 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.BarFormatter(),
 					1 => new global::TempProject.MyMessagePackObject.MyFormatter(),
 					_ => null, // unreachable
 				};

@@ -55,8 +55,8 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 				{
 					0 => new MsgPack::Formatters.NullableFormatter<global::TempProject.MyEnum>(),
 					1 => new MsgPack::Formatters.ValueTupleFormatter<int, long>(),
-					2 => new TempProject.MyEnumFormatter(),
-					3 => new TempProject.MyObjectFormatter(),
+					2 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyEnumFormatter(),
+					3 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter(),
 					_ => null, // unreachable
 				};
 			}

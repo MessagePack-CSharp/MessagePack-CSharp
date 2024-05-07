@@ -82,7 +82,11 @@ public class Foo
 }
 ";
 
-        await VerifyCS.VerifyAnalyzerAsync(input);
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+        }.RunAsync();
     }
 
     [Fact]
@@ -108,7 +112,12 @@ public class Foo
 }
 ";
 
-        await VerifyCS.VerifyCodeFixAsync(input, output);
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+        }.RunAsync();
     }
 
     [Fact]
@@ -312,6 +321,7 @@ public class Bar : Foo
             {
                 Sources = { output1, output2 },
             },
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
         }.RunAsync();
     }
 }
