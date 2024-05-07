@@ -18,7 +18,6 @@
     <PackageReference Include="MsgPack.Cli" />
     <PackageReference Include="protobuf-net" />
     <PackageReference Include="SpanJson" />
-    <PackageReference Include="System.Text.Json" />
     <PackageReference Include="Utf8Json" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="Newtonsoft.Json.Bson" />

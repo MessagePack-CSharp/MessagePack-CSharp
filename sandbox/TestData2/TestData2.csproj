@@ -6,7 +6,6 @@
     <PackageReference Include="MessagePack" />
     <PackageReference Include="IsExternalInit" />
     <PackageReference Include="System.Threading.Tasks.Extensions" />
-    <PackageReference Include="System.ValueTuple" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="System.Collections.Generic" />
