@@ -42,7 +42,7 @@ namespace MessagePack.Internal
 
 #if NETFRAMEWORK
 
-        public AssemblyBuilder Save()
+        internal AssemblyBuilder Save()
         {
             this.assemblyBuilder.Save(this.moduleName + ".dll");
             return this.assemblyBuilder;

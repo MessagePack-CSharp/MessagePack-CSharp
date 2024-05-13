@@ -4,9 +4,7 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
-
     <BenchmarkDotNetVersion>0.13.12</BenchmarkDotNetVersion>
-
     <!-- https://learn.microsoft.com/en-us/visualstudio/extensibility/roslyn-version-support?view=vs-2022 -->
     <MicrosoftCodeAnalysisVersion>4.8.0</MicrosoftCodeAnalysisVersion>
     <MicrosoftCodeAnalysisVersion Condition="'$(IsAnalyzerProject)'=='true'">4.3.0</MicrosoftCodeAnalysisVersion>
@@ -24,7 +22,6 @@
     <PackageVersion Include="Jil" version="2.17.0" />
     <PackageVersion Include="MessagePack" Version="2.1.90" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" version="3.3.4" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Common" version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" Version="$(MicrosoftCodeAnalysisTestingVersion)" />
@@ -52,16 +49,7 @@
     <PackageVersion Include="ReactiveProperty" Version="9.5.0" />
     <PackageVersion Include="Required" Version="1.0.0" />
     <PackageVersion Include="Sigil" version="5.0.0" />
-    <PackageVersion Include="SpanJson" Version="4.0.1" />
-    <PackageVersion Include="System.CodeDom" Version="8.0.0" />
-    <PackageVersion Include="System.Collections.Immutable" Version="8.0.0" />
-    <PackageVersion Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
-    <PackageVersion Include="System.Reflection.Emit" Version="4.7.0" />
-    <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
-    <PackageVersion Include="System.Text.Json" Version="6.0.0" />
-    <PackageVersion Include="System.Text.Encodings.Web" Version="6.0.0" />
-    <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
-    <PackageVersion Include="System.ValueTuple" Version="4.5.0" />
+    <PackageVersion Include="SpanJson" Version="4.0.0" />
     <PackageVersion Include="Utf8Json" Version="1.3.7" />
     <PackageVersion Include="Xunit.Combinatorial" Version="1.6.24" />
     <PackageVersion Include="xunit.runner.console" Version="2.7.0" />
@@ -70,13 +58,27 @@
     <PackageVersion Include="xunit" Version="2.7.0" />
     <PackageVersion Include="ZeroFormatter" Version="1.6.4" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net472'">
+    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
+    <PackageVersion Include="System.CodeDom" Version="6.0.0" />
+    <PackageVersion Include="System.Collections.Immutable" Version="6.0.0" />
+    <PackageVersion Include="System.Memory" Version="4.5.5" />
+    <PackageVersion Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageVersion Include="System.Reflection.Emit" Version="4.7.0" />
+    <PackageVersion Include="System.Reflection.Metadata" Version="6.0.0" />
+    <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+    <PackageVersion Include="System.Text.Json" Version="6.0.0" />
+    <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+  </ItemGroup>
   <ItemGroup Condition="'$(IsAnalyzerProject)'=='true'">
-    <PackageVersion Update="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
-    <PackageVersion Update="System.Collections.Immutable" Version="6.0.0" />
-    <PackageVersion Update="System.Memory" Version="4.5.5" />
-    <PackageVersion Update="System.Reflection.Metadata" Version="6.0.0" />
-    <PackageVersion Update="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
-    <PackageVersion Update="System.Text.Json" Version="6.0.0" />
+    <PackageVersion Update="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
+    <PackageVersion Update="System.Collections.Immutable" Version="7.0.0" />
+    <PackageVersion Update="System.Reflection.Metadata" Version="7.0.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(NonShipping)'=='true'">
+    <PackageVersion Update="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
+    <PackageVersion Update="System.Collections.Immutable" Version="7.0.0" />
+    <PackageVersion Update="System.Reflection.Metadata" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup>
     <GlobalPackageReference Include="CSharpIsNullAnalyzer" Version="0.1.495" />
