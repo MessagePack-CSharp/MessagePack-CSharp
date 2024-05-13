@@ -12,6 +12,7 @@
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <IncludeSymbols>false</IncludeSymbols>
     <DevelopmentDependency>true</DevelopmentDependency>
+    <IsAnalyzerProject>true</IsAnalyzerProject>
   </PropertyGroup>
 
   <ItemGroup>
