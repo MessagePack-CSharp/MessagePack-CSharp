@@ -58,7 +58,7 @@ namespace MessagePack.Resolvers
         }
 
 #if NETFRAMEWORK
-        public AssemblyBuilder Save()
+        internal AssemblyBuilder Save()
         {
             return DynamicAssembly.Value.Save();
         }

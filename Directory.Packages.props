@@ -53,7 +53,7 @@
     <PackageVersion Include="xunit" Version="2.4.2" />
     <PackageVersion Include="ZeroFormatter" Version="1.6.4" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net472'">
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
     <PackageVersion Include="System.CodeDom" Version="6.0.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="6.0.0" />
