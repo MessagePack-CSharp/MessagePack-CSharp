@@ -214,12 +214,22 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(CollidingFormattersId));
 
-    internal static readonly DiagnosticDescriptor InaccessibleFormatter = new(
+    public static readonly DiagnosticDescriptor InaccessibleFormatterInstance = new(
         id: InaccessibleFormatterId,
         title: "Inaccessible formatter",
         category: Category,
-        messageFormat: "Formatter should declare a default constructor with at least internal visibility",
-        description: "The auto-generated resolver cannot construct this formatter without a constructor.",
+        messageFormat: "Formatter should declare a default constructor with at least internal visibility or a public static readonly field named Instance that returns the singleton",
+        description: "The auto-generated resolver cannot construct this formatter without a constructor. It will be omitted from the resolver.",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleFormatterId));
+
+    public static readonly DiagnosticDescriptor InaccessibleFormatterType = new(
+        id: InaccessibleFormatterId,
+        title: "Inaccessible formatter",
+        category: Category,
+        messageFormat: "Formatter should be declared with at least internal visibility",
+        description: "The auto-generated resolver cannot access this formatter. It will be omitted from the resolver.",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleFormatterId));
@@ -263,7 +273,8 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         AotUnionAttributeRequiresTypeArg,
         AotArrayRankTooHigh,
         CollidingFormatters,
-        InaccessibleFormatter,
+        InaccessibleFormatterInstance,
+        InaccessibleFormatterType,
         PartialTypeRequired,
         InaccessibleDataType);
 
@@ -276,7 +287,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
             if (ReferenceSymbols.TryCreate(context.Compilation, out ReferenceSymbols? typeReferences))
             {
                 // Search the compilation for implementations of IMessagePackFormatter<T>.
-                ImmutableHashSet<CustomFormatter> formatterTypes = this.SearchNamespaceForFormatters(context.Compilation.Assembly.GlobalNamespace).ToImmutableHashSet();
+                ImmutableHashSet<CustomFormatter> formatterTypes = this.SearchForFormatters(context.Compilation.Assembly.GlobalNamespace).ToImmutableHashSet();
 
                 AnalyzerOptions options = new AnalyzerOptions()
                     .WithFormatterTypes(ImmutableArray<FormattableType>.Empty, formatterTypes)
@@ -300,9 +311,9 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
                 context.ReportDiagnostic(Diagnostic.Create(CollidingFormatters, declaredSymbol.Locations[0], formattableType.Name.GetQualifiedName(Qualifiers.Namespace)));
             }
 
-            if (formatter.IsInaccessible)
+            if (formatter.InaccessibleDescriptor is { } inaccessible)
             {
-                context.ReportDiagnostic(Diagnostic.Create(InaccessibleFormatter, declaredSymbol.Locations[0]));
+                context.ReportDiagnostic(Diagnostic.Create(inaccessible, declaredSymbol.Locations[0]));
             }
         }
 
@@ -315,21 +326,29 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private IEnumerable<CustomFormatter> SearchNamespaceForFormatters(INamespaceSymbol ns)
+    private IEnumerable<CustomFormatter> SearchForFormatters(INamespaceOrTypeSymbol container)
     {
-        foreach (INamespaceSymbol childNamespace in ns.GetNamespaceMembers())
+        if (container is INamespaceSymbol ns)
         {
-            foreach (CustomFormatter x in this.SearchNamespaceForFormatters(childNamespace))
+            foreach (INamespaceSymbol childNamespace in ns.GetNamespaceMembers())
             {
-                yield return x;
+                foreach (CustomFormatter x in this.SearchForFormatters(childNamespace))
+                {
+                    yield return x;
+                }
             }
         }
 
-        foreach (INamedTypeSymbol type in ns.GetTypeMembers())
+        foreach (INamedTypeSymbol type in container.GetTypeMembers())
         {
             if (CustomFormatter.TryCreate(type, out CustomFormatter? formatter))
             {
                 yield return formatter;
+            }
+
+            foreach (CustomFormatter nested in this.SearchForFormatters(type))
+            {
+                yield return nested;
             }
         }
     }

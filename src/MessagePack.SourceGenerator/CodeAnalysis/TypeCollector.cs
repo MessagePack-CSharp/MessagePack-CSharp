@@ -207,7 +207,7 @@ public class TypeCollector
         this.excludeArrayElement = true;
 
         bool isInaccessible = false;
-        foreach (BaseTypeDeclarationSyntax? decl in FindInaccessibleTypes(targetType))
+        foreach (BaseTypeDeclarationSyntax? decl in CodeAnalysisUtilities.FindInaccessibleTypes(targetType))
         {
             isInaccessible = true;
             reportAnalyzerDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.InaccessibleDataType, decl.Identifier.GetLocation()));
@@ -300,7 +300,7 @@ public class TypeCollector
             return result;
         }
 
-        if (!this.IsAllowAccessibility(typeSymbol))
+        if (!IsAllowAccessibility(typeSymbol))
         {
             result = false;
             this.alreadyCollected.Add(typeSymbol, result);
@@ -1085,26 +1085,9 @@ public class TypeCollector
 
     private static IEnumerable<BaseTypeDeclarationSyntax> FindNonPartialTypes(ITypeSymbol target)
     {
-        return from x in EnumerateTypeAndContainingTypes(target)
+        return from x in CodeAnalysisUtilities.EnumerateTypeAndContainingTypes(target)
                where x.FirstDeclaration?.Modifiers.Any(SyntaxKind.PartialKeyword) is false
                select x.FirstDeclaration;
-    }
-
-    private static IEnumerable<BaseTypeDeclarationSyntax> FindInaccessibleTypes(ITypeSymbol target)
-    {
-        return from x in EnumerateTypeAndContainingTypes(target)
-               where !IsAllowedAccessibility(x.Symbol.DeclaredAccessibility)
-               select x.FirstDeclaration;
-    }
-
-    private static IEnumerable<(ITypeSymbol Symbol, BaseTypeDeclarationSyntax? FirstDeclaration)> EnumerateTypeAndContainingTypes(ITypeSymbol target)
-    {
-        ITypeSymbol? focusedSymbol = target;
-        while (focusedSymbol is not null)
-        {
-            yield return (focusedSymbol, focusedSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as BaseTypeDeclarationSyntax);
-            focusedSymbol = focusedSymbol.ContainingType;
-        }
     }
 
     private static GenericTypeParameterInfo ToGenericTypeParameterInfo(ITypeParameterSymbol typeParameter)
@@ -1187,7 +1170,7 @@ public class TypeCollector
 
     private static bool IsAllowedAccessibility(Accessibility accessibility) => accessibility is Accessibility.Public or Accessibility.Internal;
 
-    private bool IsAllowAccessibility(ITypeSymbol symbol)
+    private static bool IsAllowAccessibility(ITypeSymbol symbol)
     {
         do
         {

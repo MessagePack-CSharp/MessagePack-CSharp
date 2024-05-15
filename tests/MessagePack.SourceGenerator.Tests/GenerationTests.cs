@@ -528,4 +528,21 @@ internal class MyGenericType<T>
             """;
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
+
+    [Fact]
+    public async Task CustomFormatterWithSingletonPattern()
+    {
+        string testSource = """
+            using MessagePack;
+            using MessagePack.Formatters;
+            class A {}
+            class F : IMessagePackFormatter<A> {
+                public static readonly IMessagePackFormatter<A> Instance = new F();
+                private F() {}
+                public void Serialize(ref MessagePackWriter writer, A value, MessagePackSerializerOptions options) {}
+                public A Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => default;
+            }
+            """;
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
 }

@@ -71,7 +71,7 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 				return closedKey switch
 				{
 <# for(var i = 0; i < constructedRegistrations.Length; i++) { var x = constructedRegistrations[i]; #>
-					<#= i #> => new <#= x.GetFormatterNameForResolver() #>(),
+					<#= i #> => <#= x.GetFormatterInstanceForResolver() #>,
 <# } #>
 					_ => null, // unreachable
 				};

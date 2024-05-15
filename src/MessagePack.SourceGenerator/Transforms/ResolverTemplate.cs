@@ -107,9 +107,9 @@ namespace MessagePack.SourceGenerator.Transforms
  for(var i = 0; i < constructedRegistrations.Length; i++) { var x = constructedRegistrations[i]; 
             this.Write("\t\t\t\t\t");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(" => new ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(x.GetFormatterNameForResolver()));
-            this.Write("(),\r\n");
+            this.Write(" => ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(x.GetFormatterInstanceForResolver()));
+            this.Write(",\r\n");
  } 
             this.Write("\t\t\t\t\t_ => null, // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n");
  }

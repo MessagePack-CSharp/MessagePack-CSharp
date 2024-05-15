@@ -5,4 +5,12 @@ namespace MessagePack.SourceGenerator.CodeAnalysis;
 
 public record CustomFormatterRegisterInfo : ResolverRegisterInfo
 {
+    public required CustomFormatter CustomFormatter { get; init; }
+
+    public override string GetFormatterInstanceForResolver()
+    {
+        return this.CustomFormatter.InstanceProvidingMember == ".ctor"
+            ? base.GetFormatterInstanceForResolver()
+            : $"{this.GetFormatterNameForResolver()}.{this.CustomFormatter.InstanceProvidingMember}";
+    }
 }
