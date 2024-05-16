@@ -69,6 +69,11 @@ public record ResolverRegisterInfo
     public virtual string GetFormatterNameForResolver(GenericParameterStyle style = GenericParameterStyle.Identifiers) => this.Formatter.GetQualifiedName(Qualifiers.GlobalNamespace, style);
 
     /// <summary>
+    /// Gets the C# expression that will provide an instance of the formatter.
+    /// </summary>
+    public virtual string GetFormatterInstanceForResolver() => $"new {this.GetFormatterNameForResolver()}()";
+
+    /// <summary>
     /// Gets a value indicating whether this data type is a generic type with unknown type arguments.
     /// </summary>
     public virtual bool IsUnboundGenericType => this.DataType.Arity > 0;

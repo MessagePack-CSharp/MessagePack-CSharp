@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
@@ -36,6 +37,23 @@ public static class CodeAnalysisUtilities
         }
 
         return fileName;
+    }
+
+    internal static IEnumerable<BaseTypeDeclarationSyntax> FindInaccessibleTypes(ITypeSymbol target)
+    {
+        return from x in EnumerateTypeAndContainingTypes(target)
+               where x.Symbol.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal)
+               select x.FirstDeclaration;
+    }
+
+    internal static IEnumerable<(ITypeSymbol Symbol, BaseTypeDeclarationSyntax? FirstDeclaration)> EnumerateTypeAndContainingTypes(ITypeSymbol target)
+    {
+        ITypeSymbol? focusedSymbol = target;
+        while (focusedSymbol is not null)
+        {
+            yield return (focusedSymbol, focusedSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as BaseTypeDeclarationSyntax);
+            focusedSymbol = focusedSymbol.ContainingType;
+        }
     }
 
     internal static int GetArity(ITypeSymbol dataType)
