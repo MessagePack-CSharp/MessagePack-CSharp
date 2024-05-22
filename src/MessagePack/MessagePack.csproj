@@ -6,7 +6,6 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <DefineConstants Condition=" '$(TargetFramework)' == 'net6.0' or '$(TargetFramework)' == 'net8.0' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <LangVersion>9.0</LangVersion>
 
     <Title>MessagePack for C#</Title>
     <Description>Extremely Fast MessagePack(MsgPack) Serializer for C# (.NET Framework, .NET 6, Unity, Xamarin).</Description>
