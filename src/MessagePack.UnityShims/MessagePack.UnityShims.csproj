@@ -11,11 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\**\*.cs"
-             Exclude="**\MessagePackWindow.cs"/>
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 
