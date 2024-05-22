@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\MessagePack\ThisLibraryExtensionTypeCodes.cs"/>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 
