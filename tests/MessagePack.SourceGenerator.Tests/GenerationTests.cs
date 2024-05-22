@@ -545,4 +545,22 @@ internal class MyGenericType<T>
             """;
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
+
+    [Fact]
+    public async Task ExcludeFormatterFromSourceGeneratedResolver()
+    {
+        string testSource = """
+            using MessagePack;
+            using MessagePack.Formatters;
+            class A {}
+            [ExcludeFormatterFromSourceGeneratedResolver]
+            class F : IMessagePackFormatter<A> {
+                public void Serialize(ref MessagePackWriter writer, A value, MessagePackSerializerOptions options) {}
+                public A Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => default;
+            }
+            """;
+
+        // This test is *not* expected to produce any generated files.
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
 }

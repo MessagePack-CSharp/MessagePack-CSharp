@@ -189,12 +189,16 @@ public record CustomFormatter(QualifiedTypeName Name, string? InstanceProvidingM
                 CodeAnalysisUtilities.FindInaccessibleTypes(type).Any() ? MsgPack00xMessagePackAnalyzer.InaccessibleFormatterType :
                 instanceProvidingMember is null ? MsgPack00xMessagePackAnalyzer.InaccessibleFormatterInstance :
                 null,
+            ExcludeFromSourceGeneratedResolver =
+                type.GetAttributes().Any(a => a.AttributeClass?.Name == Constants.ExcludeFormatterFromSourceGeneratedResolverAttributeName && a.AttributeClass?.ContainingNamespace.Name == Constants.AttributeNamespace),
         };
 
         return true;
     }
 
     public DiagnosticDescriptor? InaccessibleDescriptor { get; init; }
+
+    public bool ExcludeFromSourceGeneratedResolver { get; init; }
 
     public virtual bool Equals(CustomFormatter other)
     {

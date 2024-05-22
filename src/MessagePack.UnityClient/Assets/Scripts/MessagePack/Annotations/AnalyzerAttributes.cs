@@ -55,4 +55,18 @@ namespace MessagePack
         /// </summary>
         public Type FormattableType { get; }
     }
+
+    /// <summary>
+    /// Causes the source generated resolver, which typically includes all implementations of <c>IMessagePackFormatter&lt;T&gt;</c>,
+    /// to exclude this particular formatter.
+    /// </summary>
+    /// <remarks>
+    /// This is useful when the formatter is intended for special case members,
+    /// which may apply the <see cref="MessagePackFormatterAttribute"/> to select the private formatter.
+    /// </remarks>
+    [AttributeUsage(AttributeTargets.Class)]
+    [Conditional("NEVERDEFINED")]
+    public class ExcludeFormatterFromSourceGeneratedResolverAttribute : Attribute
+    {
+    }
 }
