@@ -31,7 +31,9 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             predicate: static (node, ct) => node is ClassDeclarationSyntax { BaseList.Types.Count: > 0 },
             transform: (ctxt, ct) =>
             {
-                return ctxt.SemanticModel.GetDeclaredSymbol(ctxt.Node, ct) is INamedTypeSymbol symbol && CustomFormatter.TryCreate(symbol, out CustomFormatter? formatter)
+                return ctxt.SemanticModel.GetDeclaredSymbol(ctxt.Node, ct) is INamedTypeSymbol symbol
+                    && CustomFormatter.TryCreate(symbol, out CustomFormatter? formatter)
+                    && !formatter.ExcludeFromSourceGeneratedResolver
                     ? formatter
                     : null;
             }).Collect();
