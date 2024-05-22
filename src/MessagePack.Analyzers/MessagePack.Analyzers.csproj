@@ -20,12 +20,11 @@
   </ItemGroup>
 
   <ItemDefinitionGroup>
-    <PackageReference>
-      <!-- We need this, even with SuppressDependenciesWhenPacking=true because the
-           dependencies will otherwise show up as dependencies in packages built by projects
-           that reference this one. Probably due to transitive pinning. -->
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <!-- We need this, even with SuppressDependenciesWhenPacking=true because the
+         dependencies will otherwise show up as dependencies in packages built by projects
+         that reference this one. Probably due to transitive pinning. -->
+    <PackageReference PrivateAssets="all" />
+    <ProjectReference PrivateAssets="all" />
   </ItemDefinitionGroup>
 
   <ItemGroup>
