@@ -31,7 +31,9 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             predicate: static (node, ct) => node is ClassDeclarationSyntax { BaseList.Types.Count: > 0 },
             transform: (ctxt, ct) =>
             {
-                return ctxt.SemanticModel.GetDeclaredSymbol(ctxt.Node, ct) is INamedTypeSymbol symbol && CustomFormatter.TryCreate(symbol, out CustomFormatter? formatter)
+                return ctxt.SemanticModel.GetDeclaredSymbol(ctxt.Node, ct) is INamedTypeSymbol symbol
+                    && CustomFormatter.TryCreate(symbol, out CustomFormatter? formatter)
+                    && !formatter.ExcludeFromSourceGeneratedResolver
                     ? formatter
                     : null;
             }).Collect();
@@ -93,7 +95,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                 List<FullModel> modelPerType = new();
                 void Collect(ITypeSymbol typeSymbol)
                 {
-                    if (TypeCollector.Collect(s.Left.Right, options, referenceSymbols, reportAnalyzerDiagnostic: null, typeSymbol) is FullModel model)
+                    if (TypeCollector.Collect(s.Left.Right, options, referenceSymbols, reportAnalyzerDiagnostic: null, typeSymbol, ct) is FullModel model)
                     {
                         modelPerType.Add(model);
                     }
@@ -113,13 +115,14 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                 {
                     var customFormatterInfos = FullModel.Empty.CustomFormatterInfos.Union(
                         from known in options.KnownFormatters
-                        where !known.IsInaccessible
+                        where known.InaccessibleDescriptor is null
                         from formatted in known.FormattableTypes
                         where !options.GetCollidingFormatterDataTypes(known.Name).Contains(formatted) // skip formatters with colliding types to avoid non-deterministic code generation
                         select new CustomFormatterRegisterInfo
                         {
                             Formatter = known.Name,
                             DataType = formatted.Name,
+                            CustomFormatter = known,
                         });
                     modelPerType.Add(FullModel.Empty with { CustomFormatterInfos = customFormatterInfos, Options = options });
                 }

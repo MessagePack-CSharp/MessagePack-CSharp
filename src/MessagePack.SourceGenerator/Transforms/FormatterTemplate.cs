@@ -26,20 +26,11 @@ namespace MessagePack.SourceGenerator.Transforms
         public virtual string TransformText()
         {
             this.Write("\r\n#pragma warning disable CS8669 // We may leak nullable annotations into generat" +
-                    "ed code.\r\n\r\n");
- if (ResolverNamespace.Length > 0) { 
-            this.Write("namespace ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
-            this.Write(" {\r\n");
- } 
-            this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\npartial class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("\r\n{\r\n");
+                    "ed code.\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\n");
+ using (this.EmitNestingTypesAndNamespaces(this.Write)) { 
+            this.Write("\r\n");
   bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members);
- using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { 
-            this.Write("\t");
-            this.Write(this.ToStringHelper.ToStringWithCulture(classVisibility));
-            this.Write(" sealed class ");
+            this.Write("\tinternal sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.Formatter.GetQualifiedName(Qualifiers.None)));
             this.Write(" : MsgPack::Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers)));
@@ -190,11 +181,7 @@ namespace MessagePack.SourceGenerator.Transforms
  } 
             this.Write("\t\t\treader.Depth--;\r\n\t\t\treturn ____result;\r\n");
  } 
-            this.Write("\t\t}\r\n\t}\r\n\r\n");
- } // close EmitClassesForNamespace 
-            this.Write("}\r\n\r\n");
- if (ResolverNamespace.Length > 0) { 
-            this.Write("}\r\n");
+            this.Write("\t\t}\r\n\t}\r\n");
  } 
             return this.GenerationEnvironment.ToString();
         }

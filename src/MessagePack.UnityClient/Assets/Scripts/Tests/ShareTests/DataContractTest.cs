@@ -195,6 +195,33 @@ namespace MessagePack.Tests
             public bool Equals(Detail other) => other != null && this.B1 == other.B1 && this.B2 == other.B2;
         }
 
+        [Fact]
+        public void Serialize_WithNonSerializedAttribute()
+        {
+            var mc = new ClassWithOldSchoolNonSerializedAttribute
+            {
+                PublicField = 1,
+                IgnoredPublicField = 2,
+            };
+
+            var options = ContractlessStandardResolverAllowPrivate.Options;
+            var bin = MessagePackSerializer.Serialize(mc, options);
+            var mc2 = MessagePackSerializer.Deserialize<ClassWithOldSchoolNonSerializedAttribute>(bin, options);
+
+            mc2.PublicField.Is(1);
+            mc2.IgnoredPublicField.Is(0);
+
+            MessagePackSerializer.ConvertToJson(bin).Is(@"{""PublicField"":1}");
+        }
+
+        public class ClassWithOldSchoolNonSerializedAttribute
+        {
+            public int PublicField;
+
+            [NonSerialized]
+            public int IgnoredPublicField;
+        }
+
 #if !UNITY_2018_3_OR_NEWER
 
         [Fact]

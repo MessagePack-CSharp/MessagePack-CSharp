@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis;
+
 public class UnionSerializationInfoTests
 {
     [Fact]
@@ -8,8 +10,8 @@ public class UnionSerializationInfoTests
     {
         UnionSerializationInfo info1a = new()
         {
-            DataType = new("full", "name"),
-            Formatter = new("some", "other"),
+            DataType = new("full", TypeKind.Class, "name"),
+            Formatter = new("some", TypeKind.Class, "other"),
             SubTypes = ImmutableArray.Create(new UnionSubTypeInfo(1, "hey")),
         };
         UnionSerializationInfo info1b = info1a with

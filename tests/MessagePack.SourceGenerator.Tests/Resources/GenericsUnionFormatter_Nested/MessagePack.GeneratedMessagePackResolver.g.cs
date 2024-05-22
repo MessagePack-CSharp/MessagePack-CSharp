@@ -42,8 +42,8 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(6)
 		{
 			{ typeof(global::System.Int32[]), 0 },
-			{ typeof(global::System.Collections.Generic.IEnumerable<global::System.Guid>), 1 },
-			{ typeof(global::System.Collections.Generic.List<string>), 2 },
+			{ typeof(global::System.Collections.Generic.List<string>), 1 },
+			{ typeof(global::System.Collections.Generic.IEnumerable<global::System.Guid>), 2 },
 			{ typeof(global::TempProject.MyGenericObject<string>), 3 },
 			{ typeof(global::TempProject.MyInnerGenericObject<string>), 4 },
 			{ typeof(global::TempProject.Wrapper<string>), 5 },
@@ -62,11 +62,11 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 				return closedKey switch
 				{
 					0 => new MsgPack::Formatters.ArrayFormatter<global::System.Int32>(),
-					1 => new MsgPack::Formatters.InterfaceEnumerableFormatter<global::System.Guid>(),
-					2 => new MsgPack::Formatters.ListFormatter<string>(),
-					3 => new TempProject.MyGenericObjectFormatter<string>(),
-					4 => new TempProject.MyInnerGenericObjectFormatter<string>(),
-					5 => new TempProject.WrapperFormatter<string>(),
+					1 => new MsgPack::Formatters.ListFormatter<string>(),
+					2 => new MsgPack::Formatters.InterfaceEnumerableFormatter<global::System.Guid>(),
+					3 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<string>(),
+					4 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyInnerGenericObjectFormatter<string>(),
+					5 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<string>(),
 					_ => null, // unreachable
 				};
 			}
@@ -74,9 +74,9 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return openKey switch
 				{
-					0 => global::System.Activator.CreateInstance(typeof(TempProject.MyGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
-					1 => global::System.Activator.CreateInstance(typeof(TempProject.MyInnerGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
-					2 => global::System.Activator.CreateInstance(typeof(TempProject.WrapperFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					0 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					1 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.TempProject.MyInnerGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					2 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<>).MakeGenericType(t.GenericTypeArguments)),
 					_ => null, // unreachable
 				};
 			}

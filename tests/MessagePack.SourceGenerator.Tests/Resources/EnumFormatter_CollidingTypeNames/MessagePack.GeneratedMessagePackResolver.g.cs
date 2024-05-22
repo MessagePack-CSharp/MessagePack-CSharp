@@ -52,9 +52,9 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return closedKey switch
 				{
-					0 => new NS1.MyEnumFormatter(),
-					1 => new NS2.MyEnumFormatter(),
-					2 => new MyMessagePackObjectFormatter(),
+					0 => new global::MessagePack.GeneratedMessagePackResolver.NS1.MyEnumFormatter(),
+					1 => new global::MessagePack.GeneratedMessagePackResolver.NS2.MyEnumFormatter(),
+					2 => new global::MessagePack.GeneratedMessagePackResolver.MyMessagePackObjectFormatter(),
 					_ => null, // unreachable
 				};
 			}

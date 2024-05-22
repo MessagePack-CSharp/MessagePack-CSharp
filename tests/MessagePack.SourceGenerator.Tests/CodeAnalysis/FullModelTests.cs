@@ -16,9 +16,9 @@ public class FullModelTests
     {
         EnumSerializationInfo enumInfo = new()
         {
-            DataType = new("My", "MyEnum"),
+            DataType = new("My", TypeKind.Enum, "MyEnum"),
             UnderlyingTypeName = "System.Int32",
-            Formatter = new("some", "some"),
+            Formatter = new("some", TypeKind.Class, "some"),
         };
 
         // Construct a FullModel with a non-default value for each property.

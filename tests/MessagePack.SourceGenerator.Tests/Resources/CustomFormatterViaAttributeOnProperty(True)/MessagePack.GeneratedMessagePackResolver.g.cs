@@ -51,7 +51,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return closedKey switch
 				{
-					0 => new HasPropertyWithCustomFormatterAttributeFormatter(),
+					0 => new global::MessagePack.GeneratedMessagePackResolver.HasPropertyWithCustomFormatterAttributeFormatter(),
 					1 => new global::UnserializableRecordFormatter(),
 					_ => null, // unreachable
 				};

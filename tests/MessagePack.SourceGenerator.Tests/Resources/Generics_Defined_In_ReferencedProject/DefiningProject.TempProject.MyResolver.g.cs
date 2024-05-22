@@ -50,7 +50,7 @@ partial class MyResolver : MsgPack::IFormatterResolver
 			{
 				return openKey switch
 				{
-					0 => global::System.Activator.CreateInstance(typeof(TempProject.MyGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
+					0 => global::System.Activator.CreateInstance(typeof(global::TempProject.MyResolver.TempProject.MyGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments)),
 					_ => null, // unreachable
 				};
 			}

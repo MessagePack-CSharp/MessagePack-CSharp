@@ -53,12 +53,14 @@ namespace MessagePack.Tests
         public void ConcurrentDictionaryTest()
         {
             var cd = new ConcurrentDictionary<int, int>();
+            ConcurrentDictionary<int, int> conv = this.Convert(cd);
+            conv.Count.Is(0);
 
             cd.TryAdd(1, 100);
             cd.TryAdd(2, 200);
             cd.TryAdd(3, 300);
 
-            ConcurrentDictionary<int, int> conv = this.Convert(cd);
+            conv = this.Convert(cd);
             conv[1].Is(100);
             conv[2].Is(200);
             conv[3].Is(300);

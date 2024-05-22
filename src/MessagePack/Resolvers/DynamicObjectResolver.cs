@@ -52,7 +52,7 @@ namespace MessagePack.Resolvers
         }
 
 #if NETFRAMEWORK
-        public AssemblyBuilder Save()
+        internal AssemblyBuilder Save()
         {
             return DynamicAssembly.Value.Save();
         }
@@ -193,7 +193,7 @@ namespace MessagePack.Resolvers
         }
 
 #if NETFRAMEWORK
-        public AssemblyBuilder Save()
+        internal AssemblyBuilder Save()
         {
             return DynamicAssembly.Value.Save();
         }
@@ -1766,7 +1766,7 @@ namespace MessagePack.Internal
 
             EmittableMember? CreateEmittableMember(MemberInfo m)
             {
-                if (m.IsDefined(typeof(IgnoreMemberAttribute), true) || m.IsDefined(typeof(IgnoreDataMemberAttribute), true))
+                if (m.IsDefined(typeof(IgnoreMemberAttribute), true) || m.IsDefined(typeof(IgnoreDataMemberAttribute), true) || m.IsDefined(typeof(NonSerializedAttribute), true))
                 {
                     return null;
                 }
@@ -2019,19 +2019,6 @@ namespace MessagePack.Internal
 
                             if (len != 0)
                             {
-                                if (len != 1)
-                                {
-                                    if (ctorEnumerator != null)
-                                    {
-                                        ctor = null;
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        throw new MessagePackDynamicObjectResolverException("duplicate matched constructor parameter name:" + type.FullName + " parameterName:" + item.Name + " parameterType:" + item.ParameterType.Name);
-                                    }
-                                }
-
                                 paramMember = hasKey.First().Value;
                                 if (item.ParameterType.IsAssignableFrom(paramMember.Type) && paramMember.IsReadable)
                                 {

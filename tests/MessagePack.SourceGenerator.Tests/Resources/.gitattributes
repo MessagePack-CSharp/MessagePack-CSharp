@@ -1,2 +1,3 @@
-# Always check out recorded files with CRLF line endings to match what the source generator is expected to produce.
+# The source generator always emits CRLF line endings.
+# So our recorded files should be checked out to match.
 *.g.cs eol=crlf

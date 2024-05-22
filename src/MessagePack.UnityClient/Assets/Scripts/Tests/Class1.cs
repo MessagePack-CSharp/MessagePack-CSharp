@@ -1094,7 +1094,7 @@ public class ArrayTestTest
 }
 
 [MessagePackObject(true)]
-public class ComplexModel
+public partial class ComplexModel
 {
     public IDictionary<string, string> AdditionalProperty { get; private set; }
 

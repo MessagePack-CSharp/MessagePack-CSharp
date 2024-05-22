@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net6.0;net8.0;net472</TargetFrameworks>
     <NoWarn>$(NoWarn);CS0649</NoWarn>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <DefineConstants Condition=" '$(TargetFramework)' != 'netstandard2.0' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
+    <DefineConstants Condition=" '$(TargetFramework)' == 'net6.0' or '$(TargetFramework)' == 'net8.0' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <LangVersion>9.0</LangVersion>
 
@@ -30,9 +30,18 @@
     <PackageReference Include="System.Reflection.Emit.Lightweight" />
     <PackageReference Include="System.Threading.Tasks.Extensions" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+    <PackageReference Include="System.Collections.Immutable" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MessagePack.Annotations\MessagePack.Annotations.csproj" />
+    <!-- We don't consume the analyzers in this library itself,
+         but we reference the project to add a package dependency so users of this library will automatically get the analyzers. -->
+    <ProjectReference Include="..\MessagePack.Analyzers\MessagePack.Analyzers.csproj"
+                      PrivateAssets="none"
+                      Condition="'$(ExcludeRestorePackageImports)' != ''"  />
   </ItemGroup>
 
   <ItemGroup>

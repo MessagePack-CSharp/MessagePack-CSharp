@@ -5,6 +5,13 @@ using MessagePack.Formatters;
 
 internal class CustomFormatterRecordFormatter : IMessagePackFormatter<CustomFormatterRecord>
 {
+    // Deliberately test the singleton pattern.
+    public static readonly IMessagePackFormatter<CustomFormatterRecord> Instance = new CustomFormatterRecordFormatter();
+
+    private CustomFormatterRecordFormatter()
+    {
+    }
+
     public void Serialize(ref MessagePackWriter writer, CustomFormatterRecord value, MessagePackSerializerOptions options)
     {
         writer.WriteInt32(value.Value);

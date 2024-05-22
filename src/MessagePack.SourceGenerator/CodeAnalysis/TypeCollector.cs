@@ -5,11 +5,10 @@
 #pragma warning disable SA1649 // File name should match first type name
 
 using System.Collections.Immutable;
-using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Operations;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
@@ -199,7 +198,7 @@ public class TypeCollector
 
     private readonly Compilation compilation;
 
-    private TypeCollector(Compilation compilation, AnalyzerOptions options, ReferenceSymbols referenceSymbols, ITypeSymbol targetType, Action<Diagnostic>? reportAnalyzerDiagnostic)
+    private TypeCollector(Compilation compilation, AnalyzerOptions options, ReferenceSymbols referenceSymbols, ITypeSymbol targetType, Action<Diagnostic>? reportAnalyzerDiagnostic, CancellationToken cancellationToken)
     {
         this.typeReferences = referenceSymbols;
         this.reportDiagnostic = reportAnalyzerDiagnostic;
@@ -207,7 +206,14 @@ public class TypeCollector
         this.compilation = compilation;
         this.excludeArrayElement = true;
 
-        if (IsAllowedAccessibility(targetType.DeclaredAccessibility))
+        bool isInaccessible = false;
+        foreach (BaseTypeDeclarationSyntax? decl in CodeAnalysisUtilities.FindInaccessibleTypes(targetType))
+        {
+            isInaccessible = true;
+            reportAnalyzerDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.InaccessibleDataType, decl.Identifier.GetLocation()));
+        }
+
+        if (!isInaccessible)
         {
             if (((targetType.TypeKind == TypeKind.Interface) && targetType.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)))
                 || ((targetType.TypeKind == TypeKind.Class && targetType.IsAbstract) && targetType.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)))
@@ -219,23 +225,9 @@ public class TypeCollector
         }
     }
 
-    public static FullModel? Collect(Compilation compilation, AnalyzerOptions options, ReferenceSymbols referenceSymbols, Action<Diagnostic>? reportAnalyzerDiagnostic, TypeDeclarationSyntax typeDeclaration, CancellationToken cancellationToken)
+    public static FullModel? Collect(Compilation compilation, AnalyzerOptions options, ReferenceSymbols referenceSymbols, Action<Diagnostic>? reportAnalyzerDiagnostic, ITypeSymbol targetType, CancellationToken cancellationToken)
     {
-        SemanticModel semanticModel = compilation.GetSemanticModel(typeDeclaration.SyntaxTree);
-        if (semanticModel.GetDeclaredSymbol(typeDeclaration, cancellationToken) is ITypeSymbol typeSymbol)
-        {
-            if (Collect(compilation, options, referenceSymbols, reportAnalyzerDiagnostic, typeSymbol) is FullModel model)
-            {
-                return model;
-            }
-        }
-
-        return null;
-    }
-
-    public static FullModel? Collect(Compilation compilation, AnalyzerOptions options, ReferenceSymbols referenceSymbols, Action<Diagnostic>? reportAnalyzerDiagnostic, ITypeSymbol targetType)
-    {
-        TypeCollector collector = new(compilation, options, referenceSymbols, targetType, reportAnalyzerDiagnostic);
+        TypeCollector collector = new(compilation, options, referenceSymbols, targetType, reportAnalyzerDiagnostic, cancellationToken);
         if (collector.targetType is null)
         {
             return null;
@@ -308,7 +300,7 @@ public class TypeCollector
             return result;
         }
 
-        if (!this.IsAllowAccessibility(typeSymbol))
+        if (!IsAllowAccessibility(typeSymbol))
         {
             result = false;
             this.alreadyCollected.Add(typeSymbol, result);
@@ -366,7 +358,7 @@ public class TypeCollector
 
     private bool CollectEnum(INamedTypeSymbol type, ISymbol enumUnderlyingType)
     {
-        this.collectedEnumInfo.Add(EnumSerializationInfo.Create(type, enumUnderlyingType));
+        this.collectedEnumInfo.Add(EnumSerializationInfo.Create(type, enumUnderlyingType, this.options.Generator.Resolver));
         return true;
     }
 
@@ -401,7 +393,8 @@ public class TypeCollector
 
         var info = UnionSerializationInfo.Create(
             type,
-            unionAttrs.Select(UnionSubTypeInfoSelector).Where(i => i is not null).OrderBy(x => x!.Key).ToImmutableArray()!);
+            unionAttrs.Select(UnionSubTypeInfoSelector).Where(i => i is not null).OrderBy(x => x!.Key).ToImmutableArray()!,
+            this.options.Generator.Resolver);
 
         this.collectedUnionInfo.Add(info);
         return true;
@@ -464,9 +457,9 @@ public class TypeCollector
             return false;
         }
 
-        var info = GenericSerializationInfo.Create(array) with
+        var info = GenericSerializationInfo.Create(array, this.options.Generator.Resolver) with
         {
-            Formatter = new QualifiedTypeName("MsgPack::Formatters", null, formatterName, ImmutableArray.Create(elementTypeName.GetQualifiedName())),
+            Formatter = new QualifiedTypeName("MsgPack::Formatters", null, TypeKind.Class, formatterName, ImmutableArray.Create(elementTypeName.GetQualifiedName())),
         };
         this.collectedGenericInfo.Add(info);
         return true;
@@ -525,9 +518,9 @@ public class TypeCollector
             }
 
             formatterName = $"NullableFormatter<{firstTypeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
-            var info = GenericSerializationInfo.Create(type) with
+            var info = GenericSerializationInfo.Create(type, this.options.Generator.Resolver) with
             {
-                Formatter = new QualifiedTypeName("MsgPack::Formatters", formatterName),
+                Formatter = new QualifiedTypeName("MsgPack::Formatters", TypeKind.Class, formatterName),
             };
             this.collectedGenericInfo.Add(info);
             return true;
@@ -541,11 +534,11 @@ public class TypeCollector
                 this.CollectCore(item);
             }
 
-            GenericSerializationInfo info = GenericSerializationInfo.Create(type);
+            GenericSerializationInfo info = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
             int indexOfLastPeriod = formatterFullName.LastIndexOf('.');
             info = info with
             {
-                Formatter = new(formatterFullName.Substring(0, indexOfLastPeriod), formatterFullName.Substring(indexOfLastPeriod + 1), info.DataType.TypeParameters),
+                Formatter = new(formatterFullName.Substring(0, indexOfLastPeriod), TypeKind.Class, formatterFullName.Substring(indexOfLastPeriod + 1), info.DataType.TypeParameters),
             };
 
             this.collectedGenericInfo.Add(info);
@@ -557,20 +550,20 @@ public class TypeCollector
 
             formatterName = KnownGenericTypes["System.Linq.IGrouping<,>"];
 
-            var groupingInfo = GenericSerializationInfo.Create(type);
+            var groupingInfo = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
             groupingInfo = groupingInfo with
             {
-                DataType = new QualifiedTypeName("global::System.Linq", $"IGrouping", info.DataType.TypeParameters),
+                DataType = new QualifiedTypeName("global::System.Linq", TypeKind.Interface, $"IGrouping", info.DataType.TypeParameters),
                 Formatter = groupingInfo.Formatter with { Name = formatterName },
             };
             this.collectedGenericInfo.Add(groupingInfo);
 
             formatterName = KnownGenericTypes["System.Collections.Generic.IEnumerable<>"];
 
-            GenericSerializationInfo enumerableInfo = GenericSerializationInfo.Create(type);
+            GenericSerializationInfo enumerableInfo = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
             enumerableInfo = enumerableInfo with
             {
-                DataType = new QualifiedTypeName("System.Collections.Generic", $"IEnumerable", ImmutableArray.Create(info.DataType.TypeParameters[1])),
+                DataType = new QualifiedTypeName("System.Collections.Generic", TypeKind.Interface, $"IEnumerable", ImmutableArray.Create(info.DataType.TypeParameters[1])),
                 Formatter = enumerableInfo.Formatter with { Name = formatterName },
             };
             this.collectedGenericInfo.Add(enumerableInfo);
@@ -604,7 +597,7 @@ public class TypeCollector
             }
         }
 
-        GenericSerializationInfo genericSerializationInfo = GenericSerializationInfo.Create(type);
+        GenericSerializationInfo genericSerializationInfo = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
         this.collectedGenericInfo.Add(genericSerializationInfo);
         return true;
     }
@@ -642,6 +635,7 @@ public class TypeCollector
     private ObjectSerializationInfo? GetObjectInfo(INamedTypeSymbol formattedType)
     {
         var isClass = !formattedType.IsValueType;
+        bool includesPrivateMembers = false;
 
         AttributeData? contractAttr = formattedType.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute));
         if (contractAttr is null)
@@ -656,24 +650,31 @@ public class TypeCollector
         if (this.options.Generator.Formatters.UsesMapMode || (contractAttr?.ConstructorArguments[0] is { Value: bool firstConstructorArgument } && firstConstructorArgument))
         {
             // All public members are serialize target except [Ignore] member.
+            Accessibility minimumAccessibility = Accessibility.Internal;
             isIntKey = false;
 
             var hiddenIntKey = 0;
 
-            foreach (IPropertySymbol item in formattedType.GetAllMembers().OfType<IPropertySymbol>().Where(x => !x.IsOverride))
+            foreach (IPropertySymbol item in formattedType.GetAllMembers().OfType<IPropertySymbol>())
             {
-                if (item.GetAttributes().Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)))
+                if (item.GetAttributes().Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)) ||
+                    item.IsStatic ||
+                    item.IsOverride ||
+                    item.IsImplicitlyDeclared ||
+                    item.DeclaredAccessibility < minimumAccessibility)
                 {
                     continue;
                 }
 
-                var isReadable = item.GetMethod != null && IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility) && !item.IsStatic;
-                var isWritable = item.SetMethod != null && IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility) && !item.IsStatic;
+                var isReadable = item.GetMethod is not null;
+                var isWritable = item.SetMethod is not null;
                 if (!isReadable && !isWritable)
                 {
                     continue;
                 }
 
+                includesPrivateMembers |= item.GetMethod is not null && !IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility);
+                includesPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
                 var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
                 var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                 stringMembers.Add(member.StringKey, member);
@@ -686,25 +687,16 @@ public class TypeCollector
 
             foreach (IFieldSymbol item in formattedType.GetAllMembers().OfType<IFieldSymbol>())
             {
-                if (item.GetAttributes().Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)))
-                {
-                    continue;
-                }
-
-                if (item.IsImplicitlyDeclared)
-                {
-                    continue;
-                }
-
-                var isReadable = IsAllowedAccessibility(item.DeclaredAccessibility) && !item.IsStatic;
-                var isWritable = IsAllowedAccessibility(item.DeclaredAccessibility) && !item.IsReadOnly && !item.IsStatic;
-                if (!isReadable && !isWritable)
+                if (item.GetAttributes().Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)) ||
+                    item.IsStatic ||
+                    item.IsImplicitlyDeclared ||
+                    item.DeclaredAccessibility < minimumAccessibility)
                 {
                     continue;
                 }
 
                 var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
-                var member = new MemberSerializationInfo(false, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                var member = new MemberSerializationInfo(false, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                 stringMembers.Add(member.StringKey, member);
                 if (customFormatterAttr == null)
                 {
@@ -725,6 +717,11 @@ public class TypeCollector
                     continue; // .tt files don't generate good code for this yet: https://github.com/neuecc/MessagePack-CSharp/issues/390
                 }
 
+                if (item.IsStatic || item.IsImplicitlyDeclared)
+                {
+                    continue;
+                }
+
                 if (item.GetAttributes().Any(x =>
                 {
                     var typeReferencesIgnoreDataMemberAttribute = this.typeReferences.IgnoreDataMemberAttribute;
@@ -734,13 +731,15 @@ public class TypeCollector
                     continue;
                 }
 
-                var isReadable = item.GetMethod != null && IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility) && !item.IsStatic;
-                var isWritable = item.SetMethod != null && IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility) && !item.IsStatic;
+                var isReadable = item.GetMethod is not null;
+                var isWritable = item.SetMethod is not null;
                 if (!isReadable && !isWritable)
                 {
                     continue;
                 }
 
+                includesPrivateMembers |= item.GetMethod is not null && !IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility);
+                includesPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
                 var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
                 TypedConstant? key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
                 if (key is null)
@@ -749,7 +748,7 @@ public class TypeCollector
                     {
                         if (SymbolEqualityComparer.Default.Equals(item.ContainingType, formattedType))
                         {
-                            var syntax = item.DeclaringSyntaxReferences[0].GetSyntax();
+                            var syntax = item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
                             var identifier = (syntax as PropertyDeclarationSyntax)?.Identifier ?? (syntax as ParameterSyntax)?.Identifier;
 
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey, identifier?.GetLocation(), formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
@@ -837,7 +836,7 @@ public class TypeCollector
 
             foreach (IFieldSymbol item in formattedType.GetAllMembers().OfType<IFieldSymbol>())
             {
-                if (item.IsImplicitlyDeclared)
+                if (item.IsImplicitlyDeclared || item.IsStatic)
                 {
                     continue;
                 }
@@ -847,13 +846,7 @@ public class TypeCollector
                     continue;
                 }
 
-                var isReadable = IsAllowedAccessibility(item.DeclaredAccessibility) && !item.IsStatic;
-                var isWritable = IsAllowedAccessibility(item.DeclaredAccessibility) && !item.IsReadOnly && !item.IsStatic;
-                if (!isReadable && !isWritable)
-                {
-                    continue;
-                }
-
+                includesPrivateMembers |= !IsAllowedAccessibility(item.DeclaredAccessibility);
                 var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
                 TypedConstant? key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
                 if (key is null)
@@ -892,7 +885,7 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                         intMembers.Add(member.IntKey, member);
                     }
                     else
@@ -902,7 +895,7 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                         stringMembers.Add(member.StringKey, member);
                     }
                 }
@@ -1056,19 +1049,45 @@ public class TypeCollector
             return null;
         }
 
+        if (includesPrivateMembers)
+        {
+            // If the data type or any nesting types are not declared with partial, we cannot emit the formatter as a nested type within the data type
+            // as required in order to access the private members.
+            bool anyNonPartialTypesFound = false;
+            foreach (BaseTypeDeclarationSyntax? decl in FindNonPartialTypes(formattedType))
+            {
+                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PartialTypeRequired, decl.Identifier.GetLocation()));
+                anyNonPartialTypesFound = true;
+            }
+
+            if (anyNonPartialTypesFound)
+            {
+                return null;
+            }
+        }
+
         INamedTypeSymbol? formattedTypeDefinition = formattedType.IsGenericType ? formattedType.ConstructUnboundGenericType() : null;
         ObjectSerializationInfo info = ObjectSerializationInfo.Create(
             formattedType,
             isClass: isClass,
+            includesPrivateMembers: includesPrivateMembers,
             genericTypeParameters: formattedType.IsGenericType ? formattedType.TypeParameters.Select(ToGenericTypeParameterInfo).ToArray() : Array.Empty<GenericTypeParameterInfo>(),
             constructorParameters: constructorParameters.ToArray(),
             isIntKey: isIntKey,
             members: isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
             hasIMessagePackSerializationCallbackReceiver: hasSerializationConstructor,
             needsCastOnAfter: needsCastOnAfter,
-            needsCastOnBefore: needsCastOnBefore);
+            needsCastOnBefore: needsCastOnBefore,
+            this.options.Generator.Resolver);
 
         return info;
+    }
+
+    private static IEnumerable<BaseTypeDeclarationSyntax> FindNonPartialTypes(ITypeSymbol target)
+    {
+        return from x in CodeAnalysisUtilities.EnumerateTypeAndContainingTypes(target)
+               where x.FirstDeclaration?.Modifiers.Any(SyntaxKind.PartialKeyword) is false
+               select x.FirstDeclaration;
     }
 
     private static GenericTypeParameterInfo ToGenericTypeParameterInfo(ITypeParameterSymbol typeParameter)
@@ -1151,7 +1170,7 @@ public class TypeCollector
 
     private static bool IsAllowedAccessibility(Accessibility accessibility) => accessibility is Accessibility.Public or Accessibility.Internal;
 
-    private bool IsAllowAccessibility(ITypeSymbol symbol)
+    private static bool IsAllowAccessibility(ITypeSymbol symbol)
     {
         do
         {

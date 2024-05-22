@@ -51,8 +51,8 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return closedKey switch
 				{
-					0 => new Object1Formatter(),
-					1 => new Object2Formatter(),
+					0 => new global::MessagePack.GeneratedMessagePackResolver.Object1Formatter(),
+					1 => new global::MessagePack.GeneratedMessagePackResolver.Object2Formatter(),
 					_ => null, // unreachable
 				};
 			}

@@ -78,24 +78,26 @@ namespace MessagePack.Formatters
             }
             else
             {
-                IFormatterResolver resolver = options.Resolver;
-                IMessagePackFormatter<TKey>? keyFormatter = resolver.GetFormatterWithVerify<TKey>();
-                IMessagePackFormatter<TValue>? valueFormatter = resolver.GetFormatterWithVerify<TValue>();
-
                 var len = reader.ReadMapHeader();
 
                 TIntermediate dict = this.Create(len, options);
                 options.Security.DepthStep(ref reader);
                 try
                 {
-                    for (int i = 0; i < len; i++)
+                    if (len > 0)
                     {
-                        reader.CancellationToken.ThrowIfCancellationRequested();
-                        TKey key = keyFormatter.Deserialize(ref reader, options);
+                        IFormatterResolver resolver = options.Resolver;
+                        IMessagePackFormatter<TKey>? keyFormatter = resolver.GetFormatterWithVerify<TKey>();
+                        IMessagePackFormatter<TValue>? valueFormatter = resolver.GetFormatterWithVerify<TValue>();
+                        for (int i = 0; i < len; i++)
+                        {
+                            reader.CancellationToken.ThrowIfCancellationRequested();
+                            TKey key = keyFormatter.Deserialize(ref reader, options);
 
-                        TValue value = valueFormatter.Deserialize(ref reader, options);
+                            TValue value = valueFormatter.Deserialize(ref reader, options);
 
-                        this.Add(dict, i, key, value, options);
+                            this.Add(dict, i, key, value, options);
+                        }
                     }
                 }
                 finally

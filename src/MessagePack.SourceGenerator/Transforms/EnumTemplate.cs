@@ -22,19 +22,9 @@ namespace MessagePack.SourceGenerator.Transforms
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write("\r\n");
- if (ResolverNamespace.Length > 0) { 
-            this.Write("namespace ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
-            this.Write(" {\r\n");
- } 
-            this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\npartial class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("\r\n{\r\n");
- using (this.EmitClassesForNamespace(out string classVisibility, this.Write)) { 
-            this.Write("\t");
-            this.Write(this.ToStringHelper.ToStringWithCulture(classVisibility));
-            this.Write(" sealed class ");
+            this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\n");
+ using (this.EmitNestingTypesAndNamespaces(this.Write)) { 
+            this.Write("\r\n\tinternal sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.Formatter.Name));
             this.Write(" : MsgPack::Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
@@ -49,11 +39,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(")reader.Read");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.UnderlyingTypeName));
-            this.Write("();\r\n\t\t}\r\n\t}\r\n");
- } 
-            this.Write("}\r\n\r\n");
- if (ResolverNamespace.Length > 0) { 
-            this.Write("}\r\n");
+            this.Write("();\r\n\t\t}\r\n\t}\r\n\r\n");
  } 
             return this.GenerationEnvironment.ToString();
         }

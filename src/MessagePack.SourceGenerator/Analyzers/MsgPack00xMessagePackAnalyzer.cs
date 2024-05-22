@@ -19,6 +19,8 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string AOTLimitationsId = "MsgPack008";
     public const string CollidingFormattersId = "MsgPack009";
     public const string InaccessibleFormatterId = "MsgPack010";
+    public const string PartialTypeRequiredId = "MsgPack011";
+    public const string InaccessibleDataTypeId = "MsgPack012";
 
     internal const string Category = "Usage";
 
@@ -26,6 +28,9 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     internal const string KeyAttributeShortName = "KeyAttribute";
     internal const string IgnoreShortName = "IgnoreMemberAttribute";
     internal const string IgnoreDataMemberShortName = "IgnoreDataMemberAttribute";
+
+    private const string InvalidMessagePackObjectTitle = "MessagePackObject validation";
+    private const DiagnosticSeverity InvalidMessagePackObjectSeverity = DiagnosticSeverity.Error;
 
     internal static readonly DiagnosticDescriptor TypeMustBeMessagePackObject = new DiagnosticDescriptor(
         id: UseMessagePackObjectAttributeId,
@@ -69,51 +74,63 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
 
     internal static readonly DiagnosticDescriptor InvalidMessagePackObject = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
-        title: "MessagePackObject validation",
+        title: InvalidMessagePackObjectTitle,
         category: Category,
         messageFormat: "Invalid MessagePackObject definition: {0}", // details
         description: "Invalid MessagePackObject definition.",
-        defaultSeverity: DiagnosticSeverity.Error,
+        defaultSeverity: InvalidMessagePackObjectSeverity,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
     internal static readonly DiagnosticDescriptor BothStringAndIntKeyAreNull = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
-        title: "Attribute public members of MessagePack objects",
+        title: InvalidMessagePackObjectTitle,
         category: Category,
         messageFormat: "Both int and string keys are null: {0}.{1}", // type.Name + "." + item.Name
         description: "An int or string key must be supplied to the KeyAttribute.",
-        defaultSeverity: DiagnosticSeverity.Error,
+        defaultSeverity: InvalidMessagePackObjectSeverity,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
     internal static readonly DiagnosticDescriptor DoNotMixStringAndIntKeys = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
-        title: "Attribute public members of MessagePack objects",
+        title: InvalidMessagePackObjectTitle,
         category: Category,
         messageFormat: "All KeyAttribute arguments must be of the same type (either string or int)",
         description: "Use string or int keys consistently.",
-        defaultSeverity: DiagnosticSeverity.Error,
+        defaultSeverity: InvalidMessagePackObjectSeverity,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
     internal static readonly DiagnosticDescriptor KeysMustBeUnique = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
-        title: "Attribute public members of MessagePack objects",
+        title: InvalidMessagePackObjectTitle,
         category: Category,
         messageFormat: "All KeyAttribute arguments must be unique",
         description: "Each key must be unique.",
-        defaultSeverity: DiagnosticSeverity.Error,
+        defaultSeverity: InvalidMessagePackObjectSeverity,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
     internal static readonly DiagnosticDescriptor UnionAttributeRequired = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
-        title: "Attribute public members of MessagePack objects",
+        title: InvalidMessagePackObjectTitle,
         category: Category,
         messageFormat: "This type must carry a UnionAttribute",
         description: "A UnionAttribute is required on interfaces and abstract base classes used as serialized types.",
-        defaultSeverity: DiagnosticSeverity.Error,
+        defaultSeverity: InvalidMessagePackObjectSeverity,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
+
+    // This is important because [Key] on a private member still will not be serialized, which is very confusing until
+    // one realizes the type is serializing in map mode.
+    internal static readonly DiagnosticDescriptor KeyAnnotatedMemberInMapMode = new DiagnosticDescriptor(
+        id: InvalidMessagePackObjectId,
+        title: InvalidMessagePackObjectTitle,
+        category: Category,
+        messageFormat: "Types in map mode should not annotate members with KeyAttribute",
+        description: "When in map mode (by compilation setting or with [MessagePackObject(true)]), internal and public members are automatically included in serialization and should not be annotated with KeyAttribute.",
+        defaultSeverity: InvalidMessagePackObjectSeverity,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
@@ -197,23 +214,69 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(CollidingFormattersId));
 
-    internal static readonly DiagnosticDescriptor InaccessibleFormatter = new(
+    public static readonly DiagnosticDescriptor InaccessibleFormatterInstance = new(
         id: InaccessibleFormatterId,
         title: "Inaccessible formatter",
         category: Category,
-        messageFormat: "Formatter should declare a default constructor with at least internal visibility",
-        description: "The auto-generated resolver cannot construct this formatter without a constructor.",
+        messageFormat: "Formatter should declare a default constructor with at least internal visibility or a public static readonly field named Instance that returns the singleton",
+        description: "The auto-generated resolver cannot construct this formatter without a constructor. It will be omitted from the resolver.",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleFormatterId));
 
+    public static readonly DiagnosticDescriptor InaccessibleFormatterType = new(
+        id: InaccessibleFormatterId,
+        title: "Inaccessible formatter",
+        category: Category,
+        messageFormat: "Formatter should be declared with at least internal visibility",
+        description: "The auto-generated resolver cannot access this formatter. It will be omitted from the resolver.",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleFormatterId));
+
+    internal static readonly DiagnosticDescriptor PartialTypeRequired = new(
+        id: PartialTypeRequiredId,
+        title: "Partial type required",
+        category: Category,
+        messageFormat: "Types with private, serializable members must be declared as partial",
+        description: "When a data type has serializable members that may only be accessible to the class itself (e.g. private or protected members), the type must be declared as partial to allow source generation of the formatter as a nested type.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(PartialTypeRequiredId));
+
+    internal static readonly DiagnosticDescriptor InaccessibleDataType = new(
+        id: InaccessibleDataTypeId,
+        title: "Internally accessible data type required",
+        category: Category,
+        messageFormat: "This MessagePack formattable type must have at least internal visibility",
+        description: "MessagePack serializable objects must be at least internally accessible so a source-generated formatter can access it.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleDataTypeId));
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         TypeMustBeMessagePackObject,
-        PublicMemberNeedsKey,
-        InvalidMessagePackObject,
         MessageFormatterMustBeMessagePackFormatter,
+        PublicMemberNeedsKey,
+        BaseTypeContainsUnattributedPublicMembers,
+        InvalidMessagePackObject,
+        BothStringAndIntKeyAreNull,
+        DoNotMixStringAndIntKeys,
+        KeysMustBeUnique,
+        UnionAttributeRequired,
+        KeyAnnotatedMemberInMapMode,
+        NoDeserializingConstructor,
+        DeserializingConstructorParameterTypeMismatch,
+        DeserializingConstructorParameterIndexMissing,
+        DeserializingConstructorParameterNameMissing,
+        DeserializingConstructorParameterNameDuplicate,
+        AotUnionAttributeRequiresTypeArg,
+        AotArrayRankTooHigh,
         CollidingFormatters,
-        InaccessibleFormatter);
+        InaccessibleFormatterInstance,
+        InaccessibleFormatterType,
+        PartialTypeRequired,
+        InaccessibleDataType);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -224,7 +287,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
             if (ReferenceSymbols.TryCreate(context.Compilation, out ReferenceSymbols? typeReferences))
             {
                 // Search the compilation for implementations of IMessagePackFormatter<T>.
-                ImmutableHashSet<CustomFormatter> formatterTypes = this.SearchNamespaceForFormatters(context.Compilation.Assembly.GlobalNamespace).ToImmutableHashSet();
+                ImmutableHashSet<CustomFormatter> formatterTypes = this.SearchForFormatters(context.Compilation.Assembly.GlobalNamespace).ToImmutableHashSet();
 
                 AnalyzerOptions options = new AnalyzerOptions()
                     .WithFormatterTypes(ImmutableArray<FormattableType>.Empty, formatterTypes)
@@ -248,9 +311,9 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
                 context.ReportDiagnostic(Diagnostic.Create(CollidingFormatters, declaredSymbol.Locations[0], formattableType.Name.GetQualifiedName(Qualifiers.Namespace)));
             }
 
-            if (formatter.IsInaccessible)
+            if (formatter.InaccessibleDescriptor is { } inaccessible)
             {
-                context.ReportDiagnostic(Diagnostic.Create(InaccessibleFormatter, declaredSymbol.Locations[0]));
+                context.ReportDiagnostic(Diagnostic.Create(inaccessible, declaredSymbol.Locations[0]));
             }
         }
 
@@ -258,26 +321,34 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         {
             case TypeKind.Interface when declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.UnionAttribute)):
             case TypeKind.Class or TypeKind.Struct when declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.MessagePackObjectAttribute)):
-                TypeCollector.Collect(context.Compilation, options, typeReferences, context.ReportDiagnostic, declaredSymbol);
+                TypeCollector.Collect(context.Compilation, options, typeReferences, context.ReportDiagnostic, declaredSymbol, context.CancellationToken);
                 break;
         }
     }
 
-    private IEnumerable<CustomFormatter> SearchNamespaceForFormatters(INamespaceSymbol ns)
+    private IEnumerable<CustomFormatter> SearchForFormatters(INamespaceOrTypeSymbol container)
     {
-        foreach (INamespaceSymbol childNamespace in ns.GetNamespaceMembers())
+        if (container is INamespaceSymbol ns)
         {
-            foreach (CustomFormatter x in this.SearchNamespaceForFormatters(childNamespace))
+            foreach (INamespaceSymbol childNamespace in ns.GetNamespaceMembers())
             {
-                yield return x;
+                foreach (CustomFormatter x in this.SearchForFormatters(childNamespace))
+                {
+                    yield return x;
+                }
             }
         }
 
-        foreach (INamedTypeSymbol type in ns.GetTypeMembers())
+        foreach (INamedTypeSymbol type in container.GetTypeMembers())
         {
             if (CustomFormatter.TryCreate(type, out CustomFormatter? formatter))
             {
                 yield return formatter;
+            }
+
+            foreach (CustomFormatter nested in this.SearchForFormatters(type))
+            {
+                yield return nested;
             }
         }
     }
