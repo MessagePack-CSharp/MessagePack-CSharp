@@ -7,7 +7,7 @@
     <DefineConstants>$(DefineConstants);DYNAMICCODEDUMPER</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\src\MessagePack\Annotations\Attributes.cs">
+    <Compile Include="..\..\src\MessagePack.Annotations\Attributes.cs">
       <Link>Code\Attributes.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\BufferWriter.cs">
@@ -25,7 +25,7 @@
     <Compile Include="..\..\src\MessagePack\IFormatterResolver.cs">
       <Link>Code\IFormatterResolver.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Annotations\IMessagePackSerializationCallbackReceiver.cs">
+    <Compile Include="..\..\src\MessagePack.Annotations\IMessagePackSerializationCallbackReceiver.cs">
       <Link>Code\IMessagePackSerializationCallbackReceiver.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\Internal\AutomataDictionary.cs">
@@ -61,7 +61,7 @@
     <Compile Include="..\..\src\MessagePack\Internal\ReflectionExtensions.cs">
       <Link>Code\ReflectionExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\T4\UnsafeMemory.cs">
+    <Compile Include="..\..\src\MessagePack\Internal\UnsafeMemory.cs">
       <Link>Code\UnsafeMemory.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\Internal\UnsafeMemory.Low.cs">
@@ -94,7 +94,7 @@
     <Compile Include="..\..\src\MessagePack\MessagePackReader.cs">
       <Link>Code\MessagePackReader.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\T4\MessagePackReader.Integers.cs">
+    <Compile Include="..\..\src\MessagePack\MessagePackReader.Integers.cs">
       <Link>Code\MessagePackReader.Integers.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\MessagePackWriter.cs">
