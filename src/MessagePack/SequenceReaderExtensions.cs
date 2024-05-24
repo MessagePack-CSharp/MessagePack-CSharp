@@ -42,31 +42,6 @@ namespace MessagePack
             return true;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static unsafe bool TryRead(ref this SequenceReader<byte> reader, out long value)
-        {
-            if (MessagePackUnityOptions.UnityAndroid)
-            {
-                // In Android 32bit device(armv7) + IL2CPP does not work correctly on Unsafe.ReadUnaligned.
-                // Perhaps it is about memory alignment bug of Unity's IL2CPP VM.
-                // For a workaround, read memory manually.
-                // https://github.com/neuecc/MessagePack-CSharp/issues/748
-                ReadOnlySpan<byte> span = reader.UnreadSpan;
-                if (span.Length < sizeof(long))
-                {
-                    return TryReadMultisegment(ref reader, out value);
-                }
-
-                value = MessagePack.SafeBitConverter.ToInt64(span);
-                reader.Advance(sizeof(long));
-                return true;
-            }
-            else
-            {
-                return TryRead<long>(ref reader, out value);
-            }
-        }
-
         private static unsafe bool TryReadMultisegment<T>(ref SequenceReader<byte> reader, out T value)
             where T : unmanaged
         {
@@ -85,32 +60,6 @@ namespace MessagePack
             value = Unsafe.ReadUnaligned<T>(ref MemoryMarshal.GetReference(tempSpan));
             reader.Advance(sizeof(T));
             return true;
-        }
-
-        private static unsafe bool TryReadMultisegment(ref SequenceReader<byte> reader, out long value)
-        {
-            if (MessagePackUnityOptions.UnityAndroid)
-            {
-                Debug.Assert(reader.UnreadSpan.Length < sizeof(long), "reader.UnreadSpan.Length < sizeof(T)");
-
-                // Not enough data in the current segment, try to peek for the data we need.
-                long buffer = default;
-                Span<byte> tempSpan = new Span<byte>(&buffer, sizeof(long));
-
-                if (!reader.TryCopyTo(tempSpan))
-                {
-                    value = default;
-                    return false;
-                }
-
-                value = MessagePack.SafeBitConverter.ToInt64(tempSpan);
-                reader.Advance(sizeof(long));
-                return true;
-            }
-            else
-            {
-                return TryReadMultisegment<long>(ref reader, out value);
-            }
         }
 
         /// <summary>

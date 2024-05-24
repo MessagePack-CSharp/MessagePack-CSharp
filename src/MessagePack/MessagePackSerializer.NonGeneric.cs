@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,6 +15,12 @@ namespace MessagePack
 {
     public partial class MessagePackSerializer
     {
+#if NETFRAMEWORK || NETSTANDARD2_0
+        private static readonly bool AvoidDynamicCode = false;
+#else
+        private static readonly bool AvoidDynamicCode = !RuntimeFeature.IsDynamicCodeSupported;
+#endif
+
         private static readonly Func<Type, CompiledMethods> CreateCompiledMethods;
         private static readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods> Serializes = new MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods>(capacity: 64);
 
@@ -111,7 +118,7 @@ namespace MessagePack
 
             internal delegate object? MessagePackReaderDeserialize(ref MessagePackReader reader, MessagePackSerializerOptions? options);
 
-            private bool PreferInterpretation => MessagePackUnityOptions.IL2CPP;
+            private bool PreferInterpretation => AvoidDynamicCode;
 
 #pragma warning disable SA1310 // Field names should not contain underscore
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
@@ -138,7 +145,7 @@ namespace MessagePack
                 {
                     // public static byte[] Serialize<T>(T obj, MessagePackSerializerOptions options, CancellationToken cancellationToken)
                     MethodInfo serialize = GetMethod(nameof(Serialize), type, new Type?[] { null, typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
-                    if (MessagePackUnityOptions.IL2CPP)
+                    if (AvoidDynamicCode)
                     {
                         this.Serialize_T_Options = (x, y, z) => (byte[])serialize.Invoke(null, [x, y, z])!;
                     }
@@ -163,7 +170,7 @@ namespace MessagePack
                 {
                     // public static void Serialize<T>(Stream stream, T obj, MessagePackSerializerOptions options, CancellationToken cancellationToken)
                     MethodInfo serialize = GetMethod(nameof(Serialize), type, new Type?[] { typeof(Stream), null, typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
-                    if (MessagePackUnityOptions.IL2CPP)
+                    if (AvoidDynamicCode)
                     {
                         this.Serialize_Stream_T_Options_CancellationToken = (x, y, z, a) => serialize.Invoke(null, [x, y, z, a]);
                     }
@@ -190,7 +197,7 @@ namespace MessagePack
                 {
                     // public static Task SerializeAsync<T>(Stream stream, T obj, MessagePackSerializerOptions options, CancellationToken cancellationToken)
                     MethodInfo serialize = GetMethod(nameof(SerializeAsync), type, new Type?[] { typeof(Stream), null, typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
-                    if (MessagePackUnityOptions.IL2CPP)
+                    if (AvoidDynamicCode)
                     {
                         this.SerializeAsync_Stream_T_Options_CancellationToken = (x, y, z, a) => (Task)serialize.Invoke(null, [x, y, z, a])!;
                     }
@@ -217,7 +224,7 @@ namespace MessagePack
                 {
                     // public static Task Serialize<T>(IBufferWriter<byte> writer, T obj, MessagePackSerializerOptions options, CancellationToken cancellationToken)
                     MethodInfo serialize = GetMethod(nameof(Serialize), type, new Type?[] { typeof(IBufferWriter<byte>), null, typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
-                    if (MessagePackUnityOptions.IL2CPP)
+                    if (AvoidDynamicCode)
                     {
                         this.Serialize_IBufferWriter_T_Options_CancellationToken = (x, y, z, a) => serialize.Invoke(null, [x, y, z, a]);
                     }
@@ -244,7 +251,7 @@ namespace MessagePack
                 {
                     // private static void SerializeSemiGeneric<T>(ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options)
                     MethodInfo serialize = GetMethod(nameof(SerializeSemiGeneric), type, new Type?[] { typeof(MessagePackWriter).MakeByRefType(), typeof(object), typeof(MessagePackSerializerOptions) });
-                    if (MessagePackUnityOptions.IL2CPP)
+                    if (AvoidDynamicCode)
                     {
                         this.Serialize_MessagePackWriter_T_Options = (ref MessagePackWriter x, object? y, MessagePackSerializerOptions? z) => ThrowRefStructNotSupported();
                     }
@@ -257,7 +264,7 @@ namespace MessagePack
                 {
                     // private static object DeserializeSemiGeneric<T>(ref MessagePackReader reader, MessagePackSerializerOptions options)
                     MethodInfo deserialize = GetMethod(nameof(DeserializeSemiGeneric), type, new Type?[] { typeof(MessagePackReader).MakeByRefType(), typeof(MessagePackSerializerOptions) });
-                    if (MessagePackUnityOptions.IL2CPP)
+                    if (AvoidDynamicCode)
                     {
                         this.Deserialize_MessagePackReader_Options = (ref MessagePackReader reader, MessagePackSerializerOptions? options) =>
                         {
@@ -274,7 +281,7 @@ namespace MessagePack
                 {
                     // public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken)
                     MethodInfo deserialize = GetMethod(nameof(Deserialize), type, new Type?[] { typeof(Stream), typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
-                    if (MessagePackUnityOptions.IL2CPP)
+                    if (AvoidDynamicCode)
                     {
                         this.Deserialize_Stream_Options_CancellationToken = (x, y, z) => deserialize.Invoke(null, [x, y, z]);
                     }
@@ -293,7 +300,7 @@ namespace MessagePack
                 {
                     // public static ValueTask<object> DeserializeObjectAsync<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken)
                     MethodInfo deserialize = GetMethod(nameof(DeserializeObjectAsync), type, new Type?[] { typeof(Stream), typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
-                    if (MessagePackUnityOptions.IL2CPP)
+                    if (AvoidDynamicCode)
                     {
                         this.DeserializeAsync_Stream_Options_CancellationToken = (x, y, z) => (ValueTask<object?>)deserialize.Invoke(null, [x, y, z])!;
                     }
@@ -312,7 +319,7 @@ namespace MessagePack
                 {
                     // public static T Deserialize<T>(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options, CancellationToken cancellationToken)
                     MethodInfo deserialize = GetMethod(nameof(Deserialize), type, new Type?[] { typeof(ReadOnlyMemory<byte>), typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
-                    if (MessagePackUnityOptions.IL2CPP)
+                    if (AvoidDynamicCode)
                     {
                         this.Deserialize_ReadOnlyMemory_Options = (x, y, z) => deserialize.Invoke(null, [x, y, z]);
                     }
@@ -331,7 +338,7 @@ namespace MessagePack
                 {
                     // public static T Deserialize<T>(ReadOnlySequence<byte> bytes, MessagePackSerializerOptions options, CancellationToken cancellationToken)
                     MethodInfo deserialize = GetMethod(nameof(Deserialize), type, new Type?[] { typeof(ReadOnlySequence<byte>).MakeByRefType(), typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
-                    if (MessagePackUnityOptions.IL2CPP)
+                    if (AvoidDynamicCode)
                     {
                         this.Deserialize_ReadOnlySequence_Options_CancellationToken = (x, y, z) => deserialize.Invoke(null, [x, y, z]);
                     }
