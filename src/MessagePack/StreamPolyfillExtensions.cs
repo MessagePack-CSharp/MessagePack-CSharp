@@ -13,7 +13,7 @@ using Microsoft;
 
 namespace MessagePack
 {
-#if !SPAN_BUILTIN && !UNITY_2021_2_OR_NEWER
+#if !SPAN_BUILTIN
     internal static class StreamPolyfillExtensions
     {
         /// <summary>

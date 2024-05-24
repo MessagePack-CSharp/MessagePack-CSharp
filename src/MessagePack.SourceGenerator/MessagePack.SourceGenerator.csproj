@@ -24,6 +24,7 @@
     <Compile Include="..\MessagePack\Internal\AutomataKeyGen.cs" LinkBase="MessagePack\Internal" />
     <Compile Include="..\MessagePack\SafeBitConverter.cs" LinkBase="MessagePack" />
     <Compile Include="..\MessagePack\MessagePackSerializationException.cs" LinkBase="MessagePack" />
+    <Compile Include="..\MessagePack\MessagePackUnityOptions.cs" LinkBase="MessagePack" />
     <Compile Update="Transforms\CompositeResolverTemplate.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
