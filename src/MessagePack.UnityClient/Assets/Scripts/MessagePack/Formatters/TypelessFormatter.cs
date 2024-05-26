@@ -115,27 +115,6 @@ namespace MessagePack.Formatters
             Deserializers.TryAdd(typeof(object), _ => (object p1, ref MessagePackReader p2, MessagePackSerializerOptions p3) => new object());
         }
 
-        private string BuildTypeName(Type type, MessagePackSerializerOptions options)
-        {
-            if (options.OmitAssemblyVersion)
-            {
-                string full = type.AssemblyQualifiedName!;
-
-                var shortened = MessagePackSerializerOptions.AssemblyNameVersionSelectorRegex.Replace(full, string.Empty);
-                if (Type.GetType(shortened, false) == null)
-                {
-                    // if type cannot be found with shortened name - use full name
-                    shortened = full;
-                }
-
-                return shortened;
-            }
-            else
-            {
-                return type.AssemblyQualifiedName!;
-            }
-        }
-
         public void Serialize(ref MessagePackWriter writer, object? value, MessagePackSerializerOptions options)
         {
             if (value == null)
@@ -156,7 +135,7 @@ namespace MessagePack.Formatters
                 }
                 else
                 {
-                    typeName = StringEncoding.UTF8.GetBytes(this.BuildTypeName(type, options));
+                    typeName = StringEncoding.UTF8.GetBytes(options.BuildTypeName(type));
                 }
 
                 typeNameCache.TryAdd(type, typeName);

@@ -164,6 +164,38 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Gets a string representation of the given type.
+        /// This is virtual, allowing users to set up overrides via deriving from MessagePackSerializerOptions.
+        /// A typical use case for this would be, in conjunction with overriding LoadType(), to provide the option to move types between namespaces and assemblies
+        /// without breaking binary compatibility with other processes that are writing to, and reading from, the same storage.
+        /// * overriding LoadType() allows legacy-format binary serialization to be read into the new namespace and assembly
+        /// * overriding BuildTypeName() allows the new namespace and assembly to write legacy-format binary serialization.
+        /// In the CLR, the System.Runtime.Serialization.SerializationBinder methods BindToName() and BindToType() provide this capability.
+        /// </summary>
+        /// <param name="type">The type to get a string representation of</param>
+        /// <returns></returns>
+        public virtual string BuildTypeName(Type type)
+        {
+            if (this.OmitAssemblyVersion)
+            {
+                string full = type.AssemblyQualifiedName!;
+
+                var shortened = AssemblyNameVersionSelectorRegex.Replace(full, string.Empty);
+                if (Type.GetType(shortened, false) == null)
+                {
+                    // if type cannot be found with shortened name - use full name
+                    shortened = full;
+                }
+
+                return shortened;
+            }
+            else
+            {
+                return type.AssemblyQualifiedName!;
+            }
+        }
+
+        /// <summary>
         /// Checks whether a given type may be deserialized.
         /// </summary>
         /// <param name="type">The type to be instantiated.</param>
