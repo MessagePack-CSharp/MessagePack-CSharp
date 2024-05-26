@@ -3,6 +3,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace MessagePack
 {
@@ -10,7 +11,7 @@ namespace MessagePack
     {
         internal static unsafe long ToInt64(ReadOnlySpan<byte> value)
         {
-            fixed (byte* p = value)
+            fixed (byte* p = &MemoryMarshal.GetReference(value))
             {
                 return Unsafe.ReadUnaligned<long>(p);
             }
@@ -20,7 +21,7 @@ namespace MessagePack
 
         internal static unsafe ushort ToUInt16(ReadOnlySpan<byte> value)
         {
-            fixed (byte* p = value)
+            fixed (byte* p = &MemoryMarshal.GetReference(value))
             {
                 return Unsafe.ReadUnaligned<ushort>(p);
             }
@@ -28,7 +29,7 @@ namespace MessagePack
 
         internal static unsafe uint ToUInt32(ReadOnlySpan<byte> value)
         {
-            fixed (byte* p = value)
+            fixed (byte* p = &MemoryMarshal.GetReference(value))
             {
                 return Unsafe.ReadUnaligned<uint>(p);
             }

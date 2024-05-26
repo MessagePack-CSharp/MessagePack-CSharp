@@ -97,9 +97,6 @@
     <Compile Include="..\..\src\MessagePack\MessagePackReader.Integers.cs">
       <Link>Code\MessagePackReader.Integers.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\MessagePackUnityOptions.cs">
-      <Link>Code\MessagePackUnityOptions.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\MessagePack\MessagePackWriter.cs">
       <Link>Code\MessagePackWriter.cs</Link>
     </Compile>
