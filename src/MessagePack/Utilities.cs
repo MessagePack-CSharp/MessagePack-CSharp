@@ -13,11 +13,6 @@ namespace MessagePack
     /// </summary>
     internal static class Utilities
     {
-        /// <summary>
-        /// A value indicating whether we're running on mono.
-        /// </summary>
-        internal static readonly bool IsMono = Type.GetType("Mono.RuntimeStructs") is Type;
-
         internal delegate void GetWriterBytesAction<TArg>(ref MessagePackWriter writer, TArg argument);
 
         internal static byte[] GetWriterBytes<TArg>(TArg arg, GetWriterBytesAction<TArg> action, SequencePool pool)
