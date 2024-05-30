@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>mpc</AssemblyName>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>mpc</ToolCommandName>
     <RollForward>Major</RollForward>
@@ -21,6 +21,7 @@
     <PackageReference Include="Microsoft.Build.Framework" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Build" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" />
+    <PackageReference Include="System.CodeDom" ExcludeAssets="runtime" />
   </ItemGroup>
 
   <ItemGroup>
