@@ -38,7 +38,7 @@
     <PackageVersion Include="Microsoft.NETCore.Portable.Compatibility" Version="1.0.1" />
     <PackageVersion Include="Moq" Version="4.20.70" />
     <PackageVersion Include="MsgPack.Cli" Version="1.0.1" />
-    <PackageVersion Include="Nerdbank.Streams" Version="2.10.72" />
+    <PackageVersion Include="Nerdbank.Streams" Version="2.11.74" />
     <PackageVersion Include="Newtonsoft.Json.Bson" Version="1.0.2" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageVersion Include="NuGet.Protocol" Version="6.8.0" />
