@@ -42,30 +42,6 @@ namespace MessagePack
             return true;
         }
 
-#if UNITY_ANDROID
-
-        /// <summary>
-        /// In Android 32bit device(armv7) + IL2CPP does not work correctly on Unsafe.ReadUnaligned.
-        /// Perhaps it is about memory alignment bug of Unity's IL2CPP VM.
-        /// For a workaround, read memory manually.
-        /// https://github.com/neuecc/MessagePack-CSharp/issues/748
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static unsafe bool TryRead(ref this SequenceReader<byte> reader, out long value)
-        {
-            ReadOnlySpan<byte> span = reader.UnreadSpan;
-            if (span.Length < sizeof(long))
-            {
-                return TryReadMultisegment(ref reader, out value);
-            }
-
-            value = MessagePack.SafeBitConverter.ToInt64(span);
-            reader.Advance(sizeof(long));
-            return true;
-        }
-
-#endif
-
         private static unsafe bool TryReadMultisegment<T>(ref SequenceReader<byte> reader, out T value)
             where T : unmanaged
         {
@@ -85,29 +61,6 @@ namespace MessagePack
             reader.Advance(sizeof(T));
             return true;
         }
-
-#if UNITY_ANDROID
-
-        private static unsafe bool TryReadMultisegment(ref SequenceReader<byte> reader, out long value)
-        {
-            Debug.Assert(reader.UnreadSpan.Length < sizeof(long), "reader.UnreadSpan.Length < sizeof(long)");
-
-            // Not enough data in the current segment, try to peek for the data we need.
-            long buffer = default;
-            Span<byte> tempSpan = new Span<byte>(&buffer, sizeof(long));
-
-            if (!reader.TryCopyTo(tempSpan))
-            {
-                value = default;
-                return false;
-            }
-
-            value = MessagePack.SafeBitConverter.ToInt64(tempSpan);
-            reader.Advance(sizeof(long));
-            return true;
-        }
-
-#endif
 
         /// <summary>
         /// Reads an <see cref="sbyte"/> from the next position in the sequence.

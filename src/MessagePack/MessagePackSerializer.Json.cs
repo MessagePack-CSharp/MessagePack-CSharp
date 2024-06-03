@@ -390,7 +390,6 @@ namespace MessagePack
                         writer.Write(dt.ToString("o", CultureInfo.InvariantCulture));
                         writer.Write("\"");
                     }
-#if !UNITY_2018_3_OR_NEWER
                     else if (extHeader.TypeCode == ThisLibraryExtensionTypeCodes.TypelessFormatter)
                     {
                         // prepare type name token
@@ -435,7 +434,6 @@ namespace MessagePack
                             writer.Write("{\"$type\":" + typeNameTokenBuilder.ToString() + "}");
                         }
                     }
-#endif
                     else
                     {
                         var data = reader.ReadRaw((long)extHeader.Length);

@@ -1249,7 +1249,7 @@ namespace MessagePack
             {
                 if (estimatedOffset != 1)
                 {
-                    MemoryCopy(pBuffer + estimatedOffset, pBuffer + 1, byteCount, byteCount);
+                    Buffer.MemoryCopy(pBuffer + estimatedOffset, pBuffer + 1, byteCount, byteCount);
                 }
 
                 pBuffer[0] = (byte)(MessagePackCode.MinFixStr | byteCount);
@@ -1259,7 +1259,7 @@ namespace MessagePack
             {
                 if (estimatedOffset != 2)
                 {
-                    MemoryCopy(pBuffer + estimatedOffset, pBuffer + 2, byteCount, byteCount);
+                    Buffer.MemoryCopy(pBuffer + estimatedOffset, pBuffer + 2, byteCount, byteCount);
                 }
 
                 pBuffer[0] = MessagePackCode.Str8;
@@ -1270,7 +1270,7 @@ namespace MessagePack
             {
                 if (estimatedOffset != 3)
                 {
-                    MemoryCopy(pBuffer + estimatedOffset, pBuffer + 3, byteCount, byteCount);
+                    Buffer.MemoryCopy(pBuffer + estimatedOffset, pBuffer + 3, byteCount, byteCount);
                 }
 
                 pBuffer[0] = MessagePackCode.Str16;
@@ -1281,7 +1281,7 @@ namespace MessagePack
             {
                 if (estimatedOffset != 5)
                 {
-                    MemoryCopy(pBuffer + estimatedOffset, pBuffer + 5, byteCount, byteCount);
+                    Buffer.MemoryCopy(pBuffer + estimatedOffset, pBuffer + 5, byteCount, byteCount);
                 }
 
                 pBuffer[0] = MessagePackCode.Str32;
@@ -1330,48 +1330,6 @@ namespace MessagePack
                 > long.MaxValue => 9,
                 _ => GetEncodedLength((long)value),
             };
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe void MemoryCopy(void* source, void* destination, long destinationSizeInBytes, long sourceBytesToCopy)
-        {
-#if UNITY_2018_3_OR_NEWER
-            if (sourceBytesToCopy > destinationSizeInBytes)
-            {
-                static void Throw(string paramName) => throw new ArgumentOutOfRangeException(paramName);
-
-                Throw(nameof(sourceBytesToCopy));
-            }
-
-            global::Unity.Collections.LowLevel.Unsafe.UnsafeUtility.MemMove(destination, source, sourceBytesToCopy);
-#else
-#pragma warning disable 0162
-
-            if (Utilities.IsMono)
-            {
-                // mono does not guarantee overlapped memcpy so for Unity and NETSTANDARD use slow path.
-                // https://github.com/neuecc/MessagePack-CSharp/issues/562
-                var buffer = ArrayPool<byte>.Shared.Rent((int)sourceBytesToCopy);
-                try
-                {
-                    fixed (byte* p = buffer)
-                    {
-                        Buffer.MemoryCopy(source, p, sourceBytesToCopy, sourceBytesToCopy);
-                        Buffer.MemoryCopy(p, destination, destinationSizeInBytes, sourceBytesToCopy);
-                    }
-                }
-                finally
-                {
-                    ArrayPool<byte>.Shared.Return(buffer);
-                }
-            }
-            else
-            {
-                Buffer.MemoryCopy(source, destination, destinationSizeInBytes, sourceBytesToCopy);
-            }
-
-#pragma warning restore 0162
-#endif
         }
     }
 }

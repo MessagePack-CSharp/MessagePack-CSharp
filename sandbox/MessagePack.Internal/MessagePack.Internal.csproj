@@ -26,6 +26,7 @@
     <Compile Include="..\..\src\MessagePack\MessagePackWriter.cs" />
     <Compile Include="..\..\src\MessagePack\Nil.cs" />
     <Compile Include="..\..\src\MessagePack\Internal\Sequence`1.cs" />
+    <Compile Include="..\..\src\MessagePack\SafeBitConverter.cs" />
     <Compile Include="..\..\src\MessagePack\SequencePool.cs" />
     <Compile Include="..\..\src\MessagePack\SequenceReader.cs" />
     <Compile Include="..\..\src\MessagePack\SequenceReaderExtensions.cs" />
