@@ -34,7 +34,7 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces" version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.NET.StringTools" Version="17.10.4" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
     <PackageVersion Include="Microsoft.NETCore.Portable.Compatibility" Version="1.0.1" />
     <PackageVersion Include="Moq" Version="4.20.70" />
     <PackageVersion Include="MsgPack.Cli" Version="1.0.1" />
