@@ -121,6 +121,36 @@ public class Foo
     }
 
     [Fact]
+    public async Task AddAttributeToField_WithComment()
+    {
+        string input = Preamble + @"
+[MessagePackObject]
+public class Foo
+{
+    // comment
+    public string {|MsgPack004:Member1|};
+}
+";
+
+        string output = Preamble + @"
+[MessagePackObject]
+public class Foo
+{
+    // comment
+    [Key(0)]
+    public string Member1;
+}
+";
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+        }.RunAsync();
+    }
+
+    [Fact]
     public async Task AddAttributeToType()
     {
         // Don't use Preamble because we want to test that it works without a using statement at the top.
