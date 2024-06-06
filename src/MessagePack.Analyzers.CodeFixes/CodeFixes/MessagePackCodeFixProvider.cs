@@ -1,12 +1,8 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Immutable;
 using System.Composition;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using MessagePack.SourceGenerator;
 using MessagePack.SourceGenerator.Analyzers;
 using Microsoft.CodeAnalysis;
@@ -168,6 +164,13 @@ public class MessagePackCodeFixProvider : CodeFixProvider
                 var node = await member.DeclaringSyntaxReferences[0].GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
                 var documentEditor = await solutionEditor.GetDocumentEditorAsync(document.Project.Solution.GetDocumentId(node.SyntaxTree), cancellationToken).ConfigureAwait(false);
                 var syntaxGenerator = SyntaxGenerator.GetGenerator(documentEditor.OriginalDocument);
+
+                // Preserve comments on fields.
+                if (node is VariableDeclaratorSyntax)
+                {
+                    node = node.Parent;
+                }
+
                 documentEditor.AddAttribute(node, syntaxGenerator.Attribute("MessagePack.KeyAttribute", syntaxGenerator.LiteralExpression(startOrder++)));
             }
         }
