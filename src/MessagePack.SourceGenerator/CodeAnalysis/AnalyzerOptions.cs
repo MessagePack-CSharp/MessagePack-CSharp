@@ -161,10 +161,11 @@ public record GeneratorOptions
 /// <summary>
 /// Describes a custom formatter.
 /// </summary>
-/// <param name="Name">The name (without namespace) of the type that implements at least one <c>IMessagePackFormatter</c> interface. If the formatter is a generic type, this should <em>not</em> include any generic type parameters.</param>
+/// <param name="Name">The name of the type that implements at least one <c>IMessagePackFormatter</c> interface. If the formatter is a generic type, this should <em>not</em> include any generic type parameters.</param>
 /// <param name="InstanceProvidingMember">Either ".ctor" or the name of a static field or property that will return an instance of the formatter.</param>
+/// <param name="InstanceTypeName">The type name to use when referring to an instance of the formatter. Usually the same as <paramref name="Name"/> but may be different if <paramref name="InstanceProvidingMember"/> returns a different type.</param>
 /// <param name="FormattableTypes">The type arguments that appear in each implemented <c>IMessagePackFormatter</c> interface. When generic, these should be the full name of their type definitions.</param>
-public record CustomFormatter(QualifiedTypeName Name, string? InstanceProvidingMember, ImmutableHashSet<FormattableType> FormattableTypes)
+public record CustomFormatter(QualifiedTypeName Name, string? InstanceProvidingMember, QualifiedTypeName InstanceTypeName, ImmutableHashSet<FormattableType> FormattableTypes)
 {
     public static bool TryCreate(INamedTypeSymbol type, [NotNullWhen(true)] out CustomFormatter? formatter)
     {
@@ -178,12 +179,13 @@ public record CustomFormatter(QualifiedTypeName Name, string? InstanceProvidingM
             return false;
         }
 
-        ISymbol? instanceField = type.GetMembers("Instance")
-            .FirstOrDefault(m => m.IsStatic && m.DeclaredAccessibility == Accessibility.Public && m is IFieldSymbol { IsReadOnly: true });
+        IFieldSymbol? instanceField = type.GetMembers("Instance").OfType<IFieldSymbol>()
+            .FirstOrDefault(m => m.IsStatic && m.DeclaredAccessibility == Accessibility.Public && m.IsReadOnly);
         IMethodSymbol? ctor = type.InstanceConstructors.FirstOrDefault(ctor => ctor.Parameters.Length == 0 && ctor.DeclaredAccessibility >= Accessibility.Internal);
         string? instanceProvidingMember = instanceField?.Name ?? ctor?.Name ?? null;
+        QualifiedTypeName instanceTypeName = new(instanceField?.Type ?? type);
 
-        formatter = new CustomFormatter(new QualifiedTypeName(type), instanceProvidingMember, formattedTypes)
+        formatter = new CustomFormatter(new QualifiedTypeName(type), instanceProvidingMember, instanceTypeName, formattedTypes)
         {
             InaccessibleDescriptor =
                 CodeAnalysisUtilities.FindInaccessibleTypes(type).Any() ? MsgPack00xMessagePackAnalyzer.InaccessibleFormatterType :
@@ -200,9 +202,14 @@ public record CustomFormatter(QualifiedTypeName Name, string? InstanceProvidingM
 
     public bool ExcludeFromSourceGeneratedResolver { get; init; }
 
-    public virtual bool Equals(CustomFormatter other)
+    public string InstanceExpression => this.InstanceProvidingMember == ".ctor"
+        ? $"new {this.Name.GetQualifiedName()}()"
+        : $"{this.Name.GetQualifiedName()}.{this.InstanceProvidingMember}";
+
+    public virtual bool Equals(CustomFormatter? other)
     {
-        return this.Name.Equals(other.Name)
+        return other is not null
+            && this.Name.Equals(other.Name)
             && this.FormattableTypes.SetEquals(other.FormattableTypes)
             && this.InaccessibleDescriptor == other.InaccessibleDescriptor;
     }

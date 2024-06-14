@@ -9,7 +9,7 @@ internal static class GeneratorUtilities
     {
         foreach (var memberSerializationInfo in infos)
         {
-            if (memberSerializationInfo.CustomFormatterTypeName == null && Array.IndexOf(AnalyzerUtilities.PrimitiveTypes, memberSerializationInfo.Type) == -1)
+            if (memberSerializationInfo.CustomFormatter is null && Array.IndexOf(AnalyzerUtilities.PrimitiveTypes, memberSerializationInfo.Type) == -1)
             {
                 return true;
             }
