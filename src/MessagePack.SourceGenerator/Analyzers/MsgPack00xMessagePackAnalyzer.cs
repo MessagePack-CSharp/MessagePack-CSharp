@@ -54,20 +54,20 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
 
     internal static readonly DiagnosticDescriptor PublicMemberNeedsKey = new DiagnosticDescriptor(
         id: AttributeMessagePackObjectMembersId,
-        title: "Attribute public members of MessagePack objects",
+        title: "Attribute properties and fields of MessagePack objects",
         category: Category,
-        messageFormat: "Public members of MessagePackObject-attributed types require either KeyAttribute or IgnoreMemberAttribute: {0}.{1}", // type.Name + "." + item.Name
-        description: "Public member must be marked with KeyAttribute or IgnoreMemberAttribute.",
+        messageFormat: "Properties and fields of MessagePackObject-attributed types require either KeyAttribute or IgnoreMemberAttribute: {0}.{1}", // type.Name + "." + item.Name
+        description: "Member must be marked with KeyAttribute or IgnoreMemberAttribute.",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(AttributeMessagePackObjectMembersId));
 
     internal static readonly DiagnosticDescriptor BaseTypeContainsUnattributedPublicMembers = new DiagnosticDescriptor(
         id: AttributeMessagePackObjectMembersId,
-        title: "Attribute public members of MessagePack objects",
+        title: "Attribute properties and fields of MessagePack objects",
         category: Category,
-        messageFormat: "Public members of base types of MessagePackObject-attributed types require either KeyAttribute or IgnoreMemberAttribute: {0}.{1}", // type.Name + "." + item.Name
-        description: "Public member must be marked with KeyAttribute or IgnoreMemberAttribute.",
+        messageFormat: "Properties and fields of base types of MessagePackObject-attributed types require either KeyAttribute or IgnoreMemberAttribute: {0}.{1}", // type.Name + "." + item.Name
+        description: "Member must be marked with KeyAttribute or IgnoreMemberAttribute.",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(AttributeMessagePackObjectMembersId));
