@@ -132,47 +132,55 @@ namespace MessagePack.Resolvers
                 }
             }
 
-            Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
-            using (MonoProtection.EnterRefEmitLock())
+            MessagePackEventSource.Instance.FormatterDynamicallyGeneratedStart();
+            try
             {
-                TypeBuilder typeBuilder = DynamicAssembly.Value.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName!, string.Empty).Replace(".", "_") + "Formatter" + +Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
-
-                FieldBuilder? typeToKeyAndJumpMap = null; // Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>
-                FieldBuilder? keyToJumpMap = null; // Dictionary<int, int>
-
-                // create map dictionary
+                Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
+                using (MonoProtection.EnterRefEmitLock())
                 {
-                    ConstructorBuilder method = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, Type.EmptyTypes);
-                    typeToKeyAndJumpMap = typeBuilder.DefineField("typeToKeyAndJumpMap", typeof(Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>), FieldAttributes.Private | FieldAttributes.InitOnly);
-                    keyToJumpMap = typeBuilder.DefineField("keyToJumpMap", typeof(Dictionary<int, int>), FieldAttributes.Private | FieldAttributes.InitOnly);
+                    TypeBuilder typeBuilder = DynamicAssembly.Value.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName!, string.Empty).Replace(".", "_") + "Formatter" + +Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
-                    ILGenerator il = method.GetILGenerator();
-                    BuildConstructor(type, unionAttrs, method, typeToKeyAndJumpMap, keyToJumpMap, il);
+                    FieldBuilder? typeToKeyAndJumpMap = null; // Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>
+                    FieldBuilder? keyToJumpMap = null; // Dictionary<int, int>
+
+                    // create map dictionary
+                    {
+                        ConstructorBuilder method = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, Type.EmptyTypes);
+                        typeToKeyAndJumpMap = typeBuilder.DefineField("typeToKeyAndJumpMap", typeof(Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>), FieldAttributes.Private | FieldAttributes.InitOnly);
+                        keyToJumpMap = typeBuilder.DefineField("keyToJumpMap", typeof(Dictionary<int, int>), FieldAttributes.Private | FieldAttributes.InitOnly);
+
+                        ILGenerator il = method.GetILGenerator();
+                        BuildConstructor(type, unionAttrs, method, typeToKeyAndJumpMap, keyToJumpMap, il);
+                    }
+
+                    {
+                        MethodBuilder method = typeBuilder.DefineMethod(
+                            "Serialize",
+                            MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                            null,
+                            new Type[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) });
+
+                        ILGenerator il = method.GetILGenerator();
+                        BuildSerialize(type, unionAttrs, method, typeToKeyAndJumpMap, il);
+                    }
+
+                    {
+                        MethodBuilder method = typeBuilder.DefineMethod(
+                            "Deserialize",
+                            MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                            type,
+                            new Type[] { refMessagePackReader, typeof(MessagePackSerializerOptions) });
+
+                        ILGenerator il = method.GetILGenerator();
+                        BuildDeserialize(type, unionAttrs, method, keyToJumpMap, il);
+                    }
+
+                    return typeBuilder.CreateTypeInfo();
                 }
-
-                {
-                    MethodBuilder method = typeBuilder.DefineMethod(
-                        "Serialize",
-                        MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
-                        null,
-                        new Type[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) });
-
-                    ILGenerator il = method.GetILGenerator();
-                    BuildSerialize(type, unionAttrs, method, typeToKeyAndJumpMap, il);
-                }
-
-                {
-                    MethodBuilder method = typeBuilder.DefineMethod(
-                        "Deserialize",
-                        MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
-                        type,
-                        new Type[] { refMessagePackReader, typeof(MessagePackSerializerOptions) });
-
-                    ILGenerator il = method.GetILGenerator();
-                    BuildDeserialize(type, unionAttrs, method, keyToJumpMap, il);
-                }
-
-                return typeBuilder.CreateTypeInfo();
+            }
+            finally
+            {
+                MessagePackEventSource.Instance.FormatterDynamicallyGeneratedStop(type);
             }
         }
 
