@@ -287,7 +287,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
             if (ReferenceSymbols.TryCreate(context.Compilation, out ReferenceSymbols? typeReferences))
             {
                 // Search the compilation for implementations of IMessagePackFormatter<T>.
-                ImmutableHashSet<CustomFormatter> formatterTypes = this.SearchForFormatters(context.Compilation.Assembly.GlobalNamespace).ToImmutableHashSet();
+                ImmutableHashSet<FormatterDescriptor> formatterTypes = this.SearchForFormatters(context.Compilation.Assembly.GlobalNamespace).ToImmutableHashSet();
 
                 AnalyzerOptions options = new AnalyzerOptions()
                     .WithFormatterTypes(ImmutableArray<FormattableType>.Empty, formatterTypes)
@@ -303,7 +303,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         QualifiedTypeName typeName = new(declaredSymbol);
 
         // If this is a formatter, confirm that it meets requirements.
-        if (options.KnownFormattersByName.TryGetValue(typeName, out CustomFormatter? formatter))
+        if (options.KnownFormattersByName.TryGetValue(typeName, out FormatterDescriptor? formatter))
         {
             // Look for colliding formatters (multiple formatters that want to format the same type).
             foreach (FormattableType formattableType in options.GetCollidingFormatterDataTypes(typeName))
@@ -326,13 +326,13 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private IEnumerable<CustomFormatter> SearchForFormatters(INamespaceOrTypeSymbol container)
+    private IEnumerable<FormatterDescriptor> SearchForFormatters(INamespaceOrTypeSymbol container)
     {
         if (container is INamespaceSymbol ns)
         {
             foreach (INamespaceSymbol childNamespace in ns.GetNamespaceMembers())
             {
-                foreach (CustomFormatter x in this.SearchForFormatters(childNamespace))
+                foreach (FormatterDescriptor x in this.SearchForFormatters(childNamespace))
                 {
                     yield return x;
                 }
@@ -341,12 +341,12 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
 
         foreach (INamedTypeSymbol type in container.GetTypeMembers())
         {
-            if (CustomFormatter.TryCreate(type, out CustomFormatter? formatter))
+            if (FormatterDescriptor.TryCreate(type, out FormatterDescriptor? formatter))
             {
                 yield return formatter;
             }
 
-            foreach (CustomFormatter nested in this.SearchForFormatters(type))
+            foreach (FormatterDescriptor nested in this.SearchForFormatters(type))
             {
                 yield return nested;
             }

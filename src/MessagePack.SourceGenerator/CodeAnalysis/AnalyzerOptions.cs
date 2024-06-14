@@ -17,7 +17,7 @@ namespace MessagePack.SourceGenerator.CodeAnalysis;
 /// </remarks>
 public record AnalyzerOptions
 {
-    private readonly ImmutableHashSet<CustomFormatter> knownFormatters = ImmutableHashSet<CustomFormatter>.Empty;
+    private readonly ImmutableHashSet<FormatterDescriptor> knownFormatters = ImmutableHashSet<FormatterDescriptor>.Empty;
 
     private readonly ImmutableDictionary<QualifiedTypeName, ImmutableArray<FormattableType>> collidingFormatters = ImmutableDictionary<QualifiedTypeName, ImmutableArray<FormattableType>>.Empty;
 
@@ -29,7 +29,7 @@ public record AnalyzerOptions
     /// <summary>
     /// Gets the set of custom formatters that should be considered by the analyzer and included in the generated resolver.
     /// </summary>
-    public ImmutableHashSet<CustomFormatter> KnownFormatters
+    public ImmutableHashSet<FormatterDescriptor> KnownFormatters
     {
         get => this.knownFormatters;
         init
@@ -37,9 +37,9 @@ public record AnalyzerOptions
             this.knownFormatters = value;
             this.KnownFormattersByName = value.ToImmutableDictionary(f => f.Name);
 
-            Dictionary<FormattableType, ImmutableArray<CustomFormatter>> formattableTypes = new();
+            Dictionary<FormattableType, ImmutableArray<FormatterDescriptor>> formattableTypes = new();
             bool collisionsEncountered = false;
-            foreach (CustomFormatter formatter in value)
+            foreach (FormatterDescriptor formatter in value)
             {
                 foreach (FormattableType dataType in formatter.FormattableTypes)
                 {
@@ -58,11 +58,11 @@ public record AnalyzerOptions
             var collidingFormatters = ImmutableDictionary<QualifiedTypeName, ImmutableArray<FormattableType>>.Empty;
             if (collisionsEncountered)
             {
-                foreach (KeyValuePair<FormattableType, ImmutableArray<CustomFormatter>> kvp in formattableTypes)
+                foreach (KeyValuePair<FormattableType, ImmutableArray<FormatterDescriptor>> kvp in formattableTypes)
                 {
                     if (kvp.Value.Length > 1)
                     {
-                        foreach (CustomFormatter collidingFormatter in kvp.Value)
+                        foreach (FormatterDescriptor collidingFormatter in kvp.Value)
                         {
                             if (collidingFormatters.TryGetValue(collidingFormatter.Name, out ImmutableArray<FormattableType> collidingTypes))
                             {
@@ -81,7 +81,7 @@ public record AnalyzerOptions
         }
     }
 
-    public ImmutableDictionary<QualifiedTypeName, CustomFormatter> KnownFormattersByName { get; private init; } = ImmutableDictionary<QualifiedTypeName, CustomFormatter>.Empty;
+    public ImmutableDictionary<QualifiedTypeName, FormatterDescriptor> KnownFormattersByName { get; private init; } = ImmutableDictionary<QualifiedTypeName, FormatterDescriptor>.Empty;
 
     public GeneratorOptions Generator { get; init; } = new();
 
@@ -90,7 +90,7 @@ public record AnalyzerOptions
     /// </summary>
     public bool IsGeneratingSource { get; init; }
 
-    internal AnalyzerOptions WithFormatterTypes(ImmutableArray<FormattableType> formattableTypes, ImmutableHashSet<CustomFormatter> customFormatters)
+    internal AnalyzerOptions WithFormatterTypes(ImmutableArray<FormattableType> formattableTypes, ImmutableHashSet<FormatterDescriptor> customFormatters)
     {
         return this with
         {
@@ -107,7 +107,7 @@ public record AnalyzerOptions
     /// <returns>The modified set of options.</returns>
     internal AnalyzerOptions WithAssemblyAttributes(ImmutableArray<AttributeData> assemblyAttributes, CancellationToken cancellationToken)
     {
-        ImmutableHashSet<CustomFormatter> customFormatters = AnalyzerUtilities.ParseKnownFormatterAttribute(assemblyAttributes, cancellationToken).Union(this.KnownFormatters);
+        ImmutableHashSet<FormatterDescriptor> customFormatters = AnalyzerUtilities.ParseKnownFormatterAttribute(assemblyAttributes, cancellationToken).Union(this.KnownFormatters);
         ImmutableArray<FormattableType> customFormattedTypes = this.AssumedFormattableTypes.Union(AnalyzerUtilities.ParseAssumedFormattableAttribute(assemblyAttributes, cancellationToken)).ToImmutableArray();
         return this.WithFormatterTypes(customFormattedTypes, customFormatters);
     }
@@ -165,9 +165,9 @@ public record GeneratorOptions
 /// <param name="InstanceProvidingMember">Either ".ctor" or the name of a static field or property that will return an instance of the formatter.</param>
 /// <param name="InstanceTypeName">The type name to use when referring to an instance of the formatter. Usually the same as <paramref name="Name"/> but may be different if <paramref name="InstanceProvidingMember"/> returns a different type.</param>
 /// <param name="FormattableTypes">The type arguments that appear in each implemented <c>IMessagePackFormatter</c> interface. When generic, these should be the full name of their type definitions.</param>
-public record CustomFormatter(QualifiedTypeName Name, string? InstanceProvidingMember, QualifiedTypeName InstanceTypeName, ImmutableHashSet<FormattableType> FormattableTypes)
+public record FormatterDescriptor(QualifiedTypeName Name, string? InstanceProvidingMember, QualifiedTypeName InstanceTypeName, ImmutableHashSet<FormattableType> FormattableTypes)
 {
-    public static bool TryCreate(INamedTypeSymbol type, [NotNullWhen(true)] out CustomFormatter? formatter)
+    public static bool TryCreate(INamedTypeSymbol type, [NotNullWhen(true)] out FormatterDescriptor? formatter)
     {
         var formattedTypes =
             AnalyzerUtilities.SearchTypeForFormatterImplementations(type)
@@ -185,7 +185,7 @@ public record CustomFormatter(QualifiedTypeName Name, string? InstanceProvidingM
         string? instanceProvidingMember = instanceField?.Name ?? ctor?.Name ?? null;
         QualifiedTypeName instanceTypeName = new(instanceField?.Type ?? type);
 
-        formatter = new CustomFormatter(new QualifiedTypeName(type), instanceProvidingMember, instanceTypeName, formattedTypes)
+        formatter = new FormatterDescriptor(new QualifiedTypeName(type), instanceProvidingMember, instanceTypeName, formattedTypes)
         {
             InaccessibleDescriptor =
                 CodeAnalysisUtilities.FindInaccessibleTypes(type).Any() ? MsgPack00xMessagePackAnalyzer.InaccessibleFormatterType :
@@ -206,7 +206,7 @@ public record CustomFormatter(QualifiedTypeName Name, string? InstanceProvidingM
         ? $"new {this.Name.GetQualifiedName()}()"
         : $"{this.Name.GetQualifiedName()}.{this.InstanceProvidingMember}";
 
-    public virtual bool Equals(CustomFormatter? other)
+    public virtual bool Equals(FormatterDescriptor? other)
     {
         return other is not null
             && this.Name.Equals(other.Name)

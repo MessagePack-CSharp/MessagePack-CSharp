@@ -85,15 +85,15 @@ public static class AnalyzerUtilities
         return options;
     }
 
-    internal static ImmutableHashSet<CustomFormatter> ParseKnownFormatterAttribute(ImmutableArray<AttributeData> attributes, CancellationToken cancellationToken)
+    internal static ImmutableHashSet<FormatterDescriptor> ParseKnownFormatterAttribute(ImmutableArray<AttributeData> attributes, CancellationToken cancellationToken)
     {
-        var builder = ImmutableHashSet<CustomFormatter>.Empty.ToBuilder();
+        var builder = ImmutableHashSet<FormatterDescriptor>.Empty.ToBuilder();
         foreach (AttributeData ad in attributes)
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (ad.AttributeClass?.Name == MessagePackKnownFormatterAttributeName && ad.AttributeClass?.ContainingNamespace.Name == AttributeNamespace)
             {
-                if (ad.ConstructorArguments[0].Value is INamedTypeSymbol formatterType && CustomFormatter.TryCreate(formatterType, out CustomFormatter? formatter))
+                if (ad.ConstructorArguments[0].Value is INamedTypeSymbol formatterType && FormatterDescriptor.TryCreate(formatterType, out FormatterDescriptor? formatter))
                 {
                     builder.Add(formatter);
                 }

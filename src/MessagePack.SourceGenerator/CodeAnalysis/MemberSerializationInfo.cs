@@ -12,7 +12,7 @@ public record MemberSerializationInfo(
     string Name,
     string Type,
     string ShortTypeName,
-    CustomFormatter? CustomFormatter)
+    FormatterDescriptor? CustomFormatter)
 {
     private static readonly IReadOnlyCollection<string> PrimitiveTypes = new HashSet<string>(AnalyzerUtilities.PrimitiveTypes);
 

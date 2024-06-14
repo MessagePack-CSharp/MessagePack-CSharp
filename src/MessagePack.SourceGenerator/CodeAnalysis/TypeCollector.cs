@@ -647,12 +647,12 @@ public class TypeCollector
         var intMembers = new Dictionary<int, MemberSerializationInfo>();
         var stringMembers = new Dictionary<string, MemberSerializationInfo>();
 
-        CustomFormatter? GetSpecialFormatter(ISymbol member)
+        FormatterDescriptor? GetSpecialFormatter(ISymbol member)
         {
             INamedTypeSymbol? name = member.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
             if (name is not null)
             {
-                if (CustomFormatter.TryCreate(name, out CustomFormatter? descriptor))
+                if (FormatterDescriptor.TryCreate(name, out FormatterDescriptor? descriptor))
                 {
                     return descriptor;
                 }
@@ -694,7 +694,7 @@ public class TypeCollector
 
                 includesPrivateMembers |= item.GetMethod is not null && !IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility);
                 includesPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
-                CustomFormatter? specialFormatter = GetSpecialFormatter(item);
+                FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
                 var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                 stringMembers.Add(member.StringKey, member);
 
@@ -714,7 +714,7 @@ public class TypeCollector
                     continue;
                 }
 
-                CustomFormatter? specialFormatter = GetSpecialFormatter(item);
+                FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
                 var member = new MemberSerializationInfo(false, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                 stringMembers.Add(member.StringKey, member);
                 if (specialFormatter is null)
@@ -759,7 +759,7 @@ public class TypeCollector
 
                 includesPrivateMembers |= item.GetMethod is not null && !IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility);
                 includesPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
-                CustomFormatter? specialFormatter = GetSpecialFormatter(item);
+                FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
                 TypedConstant? key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
                 if (key is null)
                 {
@@ -866,7 +866,7 @@ public class TypeCollector
                 }
 
                 includesPrivateMembers |= !IsAllowedAccessibility(item.DeclaredAccessibility);
-                CustomFormatter? specialFormatter = GetSpecialFormatter(item);
+                FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
                 TypedConstant? key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
                 if (key is null)
                 {
