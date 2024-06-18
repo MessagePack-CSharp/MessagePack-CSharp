@@ -73,6 +73,9 @@
     <Compile Include="..\..\src\MessagePack\ExtensionResult.cs">
       <Link>Code\ExtensionResult.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\MessagePackEventSource.cs">
+      <Link>Code\MessagePackEventSource.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\MessagePackSerializerOptions.cs">
       <Link>Code\MessagePackSerializerOptions.cs</Link>
     </Compile>
