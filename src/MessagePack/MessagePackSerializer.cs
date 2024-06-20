@@ -491,7 +491,7 @@ namespace MessagePack
                 {
                     MessagePackReader peekReader = reader.CreatePeekReader();
                     ExtensionHeader header = peekReader.ReadExtensionFormatHeader();
-                    if (header.TypeCode == ThisLibraryExtensionTypeCodes.Lz4Block)
+                    if (header.TypeCode == ReservedExtensionTypeCodes.Lz4Block)
                     {
                         // Read the extension using the original reader, so we "consume" it.
                         ExtensionResult extension = reader.ReadExtensionFormat();
@@ -520,7 +520,7 @@ namespace MessagePack
                     if (arrayLength != 0 && peekReader.NextMessagePackType == MessagePackType.Extension)
                     {
                         ExtensionHeader header = peekReader.ReadExtensionFormatHeader();
-                        if (header.TypeCode == ThisLibraryExtensionTypeCodes.Lz4BlockArray)
+                        if (header.TypeCode == ReservedExtensionTypeCodes.Lz4BlockArray)
                         {
                             // switch peekReader as original reader.
                             reader = peekReader;
@@ -576,7 +576,7 @@ namespace MessagePack
                     int lz4Length = LZ4Operation(msgpackUncompressedData, lz4Span, LZ4CodecEncode);
 
                     const int LengthOfUncompressedDataSizeHeader = 5;
-                    writer.WriteExtensionFormatHeader(new ExtensionHeader(ThisLibraryExtensionTypeCodes.Lz4Block, LengthOfUncompressedDataSizeHeader + (uint)lz4Length));
+                    writer.WriteExtensionFormatHeader(new ExtensionHeader(ReservedExtensionTypeCodes.Lz4Block, LengthOfUncompressedDataSizeHeader + (uint)lz4Length));
                     writer.WriteInt32((int)msgpackUncompressedData.Length);
                     writer.WriteRaw(lz4Span.AsSpan(0, lz4Length));
                 }
@@ -597,7 +597,7 @@ namespace MessagePack
                 }
 
                 writer.WriteArrayHeader(sequenceCount + 1);
-                writer.WriteExtensionFormatHeader(new ExtensionHeader(ThisLibraryExtensionTypeCodes.Lz4BlockArray, extHeaderSize));
+                writer.WriteExtensionFormatHeader(new ExtensionHeader(ReservedExtensionTypeCodes.Lz4BlockArray, extHeaderSize));
                 {
                     foreach (var item in msgpackUncompressedData)
                     {

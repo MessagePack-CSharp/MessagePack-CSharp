@@ -84,7 +84,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ThisLibraryExtensionTypeCodes.UnityVector2;
+                return ReservedExtensionTypeCodes.UnityVector2;
             }
         }
     }
@@ -95,7 +95,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ThisLibraryExtensionTypeCodes.UnityVector3;
+                return ReservedExtensionTypeCodes.UnityVector3;
             }
         }
     }
@@ -106,7 +106,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ThisLibraryExtensionTypeCodes.UnityVector4;
+                return ReservedExtensionTypeCodes.UnityVector4;
             }
         }
     }
@@ -117,7 +117,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ThisLibraryExtensionTypeCodes.UnityQuaternion;
+                return ReservedExtensionTypeCodes.UnityQuaternion;
             }
         }
     }
@@ -128,7 +128,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ThisLibraryExtensionTypeCodes.UnityColor;
+                return ReservedExtensionTypeCodes.UnityColor;
             }
         }
     }
@@ -139,7 +139,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ThisLibraryExtensionTypeCodes.UnityBounds;
+                return ReservedExtensionTypeCodes.UnityBounds;
             }
         }
     }
@@ -150,7 +150,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ThisLibraryExtensionTypeCodes.UnityRect;
+                return ReservedExtensionTypeCodes.UnityRect;
             }
         }
     }
@@ -159,7 +159,7 @@ namespace MessagePack.Unity.Extension
     {
         protected override sbyte TypeCode
         {
-            get { return ThisLibraryExtensionTypeCodes.UnityInt; }
+            get { return ReservedExtensionTypeCodes.UnityInt; }
         }
     }
 
@@ -167,7 +167,7 @@ namespace MessagePack.Unity.Extension
     {
         protected override sbyte TypeCode
         {
-            get { return ThisLibraryExtensionTypeCodes.UnityFloat; }
+            get { return ReservedExtensionTypeCodes.UnityFloat; }
         }
     }
 
@@ -175,7 +175,7 @@ namespace MessagePack.Unity.Extension
     {
         protected override sbyte TypeCode
         {
-            get { return ThisLibraryExtensionTypeCodes.UnityDouble; }
+            get { return ReservedExtensionTypeCodes.UnityDouble; }
         }
     }
 }

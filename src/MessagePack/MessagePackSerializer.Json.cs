@@ -390,7 +390,7 @@ namespace MessagePack
                         writer.Write(dt.ToString("o", CultureInfo.InvariantCulture));
                         writer.Write("\"");
                     }
-                    else if (extHeader.TypeCode == ThisLibraryExtensionTypeCodes.TypelessFormatter)
+                    else if (extHeader.TypeCode == ReservedExtensionTypeCodes.TypelessFormatter)
                     {
                         // prepare type name token
                         var privateBuilder = new StringBuilder();

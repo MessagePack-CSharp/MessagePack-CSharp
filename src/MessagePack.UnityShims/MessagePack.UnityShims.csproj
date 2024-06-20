@@ -11,7 +11,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\MessagePack\ThisLibraryExtensionTypeCodes.cs"/>
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters.cs"/>
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityResolver.cs"/>
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Extension\*.cs" LinkBase="Extension" />
   </ItemGroup>
 
   <ItemGroup>

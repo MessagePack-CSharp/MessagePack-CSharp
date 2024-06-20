@@ -211,7 +211,7 @@ namespace MessagePack.Formatters
                 scratchWriter.Flush();
 
                 // mark as extension with code 100
-                writer.WriteExtensionFormat(new ExtensionResult((sbyte)ThisLibraryExtensionTypeCodes.TypelessFormatter, scratchRental.Value));
+                writer.WriteExtensionFormat(new ExtensionResult((sbyte)ReservedExtensionTypeCodes.TypelessFormatter, scratchRental.Value));
             }
         }
 
@@ -226,7 +226,7 @@ namespace MessagePack.Formatters
             {
                 MessagePackReader peekReader = reader.CreatePeekReader();
                 ExtensionHeader ext = peekReader.ReadExtensionFormatHeader();
-                if (ext.TypeCode == ThisLibraryExtensionTypeCodes.TypelessFormatter)
+                if (ext.TypeCode == ReservedExtensionTypeCodes.TypelessFormatter)
                 {
                     reader = peekReader; // commit the experimental read made earlier.
 

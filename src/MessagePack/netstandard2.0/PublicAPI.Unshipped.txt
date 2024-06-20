@@ -27,6 +27,7 @@ MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.GeneratedAsse
 MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.MajorVersion.get -> int
 MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.MinorVersion.get -> int
 MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.ResolverType.get -> System.Type!
+MessagePack.ReservedExtensionTypeCodes
 MessagePack.Resolvers.SourceGeneratedFormatterResolver
 MessagePack.Resolvers.SourceGeneratedFormatterResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 static readonly MessagePack.Formatters.Matrix3x2Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Matrix3x2>!
