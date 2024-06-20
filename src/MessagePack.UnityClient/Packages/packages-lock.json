@@ -5,7 +5,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "7388d28922b2144497f639630fd8b8b7a3c1ee6d"
+      "hash": "a0bb5566082ff88e5e6ebfb850dafe7fc63b0895"
     },
     "com.github.messagepack.internal": {
       "version": "file:../../../bin/MessagePack/Debug/netstandard2.0",
