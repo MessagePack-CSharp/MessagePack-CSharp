@@ -13,6 +13,12 @@
       "source": "local",
       "dependencies": {}
     },
+    "com.github.messagepack.sourcegenerator.internal": {
+      "version": "file:../../../bin/MessagePack.SourceGenerator/Debug/netstandard2.0",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "com.unity.ext.nunit": {
       "version": "1.0.6",
       "depth": 1,
