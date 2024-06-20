@@ -363,3 +363,5 @@ src/MessagePack.UnityClient/Assets/Packages/
 
 # BenchmarkDotNet results
 BenchmarkDotNet.Artifacts/
+
+src/MessagePack.UnityClient/.vsconfig

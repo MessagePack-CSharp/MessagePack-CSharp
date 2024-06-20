@@ -13,7 +13,6 @@
     "precompiledReferences": [
         "System.Runtime.CompilerServices.Unsafe.dll",
         "nunit.framework.dll",
-        "MsgPack.dll",
         "MessagePack.Annotations.dll",
         "MessagePack.dll"
     ],
