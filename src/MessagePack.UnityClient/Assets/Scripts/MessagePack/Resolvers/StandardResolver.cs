@@ -292,6 +292,9 @@ namespace MessagePack.Internal
 
 #if UNITY_2018_3_OR_NEWER
             MessagePack.Unity.UnityResolver.Instance,
+#if UNITY_MATHEMATICS_SUPPORT
+            MessagePack.Unity.UnityMathematicsResolver.Instance,
+#endif
 #else
             ImmutableCollection.ImmutableCollectionResolver.Instance,
             CompositeResolver.Create(ExpandoObjectFormatter.Instance),
