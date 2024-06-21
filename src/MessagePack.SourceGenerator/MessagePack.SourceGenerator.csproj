@@ -5,7 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <IsAnalyzerProject>true</IsAnalyzerProject>
     <AnalyzerLanguage>cs</AnalyzerLanguage>
     <DebugType>embedded</DebugType>
     <IsPackable>false</IsPackable>
