@@ -31,7 +31,7 @@ namespace MessagePack
             }
         }
 
-        internal static Memory<T> GetMemoryCheckResult<T>(this IBufferWriter<T> bufferWriter, int size = 0)
+        internal static Memory<byte> GetMemoryCheckResult(this IBufferWriter<byte> bufferWriter, int size = 0)
         {
             var memory = bufferWriter.GetMemory(size);
             if (memory.IsEmpty)

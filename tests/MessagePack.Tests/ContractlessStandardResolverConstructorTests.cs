@@ -85,8 +85,55 @@ namespace MessagePack.Tests
             }
         }
 
+        public class TestConstructor3
+        {
+            private Guid x;
+            private Guid y;
+
+            public TestConstructor3(Guid x, Guid y)
+            {
+                this.x = x;
+                this.y = y;
+                this.CalledConstructorParameterCount = 2;
+            }
+
+            public int CalledConstructorParameterCount { get; }
+
+            public Guid X
+            {
+                get => this.x;
+                set => this.x = value;
+            }
+
+            public Guid Y
+            {
+                get => this.y;
+                set => this.y = value;
+            }
+        }
+
+        [Fact]
+        public void UseConstructor3()
+        {
+            var ctor = new TestConstructor3(Guid.NewGuid(), Guid.NewGuid());
+            var bin = MessagePackSerializer.Serialize(ctor, ContractlessStandardResolverAllowPrivate.Options);
+            var r = MessagePackSerializer.Deserialize<TestConstructor3>(bin, ContractlessStandardResolverAllowPrivate.Options)!;
+
+            r.CalledConstructorParameterCount.Is(2);
+        }
+
         [Fact]
         public void UseConstructor()
+        {
+            var ctor = new TestConstructor1(10, 20, 30);
+            var bin = MessagePackSerializer.Serialize(ctor, ContractlessStandardResolver.Options);
+            var r = MessagePackSerializer.Deserialize<TestConstructor1>(bin, ContractlessStandardResolver.Options);
+
+            r.CalledConstructorParameterCount.Is(3);
+        }
+
+        [Fact]
+        public void UseConstructor2()
         {
             var ctor = new TestConstructor1(10, 20, 30);
             var bin = MessagePackSerializer.Serialize(ctor, ContractlessStandardResolver.Options);
