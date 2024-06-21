@@ -1,4 +1,16 @@
+const MessagePack.ReservedExtensionTypeCodes.Lz4Block = 99 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.Lz4BlockArray = 98 -> sbyte
 const MessagePack.ReservedExtensionTypeCodes.TypelessFormatter = 100 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityBounds = 35 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityColor = 34 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityDouble = 39 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityFloat = 38 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityInt = 37 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityQuaternion = 33 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityRect = 36 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityVector2 = 30 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityVector3 = 31 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityVector4 = 32 -> sbyte
 MessagePack.CompositeResolverAttribute
 MessagePack.CompositeResolverAttribute.CompositeResolverAttribute(params System.Type![]! resolvers) -> void
 MessagePack.Formatters.Matrix3x2Formatter
