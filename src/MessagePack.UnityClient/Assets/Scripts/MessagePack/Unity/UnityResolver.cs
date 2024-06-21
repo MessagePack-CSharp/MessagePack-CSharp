@@ -8,10 +8,6 @@ using System.Collections.Generic;
 using MessagePack.Formatters;
 using UnityEngine;
 
-#if UNITY_MATHEMATICS_SUPPORT
-using Unity.Mathematics;
-#endif
-
 namespace MessagePack.Unity
 {
     public class UnityResolver : IFormatterResolver
@@ -189,17 +185,6 @@ namespace MessagePack.Unity
             {typeof(List<RectInt?>),         new ListFormatter<RectInt?>()},
             {typeof(List<BoundsInt?>),       new ListFormatter<BoundsInt?>()},
 
-#endif
-
-#if UNITY_MATHEMATICS_SUPPORT
-            { typeof(bool2), new Bool2Formatter() },
-            { typeof(bool3), new Bool3Formatter() },
-            { typeof(double2), new Double2Formatter() },
-            { typeof(double3), new Double3Formatter() },
-            { typeof(float2), new Float2Formatter() },
-            { typeof(float3), new Float3Formatter() },
-            { typeof(int2), new Int2Formatter() },
-            { typeof(int3), new Int3Formatter() },
 #endif
         };
 
