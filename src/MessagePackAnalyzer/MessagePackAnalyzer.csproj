@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
 
     <Description>Analyzer of MessagePack for C#, verify rule for [MessagePackObject] and code fix for [Key].</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Analyzer</PackageTags>

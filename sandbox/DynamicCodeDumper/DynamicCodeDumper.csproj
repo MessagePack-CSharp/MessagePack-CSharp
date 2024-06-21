@@ -70,6 +70,9 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\ExtensionResult.cs">
       <Link>Code\ExtensionResult.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackEventSource.cs">
+      <Link>Code\MessagePackEventSource.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializerOptions.cs">
       <Link>Code\MessagePackSerializerOptions.cs</Link>
     </Compile>

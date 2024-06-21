@@ -1,6 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#define DYNAMIC_GENERATION
+#endif
+
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -42,7 +46,7 @@ namespace MessagePack.Tests
             ms.Position = 0;
             var data4 = MessagePackSerializer.Deserialize(t, ms, MessagePackSerializer.DefaultOptions) as FirstSimpleData;
 
-#if ENABLE_IL2CPP
+#if DYNAMIC_GENERATION
             var data5 = data4;
 #else
             MessagePackSerializer.Serialize(t, ref writer, data, MessagePackSerializer.DefaultOptions);
@@ -241,7 +245,7 @@ namespace MessagePack.Tests
             }
         }
 
-#if !ENABLE_IL2CPP
+#if DYNAMIC_GENERATION
 
         [Fact]
         public void StackDepthCheck_DynamicObjectResolver()
