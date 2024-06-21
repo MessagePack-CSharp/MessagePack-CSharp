@@ -48,14 +48,14 @@ namespace MessagePack.SourceGenerator.Transforms
  }
             this.Write("\t{\r\n");
  foreach (var item in Info.Members) { 
- if (item.CustomFormatterTypeName != null) { 
+ if (item.CustomFormatter != null) { 
             this.Write("\t\tprivate readonly ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(item.CustomFormatterTypeName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.CustomFormatter.Name.GetQualifiedName()));
             this.Write(" __");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Name));
-            this.Write("CustomFormatter__ = new ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(item.CustomFormatterTypeName));
-            this.Write("();\r\n");
+            this.Write("CustomFormatter__ = ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.CustomFormatter.InstanceExpression));
+            this.Write(";\r\n");
  } 
  } 
  for (var i = 0; i < list.Count; i++) {

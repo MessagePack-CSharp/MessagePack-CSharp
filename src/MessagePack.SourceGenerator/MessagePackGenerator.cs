@@ -32,7 +32,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             transform: (ctxt, ct) =>
             {
                 return ctxt.SemanticModel.GetDeclaredSymbol(ctxt.Node, ct) is INamedTypeSymbol symbol
-                    && CustomFormatter.TryCreate(symbol, out CustomFormatter? formatter)
+                    && FormatterDescriptor.TryCreate(symbol, out FormatterDescriptor? formatter)
                     && !formatter.ExcludeFromSourceGeneratedResolver
                     ? formatter
                     : null;
@@ -49,11 +49,11 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             .Select(static (input, ct) =>
         {
             AnalyzerOptions? options = input.Left.Left.Left ?? new() { IsGeneratingSource = true };
-            ImmutableArray<CustomFormatter?> formatterImplementations = input.Right;
+            ImmutableArray<FormatterDescriptor?> formatterImplementations = input.Right;
 
             ImmutableArray<FormattableType> formattableTypes = input.Left.Left.Right;
-            ImmutableHashSet<CustomFormatter> formatterTypes = input.Left.Right.Aggregate(
-                ImmutableHashSet<CustomFormatter>.Empty,
+            ImmutableHashSet<FormatterDescriptor> formatterTypes = input.Left.Right.Aggregate(
+                ImmutableHashSet<FormatterDescriptor>.Empty,
                 (first, second) => first.Union(second));
 
             // Merge the formatters discovered through attributes (which need only reference formatters from other assemblies),

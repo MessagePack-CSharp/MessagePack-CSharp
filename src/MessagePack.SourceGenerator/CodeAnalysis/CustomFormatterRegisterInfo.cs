@@ -5,7 +5,7 @@ namespace MessagePack.SourceGenerator.CodeAnalysis;
 
 public record CustomFormatterRegisterInfo : ResolverRegisterInfo
 {
-    public required CustomFormatter CustomFormatter { get; init; }
+    public required FormatterDescriptor CustomFormatter { get; init; }
 
     public override string GetFormatterInstanceForResolver()
     {

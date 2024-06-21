@@ -647,6 +647,25 @@ public class TypeCollector
         var intMembers = new Dictionary<int, MemberSerializationInfo>();
         var stringMembers = new Dictionary<string, MemberSerializationInfo>();
 
+        FormatterDescriptor? GetSpecialFormatter(ISymbol member)
+        {
+            INamedTypeSymbol? name = member.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
+            if (name is not null)
+            {
+                if (FormatterDescriptor.TryCreate(name, out FormatterDescriptor? descriptor))
+                {
+                    return descriptor;
+                }
+                else
+                {
+                    // Report that the named type is not a formatter.
+                    // this.reportDiagnostic();
+                }
+            }
+
+            return null;
+        }
+
         if (this.options.Generator.Formatters.UsesMapMode || (contractAttr?.ConstructorArguments[0] is { Value: bool firstConstructorArgument } && firstConstructorArgument))
         {
             // All public members are serialize target except [Ignore] member.
@@ -675,11 +694,11 @@ public class TypeCollector
 
                 includesPrivateMembers |= item.GetMethod is not null && !IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility);
                 includesPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
-                var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
-                var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
+                var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                 stringMembers.Add(member.StringKey, member);
 
-                if (customFormatterAttr == null)
+                if (specialFormatter is null)
                 {
                     this.CollectCore(item.Type); // recursive collect
                 }
@@ -695,10 +714,10 @@ public class TypeCollector
                     continue;
                 }
 
-                var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
-                var member = new MemberSerializationInfo(false, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
+                var member = new MemberSerializationInfo(false, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                 stringMembers.Add(member.StringKey, member);
-                if (customFormatterAttr == null)
+                if (specialFormatter is null)
                 {
                     this.CollectCore(item.Type); // recursive collect
                 }
@@ -740,7 +759,7 @@ public class TypeCollector
 
                 includesPrivateMembers |= item.GetMethod is not null && !IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility);
                 includesPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
-                var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
+                FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
                 TypedConstant? key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
                 if (key is null)
                 {
@@ -798,7 +817,7 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                         intMembers.Add(member.IntKey, member);
                     }
                     else if (stringKey is not null)
@@ -808,7 +827,7 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                         stringMembers.Add(member.StringKey, member);
                     }
                 }
@@ -847,7 +866,7 @@ public class TypeCollector
                 }
 
                 includesPrivateMembers |= !IsAllowedAccessibility(item.DeclaredAccessibility);
-                var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
+                FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
                 TypedConstant? key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
                 if (key is null)
                 {
@@ -885,7 +904,7 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                         intMembers.Add(member.IntKey, member);
                     }
                     else
@@ -895,7 +914,7 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                         stringMembers.Add(member.StringKey, member);
                     }
                 }

@@ -21,8 +21,8 @@ using MsgPack = global::MessagePack;
 <# }#>
 	{
 <# foreach (var item in Info.Members) { #>
-<# if (item.CustomFormatterTypeName != null) { #>
-		private readonly <#= item.CustomFormatterTypeName #> __<#= item.Name #>CustomFormatter__ = new <#= item.CustomFormatterTypeName #>();
+<# if (item.CustomFormatter != null) { #>
+		private readonly <#= item.CustomFormatter.Name.GetQualifiedName() #> __<#= item.Name #>CustomFormatter__ = <#= item.CustomFormatter.InstanceExpression #>;
 <# } #>
 <# } #>
 <# for (var i = 0; i < list.Count; i++) {

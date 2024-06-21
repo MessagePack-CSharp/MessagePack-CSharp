@@ -12,13 +12,13 @@ public record MemberSerializationInfo(
     string Name,
     string Type,
     string ShortTypeName,
-    string? CustomFormatterTypeName)
+    FormatterDescriptor? CustomFormatter)
 {
     private static readonly IReadOnlyCollection<string> PrimitiveTypes = new HashSet<string>(AnalyzerUtilities.PrimitiveTypes);
 
     public string GetSerializeMethodString()
     {
-        if (CustomFormatterTypeName != null)
+        if (CustomFormatter is not null)
         {
             return $"this.__{this.Name}CustomFormatter__.Serialize(ref writer, value.{this.Name}, options)";
         }
@@ -34,7 +34,7 @@ public record MemberSerializationInfo(
 
     public string GetDeserializeMethodString()
     {
-        if (CustomFormatterTypeName != null)
+        if (CustomFormatter is not null)
         {
             return $"this.__{this.Name}CustomFormatter__.Deserialize(ref reader, options)";
         }

@@ -42,6 +42,7 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
         }
 
         this.TypeParameters = CodeAnalysisUtilities.GetTypeParameters(symbolToConsider);
+        this.TypeArguments = CodeAnalysisUtilities.GetTypeArguments(symbolToConsider);
     }
 
     /// <inheritdoc cref="QualifiedTypeName(string?, QualifiedTypeName?, TypeKind, string, ImmutableArray{string})"/>
@@ -126,7 +127,15 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
     /// </summary>
     public string Name { get; init; }
 
+    /// <summary>
+    /// Gets the generic type parameters that belong to the type (e.g. T, T2).
+    /// </summary>
     public ImmutableArray<string> TypeParameters { get; init; }
+
+    /// <summary>
+    /// Gets the generic type arguments that may be present to close a generic type (e.g. <c>string</c>).
+    /// </summary>
+    public ImmutableArray<string> TypeArguments { get; init; }
 
     /// <summary>
     /// Gets the number of generic type parameters that belong to the type.
@@ -170,7 +179,7 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
 
         builder.Append(this.Name);
 
-        builder.Append(this.GetTypeParameters(genericStyle));
+        builder.Append(this.GetTypeParametersOrArgs(genericStyle));
 
         if (this.ArrayRank > 0)
         {
@@ -187,7 +196,7 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
     /// </summary>
     /// <param name="style">The generic type parameters style to generate.</param>
     /// <returns>A string to append to a generic type name, or an empty string if <see cref="Arity"/> is 0.</returns>
-    public string GetTypeParameters(GenericParameterStyle style)
+    public string GetTypeParametersOrArgs(GenericParameterStyle style)
     {
         if (this.TypeParameters.IsEmpty || style == GenericParameterStyle.None)
         {
@@ -197,6 +206,7 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
         return style switch
         {
             GenericParameterStyle.Identifiers => $"<{string.Join(", ", this.TypeParameters)}>",
+            GenericParameterStyle.Arguments => $"<{string.Join(", ", this.TypeArguments)}>",
             GenericParameterStyle.TypeDefinition => $"<{new string(',', this.Arity - 1)}>",
             GenericParameterStyle.ArityOnly => $"`{this.Arity}",
             _ => throw new NotImplementedException(),
@@ -285,6 +295,11 @@ public enum GenericParameterStyle
     /// The most common suffix that includes type identifiers (e.g. <c>&lt;T1, T2&gt;</c>).
     /// </summary>
     Identifiers,
+
+    /// <summary>
+    /// The original type arguments (e.g. <c>&lt;string, int&gt;</c>).
+    /// </summary>
+    Arguments,
 
     /// <summary>
     /// A suffix that only indicates arity of the generic type. e.g. <c>`1</c> or <c>`2</c>.

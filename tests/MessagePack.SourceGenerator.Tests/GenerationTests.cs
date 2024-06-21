@@ -542,6 +542,26 @@ internal class MyGenericType<T>
                 public void Serialize(ref MessagePackWriter writer, A value, MessagePackSerializerOptions options) {}
                 public A Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => default;
             }
+            [MessagePackObject]
+            class G {
+                [Key(0), MessagePackFormatter(typeof(F))]
+                internal A a;
+            }
+            """;
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task SpecifyFormatterFromStockSet()
+    {
+        string testSource = """
+            using MessagePack;
+            using MessagePack.Formatters;
+            [MessagePackObject]
+            class G {
+                [Key(0), MessagePackFormatter(typeof(StringInterningFormatter))]
+                internal string a;
+            }
             """;
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
