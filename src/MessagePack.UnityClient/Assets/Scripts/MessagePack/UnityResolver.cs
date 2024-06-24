@@ -7,13 +7,15 @@
 using System;
 using System.Collections.Generic;
 using MessagePack.Formatters;
+using MessagePack.Resolvers;
 using UnityEngine;
 
 namespace MessagePack.Unity
 {
     public class UnityResolver : IFormatterResolver
     {
-        public static readonly UnityResolver Instance = new UnityResolver();
+        public static readonly IFormatterResolver Instance = new UnityResolver();
+        public static readonly IFormatterResolver InstanceWithStandardResolver = new WithStandardResolver();
 
         private UnityResolver()
         {
@@ -31,6 +33,32 @@ namespace MessagePack.Unity
             static FormatterCache()
             {
                 Formatter = (IMessagePackFormatter<T>?)UnityResolveryResolverGetFormatterHelper.GetFormatter(typeof(T));
+            }
+        }
+
+        private class WithStandardResolver : IFormatterResolver
+        {
+            public static readonly WithStandardResolver Instance = new WithStandardResolver();
+
+            public IMessagePackFormatter<T>? GetFormatter<T>()
+            {
+                return FormatterCache<T>.Formatter;
+            }
+
+            private static class FormatterCache<T>
+            {
+                public static readonly IMessagePackFormatter<T>? Formatter;
+
+                static FormatterCache()
+                {
+                    var f = UnityResolver.Instance.GetFormatter<T>();
+                    if (f == null)
+                    {
+                        f = StandardResolver.Instance.GetFormatter<T>();
+                    }
+
+                    Formatter = f;
+                }
             }
         }
     }
@@ -151,42 +179,40 @@ namespace MessagePack.Unity
             { typeof(List<LayerMask?>),         new ListFormatter<LayerMask?>() },
 
             // unity 2017.2
-#if UNITY_2017_2_OR_NEWER
+            { typeof(Vector2Int),         new Vector2IntFormatter() },
+            { typeof(Vector3Int),         new Vector3IntFormatter() },
+            { typeof(RangeInt),           new RangeIntFormatter() },
+            { typeof(RectInt),            new RectIntFormatter() },
+            { typeof(BoundsInt),          new BoundsIntFormatter() },
+            { typeof(Vector2Int?),        new StaticNullableFormatter<Vector2Int>(new Vector2IntFormatter()) },
+            { typeof(Vector3Int?),        new StaticNullableFormatter<Vector3Int>(new Vector3IntFormatter()) },
+            { typeof(RangeInt?),          new StaticNullableFormatter<RangeInt>(new RangeIntFormatter()) },
+            { typeof(RectInt?),           new StaticNullableFormatter<RectInt>(new RectIntFormatter()) },
+            { typeof(BoundsInt?),         new StaticNullableFormatter<BoundsInt>(new BoundsIntFormatter()) },
 
-            {typeof(Vector2Int),         new Vector2IntFormatter()},
-            {typeof(Vector3Int),         new Vector3IntFormatter()},
-            {typeof(RangeInt),           new RangeIntFormatter()},
-            {typeof(RectInt),            new RectIntFormatter()},
-            {typeof(BoundsInt),          new BoundsIntFormatter()},
-            {typeof(Vector2Int?),        new StaticNullableFormatter<Vector2Int>(new Vector2IntFormatter())},
-            {typeof(Vector3Int?),        new StaticNullableFormatter<Vector3Int>(new Vector3IntFormatter())},
-            {typeof(RangeInt?),          new StaticNullableFormatter<RangeInt>(new RangeIntFormatter())},
-            {typeof(RectInt?),           new StaticNullableFormatter<RectInt>(new RectIntFormatter())},
-            {typeof(BoundsInt?),         new StaticNullableFormatter<BoundsInt>(new BoundsIntFormatter())},
             // unity 2017.2 + array
-            {typeof(Vector2Int[]),       new ArrayFormatter<Vector2Int>()},
-            {typeof(Vector3Int[]),       new ArrayFormatter<Vector3Int>()},
-            {typeof(RangeInt[]),         new ArrayFormatter<RangeInt>()},
-            {typeof(RectInt[]),          new ArrayFormatter<RectInt>()},
-            {typeof(BoundsInt[]),        new ArrayFormatter<BoundsInt>()},
-            {typeof(Vector2Int?[]),      new ArrayFormatter<Vector2Int?>()},
-            {typeof(Vector3Int?[]),      new ArrayFormatter<Vector3Int?>()},
-            {typeof(RangeInt?[]),        new ArrayFormatter<RangeInt?>()},
-            {typeof(RectInt?[]),         new ArrayFormatter<RectInt?>()},
-            {typeof(BoundsInt?[]),       new ArrayFormatter<BoundsInt?>()},
-            // unity 2017.2 + list
-            {typeof(List<Vector2Int>),       new ListFormatter<Vector2Int>()},
-            {typeof(List<Vector3Int>),       new ListFormatter<Vector3Int>()},
-            {typeof(List<RangeInt>),         new ListFormatter<RangeInt>()},
-            {typeof(List<RectInt>),          new ListFormatter<RectInt>()},
-            {typeof(List<BoundsInt>),        new ListFormatter<BoundsInt>()},
-            {typeof(List<Vector2Int?>),      new ListFormatter<Vector2Int?>()},
-            {typeof(List<Vector3Int?>),      new ListFormatter<Vector3Int?>()},
-            {typeof(List<RangeInt?>),        new ListFormatter<RangeInt?>()},
-            {typeof(List<RectInt?>),         new ListFormatter<RectInt?>()},
-            {typeof(List<BoundsInt?>),       new ListFormatter<BoundsInt?>()},
+            { typeof(Vector2Int[]),       new ArrayFormatter<Vector2Int>() },
+            { typeof(Vector3Int[]),       new ArrayFormatter<Vector3Int>() },
+            { typeof(RangeInt[]),         new ArrayFormatter<RangeInt>() },
+            { typeof(RectInt[]),          new ArrayFormatter<RectInt>() },
+            { typeof(BoundsInt[]),        new ArrayFormatter<BoundsInt>() },
+            { typeof(Vector2Int?[]),      new ArrayFormatter<Vector2Int?>() },
+            { typeof(Vector3Int?[]),      new ArrayFormatter<Vector3Int?>() },
+            { typeof(RangeInt?[]),        new ArrayFormatter<RangeInt?>() },
+            { typeof(RectInt?[]),         new ArrayFormatter<RectInt?>() },
+            { typeof(BoundsInt?[]),       new ArrayFormatter<BoundsInt?>() },
 
-#endif
+            // unity 2017.2 + list
+            { typeof(List<Vector2Int>),       new ListFormatter<Vector2Int>() },
+            { typeof(List<Vector3Int>),       new ListFormatter<Vector3Int>() },
+            { typeof(List<RangeInt>),         new ListFormatter<RangeInt>() },
+            { typeof(List<RectInt>),          new ListFormatter<RectInt>() },
+            { typeof(List<BoundsInt>),        new ListFormatter<BoundsInt>() },
+            { typeof(List<Vector2Int?>),      new ListFormatter<Vector2Int?>() },
+            { typeof(List<Vector3Int?>),      new ListFormatter<Vector3Int?>() },
+            { typeof(List<RangeInt?>),        new ListFormatter<RangeInt?>() },
+            { typeof(List<RectInt?>),         new ListFormatter<RectInt?>() },
+            { typeof(List<BoundsInt?>),       new ListFormatter<BoundsInt?>() },
         };
 
         internal static object? GetFormatter(Type t)

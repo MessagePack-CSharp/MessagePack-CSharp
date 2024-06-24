@@ -14,9 +14,6 @@ namespace Assets.Scripts.Tests
             var mc = new MyClass() { Age = 99, Name = "foo" };
             var bin = MessagePackSerializer.Serialize(mc);
 
-             // var canGetFormatter = GeneratedMessagePackResolver.Instance.GetFormatter<MyClass>();
-            // Assert.NotNull(canGetFormatter);
-
             var formatter = MessagePackSerializer.DefaultOptions.Resolver.GetFormatter<MyClass>();
             Assert.NotNull(formatter);
 
@@ -26,16 +23,16 @@ namespace Assets.Scripts.Tests
             Assert.AreEqual(mc.Name, mc2.Name);
         }
 
-        //[Test]
-        //public void Vector3Serialize()
-        //{
-        //    var value = new Vector3(1.3f, 3.43f, 8.3f);
-        //    var bin = MessagePackSerializer.Serialize(value);
+        [Test]
+        public void Vector3Serialize()
+        {
+            var value = new Vector3(1.3f, 3.43f, 8.3f);
+            var bin = MessagePackSerializer.Serialize(value);
 
-        //    var v2 = MessagePackSerializer.Deserialize<Vector3>(bin);
+            var v2 = MessagePackSerializer.Deserialize<Vector3>(bin);
 
-        //    Assert.AreEqual(value, v2);
-        //}
+            Assert.AreEqual(value, v2);
+        }
     }
 
     [MessagePackObject]
