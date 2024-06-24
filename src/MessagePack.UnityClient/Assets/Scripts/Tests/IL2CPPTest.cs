@@ -1,5 +1,10 @@
-﻿#nullable enable
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#nullable enable
+
+using System;
+using System.Linq;
 using MessagePack;
 using NUnit.Framework;
 using UnityEngine;
@@ -33,15 +38,48 @@ namespace Assets.Scripts.Tests
 
             Assert.AreEqual(value, v2);
         }
+
+        [Test]
+        public void LZ4Block()
+        {
+            var xs = Enumerable.Range(1, 1000)
+                .Select(x => new MyClass { Age = x, Name = Guid.NewGuid().ToString() })
+                .ToArray();
+
+            var lz4Option = MessagePackSerializer.DefaultOptions.WithCompression(MessagePackCompression.Lz4Block);
+            var bin = MessagePackSerializer.Serialize(xs, lz4Option);
+
+            var ys = MessagePackSerializer.Deserialize<MyClass[]>(bin, lz4Option);
+            CollectionAssert.AreEqual(xs, ys);
+        }
+
+        [Test]
+        public void LZ4BlockArray()
+        {
+            var xs = Enumerable.Range(1, 1000)
+                .Select(x => new MyClass { Age = x, Name = Guid.NewGuid().ToString() })
+                .ToArray();
+
+            var lz4Option = MessagePackSerializer.DefaultOptions.WithCompression(MessagePackCompression.Lz4BlockArray);
+            var bin = MessagePackSerializer.Serialize(xs, lz4Option);
+
+            var ys = MessagePackSerializer.Deserialize<MyClass[]>(bin, lz4Option);
+            CollectionAssert.AreEqual(xs, ys);
+        }
     }
 
     [MessagePackObject]
-    public class MyClass
+    public class MyClass : IEquatable<MyClass>
     {
         [Key(0)]
         public int Age { get; set; }
 
         [Key(1)]
         public string? Name { get; set; }
+
+        public bool Equals(MyClass other)
+        {
+            return Age == other.Age && Name == other.Name;
+        }
     }
 }
