@@ -153,6 +153,49 @@ public class Bar
     }
 
     [Fact]
+    public async Task AddAttributeToGenericType()
+    {
+        // Don't use Preamble because we want to test that it works without a using statement at the top.
+        string input = @"
+public class Foo<T>
+{
+    public T Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public class Bar
+{
+    [MessagePack.Key(0)]
+    public Foo<int> {|MsgPack003:MemberUserGeneric|} { get; set; }
+
+    [MessagePack.Key(1)]
+    public System.Collections.Generic.List<int> MemberKnownGeneric { get; set; }
+}
+";
+
+        string output = @"
+[MessagePack.MessagePackObject]
+public class Foo<T>
+{
+    [MessagePack.Key(0)]
+    public T Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public class Bar
+{
+    [MessagePack.Key(0)]
+    public Foo<int> MemberUserGeneric { get; set; }
+
+    [MessagePack.Key(1)]
+    public System.Collections.Generic.List<int> MemberKnownGeneric { get; set; }
+}
+";
+
+        await VerifyCS.VerifyCodeFixAsync(input, output);
+    }
+
+    [Fact]
     public async Task CodeFixAppliesAcrossFiles()
     {
         var inputs = new string[]

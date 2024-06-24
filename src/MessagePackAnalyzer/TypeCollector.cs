@@ -161,7 +161,10 @@ namespace MessagePackAnalyzer
                     this.CollectCore(item, callerSymbol);
                 }
 
-                return;
+                if (KnownGenericTypes.Keys.Contains(type.ToString()))
+                {
+                    return;
+                }
             }
 
             if (type.Locations[0].IsInMetadata)
