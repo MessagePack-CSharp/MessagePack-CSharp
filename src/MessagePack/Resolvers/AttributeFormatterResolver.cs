@@ -33,11 +33,7 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
-#if UNITY_2018_3_OR_NEWER && !NETFX_CORE
-                MessagePackFormatterAttribute? attr = (MessagePackFormatterAttribute?)typeof(T).GetCustomAttributes(typeof(MessagePackFormatterAttribute), true).FirstOrDefault();
-#else
                 MessagePackFormatterAttribute? attr = typeof(T).GetTypeInfo().GetCustomAttribute<MessagePackFormatterAttribute>();
-#endif
                 if (attr == null)
                 {
                     return;

@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #nullable enable
+#pragma warning disable SA1513
+#pragma warning disable SA1516
 
 using System;
 using System.Buffers;
@@ -909,7 +911,7 @@ namespace MessagePack.Unity
             return ____result;
         }
     }
-#if UNITY_2017_2_OR_NEWER
+
     public sealed class Vector2IntFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::UnityEngine.Vector2Int>
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Vector2Int value, global::MessagePack.MessagePackSerializerOptions options)
@@ -918,6 +920,7 @@ namespace MessagePack.Unity
             writer.WriteInt32(value.x);
             writer.WriteInt32(value.y);
         }
+
         public global::UnityEngine.Vector2Int Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
@@ -960,12 +963,14 @@ namespace MessagePack.Unity
             writer.WriteInt32(value.y);
             writer.WriteInt32(value.z);
         }
+
         public global::UnityEngine.Vector3Int Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
             {
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
+
             var length = reader.ReadArrayHeader();
             var __x__ = default(int);
             var __y__ = default(int);
@@ -1006,6 +1011,7 @@ namespace MessagePack.Unity
             writer.WriteInt32(value.start);
             writer.WriteInt32(value.length);
         }
+
         public global::UnityEngine.RangeInt Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
@@ -1049,6 +1055,7 @@ namespace MessagePack.Unity
             writer.WriteInt32(value.width);
             writer.WriteInt32(value.height);
         }
+
         public global::UnityEngine.RectInt Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
@@ -1100,6 +1107,7 @@ namespace MessagePack.Unity
             options.Resolver.GetFormatterWithVerify<global::UnityEngine.Vector3Int>().Serialize(ref writer, value.position, options);
             options.Resolver.GetFormatterWithVerify<global::UnityEngine.Vector3Int>().Serialize(ref writer, value.size, options);
         }
+
         public global::UnityEngine.BoundsInt Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
@@ -1132,5 +1140,4 @@ namespace MessagePack.Unity
             return ____result;
         }
     }
-#endif
 }

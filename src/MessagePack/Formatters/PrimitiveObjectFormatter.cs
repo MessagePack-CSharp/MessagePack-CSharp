@@ -133,11 +133,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-#if UNITY_2018_3_OR_NEWER && !NETFX_CORE
-                if (t.IsEnum)
-#else
                 if (t.GetTypeInfo().IsEnum)
-#endif
                 {
                     Type underlyingType = Enum.GetUnderlyingType(t);
                     var code2 = TypeToJumpCode[underlyingType];

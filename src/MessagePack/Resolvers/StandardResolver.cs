@@ -291,12 +291,8 @@ namespace MessagePack.Internal
             AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
             SourceGeneratedFormatterResolver.Instance, // Prefer source generated formatters over dynamic ones.
 
-#if UNITY_2018_3_OR_NEWER
-            MessagePack.Unity.UnityResolver.Instance,
-#else
             ImmutableCollection.ImmutableCollectionResolver.Instance,
             CompositeResolver.Create(ExpandoObjectFormatter.Instance),
-#endif
 
 #if DYNAMIC_GENERATION
             DynamicGenericResolver.Instance, // Try Array, Tuple, Collection, Enum(Generic Fallback)

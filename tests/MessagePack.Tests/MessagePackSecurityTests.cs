@@ -11,15 +11,6 @@ using Xunit.Abstractions;
 
 public class MessagePackSecurityTests
 {
-#if UNITY_2018_3_OR_NEWER
-
-    public MessagePackSecurityTests()
-    {
-        Logger = new NullTestOutputHelper();
-    }
-
-#endif
-
     public MessagePackSecurityTests(ITestOutputHelper logger)
     {
         Logger = logger;
