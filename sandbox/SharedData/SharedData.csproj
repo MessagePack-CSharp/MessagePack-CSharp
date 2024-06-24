@@ -7,9 +7,5 @@
     <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\Class1.cs" />
-  </ItemGroup>
-
   <Import Project="..\..\tests\SourceGeneratorConsumer.targets" />
 </Project>

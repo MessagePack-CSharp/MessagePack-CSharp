@@ -145,7 +145,7 @@
     <Compile Include="..\..\src\MessagePack\StringEncoding.cs">
       <Link>Code\StringEncoding.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\Class1.cs">
+    <Compile Include="..\SharedData\Class1.cs">
       <Link>Class1.cs</Link>
     </Compile>
   </ItemGroup>
