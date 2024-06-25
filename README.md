@@ -68,8 +68,8 @@ MessagePack has a compact binary size and a full set of general purpose expressi
 
 This library is distributed via NuGet. Special [Unity support](#unity) is available, too.
 
-We target .NET Standard 2.0 with special optimizations for .NET Core 2.1+, making it compatible with most reasonably recent .NET runtimes such as Core 2.0 and later, Framework 4.6.1 and later, Mono 5.4 and later.
-The library code is pure C# (with Just-In-Time IL code generation on some platforms or AOT safe source code generation).
+We target .NET Standard 2.0 with special optimizations for .NET 6+ and .NET Framework.
+The library code is pure C# (with Just-In-Time IL code generation on some platforms or AOT safe source generators).
 
 ### NuGet packages
 
@@ -95,7 +95,7 @@ Install-Package MessagePack.AspNetCoreMvcFormatter
 
 ### Unity
 
-For Unity projects, please reado [Unity Support](#unity-support) section to install.
+For Unity projects, please read the [Unity Support](#unity-support) section to install.
 
 ### Migration notes from v1.x
 
@@ -1537,21 +1537,21 @@ The minimum supported Unity version will be `2022.3.12f1`, as it is necessary to
 
 There are two installation steps required to use it in Unity. Do both, not just one.
 
-1. Install `MessagePack` from NuGet using [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity)  
-   Open Window from NuGet -> Manage NuGet Packages, Search "MessagePack" and Press Install. 
+1. Install `MessagePack` from NuGet using [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity)
+   Open Window from NuGet -> Manage NuGet Packages, Search "MessagePack" and Press Install.
 
-2. Install `MessagePack.Unity` package by referencing the git URL.  
+2. Install `MessagePack.Unity` package by referencing the git URL.
    Open Package Manager window and press `Add Package from git URL...`, enter following path
-   
+
    ```
    https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.UnityClient/Assets/Scripts/MessagePack
    ```
 
    MessagePack uses the ..* release tag, so you can specify a version like #v3.0.0. For example: `https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.UnityClient/Assets/Scripts/MessagePack#v3.0.0`
 
-In Unity, MessagePackSerializer can serialize `Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`, `AnimationCurve`, `Keyframe`, `Matrix4x4`, `Gradient`, `Color32`, `RectOffset`, `LayerMask`, `Vector2Int`, `Vector3Int`, `RangeInt`, `RectInt`, `BoundsInt` and their nullable, array and list types with the built-in extension `UnityResolver`. 
+In Unity, MessagePackSerializer can serialize `Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`, `AnimationCurve`, `Keyframe`, `Matrix4x4`, `Gradient`, `Color32`, `RectOffset`, `LayerMask`, `Vector2Int`, `Vector3Int`, `RangeInt`, `RectInt`, `BoundsInt` and their nullable, array and list types with the built-in extension `UnityResolver`.
 
-To enable this serialization, `MessagePack.Unity` automatically adds `UnityResolver` to the default options Resolver when the application starts.
+`MessagePack.Unity` automatically adds `UnityResolver` to the default options Resolver when the application starts with code like this in the unity package to enable this serialization:
 
 ```csharp
 [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -1598,22 +1598,20 @@ var options = MessagePackSerializerOptions.Standard.WithResolver(StaticComposite
 MessagePackSerializer.DefaultOptions = options;
 ```
 
-## <a name="aot"></a>AOT Code Generation (support for Unity/Xamarin)
+## <a name="aot"></a>AOT Code Generation
 
-By default, MessagePack for C# serializes custom objects by [generating IL](https://learn.microsoft.com/dotnet/api/system.reflection.emit.ilgenerator) on the fly at runtime to create custom, highly tuned formatters for each type.
+A source generator is provided in the `MessagePackAnalyzer` package, which is automatically installed when you install `MessagePack` via NuGet.
+This will source generate the formatters required for all your `[MessagePackObject]`-annotated data types during compilation for the fastest possible startup and runtime.
+An `IFormatterResolver` is also generated that bundles all source generated and user-written formatters together.
+The `StandardResolver` includes the `SourceGeneratedFormatterResolver` which discovers and uses your source generated resolver automatically.
+
+Therefore, in the usual scenario, it will work with AOT Safe without any special handling.
+
+At runtime, if a source generated or hand-written formatter cannot be found for a given `[MessagePackObject]` type, MessagePack will generate the formatters on the fly using [Reflection.Emit](https://learn.microsoft.com/dotnet/api/system.reflection.emit.ilgenerator) to create highly-tuned formatters for each type.
 This code generation has a minor upfront performance cost.
-
-For faster startup performance or to operate in strict-AOT environments such as Xamarin and Unity IL2CPP that forbid runtime code generation, MessagePack provides a way for you to run a code generator ahead of time as well.
-This "source generation" is provided via a roslyn source generator.
 
 > Note: When using Unity, dynamic code generation only works when targeting .NET Framework 4.x + mono runtime.
 For all other Unity targets, AOT is required.
-
-The source generator is provided in the `MessagePackAnalyzer` package, which is automatically installed when you install `MessagePack` via NuGet.
-
-Source Generator detects the [MessagePackObject]-annotated type and automatically generates a formatter and a resolver that bundles them together. `StandardResolver` includes the `SourceGeneratedFormatterResolver` which discovers and uses your source generated resolver automatically.
-
-Therefore, in the usual scenario, it will work with AOT Safe without any special handling.
 
 ### Customizations
 
@@ -1644,4 +1642,3 @@ The StreamJsonRpc library is based on [JSON-RPC](https://www.jsonrpc.org/) and i
 
 ## How to build
 See our [contributor's guide](CONTRIBUTING.md).
-
