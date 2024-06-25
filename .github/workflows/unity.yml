@@ -23,7 +23,8 @@ jobs:
     - uses: actions/setup-dotnet@v3
       with:
         global-json-file: global.json
-
+    - run: dotnet build -c Debug
+    
     - uses: actions/cache@v3
       with:
         path: src/MessagePack.UnityClient/Library
