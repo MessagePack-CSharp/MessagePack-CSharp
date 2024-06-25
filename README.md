@@ -1543,7 +1543,9 @@ There are two installation steps required to use it in Unity. Do both, not just 
 2. Install `MessagePack.Unity` package by referencing the git URL.  
    Open Package Manager window and press `Add Package from git URL...`, enter following path
    
-   > https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.UnityClient/Assets/Scripts/MessagePack
+   ```
+   https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.UnityClient/Assets/Scripts/MessagePack
+   ```
 
    MessagePack uses the ..* release tag, so you can specify a version like #v3.0.0. For example: `https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.UnityClient/Assets/Scripts/MessagePack#v3.0.0`
 
