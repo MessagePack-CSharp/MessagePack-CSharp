@@ -19,30 +19,30 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+
     - uses: actions/setup-dotnet@v3
       with:
         global-json-file: global.json
-    - name: copy assets
-      run: src/MessagePack.UnityClient/copy_assets.sh
+
     - uses: actions/cache@v3
       with:
         path: src/MessagePack.UnityClient/Library
         key: MessagePack-ubuntu
-    - name: build
-      uses: game-ci/unity-builder@v2
+
+    - uses: Cysharp/Actions/.github/actions/check-metas@main # check meta files
+      with:
+        directory: src/MessagePack.UnityClient
+
+    - name: Build project
+      uses: game-ci/unity-builder@v4
       env:
-        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE_2021 }}
+        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+        UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
       with:
         projectPath: src/MessagePack.UnityClient
-        unityVersion: 2021.3.11f1
+        unityVersion: 2022.3.12f1
         targetPlatform: StandaloneLinux64
         buildMethod: PackageExporter.Export
         customParameters: /headless /ScriptBackend mono
         versioning: None
-    - uses: Cysharp/Actions/.github/actions/check-metas@main # check meta files
-      with:
-        directory: src/MessagePack.UnityClient
-    - uses: actions/upload-artifact@v3
-      with:
-        name: MessagePack.unitypackage
-        path: bin/*.unitypackage
