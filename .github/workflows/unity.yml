@@ -26,6 +26,12 @@ jobs:
       with:
         global-json-file: global.json
     - run: dotnet build -c ${{ env.BUILD_CONFIG }} # require dotnet build (Debug) before Unity build.
+    
+    - name: restore and run local tool for NuGetForUnity
+      working-directory: ./src/MessagePack.UnityClient
+      run: |
+        dotnet tool restore
+        dotnet nugetforunity restore
 
     # Run UnitTest
     - uses: actions/cache@v4
