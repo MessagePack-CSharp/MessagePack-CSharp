@@ -1,4 +1,4 @@
-name: unity
+name: Run Unity IL2CPP UnitTest
 
 on:
   workflow_dispatch:
@@ -11,39 +11,48 @@ on:
     - master
     - develop
 
+env:
+  BUILD_CONFIG: Debug
+
 jobs:
   unity:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
-
-    - uses: actions/setup-dotnet@v3
+    - uses: actions/setup-dotnet@v4
       with:
         global-json-file: global.json
-    - run: dotnet build -c Debug
-    
-    - uses: actions/cache@v3
+    - run: dotnet build -c ${{ env.BUILD_CONFIG }} # require dotnet build (Debug) before Unity build.
+
+    # Run UnitTest
+    - uses: actions/cache@v4
       with:
         path: src/MessagePack.UnityClient/Library
-        key: MessagePack-ubuntu
-
-    - uses: Cysharp/Actions/.github/actions/check-metas@main # check meta files
-      with:
-        directory: src/MessagePack.UnityClient
-
+        key: Library-MessagePack-StandaloneLinux64
+        restore-keys: |
+          Library-MessagePack-
+          Library-
     - name: Build project
       uses: game-ci/unity-builder@v4
       env:
-        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
         UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        UNITY_SERIAL: ${{ secrets.UNITY_LICENSE }}
       with:
         projectPath: src/MessagePack.UnityClient
         unityVersion: 2022.3.12f1
         targetPlatform: StandaloneLinux64
-        buildMethod: PackageExporter.Export
-        customParameters: /headless /ScriptBackend mono
+        buildMethod: UnitTestBuilder.BuildUnitTest
         versioning: None
+        customParameters: "/headless /ScriptBackend IL2CPP"
+    - name: Check UnitTest file is generated
+      run: ls -lR ./src/MessagePack.UnityClient/bin/UnitTest
+    - name: Execute UnitTest
+      run: ./src/MessagePack.UnityClient/bin/UnitTest/StandaloneLinux64_IL2CPP/test
+
+    - uses: Cysharp/Actions/.github/actions/check-metas@main # check meta files
+      with:
+        directory: src/MessagePack.UnityClient
