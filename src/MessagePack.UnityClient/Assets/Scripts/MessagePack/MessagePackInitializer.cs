@@ -6,10 +6,26 @@ namespace MessagePack.Unity
 {
     public static class MessagePackInitializer
     {
+        private static bool serializerRegistered = false;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Init()
         {
-            MessagePackSerializer.DefaultOptions = MessagePackSerializerOptions.Standard.WithResolver(UnityResolver.InstanceWithStandardResolver);
+            if (!serializerRegistered)
+            {
+                MessagePackSerializer.DefaultOptions = MessagePackSerializerOptions.Standard.WithResolver(UnityResolver.InstanceWithStandardResolver);
+                serializerRegistered = true;
+            }
         }
+
+#if UNITY_EDITOR
+
+        [UnityEditor.InitializeOnLoadMethod]
+        private static void EditorInitialize()
+        {
+            Init();
+        }
+
+#endif
     }
 }
