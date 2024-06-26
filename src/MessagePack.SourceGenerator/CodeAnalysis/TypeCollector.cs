@@ -574,8 +574,7 @@ public class TypeCollector
         if (type.IsDefinition)
         {
             this.CollectGenericUnion(type);
-            this.CollectObject(type);
-            return true;
+            return this.CollectObject(type);
         }
         else
         {
@@ -585,7 +584,10 @@ public class TypeCollector
             this.GetObjectInfo(type);
 
             // Collect generic type definition, that is not collected when it is defined outside target project.
-            this.CollectCore(type.OriginalDefinition);
+            if (!this.CollectCore(type.OriginalDefinition))
+            {
+                return false;
+            }
         }
 
         // Collect substituted types for the type parameters (e.g. Bar in Foo<Bar>)
