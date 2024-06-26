@@ -32,7 +32,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     private const string InvalidMessagePackObjectTitle = "MessagePackObject validation";
     private const DiagnosticSeverity InvalidMessagePackObjectSeverity = DiagnosticSeverity.Error;
 
-    internal static readonly DiagnosticDescriptor TypeMustBeMessagePackObject = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor TypeMustBeMessagePackObject = new DiagnosticDescriptor(
         id: UseMessagePackObjectAttributeId,
         title: "Use MessagePackObjectAttribute",
         category: Category,
@@ -42,7 +42,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(UseMessagePackObjectAttributeId));
 
-    internal static readonly DiagnosticDescriptor MessageFormatterMustBeMessagePackFormatter = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor MessageFormatterMustBeMessagePackFormatter = new DiagnosticDescriptor(
         id: MessagePackFormatterMustBeMessagePackFormatterId,
         title: "Must be IMessageFormatter",
         category: Category,
@@ -52,7 +52,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(MessagePackFormatterMustBeMessagePackFormatterId));
 
-    internal static readonly DiagnosticDescriptor PublicMemberNeedsKey = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor PublicMemberNeedsKey = new DiagnosticDescriptor(
         id: AttributeMessagePackObjectMembersId,
         title: "Attribute properties and fields of MessagePack objects",
         category: Category,
@@ -62,7 +62,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(AttributeMessagePackObjectMembersId));
 
-    internal static readonly DiagnosticDescriptor BaseTypeContainsUnattributedPublicMembers = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor BaseTypeContainsUnattributedPublicMembers = new DiagnosticDescriptor(
         id: AttributeMessagePackObjectMembersId,
         title: "Attribute properties and fields of MessagePack objects",
         category: Category,
@@ -72,7 +72,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(AttributeMessagePackObjectMembersId));
 
-    internal static readonly DiagnosticDescriptor InvalidMessagePackObject = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor InvalidMessagePackObject = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
         title: InvalidMessagePackObjectTitle,
         category: Category,
@@ -82,7 +82,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
-    internal static readonly DiagnosticDescriptor BothStringAndIntKeyAreNull = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor BothStringAndIntKeyAreNull = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
         title: InvalidMessagePackObjectTitle,
         category: Category,
@@ -92,7 +92,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
-    internal static readonly DiagnosticDescriptor DoNotMixStringAndIntKeys = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor DoNotMixStringAndIntKeys = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
         title: InvalidMessagePackObjectTitle,
         category: Category,
@@ -102,7 +102,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
-    internal static readonly DiagnosticDescriptor KeysMustBeUnique = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor KeysMustBeUnique = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
         title: InvalidMessagePackObjectTitle,
         category: Category,
@@ -112,7 +112,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
-    internal static readonly DiagnosticDescriptor UnionAttributeRequired = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor UnionAttributeRequired = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
         title: InvalidMessagePackObjectTitle,
         category: Category,
@@ -124,7 +124,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
 
     // This is important because [Key] on a private member still will not be serialized, which is very confusing until
     // one realizes the type is serializing in map mode.
-    internal static readonly DiagnosticDescriptor KeyAnnotatedMemberInMapMode = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor KeyAnnotatedMemberInMapMode = new DiagnosticDescriptor(
         id: InvalidMessagePackObjectId,
         title: InvalidMessagePackObjectTitle,
         category: Category,
@@ -134,7 +134,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
-    internal static readonly DiagnosticDescriptor NoDeserializingConstructor = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor NoDeserializingConstructor = new DiagnosticDescriptor(
         id: DeserializingConstructorId,
         title: "Deserializing constructors",
         category: Category,
@@ -144,7 +144,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(DeserializingConstructorId));
 
-    internal static readonly DiagnosticDescriptor DeserializingConstructorParameterTypeMismatch = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor DeserializingConstructorParameterTypeMismatch = new DiagnosticDescriptor(
         id: DeserializingConstructorId,
         title: "Deserializing constructors",
         category: Category,
@@ -154,7 +154,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(DeserializingConstructorId));
 
-    internal static readonly DiagnosticDescriptor DeserializingConstructorParameterIndexMissing = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor DeserializingConstructorParameterIndexMissing = new DiagnosticDescriptor(
         id: DeserializingConstructorId,
         title: "Deserializing constructors",
         category: Category,
@@ -164,7 +164,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(DeserializingConstructorId));
 
-    internal static readonly DiagnosticDescriptor DeserializingConstructorParameterNameMissing = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor DeserializingConstructorParameterNameMissing = new DiagnosticDescriptor(
         id: DeserializingConstructorId,
         title: "Deserializing constructors",
         category: Category,
@@ -174,7 +174,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(DeserializingConstructorId));
 
-    internal static readonly DiagnosticDescriptor DeserializingConstructorParameterNameDuplicate = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor DeserializingConstructorParameterNameDuplicate = new DiagnosticDescriptor(
         id: DeserializingConstructorId,
         title: "Deserializing constructors",
         category: Category,
@@ -184,7 +184,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(DeserializingConstructorId));
 
-    internal static readonly DiagnosticDescriptor AotUnionAttributeRequiresTypeArg = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor AotUnionAttributeRequiresTypeArg = new DiagnosticDescriptor(
         id: AOTLimitationsId,
         title: "AOT limitations",
         category: Category,
@@ -194,7 +194,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTLimitationsId));
 
-    internal static readonly DiagnosticDescriptor AotArrayRankTooHigh = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor AotArrayRankTooHigh = new DiagnosticDescriptor(
         id: AOTLimitationsId,
         title: "AOT limitations",
         category: Category,
@@ -204,7 +204,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTLimitationsId));
 
-    internal static readonly DiagnosticDescriptor CollidingFormatters = new(
+    public static readonly DiagnosticDescriptor CollidingFormatters = new(
         id: CollidingFormattersId,
         title: "Colliding formatters",
         category: Category,
@@ -234,7 +234,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleFormatterId));
 
-    internal static readonly DiagnosticDescriptor PartialTypeRequired = new(
+    public static readonly DiagnosticDescriptor PartialTypeRequired = new(
         id: PartialTypeRequiredId,
         title: "Partial type required",
         category: Category,
@@ -244,7 +244,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(PartialTypeRequiredId));
 
-    internal static readonly DiagnosticDescriptor InaccessibleDataType = new(
+    public static readonly DiagnosticDescriptor InaccessibleDataType = new(
         id: InaccessibleDataTypeId,
         title: "Internally accessible data type required",
         category: Category,
