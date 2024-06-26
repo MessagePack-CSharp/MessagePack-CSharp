@@ -97,9 +97,10 @@ Install-Package MessagePack.AspNetCoreMvcFormatter
 
 For Unity projects, the [Releases](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases) page provides downloadable `.unitypackage` files. When using in Unity IL2CPP or Xamarin AOT environments, please carefully read the [pre-code generation section](#aot).
 
-### Migration notes from v1.x
+### Migration notes from prior versions
 
-If you were using MessagePack for C# v1.x, check out the ["How to update to our new v2.x version"](doc/migration.md) document.
+Migrating from a prior major version of MessagePack to the latest?
+Check out [these instructions](doc/migration.md).
 
 ## Quick Start
 

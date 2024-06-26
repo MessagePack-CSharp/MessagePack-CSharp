@@ -5,10 +5,12 @@
 - `MessagePackAnalyzer.json` is no longer used to configure the analyzer.
   Use `GeneratedMessagePackResolverAttribute`, `MessagePackKnownFormatterAttribute` and `MessagePackAssumedFormattableAttribute` instead.
 - The `mpc` CLI tool is no longer used to generate ahead-of-time (AOT) formatters and resolver.
-  Use the source generator included in the `MessagePackAnalyzer` nuget package instead.
+  AOT code generation is "on by default" in v3 courtesy of our roslyn source generator.
+- Custom implementations of `IMessagePackFormatter<T>` should be `internal` for automatic inclusion in our source generated resolver.
+- Types annotated with `[MessagePackObject]` should be declared as `partial` to grant the source generated formatter access to private/protected members.
 - Unity users:
   - Use NuGetForUnity to acquire the `MessagePack` nuget package instead of acquiring source code via the .zip file on our Releases page.
-  - Unity 2021.3 is no longer supported (TODO: what version _is_ supported?)
+  - Unity 2021.3 is no longer supported. The minimum required version is 2022.3.12f1.
 
 ## Adapting to breaking changes
 
