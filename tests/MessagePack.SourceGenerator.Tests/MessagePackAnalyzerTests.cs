@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using MessagePack.SourceGenerator.Analyzers;
 using Microsoft.CodeAnalysis.Testing;
 using VerifyCS = CSharpCodeFixVerifier<MessagePack.SourceGenerator.Analyzers.MsgPack00xMessagePackAnalyzer, MessagePack.Analyzers.CodeFixes.MessagePackCodeFixProvider>;
 
@@ -353,5 +354,48 @@ public class Bar : Foo
             },
             MarkupOptions = MarkupOptions.UseFirstDescriptor,
         }.RunAsync();
+    }
+
+    [Fact]
+    public async Task AddAttributeToGenericType()
+    {
+        string input = Preamble + """
+            public class Foo<T>
+            {
+                public T Member { get; set; }
+            }
+
+            [MessagePackObject]
+            public class Bar
+            {
+                [Key(0)]
+                public {|MsgPack003:Foo<int>|} MemberUserGeneric { get; set; }
+
+                [Key(1)]
+                public System.Collections.Generic.List<int> MemberKnownGeneric { get; set; }
+            }
+            """;
+
+        string output = Preamble + """
+
+            [MessagePackObject]
+            public class Foo<T>
+            {
+                [Key(0)]
+                public T Member { get; set; }
+            }
+
+            [MessagePackObject]
+            public class Bar
+            {
+                [Key(0)]
+                public Foo<int> MemberUserGeneric { get; set; }
+
+                [Key(1)]
+                public System.Collections.Generic.List<int> MemberKnownGeneric { get; set; }
+            }
+            """;
+
+        await VerifyCS.VerifyCodeFixAsync(input, output);
     }
 }
