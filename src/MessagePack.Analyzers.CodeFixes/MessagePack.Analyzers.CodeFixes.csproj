@@ -4,7 +4,6 @@
     <RootNamespace>MessagePack.Analyzers</RootNamespace>
     <IsPackable>false</IsPackable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <IsAnalyzerProject>true</IsAnalyzerProject>
 
     <MicrosoftCodeAnalysisVersion>$(MicrosoftCodeAnalysisVersion)</MicrosoftCodeAnalysisVersion>
   </PropertyGroup>

@@ -359,6 +359,9 @@ src/MessagePack.UnityClient/Library/*
 src/MessagePack.UnityClient/obj/*
 src/MessagePack.UnityClient/Temp/*
 src/MessagePack.UnityClient/UserSettings/*
+src/MessagePack.UnityClient/Assets/Packages/
 
 # BenchmarkDotNet results
 BenchmarkDotNet.Artifacts/
+
+src/MessagePack.UnityClient/.vsconfig

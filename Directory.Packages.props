@@ -58,6 +58,10 @@
     <PackageVersion Include="Xunit.SkippableFact" Version="1.4.13" />
     <PackageVersion Include="xunit" Version="2.8.1" />
     <PackageVersion Include="ZeroFormatter" Version="1.6.4" />
+    <PackageVersion Include="PolySharp" Version="1.14.1" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1'">
+    <PackageVersion Include="System.Collections.Immutable" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net472'">
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
@@ -69,11 +73,6 @@
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
     <PackageVersion Include="System.Text.Json" Version="6.0.0" />
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(IsAnalyzerProject)'=='true'">
-    <PackageVersion Update="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
-    <PackageVersion Update="System.Collections.Immutable" Version="7.0.0" />
-    <PackageVersion Update="System.Reflection.Metadata" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup Condition="'$(NonShipping)'=='true'">
     <PackageVersion Update="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
