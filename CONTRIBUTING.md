@@ -20,6 +20,10 @@ Alternatively you may build from the command line using `msbuild.exe` or:
 
     dotnet build /p:platform=NoVSIX
 
+## Unity
+
+See the ReadMe for the target directory `src\MessagePack.UnityClient` for information on building and managing with Unity. Unity's CI is managed in `unity.yml` in GitHub Actions.
+
 ## Where to find our CI feed
 
 Once a change is in a shipping branch (e.g. `v1.8`, `v2.0`, `master`), our CI will build it and push the built package
