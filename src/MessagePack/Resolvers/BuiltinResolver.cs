@@ -125,6 +125,20 @@ namespace MessagePack.Internal
             { typeof(string[]), NullableStringArrayFormatter.Instance },
 
             // well known collections
+#if NET8_0_OR_GREATER
+            { typeof(List<Int16>), Int16ListFormatter.Instance },
+            { typeof(List<Int32>), Int32ListFormatter.Instance },
+            { typeof(List<Int64>), Int64ListFormatter.Instance },
+            { typeof(List<UInt16>), UInt16ListFormatter.Instance },
+            { typeof(List<UInt32>), UInt32ListFormatter.Instance },
+            { typeof(List<UInt64>), UInt64ListFormatter.Instance },
+            { typeof(List<Single>), SingleListFormatter.Instance },
+            { typeof(List<Double>), DoubleListFormatter.Instance },
+            { typeof(List<Boolean>), BooleanListFormatter.Instance },
+            { typeof(List<byte>), ByteListFormatter.Instance },
+            { typeof(List<SByte>), SByteListFormatter.Instance },
+            { typeof(List<Char>), CharListFormatter.Instance },
+#else
             { typeof(List<Int16>), new ListFormatter<Int16>() },
             { typeof(List<Int32>), new ListFormatter<Int32>() },
             { typeof(List<Int64>), new ListFormatter<Int64>() },
@@ -136,8 +150,9 @@ namespace MessagePack.Internal
             { typeof(List<Boolean>), new ListFormatter<Boolean>() },
             { typeof(List<byte>), new ListFormatter<byte>() },
             { typeof(List<SByte>), new ListFormatter<SByte>() },
-            { typeof(List<DateTime>), new ListFormatter<DateTime>() },
             { typeof(List<Char>), new ListFormatter<Char>() },
+#endif
+            { typeof(List<DateTime>), new ListFormatter<DateTime>() },
             { typeof(List<string>), new ListFormatter<string>() },
 
             { typeof(object[]), new ArrayFormatter<object>() },
