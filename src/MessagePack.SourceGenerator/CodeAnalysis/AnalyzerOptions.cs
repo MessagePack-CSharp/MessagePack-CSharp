@@ -132,29 +132,12 @@ public record AnalyzerOptions
         }
 
         return this.knownFormatters.SequenceEqual(other.knownFormatters)
-            && this.collidingFormatters.SequenceEqual(other.collidingFormatters, KeyValueEqualityComparer.Instance)
             && this.AssumedFormattableTypes.SequenceEqual(other.AssumedFormattableTypes)
-            && this.KnownFormattersByName.SequenceEqual(other.KnownFormattersByName)
             && this.Generator.Equals(other.Generator)
             && this.IsGeneratingSource == other.IsGeneratingSource;
     }
 
     public override int GetHashCode() => throw new NotImplementedException();
-
-    private class KeyValueEqualityComparer : IEqualityComparer<KeyValuePair<QualifiedTypeName, ImmutableArray<FormattableType>>>
-    {
-        public static readonly KeyValueEqualityComparer Instance = new();
-
-        public bool Equals(KeyValuePair<QualifiedTypeName, ImmutableArray<FormattableType>> pair1, KeyValuePair<QualifiedTypeName, ImmutableArray<FormattableType>> pair2)
-        {
-            return pair1.Key.Equals(pair2.Key) && pair1.Value.SequenceEqual(pair2.Value);
-        }
-
-        public int GetHashCode(KeyValuePair<QualifiedTypeName, ImmutableArray<FormattableType>> pair1)
-        {
-            return pair1.Key.GetHashCode();
-        }
-    }
 }
 
 /// <summary>
@@ -255,7 +238,7 @@ public record FormatterDescriptor(QualifiedTypeName Name, string? InstanceProvid
             && this.InstanceProvidingMember == other.InstanceProvidingMember
             && this.InstanceTypeName.Equals(other.InstanceTypeName)
             && this.FormattableTypes.SetEquals(other.FormattableTypes)
-            && (this.InaccessibleDescriptor?.Equals(other.InaccessibleDescriptor) ?? (other.InaccessibleDescriptor is null))
+            && this.InaccessibleDescriptor == other.InaccessibleDescriptor
             && this.ExcludeFromSourceGeneratedResolver == other.ExcludeFromSourceGeneratedResolver;
     }
 
