@@ -113,6 +113,48 @@ public record AnalyzerOptions
     }
 
     internal ImmutableArray<FormattableType> GetCollidingFormatterDataTypes(QualifiedTypeName formatter) => this.collidingFormatters.GetValueOrDefault(formatter, ImmutableArray<FormattableType>.Empty);
+
+    public virtual bool Equals(AnalyzerOptions? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        if (this.GetType() != other.GetType())
+        {
+            return false;
+        }
+
+        return this.knownFormatters.SequenceEqual(other.knownFormatters)
+            && this.collidingFormatters.SequenceEqual(other.collidingFormatters, KeyValueEqualityComparer.Instance)
+            && this.AssumedFormattableTypes.SequenceEqual(other.AssumedFormattableTypes)
+            && this.KnownFormattersByName.SequenceEqual(other.KnownFormattersByName)
+            && this.Generator.Equals(other.Generator)
+            && this.IsGeneratingSource == other.IsGeneratingSource;
+    }
+
+    public override int GetHashCode() => throw new NotImplementedException();
+
+    private class KeyValueEqualityComparer : IEqualityComparer<KeyValuePair<QualifiedTypeName, ImmutableArray<FormattableType>>>
+    {
+        public static readonly KeyValueEqualityComparer Instance = new();
+
+        public bool Equals(KeyValuePair<QualifiedTypeName, ImmutableArray<FormattableType>> pair1, KeyValuePair<QualifiedTypeName, ImmutableArray<FormattableType>> pair2)
+        {
+            return pair1.Key.Equals(pair2.Key) && pair1.Value.SequenceEqual(pair2.Value);
+        }
+
+        public int GetHashCode(KeyValuePair<QualifiedTypeName, ImmutableArray<FormattableType>> pair1)
+        {
+            return pair1.Key.GetHashCode();
+        }
+    }
 }
 
 /// <summary>
@@ -210,8 +252,11 @@ public record FormatterDescriptor(QualifiedTypeName Name, string? InstanceProvid
     {
         return other is not null
             && this.Name.Equals(other.Name)
+            && this.InstanceProvidingMember == other.InstanceProvidingMember
+            && this.InstanceTypeName.Equals(other.InstanceTypeName)
             && this.FormattableTypes.SetEquals(other.FormattableTypes)
-            && this.InaccessibleDescriptor == other.InaccessibleDescriptor;
+            && (this.InaccessibleDescriptor?.Equals(other.InaccessibleDescriptor) ?? (other.InaccessibleDescriptor is null))
+            && this.ExcludeFromSourceGeneratedResolver == other.ExcludeFromSourceGeneratedResolver;
     }
 
     public override int GetHashCode() => this.Name.GetHashCode();
