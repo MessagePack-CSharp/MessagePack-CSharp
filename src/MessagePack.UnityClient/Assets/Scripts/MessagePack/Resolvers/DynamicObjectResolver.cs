@@ -2312,7 +2312,12 @@ namespace MessagePack.Internal
             /// <see href="https://github.com/neuecc/MessagePack-CSharp/issues/1134">A bug</see> in <see cref="MethodBuilder"/>
             /// blocks its ability to invoke property init accessors when in a generic class.
             /// </remarks>
-            internal bool IsProblematicInitProperty => this.PropertyInfo is PropertyInfo property && property.DeclaringType!.IsGenericType && this.IsInitOnly;
+            internal bool IsProblematicInitProperty
+#if NET6_0_OR_GREATER
+                => false;
+#else
+                => this.PropertyInfo is PropertyInfo property && property.DeclaringType!.IsGenericType && this.IsInitOnly;
+#endif
 
             public MessagePackFormatterAttribute? GetMessagePackFormatterAttribute()
             {
