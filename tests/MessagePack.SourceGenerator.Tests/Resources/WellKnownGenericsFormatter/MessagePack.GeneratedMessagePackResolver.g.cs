@@ -39,11 +39,12 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(3)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(4)
 		{
 			{ typeof(global::System.ValueTuple<int, string, long>), 0 },
-			{ typeof(global::System.Collections.Generic.List<int>), 1 },
-			{ typeof(global::TempProject.MyObject), 2 },
+			{ typeof(global::System.Collections.Generic.List<global::System.Collections.Generic.List<int>>), 1 },
+			{ typeof(global::System.Collections.Generic.List<int>), 2 },
+			{ typeof(global::TempProject.MyObject), 3 },
 		};
 
 		internal static object GetFormatter(global::System.Type t)
@@ -53,8 +54,9 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 				return closedKey switch
 				{
 					0 => new MsgPack::Formatters.ValueTupleFormatter<int, string, long>(),
-					1 => new MsgPack::Formatters.ListFormatter<int>(),
-					2 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter(),
+					1 => new MsgPack::Formatters.ListFormatter<global::System.Collections.Generic.List<int>>(),
+					2 => new MsgPack::Formatters.ListFormatter<int>(),
+					3 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter(),
 					_ => null, // unreachable
 				};
 			}

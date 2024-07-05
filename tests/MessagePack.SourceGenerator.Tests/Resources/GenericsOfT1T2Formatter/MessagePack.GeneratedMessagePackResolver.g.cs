@@ -39,11 +39,12 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(3)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(4)
 		{
-			{ typeof(global::TempProject.MyGenericObject<int, string>), 0 },
-			{ typeof(global::TempProject.MyObject), 1 },
-			{ typeof(global::TempProject.MyObjectNested), 2 },
+			{ typeof(global::TempProject.MyGenericObject<global::TempProject.MyGenericObject<int, string>, global::TempProject.MyGenericObject<int, string>>), 0 },
+			{ typeof(global::TempProject.MyGenericObject<int, string>), 1 },
+			{ typeof(global::TempProject.MyObject), 2 },
+			{ typeof(global::TempProject.MyObjectNested), 3 },
 		};
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new(1)
 		{
@@ -56,9 +57,10 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return closedKey switch
 				{
-					0 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<int, string>(),
-					1 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter(),
-					2 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectNestedFormatter(),
+					0 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<global::TempProject.MyGenericObject<int, string>, global::TempProject.MyGenericObject<int, string>>(),
+					1 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<int, string>(),
+					2 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter(),
+					3 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectNestedFormatter(),
 					_ => null, // unreachable
 				};
 			}

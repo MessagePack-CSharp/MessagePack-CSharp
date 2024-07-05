@@ -16,7 +16,7 @@ public class CompositeResolverGenerator : IIncrementalGenerator
             $"{AttributeNamespace}.{CompositeResolverAttributeName}",
             predicate: static (node, ct) => true,
             transform: static (context, ct) => (
-                ResolverNamespace: context.TargetSymbol.ContainingNamespace.Name,
+                ResolverNamespace: context.TargetSymbol.ContainingNamespace.GetFullNamespaceName() ?? string.Empty,
                 ResolverName: context.TargetSymbol.Name,
                 Attribute: context.Attributes.Single()));
 
