@@ -14,6 +14,10 @@ namespace MessagePack.Internal;
 
 internal static class UnsafeRefSerializeHelper
 {
+    /// <summary>Unsafe serialize method without parameter checks nor cancellation.</summary>
+    /// <param name="writer">MessagePackWriter.</param>
+    /// <param name="input">Must not be null reference.</param>
+    /// <param name="length">Must be greater than 0.</param>
     internal static void Serialize(ref MessagePackWriter writer, ref bool input, int length)
     {
 #if NET8_0_OR_GREATER
@@ -29,8 +33,6 @@ internal static class UnsafeRefSerializeHelper
                     ref var outputIterator = ref MemoryMarshal.GetReference(destination);
                     for (nuint inputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<byte>.Count)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         // Load 16 bools.
                         var loaded = Vector128.LoadUnsafe(ref Unsafe.As<bool, sbyte>(ref input), inputOffset);
 
@@ -38,7 +40,7 @@ internal static class UnsafeRefSerializeHelper
                         var falses = Vector128.Equals(loaded, Vector128<sbyte>.Zero);
 
                         // MessagePackCode.True is 0xc3(-61). MessagePackCode.False is 0xc2(-62).
-                        var results = Vector128.Create(unchecked((sbyte)MessagePackCode.True)) + falses;
+                        var results = Vector128.Create((sbyte)MessagePackCode.True) + falses;
 
                         // Store 16 values.
                         results.AsByte().StoreUnsafe(ref outputIterator, inputOffset);
@@ -56,7 +58,6 @@ internal static class UnsafeRefSerializeHelper
             ref var outputIterator = ref MemoryMarshal.GetReference(destination);
             for (nuint index = 0; index < (nuint)length; index++)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
                 Unsafe.Add(ref outputIterator, index) = Unsafe.Add(ref input, index) ? MessagePackCode.True : MessagePackCode.False;
             }
         }
@@ -64,6 +65,10 @@ internal static class UnsafeRefSerializeHelper
         writer.Advance(length);
     }
 
+    /// <summary>Unsafe serialize method without parameter checks nor cancellation.</summary>
+    /// <param name="writer">MessagePackWriter.</param>
+    /// <param name="input">Must not be null reference.</param>
+    /// <param name="length">Must be greater than 0.</param>
     internal static void Serialize(ref MessagePackWriter writer, ref sbyte input, int length)
     {
         if (BitConverter.IsLittleEndian)
@@ -78,13 +83,10 @@ internal static class UnsafeRefSerializeHelper
 
     private static void BigEndianSerialize(ref MessagePackWriter writer, ref sbyte input, int length)
     {
-        var i = 0;
-        do
+        for (int i = 0; i < length; i++)
         {
-            writer.CancellationToken.ThrowIfCancellationRequested();
             writer.Write(Unsafe.Add(ref input, i));
         }
-        while (++i < length);
     }
 
     private static void LittleEndianSerialize(ref MessagePackWriter writer, ref sbyte input, int length)
@@ -110,8 +112,6 @@ internal static class UnsafeRefSerializeHelper
                     nuint outputOffset = 0;
                     for (nuint inputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector256<sbyte>.Count)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         var loaded = Vector256.LoadUnsafe(ref input, inputOffset);
 
                         // Less than MinFixNegativeInt value requires 2 byte.
@@ -161,8 +161,6 @@ internal static class UnsafeRefSerializeHelper
                     nuint outputOffset = 0;
                     for (nuint inputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<sbyte>.Count)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         var loaded = Vector128.LoadUnsafe(ref input, inputOffset);
 
                         // Less than MinFixNegativeInt value requires 2 byte.
@@ -213,7 +211,6 @@ internal static class UnsafeRefSerializeHelper
             nuint outputOffset = 0;
             for (nuint index = 0; index < (nuint)inputLength; index++)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
                 outputOffset += ReverseWriteUnknown(ref Unsafe.Add(ref outputIterator, outputOffset), Unsafe.Add(ref input, index));
             }
 
@@ -223,6 +220,10 @@ internal static class UnsafeRefSerializeHelper
         }
     }
 
+    /// <summary>Unsafe serialize method without parameter checks nor cancellation.</summary>
+    /// <param name="writer">MessagePackWriter.</param>
+    /// <param name="input">Must not be null reference.</param>
+    /// <param name="length">Must be greater than 0.</param>
     internal static void Serialize(ref MessagePackWriter writer, ref short input, int length)
     {
         if (BitConverter.IsLittleEndian)
@@ -237,13 +238,10 @@ internal static class UnsafeRefSerializeHelper
 
     private static void BigEndianSerialize(ref MessagePackWriter writer, ref short input, int length)
     {
-        var i = 0;
-        do
+        for (int i = 0; i < length; i++)
         {
-            writer.CancellationToken.ThrowIfCancellationRequested();
             writer.Write(Unsafe.Add(ref input, i));
         }
-        while (++i < length);
     }
 
     private static void LittleEndianSerialize(ref MessagePackWriter writer, ref short input, int length)
@@ -269,8 +267,6 @@ internal static class UnsafeRefSerializeHelper
                     nuint outputOffset = 0;
                     for (nuint inputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<short>.Count)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         var loaded = Vector128.LoadUnsafe(ref input, inputOffset);
 
                         // Less than sbyte.MinValue value requires 3 byte.
@@ -357,7 +353,6 @@ internal static class UnsafeRefSerializeHelper
             nuint outputOffset = 0;
             for (nuint index = 0; index < (nuint)inputLength; index++)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
                 outputOffset += ReverseWriteUnknown(ref Unsafe.Add(ref outputIterator, outputOffset), Unsafe.Add(ref input, index));
             }
 
@@ -367,11 +362,19 @@ internal static class UnsafeRefSerializeHelper
         }
     }
 
+    /// <summary>Unsafe serialize method without parameter checks nor cancellation.</summary>
+    /// <param name="writer">MessagePackWriter.</param>
+    /// <param name="input">Must not be null reference.</param>
+    /// <param name="length">Must be greater than 0.</param>
     internal static void Serialize(ref MessagePackWriter writer, ref char input, int length)
     {
         Serialize(ref writer, ref Unsafe.As<char, ushort>(ref input), length);
     }
 
+    /// <summary>Unsafe serialize method without parameter checks nor cancellation.</summary>
+    /// <param name="writer">MessagePackWriter.</param>
+    /// <param name="input">Must not be null reference.</param>
+    /// <param name="length">Must be greater than 0.</param>
     internal static void Serialize(ref MessagePackWriter writer, ref ushort input, int length)
     {
         if (BitConverter.IsLittleEndian)
@@ -386,13 +389,10 @@ internal static class UnsafeRefSerializeHelper
 
     private static void BigEndianSerialize(ref MessagePackWriter writer, ref ushort input, int length)
     {
-        var i = 0;
-        do
+        for (int i = 0; i < length; i++)
         {
-            writer.CancellationToken.ThrowIfCancellationRequested();
             writer.Write(Unsafe.Add(ref input, i));
         }
-        while (++i < length);
     }
 
     private static void LittleEndianSerialize(ref MessagePackWriter writer, ref ushort input, int length)
@@ -418,8 +418,6 @@ internal static class UnsafeRefSerializeHelper
                     nuint outputOffset = 0;
                     for (nuint inputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<short>.Count)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         var loaded = Vector128.LoadUnsafe(ref input, inputOffset).AsInt16();
 
                         // LessThan 0 means ushort max range and requires 3 byte.
@@ -492,7 +490,6 @@ internal static class UnsafeRefSerializeHelper
             nuint outputOffset = 0;
             for (nuint index = 0; index < (nuint)inputLength; index++)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
                 outputOffset += ReverseWriteUnknown(ref Unsafe.Add(ref outputIterator, outputOffset), Unsafe.Add(ref input, index));
             }
 
@@ -502,6 +499,10 @@ internal static class UnsafeRefSerializeHelper
         }
     }
 
+    /// <summary>Unsafe serialize method without parameter checks nor cancellation.</summary>
+    /// <param name="writer">MessagePackWriter.</param>
+    /// <param name="input">Must not be null reference.</param>
+    /// <param name="length">Must be greater than 0.</param>
     internal static void Serialize(ref MessagePackWriter writer, ref int input, int length)
     {
         if (BitConverter.IsLittleEndian)
@@ -516,13 +517,10 @@ internal static class UnsafeRefSerializeHelper
 
     private static void BigEndianSerialize(ref MessagePackWriter writer, ref int input, int length)
     {
-        var i = 0;
-        do
+        for (int i = 0; i < length; i++)
         {
-            writer.CancellationToken.ThrowIfCancellationRequested();
             writer.Write(Unsafe.Add(ref input, i));
         }
-        while (++i < length);
     }
 
     private static void LittleEndianSerialize(ref MessagePackWriter writer, ref int input, int length)
@@ -548,8 +546,6 @@ internal static class UnsafeRefSerializeHelper
                     nuint outputOffset = 0;
                     for (nuint inputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<int>.Count)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         var loaded = Vector128.LoadUnsafe(ref input, inputOffset);
 
                         // Less than short.MinValue value requires 5 byte.
@@ -653,7 +649,6 @@ internal static class UnsafeRefSerializeHelper
             nuint outputOffset = 0;
             for (nuint index = 0; index < (nuint)inputLength; index++)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
                 outputOffset += ReverseWriteUnknown(ref Unsafe.Add(ref outputIterator, outputOffset), Unsafe.Add(ref input, index));
             }
 
@@ -663,6 +658,10 @@ internal static class UnsafeRefSerializeHelper
         }
     }
 
+    /// <summary>Unsafe serialize method without parameter checks nor cancellation.</summary>
+    /// <param name="writer">MessagePackWriter.</param>
+    /// <param name="input">Must not be null reference.</param>
+    /// <param name="length">Must be greater than 0.</param>
     internal static void Serialize(ref MessagePackWriter writer, ref uint input, int length)
     {
         if (BitConverter.IsLittleEndian)
@@ -677,13 +676,10 @@ internal static class UnsafeRefSerializeHelper
 
     private static void BigEndianSerialize(ref MessagePackWriter writer, ref uint input, int length)
     {
-        var i = 0;
-        do
+        for (int i = 0; i < length; i++)
         {
-            writer.CancellationToken.ThrowIfCancellationRequested();
             writer.Write(Unsafe.Add(ref input, i));
         }
-        while (++i < length);
     }
 
     private static void LittleEndianSerialize(ref MessagePackWriter writer, ref uint input, int length)
@@ -709,8 +705,6 @@ internal static class UnsafeRefSerializeHelper
                     nuint outputOffset = 0;
                     for (nuint inputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<uint>.Count)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         var loaded = Vector128.LoadUnsafe(ref input, inputOffset).AsInt32();
 
                         // LessThan 0 means ushort max range and requires 5 byte.
@@ -791,7 +785,6 @@ internal static class UnsafeRefSerializeHelper
             nuint outputOffset = 0;
             for (nuint index = 0; index < (nuint)inputLength; index++)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
                 outputOffset += ReverseWriteUnknown(ref Unsafe.Add(ref outputIterator, outputOffset), Unsafe.Add(ref input, index));
             }
 
@@ -801,6 +794,10 @@ internal static class UnsafeRefSerializeHelper
         }
     }
 
+    /// <summary>Unsafe serialize method without parameter checks nor cancellation.</summary>
+    /// <param name="writer">MessagePackWriter.</param>
+    /// <param name="input">Must not be null reference.</param>
+    /// <param name="length">Must be greater than 0.</param>
     internal static void Serialize(ref MessagePackWriter writer, ref long input, int length)
     {
         if (BitConverter.IsLittleEndian)
@@ -815,13 +812,10 @@ internal static class UnsafeRefSerializeHelper
 
     private static void BigEndianSerialize(ref MessagePackWriter writer, ref long input, int length)
     {
-        var i = 0;
-        do
+        for (int i = 0; i < length; i++)
         {
-            writer.CancellationToken.ThrowIfCancellationRequested();
             writer.Write(Unsafe.Add(ref input, i));
         }
-        while (++i < length);
     }
 
     private static void LittleEndianSerialize(ref MessagePackWriter writer, ref long input, int length)
@@ -847,8 +841,6 @@ internal static class UnsafeRefSerializeHelper
                     nuint outputOffset = 0;
                     for (nuint inputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<long>.Count)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         var loaded = Vector128.LoadUnsafe(ref input, inputOffset);
 
                         // Less than int.MinValue value requires 9 byte.
@@ -970,7 +962,6 @@ internal static class UnsafeRefSerializeHelper
             nuint outputOffset = 0;
             for (nuint index = 0; index < (nuint)inputLength; index++)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
                 outputOffset += ReverseWriteUnknown(ref Unsafe.Add(ref outputIterator, outputOffset), Unsafe.Add(ref input, index));
             }
 
@@ -980,6 +971,10 @@ internal static class UnsafeRefSerializeHelper
         }
     }
 
+    /// <summary>Unsafe serialize method without parameter checks nor cancellation.</summary>
+    /// <param name="writer">MessagePackWriter.</param>
+    /// <param name="input">Must not be null reference.</param>
+    /// <param name="length">Must be greater than 0.</param>
     internal static void Serialize(ref MessagePackWriter writer, ref ulong input, int length)
     {
         if (BitConverter.IsLittleEndian)
@@ -994,13 +989,10 @@ internal static class UnsafeRefSerializeHelper
 
     private static void BigEndianSerialize(ref MessagePackWriter writer, ref ulong input, int length)
     {
-        var i = 0;
-        do
+        for (int i = 0; i < length; i++)
         {
-            writer.CancellationToken.ThrowIfCancellationRequested();
             writer.Write(Unsafe.Add(ref input, i));
         }
-        while (++i < length);
     }
 
     private static void LittleEndianSerialize(ref MessagePackWriter writer, ref ulong input, int length)
@@ -1026,8 +1018,6 @@ internal static class UnsafeRefSerializeHelper
                     nuint outputOffset = 0;
                     for (nuint inputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<ulong>.Count)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         var loaded = Vector128.LoadUnsafe(ref input, inputOffset).AsInt64();
 
                         // LessThan 0 means ushort max range and requires 5 byte.
@@ -1117,7 +1107,6 @@ internal static class UnsafeRefSerializeHelper
             nuint outputOffset = 0;
             for (nuint index = 0; index < (nuint)inputLength; index++)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
                 outputOffset += ReverseWriteUnknown(ref Unsafe.Add(ref outputIterator, outputOffset), Unsafe.Add(ref input, index));
             }
 
@@ -1127,6 +1116,10 @@ internal static class UnsafeRefSerializeHelper
         }
     }
 
+    /// <summary>Unsafe serialize method without parameter checks nor cancellation.</summary>
+    /// <param name="writer">MessagePackWriter.</param>
+    /// <param name="input">Must not be null reference.</param>
+    /// <param name="length">Must be greater than 0.</param>
     internal static void Serialize(ref MessagePackWriter writer, ref float input, int length)
     {
         if (BitConverter.IsLittleEndian)
@@ -1158,7 +1151,6 @@ internal static class UnsafeRefSerializeHelper
             ref var outputIterator = ref MemoryMarshal.GetReference(destination);
             for (nuint index = 0, outputOffset = 0; index < (nuint)inputLength; index++, outputOffset += maxOutputElementSize)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
                 Unsafe.Add(ref outputIterator, outputOffset) = MessagePackCode.Float32;
                 Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 1), Unsafe.Add(ref inputIterator, index));
             }
@@ -1192,8 +1184,6 @@ internal static class UnsafeRefSerializeHelper
                     ref var outputIterator = ref MemoryMarshal.GetReference(destination);
                     for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector256<uint>.Count, outputOffset += (nuint)Vector256<uint>.Count * maxOutputElementSize)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         // Reorder Little Endian bytes to Big Endian.
                         var shuffled = Vector256.Shuffle(Vector256.LoadUnsafe(ref inputIterator, inputOffset).AsByte(), Vector256.Create((byte)3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20, 27, 26, 25, 24, 31, 30, 29, 28)).AsUInt32();
 
@@ -1235,8 +1225,6 @@ internal static class UnsafeRefSerializeHelper
                     ref var outputIterator = ref MemoryMarshal.GetReference(destination);
                     for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<uint>.Count, outputOffset += (nuint)Vector128<uint>.Count * maxOutputElementSize)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         // Reorder Little Endian bytes to Big Endian.
                         var shuffled = Vector128.Shuffle(Vector128.LoadUnsafe(ref inputIterator, inputOffset).AsByte(), Vector128.Create((byte)3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12)).AsUInt32();
 
@@ -1272,7 +1260,6 @@ internal static class UnsafeRefSerializeHelper
             ref var outputIterator = ref MemoryMarshal.GetReference(destination);
             for (nuint index = 0, outputOffset = 0; index < (nuint)inputLength; index++, outputOffset += maxOutputElementSize)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
                 Unsafe.Add(ref outputIterator, outputOffset) = MessagePackCode.Float32;
                 Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 1), BinaryPrimitives.ReverseEndianness(Unsafe.Add(ref inputIterator, index)));
             }
@@ -1283,6 +1270,10 @@ internal static class UnsafeRefSerializeHelper
         }
     }
 
+    /// <summary>Unsafe serialize method without parameter checks nor cancellation.</summary>
+    /// <param name="writer">MessagePackWriter.</param>
+    /// <param name="input">Must not be null reference.</param>
+    /// <param name="length">Must be greater than 0.</param>
     internal static void Serialize(ref MessagePackWriter writer, ref double input, int length)
     {
         if (BitConverter.IsLittleEndian)
@@ -1314,7 +1305,6 @@ internal static class UnsafeRefSerializeHelper
             ref var outputIterator = ref MemoryMarshal.GetReference(destination);
             for (nuint index = 0, outputOffset = 0; index < (nuint)inputLength; index++, outputOffset += maxOutputElementSize)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
                 Unsafe.Add(ref outputIterator, outputOffset) = MessagePackCode.Float64;
                 Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 1), Unsafe.Add(ref inputIterator, index));
             }
@@ -1348,8 +1338,6 @@ internal static class UnsafeRefSerializeHelper
                     ref var outputIterator = ref MemoryMarshal.GetReference(destination);
                     for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector256<ulong>.Count, outputOffset += (nuint)Vector256<ulong>.Count * maxOutputElementSize)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         // Reorder Little Endian bytes to Big Endian.
                         var shuffled = Vector256.Shuffle(Vector256.LoadUnsafe(ref inputIterator, inputOffset).AsByte(), Vector256.Create((byte)7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8, 23, 22, 21, 20, 19, 18, 17, 16, 31, 30, 29, 28, 27, 26, 25, 24)).AsUInt64();
 
@@ -1383,8 +1371,6 @@ internal static class UnsafeRefSerializeHelper
                     ref var outputIterator = ref MemoryMarshal.GetReference(destination);
                     for (nuint inputOffset = 0, outputOffset = 0; inputOffset < alignedInputLength; inputOffset += (nuint)Vector128<ulong>.Count, outputOffset += (nuint)Vector128<ulong>.Count * maxOutputElementSize)
                     {
-                        writer.CancellationToken.ThrowIfCancellationRequested();
-
                         // Reorder Little Endian bytes to Big Endian.
                         var shuffled = Vector128.Shuffle(Vector128.LoadUnsafe(ref inputIterator, inputOffset).AsByte(), Vector128.Create((byte)7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8)).AsUInt64();
 
@@ -1416,7 +1402,6 @@ internal static class UnsafeRefSerializeHelper
             ref var outputIterator = ref MemoryMarshal.GetReference(destination);
             for (nuint index = 0, outputOffset = 0; index < (nuint)inputLength; index++, outputOffset += maxOutputElementSize)
             {
-                writer.CancellationToken.ThrowIfCancellationRequested();
                 Unsafe.Add(ref outputIterator, outputOffset) = MessagePackCode.Float64;
                 Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 1), BinaryPrimitives.ReverseEndianness(Unsafe.Add(ref inputIterator, index)));
             }

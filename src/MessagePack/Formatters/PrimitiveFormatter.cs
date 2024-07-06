@@ -89,6 +89,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 if (value.Length > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
 #if NET6_0_OR_GREATER
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
 #else
@@ -141,6 +142,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Count);
                 if (value.Count > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
                 }
             }
@@ -243,6 +245,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 if (value.Length > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
 #if NET6_0_OR_GREATER
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
 #else
@@ -295,6 +298,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Count);
                 if (value.Count > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
                 }
             }
@@ -397,6 +401,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 if (value.Length > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
 #if NET6_0_OR_GREATER
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
 #else
@@ -449,6 +454,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Count);
                 if (value.Count > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
                 }
             }
@@ -551,6 +557,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 if (value.Length > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
 #if NET6_0_OR_GREATER
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
 #else
@@ -603,6 +610,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Count);
                 if (value.Count > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
                 }
             }
@@ -705,6 +713,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 if (value.Length > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
 #if NET6_0_OR_GREATER
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
 #else
@@ -757,6 +766,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Count);
                 if (value.Count > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
                 }
             }
@@ -859,6 +869,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 if (value.Length > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
 #if NET6_0_OR_GREATER
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
 #else
@@ -911,6 +922,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Count);
                 if (value.Count > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
                 }
             }
@@ -1013,6 +1025,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 if (value.Length > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
 #if NET6_0_OR_GREATER
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
 #else
@@ -1065,6 +1078,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Count);
                 if (value.Count > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
                 }
             }
@@ -1167,6 +1181,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 if (value.Length > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
 #if NET6_0_OR_GREATER
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
 #else
@@ -1219,6 +1234,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Count);
                 if (value.Count > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
                 }
             }
@@ -1321,6 +1337,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 if (value.Length > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
 #if NET6_0_OR_GREATER
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
 #else
@@ -1373,6 +1390,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Count);
                 if (value.Count > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
                 }
             }
@@ -1597,6 +1615,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 if (value.Length > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
 #if NET6_0_OR_GREATER
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
 #else
@@ -1649,6 +1668,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Count);
                 if (value.Count > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
                 }
             }
@@ -1751,6 +1771,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 if (value.Length > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
 #if NET6_0_OR_GREATER
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
 #else
@@ -1803,6 +1824,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Count);
                 if (value.Count > 0)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
                 }
             }
