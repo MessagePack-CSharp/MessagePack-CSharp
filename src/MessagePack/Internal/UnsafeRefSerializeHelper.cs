@@ -1,6 +1,15 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+/*
+ * The reason why serialize method signature is void Serialize(ref MessagePackWriter writer, ref T input, int length)
+ * 1. Vector128.Load method requires only ref T or T*, not ReadOnlySpan<T>.
+ * 2. For the purpose of getting ref T, MemoryMarshal.GetArrayDataReference is performant than ReadOnlySpan<T> conversion + MemoryMarshal.GetReference.
+ * 3. Unity IL2CPP does not treat ReadOnlySpan<T> as first-class-citizen.
+ *
+ * When .NET team introduces the overload method for ReadOnlySpan<T>, the signature can be changed.
+ */
+
 using System;
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
