@@ -43,27 +43,6 @@ namespace TempProject
     }
 
     [Fact]
-    public async Task OpenNullableFormatter()
-    {
-        string testSource = """
-using System;
-using System.Collections.Generic;
-using MessagePack;
-
-namespace TempProject
-{
-    [MessagePackObject]
-    public class MyGenericObject<T> where T : struct
-    {
-        [Key(0)]
-        public T? Value { get; set; }
-    }
-}
-""";
-        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
-    }
-
-    [Fact]
     public async Task WellKnownGenericsFormatter()
     {
         string testSource = """

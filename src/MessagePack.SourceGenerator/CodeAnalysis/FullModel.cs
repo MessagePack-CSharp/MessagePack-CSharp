@@ -58,14 +58,6 @@ public record FullModel(
             }
         }
 
-        var unboundGenericTypes = new HashSet<string>(
-            objectInfos.Where(i => i.IsUnboundGenericType)
-                .Select(i => i.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.TypeDefinition)));
-
-        genericInfos.ExceptWith(genericInfos
-            .Where(i => i.IsUnboundGenericType &&
-                unboundGenericTypes.Contains(i.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.TypeDefinition))));
-
         return new FullModel(
             objectInfos.ToImmutable(),
             enumInfos.ToImmutable(),

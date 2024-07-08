@@ -507,13 +507,16 @@ public class TypeCollector
                 return true;
             }
 
-            formatterName = $"NullableFormatter";
-            var info = GenericSerializationInfo.Create(type, this.options.Generator.Resolver, isOpenGenericType);
-            info = info with
+            if (!isOpenGenericType)
             {
-                Formatter = new QualifiedTypeName("MsgPack::Formatters", TypeKind.Class, formatterName, info.DataType.TypeParameters),
-            };
-            this.collectedGenericInfo.Add(info);
+                formatterName = $"NullableFormatter<{firstTypeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
+                var info = GenericSerializationInfo.Create(type, this.options.Generator.Resolver) with
+                {
+                    Formatter = new QualifiedTypeName("MsgPack::Formatters", TypeKind.Class, formatterName),
+                };
+                this.collectedGenericInfo.Add(info);
+            }
+
             return true;
         }
 
@@ -525,14 +528,23 @@ public class TypeCollector
                 this.CollectCore(item);
             }
 
-            GenericSerializationInfo info = GenericSerializationInfo.Create(type, this.options.Generator.Resolver, isOpenGenericType);
-            int indexOfLastPeriod = formatterFullName.LastIndexOf('.');
-            info = info with
-            {
-                Formatter = new(formatterFullName.Substring(0, indexOfLastPeriod), TypeKind.Class, formatterFullName.Substring(indexOfLastPeriod + 1), info.DataType.TypeParameters),
-            };
+            GenericSerializationInfo info;
 
-            this.collectedGenericInfo.Add(info);
+            if (isOpenGenericType)
+            {
+                return true;
+            }
+            else
+            {
+                info = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
+                int indexOfLastPeriod = formatterFullName.LastIndexOf('.');
+                info = info with
+                {
+                    Formatter = new(formatterFullName.Substring(0, indexOfLastPeriod), TypeKind.Class, formatterFullName.Substring(indexOfLastPeriod + 1), info.DataType.TypeParameters),
+                };
+
+                this.collectedGenericInfo.Add(info);
+            }
 
             if (genericTypeDefinitionString != "System.Linq.ILookup<,>")
             {
@@ -541,7 +553,7 @@ public class TypeCollector
 
             formatterName = KnownGenericTypes["System.Linq.IGrouping<,>"];
 
-            var groupingInfo = GenericSerializationInfo.Create(type, this.options.Generator.Resolver, isOpenGenericType);
+            var groupingInfo = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
             groupingInfo = groupingInfo with
             {
                 DataType = new QualifiedTypeName("global::System.Linq", TypeKind.Interface, $"IGrouping", info.DataType.TypeParameters),
@@ -590,8 +602,12 @@ public class TypeCollector
             }
         }
 
-        GenericSerializationInfo genericSerializationInfo = GenericSerializationInfo.Create(type, this.options.Generator.Resolver, isOpenGenericType);
-        this.collectedGenericInfo.Add(genericSerializationInfo);
+        if (!isOpenGenericType)
+        {
+            GenericSerializationInfo genericSerializationInfo = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
+            this.collectedGenericInfo.Add(genericSerializationInfo);
+        }
+
         return true;
     }
 
