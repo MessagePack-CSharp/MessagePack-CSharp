@@ -24,6 +24,8 @@ public record FullModel(
 
     public bool IsEmpty => this.ObjectInfos.IsEmpty && this.EnumInfos.IsEmpty && this.GenericInfos.IsEmpty && this.UnionInfos.IsEmpty && this.CustomFormatterInfos.IsEmpty;
 
+    private int hashCode;
+
     /// <summary>
     /// Returns a new model that contains all the content of a collection of models.
     /// </summary>
@@ -92,5 +94,52 @@ public record FullModel(
             && Options.Equals(other.Options);
     }
 
-    public override int GetHashCode() => throw new NotImplementedException();
+    public override int GetHashCode()
+    {
+        if (this.hashCode == 0)
+        {
+            var code = 0;
+
+            code = Hash(code, this.ObjectInfos.Count);
+            if (this.ObjectInfos.Count > 0)
+            {
+                code = Hash(code, this.ObjectInfos[0].GetHashCode());
+            }
+
+            code = Hash(code, this.EnumInfos.Count);
+            if (this.EnumInfos.Count > 0)
+            {
+                code = Hash(code, this.EnumInfos[0].GetHashCode());
+            }
+
+            code = Hash(code, this.GenericInfos.Count);
+            if (this.GenericInfos.Count > 0)
+            {
+                code = Hash(code, this.GenericInfos[0].GetHashCode());
+            }
+
+            code = Hash(code, this.UnionInfos.Count);
+            if (this.UnionInfos.Count > 0)
+            {
+                code = Hash(code, this.UnionInfos[0].GetHashCode());
+            }
+
+            code = Hash(code, this.CustomFormatterInfos.Count);
+            if (this.CustomFormatterInfos.Count > 0)
+            {
+                code = Hash(code, this.CustomFormatterInfos[0].GetHashCode());
+            }
+
+            code = Hash(code, this.Options.GetHashCode());
+
+            this.hashCode = code;
+        }
+
+        return this.hashCode;
+
+        static int Hash(int hashCode, int value)
+        {
+            return (hashCode * 31) + value;
+        }
+    }
 }

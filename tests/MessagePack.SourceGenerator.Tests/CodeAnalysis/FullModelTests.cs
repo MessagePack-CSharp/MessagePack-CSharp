@@ -47,5 +47,6 @@ public class FullModelTests
 
         Assert.Equal(model1b, model1a);
         Assert.NotEqual(model2, model1a);
+        Assert.Equal(model1b.GetHashCode(), model1a.GetHashCode());
     }
 }

@@ -32,4 +32,6 @@ public sealed record EnumSerializationInfo : ResolverRegisterInfo
             UnderlyingTypeName = enumUnderlyingType.ToDisplayString(BinaryWriteFormat),
         };
     }
+
+    public override int GetHashCode() => base.GetHashCode();
 }

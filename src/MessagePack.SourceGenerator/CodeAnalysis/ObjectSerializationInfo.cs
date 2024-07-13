@@ -124,5 +124,5 @@ public record ObjectSerializationInfo : ResolverRegisterInfo
             && NeedsCastOnBefore == other.NeedsCastOnBefore;
     }
 
-    public override int GetHashCode() => throw new NotImplementedException();
+    public override int GetHashCode() => base.GetHashCode();
 }
