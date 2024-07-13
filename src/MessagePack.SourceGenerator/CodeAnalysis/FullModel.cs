@@ -24,8 +24,6 @@ public record FullModel(
 
     public bool IsEmpty => this.ObjectInfos.IsEmpty && this.EnumInfos.IsEmpty && this.GenericInfos.IsEmpty && this.UnionInfos.IsEmpty && this.CustomFormatterInfos.IsEmpty;
 
-    private int hashCode;
-
     /// <summary>
     /// Returns a new model that contains all the content of a collection of models.
     /// </summary>
@@ -96,46 +94,41 @@ public record FullModel(
 
     public override int GetHashCode()
     {
-        if (this.hashCode == 0)
+        var hashCode = 0;
+
+        hashCode = Hash(hashCode, this.ObjectInfos.Count);
+        if (this.ObjectInfos.Count > 0)
         {
-            var code = 0;
-
-            code = Hash(code, this.ObjectInfos.Count);
-            if (this.ObjectInfos.Count > 0)
-            {
-                code = Hash(code, this.ObjectInfos[0].GetHashCode());
-            }
-
-            code = Hash(code, this.EnumInfos.Count);
-            if (this.EnumInfos.Count > 0)
-            {
-                code = Hash(code, this.EnumInfos[0].GetHashCode());
-            }
-
-            code = Hash(code, this.GenericInfos.Count);
-            if (this.GenericInfos.Count > 0)
-            {
-                code = Hash(code, this.GenericInfos[0].GetHashCode());
-            }
-
-            code = Hash(code, this.UnionInfos.Count);
-            if (this.UnionInfos.Count > 0)
-            {
-                code = Hash(code, this.UnionInfos[0].GetHashCode());
-            }
-
-            code = Hash(code, this.CustomFormatterInfos.Count);
-            if (this.CustomFormatterInfos.Count > 0)
-            {
-                code = Hash(code, this.CustomFormatterInfos[0].GetHashCode());
-            }
-
-            code = Hash(code, this.Options.GetHashCode());
-
-            this.hashCode = code;
+            hashCode = Hash(hashCode, this.ObjectInfos[0].GetHashCode());
         }
 
-        return this.hashCode;
+        hashCode = Hash(hashCode, this.EnumInfos.Count);
+        if (this.EnumInfos.Count > 0)
+        {
+            hashCode = Hash(hashCode, this.EnumInfos[0].GetHashCode());
+        }
+
+        hashCode = Hash(hashCode, this.GenericInfos.Count);
+        if (this.GenericInfos.Count > 0)
+        {
+            hashCode = Hash(hashCode, this.GenericInfos[0].GetHashCode());
+        }
+
+        hashCode = Hash(hashCode, this.UnionInfos.Count);
+        if (this.UnionInfos.Count > 0)
+        {
+            hashCode = Hash(hashCode, this.UnionInfos[0].GetHashCode());
+        }
+
+        hashCode = Hash(hashCode, this.CustomFormatterInfos.Count);
+        if (this.CustomFormatterInfos.Count > 0)
+        {
+            hashCode = Hash(hashCode, this.CustomFormatterInfos[0].GetHashCode());
+        }
+
+        hashCode = Hash(hashCode, this.Options.GetHashCode());
+
+        return hashCode;
 
         static int Hash(int hashCode, int value)
         {
