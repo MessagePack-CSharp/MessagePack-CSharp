@@ -113,6 +113,31 @@ public record AnalyzerOptions
     }
 
     internal ImmutableArray<FormattableType> GetCollidingFormatterDataTypes(QualifiedTypeName formatter) => this.collidingFormatters.GetValueOrDefault(formatter, ImmutableArray<FormattableType>.Empty);
+
+    public virtual bool Equals(AnalyzerOptions? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        if (this.GetType() != other.GetType())
+        {
+            return false;
+        }
+
+        return this.knownFormatters.SequenceEqual(other.knownFormatters)
+            && this.AssumedFormattableTypes.SequenceEqual(other.AssumedFormattableTypes)
+            && this.Generator.Equals(other.Generator)
+            && this.IsGeneratingSource == other.IsGeneratingSource;
+    }
+
+    public override int GetHashCode() => throw new NotImplementedException();
 }
 
 /// <summary>
@@ -210,8 +235,11 @@ public record FormatterDescriptor(QualifiedTypeName Name, string? InstanceProvid
     {
         return other is not null
             && this.Name.Equals(other.Name)
+            && this.InstanceProvidingMember == other.InstanceProvidingMember
+            && this.InstanceTypeName.Equals(other.InstanceTypeName)
             && this.FormattableTypes.SetEquals(other.FormattableTypes)
-            && this.InaccessibleDescriptor == other.InaccessibleDescriptor;
+            && this.InaccessibleDescriptor == other.InaccessibleDescriptor
+            && this.ExcludeFromSourceGeneratedResolver == other.ExcludeFromSourceGeneratedResolver;
     }
 
     public override int GetHashCode() => this.Name.GetHashCode();
