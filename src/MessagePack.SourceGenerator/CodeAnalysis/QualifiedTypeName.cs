@@ -226,6 +226,7 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
                this.NestingType == other.NestingType &&
                this.AccessModifier == other.AccessModifier &&
                this.Kind == other.Kind &&
+               this.ArrayRank == other.ArrayRank &&
                this.Name == other.Name &&
                this.TypeParameters.SequenceEqual(other.TypeParameters);
     }
@@ -263,6 +264,12 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
             return result;
         }
 
+        result = left.ArrayRank.CompareTo(right.ArrayRank);
+        if (result != 0)
+        {
+            return result;
+        }
+
         result = StringComparer.Ordinal.Compare(left.Name, right.Name);
         if (result != 0)
         {
@@ -275,7 +282,28 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
             return result;
         }
 
-        return StringComparer.Ordinal.Compare(left.Name, right.Name);
+        result = StringComparer.Ordinal.Compare(left.Name, right.Name);
+        if (result != 0)
+        {
+            return result;
+        }
+
+        result = left.TypeParameters.Length.CompareTo(right.TypeParameters.Length);
+        if (result != 0)
+        {
+            return result;
+        }
+
+        for (int i = 0; i < left.TypeParameters.Length; i++)
+        {
+            result = StringComparer.Ordinal.Compare(left.TypeParameters[i], right.TypeParameters[i]);
+            if (result != 0)
+            {
+                return result;
+            }
+        }
+
+        return 0;
     }
 }
 

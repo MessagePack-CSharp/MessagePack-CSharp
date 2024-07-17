@@ -39,12 +39,13 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(4)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(5)
 		{
-			{ typeof(global::System.Nullable<global::TempProject.MyEnum>), 0 },
-			{ typeof(global::System.ValueTuple<int, long>), 1 },
-			{ typeof(global::TempProject.MyEnum), 2 },
-			{ typeof(global::TempProject.MyObject), 3 },
+			{ typeof(global::System.Nullable<(int, long)>), 0 },
+			{ typeof(global::System.Nullable<global::TempProject.MyEnum>), 1 },
+			{ typeof(global::System.ValueTuple<int, long>), 2 },
+			{ typeof(global::TempProject.MyEnum), 3 },
+			{ typeof(global::TempProject.MyObject), 4 },
 		};
 
 		internal static object GetFormatter(global::System.Type t)
@@ -53,10 +54,11 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				return closedKey switch
 				{
-					0 => new MsgPack::Formatters.NullableFormatter<global::TempProject.MyEnum>(),
-					1 => new MsgPack::Formatters.ValueTupleFormatter<int, long>(),
-					2 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyEnumFormatter(),
-					3 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter(),
+					0 => new MsgPack::Formatters.NullableFormatter<(int, long)>(),
+					1 => new MsgPack::Formatters.NullableFormatter<global::TempProject.MyEnum>(),
+					2 => new MsgPack::Formatters.ValueTupleFormatter<int, long>(),
+					3 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyEnumFormatter(),
+					4 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter(),
 					_ => null, // unreachable
 				};
 			}

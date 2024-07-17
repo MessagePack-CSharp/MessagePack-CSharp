@@ -187,7 +187,6 @@ public class TypeCollector
     private readonly Action<Diagnostic>? reportDiagnostic;
 
     private readonly ITypeSymbol? targetType;
-    private readonly bool excludeArrayElement;
 
     // visitor workspace:
     private readonly Dictionary<ITypeSymbol, bool> alreadyCollected = new(SymbolEqualityComparer.Default);
@@ -204,7 +203,6 @@ public class TypeCollector
         this.reportDiagnostic = reportAnalyzerDiagnostic;
         this.options = options;
         this.compilation = compilation;
-        this.excludeArrayElement = true;
 
         bool isInaccessible = false;
         foreach (BaseTypeDeclarationSyntax? decl in CodeAnalysisUtilities.FindInaccessibleTypes(targetType))
@@ -423,22 +421,14 @@ public class TypeCollector
     private bool CollectArray(IArrayTypeSymbol array)
     {
         ITypeSymbol elemType = array.ElementType;
-        if (!this.excludeArrayElement)
+
+        if (!this.CollectCore(elemType))
         {
-            if (!this.CollectCore(elemType))
-            {
-                return false;
-            }
+            return false;
         }
 
-        if (this.alreadyCollected.ContainsKey(elemType))
+        if (elemType is ITypeParameterSymbol || (elemType is INamedTypeSymbol symbol && IsOpenGenericTypeRecursively(symbol)))
         {
-            return true;
-        }
-
-        if (elemType is ITypeParameterSymbol)
-        {
-            this.alreadyCollected.Add(elemType, true);
             return true;
         }
 
@@ -493,7 +483,7 @@ public class TypeCollector
         var genericTypeDefinitionString = typeDefinition.ToDisplayString();
         string? genericTypeNamespace = type.ContainingNamespace?.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         var fullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        int unboundArity = this.IsOpenGenericTypeRecursively(type) ? type.Arity : 0;
+        var isOpenGenericType = IsOpenGenericTypeRecursively(type);
         string formattedTypeFullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         string? formatterName;
 
@@ -517,12 +507,16 @@ public class TypeCollector
                 return true;
             }
 
-            formatterName = $"NullableFormatter<{firstTypeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
-            var info = GenericSerializationInfo.Create(type, this.options.Generator.Resolver) with
+            if (!isOpenGenericType)
             {
-                Formatter = new QualifiedTypeName("MsgPack::Formatters", TypeKind.Class, formatterName),
-            };
-            this.collectedGenericInfo.Add(info);
+                formatterName = $"NullableFormatter<{firstTypeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
+                var info = GenericSerializationInfo.Create(type, this.options.Generator.Resolver) with
+                {
+                    Formatter = new QualifiedTypeName("MsgPack::Formatters", TypeKind.Class, formatterName),
+                };
+                this.collectedGenericInfo.Add(info);
+            }
+
             return true;
         }
 
@@ -534,14 +528,23 @@ public class TypeCollector
                 this.CollectCore(item);
             }
 
-            GenericSerializationInfo info = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
-            int indexOfLastPeriod = formatterFullName.LastIndexOf('.');
-            info = info with
-            {
-                Formatter = new(formatterFullName.Substring(0, indexOfLastPeriod), TypeKind.Class, formatterFullName.Substring(indexOfLastPeriod + 1), info.DataType.TypeParameters),
-            };
+            GenericSerializationInfo info;
 
-            this.collectedGenericInfo.Add(info);
+            if (isOpenGenericType)
+            {
+                return true;
+            }
+            else
+            {
+                info = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
+                int indexOfLastPeriod = formatterFullName.LastIndexOf('.');
+                info = info with
+                {
+                    Formatter = new(formatterFullName.Substring(0, indexOfLastPeriod), TypeKind.Class, formatterFullName.Substring(indexOfLastPeriod + 1), info.DataType.TypeParameters),
+                };
+
+                this.collectedGenericInfo.Add(info);
+            }
 
             if (genericTypeDefinitionString != "System.Linq.ILookup<,>")
             {
@@ -599,8 +602,12 @@ public class TypeCollector
             }
         }
 
-        GenericSerializationInfo genericSerializationInfo = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
-        this.collectedGenericInfo.Add(genericSerializationInfo);
+        if (!isOpenGenericType)
+        {
+            GenericSerializationInfo genericSerializationInfo = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
+            this.collectedGenericInfo.Add(genericSerializationInfo);
+        }
+
         return true;
     }
 
@@ -1207,8 +1214,8 @@ public class TypeCollector
         return true;
     }
 
-    private bool IsOpenGenericTypeRecursively(INamedTypeSymbol type)
+    private static bool IsOpenGenericTypeRecursively(INamedTypeSymbol type)
     {
-        return type.IsGenericType && type.TypeArguments.Any(x => x is ITypeParameterSymbol || (x is INamedTypeSymbol symbol && this.IsOpenGenericTypeRecursively(symbol)));
+        return type.IsGenericType && type.TypeArguments.Any(x => x is ITypeParameterSymbol || (x is INamedTypeSymbol symbol && IsOpenGenericTypeRecursively(symbol)));
     }
 }

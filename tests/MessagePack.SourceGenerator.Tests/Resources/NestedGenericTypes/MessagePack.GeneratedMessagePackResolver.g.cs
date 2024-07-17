@@ -39,13 +39,14 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(5)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(6)
 		{
 			{ typeof(global::System.Collections.Generic.List<global::TempProject.MyObject2>), 0 },
-			{ typeof(global::TempProject.MyGenericObject<global::TempProject.MyObject2>), 1 },
-			{ typeof(global::TempProject.MyInnerGenericObject<global::TempProject.MyObject2>), 2 },
-			{ typeof(global::TempProject.MyObject), 3 },
-			{ typeof(global::TempProject.MyObject2), 4 },
+			{ typeof(global::TempProject.MyObject2[]), 1 },
+			{ typeof(global::TempProject.MyGenericObject<global::TempProject.MyObject2>), 2 },
+			{ typeof(global::TempProject.MyInnerGenericObject<global::TempProject.MyObject2>), 3 },
+			{ typeof(global::TempProject.MyObject), 4 },
+			{ typeof(global::TempProject.MyObject2), 5 },
 		};
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new(3)
 		{
@@ -61,10 +62,11 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 				return closedKey switch
 				{
 					0 => new MsgPack::Formatters.ListFormatter<global::TempProject.MyObject2>(),
-					1 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<global::TempProject.MyObject2>(),
-					2 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyInnerGenericObjectFormatter<global::TempProject.MyObject2>(),
-					3 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter(),
-					4 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObject2Formatter(),
+					1 => new MsgPack::Formatters.ArrayFormatter<global::TempProject.MyObject2>(),
+					2 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<global::TempProject.MyObject2>(),
+					3 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyInnerGenericObjectFormatter<global::TempProject.MyObject2>(),
+					4 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter(),
+					5 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObject2Formatter(),
 					_ => null, // unreachable
 				};
 			}
