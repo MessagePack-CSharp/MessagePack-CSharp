@@ -37,13 +37,6 @@ namespace MessagePack.Resolvers
 
         private static readonly Lazy<DynamicAssembly> DynamicAssembly;
 
-#if NETFRAMEWORK || NETSTANDARD2_0
-        private static readonly Regex SubtractFullNameRegex = new(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
-#else
-        private static readonly Regex SubtractFullNameRegex = new(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported ? RegexOptions.Compiled : RegexOptions.None);
-#endif
-
-
         private static int nameSequence = 0;
 
         static DynamicUnionResolver()
@@ -138,7 +131,7 @@ namespace MessagePack.Resolvers
                 Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
                 using (MonoProtection.EnterRefEmitLock())
                 {
-                    TypeBuilder typeBuilder = DynamicAssembly.Value.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName!, string.Empty).Replace(".", "_") + "Formatter" + +Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
+                    TypeBuilder typeBuilder = DynamicAssembly.Value.DefineType("MessagePack.Formatters." + DynamicObjectTypeBuilder.SubtractFullNameRegex.Replace(type.FullName!, string.Empty).Replace(".", "_") + "Formatter" + +Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
                     FieldBuilder? typeToKeyAndJumpMap = null; // Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>
                     FieldBuilder? keyToJumpMap = null; // Dictionary<int, int>
