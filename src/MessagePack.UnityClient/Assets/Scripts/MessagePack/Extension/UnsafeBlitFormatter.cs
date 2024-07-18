@@ -5,6 +5,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using MessagePack.Formatters;
@@ -19,7 +20,7 @@ namespace MessagePack.Unity.Extension
     // Layout: [extHeader, byteSize(integer), isLittleEndian(bool), bytes()]
     // Used Ext:30~36
     public abstract class UnsafeBlitFormatterBase<T> : IMessagePackFormatter<T[]?>
-        where T : struct
+        where T : unmanaged
     {
         protected abstract sbyte TypeCode { get; }
 
@@ -66,11 +67,18 @@ namespace MessagePack.Unity.Extension
             // Reverse the byte order if necessary.
             if (isLittleEndian != BitConverter.IsLittleEndian)
             {
-                for (int i = 0, j = resultAsBytes.Length - 1; i < j; i++, j--)
+                unsafe
                 {
-                    byte tmp = resultAsBytes[i];
-                    resultAsBytes[i] = resultAsBytes[j];
-                    resultAsBytes[j] = tmp;
+                    for (int i = 0, byteOffset = 0; i < result.Length; i++, byteOffset += sizeof(T))
+                    {
+                        for (var byteIndex = 0; (byteIndex << 1) < sizeof(T); byteIndex++)
+                        {
+                            var targetByteIndex = sizeof(T) - byteIndex - 1;
+                            var temp = result[byteOffset + targetByteIndex];
+                            result[byteOffset + targetByteIndex] = result[byteOffset + byteIndex];
+                            result[byteOffset + byteIndex] = temp;
+                        }
+                    }
                 }
             }
 
