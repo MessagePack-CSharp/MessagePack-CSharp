@@ -27,31 +27,32 @@ namespace MessagePack.Resolvers
         /// A *private* list of resolvers. If we ever want to expose any of these (so the user can adjust settings, etc.)
         /// then we must make this an instance collection instead of a static collection so that each consumer can have their own settings.
         /// </summary>
-        private static readonly IReadOnlyList<IFormatterResolver> Resolvers;
+        private static readonly IReadOnlyList<IFormatterResolver> Resolvers = MessagePackSerializer.AvoidDynamicCode
+            ? [
+                NativeDateTimeResolver.Instance, // Native c# DateTime format, preserving timezone
+                ForceSizePrimitiveObjectResolver.Instance, // Preserve particular integer types
+                BuiltinResolver.Instance, // Try Builtin
+                AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]new TypelessContractlessStandardResolver()
+                DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
+                TypelessObjectResolver.Instance
+                ]
+            : [
+                NativeDateTimeResolver.Instance, // Native c# DateTime format, preserving timezone
+                ForceSizePrimitiveObjectResolver.Instance, // Preserve particular integer types
+                BuiltinResolver.Instance, // Try Builtin
+                AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]new TypelessContractlessStandardResolver()
+                DynamicEnumResolver.Instance, // Try Enum
+                DynamicGenericResolver.Instance, // Try Array, Tuple, Collection
+                DynamicUnionResolver.Instance, // Try Union(Interface)
+                DynamicObjectResolver.Instance, // Try Object
+                DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
+                TypelessObjectResolver.Instance
+                ];
 
         static TypelessContractlessStandardResolver()
         {
             Instance = new TypelessContractlessStandardResolver();
             Options = new MessagePackSerializerOptions(Instance);
-            var resolvers = new List<IFormatterResolver>()
-            {
-                NativeDateTimeResolver.Instance, // Native c# DateTime format, preserving timezone
-                ForceSizePrimitiveObjectResolver.Instance, // Preserve particular integer types
-                BuiltinResolver.Instance, // Try Builtin
-                AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]new TypelessContractlessStandardResolver()
-            };
-
-            if (!MessagePackSerializer.AvoidDynamicCode)
-            {
-                resolvers.Add(DynamicEnumResolver.Instance); // Try Enum
-                resolvers.Add(DynamicGenericResolver.Instance); // Try Array, Tuple, Collection
-                resolvers.Add(DynamicUnionResolver.Instance); // Try Union(Interface)
-                resolvers.Add(DynamicObjectResolver.Instance); // Try Object
-            }
-
-            resolvers.Add(DynamicContractlessObjectResolverAllowPrivate.Instance); // Serializes keys as strings
-            resolvers.Add(TypelessObjectResolver.Instance);
-            Resolvers = resolvers;
         }
 
         private readonly ResolverCache resolverCache = new ResolverCache(Resolvers);
