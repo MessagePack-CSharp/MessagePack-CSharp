@@ -299,7 +299,7 @@ internal static class UnsafeRefSerializeHelper
                         if (kinds == Vector128.Create((short)2))
                         {
                             // Reorder Big-Endian
-                            var shuffled = Vector128.Shuffle(loaded.AsByte(), Vector128.Create((byte)0, 3, 5, 7, 9, 11, 13, 15, 0, 0, 0, 0, 0, 0, 0, 0)).AsUInt64().GetElement(0);
+                            var shuffled = Vector128.Shuffle(loaded.AsByte(), Vector128.Create((byte)0, 2, 4, 6, 8, 10, 12, 14, 0, 0, 0, 0, 0, 0, 0, 0)).AsUInt64().GetElement(0);
                             Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset), shuffled);
                             outputOffset += sizeof(ulong);
                         }
@@ -447,7 +447,7 @@ internal static class UnsafeRefSerializeHelper
                         if (kinds == Vector128<short>.Zero)
                         {
                             // Reorder Big-Endian
-                            var shuffled = Vector128.Shuffle(loaded.AsByte(), Vector128.Create((byte)0, 3, 5, 7, 9, 11, 13, 15, 0, 0, 0, 0, 0, 0, 0, 0)).AsUInt64().GetElement(0);
+                            var shuffled = Vector128.Shuffle(loaded.AsByte(), Vector128.Create((byte)0, 2, 4, 6, 8, 10, 12, 14, 0, 0, 0, 0, 0, 0, 0, 0)).AsUInt64().GetElement(0);
                             Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset), shuffled);
                             outputOffset += sizeof(ulong);
                         }
