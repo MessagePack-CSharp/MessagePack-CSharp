@@ -73,10 +73,8 @@ namespace MessagePack.Unity.Extension
                     {
                         for (var byteIndex = 0; (byteIndex << 1) < sizeof(T); byteIndex++)
                         {
-                            var targetByteIndex = sizeof(T) - byteIndex - 1;
-                            var temp = result[byteOffset + targetByteIndex];
-                            result[byteOffset + targetByteIndex] = result[byteOffset + byteIndex];
-                            result[byteOffset + byteIndex] = temp;
+                            var targetByteIndex = sizeof(T) - byteIndex - 1 + byteOffset;
+                            (resultAsBytes[byteOffset + byteIndex], resultAsBytes[targetByteIndex]) = (resultAsBytes[targetByteIndex], resultAsBytes[byteOffset + byteIndex]);
                         }
                     }
                 }
