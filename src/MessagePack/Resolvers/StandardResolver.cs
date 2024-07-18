@@ -25,7 +25,7 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        private static readonly IFormatterResolver[] Resolvers = MessagePackSerializer.AvoidDynamicCode
+        private static readonly IFormatterResolver[] Resolvers = DynamicAssembly.AvoidDynamicCode
             ? StandardResolverHelper.DefaultResolvers
             : [.. StandardResolverHelper.DefaultResolvers, DynamicObjectResolver.Instance];
 
@@ -53,7 +53,7 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-                    Formatter = MessagePackSerializer.AvoidDynamicCode
+                    Formatter = DynamicAssembly.AvoidDynamicCode
                         ? PrimitiveObjectResolver.Instance.GetFormatter<T>()
                         : (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
                 }
@@ -85,7 +85,7 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        private static readonly IFormatterResolver[] Resolvers = MessagePackSerializer.AvoidDynamicCode
+        private static readonly IFormatterResolver[] Resolvers = DynamicAssembly.AvoidDynamicCode
             ? StandardResolverHelper.DefaultResolvers
             : [.. StandardResolverHelper.DefaultResolvers, DynamicObjectResolver.Instance, DynamicContractlessObjectResolver.Instance];
 
@@ -113,7 +113,7 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-                    Formatter = MessagePackSerializer.AvoidDynamicCode
+                    Formatter = DynamicAssembly.AvoidDynamicCode
                         ? PrimitiveObjectResolver.Instance.GetFormatter<T>()
                         : (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
                 }
@@ -145,7 +145,7 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        private static readonly IFormatterResolver[] Resolvers = MessagePackSerializer.AvoidDynamicCode
+        private static readonly IFormatterResolver[] Resolvers = DynamicAssembly.AvoidDynamicCode
             ? StandardResolverHelper.DefaultResolvers
             : [.. StandardResolverHelper.DefaultResolvers, DynamicObjectResolverAllowPrivate.Instance];
 
@@ -173,7 +173,7 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-                    Formatter = MessagePackSerializer.AvoidDynamicCode
+                    Formatter = DynamicAssembly.AvoidDynamicCode
                         ? PrimitiveObjectResolver.Instance.GetFormatter<T>()
                         : (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
                 }
@@ -205,7 +205,7 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        private static readonly IFormatterResolver[] Resolvers = MessagePackSerializer.AvoidDynamicCode
+        private static readonly IFormatterResolver[] Resolvers = DynamicAssembly.AvoidDynamicCode
             ? StandardResolverHelper.DefaultResolvers
             : [.. StandardResolverHelper.DefaultResolvers, DynamicObjectResolverAllowPrivate.Instance, DynamicContractlessObjectResolverAllowPrivate.Instance];
 
@@ -233,7 +233,7 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-                    Formatter = MessagePackSerializer.AvoidDynamicCode
+                    Formatter = DynamicAssembly.AvoidDynamicCode
                         ? PrimitiveObjectResolver.Instance.GetFormatter<T>()
                         : (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
                 }
@@ -258,7 +258,7 @@ namespace MessagePack.Internal
 {
     internal static class StandardResolverHelper
     {
-        public static readonly IFormatterResolver[] DefaultResolvers = MessagePackSerializer.AvoidDynamicCode
+        public static readonly IFormatterResolver[] DefaultResolvers = DynamicAssembly.AvoidDynamicCode
             ? [BuiltinResolver.Instance, AttributeFormatterResolver.Instance, SourceGeneratedFormatterResolver.Instance, ImmutableCollection.ImmutableCollectionResolver.Instance, CompositeResolver.Create(ExpandoObjectFormatter.Instance)]
             : [BuiltinResolver.Instance, AttributeFormatterResolver.Instance, SourceGeneratedFormatterResolver.Instance, ImmutableCollection.ImmutableCollectionResolver.Instance, CompositeResolver.Create(ExpandoObjectFormatter.Instance), DynamicGenericResolver.Instance, DynamicUnionResolver.Instance];
     }

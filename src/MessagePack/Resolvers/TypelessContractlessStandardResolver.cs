@@ -27,7 +27,7 @@ namespace MessagePack.Resolvers
         /// A *private* list of resolvers. If we ever want to expose any of these (so the user can adjust settings, etc.)
         /// then we must make this an instance collection instead of a static collection so that each consumer can have their own settings.
         /// </summary>
-        private static readonly IReadOnlyList<IFormatterResolver> Resolvers = MessagePackSerializer.AvoidDynamicCode
+        private static readonly IReadOnlyList<IFormatterResolver> Resolvers = Internal.DynamicAssembly.AvoidDynamicCode
             ? [
                 NativeDateTimeResolver.Instance, // Native c# DateTime format, preserving timezone
                 ForceSizePrimitiveObjectResolver.Instance, // Preserve particular integer types
