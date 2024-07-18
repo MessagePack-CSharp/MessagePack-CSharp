@@ -45,8 +45,6 @@ namespace MessagePack.Resolvers
         }
     }
 
-    ////#if !UNITY_2018_3_OR_NEWER
-
     ////    /// <summary>
     ////    /// In `object`, when serializing resolve by concrete type and when deserializing use primitive.
     ////    /// </summary>
@@ -76,6 +74,4 @@ namespace MessagePack.Resolvers
     ////            }
     ////        }
     ////    }
-
-    ////#endif
 }

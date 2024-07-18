@@ -179,17 +179,13 @@ ERROR:
             throw new MessagePackSerializationException("Invalid Guid Pattern.");
         }
 
-#if !UNITY_2018_3_OR_NEWER
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         private static byte Parse(ReadOnlySpan<byte> bytes, int highOffset)
         {
             return unchecked((byte)((SwitchParse(bytes[highOffset]) * 16) + SwitchParse(bytes[highOffset + 1])));
         }
 
-#if !UNITY_2018_3_OR_NEWER
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         private static byte SwitchParse(byte b)
         {
             // '0'(48) ~ '9'(57) => -48

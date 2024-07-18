@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !(UNITY_2018_3_OR_NEWER && NET_STANDARD_2_0)
-
 using System;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -51,5 +49,3 @@ namespace MessagePack.Internal
 #endif
     }
 }
-
-#endif

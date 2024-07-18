@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !(UNITY_2018_3_OR_NEWER && NET_STANDARD_2_0)
-
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -38,11 +36,8 @@ namespace MessagePack.Resolvers
         public static readonly MessagePackSerializerOptions Options;
 
         private static readonly Lazy<DynamicAssembly> DynamicAssembly;
-#if !UNITY_2018_3_OR_NEWER
-        private static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
-#else
-        private static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");
-#endif
+
+        private static readonly Regex SubtractFullNameRegex = new(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", MessagePackSerializer.AvoidDynamicCode ? RegexOptions.None : RegexOptions.Compiled);
 
         private static int nameSequence = 0;
 
@@ -501,5 +496,3 @@ namespace MessagePack.Resolvers
         }
     }
 }
-
-#endif

@@ -1,8 +1,6 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !(UNITY_2018_3_OR_NEWER && NET_STANDARD_2_0)
-
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -314,11 +312,7 @@ namespace MessagePack.Internal
 {
     internal static class DynamicObjectTypeBuilder
     {
-#if !UNITY_2018_3_OR_NEWER
-        private static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
-#else
-        static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");
-#endif
+        private static readonly Regex SubtractFullNameRegex = new(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", MessagePackSerializer.AvoidDynamicCode ? RegexOptions.None : RegexOptions.Compiled);
 
         private static int nameSequence = 0;
 
@@ -789,7 +783,6 @@ namespace MessagePack.Internal
                     il.Emit(OpCodes.Call, ReadOnlySpanFromByteArray); // convert byte[] to ReadOnlySpan<byte>
 
                     // Optimize, WriteRaw(Unity, large) or UnsafeMemory32/64.WriteRawX
-#if !UNITY_2018_3_OR_NEWER
                     var valueLen = CodeGenHelpers.GetEncodedStringBytes(item.StringKey!).Length;
                     if (valueLen <= MessagePackRange.MaxFixStringLength)
                     {
@@ -803,7 +796,6 @@ namespace MessagePack.Internal
                         }
                     }
                     else
-#endif
                     {
                         il.EmitCall(MessagePackWriterTypeInfo.WriteRaw);
                     }
@@ -2457,5 +2449,3 @@ namespace MessagePack.Internal
         }
     }
 }
-
-#endif
