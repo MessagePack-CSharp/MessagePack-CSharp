@@ -30,6 +30,12 @@
 
 using System;
 using System.Buffers;
+using System.Collections.Generic;
+using MessagePack.Internal;
+
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
@@ -88,7 +94,79 @@ namespace MessagePack.Formatters
             }
         }
     }
-<# if(t.Name != "Byte") { #>
+<# if(t.Name == "Byte") { #>
+
+#if NET8_0_OR_GREATER
+    public sealed class <#= t.Name #>ListFormatter : IMessagePackFormatter<List<<#= t.Name #>>?>
+    {
+        public static readonly <#= t.Name #>ListFormatter Instance = new <#= t.Name #>ListFormatter();
+
+        private <#= t.Name #>ListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<<#= t.Name #>>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.Write(CollectionsMarshal.AsSpan(value));
+            }
+        }
+
+        public List<<#= t.Name #>>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.NextMessagePackType == MessagePackType.Array)
+            {
+                int len = reader.ReadArrayHeader();
+                if (len == 0)
+                {
+                    return [];
+                }
+
+                var list = new List<byte>(len);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    CollectionsMarshal.SetCount(list, len);
+                    var span = CollectionsMarshal.AsSpan(list);
+                    for (int i = 0; i < len; i++)
+                    {
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        span[i] = reader.ReadByte();
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
+
+                return list;
+            }
+            else
+            {
+                var sequence = reader.ReadBytes();
+                if (sequence == null)
+                {
+                    return null;
+                }
+
+                int len = checked((int)sequence.Value.Length);
+                var list = new List<byte>(len);
+                CollectionsMarshal.SetCount(list, len);
+                var span = CollectionsMarshal.AsSpan(list);
+                sequence.Value.CopyTo(span);
+                return list;
+            }
+        }
+    }
+
+#endif
+<# } #>
+<# else if(t.Name == "DateTime") { #>
 
     public sealed class <#= t.Name #>ArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]?>
     {
@@ -136,6 +214,112 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+<# } #>
+<# else { #>
+
+    public sealed class <#= t.Name #>ArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]?>
+    {
+        public static readonly <#= t.Name #>ArrayFormatter Instance = new <#= t.Name #>ArrayFormatter();
+
+        private <#= t.Name #>ArrayFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, <#= t.Name #>[]? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Length);
+                if (value.Length > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
+                }
+            }
+        }
+
+        public <#= t.Name #>[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<<#= t.Name #>>();
+            }
+
+            var array = new <#= t.Name #>[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.Read<#= t.Name #>();
+            }
+
+            return array;
+        }
+    }
+
+#if NET8_0_OR_GREATER
+    public sealed class <#= t.Name #>ListFormatter : IMessagePackFormatter<List<<#= t.Name #>>?>
+    {
+        public static readonly <#= t.Name #>ListFormatter Instance = new <#= t.Name #>ListFormatter();
+
+        private <#= t.Name #>ListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<<#= t.Name #>>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<<#= t.Name #>>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<<#= t.Name #>>(len);
+            CollectionsMarshal.SetCount(list, len);
+            var span = CollectionsMarshal.AsSpan(list);
+            for (int i = 0; i < len; i++)
+            {
+                span[i] = reader.Read<#= t.Name #>();
+            }
+
+            return list;
+        }
+    }
+#endif
 <# } #>
 <# } #>
 }
