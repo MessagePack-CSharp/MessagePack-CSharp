@@ -16,9 +16,9 @@ namespace MessagePack
     public partial class MessagePackSerializer
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
-        private static readonly bool AvoidDynamicCode = false;
+        internal static readonly bool AvoidDynamicCode = false;
 #else
-        private static readonly bool AvoidDynamicCode = !RuntimeFeature.IsDynamicCodeSupported;
+        internal static readonly bool AvoidDynamicCode = !RuntimeFeature.IsDynamicCodeSupported;
 #endif
 
         private static readonly Func<Type, CompiledMethods> CreateCompiledMethods;

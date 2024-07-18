@@ -1,11 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
-#define DYNAMIC_GENERATION
-#endif
-
-using System.Linq;
 using MessagePack.Formatters;
 using MessagePack.Internal;
 using MessagePack.Resolvers;
@@ -30,12 +25,12 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
-        {
-#if DYNAMIC_GENERATION && !NET_STANDARD_2_0
-            DynamicObjectResolver.Instance, // Try Object
-#endif
-        }).ToArray();
+        private static readonly IFormatterResolver[] Resolvers = MessagePackSerializer.AvoidDynamicCode
+            ? StandardResolverHelper.DefaultResolvers
+            : [
+                ..StandardResolverHelper.DefaultResolvers,
+                DynamicObjectResolver.Instance
+                ];
 
         static StandardResolver()
         {
@@ -61,11 +56,9 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-#if DYNAMIC_GENERATION
-                    Formatter = (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
-#else
-                    Formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
-#endif
+                    Formatter = MessagePackSerializer.AvoidDynamicCode
+                        ? PrimitiveObjectResolver.Instance.GetFormatter<T>()
+                        : (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
                 }
                 else
                 {
@@ -95,13 +88,13 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
-        {
-#if DYNAMIC_GENERATION && !NET_STANDARD_2_0
-            DynamicObjectResolver.Instance, // Try Object
-            DynamicContractlessObjectResolver.Instance, // Serializes keys as strings
-#endif
-        }).ToArray();
+        private static readonly IFormatterResolver[] Resolvers = MessagePackSerializer.AvoidDynamicCode
+            ? StandardResolverHelper.DefaultResolvers
+            : [
+                ..StandardResolverHelper.DefaultResolvers,
+                DynamicObjectResolver.Instance, // Try Object
+                DynamicContractlessObjectResolver.Instance, // Serializes keys as strings
+                ];
 
         static ContractlessStandardResolver()
         {
@@ -127,11 +120,9 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-#if DYNAMIC_GENERATION
-                    Formatter = (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
-#else
-                    Formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
-#endif
+                    Formatter = MessagePackSerializer.AvoidDynamicCode
+                        ? PrimitiveObjectResolver.Instance.GetFormatter<T>()
+                        : (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
                 }
                 else
                 {
@@ -161,12 +152,12 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
-        {
-#if DYNAMIC_GENERATION && !NET_STANDARD_2_0
-            DynamicObjectResolverAllowPrivate.Instance, // Try Object
-#endif
-        }).ToArray();
+        private static readonly IFormatterResolver[] Resolvers = MessagePackSerializer.AvoidDynamicCode
+            ? StandardResolverHelper.DefaultResolvers
+            : [
+                ..StandardResolverHelper.DefaultResolvers,
+                DynamicObjectResolverAllowPrivate.Instance, // Try Object
+                ];
 
         static StandardResolverAllowPrivate()
         {
@@ -192,11 +183,9 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-#if DYNAMIC_GENERATION
-                    Formatter = (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
-#else
-                    Formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
-#endif
+                    Formatter = MessagePackSerializer.AvoidDynamicCode
+                        ? PrimitiveObjectResolver.Instance.GetFormatter<T>()
+                        : (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
                 }
                 else
                 {
@@ -226,13 +215,13 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
-        {
-#if DYNAMIC_GENERATION && !NET_STANDARD_2_0
-            DynamicObjectResolverAllowPrivate.Instance, // Try Object
-            DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
-#endif
-        }).ToArray();
+        private static readonly IFormatterResolver[] Resolvers = MessagePackSerializer.AvoidDynamicCode
+            ? StandardResolverHelper.DefaultResolvers
+            : [
+                ..StandardResolverHelper.DefaultResolvers,
+                DynamicObjectResolverAllowPrivate.Instance, // Try Object
+                DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
+                ];
 
         static ContractlessStandardResolverAllowPrivate()
         {
@@ -258,11 +247,9 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-#if DYNAMIC_GENERATION
-                    Formatter = (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
-#else
-                    Formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
-#endif
+                    Formatter = MessagePackSerializer.AvoidDynamicCode
+                        ? PrimitiveObjectResolver.Instance.GetFormatter<T>()
+                        : (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
                 }
                 else
                 {
@@ -285,22 +272,22 @@ namespace MessagePack.Internal
 {
     internal static class StandardResolverHelper
     {
-        public static readonly IFormatterResolver[] DefaultResolvers = new IFormatterResolver[]
-        {
-            BuiltinResolver.Instance, // Try Builtin
-            AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
-            SourceGeneratedFormatterResolver.Instance, // Prefer source generated formatters over dynamic ones.
-
-            ImmutableCollection.ImmutableCollectionResolver.Instance,
-            CompositeResolver.Create(ExpandoObjectFormatter.Instance),
-
-#if DYNAMIC_GENERATION
-            DynamicGenericResolver.Instance, // Try Array, Tuple, Collection, Enum(Generic Fallback)
-#endif
-
-#if DYNAMIC_GENERATION && !NET_STANDARD_2_0
-            DynamicUnionResolver.Instance, // Try Union(Interface)
-#endif
-        };
+        public static readonly IFormatterResolver[] DefaultResolvers = MessagePackSerializer.AvoidDynamicCode
+            ? [
+                BuiltinResolver.Instance, // Try Builtin
+                AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
+                SourceGeneratedFormatterResolver.Instance, // Prefer source generated formatters over dynamic ones.
+                ImmutableCollection.ImmutableCollectionResolver.Instance,
+                CompositeResolver.Create(ExpandoObjectFormatter.Instance)
+                ]
+            : [
+                BuiltinResolver.Instance, // Try Builtin
+                AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
+                SourceGeneratedFormatterResolver.Instance, // Prefer source generated formatters over dynamic ones.
+                ImmutableCollection.ImmutableCollectionResolver.Instance,
+                CompositeResolver.Create(ExpandoObjectFormatter.Instance),
+                DynamicGenericResolver.Instance, // Try Array, Tuple, Collection, Enum(Generic Fallback)
+                DynamicUnionResolver.Instance, // Try Union(Interface)
+            ];
     }
 }
