@@ -1,16 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !UNITY_2018_3_OR_NEWER
-
-#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
-#define DYNAMIC_GENERATION
-#endif
-
 using System;
 using System.Collections.Generic;
 using MessagePack.Formatters;
-using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
@@ -34,26 +27,31 @@ namespace MessagePack.Resolvers
         /// A *private* list of resolvers. If we ever want to expose any of these (so the user can adjust settings, etc.)
         /// then we must make this an instance collection instead of a static collection so that each consumer can have their own settings.
         /// </summary>
-        private static readonly IReadOnlyList<IFormatterResolver> Resolvers = new IFormatterResolver[]
-        {
-            NativeDateTimeResolver.Instance, // Native c# DateTime format, preserving timezone
-            ForceSizePrimitiveObjectResolver.Instance, // Preserve particular integer types
-            BuiltinResolver.Instance, // Try Builtin
-            AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
-#if DYNAMIC_GENERATION
-            DynamicEnumResolver.Instance, // Try Enum
-            DynamicGenericResolver.Instance, // Try Array, Tuple, Collection
-            DynamicUnionResolver.Instance, // Try Union(Interface)
-            DynamicObjectResolver.Instance, // Try Object
-#endif
-            DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
-            TypelessObjectResolver.Instance,
-        };
+        private static readonly IReadOnlyList<IFormatterResolver> Resolvers;
 
         static TypelessContractlessStandardResolver()
         {
             Instance = new TypelessContractlessStandardResolver();
             Options = new MessagePackSerializerOptions(Instance);
+            var resolvers = new List<IFormatterResolver>()
+            {
+                NativeDateTimeResolver.Instance, // Native c# DateTime format, preserving timezone
+                ForceSizePrimitiveObjectResolver.Instance, // Preserve particular integer types
+                BuiltinResolver.Instance, // Try Builtin
+                AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]new TypelessContractlessStandardResolver()
+            };
+
+            if (!MessagePackSerializer.AvoidDynamicCode)
+            {
+                resolvers.Add(DynamicEnumResolver.Instance); // Try Enum
+                resolvers.Add(DynamicGenericResolver.Instance); // Try Array, Tuple, Collection
+                resolvers.Add(DynamicUnionResolver.Instance); // Try Union(Interface)
+                resolvers.Add(DynamicObjectResolver.Instance); // Try Object
+            }
+
+            resolvers.Add(DynamicContractlessObjectResolverAllowPrivate.Instance); // Serializes keys as strings
+            resolvers.Add(TypelessObjectResolver.Instance);
+            Resolvers = resolvers;
         }
 
         private readonly ResolverCache resolverCache = new ResolverCache(Resolvers);
@@ -85,5 +83,3 @@ namespace MessagePack.Resolvers
         }
     }
 }
-
-#endif
