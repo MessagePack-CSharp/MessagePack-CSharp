@@ -312,7 +312,11 @@ namespace MessagePack.Internal
 {
     internal static class DynamicObjectTypeBuilder
     {
-        private static readonly Regex SubtractFullNameRegex = new(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", MessagePackSerializer.AvoidDynamicCode ? RegexOptions.None : RegexOptions.Compiled);
+#if NETFRAMEWORK || NETSTANDARD2_0
+        private static readonly Regex SubtractFullNameRegex = new(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
+#else
+        private static readonly Regex SubtractFullNameRegex = new(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported ? RegexOptions.Compiled : RegexOptions.None);
+#endif
 
         private static int nameSequence = 0;
 
