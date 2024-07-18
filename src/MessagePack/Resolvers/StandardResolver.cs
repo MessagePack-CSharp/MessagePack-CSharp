@@ -27,10 +27,7 @@ namespace MessagePack.Resolvers
 
         private static readonly IFormatterResolver[] Resolvers = MessagePackSerializer.AvoidDynamicCode
             ? StandardResolverHelper.DefaultResolvers
-            : [
-                ..StandardResolverHelper.DefaultResolvers,
-                DynamicObjectResolver.Instance
-                ];
+            : [.. StandardResolverHelper.DefaultResolvers, DynamicObjectResolver.Instance];
 
         static StandardResolver()
         {
@@ -90,11 +87,7 @@ namespace MessagePack.Resolvers
 
         private static readonly IFormatterResolver[] Resolvers = MessagePackSerializer.AvoidDynamicCode
             ? StandardResolverHelper.DefaultResolvers
-            : [
-                ..StandardResolverHelper.DefaultResolvers,
-                DynamicObjectResolver.Instance, // Try Object
-                DynamicContractlessObjectResolver.Instance, // Serializes keys as strings
-                ];
+            : [.. StandardResolverHelper.DefaultResolvers, DynamicObjectResolver.Instance, DynamicContractlessObjectResolver.Instance];
 
         static ContractlessStandardResolver()
         {
@@ -154,10 +147,7 @@ namespace MessagePack.Resolvers
 
         private static readonly IFormatterResolver[] Resolvers = MessagePackSerializer.AvoidDynamicCode
             ? StandardResolverHelper.DefaultResolvers
-            : [
-                ..StandardResolverHelper.DefaultResolvers,
-                DynamicObjectResolverAllowPrivate.Instance, // Try Object
-                ];
+            : [.. StandardResolverHelper.DefaultResolvers, DynamicObjectResolverAllowPrivate.Instance];
 
         static StandardResolverAllowPrivate()
         {
@@ -217,11 +207,7 @@ namespace MessagePack.Resolvers
 
         private static readonly IFormatterResolver[] Resolvers = MessagePackSerializer.AvoidDynamicCode
             ? StandardResolverHelper.DefaultResolvers
-            : [
-                ..StandardResolverHelper.DefaultResolvers,
-                DynamicObjectResolverAllowPrivate.Instance, // Try Object
-                DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
-                ];
+            : [.. StandardResolverHelper.DefaultResolvers, DynamicObjectResolverAllowPrivate.Instance, DynamicContractlessObjectResolverAllowPrivate.Instance];
 
         static ContractlessStandardResolverAllowPrivate()
         {
@@ -273,21 +259,7 @@ namespace MessagePack.Internal
     internal static class StandardResolverHelper
     {
         public static readonly IFormatterResolver[] DefaultResolvers = MessagePackSerializer.AvoidDynamicCode
-            ? [
-                BuiltinResolver.Instance, // Try Builtin
-                AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
-                SourceGeneratedFormatterResolver.Instance, // Prefer source generated formatters over dynamic ones.
-                ImmutableCollection.ImmutableCollectionResolver.Instance,
-                CompositeResolver.Create(ExpandoObjectFormatter.Instance)
-                ]
-            : [
-                BuiltinResolver.Instance, // Try Builtin
-                AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
-                SourceGeneratedFormatterResolver.Instance, // Prefer source generated formatters over dynamic ones.
-                ImmutableCollection.ImmutableCollectionResolver.Instance,
-                CompositeResolver.Create(ExpandoObjectFormatter.Instance),
-                DynamicGenericResolver.Instance, // Try Array, Tuple, Collection, Enum(Generic Fallback)
-                DynamicUnionResolver.Instance, // Try Union(Interface)
-            ];
+            ? [BuiltinResolver.Instance, AttributeFormatterResolver.Instance, SourceGeneratedFormatterResolver.Instance, ImmutableCollection.ImmutableCollectionResolver.Instance, CompositeResolver.Create(ExpandoObjectFormatter.Instance)]
+            : [BuiltinResolver.Instance, AttributeFormatterResolver.Instance, SourceGeneratedFormatterResolver.Instance, ImmutableCollection.ImmutableCollectionResolver.Instance, CompositeResolver.Create(ExpandoObjectFormatter.Instance), DynamicGenericResolver.Instance, DynamicUnionResolver.Instance];
     }
 }
