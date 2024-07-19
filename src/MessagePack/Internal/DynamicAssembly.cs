@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !(UNITY_2018_3_OR_NEWER && NET_STANDARD_2_0)
-
 using System;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -11,6 +9,12 @@ namespace MessagePack.Internal
 {
     internal class DynamicAssembly
     {
+#if NETFRAMEWORK || NETSTANDARD2_0
+        internal static readonly bool AvoidDynamicCode = false;
+#else
+        internal static readonly bool AvoidDynamicCode = !System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported;
+#endif
+
 #if NETFRAMEWORK // We don't ship a net472 target, but we might add one for debugging purposes
         private readonly string moduleName;
 #endif
@@ -51,5 +55,3 @@ namespace MessagePack.Internal
 #endif
     }
 }
-
-#endif

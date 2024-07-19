@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !UNITY_2018_3_OR_NEWER
-
 #pragma warning disable SA1402 // File may only contain a single type
 
 using System;
@@ -168,5 +166,3 @@ namespace MessagePack.Internal
         }
     }
 }
-
-#endif

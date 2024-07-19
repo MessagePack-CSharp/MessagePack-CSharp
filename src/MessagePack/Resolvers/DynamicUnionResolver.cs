@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !(UNITY_2018_3_OR_NEWER && NET_STANDARD_2_0)
-
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -38,11 +36,6 @@ namespace MessagePack.Resolvers
         public static readonly MessagePackSerializerOptions Options;
 
         private static readonly Lazy<DynamicAssembly> DynamicAssembly;
-#if !UNITY_2018_3_OR_NEWER
-        private static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
-#else
-        private static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");
-#endif
 
         private static int nameSequence = 0;
 
@@ -138,7 +131,7 @@ namespace MessagePack.Resolvers
                 Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
                 using (MonoProtection.EnterRefEmitLock())
                 {
-                    TypeBuilder typeBuilder = DynamicAssembly.Value.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName!, string.Empty).Replace(".", "_") + "Formatter" + +Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
+                    TypeBuilder typeBuilder = DynamicAssembly.Value.DefineType("MessagePack.Formatters." + DynamicObjectTypeBuilder.SubtractFullNameRegex.Replace(type.FullName!, string.Empty).Replace(".", "_") + "Formatter" + +Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
                     FieldBuilder? typeToKeyAndJumpMap = null; // Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>
                     FieldBuilder? keyToJumpMap = null; // Dictionary<int, int>
@@ -501,5 +494,3 @@ namespace MessagePack.Resolvers
         }
     }
 }
-
-#endif

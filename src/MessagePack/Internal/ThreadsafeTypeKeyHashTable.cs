@@ -203,26 +203,12 @@ namespace MessagePack.Internal
 
         private static void VolatileWrite([NotNullIfNotNull("value")] ref Entry? location, Entry value)
         {
-#if !UNITY_2018_3_OR_NEWER
             System.Threading.Volatile.Write(ref location!, value);
-#elif UNITY_2018_3_OR_NEWER || NET_4_6
-            System.Threading.Volatile.Write(ref location, value);
-#else
-            System.Threading.Thread.MemoryBarrier();
-            location = value;
-#endif
         }
 
         private static void VolatileWrite([NotNullIfNotNull("value")] ref Entry[] location, Entry[] value)
         {
-#if !UNITY_2018_3_OR_NEWER
             System.Threading.Volatile.Write(ref location, value);
-#elif UNITY_2018_3_OR_NEWER || NET_4_6
-            System.Threading.Volatile.Write(ref location, value);
-#else
-            System.Threading.Thread.MemoryBarrier();
-            location = value;
-#endif
         }
 
         private class Entry
