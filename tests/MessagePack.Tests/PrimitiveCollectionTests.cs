@@ -26,7 +26,7 @@ public class PrimitiveCollectionTests
         [Array.Empty<long>()],
         [Array.Empty<ulong>()],
 
-        [new bool[15] { true, true, false, false, true, false, false, false, false, true, true, true, true, true, true }],
+        [new bool[31] { true, true, false, false, true, false, false, false, false, true, true, true, true, true, true, false, true, true, false, false, true, false, false, false, false, true, true, true, true, true, true }],
         [new sbyte[15] { 2, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, }], // 1byte
         [new short[15] { 2, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, }], // 1byte
         [new int[15] { 2, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, }], // 1byte
@@ -45,7 +45,7 @@ public class PrimitiveCollectionTests
         [new uint[15] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, (ushort)sbyte.MaxValue }], // 1byte
         [new ulong[15] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, (ushort)sbyte.MaxValue }], // 1byte
 
-        [new bool[16] { true, true, false, false, true, false, false, false, false, true, true, true, true, true, true, false }],
+        [new bool[32] { true, true, false, false, true, false, false, false, false, true, true, true, true, true, true, false, true, true, false, false, true, false, false, false, false, true, true, true, true, true, true, false }],
         [new sbyte[16] { 3, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, }], // 1byte
         [new short[16] { 3, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, }], // 1byte
         [new int[16] { 3, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, }], // 1byte
@@ -64,7 +64,7 @@ public class PrimitiveCollectionTests
         [new uint[16] { sbyte.MaxValue - 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, (uint)sbyte.MaxValue, }], // 1byte
         [new ulong[16] { sbyte.MaxValue - 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, (ulong)sbyte.MaxValue, }], // 1byte
 
-        [new bool[17] { true, true, false, false, true, false, false, false, false, true, true, true, true, true, true, false, false }],
+        [new bool[33] { true, true, false, false, true, false, false, false, false, true, true, true, true, true, true, false, false, true, true, false, false, true, false, false, false, false, true, true, true, true, true, true, false }],
         [new sbyte[17] { 4, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, }], // 1byte
         [new short[17] { 4, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, }], // 1byte
         [new int[17] { 4, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, }], // 1byte

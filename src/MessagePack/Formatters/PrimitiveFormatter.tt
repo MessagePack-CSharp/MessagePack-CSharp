@@ -31,6 +31,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using MessagePack.Internal;
 
 #if NET6_0_OR_GREATER
@@ -214,6 +215,150 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+<# } #>
+<# else if (t.Name == "Boolean") { #>
+
+    public sealed class <#= t.Name #>ArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]?>
+    {
+        public static readonly <#= t.Name #>ArrayFormatter Instance = new <#= t.Name #>ArrayFormatter();
+
+        private <#= t.Name #>ArrayFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, <#= t.Name #>[]? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Length);
+                if (value.Length > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
+                }
+            }
+        }
+
+        public <#= t.Name #>[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var array = new <#= t.Name #>[len];
+#if NET6_0_OR_GREATER
+            ref var output = ref MemoryMarshal.GetArrayDataReference(array);
+#else
+            ref var output = ref array[0];
+#endif
+
+            var inputOffset = 0;
+            var sequence = reader.ReadRaw(len);
+            foreach (var memory in sequence)
+            {
+                var inputSpan = memory.Span;
+                if (inputSpan.IsEmpty)
+                {
+                    continue;
+                }
+
+#if NET6_0_OR_GREATER
+                var errorIndex = UnsafeRefDeserializeHelper.Deserialize(ref MemoryMarshal.GetReference(inputSpan), inputSpan.Length, ref Unsafe.Add(ref output, inputOffset));
+#else
+                var errorIndex = UnsafeRefDeserializeHelper.Deserialize(ref Unsafe.AsRef(in inputSpan[0]), inputSpan.Length, ref Unsafe.Add(ref output, inputOffset));
+#endif
+                if (errorIndex >= 0)
+                {
+                    throw new MessagePackSerializationException($"Unexpected msgpack code {inputSpan[errorIndex]} ({MessagePackCode.ToFormatName(inputSpan[errorIndex])}) at {errorIndex + inputOffset} encountered.");
+                }
+
+                inputOffset += inputSpan.Length;
+            }
+
+            return array;
+        }
+    }
+
+#if NET8_0_OR_GREATER
+    public sealed class <#= t.Name #>ListFormatter : IMessagePackFormatter<List<<#= t.Name #>>?>
+    {
+        public static readonly <#= t.Name #>ListFormatter Instance = new <#= t.Name #>ListFormatter();
+
+        private <#= t.Name #>ListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<<#= t.Name #>>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<<#= t.Name #>>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<<#= t.Name #>>(len);
+            CollectionsMarshal.SetCount(list, len);
+            ref var output = ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(list));
+            var inputOffset = 0;
+            var sequence = reader.ReadRaw(len);
+            foreach (var memory in sequence)
+            {
+                var inputSpan = memory.Span;
+                if (inputSpan.IsEmpty)
+                {
+                    continue;
+                }
+
+                var errorIndex = UnsafeRefDeserializeHelper.Deserialize(ref MemoryMarshal.GetReference(inputSpan), inputSpan.Length, ref Unsafe.Add(ref output, inputOffset));
+                if (errorIndex >= 0)
+                {
+                    throw new MessagePackSerializationException($"Unexpected msgpack code {inputSpan[errorIndex]} ({MessagePackCode.ToFormatName(inputSpan[errorIndex])}) at {errorIndex + inputOffset} encountered.");
+                }
+
+                inputOffset += inputSpan.Length;
+            }
+
+            return list;
+        }
+    }
+#endif
 <# } #>
 <# else { #>
 
