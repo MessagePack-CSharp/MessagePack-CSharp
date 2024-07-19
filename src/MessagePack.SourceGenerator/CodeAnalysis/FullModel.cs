@@ -92,5 +92,47 @@ public record FullModel(
             && Options.Equals(other.Options);
     }
 
-    public override int GetHashCode() => throw new NotImplementedException();
+    public override int GetHashCode()
+    {
+        int hashCode = 0;
+
+        hashCode = Hash(hashCode, this.ObjectInfos.Count);
+        if (this.ObjectInfos.Count > 0)
+        {
+            hashCode = Hash(hashCode, this.ObjectInfos[0].GetHashCode());
+        }
+
+        hashCode = Hash(hashCode, this.EnumInfos.Count);
+        if (this.EnumInfos.Count > 0)
+        {
+            hashCode = Hash(hashCode, this.EnumInfos[0].GetHashCode());
+        }
+
+        hashCode = Hash(hashCode, this.GenericInfos.Count);
+        if (this.GenericInfos.Count > 0)
+        {
+            hashCode = Hash(hashCode, this.GenericInfos[0].GetHashCode());
+        }
+
+        hashCode = Hash(hashCode, this.UnionInfos.Count);
+        if (this.UnionInfos.Count > 0)
+        {
+            hashCode = Hash(hashCode, this.UnionInfos[0].GetHashCode());
+        }
+
+        hashCode = Hash(hashCode, this.CustomFormatterInfos.Count);
+        if (this.CustomFormatterInfos.Count > 0)
+        {
+            hashCode = Hash(hashCode, this.CustomFormatterInfos[0].GetHashCode());
+        }
+
+        hashCode = Hash(hashCode, this.Options.GetHashCode());
+
+        return hashCode;
+
+        static int Hash(int hashCode, int value)
+        {
+            return (hashCode * 31) + value;
+        }
+    }
 }

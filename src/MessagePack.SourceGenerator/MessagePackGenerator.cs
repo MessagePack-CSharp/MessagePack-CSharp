@@ -130,6 +130,22 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                 return FullModel.Combine(modelPerType.ToImmutableArray());
             });
 
+        var splittedSources = source
+            .SelectMany(static (s, ct) =>
+            {
+                if (s is null)
+                {
+                    return ImmutableArray<FullModel>.Empty;
+                }
+
+                var models = new List<FullModel>();
+                models.AddRange(s.ObjectInfos.Select(i => FullModel.Empty with { Options = s.Options, ObjectInfos = ImmutableSortedSet.Create(i) }));
+                models.AddRange(s.EnumInfos.Select(i => FullModel.Empty with { Options = s.Options, EnumInfos = ImmutableSortedSet.Create(i) }));
+                models.AddRange(s.UnionInfos.Select(i => FullModel.Empty with { Options = s.Options, UnionInfos = ImmutableSortedSet.Create(i) }));
+
+                return models.ToImmutableArray();
+            });
+
         context.RegisterSourceOutput(source, static (context, source) =>
         {
             if (source is { Options.IsGeneratingSource: true })
@@ -138,7 +154,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             }
         });
 
-        context.RegisterSourceOutput(source, static (context, source) =>
+        context.RegisterSourceOutput(splittedSources, static (context, source) =>
         {
             if (source is { Options.IsGeneratingSource: true })
             {

@@ -131,13 +131,27 @@ public record AnalyzerOptions
             return false;
         }
 
-        return this.knownFormatters.SequenceEqual(other.knownFormatters)
-            && this.AssumedFormattableTypes.SequenceEqual(other.AssumedFormattableTypes)
+        return this.knownFormatters.SetEquals(other.knownFormatters)
+            && this.AssumedFormattableTypes.SetEquals(other.AssumedFormattableTypes)
             && this.Generator.Equals(other.Generator)
             && this.IsGeneratingSource == other.IsGeneratingSource;
     }
 
-    public override int GetHashCode() => throw new NotImplementedException();
+    public override int GetHashCode()
+    {
+        int hashCode = 0;
+
+        hashCode = Hash(hashCode, this.knownFormatters.Count);
+        hashCode = Hash(hashCode, this.AssumedFormattableTypes.Count);
+        hashCode = Hash(hashCode, this.Generator.GetHashCode());
+
+        return hashCode;
+
+        static int Hash(int hashCode, int value)
+        {
+            return (hashCode * 31) + value;
+        }
+    }
 }
 
 /// <summary>

@@ -121,6 +121,8 @@ public record ResolverRegisterInfo
         return generatedResolverName;
     }
 
+    public override int GetHashCode() => this.DataType.GetHashCode();
+
     public enum FormatterPosition
     {
         UnderResolver,
