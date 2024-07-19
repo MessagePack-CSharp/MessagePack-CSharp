@@ -94,7 +94,7 @@ public record FullModel(
 
     public override int GetHashCode()
     {
-        var hashCode = 0;
+        int hashCode = 0;
 
         hashCode = Hash(hashCode, this.ObjectInfos.Count);
         if (this.ObjectInfos.Count > 0)

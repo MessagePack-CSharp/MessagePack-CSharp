@@ -24,6 +24,4 @@ public sealed record GenericSerializationInfo : ResolverRegisterInfo
             Formatter = basicInfo.Formatter with { TypeParameters = typeArguments },
         };
     }
-
-    public override int GetHashCode() => base.GetHashCode();
 }

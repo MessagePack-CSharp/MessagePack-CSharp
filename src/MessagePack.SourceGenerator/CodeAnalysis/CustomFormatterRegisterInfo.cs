@@ -13,6 +13,4 @@ public record CustomFormatterRegisterInfo : ResolverRegisterInfo
             ? base.GetFormatterInstanceForResolver()
             : $"{this.GetFormatterNameForResolver()}.{this.CustomFormatter.InstanceProvidingMember}";
     }
-
-    public override int GetHashCode() => base.GetHashCode();
 }

@@ -139,7 +139,7 @@ public record AnalyzerOptions
 
     public override int GetHashCode()
     {
-        var hashCode = 0;
+        int hashCode = 0;
 
         hashCode = Hash(hashCode, this.knownFormatters.Count);
         hashCode = Hash(hashCode, this.AssumedFormattableTypes.Count);

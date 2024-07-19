@@ -124,5 +124,18 @@ public record ObjectSerializationInfo : ResolverRegisterInfo
             && NeedsCastOnBefore == other.NeedsCastOnBefore;
     }
 
-    public override int GetHashCode() => base.GetHashCode();
+    public override int GetHashCode()
+    {
+        int hash = base.GetHashCode();
+
+        hash = Hash(hash, this.IsClass ? 1 : 2);
+        hash = Hash(hash, this.GenericTypeParameters.Length);
+
+        return hash;
+
+        static int Hash(int hashCode, int value)
+        {
+            return (hashCode * 31) + value;
+        }
+    }
 }
