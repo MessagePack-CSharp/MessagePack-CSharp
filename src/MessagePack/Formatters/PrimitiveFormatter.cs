@@ -7,6 +7,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using MessagePack.Internal;
 
 #if NET6_0_OR_GREATER
@@ -1357,13 +1358,37 @@ namespace MessagePack.Formatters
             var len = reader.ReadArrayHeader();
             if (len == 0)
             {
-                return Array.Empty<Boolean>();
+                return [];
             }
 
             var array = new Boolean[len];
-            for (int i = 0; i < array.Length; i++)
+#if NET6_0_OR_GREATER
+            ref var output = ref MemoryMarshal.GetArrayDataReference(array);
+#else
+            ref var output = ref array[0];
+#endif
+
+            var inputOffset = 0;
+            var sequence = reader.ReadRaw(len);
+            foreach (var memory in sequence)
             {
-                array[i] = reader.ReadBoolean();
+                var inputSpan = memory.Span;
+                if (inputSpan.IsEmpty)
+                {
+                    continue;
+                }
+
+#if NET6_0_OR_GREATER
+                var errorIndex = UnsafeRefDeserializeHelper.Deserialize(ref MemoryMarshal.GetReference(inputSpan), inputSpan.Length, ref Unsafe.Add(ref output, inputOffset));
+#else
+                var errorIndex = UnsafeRefDeserializeHelper.Deserialize(ref Unsafe.AsRef(in inputSpan[0]), inputSpan.Length, ref Unsafe.Add(ref output, inputOffset));
+#endif
+                if (errorIndex >= 0)
+                {
+                    throw new MessagePackSerializationException($"Unexpected msgpack code {inputSpan[errorIndex]} ({MessagePackCode.ToFormatName(inputSpan[errorIndex])}) at {errorIndex + inputOffset} encountered.");
+                }
+
+                inputOffset += inputSpan.Length;
             }
 
             return array;
@@ -1411,10 +1436,24 @@ namespace MessagePack.Formatters
 
             var list = new List<Boolean>(len);
             CollectionsMarshal.SetCount(list, len);
-            var span = CollectionsMarshal.AsSpan(list);
-            for (int i = 0; i < len; i++)
+            ref var output = ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(list));
+            var inputOffset = 0;
+            var sequence = reader.ReadRaw(len);
+            foreach (var memory in sequence)
             {
-                span[i] = reader.ReadBoolean();
+                var inputSpan = memory.Span;
+                if (inputSpan.IsEmpty)
+                {
+                    continue;
+                }
+
+                var errorIndex = UnsafeRefDeserializeHelper.Deserialize(ref MemoryMarshal.GetReference(inputSpan), inputSpan.Length, ref Unsafe.Add(ref output, inputOffset));
+                if (errorIndex >= 0)
+                {
+                    throw new MessagePackSerializationException($"Unexpected msgpack code {inputSpan[errorIndex]} ({MessagePackCode.ToFormatName(inputSpan[errorIndex])}) at {errorIndex + inputOffset} encountered.");
+                }
+
+                inputOffset += inputSpan.Length;
             }
 
             return list;
