@@ -10,9 +10,9 @@ namespace MessagePack.Internal
     internal class DynamicAssembly
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
-        public static readonly bool AvoidDynamicCode = false;
+        internal static readonly bool AvoidDynamicCode = false;
 #else
-        public static readonly bool AvoidDynamicCode = !System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported;
+        internal static readonly bool AvoidDynamicCode = !System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported;
 #endif
 
 #if NETFRAMEWORK // We don't ship a net472 target, but we might add one for debugging purposes
