@@ -352,6 +352,9 @@ MigrationBackup/
 # mac-created file to track user view preferences for a directory
 .DS_Store
 
+# Analysis results
+*.sarif
+
 # Unity
 
 src/MessagePack.UnityClient/bin/*
