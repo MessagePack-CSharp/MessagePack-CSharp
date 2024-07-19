@@ -13,10 +13,10 @@ internal static partial class VisualBasicCodeFixVerifier<TAnalyzer, TCodeFix>
     where TCodeFix : CodeFixProvider, new()
 {
     public static DiagnosticResult Diagnostic()
-        => VisualBasicCodeFixVerifier<TAnalyzer, TCodeFix, XUnitVerifier>.Diagnostic();
+        => VisualBasicCodeFixVerifier<TAnalyzer, TCodeFix, DefaultVerifier>.Diagnostic();
 
     public static DiagnosticResult Diagnostic(string diagnosticId)
-        => VisualBasicCodeFixVerifier<TAnalyzer, TCodeFix, XUnitVerifier>.Diagnostic(diagnosticId);
+        => VisualBasicCodeFixVerifier<TAnalyzer, TCodeFix, DefaultVerifier>.Diagnostic(diagnosticId);
 
     public static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor)
         => new DiagnosticResult(descriptor);
