@@ -12,7 +12,7 @@ using Microsoft.CodeAnalysis.VisualBasic.Testing;
 
 internal static partial class VisualBasicCodeFixVerifier<TAnalyzer, TCodeFix>
 {
-    internal class Test : VisualBasicCodeFixTest<TAnalyzer, TCodeFix, XUnitVerifier>
+    internal class Test : VisualBasicCodeFixTest<TAnalyzer, TCodeFix, DefaultVerifier>
     {
         internal Test()
         {

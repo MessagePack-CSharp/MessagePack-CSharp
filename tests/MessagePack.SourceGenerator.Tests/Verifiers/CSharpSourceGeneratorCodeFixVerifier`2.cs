@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis.Testing.Verifiers;
 internal class CSharpSourceGeneratorCodeFixVerifier<TSourceGenerator, TCodeFix>
     where TCodeFix : CodeFixProvider, new()
 {
-    public class Test : CSharpCodeFixTest<EmptyDiagnosticAnalyzer, TCodeFix, XUnitVerifier>
+    public class Test : CSharpCodeFixTest<EmptyDiagnosticAnalyzer, TCodeFix, DefaultVerifier>
     {
         public Test()
         {
