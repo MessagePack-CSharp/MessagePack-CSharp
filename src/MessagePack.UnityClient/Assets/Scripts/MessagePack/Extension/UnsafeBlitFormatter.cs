@@ -5,6 +5,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using MessagePack.Formatters;
@@ -15,17 +16,23 @@ using UnityEngine;
 
 namespace MessagePack.Unity.Extension
 {
+    public interface IReverseEndianessHelper
+    {
+        public void ReverseEndianess(ref byte value, int size);
+    }
+
     // use ext instead of ArrayFormatter to extremely boost up performance.
     // Layout: [extHeader, byteSize(integer), isLittleEndian(bool), bytes()]
     // Used Ext:30~36
-    public abstract class UnsafeBlitFormatterBase<T> : IMessagePackFormatter<T[]?>
-        where T : struct
+    public abstract class UnsafeBlitFormatterBase<T, TReverseEndianessHelper> : IMessagePackFormatter<T[]?>
+        where T : unmanaged
+        where TReverseEndianessHelper : struct, IReverseEndianessHelper
     {
         protected abstract sbyte TypeCode { get; }
 
         protected void CopyDeserializeUnsafe(ReadOnlySpan<byte> src, Span<T> dest) => src.CopyTo(MemoryMarshal.Cast<T, byte>(dest));
 
-        public void Serialize(ref MessagePackWriter writer, T[]? value, MessagePackSerializerOptions options)
+        public unsafe void Serialize(ref MessagePackWriter writer, T[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -33,7 +40,7 @@ namespace MessagePack.Unity.Extension
                 return;
             }
 
-            var byteLen = value.Length * Marshal.SizeOf<T>();
+            var byteLen = value.Length * sizeof(T);
             var realLen = MessagePackWriter.GetEncodedLength(byteLen) + byteLen + 1;
 
             writer.WriteExtensionFormatHeader(new ExtensionHeader(this.TypeCode, realLen));
@@ -64,13 +71,13 @@ namespace MessagePack.Unity.Extension
             reader.ReadRaw(byteLength).CopyTo(resultAsBytes);
 
             // Reverse the byte order if necessary.
-            if (isLittleEndian != BitConverter.IsLittleEndian)
+            if (isLittleEndian != BitConverter.IsLittleEndian && result.Length > 0)
             {
-                for (int i = 0, j = resultAsBytes.Length - 1; i < j; i++, j--)
+                TReverseEndianessHelper reverseEndianessHelper = default;
+                ref var resultFirstByte = ref MemoryMarshal.GetReference(resultAsBytes);
+                for (int i = 0, offset = 0; i < result.Length; i++, offset += sizeof(T))
                 {
-                    byte tmp = resultAsBytes[i];
-                    resultAsBytes[i] = resultAsBytes[j];
-                    resultAsBytes[j] = tmp;
+                    reverseEndianessHelper.ReverseEndianess(ref Unsafe.Add(ref resultFirstByte, offset), sizeof(T));
                 }
             }
 
@@ -78,7 +85,37 @@ namespace MessagePack.Unity.Extension
         }
     }
 
-    public class Vector2ArrayBlitFormatter : UnsafeBlitFormatterBase<Vector2>
+    public struct ReverseEndianessHelperSimpleSingle : IReverseEndianessHelper
+    {
+        public unsafe void ReverseEndianess(ref byte value, int size)
+        {
+            for (var i = 0; (i << 1) < size; i++)
+            {
+                ref var first = ref Unsafe.Add(ref value, i);
+                ref var second = ref Unsafe.Add(ref value, size - i - 1);
+                (first, second) = (second, first);
+            }
+        }
+    }
+
+    public struct ReverseEndianessHelperSimpleRepeat<T> : IReverseEndianessHelper
+        where T : unmanaged
+    {
+        public unsafe void ReverseEndianess(ref byte value, int size)
+        {
+            for (var offset = 0; offset < size; offset += sizeof(T))
+            {
+                for (var i = 0; (i << 1) < sizeof(T); i++)
+                {
+                    ref var first = ref Unsafe.Add(ref value, offset + i);
+                    ref var second = ref Unsafe.Add(ref value, offset + sizeof(T) - i - 1);
+                    (first, second) = (second, first);
+                }
+            }
+        }
+    }
+
+    public class Vector2ArrayBlitFormatter : UnsafeBlitFormatterBase<Vector2, ReverseEndianessHelperSimpleRepeat<float>>
     {
         protected override sbyte TypeCode
         {
@@ -89,7 +126,7 @@ namespace MessagePack.Unity.Extension
         }
     }
 
-    public class Vector3ArrayBlitFormatter : UnsafeBlitFormatterBase<Vector3>
+    public class Vector3ArrayBlitFormatter : UnsafeBlitFormatterBase<Vector3, ReverseEndianessHelperSimpleRepeat<float>>
     {
         protected override sbyte TypeCode
         {
@@ -100,7 +137,7 @@ namespace MessagePack.Unity.Extension
         }
     }
 
-    public class Vector4ArrayBlitFormatter : UnsafeBlitFormatterBase<Vector4>
+    public class Vector4ArrayBlitFormatter : UnsafeBlitFormatterBase<Vector4, ReverseEndianessHelperSimpleRepeat<float>>
     {
         protected override sbyte TypeCode
         {
@@ -111,7 +148,7 @@ namespace MessagePack.Unity.Extension
         }
     }
 
-    public class QuaternionArrayBlitFormatter : UnsafeBlitFormatterBase<Quaternion>
+    public class QuaternionArrayBlitFormatter : UnsafeBlitFormatterBase<Quaternion, ReverseEndianessHelperSimpleRepeat<float>>
     {
         protected override sbyte TypeCode
         {
@@ -122,7 +159,7 @@ namespace MessagePack.Unity.Extension
         }
     }
 
-    public class ColorArrayBlitFormatter : UnsafeBlitFormatterBase<Color>
+    public class ColorArrayBlitFormatter : UnsafeBlitFormatterBase<Color, ReverseEndianessHelperSimpleRepeat<float>>
     {
         protected override sbyte TypeCode
         {
@@ -133,7 +170,7 @@ namespace MessagePack.Unity.Extension
         }
     }
 
-    public class BoundsArrayBlitFormatter : UnsafeBlitFormatterBase<Bounds>
+    public class BoundsArrayBlitFormatter : UnsafeBlitFormatterBase<Bounds, ReverseEndianessHelperSimpleRepeat<float>>
     {
         protected override sbyte TypeCode
         {
@@ -144,7 +181,7 @@ namespace MessagePack.Unity.Extension
         }
     }
 
-    public class RectArrayBlitFormatter : UnsafeBlitFormatterBase<Rect>
+    public class RectArrayBlitFormatter : UnsafeBlitFormatterBase<Rect, ReverseEndianessHelperSimpleRepeat<float>>
     {
         protected override sbyte TypeCode
         {
@@ -155,7 +192,7 @@ namespace MessagePack.Unity.Extension
         }
     }
 
-    public class IntArrayBlitFormatter : UnsafeBlitFormatterBase<int>
+    public class IntArrayBlitFormatter : UnsafeBlitFormatterBase<int, ReverseEndianessHelperSimpleSingle>
     {
         protected override sbyte TypeCode
         {
@@ -163,7 +200,7 @@ namespace MessagePack.Unity.Extension
         }
     }
 
-    public class FloatArrayBlitFormatter : UnsafeBlitFormatterBase<float>
+    public class FloatArrayBlitFormatter : UnsafeBlitFormatterBase<float, ReverseEndianessHelperSimpleSingle>
     {
         protected override sbyte TypeCode
         {
@@ -171,7 +208,7 @@ namespace MessagePack.Unity.Extension
         }
     }
 
-    public class DoubleArrayBlitFormatter : UnsafeBlitFormatterBase<double>
+    public class DoubleArrayBlitFormatter : UnsafeBlitFormatterBase<double, ReverseEndianessHelperSimpleSingle>
     {
         protected override sbyte TypeCode
         {
