@@ -53,7 +53,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(MessagePackFormatterMustBeMessagePackFormatterId));
 
-    public static readonly DiagnosticDescriptor PublicMemberNeedsKey = new DiagnosticDescriptor(
+    public static readonly DiagnosticDescriptor MemberNeedsKey = new DiagnosticDescriptor(
         id: AttributeMessagePackObjectMembersId,
         title: "Attribute properties and fields of MessagePack objects",
         category: Category,
@@ -258,7 +258,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         TypeMustBeMessagePackObject,
         MessageFormatterMustBeMessagePackFormatter,
-        PublicMemberNeedsKey,
+        MemberNeedsKey,
         BaseTypeContainsUnattributedPublicMembers,
         InvalidMessagePackObject,
         BothStringAndIntKeyAreNull,

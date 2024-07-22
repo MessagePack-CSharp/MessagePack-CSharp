@@ -11,7 +11,7 @@ public class MessagePackCodeFixProvider : CodeFixProvider
         get
         {
             return ImmutableArray.Create(
-                MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey.Id,
+                MsgPack00xMessagePackAnalyzer.MemberNeedsKey.Id,
                 MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject.Id);
         }
     }
