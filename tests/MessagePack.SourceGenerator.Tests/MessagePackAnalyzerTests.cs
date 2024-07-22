@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using MessagePack.SourceGenerator.Analyzers;
+using MessagePack.Analyzers.CodeFixes;
 using Microsoft.CodeAnalysis.Testing;
 using VerifyCS = CSharpCodeFixVerifier<MessagePack.SourceGenerator.Analyzers.MsgPack00xMessagePackAnalyzer, MessagePack.Analyzers.CodeFixes.MessagePackCodeFixProvider>;
 
@@ -118,6 +118,43 @@ public class Foo
             TestCode = input,
             FixedCode = output,
             MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
+    }
+
+    [Fact]
+    public async Task AddIgnoreAttributesToMembers()
+    {
+        string input = Preamble + @"
+[MessagePackObject]
+public class Foo
+{
+    internal string {|MsgPack004:member1 = null|};
+    internal string {|MsgPack004:member2 = null|};
+    [Key(0)]
+    public string Member3 { get; set; }
+}
+";
+
+        string output = Preamble + @"
+[MessagePackObject]
+public class Foo
+{
+    [IgnoreMember]
+    internal string member1 = null;
+    [IgnoreMember]
+    internal string member2 = null;
+    [Key(0)]
+    public string Member3 { get; set; }
+}
+";
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddIgnoreMemberAttributeEquivalenceKey,
         }.RunAsync();
     }
 
@@ -148,6 +185,7 @@ public class Foo
             TestCode = input,
             FixedCode = output,
             MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
         }.RunAsync();
     }
 
@@ -185,7 +223,13 @@ public class Bar
 }
 ";
 
-        await VerifyCS.VerifyCodeFixAsync(input, output);
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
     }
 
     [Fact]
@@ -222,7 +266,13 @@ public record Bar
 }
 ";
 
-        await VerifyCS.VerifyCodeFixAsync(input, output);
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
     }
 
     [Fact]
@@ -259,7 +309,13 @@ public record Bar
 }
 ";
 
-        await VerifyCS.VerifyCodeFixAsync(input, output);
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
     }
 
     [Fact]
@@ -302,7 +358,13 @@ namespace System.Runtime.CompilerServices
 }
 ";
 
-        await VerifyCS.VerifyCodeFixAsync(input, output);
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
     }
 
     [Fact]
@@ -353,6 +415,7 @@ public class Bar : Foo
                 Sources = { output1, output2 },
             },
             MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
         }.RunAsync();
     }
 
@@ -396,6 +459,12 @@ public class Bar : Foo
             }
             """;
 
-        await VerifyCS.VerifyCodeFixAsync(input, output);
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
     }
 }

@@ -6,7 +6,10 @@ namespace MessagePack.Analyzers.CodeFixes;
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(MessagePackCodeFixProvider)), Shared]
 public class MessagePackCodeFixProvider : CodeFixProvider
 {
-    public sealed override ImmutableArray<string> FixableDiagnosticIds
+    public const string AddKeyAttributeEquivanceKey = "MessagePackAnalyzer.AddKeyAttribute";
+    public const string AddIgnoreMemberAttributeEquivalenceKey = "MessagePackAnalyzer.AddIgnoreMemberAttribute";
+
+    public override ImmutableArray<string> FixableDiagnosticIds
     {
         get
         {
@@ -16,12 +19,12 @@ public class MessagePackCodeFixProvider : CodeFixProvider
         }
     }
 
-    public sealed override FixAllProvider GetFixAllProvider()
+    public override FixAllProvider GetFixAllProvider()
     {
         return WellKnownFixAllProviders.BatchFixer;
     }
 
-    public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
         var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false) as CompilationUnitSyntax;
         if (root is null)
@@ -112,29 +115,43 @@ public class MessagePackCodeFixProvider : CodeFixProvider
             }
         }
 
-        var action = CodeAction.Create("Add MessagePack KeyAttribute", c => AddKeyAttributeAsync(context.Document, namedSymbol, c), "MessagePackAnalyzer.AddKeyAttribute");
+        CodeAction addKeyAction = CodeAction.Create("Add MessagePack KeyAttribute", c => AddKeyAttributeAsync(context.Document, namedSymbol, c), AddKeyAttributeEquivanceKey);
+        context.RegisterCodeFix(addKeyAction, context.Diagnostics.First());
 
-        context.RegisterCodeFix(action, context.Diagnostics.First()); // use single.
+        foreach (Diagnostic diagnostic in context.Diagnostics)
+        {
+            SyntaxNode? diagnosticTargetNode = root.FindNode(diagnostic.Location.SourceSpan);
+            if (diagnosticTargetNode?.AncestorsAndSelf().FirstOrDefault(n => n is FieldDeclarationSyntax or PropertyDeclarationSyntax) is MemberDeclarationSyntax fieldOrProperty)
+            {
+                context.RegisterCodeFix(
+                    CodeAction.Create(
+                        "Add MessagePack [IgnoreMember]",
+                        ct => AddIgnoreMemberAttributeAsync(context.Document, fieldOrProperty, ct),
+                        AddIgnoreMemberAttributeEquivalenceKey),
+                    diagnostic);
+            }
+        }
     }
+
+    private static IEnumerable<ISymbol> FindMembersMissingAttributes(INamedTypeSymbol type) => type.GetAllMembers()
+        .Where(x => x.Kind == SymbolKind.Property || x.Kind == SymbolKind.Field)
+        .Where(x => x.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.IgnoreShortName) == null && x.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.IgnoreDataMemberShortName) == null)
+        .Where(x => !x.IsStatic)
+        .Where(x =>
+        {
+            return x switch
+            {
+                IPropertySymbol p => p.ExplicitInterfaceImplementations.Length == 0,
+                IFieldSymbol f => !f.IsImplicitlyDeclared,
+                _ => throw new NotSupportedException("Unsupported member type."),
+            };
+        });
 
     private static async Task<Solution> AddKeyAttributeAsync(Document document, INamedTypeSymbol type, CancellationToken cancellationToken)
     {
         var solutionEditor = new SolutionEditor(document.Project.Solution);
 
-        var targets = type.GetAllMembers()
-            .Where(x => x.Kind == SymbolKind.Property || x.Kind == SymbolKind.Field)
-            .Where(x => x.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.IgnoreShortName) == null && x.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.IgnoreDataMemberShortName) == null)
-            .Where(x => !x.IsStatic)
-            .Where(x =>
-            {
-                return x switch
-                {
-                    IPropertySymbol p => p.ExplicitInterfaceImplementations.Length == 0,
-                    IFieldSymbol f => !f.IsImplicitlyDeclared,
-                    _ => throw new NotSupportedException("Unsupported member type."),
-                };
-            })
-            .ToArray();
+        var targets = FindMembersMissingAttributes(type).ToArray();
 
         var startOrder = targets
             .Select(x => x.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.KeyAttributeShortName))
@@ -171,6 +188,17 @@ public class MessagePackCodeFixProvider : CodeFixProvider
             var syntaxGenerator = SyntaxGenerator.GetGenerator(documentEditor.OriginalDocument);
             documentEditor.AddAttribute(node, syntaxGenerator.Attribute("MessagePack.MessagePackObject"));
         }
+
+        return solutionEditor.GetChangedSolution();
+    }
+
+    private static async Task<Solution> AddIgnoreMemberAttributeAsync(Document document, MemberDeclarationSyntax memberDecl, CancellationToken cancellationToken)
+    {
+        SolutionEditor solutionEditor = new(document.Project.Solution);
+        DocumentEditor documentEditor = await solutionEditor.GetDocumentEditorAsync(document.Id, cancellationToken);
+        SyntaxGenerator syntaxGenerator = SyntaxGenerator.GetGenerator(documentEditor.OriginalDocument);
+
+        documentEditor.AddAttribute(memberDecl, syntaxGenerator.Attribute("MessagePack.IgnoreMemberAttribute"));
 
         return solutionEditor.GetChangedSolution();
     }
