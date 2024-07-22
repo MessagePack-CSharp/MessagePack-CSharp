@@ -8,7 +8,7 @@ Rule ID | Category | Severity | Notes
 MsgPack001 | Reliability | Disabled | MsgPack001SpecifyOptionsAnalyzer
 MsgPack002 | Reliability | Disabled | MsgPack002UseConstantOptionsAnalyzer
 MsgPack003 | Usage | Error | MsgPack00xMessagePackAnalyzer
-MsgPack004 | Usage | Error | MsgPack00xMessagePackAnalyzer
+MsgPack004 | Usage | Error | Member needs Key or IgnoreMember attribute
 MsgPack005 | Usage | Error | MsgPack00xMessagePackAnalyzer
 MsgPack006 | Usage | Error | MsgPack00xMessagePackAnalyzer
 MsgPack007 | Usage | Error | MsgPack00xMessagePackAnalyzer
