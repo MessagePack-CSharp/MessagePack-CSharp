@@ -17,7 +17,7 @@ namespace MessagePack.Unity.Extension
 {
     public interface IReverseEndianessHelper
     {
-        public void ReverseEndianess(ReadOnlySpan<byte> span);
+        public void ReverseEndianess(Span<byte> span);
     }
 
     // use ext instead of ArrayFormatter to extremely boost up performance.
@@ -85,7 +85,7 @@ namespace MessagePack.Unity.Extension
 
     public struct ReverseEndianessHelperSimpleSingle : IReverseEndianessHelper
     {
-        public unsafe void ReverseEndianess(ReadOnlySpan<byte> span)
+        public unsafe void ReverseEndianess(Span<byte> span)
         {
             for (var i = 0; (i << 1) < span.Length; i++)
             {
@@ -97,7 +97,7 @@ namespace MessagePack.Unity.Extension
     public struct ReverseEndianessHelperSimpleRepeat<T> : IReverseEndianessHelper
         where T : unmanaged
     {
-        public unsafe void ReverseEndianess(ReadOnlySpan<byte> span)
+        public unsafe void ReverseEndianess(Span<byte> span)
         {
             for (var offset = 0; offset < span.Length; offset += sizeof(T))
             {
