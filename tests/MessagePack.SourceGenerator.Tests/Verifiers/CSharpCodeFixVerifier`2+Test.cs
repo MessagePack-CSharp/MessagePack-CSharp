@@ -18,6 +18,7 @@ internal static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
             this.ReferenceAssemblies = ReferencesHelper.DefaultTargetFrameworkReferences;
             this.CompilerDiagnostics = CompilerDiagnostics.Warnings;
             this.TestState.AdditionalReferences.AddRange(ReferencesHelper.GetReferences(references));
+            this.FixedState.AdditionalReferences.AddRange(ReferencesHelper.GetReferences(references));
 
             this.TestState.AdditionalFilesFactories.Add(() =>
             {

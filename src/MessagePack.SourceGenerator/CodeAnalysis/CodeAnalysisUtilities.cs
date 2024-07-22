@@ -42,7 +42,7 @@ public static class CodeAnalysisUtilities
     internal static IEnumerable<BaseTypeDeclarationSyntax> FindInaccessibleTypes(ITypeSymbol target)
     {
         return from x in EnumerateTypeAndContainingTypes(target)
-               where x.Symbol.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal)
+               where x.Symbol.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrFriend or Accessibility.ProtectedOrInternal)
                select x.FirstDeclaration;
     }
 

@@ -18,9 +18,10 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string DeserializingConstructorId = "MsgPack007";
     public const string AOTLimitationsId = "MsgPack008";
     public const string CollidingFormattersId = "MsgPack009";
-    public const string InaccessibleFormatterId = "MsgPack010";
+    public const string InaccessibleFormatterTypeId = "MsgPack010";
     public const string PartialTypeRequiredId = "MsgPack011";
     public const string InaccessibleDataTypeId = "MsgPack012";
+    public const string InaccessibleFormatterInstanceId = "MsgPack013";
 
     internal const string Category = "Usage";
 
@@ -215,24 +216,24 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         helpLinkUri: AnalyzerUtilities.GetHelpLink(CollidingFormattersId));
 
     public static readonly DiagnosticDescriptor InaccessibleFormatterInstance = new(
-        id: InaccessibleFormatterId,
+        id: InaccessibleFormatterInstanceId,
         title: "Inaccessible formatter",
         category: Category,
         messageFormat: "Formatter should declare a default constructor with at least internal visibility or a public static readonly field named Instance that returns the singleton",
         description: "The auto-generated resolver cannot construct this formatter without a constructor. It will be omitted from the resolver.",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleFormatterId));
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleFormatterInstanceId));
 
     public static readonly DiagnosticDescriptor InaccessibleFormatterType = new(
-        id: InaccessibleFormatterId,
+        id: InaccessibleFormatterTypeId,
         title: "Inaccessible formatter",
         category: Category,
         messageFormat: "Formatter should be declared with at least internal visibility",
         description: "The auto-generated resolver cannot access this formatter. It will be omitted from the resolver.",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleFormatterId));
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleFormatterTypeId));
 
     public static readonly DiagnosticDescriptor PartialTypeRequired = new(
         id: PartialTypeRequiredId,
