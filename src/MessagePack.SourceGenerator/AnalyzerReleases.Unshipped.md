@@ -14,6 +14,7 @@ MsgPack006 | Usage | Error | MsgPack00xMessagePackAnalyzer
 MsgPack007 | Usage | Error | MsgPack00xMessagePackAnalyzer
 MsgPack008 | Usage | Error | MsgPack00xMessagePackAnalyzer
 MsgPack009 | Usage | Error | MsgPack00xMessagePackAnalyzer
-MsgPack010 | Usage | Warning | MsgPack00xMessagePackAnalyzer
+MsgPack010 | Usage | Warning | Formatter is not accessible to the source generated resolver
 MsgPack011 | Usage | Error | MsgPack00xMessagePackAnalyzer
 MsgPack012 | Usage | Error | MsgPack00xMessagePackAnalyzer
+MsgPack013 | Usage | Warning | Formatter has no accessible instance for the source generated resolver

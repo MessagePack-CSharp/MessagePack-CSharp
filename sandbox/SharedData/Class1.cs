@@ -100,9 +100,9 @@ namespace SharedData
         }
     }
 
-#pragma warning disable MsgPack010 // no default constructor
+#pragma warning disable MsgPack013 // no default constructor
     public class OreOreFormatter2 : IMessagePackFormatter<ulong>
-#pragma warning restore MsgPack010 // no default constructor
+#pragma warning restore MsgPack013 // no default constructor
     {
         public OreOreFormatter2(int x, string y)
         {
@@ -844,9 +844,9 @@ namespace SharedData
         }
     }
 
-#pragma warning disable MsgPack010 // no default constructor
+#pragma warning disable MsgPack013 // no default constructor
     public class DynamicArgumentTupleFormatter<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IMessagePackFormatter<DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>>
-#pragma warning restore MsgPack010 // no default constructor
+#pragma warning restore MsgPack013 // no default constructor
     {
         private readonly T1 default1;
         private readonly T2 default2;
