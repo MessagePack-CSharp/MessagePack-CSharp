@@ -6,6 +6,7 @@
 
 using System;
 using System.Buffers;
+using System.Runtime.CompilerServices;
 
 namespace MessagePack
 {
@@ -21,6 +22,7 @@ namespace MessagePack
         /// </summary>
         /// <returns>The value.</returns>
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Byte ReadByte()
         {
             ThrowInsufficientBufferUnless(this.reader.TryRead(out byte code));
@@ -339,6 +341,7 @@ namespace MessagePack
         /// </summary>
         /// <returns>The value.</returns>
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Int32 ReadInt32()
         {
             ThrowInsufficientBufferUnless(this.reader.TryRead(out byte code));
