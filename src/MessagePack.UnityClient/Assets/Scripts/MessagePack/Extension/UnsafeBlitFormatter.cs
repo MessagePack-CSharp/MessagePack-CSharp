@@ -5,7 +5,6 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using MessagePack.Formatters;
@@ -18,7 +17,7 @@ namespace MessagePack.Unity.Extension
 {
     public interface IReverseEndianessHelper
     {
-        public void ReverseEndianess(ref byte value, int size);
+        public void ReverseEndianess(Span<byte> span);
     }
 
     // use ext instead of ArrayFormatter to extremely boost up performance.
@@ -66,7 +65,7 @@ namespace MessagePack.Unity.Extension
             var isLittleEndian = reader.ReadBoolean();
 
             // Allocate a T[] that we will return. We'll then cast the T[] as byte[] so we can copy the byte sequence directly into it.
-            var result = new T[byteLength / Marshal.SizeOf<T>()];
+            var result = new T[byteLength / sizeof(T)];
             Span<byte> resultAsBytes = MemoryMarshal.Cast<T, byte>(result);
             reader.ReadRaw(byteLength).CopyTo(resultAsBytes);
 
@@ -74,10 +73,9 @@ namespace MessagePack.Unity.Extension
             if (isLittleEndian != BitConverter.IsLittleEndian && result.Length > 0)
             {
                 TReverseEndianessHelper reverseEndianessHelper = default;
-                ref var resultFirstByte = ref MemoryMarshal.GetReference(resultAsBytes);
-                for (int i = 0, offset = 0; i < result.Length; i++, offset += sizeof(T))
+                for (int offset = 0; offset < resultAsBytes.Length; offset += sizeof(T))
                 {
-                    reverseEndianessHelper.ReverseEndianess(ref Unsafe.Add(ref resultFirstByte, offset), sizeof(T));
+                    reverseEndianessHelper.ReverseEndianess(resultAsBytes.Slice(offset, sizeof(T)));
                 }
             }
 
@@ -87,13 +85,11 @@ namespace MessagePack.Unity.Extension
 
     public struct ReverseEndianessHelperSimpleSingle : IReverseEndianessHelper
     {
-        public unsafe void ReverseEndianess(ref byte value, int size)
+        public unsafe void ReverseEndianess(Span<byte> span)
         {
-            for (var i = 0; (i << 1) < size; i++)
+            for (var i = 0; (i << 1) < span.Length; i++)
             {
-                ref var first = ref Unsafe.Add(ref value, i);
-                ref var second = ref Unsafe.Add(ref value, size - i - 1);
-                (first, second) = (second, first);
+                (span[span.Length - 1 - i], span[i]) = (span[i], span[span.Length - 1 - i]);
             }
         }
     }
@@ -101,15 +97,13 @@ namespace MessagePack.Unity.Extension
     public struct ReverseEndianessHelperSimpleRepeat<T> : IReverseEndianessHelper
         where T : unmanaged
     {
-        public unsafe void ReverseEndianess(ref byte value, int size)
+        public unsafe void ReverseEndianess(Span<byte> span)
         {
-            for (var offset = 0; offset < size; offset += sizeof(T))
+            for (var offset = 0; offset < span.Length; offset += sizeof(T))
             {
                 for (var i = 0; (i << 1) < sizeof(T); i++)
                 {
-                    ref var first = ref Unsafe.Add(ref value, offset + i);
-                    ref var second = ref Unsafe.Add(ref value, offset + sizeof(T) - i - 1);
-                    (first, second) = (second, first);
+                    (span[offset + sizeof(T) - 1 - i], span[offset + i]) = (span[offset + i], span[offset + sizeof(T) - 1 - i]);
                 }
             }
         }
