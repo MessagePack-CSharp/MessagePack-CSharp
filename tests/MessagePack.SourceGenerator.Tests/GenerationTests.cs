@@ -583,4 +583,22 @@ internal class MyGenericType<T>
         // This test is *not* expected to produce any generated files.
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
+
+    [Fact]
+    public async Task NonDefaultDeserializingConstructor_Private()
+    {
+        string testSource = """
+            using MessagePack;
+            [MessagePackObject]
+            partial class A {
+                [SerializationConstructor]
+                A(int x) => this.X = x;
+
+                [Key(0)]
+                internal int X { get; }
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
 }

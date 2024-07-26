@@ -934,10 +934,13 @@ public class TypeCollector
 
         // GetConstructor
         var ctorEnumerator = default(IEnumerator<IMethodSymbol>);
-        var ctor = formattedType.Constructors.Where(x => IsAllowedAccessibility(x.DeclaredAccessibility)).SingleOrDefault(x => x.GetAttributes().Any(y => y.AttributeClass != null && y.AttributeClass.ApproximatelyEqual(this.typeReferences.SerializationConstructorAttribute)));
-        if (ctor == null)
+        var ctor = formattedType.Constructors.SingleOrDefault(x => x.GetAttributes().Any(y => y.AttributeClass != null && y.AttributeClass.ApproximatelyEqual(this.typeReferences.SerializationConstructorAttribute)));
+        if (ctor is null)
         {
-            ctorEnumerator = formattedType.Constructors.Where(x => IsAllowedAccessibility(x.DeclaredAccessibility)).OrderByDescending(x => x.Parameters.Length).GetEnumerator();
+            ctorEnumerator = formattedType.Constructors
+                .OrderByDescending(x => x.DeclaredAccessibility)
+                .ThenByDescending(x => x.Parameters.Length)
+                .GetEnumerator();
 
             if (ctorEnumerator.MoveNext())
             {
@@ -946,14 +949,17 @@ public class TypeCollector
         }
 
         // struct allows null ctor
-        if (ctor == null && isClass)
+        if (ctor is null && isClass)
         {
             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.NoDeserializingConstructor, GetIdentifierLocation(formattedType)));
+            return null;
         }
 
         var constructorParameters = new List<MemberSerializationInfo>();
-        if (ctor != null)
+        if (ctor is not null)
         {
+            includesPrivateMembers |= !IsAllowedAccessibility(ctor.DeclaredAccessibility);
+
             var constructorLookupDictionary = stringMembers.ToLookup(x => x.Value.Name, x => x, StringComparer.OrdinalIgnoreCase);
             do
             {
