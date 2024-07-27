@@ -3,6 +3,7 @@
 
 using MessagePack.SourceGenerator.Tests;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Testing;
 using VerifyCS = CSharpSourceGeneratorVerifier<MessagePack.SourceGenerator.MessagePackGenerator>;
 
 public class GenerationTests
@@ -582,5 +583,71 @@ internal class MyGenericType<T>
 
         // This test is *not* expected to produce any generated files.
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task NonDefaultDeserializingConstructor_Private()
+    {
+        string testSource = """
+            using MessagePack;
+            [MessagePackObject]
+            partial class A {
+                [SerializationConstructor]
+                A(int x) => this.X = x;
+
+                [Key(0)]
+                internal int X { get; }
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task DeserializingConstructorParameterMemberTypeAssignability_MemberAssignsToParamType()
+    {
+        string testSource = """
+            using MessagePack;
+            using System.Linq;
+            using System.Collections.Generic;
+            [MessagePackObject]
+            class A {
+                [SerializationConstructor]
+                internal A(IReadOnlyList<int> x) => this.X = x.ToList();
+
+                [Key(0)]
+                internal List<int> X { get; }
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task DeserializingConstructorParameterMemberTypeAssignability_Incompatible()
+    {
+        string testSource = """
+            using MessagePack;
+            using System.Linq;
+            using System.Collections.Generic;
+            using System.Collections.Immutable;
+            [MessagePackObject]
+            class A {
+                [SerializationConstructor]
+                internal A({|#0:ImmutableList<int> x|}) => this.X = x.ToList();
+
+                [Key(0)]
+                internal List<int> X { get; }
+            }
+            """;
+
+        await new VerifyCS.Test
+        {
+            TestState =
+            {
+                Sources = { testSource },
+            },
+            ExpectedDiagnostics = { DiagnosticResult.CompilerError("MsgPack007").WithLocation(0) },
+        }.RunDefaultAsync(this.testOutputHelper);
     }
 }

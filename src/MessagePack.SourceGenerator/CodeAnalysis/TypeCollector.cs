@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
@@ -653,8 +654,8 @@ public class TypeCollector
         }
 
         var isIntKey = true;
-        var intMembers = new Dictionary<int, MemberSerializationInfo>();
-        var stringMembers = new Dictionary<string, MemberSerializationInfo>();
+        var intMembers = new Dictionary<int, (MemberSerializationInfo Info, ITypeSymbol TypeSymbol)>();
+        var stringMembers = new Dictionary<string, (MemberSerializationInfo Info, ITypeSymbol TypeSymbol)>();
 
         FormatterDescriptor? GetSpecialFormatter(ISymbol member)
         {
@@ -705,7 +706,7 @@ public class TypeCollector
                 includesPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
                 FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
                 var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
-                stringMembers.Add(member.StringKey, member);
+                stringMembers.Add(member.StringKey, (member, item.Type));
 
                 if (specialFormatter is null)
                 {
@@ -725,7 +726,7 @@ public class TypeCollector
 
                 FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
                 var member = new MemberSerializationInfo(false, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
-                stringMembers.Add(member.StringKey, member);
+                stringMembers.Add(member.StringKey, (member, item.Type));
                 if (specialFormatter is null)
                 {
                     this.CollectCore(item.Type); // recursive collect
@@ -827,7 +828,7 @@ public class TypeCollector
                         }
 
                         var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
-                        intMembers.Add(member.IntKey, member);
+                        intMembers.Add(member.IntKey, (member, item.Type));
                     }
                     else if (stringKey is not null)
                     {
@@ -837,7 +838,7 @@ public class TypeCollector
                         }
 
                         var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
-                        stringMembers.Add(member.StringKey, member);
+                        stringMembers.Add(member.StringKey, (member, item.Type));
                     }
                 }
 
@@ -914,7 +915,7 @@ public class TypeCollector
                         }
 
                         var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
-                        intMembers.Add(member.IntKey, member);
+                        intMembers.Add(member.IntKey, (member, item.Type));
                     }
                     else
                     {
@@ -924,7 +925,7 @@ public class TypeCollector
                         }
 
                         var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
-                        stringMembers.Add(member.StringKey, member);
+                        stringMembers.Add(member.StringKey, (member, item.Type));
                     }
                 }
 
@@ -934,10 +935,13 @@ public class TypeCollector
 
         // GetConstructor
         var ctorEnumerator = default(IEnumerator<IMethodSymbol>);
-        var ctor = formattedType.Constructors.Where(x => IsAllowedAccessibility(x.DeclaredAccessibility)).SingleOrDefault(x => x.GetAttributes().Any(y => y.AttributeClass != null && y.AttributeClass.ApproximatelyEqual(this.typeReferences.SerializationConstructorAttribute)));
-        if (ctor == null)
+        var ctor = formattedType.Constructors.SingleOrDefault(x => x.GetAttributes().Any(y => y.AttributeClass != null && y.AttributeClass.ApproximatelyEqual(this.typeReferences.SerializationConstructorAttribute)));
+        if (ctor is null)
         {
-            ctorEnumerator = formattedType.Constructors.Where(x => IsAllowedAccessibility(x.DeclaredAccessibility)).OrderByDescending(x => x.Parameters.Length).GetEnumerator();
+            ctorEnumerator = formattedType.Constructors
+                .OrderByDescending(x => x.DeclaredAccessibility)
+                .ThenByDescending(x => x.Parameters.Length)
+                .GetEnumerator();
 
             if (ctorEnumerator.MoveNext())
             {
@@ -946,29 +950,31 @@ public class TypeCollector
         }
 
         // struct allows null ctor
-        if (ctor == null && isClass)
+        if (ctor is null && isClass)
         {
             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.NoDeserializingConstructor, GetIdentifierLocation(formattedType)));
+            return null;
         }
 
         var constructorParameters = new List<MemberSerializationInfo>();
-        if (ctor != null)
+        if (ctor is not null)
         {
-            var constructorLookupDictionary = stringMembers.ToLookup(x => x.Value.Name, x => x, StringComparer.OrdinalIgnoreCase);
+            includesPrivateMembers |= !IsAllowedAccessibility(ctor.DeclaredAccessibility);
+
+            var constructorLookupDictionary = stringMembers.ToLookup(x => x.Value.Info.Name, x => x, StringComparer.OrdinalIgnoreCase);
             do
             {
                 constructorParameters.Clear();
                 var ctorParamIndex = 0;
                 foreach (IParameterSymbol item in ctor!.Parameters)
                 {
-                    MemberSerializationInfo paramMember;
                     if (isIntKey)
                     {
-                        if (intMembers.TryGetValue(ctorParamIndex, out paramMember!))
+                        if (intMembers.TryGetValue(ctorParamIndex, out (MemberSerializationInfo Info, ITypeSymbol TypeSymbol) member))
                         {
-                            if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.Type && paramMember.IsReadable)
+                            if (this.compilation.ClassifyConversion(member.TypeSymbol, item.Type) is { IsImplicit: true } && member.Info.IsReadable)
                             {
-                                constructorParameters.Add(paramMember);
+                                constructorParameters.Add(member.Info);
                             }
                             else
                             {
@@ -980,6 +986,7 @@ public class TypeCollector
                                 else
                                 {
                                     this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterTypeMismatch, GetLocation(item)));
+                                    return null;
                                 }
                             }
                         }
@@ -993,12 +1000,13 @@ public class TypeCollector
                             else
                             {
                                 this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterIndexMissing, GetParameterListLocation(ctor)));
+                                return null;
                             }
                         }
                     }
                     else
                     {
-                        IEnumerable<KeyValuePair<string, MemberSerializationInfo>> hasKey = constructorLookupDictionary[item.Name];
+                        IEnumerable<KeyValuePair<string, (MemberSerializationInfo Info, ITypeSymbol TypeSymbol)>> hasKey = constructorLookupDictionary[item.Name];
                         using var enumerator = hasKey.GetEnumerator();
 
                         // hasKey.Count() == 0
@@ -1007,6 +1015,7 @@ public class TypeCollector
                             if (ctorEnumerator == null)
                             {
                                 this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterNameMissing, GetParameterListLocation(ctor)));
+                                return null;
                             }
 
                             ctor = null;
@@ -1021,13 +1030,14 @@ public class TypeCollector
                             if (ctorEnumerator == null)
                             {
                                 this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterNameDuplicate, GetLocation(item)));
+                                return null;
                             }
 
                             ctor = null;
                             continue;
                         }
 
-                        paramMember = first;
+                        MemberSerializationInfo paramMember = first.Info;
                         if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.Type && paramMember.IsReadable)
                         {
                             constructorParameters.Add(paramMember);
@@ -1037,6 +1047,7 @@ public class TypeCollector
                             if (ctorEnumerator == null)
                             {
                                 this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterTypeMismatch, GetLocation(item)));
+                                return null;
                             }
 
                             ctor = null;
@@ -1102,7 +1113,7 @@ public class TypeCollector
             genericTypeParameters: formattedType.IsGenericType ? formattedType.TypeParameters.Select(ToGenericTypeParameterInfo).ToArray() : Array.Empty<GenericTypeParameterInfo>(),
             constructorParameters: constructorParameters.ToArray(),
             isIntKey: isIntKey,
-            members: isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
+            members: isIntKey ? intMembers.Values.Select(v => v.Info).ToArray() : stringMembers.Values.Select(v => v.Info).ToArray(),
             hasIMessagePackSerializationCallbackReceiver: hasSerializationConstructor,
             needsCastOnAfter: needsCastOnAfter,
             needsCastOnBefore: needsCastOnBefore,
