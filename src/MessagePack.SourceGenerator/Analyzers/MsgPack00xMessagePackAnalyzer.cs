@@ -25,10 +25,10 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
 
     internal const string Category = "Usage";
 
-    internal const string MessagePackObjectAttributeShortName = Constants.MessagePackObjectAttributeName;
-    internal const string KeyAttributeShortName = "KeyAttribute";
-    internal const string IgnoreShortName = "IgnoreMemberAttribute";
-    internal const string IgnoreDataMemberShortName = "IgnoreDataMemberAttribute";
+    public const string MessagePackObjectAttributeShortName = Constants.MessagePackObjectAttributeName;
+    public const string KeyAttributeShortName = "KeyAttribute";
+    public const string IgnoreShortName = "IgnoreMemberAttribute";
+    public const string IgnoreDataMemberShortName = "IgnoreDataMemberAttribute";
 
     private const string InvalidMessagePackObjectTitle = "MessagePackObject validation";
     private const DiagnosticSeverity InvalidMessagePackObjectSeverity = DiagnosticSeverity.Error;
@@ -239,8 +239,8 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         id: PartialTypeRequiredId,
         title: "Partial type required",
         category: Category,
-        messageFormat: "Types with private, serializable members must be declared as partial",
-        description: "When a data type has serializable members that may only be accessible to the class itself (e.g. private or protected members), the type must be declared as partial to allow source generation of the formatter as a nested type.",
+        messageFormat: "Types with private, serializable members must be declared as partial, including nesting types",
+        description: "When a data type has serializable members that may only be accessible to the class itself (e.g. private or protected members), the type must be declared as partial to allow source generation of the formatter as a nested type. When a data type is itself a nested type, its declaring types must also be partial.",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(PartialTypeRequiredId));
