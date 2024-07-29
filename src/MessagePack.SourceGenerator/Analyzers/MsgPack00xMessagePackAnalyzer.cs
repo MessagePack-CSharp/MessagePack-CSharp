@@ -312,7 +312,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
                 context.ReportDiagnostic(Diagnostic.Create(CollidingFormatters, declaredSymbol.Locations[0], formattableType.Name.GetQualifiedName(Qualifiers.Namespace)));
             }
 
-            if (formatter.InaccessibleDescriptor is { } inaccessible)
+            if (!formatter.ExcludeFromSourceGeneratedResolver && formatter.InaccessibleDescriptor is { } inaccessible)
             {
                 context.ReportDiagnostic(Diagnostic.Create(inaccessible, declaredSymbol.Locations[0]));
             }

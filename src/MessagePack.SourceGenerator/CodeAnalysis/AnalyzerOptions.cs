@@ -41,6 +41,11 @@ public record AnalyzerOptions
             bool collisionsEncountered = false;
             foreach (FormatterDescriptor formatter in value)
             {
+                if (formatter.ExcludeFromSourceGeneratedResolver)
+                {
+                    continue;
+                }
+
                 foreach (FormattableType dataType in formatter.FormattableTypes)
                 {
                     if (formattableTypes.ContainsKey(dataType))
