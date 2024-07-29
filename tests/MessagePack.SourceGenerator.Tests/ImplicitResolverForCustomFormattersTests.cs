@@ -80,6 +80,32 @@ public class ImplicitResolverForCustomFormattersTests
     }
 
     [Fact]
+    public async Task MultipleFunctionalCustomFormattersForType_OnlyOneNonExcluded()
+    {
+        string testSource = """
+            using System;
+            using MessagePack;
+            using MessagePack.Formatters;
+            using MessagePack.Resolvers;
+
+            [ExcludeFormatterFromSourceGeneratedResolver]
+            internal class IntFormatter1 : IMessagePackFormatter<int>
+            {
+                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
+                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+            }
+
+            internal class IntFormatter2 : IMessagePackFormatter<int>
+            {
+                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
+                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.logger, testSource);
+    }
+
+    [Fact]
     public async Task MultipleFunctionalCustomFormattersForType_MultiFormatter()
     {
         string testSource = """
@@ -134,5 +160,26 @@ public class ImplicitResolverForCustomFormattersTests
                 new DiagnosticResult(MsgPack00xMessagePackAnalyzer.InaccessibleFormatterInstance).WithLocation(0),
             },
         }.RunDefaultAsync(this.logger);
+    }
+
+    [Fact]
+    public async Task CustomFormatterWithoutDefaultConstructor_Excluded()
+    {
+        string testSource = """
+            using System;
+            using MessagePack;
+            using MessagePack.Formatters;
+            using MessagePack.Resolvers;
+
+            [ExcludeFormatterFromSourceGeneratedResolver]
+            internal class IntFormatter : IMessagePackFormatter<int>
+            {
+                public IntFormatter(int value) { } // non-default constructor causes problem
+                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
+                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.logger, testSource);
     }
 }
