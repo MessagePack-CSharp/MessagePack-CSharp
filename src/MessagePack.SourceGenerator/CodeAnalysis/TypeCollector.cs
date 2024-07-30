@@ -1093,9 +1093,13 @@ public class TypeCollector
             // If the data type or any nesting types are not declared with partial, we cannot emit the formatter as a nested type within the data type
             // as required in order to access the private members.
             bool anyNonPartialTypesFound = false;
-            foreach (BaseTypeDeclarationSyntax? decl in FindNonPartialTypes(formattedType))
+            BaseTypeDeclarationSyntax[] nonPartialTypes = FindNonPartialTypes(formattedType).ToArray();
+            if (nonPartialTypes.Length > 0)
             {
-                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PartialTypeRequired, decl.Identifier.GetLocation()));
+                BaseTypeDeclarationSyntax? targetType = formattedType.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as BaseTypeDeclarationSyntax;
+                Location? primaryLocation = targetType?.Identifier.GetLocation();
+                Location[]? addlLocations = nonPartialTypes.Where(t => t != targetType).Select(t => t.Identifier.GetLocation()).ToArray();
+                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PartialTypeRequired, primaryLocation, (IEnumerable<Location>?)addlLocations));
                 anyNonPartialTypesFound = true;
             }
 

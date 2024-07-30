@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace MessagePack.Analyzers.CodeFixes;
 
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(SimpleBaseTypeSyntax)), Shared]
@@ -75,9 +77,21 @@ public class FormatterCodeFixProvider : CodeFixProvider
 
     private static Task<Document> AddPartialModifierAsync(Document document, SyntaxNode syntaxRoot, BaseTypeDeclarationSyntax typeDecl, Diagnostic diagnostic, CancellationToken cancellationToken)
     {
-        SyntaxNode? modifiedSyntax = syntaxRoot.ReplaceNode(
-            typeDecl,
-            typeDecl.AddModifiers(SyntaxFactory.Token(SyntaxKind.PartialKeyword)));
+        SyntaxNode? modifiedSyntax = syntaxRoot;
+        if (TryAddPartialModifier(typeDecl, out BaseTypeDeclarationSyntax? modified))
+        {
+            modifiedSyntax = modifiedSyntax.ReplaceNode(typeDecl, modified);
+        }
+
+        foreach (Location addlLocation in diagnostic.AdditionalLocations)
+        {
+            BaseTypeDeclarationSyntax? addlType = modifiedSyntax.FindNode(addlLocation.SourceSpan) as BaseTypeDeclarationSyntax;
+            if (addlType is not null && TryAddPartialModifier(addlType, out modified))
+            {
+                modifiedSyntax = modifiedSyntax.ReplaceNode(addlType, modified);
+            }
+        }
+
         document = document.WithSyntaxRoot(modifiedSyntax);
         return Task.FromResult(document);
     }
@@ -144,5 +158,17 @@ public class FormatterCodeFixProvider : CodeFixProvider
 
         SyntaxToken ReplaceModifier(SyntaxToken original) => internalKeywordToken.WithLeadingTrivia(original.LeadingTrivia).WithTrailingTrivia(original.TrailingTrivia);
         SyntaxTokenList ReplaceModifierInList(int index) => modifiers.Replace(modifiers[index], ReplaceModifier(modifiers[index]));
+    }
+
+    private static bool TryAddPartialModifier(BaseTypeDeclarationSyntax typeDeclaration, [NotNullWhen(true)] out BaseTypeDeclarationSyntax? modified)
+    {
+        if (typeDeclaration.Modifiers.Any(SyntaxKind.PartialKeyword))
+        {
+            modified = null;
+            return false;
+        }
+
+        modified = typeDeclaration.AddModifiers(SyntaxFactory.Token(SyntaxKind.PartialKeyword));
+        return true;
     }
 }
