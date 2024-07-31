@@ -198,12 +198,15 @@ public class TypeCollector
 
     private readonly Compilation compilation;
 
+    private readonly CancellationToken cancellationToken;
+
     private TypeCollector(Compilation compilation, AnalyzerOptions options, ReferenceSymbols referenceSymbols, ITypeSymbol targetType, Action<Diagnostic>? reportAnalyzerDiagnostic, CancellationToken cancellationToken)
     {
         this.typeReferences = referenceSymbols;
         this.reportDiagnostic = reportAnalyzerDiagnostic;
         this.options = options;
         this.compilation = compilation;
+        this.cancellationToken = cancellationToken;
 
         bool isInaccessible = false;
         foreach (BaseTypeDeclarationSyntax? decl in CodeAnalysisUtilities.FindInaccessibleTypes(targetType))
@@ -267,6 +270,8 @@ public class TypeCollector
     // Gate of recursive collect
     private bool CollectCore(ITypeSymbol typeSymbol)
     {
+        this.cancellationToken.ThrowIfCancellationRequested();
+
         if (this.alreadyCollected.TryGetValue(typeSymbol, out bool result))
         {
             return result;
