@@ -515,7 +515,6 @@ namespace UnityEngine
     }
 }
 
-#if UNITY_MATHEMATICS_SUPPORT
 namespace Unity.Mathematics
 {
     [MessagePackObject]
@@ -658,4 +657,3 @@ namespace Unity.Mathematics
         }
     }
 }
-#endif
