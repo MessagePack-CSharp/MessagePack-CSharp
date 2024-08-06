@@ -128,6 +128,12 @@ public static class AnalyzerUtilities
                     }
                 }
 
+                // If the resolver has GeneratedMessagePackResolverAttribute, it has static Instance property
+                if (r.GetAttributes().Any(x => x.AttributeClass?.Name == GeneratedMessagePackResolverAttributeName && x.AttributeClass?.ContainingNamespace.GetFullNamespaceName() == AttributeNamespace))
+                {
+                    return $"{r.GetCanonicalTypeFullName()}.Instance";
+                }
+
                 // Fallback to instantiating the resolver, if a constructor is available.
                 if (r.InstanceConstructors.FirstOrDefault(c => c.Parameters.Length == 0) is IMethodSymbol ctor)
                 {
