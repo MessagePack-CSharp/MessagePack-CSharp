@@ -266,12 +266,16 @@ internal class MyMessagePackObject
     {
         string testSource = """
 using MessagePack;
+using System.Collections.Generic;
 
 [MessagePackObject]
 internal class ContainerObject
 {
     [Key(0)]
     internal SubObject[] ArrayOfCustomObjects { get; set; }
+
+    [Key(1)]
+    internal List<SubObject>[] ArrayOfCustomObjectList { get; set; }
 }
 
 [MessagePackObject]

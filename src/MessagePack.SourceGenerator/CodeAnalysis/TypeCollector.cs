@@ -455,7 +455,7 @@ public class TypeCollector
 
         var info = GenericSerializationInfo.Create(array, this.options.Generator.Resolver) with
         {
-            Formatter = new QualifiedTypeName("MsgPack::Formatters", null, TypeKind.Class, formatterName, ImmutableArray.Create(elementTypeName.GetQualifiedName())),
+            Formatter = new QualifiedTypeName("MsgPack::Formatters", null, TypeKind.Class, formatterName, ImmutableArray.Create(elementTypeName.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments))),
         };
         this.collectedGenericInfo.Add(info);
         return true;
