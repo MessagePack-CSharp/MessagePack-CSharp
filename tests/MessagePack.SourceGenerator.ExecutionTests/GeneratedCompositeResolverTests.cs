@@ -16,7 +16,7 @@ public class GeneratedCompositeResolverTests
 
 namespace Tests
 {
-    [CompositeResolver(typeof(NativeGuidResolver), typeof(NativeDecimalResolver))]
+    [CompositeResolver(typeof(GeneratedMessagePackResolver), typeof(NativeGuidResolver), typeof(NativeDecimalResolver))]
     internal partial class MyGeneratedCompositeResolver
     {
     }
