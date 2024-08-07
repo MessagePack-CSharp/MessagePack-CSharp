@@ -31,15 +31,18 @@ public class CompositeResolverGenerator : IIncrementalGenerator
                 // We'll be accessing these members from a new source file, so it doesn't matter
                 // which existing syntax tree's semantic model we use to test for accessibility.
                 SemanticModel semanticModel = compilation.GetSemanticModel(compilation.SyntaxTrees.First());
-                string[] creationExpressions = AnalyzerUtilities.ResolverSymbolToInstanceExpression(
+                string[] resolverCreationExpressions = AnalyzerUtilities.ResolverSymbolToInstanceExpression(
+                    semanticModel,
+                    source.Attribute.ConstructorArguments[0].Values.Select(tc => tc.Value as INamedTypeSymbol)).ToArray();
+                string[] formatterCreationExpressions = AnalyzerUtilities.FormatterSymbolToInstanceExpression(
                     semanticModel,
                     source.Attribute.ConstructorArguments[0].Values.Select(tc => tc.Value as INamedTypeSymbol)).ToArray();
 
-                return (source.ResolverName, source.ResolverNamespace, CreationExpressions: creationExpressions);
+                return (source.ResolverName, source.ResolverNamespace, ResolverCreationExpressions: resolverCreationExpressions, FormatterCreationExpressions: formatterCreationExpressions);
             }
             else
             {
-                return (source.ResolverName, source.ResolverNamespace, CreationExpressions: Array.Empty<string>());
+                return (source.ResolverName, source.ResolverNamespace, ResolverCreationExpressions: Array.Empty<string>(), FormatterCreationExpressions: Array.Empty<string>());
             }
         });
 
@@ -49,7 +52,8 @@ public class CompositeResolverGenerator : IIncrementalGenerator
             {
                 ResolverName = source.ResolverName,
                 ResolverNamespace = source.ResolverNamespace,
-                ResolverInstanceExpressions = source.CreationExpressions,
+                ResolverInstanceExpressions = source.ResolverCreationExpressions,
+                FormatterInstanceExpressions = source.FormatterCreationExpressions,
             };
             context.AddSource(generator.FileName, generator.TransformText());
         });

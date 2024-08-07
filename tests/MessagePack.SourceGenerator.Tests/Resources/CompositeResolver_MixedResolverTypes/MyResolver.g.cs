@@ -6,7 +6,11 @@ partial class MyResolver : MsgPack::IFormatterResolver
 {
 	public static readonly MyResolver Instance = new MyResolver();
 
-	private static readonly MsgPack::IFormatterResolver[] ResolverList = new MsgPack::IFormatterResolver[]
+	private static readonly MsgPack::Formatters.IMessagePackFormatter[] formatterList = new MsgPack::Formatters.IMessagePackFormatter[]
+	{
+	};
+
+	private static readonly MsgPack::IFormatterResolver[] resolverList = new MsgPack::IFormatterResolver[]
 	{
 		global::MessagePack.Resolvers.NativeGuidResolver.Instance,
 		new global::ResolverWithCtor(),
@@ -25,7 +29,16 @@ partial class MyResolver : MsgPack::IFormatterResolver
 
 		static FormatterCache()
 		{
-			foreach (var resolver in ResolverList)
+			foreach (var formatter in formatterList)
+			{
+				if (formatter is MsgPack::Formatters.IMessagePackFormatter<T> f)
+				{
+					Formatter = f;
+					return;
+				}
+			}
+
+			foreach (var resolver in resolverList)
 			{
 				var f = resolver.GetFormatter<T>();
 				if (f != null)

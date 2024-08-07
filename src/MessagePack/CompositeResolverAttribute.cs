@@ -19,8 +19,8 @@ namespace MessagePack
         /// Initializes a new instance of the <see cref="CompositeResolverAttribute"/> class
         /// that describes the composite resolver to generate.
         /// </summary>
-        /// <param name="resolvers">The list of resolvers that this resolver aggregates together.</param>
-        public CompositeResolverAttribute(params Type[] resolvers)
+        /// <param name="formattersAndResolvers">The list of formatters and resolvers that this resolver aggregates together.</param>
+        public CompositeResolverAttribute(params Type[] formattersAndResolvers)
         {
         }
     }

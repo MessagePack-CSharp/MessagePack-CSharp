@@ -123,4 +123,6 @@ public partial class CompositeResolverTemplate : IFormatterTemplate
     ResolverRegisterInfo IFormatterTemplate.Info => throw new NotImplementedException();
 
     public required string[] ResolverInstanceExpressions { get; init; }
+
+    public required string[] FormatterInstanceExpressions { get; init; }
 }

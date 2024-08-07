@@ -113,14 +113,16 @@ public static class AnalyzerUtilities
             select new FormattableType(type));
     }
 
-    internal static IEnumerable<string> ResolverSymbolToInstanceExpression(SemanticModel semanticModel, IEnumerable<INamedTypeSymbol?> resolverTypes)
+    internal static IEnumerable<string> ResolverSymbolToInstanceExpression(SemanticModel semanticModel, IEnumerable<INamedTypeSymbol?> formatterAndResolverTypes)
     {
-        return resolverTypes.Select(r =>
-        {
-            if (r is not null)
+        return formatterAndResolverTypes
+            .Where(r => r is not null &&
+                (r.GetAttributes().Any(x => x.AttributeClass?.Name == GeneratedMessagePackResolverAttributeName && x.AttributeClass?.ContainingNamespace.GetFullNamespaceName() == AttributeNamespace) ||
+                r.AllInterfaces.Any(x => x.Name == IFormatterResolverInterfaceName && x.ContainingNamespace.GetFullNamespaceName() == AttributeNamespace)))
+            .Select(r =>
             {
                 // Prefer to get the resolver by its static Instance property/field, if available.
-                if (r.GetMembers("Instance").FirstOrDefault() is ISymbol { IsStatic: true } instanceMember)
+                if (r!.GetMembers("Instance").FirstOrDefault() is ISymbol { IsStatic: true } instanceMember)
                 {
                     if (instanceMember is IFieldSymbol or IPropertySymbol && semanticModel.IsAccessible(0, instanceMember))
                     {
@@ -142,11 +144,39 @@ public static class AnalyzerUtilities
                         return $"new {r.GetCanonicalTypeFullName()}()";
                     }
                 }
-            }
 
-            // No way to access an instance of the resolver. Produce something that will error out with direction for the user.
-            return $"#error No accessible default constructor or static Instance member on {r}.";
-        });
+                // No way to access an instance of the resolver. Produce something that will error out with direction for the user.
+                return $"#error No accessible default constructor or static Instance member on {r}.";
+            });
+    }
+
+    internal static IEnumerable<string> FormatterSymbolToInstanceExpression(SemanticModel semanticModel, IEnumerable<INamedTypeSymbol?> formatterAndResolverTypes)
+    {
+        return formatterAndResolverTypes
+            .Where(r => r is not null && r.AllInterfaces.Any(x => x.Name == IMessagePackFormatterInterfaceName && x.ContainingNamespace.GetFullNamespaceName() == IMessagePackFormatterInterfaceNamespace))
+            .Select(r =>
+            {
+                // Prefer to get the resolver by its static Instance property/field, if available.
+                if (r!.GetMembers("Instance").FirstOrDefault() is ISymbol { IsStatic: true } instanceMember)
+                {
+                    if (instanceMember is IFieldSymbol or IPropertySymbol && semanticModel.IsAccessible(0, instanceMember))
+                    {
+                        return $"{r.GetCanonicalTypeFullName()}.Instance";
+                    }
+                }
+
+                // Fallback to instantiating the resolver, if a constructor is available.
+                if (r.InstanceConstructors.FirstOrDefault(c => c.Parameters.Length == 0) is IMethodSymbol ctor)
+                {
+                    if (semanticModel.IsAccessible(0, ctor))
+                    {
+                        return $"new {r.GetCanonicalTypeFullName()}()";
+                    }
+                }
+
+                // No way to access an instance of the resolver. Produce something that will error out with direction for the user.
+                return $"#error No accessible default constructor or static Instance member on {r}.";
+            });
     }
 
     internal static IEnumerable<INamedTypeSymbol> SearchTypeForFormatterImplementations(INamedTypeSymbol symbol)
