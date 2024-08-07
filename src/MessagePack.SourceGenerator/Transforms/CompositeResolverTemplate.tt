@@ -10,7 +10,14 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 {
 	public static readonly <#= ResolverName #> Instance = new <#= ResolverName #>();
 
-	private static readonly MsgPack::IFormatterResolver[] ResolverList = new MsgPack::IFormatterResolver[]
+	private static readonly MsgPack::Formatters.IMessagePackFormatter[] formatterList = new MsgPack::Formatters.IMessagePackFormatter[]
+	{
+<# foreach (string expr in FormatterInstanceExpressions) { #>
+		<#= expr #>,
+<# } #>
+	};
+
+	private static readonly MsgPack::IFormatterResolver[] resolverList = new MsgPack::IFormatterResolver[]
 	{
 <# foreach (string expr in ResolverInstanceExpressions) { #>
 		<#= expr #>,
@@ -30,7 +37,16 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 
 		static FormatterCache()
 		{
-			foreach (var resolver in ResolverList)
+			foreach (var formatter in formatterList)
+			{
+				if (formatter is MsgPack::Formatters.IMessagePackFormatter<T> f)
+				{
+					Formatter = f;
+					return;
+				}
+			}
+
+			foreach (var resolver in resolverList)
 			{
 				var f = resolver.GetFormatter<T>();
 				if (f != null)

@@ -12,7 +12,7 @@ const MessagePack.ReservedExtensionTypeCodes.UnityVector2 = 30 -> sbyte
 const MessagePack.ReservedExtensionTypeCodes.UnityVector3 = 31 -> sbyte
 const MessagePack.ReservedExtensionTypeCodes.UnityVector4 = 32 -> sbyte
 MessagePack.CompositeResolverAttribute
-MessagePack.CompositeResolverAttribute.CompositeResolverAttribute(params System.Type![]! resolvers) -> void
+MessagePack.CompositeResolverAttribute.CompositeResolverAttribute(params System.Type![]! formattersAndResolvers) -> void
 MessagePack.Formatters.Matrix3x2Formatter
 MessagePack.Formatters.Matrix3x2Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Matrix3x2
 MessagePack.Formatters.Matrix3x2Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Matrix3x2 value, MessagePack.MessagePackSerializerOptions! options) -> void

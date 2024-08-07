@@ -34,7 +34,14 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(" Instance = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("();\r\n\r\n\tprivate static readonly MsgPack::IFormatterResolver[] ResolverList = new " +
+            this.Write("();\r\n\r\n\tprivate static readonly MsgPack::Formatters.IMessagePackFormatter[] forma" +
+                    "tterList = new MsgPack::Formatters.IMessagePackFormatter[]\r\n\t{\r\n");
+ foreach (string expr in FormatterInstanceExpressions) { 
+            this.Write("\t\t");
+            this.Write(this.ToStringHelper.ToStringWithCulture(expr));
+            this.Write(",\r\n");
+ } 
+            this.Write("\t};\r\n\r\n\tprivate static readonly MsgPack::IFormatterResolver[] resolverList = new " +
                     "MsgPack::IFormatterResolver[]\r\n\t{\r\n");
  foreach (string expr in ResolverInstanceExpressions) { 
             this.Write("\t\t");
@@ -56,7 +63,16 @@ namespace MessagePack.SourceGenerator.Transforms
 
 		static FormatterCache()
 		{
-			foreach (var resolver in ResolverList)
+			foreach (var formatter in formatterList)
+			{
+				if (formatter is MsgPack::Formatters.IMessagePackFormatter<T> f)
+				{
+					Formatter = f;
+					return;
+				}
+			}
+
+			foreach (var resolver in resolverList)
 			{
 				var f = resolver.GetFormatter<T>();
 				if (f != null)
