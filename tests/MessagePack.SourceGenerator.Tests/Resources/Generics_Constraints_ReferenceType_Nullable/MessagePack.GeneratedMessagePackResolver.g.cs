@@ -39,7 +39,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new(1)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(1)
 		{
 			{ typeof(global::TempProject.MyGenericObject<,>), 0 },
 		};
@@ -48,10 +48,10 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 		{
 			if (t.IsGenericType && openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))
 			{
-				return openKey switch
+				switch (openKey)
 				{
-					0 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<,>).MakeGenericType(t.GenericTypeArguments)),
-					_ => null, // unreachable
+					case 0: return global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<,>).MakeGenericType(t.GenericTypeArguments));
+					default: return null; // unreachable
 				};
 			}
 

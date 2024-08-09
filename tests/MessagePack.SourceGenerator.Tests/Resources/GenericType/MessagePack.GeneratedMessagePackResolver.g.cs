@@ -39,12 +39,12 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(2)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(2)
 		{
 			{ typeof(global::MyGenericType<int>), 0 },
 			{ typeof(global::ContainerObject), 1 },
 		};
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new(1)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(1)
 		{
 			{ typeof(global::MyGenericType<>), 0 },
 		};
@@ -53,19 +53,19 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 		{
 			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return closedKey switch
+				switch (closedKey)
 				{
-					0 => new global::MessagePack.GeneratedMessagePackResolver.MyGenericTypeFormatter<int>(),
-					1 => new global::MessagePack.GeneratedMessagePackResolver.ContainerObjectFormatter(),
-					_ => null, // unreachable
+					case 0: return new global::MessagePack.GeneratedMessagePackResolver.MyGenericTypeFormatter<int>();
+					case 1: return new global::MessagePack.GeneratedMessagePackResolver.ContainerObjectFormatter();
+					default: return null; // unreachable
 				};
 			}
 			if (t.IsGenericType && openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))
 			{
-				return openKey switch
+				switch (openKey)
 				{
-					0 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.MyGenericTypeFormatter<>).MakeGenericType(t.GenericTypeArguments)),
-					_ => null, // unreachable
+					case 0: return global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.MyGenericTypeFormatter<>).MakeGenericType(t.GenericTypeArguments));
+					default: return null; // unreachable
 				};
 			}
 

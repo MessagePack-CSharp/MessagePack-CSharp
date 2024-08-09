@@ -39,7 +39,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(5)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(5)
 		{
 			{ typeof(global::System.Int32[]), 0 },
 			{ typeof(global::System.Collections.Generic.IEnumerable<global::System.Guid>), 1 },
@@ -47,7 +47,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{ typeof(global::TempProject.Wrapper<int[]>), 3 },
 			{ typeof(global::TempProject.Wrapper<string>), 4 },
 		};
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new(1)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(1)
 		{
 			{ typeof(global::TempProject.Wrapper<>), 0 },
 		};
@@ -56,22 +56,22 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 		{
 			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return closedKey switch
+				switch (closedKey)
 				{
-					0 => new MsgPack::Formatters.ArrayFormatter<global::System.Int32>(),
-					1 => new MsgPack::Formatters.InterfaceEnumerableFormatter<global::System.Guid>(),
-					2 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>(),
-					3 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<int[]>(),
-					4 => new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<string>(),
-					_ => null, // unreachable
+					case 0: return new MsgPack::Formatters.ArrayFormatter<global::System.Int32>();
+					case 1: return new MsgPack::Formatters.InterfaceEnumerableFormatter<global::System.Guid>();
+					case 2: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
+					case 3: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<int[]>();
+					case 4: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<string>();
+					default: return null; // unreachable
 				};
 			}
 			if (t.IsGenericType && openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))
 			{
-				return openKey switch
+				switch (openKey)
 				{
-					0 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<>).MakeGenericType(t.GenericTypeArguments)),
-					_ => null, // unreachable
+					case 0: return global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<>).MakeGenericType(t.GenericTypeArguments));
+					default: return null; // unreachable
 				};
 			}
 

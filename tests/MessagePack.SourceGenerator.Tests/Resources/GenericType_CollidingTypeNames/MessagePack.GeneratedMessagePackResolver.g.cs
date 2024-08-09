@@ -39,13 +39,13 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(3)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(3)
 		{
 			{ typeof(global::NS1.MyType<int>), 0 },
 			{ typeof(global::NS2.MyType<int>), 1 },
 			{ typeof(global::MyMessagePackObject), 2 },
 		};
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new(2)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(2)
 		{
 			{ typeof(global::NS1.MyType<>), 0 },
 			{ typeof(global::NS2.MyType<>), 1 },
@@ -55,21 +55,21 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 		{
 			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return closedKey switch
+				switch (closedKey)
 				{
-					0 => new global::MessagePack.GeneratedMessagePackResolver.NS1.MyTypeFormatter<int>(),
-					1 => new global::MessagePack.GeneratedMessagePackResolver.NS2.MyTypeFormatter<int>(),
-					2 => new global::MessagePack.GeneratedMessagePackResolver.MyMessagePackObjectFormatter(),
-					_ => null, // unreachable
+					case 0: return new global::MessagePack.GeneratedMessagePackResolver.NS1.MyTypeFormatter<int>();
+					case 1: return new global::MessagePack.GeneratedMessagePackResolver.NS2.MyTypeFormatter<int>();
+					case 2: return new global::MessagePack.GeneratedMessagePackResolver.MyMessagePackObjectFormatter();
+					default: return null; // unreachable
 				};
 			}
 			if (t.IsGenericType && openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))
 			{
-				return openKey switch
+				switch (openKey)
 				{
-					0 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.NS1.MyTypeFormatter<>).MakeGenericType(t.GenericTypeArguments)),
-					1 => global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.NS2.MyTypeFormatter<>).MakeGenericType(t.GenericTypeArguments)),
-					_ => null, // unreachable
+					case 0: return global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.NS1.MyTypeFormatter<>).MakeGenericType(t.GenericTypeArguments));
+					case 1: return global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.NS2.MyTypeFormatter<>).MakeGenericType(t.GenericTypeArguments));
+					default: return null; // unreachable
 				};
 			}
 
