@@ -80,7 +80,14 @@ namespace MessagePackAnalyzer
             {
                 if (ReferenceSymbols.TryCreate(ctxt.Compilation, out ReferenceSymbols? typeReferences))
                 {
-                    ctxt.RegisterSyntaxNodeAction(c => Analyze(c, typeReferences), SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.InterfaceDeclaration);
+                    var relevantSyntaxKinds = new[]
+                    {
+                         SyntaxKind.ClassDeclaration,
+                         SyntaxKind.StructDeclaration,
+                         SyntaxKind.InterfaceDeclaration,
+                         SyntaxKind.RecordDeclaration,
+                    };
+                    ctxt.RegisterSyntaxNodeAction(c => Analyze(c, typeReferences), relevantSyntaxKinds);
                 }
             });
         }

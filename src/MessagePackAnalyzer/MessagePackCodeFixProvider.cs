@@ -154,7 +154,8 @@ namespace MessagePackAnalyzer
 
             foreach (ISymbol member in targets)
             {
-                if (member.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName) is null)
+                if (!member.IsImplicitlyDeclared &&
+                    member.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName) is null)
                 {
                     SyntaxNode node = await member.DeclaringSyntaxReferences[0].GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
                     var documentEditor = await solutionEditor.GetDocumentEditorAsync(document.Project.Solution.GetDocumentId(node.SyntaxTree), cancellationToken).ConfigureAwait(false);
