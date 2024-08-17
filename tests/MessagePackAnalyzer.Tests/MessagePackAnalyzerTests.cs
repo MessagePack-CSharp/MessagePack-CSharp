@@ -3,7 +3,6 @@
 
 using System.Collections.Immutable;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
@@ -227,6 +226,32 @@ public record Foo
         context.SolutionTransforms.Add(static (solution, projectId) =>
         {
             return solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp9));
+        });
+
+        context.TestCode = input;
+        context.FixedCode = output;
+
+        await context.RunAsync();
+    }
+
+    [Fact]
+    public async Task AddAttributesToMembersOfRecordWithPrimaryCtor()
+    {
+        string input = Preamble + /* lang=c#-test */ @"
+[MessagePackObject]
+public record Foo(
+    string {|MsgPack004:Member1|},
+    string {|MsgPack004:Member2|});
+";
+
+        string output = input; // No fix for this
+
+        var context = new CSharpCodeFixTest<MessagePackAnalyzer.MessagePackAnalyzer, MessagePackAnalyzer.MessagePackCodeFixProvider, DefaultVerifier>();
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net60.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePack", "2.0.335"))); ;
+        context.CompilerDiagnostics = CompilerDiagnostics.Errors;
+        context.SolutionTransforms.Add(static (solution, projectId) =>
+        {
+            return solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp11));
         });
 
         context.TestCode = input;

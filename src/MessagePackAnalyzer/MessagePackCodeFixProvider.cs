@@ -118,6 +118,12 @@ namespace MessagePackAnalyzer
                 }
             }
 
+            if (namedSymbol.IsRecord && namedSymbol.Constructors.Any(c => IsPrimaryConstructor(c, namedSymbol)))
+            {
+                // We can`t specify the target of the attribute ([property:Key(X)] with the current roslyn version of this code fix.
+                return;
+            }
+
             var action = CodeAction.Create("Add MessagePack KeyAttribute", c => AddKeyAttributeAsync(context.Document, namedSymbol, c), "MessagePackAnalyzer.AddKeyAttribute");
 
             context.RegisterCodeFix(action, context.Diagnostics.First()); // use single.
@@ -173,6 +179,21 @@ namespace MessagePackAnalyzer
             }
 
             return solutionEditor.GetChangedSolution();
+        }
+
+        private static bool IsPrimaryConstructor(IMethodSymbol constructor, INamedTypeSymbol type)
+        {
+            var constructorParameters = constructor.Parameters;
+            var typeProperties = type.GetMembers()
+                .OfType<IPropertySymbol>()
+                .Where(prop => !prop.IsImplicitlyDeclared)
+                .ToList();
+
+            return constructorParameters.Length == typeProperties.Count &&
+                constructorParameters.All(param =>
+                    typeProperties.Any(prop =>
+                        prop.Name == param.Name &&
+                        prop.Type.ToDisplayString() == param.Type.ToDisplayString()));
         }
     }
 }
