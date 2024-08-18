@@ -221,7 +221,7 @@ public record Foo
 ";
 
         var context = new CSharpCodeFixTest<MessagePackAnalyzer.MessagePackAnalyzer, MessagePackAnalyzer.MessagePackCodeFixProvider, DefaultVerifier>();
-        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net60.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePack", "2.0.335"))); ;
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net60.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePack", "2.0.335")));
         context.CompilerDiagnostics = CompilerDiagnostics.Errors;
         context.SolutionTransforms.Add(static (solution, projectId) =>
         {
@@ -247,7 +247,7 @@ public record Foo(
         string output = input; // No fix for this
 
         var context = new CSharpCodeFixTest<MessagePackAnalyzer.MessagePackAnalyzer, MessagePackAnalyzer.MessagePackCodeFixProvider, DefaultVerifier>();
-        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net60.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePack", "2.0.335"))); ;
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net60.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePack", "2.0.335")));
         context.CompilerDiagnostics = CompilerDiagnostics.Errors;
         context.SolutionTransforms.Add(static (solution, projectId) =>
         {
