@@ -219,19 +219,20 @@ public record Foo
     public string Member2 { get; set; }
 }
 ";
-
-        var context = new CSharpCodeFixTest<MessagePackAnalyzer.MessagePackAnalyzer, MessagePackAnalyzer.MessagePackCodeFixProvider, DefaultVerifier>();
-        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net60.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePack", "2.0.335")));
-        context.CompilerDiagnostics = CompilerDiagnostics.Errors;
-        context.SolutionTransforms.Add(static (solution, projectId) =>
+        await new VerifyCS.Test
         {
-            return solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp9));
-        });
-
-        context.TestCode = input;
-        context.FixedCode = output;
-
-        await context.RunAsync();
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net60.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePack", "2.0.335"))),
+            CompilerDiagnostics = CompilerDiagnostics.Errors,
+            SolutionTransforms =
+            {
+                static (solution, projectId) =>
+                {
+                    return solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp11));
+                },
+            },
+            TestCode = input,
+            FixedCode = output,
+        }.RunAsync();
     }
 
     [Fact]
@@ -246,17 +247,19 @@ public record Foo(
 
         string output = input; // No fix for this
 
-        var context = new CSharpCodeFixTest<MessagePackAnalyzer.MessagePackAnalyzer, MessagePackAnalyzer.MessagePackCodeFixProvider, DefaultVerifier>();
-        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net60.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePack", "2.0.335")));
-        context.CompilerDiagnostics = CompilerDiagnostics.Errors;
-        context.SolutionTransforms.Add(static (solution, projectId) =>
+        await new VerifyCS.Test
         {
-            return solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp11));
-        });
-
-        context.TestCode = input;
-        context.FixedCode = output;
-
-        await context.RunAsync();
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net60.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePack", "2.0.335"))),
+            CompilerDiagnostics = CompilerDiagnostics.Errors,
+            SolutionTransforms =
+            {
+                static (solution, projectId) =>
+                {
+                    return solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp11));
+                },
+            },
+            TestCode = input,
+            FixedCode = output,
+        }.RunAsync();
     }
 }
