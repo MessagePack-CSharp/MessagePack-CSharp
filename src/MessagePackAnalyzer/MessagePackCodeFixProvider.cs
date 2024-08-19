@@ -154,12 +154,26 @@ namespace MessagePackAnalyzer
 
             foreach (ISymbol member in targets)
             {
-                if (member.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName) is null)
+                if (!member.IsImplicitlyDeclared &&
+                    member.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName) is null)
                 {
                     SyntaxNode node = await member.DeclaringSyntaxReferences[0].GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
                     var documentEditor = await solutionEditor.GetDocumentEditorAsync(document.Project.Solution.GetDocumentId(node.SyntaxTree), cancellationToken).ConfigureAwait(false);
                     var syntaxGenerator = SyntaxGenerator.GetGenerator(documentEditor.OriginalDocument);
-                    documentEditor.AddAttribute(node, syntaxGenerator.Attribute("MessagePack.KeyAttribute", syntaxGenerator.LiteralExpression(startOrder++)));
+                    AttributeListSyntax attributeList = (AttributeListSyntax)syntaxGenerator.Attribute("MessagePack.KeyAttribute", syntaxGenerator.LiteralExpression(startOrder++));
+                    if (node is ParameterSyntax parameter)
+                    {
+                        // The primary constructor requires special target on the attribute list.
+                        attributeList = attributeList.WithTarget(
+                            SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.PropertyKeyword)))
+                            .WithLeadingTrivia(parameter.GetLeadingTrivia());
+                        ParameterSyntax attributedParameter = parameter.AddAttributeLists(attributeList);
+                        documentEditor.ReplaceNode(parameter, attributedParameter);
+                    }
+                    else
+                    {
+                        documentEditor.AddAttribute(node, attributeList);
+                    }
                 }
             }
 

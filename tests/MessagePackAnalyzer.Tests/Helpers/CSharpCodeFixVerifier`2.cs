@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
@@ -22,26 +23,26 @@ public static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
     public static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor)
         => new DiagnosticResult(descriptor);
 
-    public static Task VerifyAnalyzerWithoutMessagePackReferenceAsync(string source)
+    public static Task VerifyAnalyzerWithoutMessagePackReferenceAsync([StringSyntax("c#-test")] string source)
     {
         var test = new Test { TestCode = source, ReferenceAssemblies = ReferenceAssemblies.NetFramework.Net472.Default };
         return test.RunAsync();
     }
 
-    public static Task VerifyAnalyzerAsync(string source, params DiagnosticResult[] expected)
+    public static Task VerifyAnalyzerAsync([StringSyntax("c#-test")] string source, params DiagnosticResult[] expected)
     {
         var test = new Test { TestCode = source };
         test.ExpectedDiagnostics.AddRange(expected);
         return test.RunAsync();
     }
 
-    public static Task VerifyCodeFixAsync(string source, string fixedSource)
+    public static Task VerifyCodeFixAsync([StringSyntax("c#-test")] string source, [StringSyntax("c#-test")] string fixedSource)
         => VerifyCodeFixAsync(source, DiagnosticResult.EmptyDiagnosticResults, fixedSource);
 
-    public static Task VerifyCodeFixAsync(string source, DiagnosticResult expected, string fixedSource)
+    public static Task VerifyCodeFixAsync([StringSyntax("c#-test")] string source, DiagnosticResult expected, [StringSyntax("c#-test")] string fixedSource)
         => VerifyCodeFixAsync(source, new[] { expected }, fixedSource);
 
-    public static Task VerifyCodeFixAsync(string source, DiagnosticResult[] expected, string fixedSource)
+    public static Task VerifyCodeFixAsync([StringSyntax("c#-test")] string source, DiagnosticResult[] expected, [StringSyntax("c#-test")] string fixedSource)
     {
         var test = new Test
         {
@@ -53,7 +54,7 @@ public static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
         return test.RunAsync();
     }
 
-    public static Task VerifyCodeFixAsync(string[] source, string[] fixedSource)
+    public static Task VerifyCodeFixAsync([StringSyntax("c#-test")] string[] source, [StringSyntax("c#-test")] string[] fixedSource)
     {
         var test = new Test
         {
