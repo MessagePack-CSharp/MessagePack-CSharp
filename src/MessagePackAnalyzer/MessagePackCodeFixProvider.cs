@@ -118,12 +118,6 @@ namespace MessagePackAnalyzer
                 }
             }
 
-            if (namedSymbol.IsRecord && namedSymbol.Constructors.Any(c => IsPrimaryConstructor(c, namedSymbol)))
-            {
-                // We can`t specify the target of the attribute ([property:Key(X)] with the current roslyn version of this code fix.
-                return;
-            }
-
             var action = CodeAction.Create("Add MessagePack KeyAttribute", c => AddKeyAttributeAsync(context.Document, namedSymbol, c), "MessagePackAnalyzer.AddKeyAttribute");
 
             context.RegisterCodeFix(action, context.Diagnostics.First()); // use single.
@@ -166,7 +160,20 @@ namespace MessagePackAnalyzer
                     SyntaxNode node = await member.DeclaringSyntaxReferences[0].GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
                     var documentEditor = await solutionEditor.GetDocumentEditorAsync(document.Project.Solution.GetDocumentId(node.SyntaxTree), cancellationToken).ConfigureAwait(false);
                     var syntaxGenerator = SyntaxGenerator.GetGenerator(documentEditor.OriginalDocument);
-                    documentEditor.AddAttribute(node, syntaxGenerator.Attribute("MessagePack.KeyAttribute", syntaxGenerator.LiteralExpression(startOrder++)));
+                    AttributeListSyntax attributeList = (AttributeListSyntax)syntaxGenerator.Attribute("MessagePack.KeyAttribute", syntaxGenerator.LiteralExpression(startOrder++));
+                    if (node is ParameterSyntax parameter)
+                    {
+                        // The primary constructor requires special target on the attribute list.
+                        attributeList = attributeList.WithTarget(
+                            SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.PropertyKeyword)))
+                            .WithLeadingTrivia(parameter.GetLeadingTrivia());
+                        ParameterSyntax attributedParameter = parameter.AddAttributeLists(attributeList);
+                        documentEditor.ReplaceNode(parameter, attributedParameter);
+                    }
+                    else
+                    {
+                        documentEditor.AddAttribute(node, attributeList);
+                    }
                 }
             }
 
@@ -179,21 +186,6 @@ namespace MessagePackAnalyzer
             }
 
             return solutionEditor.GetChangedSolution();
-        }
-
-        private static bool IsPrimaryConstructor(IMethodSymbol constructor, INamedTypeSymbol type)
-        {
-            var constructorParameters = constructor.Parameters;
-            var typeProperties = type.GetMembers()
-                .OfType<IPropertySymbol>()
-                .Where(prop => !prop.IsImplicitlyDeclared)
-                .ToList();
-
-            return constructorParameters.Length == typeProperties.Count &&
-                constructorParameters.All(param =>
-                    typeProperties.Any(prop =>
-                        prop.Name == param.Name &&
-                        prop.Type.ToDisplayString() == param.Type.ToDisplayString()));
         }
     }
 }

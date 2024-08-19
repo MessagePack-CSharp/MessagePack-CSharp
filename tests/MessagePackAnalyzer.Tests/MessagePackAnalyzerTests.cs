@@ -245,7 +245,12 @@ public record Foo(
     string {|MsgPack004:Member2|});
 ";
 
-        string output = input; // No fix for this
+        string output = Preamble + /* lang=c#-test */ @"
+[MessagePackObject]
+public record Foo(
+    [property: Key(0)] string {|MsgPack004:Member1|},
+    [property: Key(1)] string {|MsgPack004:Member2|});
+";
 
         await new VerifyCS.Test
         {
