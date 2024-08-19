@@ -19,7 +19,7 @@ internal class CSharpSourceGeneratorCodeFixVerifier<TSourceGenerator, TCodeFix>
             this.CompilerDiagnostics = CompilerDiagnostics.Warnings;
         }
 
-        public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.CSharp9;
+        public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.CSharp7_3;
 
         public ReferencesSet MessagePackReferences { get; set; } = ReferencesSet.MessagePack;
 

@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis.CSharp;
 using VerifyCS = CSharpSourceGeneratorVerifier<MessagePack.SourceGenerator.MessagePackGenerator>;
 
 public class CustomStringKeyFormatterTests
@@ -26,7 +27,7 @@ namespace TempProject
     public record MyMessagePackObject([property: Key("p")] string PhoneNumber, [property: Key("c")] int Count);
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, languageVersion: LanguageVersion.CSharp9);
     }
 
     [Fact]

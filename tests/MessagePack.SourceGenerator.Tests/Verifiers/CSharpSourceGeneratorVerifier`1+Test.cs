@@ -43,9 +43,9 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
 #endif
         }
 
-        public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.CSharp9;
+        public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.CSharp7_3;
 
-        public static Task RunDefaultAsync(ITestOutputHelper logger, string testSource, AnalyzerOptions? options = null, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
+        public static Task RunDefaultAsync(ITestOutputHelper logger, string testSource, AnalyzerOptions? options = null, LanguageVersion languageVersion = LanguageVersion.CSharp7_3, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
             options ??= new();
 
@@ -64,7 +64,7 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
                     partial class {{options.Generator.Resolver.Name}} { }
                 }
                 """;
-            return RunDefaultAsync(logger, testSource, resolverPartialClassSource, testFile, testMethod);
+            return RunDefaultAsync(logger, testSource, resolverPartialClassSource, languageVersion, testFile, testMethod);
         }
 
         public async Task RunDefaultAsync(ITestOutputHelper logger)
@@ -91,7 +91,7 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
             }
         }
 
-        private static Task RunDefaultAsync(ITestOutputHelper logger, string testSource, string resolverPartialClassSource, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
+        private static Task RunDefaultAsync(ITestOutputHelper logger, string testSource, string resolverPartialClassSource, LanguageVersion languageVersion, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
             Test test = new(testFile: testFile, testMethod: testMethod)
             {
@@ -99,6 +99,7 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
                 {
                     Sources = { testSource, resolverPartialClassSource },
                 },
+                LanguageVersion = languageVersion,
             };
 
             return test.RunDefaultAsync(logger);
