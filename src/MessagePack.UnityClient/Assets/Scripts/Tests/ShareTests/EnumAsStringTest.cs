@@ -91,14 +91,14 @@ namespace MessagePack.Tests
             new object[] { AsStringFlag.Foo, null, "Foo", "null" },
             new object[] { AsStringFlag.Bar, AsStringFlag.Baz, "Bar", "Baz" },
             new object[] { AsStringFlag.FooBar, AsStringFlag.FooBaz, "FooBar", "FooBaz" },
-            new object[] { AsStringFlag.BarBaz, AsStringFlag.FooBarBaz, "BarBaz", "FooBarBaz" },
+            new object[] { AsStringFlag.BarBaz, AsStringFlag.FooBarBaz, "BarBaz", "FooBarBaz", },
             new object[] { AsStringFlag.Bar | AsStringFlag.FooBaz, AsStringFlag.BarBaz | AsStringFlag.FooBarBaz, "Bar, FooBaz", "BarBaz, FooBarBaz" },
             new object[] { (AsStringFlag)10, (AsStringFlag)999, "Baz, FooBaz", "999" },
         };
 
         public static object[][] EnumDataForEnumMember =
         {
-            new object[] { AsStringWithEnumMember.Foo, null, "FooValue", "null" },
+            new object[] { AsStringWithEnumMember.Foo, null, "FooValue", "null", },
             new object[] { AsStringWithEnumMember.Bar, AsStringWithEnumMember.Baz, "BarValue", "BazValue" },
             new object[] { AsStringWithEnumMember.FooBar, AsStringWithEnumMember.FooBaz, "FooBarValue", "FooBazValue" },
             new object[] { AsStringWithEnumMember.BarBaz, AsStringWithEnumMember.FooBarBaz, "BarBazValue", "FooBarBazValue" },
@@ -120,13 +120,13 @@ namespace MessagePack.Tests
         public void EnumTest<T>(T x, T? y, string xName, string yName)
             where T : struct
         {
-            var bin = MessagePackSerializer.Serialize(x, DynamicEnumAsStringResolver.Options);
+            var bin = MessagePackSerializer.Serialize(x, DynamicEnumAsStringResolver.CaseSensetiveInstance.Options);
             MessagePackSerializer.ConvertToJson(bin).Trim('\"').Is(xName);
-            MessagePackSerializer.Deserialize<T>(bin, DynamicEnumAsStringResolver.Options).Is(x);
+            MessagePackSerializer.Deserialize<T>(bin, DynamicEnumAsStringResolver.CaseSensetiveInstance.Options).Is(x);
 
-            var bin2 = MessagePackSerializer.Serialize(y, DynamicEnumAsStringResolver.Options);
+            var bin2 = MessagePackSerializer.Serialize(y, DynamicEnumAsStringResolver.CaseSensetiveInstance.Options);
             MessagePackSerializer.ConvertToJson(bin2).Trim('\"').Is(yName);
-            MessagePackSerializer.Deserialize<T?>(bin2, DynamicEnumAsStringResolver.Options).Is(y);
+            MessagePackSerializer.Deserialize<T?>(bin2, DynamicEnumAsStringResolver.CaseSensetiveInstance.Options).Is(y);
         }
 
         [Theory]
@@ -134,13 +134,13 @@ namespace MessagePack.Tests
         public void EnumTestEnumMember<T>(T x, T? y, string xName, string yName)
             where T : struct
         {
-            var bin = MessagePackSerializer.Serialize(x, DynamicEnumAsStringResolver.Options);
+            var bin = MessagePackSerializer.Serialize(x, DynamicEnumAsStringResolver.CaseSensetiveInstance.Options);
             MessagePackSerializer.ConvertToJson(bin).Trim('\"').Is(xName);
-            MessagePackSerializer.Deserialize<T>(bin, DynamicEnumAsStringResolver.Options).Is(x);
+            MessagePackSerializer.Deserialize<T>(bin, DynamicEnumAsStringResolver.CaseSensetiveInstance.Options).Is(x);
 
-            var bin2 = MessagePackSerializer.Serialize(y, DynamicEnumAsStringResolver.Options);
+            var bin2 = MessagePackSerializer.Serialize(y, DynamicEnumAsStringResolver.CaseSensetiveInstance.Options);
             MessagePackSerializer.ConvertToJson(bin2).Trim('\"').Is(yName);
-            MessagePackSerializer.Deserialize<T?>(bin2, DynamicEnumAsStringResolver.Options).Is(y);
+            MessagePackSerializer.Deserialize<T?>(bin2, DynamicEnumAsStringResolver.CaseSensetiveInstance.Options).Is(y);
         }
     }
 

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
+using MessagePack.Internal;
 
 namespace MessagePack.Formatters
 {
@@ -12,18 +13,25 @@ namespace MessagePack.Formatters
     public sealed class EnumAsStringFormatter<T> : IMessagePackFormatter<T>
         where T : struct, Enum
     {
+        private readonly bool ignoreCase;
         private readonly IReadOnlyDictionary<string, T> nameValueMapping;
         private readonly IReadOnlyDictionary<T, string> valueNameMapping;
         private readonly IReadOnlyDictionary<string, string>? clrToSerializationName;
         private readonly IReadOnlyDictionary<string, string>? serializationToClrName;
         private readonly bool isFlags;
 
+
+        public EnumAsStringFormatter(bool ignoreCase)
+            : this()
+        {
+            this.ignoreCase = ignoreCase;
+        }
+
         public EnumAsStringFormatter()
         {
             this.isFlags = typeof(T).GetCustomAttribute<FlagsAttribute>() is object;
-
             var fields = typeof(T).GetFields(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Static);
-            var nameValueMapping = new Dictionary<string, T>(fields.Length);
+            var nameValueMapping = new Dictionary<string, T>(fields.Length, ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
             var valueNameMapping = new Dictionary<T, string>();
             Dictionary<string, string>? clrToSerializationName = null;
             Dictionary<string, string>? serializationToClrName = null;
@@ -37,8 +45,8 @@ namespace MessagePack.Formatters
                 var attribute = enumValueMember.GetCustomAttribute<EnumMemberAttribute>();
                 if (attribute is { IsValueSetExplicitly: true, Value: not null })
                 {
-                    clrToSerializationName ??= new();
-                    serializationToClrName ??= new();
+                    clrToSerializationName ??= new(ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+                    serializationToClrName ??= new(ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
 
                     clrToSerializationName.Add(name, attribute.Value);
                     serializationToClrName.Add(attribute.Value, name);
@@ -79,7 +87,7 @@ namespace MessagePack.Formatters
             // Avoid Enum.Parse when we can because it is too slow.
             if (!this.nameValueMapping.TryGetValue(name, out T value))
             {
-                value = (T)Enum.Parse(typeof(T), this.GetClrNames(name));
+                value = (T)Enum.Parse(typeof(T), this.GetClrNames(name), ignoreCase);
             }
 
             return value;
