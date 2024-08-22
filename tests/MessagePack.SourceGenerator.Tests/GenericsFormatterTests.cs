@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis.CSharp;
 using VerifyCS = CSharpSourceGeneratorVerifier<MessagePack.SourceGenerator.MessagePackGenerator>;
 
 public class GenericsFormatterTests
@@ -352,7 +353,7 @@ namespace TempProject
     public interface IMyInterface {}
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, languageVersion: LanguageVersion.CSharp9);
     }
 
     [Fact]
@@ -405,7 +406,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, languageVersion: LanguageVersion.CSharp8);
     }
 
     [Fact]
@@ -432,7 +433,7 @@ namespace TempProject
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, languageVersion: LanguageVersion.CSharp9);
     }
 
     [Fact]

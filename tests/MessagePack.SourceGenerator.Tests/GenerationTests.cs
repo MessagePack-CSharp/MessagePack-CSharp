@@ -3,6 +3,7 @@
 
 using MessagePack.SourceGenerator.Tests;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Testing;
 using VerifyCS = CSharpSourceGeneratorVerifier<MessagePack.SourceGenerator.MessagePackGenerator>;
 
@@ -230,7 +231,7 @@ class UnserializableRecordFormatter : IMessagePackFormatter<UnserializableRecord
     }
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, options: new() { Generator = new() { Formatters = new() { UsesMapMode = usesMapMode } } }, testMethod: $"{nameof(CustomFormatterViaAttributeOnProperty)}({usesMapMode})");
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, options: new() { Generator = new() { Formatters = new() { UsesMapMode = usesMapMode } } }, languageVersion: LanguageVersion.CSharp9, testMethod: $"{nameof(CustomFormatterViaAttributeOnProperty)}({usesMapMode})");
     }
 
     [Theory, PairwiseData]
