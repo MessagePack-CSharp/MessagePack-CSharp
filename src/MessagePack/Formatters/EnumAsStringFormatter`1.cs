@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
+using MessagePack.Internal;
 
 namespace MessagePack.Formatters
 {
@@ -12,18 +13,34 @@ namespace MessagePack.Formatters
     public sealed class EnumAsStringFormatter<T> : IMessagePackFormatter<T>
         where T : struct, Enum
     {
+        private readonly bool ignoreCase;
         private readonly IReadOnlyDictionary<string, T> nameValueMapping;
         private readonly IReadOnlyDictionary<T, string> valueNameMapping;
         private readonly IReadOnlyDictionary<string, string>? clrToSerializationName;
         private readonly IReadOnlyDictionary<string, string>? serializationToClrName;
         private readonly bool isFlags;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EnumAsStringFormatter{T}"/> class
+        /// that is case sensitive.
+        /// </summary>
         public EnumAsStringFormatter()
+            : this(ignoreCase: false)
         {
-            this.isFlags = typeof(T).GetCustomAttribute<FlagsAttribute>() is object;
+        }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EnumAsStringFormatter{T}"/> class.
+        /// </summary>
+        /// <param name="ignoreCase">A value indicating whether to allow enum value names to mismatch on deserialization.</param>
+        public EnumAsStringFormatter(bool ignoreCase)
+        {
+            this.ignoreCase = ignoreCase;
+            StringComparer stringComparer = ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+
+            this.isFlags = typeof(T).GetCustomAttribute<FlagsAttribute>() is object;
             var fields = typeof(T).GetFields(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Static);
-            var nameValueMapping = new Dictionary<string, T>(fields.Length);
+            var nameValueMapping = new Dictionary<string, T>(fields.Length, ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
             var valueNameMapping = new Dictionary<T, string>();
             Dictionary<string, string>? clrToSerializationName = null;
             Dictionary<string, string>? serializationToClrName = null;
@@ -37,8 +54,8 @@ namespace MessagePack.Formatters
                 var attribute = enumValueMember.GetCustomAttribute<EnumMemberAttribute>();
                 if (attribute is { IsValueSetExplicitly: true, Value: not null })
                 {
-                    clrToSerializationName ??= new();
-                    serializationToClrName ??= new();
+                    clrToSerializationName ??= new(stringComparer);
+                    serializationToClrName ??= new(stringComparer);
 
                     clrToSerializationName.Add(name, attribute.Value);
                     serializationToClrName.Add(attribute.Value, name);
@@ -79,7 +96,7 @@ namespace MessagePack.Formatters
             // Avoid Enum.Parse when we can because it is too slow.
             if (!this.nameValueMapping.TryGetValue(name, out T value))
             {
-                value = (T)Enum.Parse(typeof(T), this.GetClrNames(name));
+                value = (T)Enum.Parse(typeof(T), this.GetClrNames(name), this.ignoreCase);
             }
 
             return value;
