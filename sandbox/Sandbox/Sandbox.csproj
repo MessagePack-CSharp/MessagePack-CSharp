@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\tests\SourceGeneratorConsumer.props" />
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -16,8 +17,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack.UnityShims\MessagePack.UnityShims.csproj" />
-    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
     <ProjectReference Include="..\SharedData\SharedData.csproj" />
   </ItemGroup>
 
+  <Import Project="..\..\tests\SourceGeneratorConsumer.targets" />
 </Project>

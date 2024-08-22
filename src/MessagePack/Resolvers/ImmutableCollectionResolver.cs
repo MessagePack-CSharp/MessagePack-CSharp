@@ -2,6 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection;
@@ -52,6 +55,10 @@ namespace MessagePack.ImmutableCollection
             { typeof(IImmutableQueue<>), typeof(InterfaceImmutableQueueFormatter<>) },
             { typeof(IImmutableSet<>), typeof(InterfaceImmutableSetFormatter<>) },
             { typeof(IImmutableStack<>), typeof(InterfaceImmutableStackFormatter<>) },
+#if NET8_0_OR_GREATER
+            { typeof(FrozenDictionary<,>), typeof(FrozenDictionaryFormatter<,>) },
+            { typeof(FrozenSet<>), typeof(FrozenSetFormatter<>) },
+#endif
         };
 
         internal static object? GetFormatter(Type t)

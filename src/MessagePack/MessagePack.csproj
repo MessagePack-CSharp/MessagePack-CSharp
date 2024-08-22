@@ -1,30 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net6.0;net472</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net8.0;net472</TargetFrameworks>
     <NoWarn>$(NoWarn);CS0649</NoWarn>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <DefineConstants Condition=" '$(TargetFramework)' == 'net6.0' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
+    <DefineConstants Condition=" '$(TargetFramework)' == 'net6.0' or '$(TargetFramework)' == 'net8.0' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <LangVersion>9.0</LangVersion>
 
     <Title>MessagePack for C#</Title>
     <Description>Extremely Fast MessagePack(MsgPack) Serializer for C# (.NET Framework, .NET 6, Unity, Xamarin).</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
     <AssemblyName>MessagePack</AssemblyName>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs"
-             Exclude="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**;
-                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\**;
-                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\**;
-                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\_InternalVisibleTo.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\FloatBits.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <AdditionalFiles Include="$(TargetFramework)\PublicAPI.Shipped.txt" />
@@ -34,6 +21,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
     <PackageReference Include="Microsoft.NET.StringTools" PrivateAssets="compile" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
+    <PackageReference Include="System.Collections.Immutable" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
@@ -49,6 +39,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MessagePack.Annotations\MessagePack.Annotations.csproj" />
+    <!-- We don't consume the analyzers in this library itself,
+         but we reference the project to add a package dependency so users of this library will automatically get the analyzers. -->
+    <ProjectReference Include="..\MessagePack.Analyzers\MessagePack.Analyzers.csproj"
+                      PrivateAssets="none"
+                      Condition="'$(ExcludeRestorePackageImports)' != ''"  />
   </ItemGroup>
 
   <ItemGroup>
@@ -115,13 +110,4 @@
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
-  <Target Name="CopyT4OutputToUnity" BeforeTargets="Compile">
-    <ItemGroup>
-      <!-- Remove the T4 .cs output files that we copy to UnityClient -->
-      <UnityT4Source Include="@(None->'%(RootDir)%(Directory)%(FileName).cs')" Condition=" '%(None.Generator)' == 'TextTemplatingFileGenerator' " />
-      <UnityT4Target Include="@(UnityT4Source->'..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\%(FileName)%(Extension)')" />
-    </ItemGroup>
-
-    <Copy SourceFiles="@(UnityT4Source)" DestinationFiles="@(UnityT4Target)" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
-  </Target>
 </Project>

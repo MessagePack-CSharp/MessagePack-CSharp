@@ -4,6 +4,7 @@ parameters:
   default:
     vmImage: windows-2022
 - name: includeMacOS
+  type: boolean
 - name: RunTests
   type: boolean
   default: true
@@ -17,7 +18,7 @@ jobs:
     clean: true
   - template: install-dependencies.yml
 
-  - powershell: '& (./azure-pipelines/Get-nbgv.ps1) cloud -c'
+  - script: dotnet nbgv cloud -c
     displayName: ⚙ Set build number
 
   - template: dotnet.yml
@@ -35,6 +36,8 @@ jobs:
   - template: dotnet.yml
     parameters:
       RunTests: ${{ parameters.RunTests }}
+  - script: dotnet format --verify-no-changes --no-restore
+    displayName: 💅 Verify formatted code
 
 - job: macOS
   condition: ${{ parameters.includeMacOS }}
@@ -48,26 +51,6 @@ jobs:
   - template: dotnet.yml
     parameters:
       RunTests: ${{ parameters.RunTests }}
-
-# This job ensures that we're running mpc regularly on the generated code that we check in.
-# It also helps exercise mpc so bugs don't go unnoticed.
-- job: codegen_diff
-  pool:
-    vmImage: ubuntu-22.04
-  steps:
-  - checkout: self
-    clean: true
-  - template: install-dependencies.yml
-  - pwsh: sandbox/codegen.ps1
-    displayName: 🏭 Regenerate checked-in code
-  - bash: |
-        git add -u . # compare after applying git EOL normalization
-        git diff --cached --exit-code --stat \
-        || (echo "##[error] found changed files after build. Please run 'sandbox/codegen.ps1'" \
-                "and check in all changes" \
-            && git diff --cached \
-            && exit 1)
-    displayName: 🔍 Check for uncommitted changes
 
 - job: WrapUp
   dependsOn:

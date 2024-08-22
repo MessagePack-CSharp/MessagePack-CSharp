@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <DefineConstants>$(DefineConstants);SPAN_BUILTIN;MESSAGEPACK_INTERNAL</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -16,23 +16,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\BufferWriter.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\ExtensionHeader.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\ExtensionResult.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackCode.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializationException.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\MessagePackReader.Integers.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackWriter.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Nil.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\Sequence`1.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequencePool.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReader.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReaderExtensions.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\DateTimeConstants.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\GuidBits.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Utilities.cs" Link="Utilities.cs" />
+    <Compile Include="..\..\src\MessagePack\BufferWriter.cs" />
+    <Compile Include="..\..\src\MessagePack\ExtensionHeader.cs" />
+    <Compile Include="..\..\src\MessagePack\ExtensionResult.cs" />
+    <Compile Include="..\..\src\MessagePack\MessagePackCode.cs" />
+    <Compile Include="..\..\src\MessagePack\MessagePackReader.cs" />
+    <Compile Include="..\..\src\MessagePack\MessagePackSerializationException.cs" />
+    <Compile Include="..\..\src\MessagePack\MessagePackReader.Integers.cs" />
+    <Compile Include="..\..\src\MessagePack\MessagePackWriter.cs" />
+    <Compile Include="..\..\src\MessagePack\Nil.cs" />
+    <Compile Include="..\..\src\MessagePack\Internal\Sequence`1.cs" />
+    <Compile Include="..\..\src\MessagePack\SafeBitConverter.cs" />
+    <Compile Include="..\..\src\MessagePack\SequencePool.cs" />
+    <Compile Include="..\..\src\MessagePack\SequenceReader.cs" />
+    <Compile Include="..\..\src\MessagePack\SequenceReaderExtensions.cs" />
+    <Compile Include="..\..\src\MessagePack\StringEncoding.cs" />
+    <Compile Include="..\..\src\MessagePack\Internal\DateTimeConstants.cs" />
+    <Compile Include="..\..\src\MessagePack\Internal\GuidBits.cs" />
+    <Compile Include="..\..\src\MessagePack\Utilities.cs" Link="Utilities.cs" />
   </ItemGroup>
 
 </Project>

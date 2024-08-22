@@ -1,0 +1,28 @@
+<Project>
+  <!--<Import Project="..\src\MessagePack.Analyzers\build\MessagePack.Analyzers.props" />-->
+
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePack.Analyzers\MessagePack.Analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePack\MessagePack.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Keep this list in sync with what's in src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.targets -->
+    <!--<Analyzer Include="$(PkgMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll"/>-->
+  </ItemGroup>
+
+</Project>

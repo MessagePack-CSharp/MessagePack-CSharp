@@ -1,0 +1,9 @@
+<Project>
+  <Target Name="WarnOnMessagePackAnalyzeJsonFile" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <_ObsoleteAnalyzerJson Include="@(AdditionalFiles)" Condition="'%(FileName)%(Extension)' == 'MessagePackAnalyzer.json'" />
+    </ItemGroup>
+    <Warning Text="MessagePackAnalyzer.json is no longer used. Please remove it from your project. See https://github.com/MessagePack-CSharp/MessagePack-CSharp/blob/develop/doc/migration.md for more details on migrating to this version of MessagePack."
+             Condition="Exists('MessagePackAnalyzer.json') or '@(_ObsoleteAnalyzerJson)'!=''" />
+  </Target>
+</Project>

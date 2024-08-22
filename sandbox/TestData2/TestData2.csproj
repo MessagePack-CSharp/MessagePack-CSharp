@@ -5,7 +5,6 @@
   <ItemGroup>
     <PackageReference Include="MessagePack" />
     <PackageReference Include="IsExternalInit" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="System.Collections.Generic" />
