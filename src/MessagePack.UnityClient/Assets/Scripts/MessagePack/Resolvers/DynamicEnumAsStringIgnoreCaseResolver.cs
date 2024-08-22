@@ -8,25 +8,14 @@ using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
-    public sealed class DynamicEnumAsStringResolver : IFormatterResolver
+    public sealed class DynamicEnumAsStringIgnoreCaseResolver : IFormatterResolver
     {
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly DynamicEnumAsStringResolver Instance;
+        public static readonly DynamicEnumAsStringIgnoreCaseResolver Instance = new();
 
-        /// <summary>
-        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
-        /// </summary>
-        public static readonly MessagePackSerializerOptions Options;
-
-        static DynamicEnumAsStringResolver()
-        {
-            Instance = new DynamicEnumAsStringResolver();
-            Options = new MessagePackSerializerOptions(Instance);
-        }
-
-        private DynamicEnumAsStringResolver()
+        private DynamicEnumAsStringIgnoreCaseResolver()
         {
         }
 
@@ -37,6 +26,8 @@ namespace MessagePack.Resolvers
 
         private static class FormatterCache<T>
         {
+            private static readonly object?[] FormatterCtorArgs = new object?[] { true };
+
             public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
@@ -52,7 +43,7 @@ namespace MessagePack.Resolvers
                         return;
                     }
 
-                    var innerFormatter = DynamicEnumAsStringResolver.Instance.GetFormatterDynamic(ti.AsType());
+                    var innerFormatter = Instance.GetFormatterDynamic(ti.AsType());
                     if (innerFormatter == null)
                     {
                         return;
@@ -66,7 +57,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(EnumAsStringFormatter<>).MakeGenericType(typeof(T)))!;
+                Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(EnumAsStringFormatter<>).MakeGenericType(typeof(T)), FormatterCtorArgs)!;
             }
         }
     }

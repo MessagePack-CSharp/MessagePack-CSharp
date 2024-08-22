@@ -1,0 +1,4 @@
+MessagePack.Formatters.EnumAsStringFormatter<T>.EnumAsStringFormatter(bool ignoreCase) -> void
+MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver
+MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
+static readonly MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver.Instance -> MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver!
