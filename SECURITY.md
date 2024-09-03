@@ -12,4 +12,4 @@
 
 Please use email to contact the project's main contributors with any vulnerability you become aware of.
 
-    Yoshifumi Kawai <ils@neue.cc>; Andrew Arnott <andrewarnott@gmail.com>
+    Yoshifumi Kawai <ils@neue.cc>; Andrew Arnott <andrewarnott@live.com>
