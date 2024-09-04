@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using MessagePack.Analyzers.CodeFixes;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Testing;
 using VerifyCS = CSharpCodeFixVerifier<MessagePack.SourceGenerator.Analyzers.MsgPack00xMessagePackAnalyzer, MessagePack.Analyzers.CodeFixes.MessagePackCodeFixProvider>;
 
@@ -465,6 +466,79 @@ public class Bar : Foo
             FixedCode = output,
             MarkupOptions = MarkupOptions.UseFirstDescriptor,
             CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
+    }
+
+    [Fact]
+    public async Task AddAttributesToMembersOfRecord()
+    {
+        string input = Preamble + /* lang=c#-test */ @"
+[MessagePackObject]
+public record Foo
+{
+    public string {|MsgPack004:Member1|} { get; set; }
+    public string {|MsgPack004:Member2|} { get; set; }
+}
+";
+
+        string output = Preamble + /* lang=c#-test */ @"
+[MessagePackObject]
+public record Foo
+{
+    [Key(0)]
+    public string Member1 { get; set; }
+    [Key(1)]
+    public string Member2 { get; set; }
+}
+";
+        await new VerifyCS.Test
+        {
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net60,
+            CompilerDiagnostics = CompilerDiagnostics.Errors,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            SolutionTransforms =
+            {
+                static (solution, projectId) =>
+                {
+                    return solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp11));
+                },
+            },
+            TestCode = input,
+            FixedCode = output,
+        }.RunAsync();
+    }
+
+    [Fact]
+    public async Task AddAttributesToMembersOfRecordWithPrimaryCtor()
+    {
+        string input = Preamble + /* lang=c#-test */ @"
+[MessagePackObject]
+public record {|MsgPack007:Foo|}(
+    string {|MsgPack004:Member1|},
+    string {|MsgPack004:Member2|});
+";
+
+        string output = Preamble + /* lang=c#-test */ @"
+[MessagePackObject]
+public record Foo(
+    [property: Key(0)] string {|MsgPack004:Member1|},
+    [property: Key(1)] string {|MsgPack004:Member2|});
+";
+
+        await new VerifyCS.Test
+        {
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net60,
+            CompilerDiagnostics = CompilerDiagnostics.Errors,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            SolutionTransforms =
+            {
+                static (solution, projectId) =>
+                {
+                    return solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp11));
+                },
+            },
+            TestCode = input,
+            FixedCode = output,
         }.RunAsync();
     }
 }
