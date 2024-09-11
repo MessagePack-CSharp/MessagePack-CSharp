@@ -541,4 +541,38 @@ public record Foo(
             FixedCode = output,
         }.RunAsync();
     }
+
+    [Fact]
+    public async Task DoNotAddAttributesToClassWithPrimaryCtor()
+    {
+        string input = Preamble + /* lang=c#-test */ @"
+[MessagePackObject]
+public class {|MsgPack007:Foo|}(
+    string Member1,
+    string Member2);
+";
+
+        string output = Preamble + /* lang=c#-test */ @"
+[MessagePackObject]
+public class {|MsgPack007:Foo|}(
+    string Member1,
+    string Member2);
+";
+
+        await new VerifyCS.Test
+        {
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net60,
+            CompilerDiagnostics = CompilerDiagnostics.Errors,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            SolutionTransforms =
+            {
+                static (solution, projectId) =>
+                {
+                    return solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp12));
+                },
+            },
+            TestCode = input,
+            FixedCode = output,
+        }.RunAsync();
+    }
 }

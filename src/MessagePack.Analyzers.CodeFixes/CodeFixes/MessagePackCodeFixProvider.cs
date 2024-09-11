@@ -81,6 +81,11 @@ public class MessagePackCodeFixProvider : CodeFixProvider
                         }
                     }
                 }
+                else if (targetNode.Parent?.Parent is RecordDeclarationSyntax recordDeclarationSyntax)
+                {
+                    // Support primary constructors for records (but not for classes, since their semantics differ!).
+                    targetType = model.GetDeclaredSymbol(recordDeclarationSyntax) as ITypeSymbol;
+                }
             }
             else
             {
@@ -177,7 +182,20 @@ public class MessagePackCodeFixProvider : CodeFixProvider
                     node = node.Parent;
                 }
 
-                documentEditor.AddAttribute(node, syntaxGenerator.Attribute("MessagePack.KeyAttribute", syntaxGenerator.LiteralExpression(startOrder++)));
+                AttributeListSyntax attributeList = (AttributeListSyntax)syntaxGenerator.Attribute("MessagePack.KeyAttribute", syntaxGenerator.LiteralExpression(startOrder++));
+                if (node is ParameterSyntax parameter)
+                {
+                    // The primary constructor requires special target on the attribute list.
+                    attributeList = attributeList.WithTarget(
+                        SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.PropertyKeyword)))
+                        .WithLeadingTrivia(parameter.GetLeadingTrivia());
+                    ParameterSyntax attributedParameter = parameter.AddAttributeLists(attributeList);
+                    documentEditor.ReplaceNode(parameter, attributedParameter);
+                }
+                else
+                {
+                    documentEditor.AddAttribute(node, attributeList);
+                }
             }
         }
 
