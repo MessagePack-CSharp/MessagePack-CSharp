@@ -521,8 +521,8 @@ public record {|MsgPack007:Foo|}(
         string output = Preamble + /* lang=c#-test */ @"
 [MessagePackObject]
 public record Foo(
-    [property: Key(0)] string {|MsgPack004:Member1|},
-    [property: Key(1)] string {|MsgPack004:Member2|});
+    [property: Key(0)] string Member1,
+    [property: Key(1)] string Member2);
 ";
 
         await new VerifyCS.Test
