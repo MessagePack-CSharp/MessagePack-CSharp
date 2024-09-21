@@ -21,9 +21,11 @@ partial class GeneratedMessagePackResolver {
 			}
 
 			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
-			writer.WriteArrayHeader(2);
+			writer.WriteArrayHeader(4);
 			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::SubObject[]>(formatterResolver).Serialize(ref writer, value.ArrayOfCustomObjects, options);
 			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::SubObject>[]>(formatterResolver).Serialize(ref writer, value.ArrayOfCustomObjectList, options);
+			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::SubObject[][]>(formatterResolver).Serialize(ref writer, value.ArrayOfCustomObjectArray, options);
+			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::SubObject[][,]>(formatterResolver).Serialize(ref writer, value.ArrayOfCustomObject2DArray, options);
 		}
 
 		public global::ContainerObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -47,6 +49,12 @@ partial class GeneratedMessagePackResolver {
 						break;
 					case 1:
 						____result.ArrayOfCustomObjectList = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::SubObject>[]>(formatterResolver).Deserialize(ref reader, options);
+						break;
+					case 2:
+						____result.ArrayOfCustomObjectArray = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::SubObject[][]>(formatterResolver).Deserialize(ref reader, options);
+						break;
+					case 3:
+						____result.ArrayOfCustomObject2DArray = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::SubObject[][,]>(formatterResolver).Deserialize(ref reader, options);
 						break;
 					default:
 						reader.Skip();

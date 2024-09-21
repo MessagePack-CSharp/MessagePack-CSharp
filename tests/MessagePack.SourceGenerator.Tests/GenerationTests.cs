@@ -277,6 +277,12 @@ internal class ContainerObject
 
     [Key(1)]
     internal List<SubObject>[] ArrayOfCustomObjectList { get; set; }
+
+    [Key(2)]
+    internal SubObject[][] ArrayOfCustomObjectArray { get; set; }
+
+    [Key(3)]
+    internal SubObject[][,] ArrayOfCustomObject2DArray { get; set; }
 }
 
 [MessagePackObject]

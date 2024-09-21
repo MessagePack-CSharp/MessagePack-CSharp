@@ -39,13 +39,16 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(5)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(8)
 		{
 			{ typeof(global::SubObject[]), 0 },
-			{ typeof(global::System.Collections.Generic.List<global::SubObject>[]), 1 },
-			{ typeof(global::System.Collections.Generic.List<global::SubObject>), 2 },
-			{ typeof(global::ContainerObject), 3 },
-			{ typeof(global::SubObject), 4 },
+			{ typeof(global::SubObject[,]), 1 },
+			{ typeof(global::SubObject[][]), 2 },
+			{ typeof(global::SubObject[][,]), 3 },
+			{ typeof(global::System.Collections.Generic.List<global::SubObject>[]), 4 },
+			{ typeof(global::System.Collections.Generic.List<global::SubObject>), 5 },
+			{ typeof(global::ContainerObject), 6 },
+			{ typeof(global::SubObject), 7 },
 		};
 
 		internal static object GetFormatter(global::System.Type t)
@@ -55,10 +58,13 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 				switch (closedKey)
 				{
 					case 0: return new MsgPack::Formatters.ArrayFormatter<global::SubObject>();
-					case 1: return new MsgPack::Formatters.ArrayFormatter<global::System.Collections.Generic.List<global::SubObject>>();
-					case 2: return new MsgPack::Formatters.ListFormatter<global::SubObject>();
-					case 3: return new global::MessagePack.GeneratedMessagePackResolver.ContainerObjectFormatter();
-					case 4: return new global::MessagePack.GeneratedMessagePackResolver.SubObjectFormatter();
+					case 1: return new MsgPack::Formatters.TwoDimensionalArrayFormatter<global::SubObject>();
+					case 2: return new MsgPack::Formatters.ArrayFormatter<global::SubObject[]>();
+					case 3: return new MsgPack::Formatters.ArrayFormatter<global::SubObject[,]>();
+					case 4: return new MsgPack::Formatters.ArrayFormatter<global::System.Collections.Generic.List<global::SubObject>>();
+					case 5: return new MsgPack::Formatters.ListFormatter<global::SubObject>();
+					case 6: return new global::MessagePack.GeneratedMessagePackResolver.ContainerObjectFormatter();
+					case 7: return new global::MessagePack.GeneratedMessagePackResolver.SubObjectFormatter();
 					default: return null; // unreachable
 				};
 			}

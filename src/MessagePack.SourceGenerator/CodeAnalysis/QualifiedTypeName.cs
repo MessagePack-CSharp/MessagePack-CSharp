@@ -24,14 +24,19 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
     {
         this.Kind = symbol.TypeKind;
         this.IsRecord = symbol.IsRecord;
+
         ITypeSymbol symbolToConsider = symbol;
-        if (symbol is IArrayTypeSymbol arrayType)
+        List<int>? arrayRanks = null;
+        while (symbolToConsider is IArrayTypeSymbol arrayType)
         {
-            this.ArrayRank = arrayType.Rank;
+            arrayRanks ??= new();
+            arrayRanks.Add(arrayType.Rank);
             symbolToConsider = arrayType.ElementType;
         }
 
+        this.ArrayRanks = arrayRanks?.ToArray() ?? Array.Empty<int>();
         this.Name = symbolToConsider.Name;
+
         if (symbolToConsider.ContainingType is not null)
         {
             this.NestingType = new(symbolToConsider.ContainingType);
@@ -75,6 +80,7 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
         this.NestingType = nestingType;
         this.Kind = kind;
         this.Name = name;
+        this.ArrayRanks = Array.Empty<int>();
         this.TypeParameters = typeParameters;
     }
 
@@ -142,7 +148,7 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
     /// </summary>
     public int Arity => this.TypeParameters.Length;
 
-    public int ArrayRank { get; init; }
+    public int[] ArrayRanks { get; init; }
 
     public string GetQualifiedName(Qualifiers qualifier = Qualifiers.GlobalNamespace, GenericParameterStyle genericStyle = GenericParameterStyle.Identifiers)
     {
@@ -181,11 +187,14 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
 
         builder.Append(this.GetTypeParametersOrArgs(genericStyle));
 
-        if (this.ArrayRank > 0)
+        if (this.ArrayRanks.Length > 0)
         {
-            builder.Append('[');
-            builder.Append(',', this.ArrayRank - 1);
-            builder.Append(']');
+            for (int i = 0; i < this.ArrayRanks.Length; i++)
+            {
+                builder.Append('[');
+                builder.Append(',', this.ArrayRanks[i] - 1);
+                builder.Append(']');
+            }
         }
 
         return builder.ToString();
@@ -226,7 +235,7 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
                this.NestingType == other.NestingType &&
                this.AccessModifier == other.AccessModifier &&
                this.Kind == other.Kind &&
-               this.ArrayRank == other.ArrayRank &&
+               this.ArrayRanks.SequenceEqual(other.ArrayRanks) &&
                this.Name == other.Name &&
                this.TypeParameters.SequenceEqual(other.TypeParameters);
     }
@@ -264,10 +273,19 @@ public record QualifiedTypeName : IComparable<QualifiedTypeName>
             return result;
         }
 
-        result = left.ArrayRank.CompareTo(right.ArrayRank);
+        result = left.ArrayRanks.Length.CompareTo(right.ArrayRanks.Length);
         if (result != 0)
         {
             return result;
+        }
+
+        for (int i = 0; i < left.ArrayRanks.Length; i++)
+        {
+            result = left.ArrayRanks[i].CompareTo(right.ArrayRanks[i]);
+            if (result != 0)
+            {
+                return result;
+            }
         }
 
         result = StringComparer.Ordinal.Compare(left.Name, right.Name);
