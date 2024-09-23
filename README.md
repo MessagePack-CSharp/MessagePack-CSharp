@@ -1584,7 +1584,7 @@ For all other Unity targets, AOT is required.
 
 If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation. `mpc` (MessagePackCompiler) is the code generator of MessagePack for C#. mpc uses [Roslyn](https://github.com/dotnet/roslyn) to analyze source code.
 
-First of all, mpc requires [.NET Core 3 Runtime](https://dotnet.microsoft.com/download). The easiest way to acquire and run mpc is as a dotnet tool.
+First of all, mpc requires [.NET 6+ Runtime](https://dotnet.microsoft.com/download). The easiest way to acquire and run mpc is as a dotnet tool.
 
 ```
 dotnet tool install --global MessagePack.Generator
@@ -1603,11 +1603,7 @@ Once you have the tool installed, simply invoke using `dotnet mpc` within your r
 
 ```
 dotnet mpc --help
-```
 
-Alternatively, you can download mpc from the [Releases](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases) page, that includes platform native binaries (that don't require a separate dotnet runtime).
-
-```
 Usage: mpc [options...]
 
 Options:
