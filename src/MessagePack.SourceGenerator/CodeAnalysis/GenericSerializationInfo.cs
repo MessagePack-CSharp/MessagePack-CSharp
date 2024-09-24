@@ -14,13 +14,13 @@ public sealed record GenericSerializationInfo : ResolverRegisterInfo
 {
     public override bool IsUnboundGenericType => false;
 
-    public static new GenericSerializationInfo Create(ITypeSymbol dataType, ResolverOptions resolverOptions, FormatterPosition formatterLocation = FormatterPosition.UnderResolver)
+    public static new GenericSerializationInfo Create(INamedTypeSymbol dataType, ResolverOptions resolverOptions, FormatterPosition formatterLocation = FormatterPosition.UnderResolver)
     {
         ResolverRegisterInfo basicInfo = ResolverRegisterInfo.Create(dataType, resolverOptions, formatterLocation);
         ImmutableArray<string> typeArguments = CodeAnalysisUtilities.GetTypeArguments(dataType);
         return new GenericSerializationInfo
         {
-            DataType = basicInfo.DataType with { TypeParameters = typeArguments },
+            DataType = ((QualifiedNamedTypeName)basicInfo.DataType) with { TypeParameters = typeArguments },
             Formatter = basicInfo.Formatter with { TypeParameters = typeArguments },
         };
     }

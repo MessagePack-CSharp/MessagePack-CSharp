@@ -49,7 +49,7 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(<#= constructedRegistrations.Length #>)
 		{
 <# for(var i = 0; i < constructedRegistrations.Length; i++) { #>
-			{ typeof(<#= constructedRegistrations[i].DataType.GetQualifiedName() #>), <#= i #> },
+			{ typeof(<#= constructedRegistrations[i].DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments) #>), <#= i #> },
 <# } #>
 		};
 <# }

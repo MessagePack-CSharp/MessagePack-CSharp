@@ -139,6 +139,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
                 }
 
                 var models = new List<FullModel>();
+                models.AddRange(s.ArrayFormatterInfos.Select(i => FullModel.Empty with { Options = s.Options, ArrayFormatterInfos = ImmutableSortedSet.Create(i) }));
                 models.AddRange(s.ObjectInfos.Select(i => FullModel.Empty with { Options = s.Options, ObjectInfos = ImmutableSortedSet.Create(i) }));
                 models.AddRange(s.EnumInfos.Select(i => FullModel.Empty with { Options = s.Options, EnumInfos = ImmutableSortedSet.Create(i) }));
                 models.AddRange(s.UnionInfos.Select(i => FullModel.Empty with { Options = s.Options, UnionInfos = ImmutableSortedSet.Create(i) }));
