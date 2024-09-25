@@ -509,6 +509,45 @@ public class Bar : Foo
     }
 
     [Fact]
+    public async Task AddAttributesToMembersOfRecordStruct()
+    {
+        string input = Preamble + /* lang=c#-test */ """
+            [MessagePackObject]
+            public record struct Foo
+            {
+                public string {|MsgPack004:Member1|} { get; set; }
+                public string {|MsgPack004:Member2|} { get; set; }
+            }
+            """;
+
+        string output = Preamble + /* lang=c#-test */ """
+            [MessagePackObject]
+            public record struct Foo
+            {
+                [Key(0)]
+                public string Member1 { get; set; }
+                [Key(1)]
+                public string Member2 { get; set; }
+            }
+            """;
+        await new VerifyCS.Test
+        {
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net60,
+            CompilerDiagnostics = CompilerDiagnostics.Errors,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            SolutionTransforms =
+            {
+                static (solution, projectId) =>
+                {
+                    return solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp11));
+                },
+            },
+            TestCode = input,
+            FixedCode = output,
+        }.RunAsync();
+    }
+
+    [Fact]
     public async Task AddAttributesToMembersOfRecordWithPrimaryCtor()
     {
         string input = Preamble + /* lang=c#-test */ """
@@ -521,6 +560,40 @@ public class Bar : Foo
         string output = Preamble + /* lang=c#-test */ """
             [MessagePackObject]
             public record Foo(
+                [property: Key(0)] string Member1,
+                [property: Key(1)] string Member2);
+            """;
+
+        await new VerifyCS.Test
+        {
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net60,
+            CompilerDiagnostics = CompilerDiagnostics.Errors,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            SolutionTransforms =
+            {
+                static (solution, projectId) =>
+                {
+                    return solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp11));
+                },
+            },
+            TestCode = input,
+            FixedCode = output,
+        }.RunAsync();
+    }
+
+    [Fact]
+    public async Task AddAttributesToMembersOfRecordStructWithPrimaryCtor()
+    {
+        string input = Preamble + /* lang=c#-test */ """
+            [MessagePackObject]
+            public record struct Foo(
+                string {|MsgPack004:Member1|},
+                string {|MsgPack004:Member2|});
+            """;
+
+        string output = Preamble + /* lang=c#-test */ """
+            [MessagePackObject]
+            public record struct Foo(
                 [property: Key(0)] string Member1,
                 [property: Key(1)] string Member2);
             """;
