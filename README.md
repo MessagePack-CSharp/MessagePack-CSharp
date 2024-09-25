@@ -57,7 +57,7 @@ MessagePack has a compact binary size and a full set of general purpose expressi
 - [IgnoreFormatter](#ignoreformatter)
 - [Reserved Extension Types](#reserved-extension-types)
 - [Unity support](#unity-support)
-- [AOT Code Generation (support for Unity/Xamarin)](#aot-code-generation-support-for-unityxamarin)
+- [AOT Code Generation (support for Unity/Xamarin)](#aot)
 - [RPC](#rpc)
     - [MagicOnion](#magiconion)
     - [StreamJsonRpc](#streamjsonrpc)
