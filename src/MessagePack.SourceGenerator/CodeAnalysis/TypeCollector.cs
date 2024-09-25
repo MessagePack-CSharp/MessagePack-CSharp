@@ -721,7 +721,8 @@ public class TypeCollector
 
             foreach (IPropertySymbol item in formattedType.GetAllMembers().OfType<IPropertySymbol>())
             {
-                if (item.GetAttributes().Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)) ||
+                ImmutableArray<AttributeData> attributes = item.GetAttributes();
+                if (attributes.Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)) ||
                     item.IsStatic ||
                     item.IsOverride ||
                     item.IsImplicitlyDeclared ||
@@ -737,10 +738,13 @@ public class TypeCollector
                     continue;
                 }
 
+                AttributeData? keyAttribute = attributes.FirstOrDefault(attributes => attributes.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute));
+                string stringKey = keyAttribute?.ConstructorArguments.Length == 1 && keyAttribute.ConstructorArguments[0].Value is string name ? name : item.Name;
+
                 includesPrivateMembers |= item.GetMethod is not null && !IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility);
                 includesPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
                 FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
-                var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
+                MemberSerializationInfo member = new(true, isWritable, isReadable, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                 stringMembers.Add(member.StringKey, (member, item.Type));
 
                 if (specialFormatter is null)
@@ -751,7 +755,8 @@ public class TypeCollector
 
             foreach (IFieldSymbol item in formattedType.GetAllMembers().OfType<IFieldSymbol>())
             {
-                if (item.GetAttributes().Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)) ||
+                ImmutableArray<AttributeData> attributes = item.GetAttributes();
+                if (attributes.Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)) ||
                     item.IsStatic ||
                     item.IsImplicitlyDeclared ||
                     item.DeclaredAccessibility < minimumAccessibility)
@@ -759,8 +764,11 @@ public class TypeCollector
                     continue;
                 }
 
+                AttributeData? keyAttribute = attributes.FirstOrDefault(attributes => attributes.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute));
+                string stringKey = keyAttribute?.ConstructorArguments.Length == 1 && keyAttribute.ConstructorArguments[0].Value is string name ? name : item.Name;
+
                 FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
-                var member = new MemberSerializationInfo(false, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
+                MemberSerializationInfo member = new(false, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                 stringMembers.Add(member.StringKey, (member, item.Type));
                 if (specialFormatter is null)
                 {

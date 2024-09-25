@@ -14,7 +14,7 @@ namespace MessagePack
         /// <summary>
         /// Gets a value indicating whether to automatically serialize all internal and public fields and properties using their property name as the key in a map.
         /// </summary>
-        public bool KeyAsPropertyName { get; private set; }
+        public bool KeyAsPropertyName { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackObjectAttribute"/> class.
@@ -46,9 +46,9 @@ namespace MessagePack
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     public class KeyAttribute : Attribute
     {
-        public int? IntKey { get; private set; }
+        public int? IntKey { get; }
 
-        public string? StringKey { get; private set; }
+        public string? StringKey { get; }
 
         public KeyAttribute(int x)
         {
@@ -72,12 +72,12 @@ namespace MessagePack
         /// <summary>
         /// Gets the distinguishing value that identifies a particular subtype.
         /// </summary>
-        public int Key { get; private set; }
+        public int Key { get; }
 
         /// <summary>
         /// Gets the derived or implementing type.
         /// </summary>
-        public Type SubType { get; private set; }
+        public Type SubType { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UnionAttribute"/> class.
@@ -110,9 +110,9 @@ namespace MessagePack
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Enum | AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Parameter | AttributeTargets.ReturnValue, AllowMultiple = false, Inherited = true)]
     public class MessagePackFormatterAttribute : Attribute
     {
-        public Type FormatterType { get; private set; }
+        public Type FormatterType { get; }
 
-        public object?[]? Arguments { get; private set; }
+        public object?[]? Arguments { get; }
 
         public MessagePackFormatterAttribute(Type formatterType)
         {
