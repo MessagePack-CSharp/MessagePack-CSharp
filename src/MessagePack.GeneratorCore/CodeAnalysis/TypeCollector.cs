@@ -635,7 +635,14 @@ namespace MessagePackCompiler.CodeAnalysis
                     }
 
                     var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
-                    var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                    var keyAttribute = item.GetAttributes()
+                        .FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute));
+
+                    var stringKey = keyAttribute?.ConstructorArguments.Length > 0
+                        ? keyAttribute.ConstructorArguments[0].Value as string ?? item.Name
+                        : item.Name;
+
+                    var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                     stringMembers.Add(member.StringKey, member);
 
                     this.CollectCore(item.Type); // recursive collect
@@ -661,7 +668,14 @@ namespace MessagePackCompiler.CodeAnalysis
                     }
 
                     var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
-                    var member = new MemberSerializationInfo(false, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                    var keyAttribute = item.GetAttributes()
+                        .FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute));
+
+                    var stringKey = keyAttribute?.ConstructorArguments.Length > 0
+                        ? keyAttribute.ConstructorArguments[0].Value as string ?? item.Name
+                        : item.Name;
+
+                    var member = new MemberSerializationInfo(false, isWritable, isReadable, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                     stringMembers.Add(member.StringKey, member);
                     this.CollectCore(item.Type); // recursive collect
                 }

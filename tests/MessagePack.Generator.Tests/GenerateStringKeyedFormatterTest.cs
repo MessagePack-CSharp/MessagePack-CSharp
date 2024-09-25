@@ -863,5 +863,67 @@ namespace TempProject
                 ((string)result.B).Should().Be("foobar"); // default value
             });
         }
+
+        [Fact]
+        public async Task StringKeyAttributeMapModeTest()
+        {
+            using var tempWorkarea = TemporaryProjectWorkarea.Create();
+            var contents = @"
+using System;
+using System.Collections.Generic;
+using MessagePack;
+
+namespace TempProject
+{
+    [MessagePackObject]
+    public class MyMessagePackObject
+    {
+        [Key(""a"")]
+        public int A { get; set; }
+        [Key(""b"")]
+        public string B { get; set; }
+    }
+}
+            ";
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
+
+            var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
+            await compiler.GenerateFileAsync(
+                tempWorkarea.GetOutputCompilation().Compilation,
+                tempWorkarea.OutputDirectory,
+                "TempProjectResolver",
+                "TempProject.Generated",
+                true,
+                string.Empty,
+                Array.Empty<string>());
+
+            var compilation = tempWorkarea.GetOutputCompilation();
+            compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
+
+            // Run tests with the generated resolver/formatter assembly.
+            compilation.ExecuteWithGeneratedAssembly((ctx, assembly) =>
+            {
+                var mpoType = assembly.GetType("TempProject.MyMessagePackObject");
+                var options = MessagePackSerializerOptions.Standard
+                    .WithResolver(CompositeResolver.Create(
+                        StandardResolver.Instance,
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
+
+                // Build `{ "a": -1, "b": "foo" }`
+                var seq = new Sequence<byte>();
+                var writer = new MessagePackWriter(seq);
+                writer.WriteMapHeader(2);
+                writer.Write("a");
+                writer.Write(-1);
+                writer.Write("b");
+                writer.Write("foo");
+                writer.Flush();
+
+                // Verify deserialization
+                dynamic result = MessagePackSerializer.Deserialize(mpoType, seq, options);
+                ((int)result.A).Should().Be(-1); // from ctor
+                ((string)result.B).Should().Be("foo"); // default value
+            });
+        }
     }
 }
