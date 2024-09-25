@@ -39,7 +39,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(4)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(4)
 		{
 			{ typeof(global::IMyType), 0 },
 			{ typeof(global::Derived1), 1 },
@@ -51,13 +51,13 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 		{
 			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return closedKey switch
+				switch (closedKey)
 				{
-					0 => new global::MessagePack.GeneratedMessagePackResolver.IMyTypeFormatter(),
-					1 => new global::MessagePack.GeneratedMessagePackResolver.Derived1Formatter(),
-					2 => new global::MessagePack.GeneratedMessagePackResolver.Derived2Formatter(),
-					3 => new global::MessagePack.GeneratedMessagePackResolver.MyMessagePackObjectFormatter(),
-					_ => null, // unreachable
+					case 0: return new global::MessagePack.GeneratedMessagePackResolver.IMyTypeFormatter();
+					case 1: return new global::MessagePack.GeneratedMessagePackResolver.Derived1Formatter();
+					case 2: return new global::MessagePack.GeneratedMessagePackResolver.Derived2Formatter();
+					case 3: return new global::MessagePack.GeneratedMessagePackResolver.MyMessagePackObjectFormatter();
+					default: return null; // unreachable
 				};
 			}
 

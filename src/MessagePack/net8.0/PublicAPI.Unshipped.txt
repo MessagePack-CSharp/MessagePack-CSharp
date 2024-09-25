@@ -25,6 +25,7 @@ MessagePack.Formatters.CharListFormatter.Serialize(ref MessagePack.MessagePackWr
 MessagePack.Formatters.DoubleListFormatter
 MessagePack.Formatters.DoubleListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<double>?
 MessagePack.Formatters.DoubleListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<double>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.EnumAsStringFormatter<T>.EnumAsStringFormatter(bool ignoreCase) -> void
 MessagePack.Formatters.Int16ListFormatter
 MessagePack.Formatters.Int16ListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<short>?
 MessagePack.Formatters.Int16ListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<short>? value, MessagePack.MessagePackSerializerOptions! options) -> void
@@ -92,6 +93,8 @@ MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.MajorVersion.
 MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.MinorVersion.get -> int
 MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.ResolverType.get -> System.Type!
 MessagePack.ReservedExtensionTypeCodes
+MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver
+MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.SourceGeneratedFormatterResolver
 MessagePack.Resolvers.SourceGeneratedFormatterResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 static readonly MessagePack.Formatters.BooleanListFormatter.Instance -> MessagePack.Formatters.BooleanListFormatter!
@@ -112,4 +115,5 @@ static readonly MessagePack.Formatters.UInt64ListFormatter.Instance -> MessagePa
 static readonly MessagePack.Formatters.Vector2Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Vector2>!
 static readonly MessagePack.Formatters.Vector3Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Vector3>!
 static readonly MessagePack.Formatters.Vector4Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Vector4>!
+static readonly MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver.Instance -> MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver!
 static readonly MessagePack.Resolvers.SourceGeneratedFormatterResolver.Instance -> MessagePack.Resolvers.SourceGeneratedFormatterResolver!

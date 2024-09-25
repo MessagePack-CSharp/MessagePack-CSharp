@@ -7,9 +7,9 @@ using VerifyCS = CSharpSourceGeneratorVerifier<MessagePack.SourceGenerator.Messa
 public class PrivateMemberAccessTests(ITestOutputHelper logger)
 {
     [Theory]
-    [InlineData("class", LanguageVersion.CSharp9)]
+    [InlineData("class", LanguageVersion.CSharp7_3)]
     [InlineData("record", LanguageVersion.CSharp9)]
-    [InlineData("struct", LanguageVersion.CSharp9)]
+    [InlineData("struct", LanguageVersion.CSharp7_3)]
     [InlineData("record struct", LanguageVersion.CSharp10)]
     public async Task FormatterForClassWithPrivateMembers(string type, LanguageVersion version)
     {
@@ -59,10 +59,10 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
     }
 
     [Theory]
-    [InlineData("class")]
-    [InlineData("record")]
-    [InlineData("struct")]
-    public async Task FormatterForClassWithPrivateMembers_NonPartialTypes(string type)
+    [InlineData("class", LanguageVersion.CSharp7_3)]
+    [InlineData("record", LanguageVersion.CSharp9)]
+    [InlineData("struct", LanguageVersion.CSharp7_3)]
+    public async Task FormatterForClassWithPrivateMembers_NonPartialTypes(string type, LanguageVersion languageVersion)
     {
         string testSource = $$"""
             using System;
@@ -77,14 +77,14 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
                 public int Value { get => value; set => this.value = value; }
             }
             """;
-        await VerifyCS.Test.RunDefaultAsync(logger, testSource, testMethod: $"{nameof(FormatterForClassWithPrivateMembers_NonPartialTypes)}({type})");
+        await VerifyCS.Test.RunDefaultAsync(logger, testSource, languageVersion: languageVersion, testMethod: $"{nameof(FormatterForClassWithPrivateMembers_NonPartialTypes)}({type})");
     }
 
     [Theory]
-    [InlineData("class")]
-    [InlineData("record")]
-    [InlineData("struct")]
-    public async Task FormatterForClassWithPrivateMembers_Nested_NonPartialTypes(string type)
+    [InlineData("class", LanguageVersion.CSharp7_3)]
+    [InlineData("record", LanguageVersion.CSharp9)]
+    [InlineData("struct", LanguageVersion.CSharp7_3)]
+    public async Task FormatterForClassWithPrivateMembers_Nested_NonPartialTypes(string type, LanguageVersion languageVersion)
     {
         string testSource = $$"""
             using System;
@@ -102,6 +102,6 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
                 }
             }
             """;
-        await VerifyCS.Test.RunDefaultAsync(logger, testSource, testMethod: $"{nameof(FormatterForClassWithPrivateMembers_Nested_NonPartialTypes)}({type})");
+        await VerifyCS.Test.RunDefaultAsync(logger, testSource, languageVersion: languageVersion, testMethod: $"{nameof(FormatterForClassWithPrivateMembers_Nested_NonPartialTypes)}({type})");
     }
 }

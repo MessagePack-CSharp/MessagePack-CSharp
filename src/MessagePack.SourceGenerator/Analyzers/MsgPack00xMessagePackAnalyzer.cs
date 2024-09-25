@@ -301,7 +301,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     private void AnalyzeSymbol(SymbolAnalysisContext context, ReferenceSymbols typeReferences, AnalyzerOptions options)
     {
         INamedTypeSymbol declaredSymbol = (INamedTypeSymbol)context.Symbol;
-        QualifiedTypeName typeName = new(declaredSymbol);
+        QualifiedNamedTypeName typeName = new(declaredSymbol);
 
         // If this is a formatter, confirm that it meets requirements.
         if (options.KnownFormattersByName.TryGetValue(typeName, out FormatterDescriptor? formatter))

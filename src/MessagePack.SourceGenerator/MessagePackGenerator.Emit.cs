@@ -69,6 +69,7 @@ public partial class MessagePackGenerator
         StringBuilder sb = new();
 
         ResolverRegisterInfo[] registerInfos = [
+            .. model.ArrayFormatterInfos,
             .. model.GenericInfos,
             .. model.EnumInfos,
             .. model.UnionInfos,

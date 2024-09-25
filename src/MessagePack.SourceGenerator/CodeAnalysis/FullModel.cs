@@ -12,6 +12,7 @@ public record FullModel(
     ImmutableSortedSet<GenericSerializationInfo> GenericInfos,
     ImmutableSortedSet<UnionSerializationInfo> UnionInfos,
     ImmutableSortedSet<CustomFormatterRegisterInfo> CustomFormatterInfos,
+    ImmutableSortedSet<ResolverRegisterInfo> ArrayFormatterInfos,
     AnalyzerOptions Options)
 {
     public static readonly FullModel Empty = new(
@@ -20,6 +21,7 @@ public record FullModel(
         ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
         ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
         ImmutableSortedSet.Create<CustomFormatterRegisterInfo>(ResolverRegisterInfoComparer.Default),
+        ImmutableSortedSet.Create<ResolverRegisterInfo>(ResolverRegisterInfoComparer.Default),
         new AnalyzerOptions());
 
     public bool IsEmpty => this.ObjectInfos.IsEmpty && this.EnumInfos.IsEmpty && this.GenericInfos.IsEmpty && this.UnionInfos.IsEmpty && this.CustomFormatterInfos.IsEmpty;
@@ -43,6 +45,7 @@ public record FullModel(
         var genericInfos = ImmutableSortedSet.CreateBuilder<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default);
         var unionInfos = ImmutableSortedSet.CreateBuilder<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default);
         var customFormatterInfos = ImmutableSortedSet.CreateBuilder<CustomFormatterRegisterInfo>(ResolverRegisterInfoComparer.Default);
+        var arrayFormatterInfos = ImmutableSortedSet.CreateBuilder<ResolverRegisterInfo>(ResolverRegisterInfoComparer.Default);
 
         foreach (FullModel model in models)
         {
@@ -51,6 +54,7 @@ public record FullModel(
             genericInfos.UnionWith(model.GenericInfos);
             unionInfos.UnionWith(model.UnionInfos);
             customFormatterInfos.UnionWith(model.CustomFormatterInfos);
+            arrayFormatterInfos.UnionWith(model.ArrayFormatterInfos);
 
             if (options != model.Options)
             {
@@ -64,6 +68,7 @@ public record FullModel(
             genericInfos.ToImmutable(),
             unionInfos.ToImmutable(),
             customFormatterInfos.ToImmutable(),
+            arrayFormatterInfos.ToImmutable(),
             options);
     }
 

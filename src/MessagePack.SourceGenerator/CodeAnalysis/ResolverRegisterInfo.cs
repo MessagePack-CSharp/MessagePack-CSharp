@@ -23,25 +23,49 @@ public record ResolverRegisterInfo
     /// <param name="resolverOptions">The resolver options.</param>
     /// <param name="formatterLocation">Position the formatter under the data type when it must access private members.</param>
     /// <returns>The resolver and formatter information.</returns>
-    public static ResolverRegisterInfo Create(ITypeSymbol dataType, ResolverOptions resolverOptions, FormatterPosition formatterLocation = FormatterPosition.UnderResolver)
+    public static ResolverRegisterInfo Create(INamedTypeSymbol dataType, ResolverOptions resolverOptions, FormatterPosition formatterLocation = FormatterPosition.UnderResolver)
     {
-        QualifiedTypeName dataTypeName = new(dataType);
+        QualifiedNamedTypeName dataTypeName = new(dataType);
 
         return new ResolverRegisterInfo
         {
             FormatterLocation = formatterLocation,
             DataType = dataTypeName,
-            Formatter = dataTypeName with
+            Formatter = new QualifiedNamedTypeName(TypeKind.Class)
             {
-                Namespace = null,
-                NestingType = formatterLocation switch
+                Container = NestingTypeContainer.From(formatterLocation switch
                 {
                     FormatterPosition.UnderResolver => GetNestingTypeForFormatterUnderResolver(dataTypeName, resolverOptions),
                     FormatterPosition.UnderDataType => dataTypeName,
                     _ => throw new NotImplementedException(),
-                },
+                }),
                 Name = $"{dataTypeName.Name}Formatter",
                 Kind = TypeKind.Class,
+                AccessModifier = dataTypeName.AccessModifier,
+                TypeParameters = dataTypeName.TypeParameters,
+                TypeArguments = dataTypeName.TypeArguments,
+            },
+        };
+    }
+
+    /// <summary>
+    /// Creates formatter and resolver info for an array data type that should be serializable.
+    /// </summary>
+    /// <param name="dataType">The type to be serialized.</param>
+    /// <param name="resolverOptions">The resolver options.</param>
+    /// <param name="formatterLocation">Position the formatter under the data type when it must access private members.</param>
+    /// <returns>The resolver and formatter information.</returns>
+    public static ResolverRegisterInfo CreateArray(IArrayTypeSymbol dataType, ResolverOptions resolverOptions, FormatterPosition formatterLocation = FormatterPosition.UnderResolver)
+    {
+        QualifiedArrayTypeName dataTypeName = new(dataType);
+
+        return new ResolverRegisterInfo
+        {
+            FormatterLocation = formatterLocation,
+            DataType = dataTypeName,
+            Formatter = new QualifiedNamedTypeName(TypeKind.Class)
+            {
+                Name = $"XXXFormatter",
             },
         };
     }
@@ -54,7 +78,7 @@ public record ResolverRegisterInfo
     /// <summary>
     /// Gets the namespace of the formatter.
     /// </summary>
-    public required QualifiedTypeName Formatter { get; init; }
+    public required QualifiedNamedTypeName Formatter { get; init; }
 
     /// <summary>
     /// Gets the declaration parent of the formatter.
@@ -76,41 +100,42 @@ public record ResolverRegisterInfo
     /// <summary>
     /// Gets a value indicating whether this data type is a generic type with unknown type arguments.
     /// </summary>
-    public virtual bool IsUnboundGenericType => this.DataType.Arity > 0;
+    public virtual bool IsUnboundGenericType => this.DataType is QualifiedNamedTypeName { Arity: > 0 };
 
     public string FileNameHint => $"Formatters.{this.Formatter.GetQualifiedName(Qualifiers.Namespace, GenericParameterStyle.ArityOnly)}";
 
-    private static QualifiedTypeName? GetNestingTypeForFormatterUnderResolver(QualifiedTypeName dataType, ResolverOptions resolverOptions)
+    private static QualifiedNamedTypeName? GetNestingTypeForFormatterUnderResolver(QualifiedTypeName dataType, ResolverOptions resolverOptions)
     {
         // Each nesting type of the data type become a nested type for the formatter.
-        if (dataType.NestingType is not null)
+        if (dataType is QualifiedNamedTypeName { Container: NestingTypeContainer { NestingType: { } nestingType } })
         {
             // The data type aready has a nesting type. Reusing that for the formatter, but recurse in
             // because ultimately we need to add the namespaces as nesting types, and then add the resolver
             // as the outermost type and finally the namespace the resolver appears in.
-            return dataType.NestingType with
+            return nestingType with
             {
-                Namespace = null,
-                NestingType = GetNestingTypeForFormatterUnderResolver(dataType.NestingType, resolverOptions),
+                Container = GetNestingTypeForFormatterUnderResolver(nestingType, resolverOptions) is { } n ? new NestingTypeContainer(n) : null,
                 AccessModifier = Accessibility.Internal,
             };
         }
 
-        QualifiedTypeName generatedResolverName = new(
-            resolverOptions.Namespace,
-            TypeKind.Class,
-            resolverOptions.Name);
+        QualifiedNamedTypeName generatedResolverName = new(TypeKind.Class)
+        {
+            Container = NamespaceTypeContainer.From(resolverOptions.Namespace),
+            Name = resolverOptions.Name,
+        };
 
         // Each namespace of the data type also becomes a nesting type of the formatter.
-        if (dataType.Namespace is not null)
+        if (dataType is QualifiedNamedTypeName { Container: NamespaceTypeContainer { Namespace: string ns } })
         {
-            string[] namespaces = dataType.Namespace.Split('.');
-            QualifiedTypeName? partialClassAsNamespaceStep = generatedResolverName;
+            string[] namespaces = ns.Split('.');
+            QualifiedNamedTypeName? partialClassAsNamespaceStep = generatedResolverName;
             for (int i = 0; i < namespaces.Length; i++)
             {
-                partialClassAsNamespaceStep = new QualifiedTypeName(null, TypeKind.Class, namespaces[i])
+                partialClassAsNamespaceStep = new(TypeKind.Class)
                 {
-                    NestingType = partialClassAsNamespaceStep,
+                    Name = namespaces[i],
+                    Container = new NestingTypeContainer(partialClassAsNamespaceStep),
                     AccessModifier = Accessibility.Internal,
                 };
             }

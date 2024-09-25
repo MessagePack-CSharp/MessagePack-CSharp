@@ -46,16 +46,16 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 <#
    var constructedRegistrations = ConstructedTypeRegistrations.ToArray();
    if (constructedRegistrations.Length > 0) { #>
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(<#= constructedRegistrations.Length #>)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(<#= constructedRegistrations.Length #>)
 		{
 <# for(var i = 0; i < constructedRegistrations.Length; i++) { #>
-			{ typeof(<#= constructedRegistrations[i].DataType.GetQualifiedName() #>), <#= i #> },
+			{ typeof(<#= constructedRegistrations[i].DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments) #>), <#= i #> },
 <# } #>
 		};
 <# }
    var openGenericRegistrations = OpenGenericRegistrations.ToArray();
    if (openGenericRegistrations.Length > 0) { #>
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new(<#= openGenericRegistrations.Length #>)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(<#= openGenericRegistrations.Length #>)
 		{
 <# for(var i = 0; i < openGenericRegistrations.Length; i++) { #>
 			{ typeof(<#= openGenericRegistrations[i].DataType.GetQualifiedName(genericStyle: GenericParameterStyle.TypeDefinition) #>), <#= i #> },
@@ -68,12 +68,12 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 <# if (constructedRegistrations.Length > 0) { #>
 			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return closedKey switch
+				switch (closedKey)
 				{
 <# for(var i = 0; i < constructedRegistrations.Length; i++) { var x = constructedRegistrations[i]; #>
-					<#= i #> => <#= x.GetFormatterInstanceForResolver() #>,
+					case <#= i #>: return <#= x.GetFormatterInstanceForResolver() #>;
 <# } #>
-					_ => null, // unreachable
+					default: return null; // unreachable
 				};
 			}
 <# }
@@ -81,12 +81,12 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
    if (openGenericRegistrations.Length > 0) { #>
 			if (t.IsGenericType && openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))
 			{
-				return openKey switch
+				switch (openKey)
 				{
 <#     for(var i = 0; i < openGenericRegistrations.Length; i++) { var x = openGenericRegistrations[i]; #>
-					<#= i #> => global::System.Activator.CreateInstance(typeof(<#= x.GetFormatterNameForResolver(GenericParameterStyle.TypeDefinition) #>).MakeGenericType(t.GenericTypeArguments)),
+					case <#= i #>: return global::System.Activator.CreateInstance(typeof(<#= x.GetFormatterNameForResolver(GenericParameterStyle.TypeDefinition) #>).MakeGenericType(t.GenericTypeArguments));
 <#     } #>
-					_ => null, // unreachable
+					default: return null; // unreachable
 				};
 			}
 <# } #>

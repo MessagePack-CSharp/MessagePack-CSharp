@@ -86,7 +86,7 @@ public record AnalyzerOptions
         }
     }
 
-    public ImmutableDictionary<QualifiedTypeName, FormatterDescriptor> KnownFormattersByName { get; private init; } = ImmutableDictionary<QualifiedTypeName, FormatterDescriptor>.Empty;
+    public ImmutableDictionary<QualifiedNamedTypeName, FormatterDescriptor> KnownFormattersByName { get; private init; } = ImmutableDictionary<QualifiedNamedTypeName, FormatterDescriptor>.Empty;
 
     public GeneratorOptions Generator { get; init; } = new();
 
@@ -209,7 +209,7 @@ public record GeneratorOptions
 /// <param name="InstanceProvidingMember">Either ".ctor" or the name of a static field or property that will return an instance of the formatter.</param>
 /// <param name="InstanceTypeName">The type name to use when referring to an instance of the formatter. Usually the same as <paramref name="Name"/> but may be different if <paramref name="InstanceProvidingMember"/> returns a different type.</param>
 /// <param name="FormattableTypes">The type arguments that appear in each implemented <c>IMessagePackFormatter</c> interface. When generic, these should be the full name of their type definitions.</param>
-public record FormatterDescriptor(QualifiedTypeName Name, string? InstanceProvidingMember, QualifiedTypeName InstanceTypeName, ImmutableHashSet<FormattableType> FormattableTypes)
+public record FormatterDescriptor(QualifiedNamedTypeName Name, string? InstanceProvidingMember, QualifiedTypeName InstanceTypeName, ImmutableHashSet<FormattableType> FormattableTypes)
 {
     public static bool TryCreate(INamedTypeSymbol type, [NotNullWhen(true)] out FormatterDescriptor? formatter)
     {
@@ -227,9 +227,9 @@ public record FormatterDescriptor(QualifiedTypeName Name, string? InstanceProvid
             .FirstOrDefault(m => m.IsStatic && m.DeclaredAccessibility == Accessibility.Public && m.IsReadOnly);
         IMethodSymbol? ctor = type.InstanceConstructors.FirstOrDefault(ctor => ctor.Parameters.Length == 0 && ctor.DeclaredAccessibility >= Accessibility.Internal);
         string? instanceProvidingMember = instanceField?.Name ?? ctor?.Name ?? null;
-        QualifiedTypeName instanceTypeName = new(instanceField?.Type ?? type);
+        QualifiedTypeName instanceTypeName = QualifiedTypeName.Create(instanceField?.Type ?? type);
 
-        formatter = new FormatterDescriptor(new QualifiedTypeName(type), instanceProvidingMember, instanceTypeName, formattedTypes)
+        formatter = new FormatterDescriptor(new QualifiedNamedTypeName(type), instanceProvidingMember, instanceTypeName, formattedTypes)
         {
             InaccessibleDescriptor =
                 CodeAnalysisUtilities.FindInaccessibleTypes(type).Any() ? MsgPack00xMessagePackAnalyzer.InaccessibleFormatterType :
@@ -271,7 +271,7 @@ public record FormatterDescriptor(QualifiedTypeName Name, string? InstanceProvid
 public record FormattableType(QualifiedTypeName Name)
 {
     public FormattableType(ITypeSymbol type)
-        : this(new QualifiedTypeName(type))
+        : this(QualifiedTypeName.Create(type))
     {
     }
 }

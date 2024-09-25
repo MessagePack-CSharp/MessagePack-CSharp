@@ -39,7 +39,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new(2)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(2)
 		{
 			{ typeof(global::HasPropertyWithCustomFormatterAttribute), 0 },
 			{ typeof(global::UnserializableRecord), 1 },
@@ -49,11 +49,11 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 		{
 			if (closedTypeLookup.TryGetValue(t, out int closedKey))
 			{
-				return closedKey switch
+				switch (closedKey)
 				{
-					0 => new global::MessagePack.GeneratedMessagePackResolver.HasPropertyWithCustomFormatterAttributeFormatter(),
-					1 => new global::UnserializableRecordFormatter(),
-					_ => null, // unreachable
+					case 0: return new global::MessagePack.GeneratedMessagePackResolver.HasPropertyWithCustomFormatterAttributeFormatter();
+					case 1: return new global::UnserializableRecordFormatter();
+					default: return null; // unreachable
 				};
 			}
 

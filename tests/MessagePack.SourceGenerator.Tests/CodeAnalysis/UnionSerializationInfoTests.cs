@@ -10,8 +10,16 @@ public class UnionSerializationInfoTests
     {
         UnionSerializationInfo info1a = new()
         {
-            DataType = new("full", TypeKind.Class, "name"),
-            Formatter = new("some", TypeKind.Class, "other"),
+            DataType = new QualifiedNamedTypeName(TypeKind.Class)
+            {
+                Container = new NamespaceTypeContainer("full"),
+                Name = "name",
+            },
+            Formatter = new(TypeKind.Class)
+            {
+                Container = new NamespaceTypeContainer("some"),
+                Name = "other",
+            },
             SubTypes = ImmutableArray.Create(new UnionSubTypeInfo(1, "hey")),
         };
         UnionSerializationInfo info1b = info1a with

@@ -73,12 +73,13 @@ namespace MessagePack.SourceGenerator.Transforms
    var constructedRegistrations = ConstructedTypeRegistrations.ToArray();
    if (constructedRegistrations.Length > 0) { 
             this.Write("\t\tprivate static readonly global::System.Collections.Generic.Dictionary<global::S" +
-                    "ystem.Type, int> closedTypeLookup = new(");
+                    "ystem.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dicti" +
+                    "onary<global::System.Type, int>(");
             this.Write(this.ToStringHelper.ToStringWithCulture(constructedRegistrations.Length));
             this.Write(")\r\n\t\t{\r\n");
  for(var i = 0; i < constructedRegistrations.Length; i++) { 
             this.Write("\t\t\t{ typeof(");
-            this.Write(this.ToStringHelper.ToStringWithCulture(constructedRegistrations[i].DataType.GetQualifiedName()));
+            this.Write(this.ToStringHelper.ToStringWithCulture(constructedRegistrations[i].DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments)));
             this.Write("), ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(" },\r\n");
@@ -88,7 +89,8 @@ namespace MessagePack.SourceGenerator.Transforms
    var openGenericRegistrations = OpenGenericRegistrations.ToArray();
    if (openGenericRegistrations.Length > 0) { 
             this.Write("\t\tprivate static readonly global::System.Collections.Generic.Dictionary<global::S" +
-                    "ystem.Type, int> openTypeLookup = new(");
+                    "ystem.Type, int> openTypeLookup = new global::System.Collections.Generic.Diction" +
+                    "ary<global::System.Type, int>(");
             this.Write(this.ToStringHelper.ToStringWithCulture(openGenericRegistrations.Length));
             this.Write(")\r\n\t\t{\r\n");
  for(var i = 0; i < openGenericRegistrations.Length; i++) { 
@@ -102,29 +104,29 @@ namespace MessagePack.SourceGenerator.Transforms
  } 
             this.Write("\r\n\t\tinternal static object GetFormatter(global::System.Type t)\r\n\t\t{\r\n");
  if (constructedRegistrations.Length > 0) { 
-            this.Write("\t\t\tif (closedTypeLookup.TryGetValue(t, out int closedKey))\r\n\t\t\t{\r\n\t\t\t\treturn clos" +
-                    "edKey switch\r\n\t\t\t\t{\r\n");
+            this.Write("\t\t\tif (closedTypeLookup.TryGetValue(t, out int closedKey))\r\n\t\t\t{\r\n\t\t\t\tswitch (clo" +
+                    "sedKey)\r\n\t\t\t\t{\r\n");
  for(var i = 0; i < constructedRegistrations.Length; i++) { var x = constructedRegistrations[i]; 
-            this.Write("\t\t\t\t\t");
+            this.Write("\t\t\t\t\tcase ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(" => ");
+            this.Write(": return ");
             this.Write(this.ToStringHelper.ToStringWithCulture(x.GetFormatterInstanceForResolver()));
-            this.Write(",\r\n");
+            this.Write(";\r\n");
  } 
-            this.Write("\t\t\t\t\t_ => null, // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n");
+            this.Write("\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n");
  }
 
    if (openGenericRegistrations.Length > 0) { 
             this.Write("\t\t\tif (t.IsGenericType && openTypeLookup.TryGetValue(t.GetGenericTypeDefinition()" +
-                    ", out int openKey))\r\n\t\t\t{\r\n\t\t\t\treturn openKey switch\r\n\t\t\t\t{\r\n");
+                    ", out int openKey))\r\n\t\t\t{\r\n\t\t\t\tswitch (openKey)\r\n\t\t\t\t{\r\n");
      for(var i = 0; i < openGenericRegistrations.Length; i++) { var x = openGenericRegistrations[i]; 
-            this.Write("\t\t\t\t\t");
+            this.Write("\t\t\t\t\tcase ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(" => global::System.Activator.CreateInstance(typeof(");
+            this.Write(": return global::System.Activator.CreateInstance(typeof(");
             this.Write(this.ToStringHelper.ToStringWithCulture(x.GetFormatterNameForResolver(GenericParameterStyle.TypeDefinition)));
-            this.Write(").MakeGenericType(t.GenericTypeArguments)),\r\n");
+            this.Write(").MakeGenericType(t.GenericTypeArguments));\r\n");
      } 
-            this.Write("\t\t\t\t\t_ => null, // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n");
+            this.Write("\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n");
  } 
             this.Write("\r\n\t\t\treturn null;\r\n\t\t}\r\n\t}\r\n}\r\n\r\n");
  if (ResolverNamespace.Length > 0) { 
