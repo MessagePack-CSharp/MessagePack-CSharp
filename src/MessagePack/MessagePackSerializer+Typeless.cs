@@ -51,6 +51,8 @@ namespace MessagePack
 
             public static object? Deserialize(Memory<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => Deserialize<object?>(bytes, options ?? DefaultOptions, cancellationToken);
 
+            public static object? Deserialize(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => Deserialize<object?>(bytes, options ?? DefaultOptions, cancellationToken);
+
             public static ValueTask<object?> DeserializeAsync(Stream stream, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => DeserializeAsync<object?>(stream, options ?? DefaultOptions, cancellationToken);
         }
     }
