@@ -17,4 +17,6 @@ internal static class Constants
 
     internal const string IMessagePackFormatterInterfaceNamespace = "MessagePack.Formatters";
     internal const string IMessagePackFormatterInterfaceName = "IMessagePackFormatter";
+
+    internal const string IFormatterResolverInterfaceName = "IFormatterResolver";
 }
