@@ -12,36 +12,36 @@ internal static class TransformUtilities
 
     internal static IDisposable? EmitNestingTypesAndNamespaces(this IFormatterTemplate template, QualifiedTypeName nestedType, ResolverRegisterInfo.FormatterPosition formatterLocation, Action<string> writer)
     {
-        if (nestedType.NestingType is null)
+        if (nestedType is not QualifiedNamedTypeName { Container: NestingTypeContainer { NestingType: { } nestingType } })
         {
             return null;
         }
 
         Stack<IDisposable?> reverseAction = new();
 
-        if (nestedType.NestingType.Namespace is not null)
+        if (nestingType.Container is NamespaceTypeContainer { Namespace: string ns })
         {
-            writer($"namespace {nestedType.NestingType.Namespace} {{\r\n");
+            writer($"namespace {ns} {{\r\n");
             reverseAction.Push(new DisposeAction(() => writer("}\r\n")));
         }
 
         // Start with outer-most type.
-        if (nestedType.NestingType.NestingType is not null)
+        if (nestingType is { Container: NestingTypeContainer { NestingType: not null } })
         {
-            reverseAction.Push(EmitNestingTypesAndNamespaces(template, nestedType.NestingType, formatterLocation, writer));
+            reverseAction.Push(EmitNestingTypesAndNamespaces(template, nestingType, formatterLocation, writer));
         }
 
-        string kind = nestedType.NestingType.Kind switch
+        string kind = nestingType.Kind switch
         {
-            TypeKind.Class when nestedType.NestingType.IsRecord => "record", // C# 9 doesn't want to see `record class`.
+            TypeKind.Class when nestingType.IsRecord => "record", // C# 9 doesn't want to see `record class`.
             TypeKind.Class => "class",
-            TypeKind.Struct when nestedType.NestingType.IsRecord => "record struct",
+            TypeKind.Struct when nestingType.IsRecord => "record struct",
             TypeKind.Struct => "struct",
             TypeKind.Interface => "interface",
-            _ => throw new NotSupportedException("Unsupported kind: " + nestedType.NestingType.Kind),
+            _ => throw new NotSupportedException("Unsupported kind: " + nestingType.Kind),
         };
 
-        string? accessModifier = nestedType.NestingType.AccessModifier switch
+        string? accessModifier = nestingType.AccessModifier switch
         {
             Accessibility.Public => "public",
             Accessibility.Internal => "internal",
@@ -54,7 +54,7 @@ internal static class TransformUtilities
             writer($" ");
         }
 
-        writer($"partial {kind} {nestedType.NestingType.Name} {{\r\n");
+        writer($"partial {kind} {nestingType.Name} {{\r\n");
         reverseAction.Push(new DisposeAction(() => writer("}\r\n")));
 
         return new DisposeAction(() =>
@@ -68,8 +68,7 @@ internal static class TransformUtilities
 
     internal static IDisposable? EmitClassesForNamespace(this IFormatterTemplate template, out string formatterVisibility, Action<string> writer)
     {
-        string? ns = template.Info.DataType.Namespace;
-        if (ns is null)
+        if (template.Info.DataType is not QualifiedNamedTypeName { Container: NamespaceTypeContainer { Namespace: string ns } })
         {
             formatterVisibility = "private";
             return null;

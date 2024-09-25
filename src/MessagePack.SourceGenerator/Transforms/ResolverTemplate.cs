@@ -79,7 +79,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(")\r\n\t\t{\r\n");
  for(var i = 0; i < constructedRegistrations.Length; i++) { 
             this.Write("\t\t\t{ typeof(");
-            this.Write(this.ToStringHelper.ToStringWithCulture(constructedRegistrations[i].DataType.GetQualifiedName()));
+            this.Write(this.ToStringHelper.ToStringWithCulture(constructedRegistrations[i].DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments)));
             this.Write("), ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(" },\r\n");

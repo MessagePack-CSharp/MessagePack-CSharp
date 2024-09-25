@@ -195,6 +195,7 @@ public class TypeCollector
     private readonly ImmutableSortedSet<EnumSerializationInfo>.Builder collectedEnumInfo = ImmutableSortedSet.CreateBuilder<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default);
     private readonly ImmutableSortedSet<GenericSerializationInfo>.Builder collectedGenericInfo = ImmutableSortedSet.CreateBuilder<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default);
     private readonly ImmutableSortedSet<UnionSerializationInfo>.Builder collectedUnionInfo = ImmutableSortedSet.CreateBuilder<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default);
+    private readonly ImmutableSortedSet<ResolverRegisterInfo>.Builder collectedArrayInfo = ImmutableSortedSet.CreateBuilder<ResolverRegisterInfo>(ResolverRegisterInfoComparer.Default);
 
     private readonly Compilation compilation;
 
@@ -246,6 +247,7 @@ public class TypeCollector
         this.collectedEnumInfo.Clear();
         this.collectedGenericInfo.Clear();
         this.collectedUnionInfo.Clear();
+        this.collectedArrayInfo.Clear();
     }
 
     // EntryPoint
@@ -264,6 +266,7 @@ public class TypeCollector
             this.collectedGenericInfo.ToImmutable(),
             this.collectedUnionInfo.ToImmutable(),
             ImmutableSortedSet<CustomFormatterRegisterInfo>.Empty,
+            this.collectedArrayInfo.ToImmutable(),
             this.options);
     }
 
@@ -278,7 +281,7 @@ public class TypeCollector
         }
 
         FormattableType formattableType = new(typeSymbol);
-        if (EmbeddedTypes.Contains(formattableType.Name.Name))
+        if (formattableType.Name is QualifiedNamedTypeName { Name: string name } && EmbeddedTypes.Contains(name))
         {
             result = true;
             this.alreadyCollected.Add(typeSymbol, result);
@@ -438,7 +441,7 @@ public class TypeCollector
             return true;
         }
 
-        QualifiedTypeName elementTypeName = new(elemType);
+        QualifiedTypeName elementTypeName = QualifiedTypeName.Create(elemType);
         string? formatterName = array.Rank switch
         {
             1 => "ArrayFormatter",
@@ -453,11 +456,16 @@ public class TypeCollector
             return false;
         }
 
-        var info = GenericSerializationInfo.Create(array, this.options.Generator.Resolver) with
+        var info = ResolverRegisterInfo.CreateArray(array, this.options.Generator.Resolver) with
         {
-            Formatter = new QualifiedTypeName("MsgPack::Formatters", null, TypeKind.Class, formatterName, ImmutableArray.Create(elementTypeName.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments))),
+            Formatter = new QualifiedNamedTypeName(TypeKind.Class)
+            {
+                Container = new NamespaceTypeContainer("MsgPack::Formatters"),
+                Name = formatterName,
+                TypeParameters = ImmutableArray.Create(elementTypeName.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments)),
+            },
         };
-        this.collectedGenericInfo.Add(info);
+        this.collectedArrayInfo.Add(info);
         return true;
     }
 
@@ -518,7 +526,11 @@ public class TypeCollector
                 formatterName = $"NullableFormatter<{firstTypeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
                 var info = GenericSerializationInfo.Create(type, this.options.Generator.Resolver) with
                 {
-                    Formatter = new QualifiedTypeName("MsgPack::Formatters", TypeKind.Class, formatterName),
+                    Formatter = new QualifiedNamedTypeName(TypeKind.Class)
+                    {
+                        Name = formatterName,
+                        Container = new NamespaceTypeContainer("MsgPack::Formatters"),
+                    },
                 };
                 this.collectedGenericInfo.Add(info);
             }
@@ -546,7 +558,12 @@ public class TypeCollector
                 int indexOfLastPeriod = formatterFullName.LastIndexOf('.');
                 info = info with
                 {
-                    Formatter = new(formatterFullName.Substring(0, indexOfLastPeriod), TypeKind.Class, formatterFullName.Substring(indexOfLastPeriod + 1), info.DataType.TypeParameters),
+                    Formatter = new(TypeKind.Class)
+                    {
+                        Container = new NamespaceTypeContainer(formatterFullName.Substring(0, indexOfLastPeriod)),
+                        Name = formatterFullName.Substring(indexOfLastPeriod + 1),
+                        TypeParameters = GetTypeParameters(info.DataType),
+                    },
                 };
 
                 this.collectedGenericInfo.Add(info);
@@ -562,7 +579,12 @@ public class TypeCollector
             var groupingInfo = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
             groupingInfo = groupingInfo with
             {
-                DataType = new QualifiedTypeName("global::System.Linq", TypeKind.Interface, $"IGrouping", info.DataType.TypeParameters),
+                DataType = new QualifiedNamedTypeName(TypeKind.Interface)
+                {
+                    Container = new NamespaceTypeContainer("global::System.Linq"),
+                    Name = "IGrouping",
+                    TypeParameters = GetTypeParameters(info.DataType),
+                },
                 Formatter = groupingInfo.Formatter with { Name = formatterName },
             };
             this.collectedGenericInfo.Add(groupingInfo);
@@ -572,7 +594,12 @@ public class TypeCollector
             GenericSerializationInfo enumerableInfo = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
             enumerableInfo = enumerableInfo with
             {
-                DataType = new QualifiedTypeName("System.Collections.Generic", TypeKind.Interface, $"IEnumerable", ImmutableArray.Create(info.DataType.TypeParameters[1])),
+                DataType = new QualifiedNamedTypeName(TypeKind.Interface)
+                {
+                    Container = new NamespaceTypeContainer("System.Collections.Generic"),
+                    Name = "IEnumerable",
+                    TypeParameters = ImmutableArray.Create(GetTypeParameters(info.DataType)[1]),
+                },
                 Formatter = enumerableInfo.Formatter with { Name = formatterName },
             };
             this.collectedGenericInfo.Add(enumerableInfo);
@@ -613,6 +640,9 @@ public class TypeCollector
             GenericSerializationInfo genericSerializationInfo = GenericSerializationInfo.Create(type, this.options.Generator.Resolver);
             this.collectedGenericInfo.Add(genericSerializationInfo);
         }
+
+        static ImmutableArray<string> GetTypeParameters(QualifiedTypeName qtn)
+            => qtn is QualifiedNamedTypeName named ? named.TypeParameters : ImmutableArray.Create<string>();
 
         return true;
     }

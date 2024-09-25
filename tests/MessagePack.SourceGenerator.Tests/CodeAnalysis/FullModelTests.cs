@@ -16,9 +16,17 @@ public class FullModelTests
     {
         EnumSerializationInfo enumInfo = new()
         {
-            DataType = new("My", TypeKind.Enum, "MyEnum"),
+            DataType = new QualifiedNamedTypeName(TypeKind.Enum)
+            {
+                Container = new NamespaceTypeContainer("My"),
+                Name = "MyEnum",
+            },
             UnderlyingTypeName = "System.Int32",
-            Formatter = new("some", TypeKind.Class, "some"),
+            Formatter = new QualifiedNamedTypeName(TypeKind.Class)
+            {
+                Container = new NamespaceTypeContainer("some"),
+                Name = "some",
+            },
         };
 
         // Construct a FullModel with a non-default value for each property.
@@ -28,6 +36,7 @@ public class FullModelTests
             ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<CustomFormatterRegisterInfo>(ResolverRegisterInfoComparer.Default),
+            ImmutableSortedSet.Create<ResolverRegisterInfo>(ResolverRegisterInfoComparer.Default),
             new AnalyzerOptions());
         FullModel model1b = new(
             ImmutableSortedSet.Create<ObjectSerializationInfo>(ResolverRegisterInfoComparer.Default),
@@ -35,6 +44,7 @@ public class FullModelTests
             ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<CustomFormatterRegisterInfo>(ResolverRegisterInfoComparer.Default),
+            ImmutableSortedSet.Create<ResolverRegisterInfo>(ResolverRegisterInfoComparer.Default),
             new AnalyzerOptions());
 
         FullModel model2 = new(
@@ -43,6 +53,7 @@ public class FullModelTests
             ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
             ImmutableSortedSet.Create<CustomFormatterRegisterInfo>(ResolverRegisterInfoComparer.Default),
+            ImmutableSortedSet.Create<ResolverRegisterInfo>(ResolverRegisterInfoComparer.Default),
             new AnalyzerOptions());
 
         Assert.Equal(model1b, model1a);
