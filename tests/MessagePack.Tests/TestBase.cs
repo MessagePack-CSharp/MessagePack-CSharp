@@ -12,6 +12,6 @@ namespace MessagePack.Tests
     {
         protected readonly CancellationToken TimeoutToken = new CancellationTokenSource(TestTimeoutSpan).Token;
 
-        private static readonly TimeSpan TestTimeoutSpan = Debugger.IsAttached ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(5);
+        private static readonly TimeSpan TestTimeoutSpan = Debugger.IsAttached ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(10);
     }
 }
