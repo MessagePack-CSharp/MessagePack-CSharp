@@ -210,11 +210,17 @@ public record GeneratorOptions
 /// <param name="FormattableTypes">The type arguments that appear in each implemented <c>IMessagePackFormatter</c> interface. When generic, these should be the full name of their type definitions.</param>
 public record FormatterDescriptor(QualifiedNamedTypeName Name, string? InstanceProvidingMember, QualifiedTypeName InstanceTypeName, ImmutableHashSet<FormattableType> FormattableTypes)
 {
+    /// <summary>
+    /// Creates a descriptor for a formatter, if the given type implements at least one <c>IMessagePackFormatter</c> interface.
+    /// </summary>
+    /// <param name="type">The type symbol for the formatter.</param>
+    /// <param name="formatter">Receives the formatter descriptor, if applicable.</param>
+    /// <returns><see langword="true"/> if <paramref name="type"/> represents a formatter.</returns>
     public static bool TryCreate(INamedTypeSymbol type, [NotNullWhen(true)] out FormatterDescriptor? formatter)
     {
         var formattedTypes =
             AnalyzerUtilities.SearchTypeForFormatterImplementations(type)
-            .Select(i => new FormattableType(i))
+            .Select(i => new FormattableType(i, type.ContainingAssembly))
             .ToImmutableHashSet();
         if (formattedTypes.IsEmpty)
         {
@@ -267,10 +273,11 @@ public record FormatterDescriptor(QualifiedNamedTypeName Name, string? InstanceP
 /// Describes a formattable type.
 /// </summary>
 /// <param name="Name">The name of the formattable type.</param>
-public record FormattableType(QualifiedTypeName Name)
+/// <param name="IsFormatterInSameAssembly"><see langword="true" /> if the formatter and the formatted types are declared in the same assembly.</param>
+public record FormattableType(QualifiedTypeName Name, bool IsFormatterInSameAssembly)
 {
-    public FormattableType(ITypeSymbol type)
-        : this(QualifiedTypeName.Create(type))
+    public FormattableType(ITypeSymbol type, IAssemblySymbol? formatterAssembly)
+        : this(QualifiedTypeName.Create(type), SymbolEqualityComparer.Default.Equals(type.ContainingAssembly, formatterAssembly))
     {
     }
 }

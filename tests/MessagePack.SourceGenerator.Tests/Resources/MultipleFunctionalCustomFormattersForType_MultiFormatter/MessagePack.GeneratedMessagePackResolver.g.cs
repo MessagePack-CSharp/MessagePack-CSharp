@@ -41,7 +41,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 	{
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(1)
 		{
-			{ typeof(global::System.Boolean), 0 },
+			{ typeof(global::B), 0 },
 		};
 
 		internal static object GetFormatter(global::System.Type t)

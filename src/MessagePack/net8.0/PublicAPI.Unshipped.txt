@@ -13,6 +13,8 @@ const MessagePack.ReservedExtensionTypeCodes.UnityVector3 = 31 -> sbyte
 const MessagePack.ReservedExtensionTypeCodes.UnityVector4 = 32 -> sbyte
 MessagePack.CompositeResolverAttribute
 MessagePack.CompositeResolverAttribute.CompositeResolverAttribute(params System.Type![]! formattersAndResolvers) -> void
+MessagePack.CompositeResolverAttribute.IncludeLocalFormatters.get -> bool
+MessagePack.CompositeResolverAttribute.IncludeLocalFormatters.set -> void
 MessagePack.Formatters.BooleanListFormatter
 MessagePack.Formatters.BooleanListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<bool>?
 MessagePack.Formatters.BooleanListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<bool>? value, MessagePack.MessagePackSerializerOptions! options) -> void

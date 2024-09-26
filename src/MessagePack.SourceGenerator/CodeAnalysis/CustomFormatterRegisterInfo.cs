@@ -7,6 +7,8 @@ public record CustomFormatterRegisterInfo : ResolverRegisterInfo
 {
     public required FormatterDescriptor CustomFormatter { get; init; }
 
+    public required FormattableType FormattableDataType { get; init; }
+
     public override string GetFormatterInstanceForResolver()
     {
         return this.CustomFormatter.InstanceProvidingMember == ".ctor"

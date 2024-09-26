@@ -74,7 +74,7 @@ public partial class MessagePackGenerator
             .. model.EnumInfos,
             .. model.UnionInfos,
             .. model.ObjectInfos,
-            .. model.CustomFormatterInfos,
+            .. model.CustomFormatterInfos.Where(fi => fi.FormattableDataType.IsFormatterInSameAssembly),
         ];
         ResolverTemplate resolverTemplate = new(options, registerInfos);
         sb.Append(FileHeader);

@@ -109,7 +109,7 @@ public static class AnalyzerUtilities
             where ad.AttributeClass?.Name == MessagePackAssumedFormattableAttributeName && ad.AttributeClass?.ContainingNamespace.Name == AttributeNamespace
             let type = (INamedTypeSymbol?)ad.ConstructorArguments[0].Value
             where type is not null
-            select new FormattableType(type));
+            select new FormattableType(type, null));
     }
 
     internal static IEnumerable<string> ResolverSymbolToInstanceExpression(SemanticModel semanticModel, IEnumerable<INamedTypeSymbol?> formatterAndResolverTypes)
