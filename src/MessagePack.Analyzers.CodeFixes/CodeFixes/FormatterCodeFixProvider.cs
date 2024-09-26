@@ -11,7 +11,8 @@ public class FormatterCodeFixProvider : CodeFixProvider
     private static readonly ImmutableArray<string> FixableIds = ImmutableArray.Create(
         MsgPack00xMessagePackAnalyzer.InaccessibleFormatterTypeId,
         MsgPack00xMessagePackAnalyzer.InaccessibleFormatterInstanceId,
-        MsgPack00xMessagePackAnalyzer.PartialTypeRequired.Id);
+        MsgPack00xMessagePackAnalyzer.PartialTypeRequiredId,
+        MsgPack00xMessagePackAnalyzer.NullableReferenceTypeFormatterId);
 
     public sealed override ImmutableArray<string> FixableDiagnosticIds => FixableIds;
 
@@ -25,12 +26,13 @@ public class FormatterCodeFixProvider : CodeFixProvider
         foreach (Diagnostic diagnostic in context.Diagnostics)
         {
             SyntaxNode? syntaxRoot = await context.Document.GetSyntaxRootAsync(context.CancellationToken);
-            BaseTypeDeclarationSyntax? typeDecl = syntaxRoot?.FindNode(diagnostic.Location.SourceSpan) as BaseTypeDeclarationSyntax;
-            if (syntaxRoot is not null && typeDecl is not null)
+            CSharpSyntaxNode? diagnosticTargetNode = syntaxRoot?.FindNode(diagnostic.Location.SourceSpan) as CSharpSyntaxNode;
+            BaseTypeDeclarationSyntax? typeDecl = diagnosticTargetNode as BaseTypeDeclarationSyntax;
+            if (syntaxRoot is not null)
             {
                 switch (diagnostic.Id)
                 {
-                    case MsgPack00xMessagePackAnalyzer.PartialTypeRequiredId:
+                    case MsgPack00xMessagePackAnalyzer.PartialTypeRequiredId when typeDecl is not null:
                         context.RegisterCodeFix(
                             CodeAction.Create(
                                 "Add partial modifier",
@@ -39,7 +41,7 @@ public class FormatterCodeFixProvider : CodeFixProvider
                             diagnostic);
 
                         break;
-                    case MsgPack00xMessagePackAnalyzer.InaccessibleFormatterTypeId:
+                    case MsgPack00xMessagePackAnalyzer.InaccessibleFormatterTypeId when typeDecl is not null:
                         context.RegisterCodeFix(
                             CodeAction.Create(
                                 "Make type internal",
@@ -48,7 +50,7 @@ public class FormatterCodeFixProvider : CodeFixProvider
                             diagnostic);
 
                         break;
-                    case MsgPack00xMessagePackAnalyzer.InaccessibleFormatterInstanceId:
+                    case MsgPack00xMessagePackAnalyzer.InaccessibleFormatterInstanceId when typeDecl is not null:
                         SemanticModel? semanticModel = await context.Document.GetSemanticModelAsync(context.CancellationToken);
                         if (semanticModel?.GetDeclaredSymbol(typeDecl, context.CancellationToken) is INamedTypeSymbol typeSymbol)
                         {
@@ -70,9 +72,58 @@ public class FormatterCodeFixProvider : CodeFixProvider
                         }
 
                         break;
+                    case MsgPack00xMessagePackAnalyzer.NullableReferenceTypeFormatterId:
+                        if (diagnosticTargetNode is TypeSyntax typeArg)
+                        {
+                            context.RegisterCodeFix(
+                                CodeAction.Create(
+                                    "Add nullable annotation",
+                                    ct => AddNullableAnnotationAsync(context, typeArg, ct),
+                                    "NullableRefAddition"),
+                                diagnostic);
+                        }
+
+                        break;
                 }
             }
         }
+    }
+
+    private static async Task<Document> AddNullableAnnotationAsync(CodeFixContext context, TypeSyntax typeArg, CancellationToken ct)
+    {
+        SyntaxNode? root = await context.Document.GetSyntaxRootAsync(ct);
+        if (root is null)
+        {
+            return context.Document;
+        }
+
+        // Attempt to update any and all references to this type.
+        BaseTypeDeclarationSyntax? typeDecl = typeArg.FirstAncestorOrSelf<BaseTypeDeclarationSyntax>();
+        if (typeDecl is not null)
+        {
+            SemanticModel? semanticModel = await context.Document.GetSemanticModelAsync(ct);
+            if (semanticModel is not null)
+            {
+                ITypeSymbol? nonAnnotated = semanticModel.GetTypeInfo(typeArg, ct).Type;
+                if (nonAnnotated is not null)
+                {
+                    BaseTypeDeclarationSyntax updatedTypeDecl = typeDecl.ReplaceNodes(
+                        typeDecl.DescendantNodes().OfType<TypeSyntax>(),
+                        (old, current) =>
+                        {
+                            ITypeSymbol? actual = semanticModel.GetTypeInfo(old, ct).Type;
+                            return SymbolEqualityComparer.IncludeNullability.Equals(actual, nonAnnotated)
+                                ? SyntaxFactory.NullableType(current.WithoutTrailingTrivia()).WithTrailingTrivia(current.GetTrailingTrivia())
+                                : current;
+                        });
+                    root = root.ReplaceNode(typeDecl, updatedTypeDecl);
+                }
+            }
+        }
+
+        Document document = context.Document;
+        document = document.WithSyntaxRoot(root);
+        return document;
     }
 
     private static Task<Document> AddPartialModifierAsync(Document document, SyntaxNode syntaxRoot, BaseTypeDeclarationSyntax typeDecl, Diagnostic diagnostic, CancellationToken cancellationToken)

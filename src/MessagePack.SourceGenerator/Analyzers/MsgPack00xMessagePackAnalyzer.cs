@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using AnalyzerOptions = MessagePack.SourceGenerator.CodeAnalysis.AnalyzerOptions;
 
@@ -22,6 +23,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string PartialTypeRequiredId = "MsgPack011";
     public const string InaccessibleDataTypeId = "MsgPack012";
     public const string InaccessibleFormatterInstanceId = "MsgPack013";
+    public const string NullableReferenceTypeFormatterId = "MsgPack014";
 
     internal const string Category = "Usage";
 
@@ -255,6 +257,15 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InaccessibleDataTypeId));
 
+    public static readonly DiagnosticDescriptor NullableReferenceTypeFormatter = new(
+        id: NullableReferenceTypeFormatterId,
+        title: "Format nullable reference types",
+        category: Category,
+        messageFormat: "Implement IMessagePackFormatter<{0}?> (with nullable annotation)",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(NullableReferenceTypeFormatterId));
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         TypeMustBeMessagePackObject,
         MessageFormatterMustBeMessagePackFormatter,
@@ -277,7 +288,8 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         InaccessibleFormatterInstance,
         InaccessibleFormatterType,
         PartialTypeRequired,
-        InaccessibleDataType);
+        InaccessibleDataType,
+        NullableReferenceTypeFormatter);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -315,6 +327,46 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
             if (!formatter.ExcludeFromSourceGeneratedResolver && formatter.InaccessibleDescriptor is { } inaccessible)
             {
                 context.ReportDiagnostic(Diagnostic.Create(inaccessible, declaredSymbol.Locations[0]));
+            }
+
+            // Call out any formattable reference types that are not nullable.
+            foreach (INamedTypeSymbol iface in declaredSymbol.Interfaces)
+            {
+                if (iface.TypeArguments is [INamedTypeSymbol { IsReferenceType: true, NullableAnnotation: NullableAnnotation.NotAnnotated } a])
+                {
+                    Location? location = null;
+
+                    // Find the location of the actual generic type argument if we can.
+                    foreach (var syntaxRef in declaredSymbol.DeclaringSyntaxReferences)
+                    {
+                        if (syntaxRef.GetSyntax(context.CancellationToken) is BaseTypeDeclarationSyntax { BaseList: { } baseList } typeSyntax)
+                        {
+#pragma warning disable RS1030 // Do not invoke Compilation.GetSemanticModel() method within a diagnostic analyzer
+                            SemanticModel semanticModel = context.Compilation.GetSemanticModel(syntaxRef.SyntaxTree);
+#pragma warning restore RS1030 // Do not invoke Compilation.GetSemanticModel() method within a diagnostic analyzer
+                            foreach (BaseTypeSyntax baseTypeSyntax in baseList.Types)
+                            {
+                                if (baseTypeSyntax.Type is GenericNameSyntax { TypeArgumentList: { Arguments: [TypeSyntax typeArg] } })
+                                {
+                                    ITypeSymbol? actual = semanticModel.GetTypeInfo(typeArg, context.CancellationToken).Type;
+                                    if (SymbolEqualityComparer.Default.Equals(actual, a))
+                                    {
+                                        location = typeArg.GetLocation();
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (location is not null)
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    location ??= declaredSymbol.Locations[0];
+                    context.ReportDiagnostic(Diagnostic.Create(NullableReferenceTypeFormatter, location, a.Name));
+                }
             }
         }
 
