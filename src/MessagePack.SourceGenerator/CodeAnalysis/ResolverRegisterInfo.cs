@@ -119,17 +119,11 @@ public record ResolverRegisterInfo
             };
         }
 
-        QualifiedNamedTypeName generatedResolverName = new(TypeKind.Class)
-        {
-            Container = NamespaceTypeContainer.From(resolverOptions.Namespace),
-            Name = resolverOptions.Name,
-        };
-
         // Each namespace of the data type also becomes a nesting type of the formatter.
         if (dataType is QualifiedNamedTypeName { Container: NamespaceTypeContainer { Namespace: string ns } })
         {
             string[] namespaces = ns.Split('.');
-            QualifiedNamedTypeName? partialClassAsNamespaceStep = generatedResolverName;
+            QualifiedNamedTypeName? partialClassAsNamespaceStep = resolverOptions.Name;
             for (int i = 0; i < namespaces.Length; i++)
             {
                 partialClassAsNamespaceStep = new(TypeKind.Class)
@@ -143,7 +137,7 @@ public record ResolverRegisterInfo
             return partialClassAsNamespaceStep;
         }
 
-        return generatedResolverName;
+        return resolverOptions.Name;
     }
 
     public override int GetHashCode() => this.DataType.GetHashCode();

@@ -7,9 +7,7 @@ public interface IFormatterTemplate
 {
     string FileName { get; }
 
-    string ResolverNamespace { get; }
-
-    string ResolverName { get; }
+    QualifiedNamedTypeName ResolverName { get; }
 
     ResolverRegisterInfo Info { get; }
 

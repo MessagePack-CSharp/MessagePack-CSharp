@@ -66,8 +66,7 @@ public static class AnalyzerUtilities
 
         ResolverOptions resolverOptions = new()
         {
-            Name = targetSymbol.Name,
-            Namespace = targetSymbol.ContainingNamespace.GetFullNamespaceName(),
+            Name = new QualifiedNamedTypeName((INamedTypeSymbol)targetSymbol),
         };
 
         GeneratorOptions generatorOptions = new()

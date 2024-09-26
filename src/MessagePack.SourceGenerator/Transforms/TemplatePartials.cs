@@ -15,9 +15,7 @@ public partial class FormatterTemplate : IFormatterTemplate
 
     public AnalyzerOptions Options { get; }
 
-    public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
-
-    public string ResolverName => this.Options.Generator.Resolver.Name;
+    public QualifiedNamedTypeName ResolverName => this.Options.Generator.Resolver.Name;
 
     public ObjectSerializationInfo Info { get; }
 
@@ -36,9 +34,7 @@ public partial class StringKeyFormatterTemplate : IFormatterTemplate
 
     public AnalyzerOptions Options { get; }
 
-    public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
-
-    public string ResolverName => this.Options.Generator.Resolver.Name;
+    public QualifiedNamedTypeName ResolverName => this.Options.Generator.Resolver.Name;
 
     public ObjectSerializationInfo Info { get; }
 
@@ -57,9 +53,7 @@ public partial class ResolverTemplate
 
     public AnalyzerOptions Options { get; init; }
 
-    public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
-
-    public string ResolverName => this.Options.Generator.Resolver.Name;
+    public QualifiedNamedTypeName ResolverName => this.Options.Generator.Resolver.Name;
 
     public IReadOnlyList<ResolverRegisterInfo> AllRegisterRegistrations { get; }
 
@@ -67,7 +61,7 @@ public partial class ResolverTemplate
 
     public IEnumerable<ResolverRegisterInfo> ConstructedTypeRegistrations => this.AllRegisterRegistrations.Where(r => !r.IsUnboundGenericType);
 
-    public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.ResolverName, this.ResolverNamespace)}.g.cs";
+    public string FileName => $"{this.ResolverName.GetQualifiedName(Qualifiers.Namespace, GenericParameterStyle.ArityOnly)}.g.cs";
 }
 
 public partial class EnumTemplate : IFormatterTemplate
@@ -80,9 +74,7 @@ public partial class EnumTemplate : IFormatterTemplate
 
     public AnalyzerOptions Options { get; }
 
-    public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
-
-    public string ResolverName => this.Options.Generator.Resolver.Name;
+    public QualifiedNamedTypeName ResolverName => this.Options.Generator.Resolver.Name;
 
     public EnumSerializationInfo Info { get; }
 
@@ -101,9 +93,7 @@ public partial class UnionTemplate : IFormatterTemplate
 
     public AnalyzerOptions Options { get; }
 
-    public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
-
-    public string ResolverName => this.Options.Generator.Resolver.Name;
+    public QualifiedNamedTypeName ResolverName => this.Options.Generator.Resolver.Name;
 
     public UnionSerializationInfo Info { get; }
 
@@ -114,11 +104,9 @@ public partial class UnionTemplate : IFormatterTemplate
 
 public partial class CompositeResolverTemplate : IFormatterTemplate
 {
-    public string FileName => $"{this.ResolverName}.g.cs";
+    public string FileName => $"{this.ResolverName.Name}.g.cs";
 
-    public required string ResolverNamespace { get; init; }
-
-    public required string ResolverName { get; init; }
+    public required QualifiedNamedTypeName ResolverName { get; init; }
 
     ResolverRegisterInfo IFormatterTemplate.Info => throw new NotImplementedException();
 

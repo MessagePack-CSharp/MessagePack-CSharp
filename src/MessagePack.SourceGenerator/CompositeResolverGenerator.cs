@@ -16,8 +16,7 @@ public class CompositeResolverGenerator : IIncrementalGenerator
             $"{AttributeNamespace}.{CompositeResolverAttributeName}",
             predicate: static (node, ct) => true,
             transform: static (context, ct) => (
-                ResolverNamespace: context.TargetSymbol.ContainingNamespace.GetFullNamespaceName() ?? string.Empty,
-                ResolverName: context.TargetSymbol.Name,
+                ResolverName: new QualifiedNamedTypeName((INamedTypeSymbol)context.TargetSymbol),
                 Attribute: context.Attributes.Single()));
 
         var resolvers = attributeData.Combine(context.CompilationProvider).Select((leftRight, cancellationToken) =>
@@ -38,11 +37,11 @@ public class CompositeResolverGenerator : IIncrementalGenerator
                     semanticModel,
                     source.Attribute.ConstructorArguments[0].Values.Select(tc => tc.Value as INamedTypeSymbol)).ToArray();
 
-                return (source.ResolverName, source.ResolverNamespace, ResolverCreationExpressions: resolverCreationExpressions, FormatterCreationExpressions: formatterCreationExpressions);
+                return (source.ResolverName, ResolverCreationExpressions: resolverCreationExpressions, FormatterCreationExpressions: formatterCreationExpressions);
             }
             else
             {
-                return (source.ResolverName, source.ResolverNamespace, ResolverCreationExpressions: Array.Empty<string>(), FormatterCreationExpressions: Array.Empty<string>());
+                return (source.ResolverName, ResolverCreationExpressions: Array.Empty<string>(), FormatterCreationExpressions: Array.Empty<string>());
             }
         });
 
@@ -51,7 +50,6 @@ public class CompositeResolverGenerator : IIncrementalGenerator
             CompositeResolverTemplate generator = new()
             {
                 ResolverName = source.ResolverName,
-                ResolverNamespace = source.ResolverNamespace,
                 ResolverInstanceExpressions = source.ResolverCreationExpressions,
                 FormatterInstanceExpressions = source.FormatterCreationExpressions,
             };

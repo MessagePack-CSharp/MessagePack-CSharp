@@ -223,9 +223,12 @@ public abstract record TypeContainer : IComparable<TypeContainer?>
     public abstract int CompareTo(TypeContainer? other);
 }
 
+[DebuggerDisplay($"{{{nameof(NestingType)},nq}}+")]
 public record NestingTypeContainer(QualifiedNamedTypeName NestingType) : TypeContainer
 {
     public static NestingTypeContainer? From(QualifiedNamedTypeName? nesting) => nesting is null ? null : new(nesting);
+
+    public override string ToString() => $"{this.NestingType}+";
 
     public override int CompareTo(TypeContainer? other)
     {
@@ -235,9 +238,12 @@ public record NestingTypeContainer(QualifiedNamedTypeName NestingType) : TypeCon
     }
 }
 
+[DebuggerDisplay($"{{{nameof(Namespace)},nq}}.")]
 public record NamespaceTypeContainer(string Namespace) : TypeContainer
 {
     public static NamespaceTypeContainer? From(string? ns) => ns is null ? null : new(ns);
+
+    public override string ToString() => $"{this.Namespace}.";
 
     public override int CompareTo(TypeContainer? other)
     {

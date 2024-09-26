@@ -1,28 +1,21 @@
-<#@ template debug="false" hostspecific="false" linePragmas="false" language="C#" #>
-
+﻿
 using MsgPack = global::MessagePack;
 
-<# using (TransformUtilities.EmitNestingTypesAndNamespaces(this.ResolverName, this.Write)) { #>
+partial class Test {
 
-partial class <#= ResolverName.Name #> : MsgPack::IFormatterResolver
+partial class MyResolver : MsgPack::IFormatterResolver
 {
-	public static readonly <#= ResolverName.Name #> Instance = new <#= ResolverName.Name #>();
+	public static readonly MyResolver Instance = new MyResolver();
 
 	private static readonly MsgPack::Formatters.IMessagePackFormatter[] formatterList = new MsgPack::Formatters.IMessagePackFormatter[]
 	{
-<# foreach (string expr in FormatterInstanceExpressions) { #>
-		<#= expr #>,
-<# } #>
 	};
 
 	private static readonly MsgPack::IFormatterResolver[] resolverList = new MsgPack::IFormatterResolver[]
 	{
-<# foreach (string expr in ResolverInstanceExpressions) { #>
-		<#= expr #>,
-<# } #>
 	};
 
-	private <#= ResolverName.Name #>() { }
+	private MyResolver() { }
 
 	public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
 	{
@@ -57,4 +50,4 @@ partial class <#= ResolverName.Name #> : MsgPack::IFormatterResolver
 	}
 }
 
-<# } #>
+}

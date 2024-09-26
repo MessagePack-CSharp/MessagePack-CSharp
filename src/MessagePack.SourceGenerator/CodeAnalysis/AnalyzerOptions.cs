@@ -178,12 +178,11 @@ public record ResolverOptions
     /// <summary>
     /// Gets the name to use for the resolver.
     /// </summary>
-    public string Name { get; init; } = "GeneratedMessagePackResolver";
-
-    /// <summary>
-    /// Gets the namespace the source generated resolver will be emitted into.
-    /// </summary>
-    public string? Namespace { get; init; } = "MessagePack";
+    public QualifiedNamedTypeName Name { get; init; } = new(TypeKind.Class)
+    {
+        Container = new NamespaceTypeContainer("MessagePack"),
+        Name = "GeneratedMessagePackResolver",
+    };
 }
 
 /// <summary>
