@@ -23,5 +23,16 @@ namespace MessagePack
         public CompositeResolverAttribute(params Type[] formattersAndResolvers)
         {
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to automatically include any formatters that are defined
+        /// in the same assembly as the type to which this attribute is applied.
+        /// </summary>
+        /// <remarks>
+        /// When <see langword="true"/>, the resolver will be a superset of the default source-generated resolver
+        /// (which only includes formatters for data types defined in the same assembly as the type to which this attribute is applied)
+        /// by adding any additional hand-written formatters declared in the same assembly for data types in other assemblies.
+        /// </remarks>
+        public bool IncludeLocalFormatters { get; set; }
     }
 }

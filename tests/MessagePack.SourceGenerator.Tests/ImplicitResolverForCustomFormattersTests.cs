@@ -63,17 +63,19 @@ public class ImplicitResolverForCustomFormattersTests
             using MessagePack.Formatters;
             using MessagePack.Resolvers;
 
-            internal class {|MsgPack009:IntFormatter1|} : IMessagePackFormatter<int>
+            internal class {|MsgPack009:AFormatter1|} : IMessagePackFormatter<A>
             {
-                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
-                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+                public void Serialize(ref MessagePackWriter writer, A value, MessagePackSerializerOptions options) => throw new NotImplementedException();
+                public A Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => throw new NotImplementedException();
             }
 
-            internal class {|MsgPack009:IntFormatter2|} : IMessagePackFormatter<int>
+            internal class {|MsgPack009:AFormatter2|} : IMessagePackFormatter<A>
             {
-                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
-                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+                public void Serialize(ref MessagePackWriter writer, A value, MessagePackSerializerOptions options) => throw new NotImplementedException();
+                public A Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => throw new NotImplementedException();
             }
+
+            class A { }
             """;
 
         await VerifyCS.Test.RunDefaultAsync(this.logger, testSource);
@@ -89,17 +91,19 @@ public class ImplicitResolverForCustomFormattersTests
             using MessagePack.Resolvers;
 
             [ExcludeFormatterFromSourceGeneratedResolver]
-            internal class IntFormatter1 : IMessagePackFormatter<int>
+            internal class AFormatter1 : IMessagePackFormatter<A>
             {
-                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
-                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+                public void Serialize(ref MessagePackWriter writer, A value, MessagePackSerializerOptions options) => throw new NotImplementedException();
+                public A Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => throw new NotImplementedException();
             }
 
-            internal class IntFormatter2 : IMessagePackFormatter<int>
+            internal class AFormatter2 : IMessagePackFormatter<A>
             {
-                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
-                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+                public void Serialize(ref MessagePackWriter writer, A value, MessagePackSerializerOptions options) => throw new NotImplementedException();
+                public A Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => throw new NotImplementedException();
             }
+
+            class A { }
             """;
 
         await VerifyCS.Test.RunDefaultAsync(this.logger, testSource);
@@ -114,19 +118,22 @@ public class ImplicitResolverForCustomFormattersTests
             using MessagePack.Formatters;
             using MessagePack.Resolvers;
 
-            internal class {|MsgPack009:IntFormatter|} : IMessagePackFormatter<int>
+            internal class {|MsgPack009:AFormatter|} : IMessagePackFormatter<A>
             {
-                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
-                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+                public void Serialize(ref MessagePackWriter writer, A value, MessagePackSerializerOptions options) => throw new NotImplementedException();
+                public A Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => throw new NotImplementedException();
             }
 
-            internal class {|MsgPack009:MultiFormatter|} : IMessagePackFormatter<int>, IMessagePackFormatter<bool>
+            internal class {|MsgPack009:MultiFormatter|} : IMessagePackFormatter<A>, IMessagePackFormatter<B>
             {
-                void IMessagePackFormatter<int>.Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
-                int IMessagePackFormatter<int>.Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
-                void IMessagePackFormatter<bool>.Serialize(ref MessagePackWriter writer, bool value, MessagePackSerializerOptions options) => writer.Write(value);
-                bool IMessagePackFormatter<bool>.Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadBoolean();
+                void IMessagePackFormatter<A>.Serialize(ref MessagePackWriter writer, A value, MessagePackSerializerOptions options) => throw new NotImplementedException();
+                A IMessagePackFormatter<A>.Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => throw new NotImplementedException();
+                void IMessagePackFormatter<B>.Serialize(ref MessagePackWriter writer, B value, MessagePackSerializerOptions options) => throw new NotImplementedException();
+                B IMessagePackFormatter<B>.Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => throw new NotImplementedException();
             }
+
+            class A { }
+            class B { }
             """;
 
         await VerifyCS.Test.RunDefaultAsync(this.logger, testSource);
@@ -141,12 +148,14 @@ public class ImplicitResolverForCustomFormattersTests
             using MessagePack.Formatters;
             using MessagePack.Resolvers;
 
-            internal class {|#0:IntFormatter|} : IMessagePackFormatter<int>
+            internal class {|#0:AFormatter|} : IMessagePackFormatter<A>
             {
-                public IntFormatter(int value) { } // non-default constructor causes problem
-                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
-                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+                public AFormatter(int value) { } // non-default constructor causes problem
+                public void Serialize(ref MessagePackWriter writer, A value, MessagePackSerializerOptions options) => throw new NotImplementedException();
+                public A Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => throw new NotImplementedException();
             }
+
+            class A { }
             """;
 
         await new VerifyCS.Test()
@@ -172,12 +181,14 @@ public class ImplicitResolverForCustomFormattersTests
             using MessagePack.Resolvers;
 
             [ExcludeFormatterFromSourceGeneratedResolver]
-            internal class IntFormatter : IMessagePackFormatter<int>
+            internal class AFormatter : IMessagePackFormatter<A>
             {
-                public IntFormatter(int value) { } // non-default constructor causes problem
-                public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options) => writer.Write(value);
-                public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => reader.ReadInt32();
+                public AFormatter(int value) { } // non-default constructor causes problem
+                public void Serialize(ref MessagePackWriter writer, A value, MessagePackSerializerOptions options) => throw new NotImplementedException();
+                public A Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => throw new NotImplementedException();
             }
+
+            class A { }
             """;
 
         await VerifyCS.Test.RunDefaultAsync(this.logger, testSource);

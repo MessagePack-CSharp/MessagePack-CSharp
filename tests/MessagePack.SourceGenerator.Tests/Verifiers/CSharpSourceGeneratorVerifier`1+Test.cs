@@ -9,6 +9,7 @@
 #endif
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -45,7 +46,7 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
 
         public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.CSharp7_3;
 
-        public static Task RunDefaultAsync(ITestOutputHelper logger, string testSource, AnalyzerOptions? options = null, LanguageVersion languageVersion = LanguageVersion.CSharp7_3, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
+        public static Task RunDefaultAsync(ITestOutputHelper logger, [StringSyntax("c#-test")] string testSource, AnalyzerOptions? options = null, LanguageVersion languageVersion = LanguageVersion.CSharp7_3, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
             options ??= new();
 
@@ -59,9 +60,9 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
                 {{assumedFormattable}}
                 {{knownFormatters}}
 
-                namespace {{options.Generator.Resolver.Namespace}} {
+                namespace {{((NamespaceTypeContainer)options.Generator.Resolver.Name.Container!).Namespace}} {
                     [GeneratedMessagePackResolver(UseMapMode = {{(options.Generator.Formatters.UsesMapMode ? "true" : "false")}})]
-                    partial class {{options.Generator.Resolver.Name}} { }
+                    partial class {{options.Generator.Resolver.Name.Name}} { }
                 }
                 """;
             return RunDefaultAsync(logger, testSource, resolverPartialClassSource, languageVersion, testFile, testMethod);
@@ -91,7 +92,7 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
             }
         }
 
-        private static Task RunDefaultAsync(ITestOutputHelper logger, string testSource, string resolverPartialClassSource, LanguageVersion languageVersion, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
+        private static Task RunDefaultAsync(ITestOutputHelper logger, [StringSyntax("c#-test")] string testSource, string resolverPartialClassSource, LanguageVersion languageVersion, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
             Test test = new(testFile: testFile, testMethod: testMethod)
             {

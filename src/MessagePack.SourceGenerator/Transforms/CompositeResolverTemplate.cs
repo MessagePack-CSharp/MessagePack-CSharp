@@ -23,17 +23,13 @@ namespace MessagePack.SourceGenerator.Transforms
         public virtual string TransformText()
         {
             this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\n");
- if (ResolverNamespace.Length > 0) { 
-            this.Write("namespace ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
-            this.Write(" {\r\n");
- } 
+ using (TransformUtilities.EmitNestingTypesAndNamespaces(this.ResolverName, this.Write)) { 
             this.Write("\r\npartial class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName.Name));
             this.Write(" : MsgPack::IFormatterResolver\r\n{\r\n\tpublic static readonly ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName.Name));
             this.Write(" Instance = new ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName.Name));
             this.Write("();\r\n\r\n\tprivate static readonly MsgPack::Formatters.IMessagePackFormatter[] forma" +
                     "tterList = new MsgPack::Formatters.IMessagePackFormatter[]\r\n\t{\r\n");
  foreach (string expr in FormatterInstanceExpressions) { 
@@ -49,7 +45,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(",\r\n");
  } 
             this.Write("\t};\r\n\r\n\tprivate ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName.Name));
             this.Write(@"() { }
 
 	public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
@@ -86,8 +82,6 @@ namespace MessagePack.SourceGenerator.Transforms
 }
 
 ");
- if (ResolverNamespace.Length > 0) { 
-            this.Write("}\r\n");
  } 
             return this.GenerationEnvironment.ToString();
         }

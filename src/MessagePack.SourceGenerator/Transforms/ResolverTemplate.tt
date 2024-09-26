@@ -6,19 +6,17 @@
 
 using MsgPack = global::MessagePack;
 
-[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(<#= CodeAnalysisUtilities.QualifyWithOptionalNamespace(ResolverName, ResolverNamespace) #>), <#= Version.Parse(ThisAssembly.AssemblyFileVersion).Major #>, <#= Version.Parse(ThisAssembly.AssemblyFileVersion).Minor #>)]
+[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(<#= this.ResolverName.GetQualifiedName(Qualifiers.Namespace) #>), <#= Version.Parse(ThisAssembly.AssemblyFileVersion).Major #>, <#= Version.Parse(ThisAssembly.AssemblyFileVersion).Minor #>)]
 
-<# if (ResolverNamespace.Length > 0) { #>
-namespace <#= ResolverNamespace #> {
-<# } #>
+<# using (TransformUtilities.EmitNestingTypesAndNamespaces(this.ResolverName, this.Write)) { #>
 
 /// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
-partial class <#= ResolverName #> : MsgPack::IFormatterResolver
+partial class <#= ResolverName.Name #> : MsgPack::IFormatterResolver
 {
 	/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
-	public static readonly MsgPack::IFormatterResolver Instance = new <#= ResolverName #>();
+	public static readonly MsgPack::IFormatterResolver Instance = new <#= ResolverName.Name #>();
 
-	private <#= ResolverName #>()
+	private <#= ResolverName.Name #>()
 	{
 	}
 
@@ -33,7 +31,7 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 
 		static FormatterCache()
 		{
-			var f = <#= ResolverName #>GetFormatterHelper.GetFormatter(typeof(T));
+			var f = <#= ResolverName.Name #>GetFormatterHelper.GetFormatter(typeof(T));
 			if (f != null)
 			{
 				Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
@@ -41,7 +39,7 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 		}
 	}
 
-	private static class <#= ResolverName #>GetFormatterHelper
+	private static class <#= ResolverName.Name #>GetFormatterHelper
 	{
 <#
    var constructedRegistrations = ConstructedTypeRegistrations.ToArray();
@@ -96,6 +94,4 @@ partial class <#= ResolverName #> : MsgPack::IFormatterResolver
 	}
 }
 
-<# if (ResolverNamespace.Length > 0) { #>
-}
 <# } #>

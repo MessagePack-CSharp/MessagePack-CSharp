@@ -280,7 +280,7 @@ public class TypeCollector
             return result;
         }
 
-        FormattableType formattableType = new(typeSymbol);
+        FormattableType formattableType = new(typeSymbol, null);
         if (formattableType.Name is QualifiedNamedTypeName { Name: string name } && EmbeddedTypes.Contains(name))
         {
             result = true;
@@ -288,7 +288,7 @@ public class TypeCollector
             return result;
         }
 
-        if (this.options.AssumedFormattableTypes.Contains(formattableType))
+        if (this.options.AssumedFormattableTypes.Contains(formattableType) || this.options.AssumedFormattableTypes.Contains(formattableType with { IsFormatterInSameAssembly = true }))
         {
             result = true;
             this.alreadyCollected.Add(typeSymbol, result);
