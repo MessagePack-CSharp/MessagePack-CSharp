@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using AnalyzerOptions = MessagePack.SourceGenerator.CodeAnalysis.AnalyzerOptions;
@@ -306,8 +307,52 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
                     .WithFormatterTypes(ImmutableArray<FormattableType>.Empty, formatterTypes)
                     .WithAssemblyAttributes(context.Compilation.Assembly.GetAttributes(), context.CancellationToken);
                 context.RegisterSymbolAction(context => this.AnalyzeSymbol(context, typeReferences, options), SymbolKind.NamedType);
+                context.RegisterSymbolStartAction(context => SymbolStartAction(context, typeReferences, options), SymbolKind.NamedType);
             }
         });
+    }
+
+    private static void SymbolStartAction(SymbolStartAnalysisContext context, ReferenceSymbols typeReferences, AnalyzerOptions options)
+    {
+        INamedTypeSymbol declaredSymbol = (INamedTypeSymbol)context.Symbol;
+        QualifiedNamedTypeName typeName = new(declaredSymbol);
+
+        // If this is a formatter, confirm that it meets requirements.
+        if (options.KnownFormattersByName.TryGetValue(typeName, out FormatterDescriptor? formatter))
+        {
+            // Call out any formattable reference types that are not nullable.
+            INamedTypeSymbol[] missing = (
+                from iface in declaredSymbol.Interfaces
+                where SymbolEqualityComparer.Default.Equals(iface.ConstructUnboundGenericType(), typeReferences.MessagePackFormatterOfT) &&
+                    iface.TypeArguments is [INamedTypeSymbol { IsReferenceType: true, NullableAnnotation: NullableAnnotation.NotAnnotated } a]
+                select (INamedTypeSymbol)iface.TypeArguments[0]).ToArray();
+
+            if (missing.Length > 0)
+            {
+                // Look for the base list so we can report the diagnostic(s) at the actual type argument.
+                context.RegisterSyntaxNodeAction(
+                    context =>
+                    {
+                        BaseListSyntax baseList = (BaseListSyntax)context.Node;
+
+                        // Find the location of the actual generic type argument if we can.
+                        foreach (BaseTypeSyntax baseTypeSyntax in baseList.Types)
+                        {
+                            if (baseTypeSyntax.Type is GenericNameSyntax { TypeArgumentList: { Arguments: [TypeSyntax typeArg] } })
+                            {
+                                ITypeSymbol? actual = context.SemanticModel.GetTypeInfo(typeArg, context.CancellationToken).Type;
+                                if (missing.Any(m => SymbolEqualityComparer.Default.Equals(actual, m)))
+                                {
+                                    Location location = typeArg.GetLocation();
+                                    context.ReportDiagnostic(Diagnostic.Create(NullableReferenceTypeFormatter, location, typeArg.ToString()));
+                                    break;
+                                }
+                            }
+                        }
+                    },
+                    SyntaxKind.BaseList);
+            }
+        }
     }
 
     private void AnalyzeSymbol(SymbolAnalysisContext context, ReferenceSymbols typeReferences, AnalyzerOptions options)
@@ -327,46 +372,6 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
             if (!formatter.ExcludeFromSourceGeneratedResolver && formatter.InaccessibleDescriptor is { } inaccessible)
             {
                 context.ReportDiagnostic(Diagnostic.Create(inaccessible, declaredSymbol.Locations[0]));
-            }
-
-            // Call out any formattable reference types that are not nullable.
-            foreach (INamedTypeSymbol iface in declaredSymbol.Interfaces)
-            {
-                if (iface.TypeArguments is [INamedTypeSymbol { IsReferenceType: true, NullableAnnotation: NullableAnnotation.NotAnnotated } a])
-                {
-                    Location? location = null;
-
-                    // Find the location of the actual generic type argument if we can.
-                    foreach (var syntaxRef in declaredSymbol.DeclaringSyntaxReferences)
-                    {
-                        if (syntaxRef.GetSyntax(context.CancellationToken) is BaseTypeDeclarationSyntax { BaseList: { } baseList } typeSyntax)
-                        {
-#pragma warning disable RS1030 // Do not invoke Compilation.GetSemanticModel() method within a diagnostic analyzer
-                            SemanticModel semanticModel = context.Compilation.GetSemanticModel(syntaxRef.SyntaxTree);
-#pragma warning restore RS1030 // Do not invoke Compilation.GetSemanticModel() method within a diagnostic analyzer
-                            foreach (BaseTypeSyntax baseTypeSyntax in baseList.Types)
-                            {
-                                if (baseTypeSyntax.Type is GenericNameSyntax { TypeArgumentList: { Arguments: [TypeSyntax typeArg] } })
-                                {
-                                    ITypeSymbol? actual = semanticModel.GetTypeInfo(typeArg, context.CancellationToken).Type;
-                                    if (SymbolEqualityComparer.Default.Equals(actual, a))
-                                    {
-                                        location = typeArg.GetLocation();
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if (location is not null)
-                            {
-                                break;
-                            }
-                        }
-                    }
-
-                    location ??= declaredSymbol.Locations[0];
-                    context.ReportDiagnostic(Diagnostic.Create(NullableReferenceTypeFormatter, location, a.Name));
-                }
             }
         }
 
