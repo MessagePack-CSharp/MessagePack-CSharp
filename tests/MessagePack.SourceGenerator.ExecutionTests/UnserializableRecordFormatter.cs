@@ -3,15 +3,26 @@
 
 using MessagePack.Formatters;
 
-internal class UnserializableRecordFormatter : IMessagePackFormatter<UnserializableRecord>
+internal class UnserializableRecordFormatter : IMessagePackFormatter<UnserializableRecord?>
 {
-    public void Serialize(ref MessagePackWriter writer, UnserializableRecord value, MessagePackSerializerOptions options)
+    public void Serialize(ref MessagePackWriter writer, UnserializableRecord? value, MessagePackSerializerOptions options)
     {
+        if (value is null)
+        {
+            writer.WriteNil();
+            return;
+        }
+
         writer.WriteInt32(value.Value);
     }
 
-    public UnserializableRecord Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+    public UnserializableRecord? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
     {
+        if (reader.TryReadNil())
+        {
+            return null;
+        }
+
         return new UnserializableRecord { Value = reader.ReadInt32() };
     }
 }
