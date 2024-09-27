@@ -14,6 +14,7 @@ public record ReferenceSymbols(
     INamedTypeSymbol IgnoreAttribute,
     INamedTypeSymbol FormatterAttribute,
     INamedTypeSymbol? MessagePackFormatter,
+    INamedTypeSymbol? MessagePackFormatterOfT,
     INamedTypeSymbol? IgnoreDataMemberAttribute,
     INamedTypeSymbol IMessagePackSerializationCallbackReceiver)
 {
@@ -58,6 +59,7 @@ public record ReferenceSymbols(
         }
 
         INamedTypeSymbol? messageFormatter = compilation.GetTypeByMetadataName("MessagePack.Formatters.IMessagePackFormatter");
+        INamedTypeSymbol? messageFormatterOfT = compilation.GetTypeByMetadataName("MessagePack.Formatters.IMessagePackFormatter`1")?.ConstructUnboundGenericType();
 
         INamedTypeSymbol? ignoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
 
@@ -75,6 +77,7 @@ public record ReferenceSymbols(
             ignoreAttribute,
             formatterAttribute,
             messageFormatter,
+            messageFormatterOfT,
             ignoreDataMemberAttribute,
             messagePackSerializationCallbackReceiver);
         return true;
