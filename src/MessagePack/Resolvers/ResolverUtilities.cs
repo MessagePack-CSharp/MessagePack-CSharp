@@ -13,17 +13,17 @@ namespace MessagePack.Internal
         {
             if (args == null || args.Length == 0)
             {
-                if (formatterType.GetConstructor(Type.EmptyTypes) is ConstructorInfo ctor)
-                {
-                    return (IMessagePackFormatter)ctor.Invoke(Array.Empty<object>());
-                }
-                else if (FetchSingletonField(formatterType) is FieldInfo instance)
+                if (FetchSingletonField(formatterType) is FieldInfo instance)
                 {
                     return (IMessagePackFormatter)(instance.GetValue(null) ?? throw new InvalidOperationException($"{instance.ReflectedType?.FullName}.{instance.Name} return null."));
                 }
+                else if (formatterType.GetConstructor(BindingFlags.Public | BindingFlags.Instance, binder: null, Type.EmptyTypes, Array.Empty<ParameterModifier>()) is ConstructorInfo ctor)
+                {
+                    return (IMessagePackFormatter)ctor.Invoke(Array.Empty<object>());
+                }
                 else
                 {
-                    throw new MessagePackSerializationException($"The {formatterType.FullName} formatter has no default constructor nor implements the singleton pattern.");
+                    throw new MessagePackSerializationException($"The {formatterType.FullName} formatter has no public default constructor nor implements the singleton pattern.");
                 }
             }
             else
@@ -34,7 +34,7 @@ namespace MessagePack.Internal
 
         internal static FieldInfo? FetchSingletonField(Type formatterType)
         {
-            if (formatterType.GetField("Instance", BindingFlags.Static | BindingFlags.Public) is FieldInfo fieldInfo && fieldInfo.IsInitOnly)
+            if (formatterType.GetField("Instance", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) is FieldInfo fieldInfo && fieldInfo.IsInitOnly)
             {
                 return fieldInfo;
             }

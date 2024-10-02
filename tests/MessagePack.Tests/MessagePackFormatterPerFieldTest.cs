@@ -64,6 +64,12 @@ namespace MessagePack.Tests
 
         public class Int_x10Formatter : IMessagePackFormatter<int>
         {
+            internal static readonly Int_x10Formatter Instance = new();
+
+            private Int_x10Formatter()
+            {
+            }
+
             public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
             {
                 return reader.ReadInt32() * 10;
