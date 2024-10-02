@@ -107,18 +107,18 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n");
  } 
             this.Write("\t\t\tvar length = reader.ReadArrayHeader();\r\n");
- var canOverwrite = Info.ConstructorParameters.Length == 0;
- if (canOverwrite) { 
+ if (Info.MustDeserializeFieldsFirst) { 
+	foreach (var member in Info.Members) { 
+            this.Write("\t\t\tvar ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.LocalVariableName));
+            this.Write(" = default(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Type));
+            this.Write(");\r\n");
+	}
+} else { 
             this.Write("\t\t\tvar ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.GetConstructorString()));
             this.Write(";\r\n");
- } else { foreach (var member in Info.Members) { 
-            this.Write("\t\t\tvar __");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("__ = default(");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Type));
-            this.Write(");\r\n");
- } 
  } 
             this.Write("\r\n\t\t\tfor (int i = 0; i < length; i++)\r\n\t\t\t{\r\n\t\t\t\tswitch (i)\r\n\t\t\t\t{\r\n");
  for (var memberIndex = 0; memberIndex <= Info.MaxKey; memberIndex++) {
@@ -127,7 +127,13 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\t\t\t\t\tcase ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.IntKey));
             this.Write(":\r\n");
- if (canOverwrite) {
+ if (Info.MustDeserializeFieldsFirst) { 
+            this.Write("\t\t\t\t\t\t");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.LocalVariableName));
+            this.Write(" = ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.GetDeserializeMethodString()));
+            this.Write(";\r\n");
+ } else {
   if (member.IsWritable) { 
             this.Write("\t\t\t\t\t\t____result.");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
@@ -135,36 +141,28 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetDeserializeMethodString()));
             this.Write(";\r\n");
  } else { 
-            this.Write("\t\t\t\t\t\t");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.GetDeserializeMethodString()));
-            this.Write(";\r\n");
+            this.Write("\t\t\t\t\t\treader.Skip();\r\n");
  } 
- } else {
-            this.Write("\t\t\t\t\t\t__");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("__ = ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.GetDeserializeMethodString()));
-            this.Write(";\r\n");
  } 
             this.Write("\t\t\t\t\t\tbreak;\r\n");
  } 
             this.Write("\t\t\t\t\tdefault:\r\n\t\t\t\t\t\treader.Skip();\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n");
- if (!canOverwrite) { 
+ if (Info.MustDeserializeFieldsFirst) { 
             this.Write("\t\t\tvar ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.GetConstructorString()));
             this.Write(";\r\n");
  bool memberAssignExists = false;
   for (var memberIndex = 0; memberIndex <= Info.MaxKey; memberIndex++) {
   var member = Info.GetMember(memberIndex);
-  if (member == null || !member.IsWritable || Info.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
+  if (member == null || !member.IsWritable || member.IsInitOnly || Info.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
   memberAssignExists = true;
             this.Write("\t\t\tif (length <= ");
             this.Write(this.ToStringHelper.ToStringWithCulture(memberIndex));
             this.Write(")\r\n\t\t\t{\r\n\t\t\t\tgoto MEMBER_ASSIGNMENT_END;\r\n\t\t\t}\r\n\r\n\t\t\t____result.");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write(" = __");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("__;\r\n");
+            this.Write(" = ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.LocalVariableName));
+            this.Write(";\r\n");
  } 
  if (memberAssignExists) { 
             this.Write("\r\n\t\tMEMBER_ASSIGNMENT_END:\r\n");

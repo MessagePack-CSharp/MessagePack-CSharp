@@ -7,6 +7,7 @@ public record MemberSerializationInfo(
     bool IsProperty,
     bool IsWritable,
     bool IsReadable,
+    bool IsInitOnly,
     int IntKey,
     string StringKey,
     string Name,
@@ -15,6 +16,8 @@ public record MemberSerializationInfo(
     FormatterDescriptor? CustomFormatter)
 {
     private static readonly IReadOnlyCollection<string> PrimitiveTypes = new HashSet<string>(AnalyzerUtilities.PrimitiveTypes);
+
+    public string LocalVariableName => $"__{this.Name}__";
 
     public string GetSerializeMethodString()
     {

@@ -75,12 +75,12 @@ using MsgPack = global::MessagePack;
 			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 <# } #>
 			var length = reader.ReadArrayHeader();
-<# var canOverwrite = Info.ConstructorParameters.Length == 0;
- if (canOverwrite) { #>
+<# if (Info.MustDeserializeFieldsFirst) { 
+	foreach (var member in Info.Members) { #>
+			var <#= member.LocalVariableName #> = default(<#= member.Type #>);
+<#	}
+} else { #>
 			var ____result = new <#= Info.GetConstructorString()  #>;
-<# } else { foreach (var member in Info.Members) { #>
-			var __<#= member.Name #>__ = default(<#= member.Type #>);
-<# } #>
 <# } #>
 
 			for (int i = 0; i < length; i++)
@@ -91,14 +91,14 @@ using MsgPack = global::MessagePack;
   var member = Info.GetMember(memberIndex);
   if (member == null) { continue; } #>
 					case <#= member.IntKey #>:
-<# if (canOverwrite) {
+<# if (Info.MustDeserializeFieldsFirst) { #>
+						<#= member.LocalVariableName #> = <#= member.GetDeserializeMethodString() #>;
+<# } else {
   if (member.IsWritable) { #>
 						____result.<#= member.Name #> = <#= member.GetDeserializeMethodString() #>;
 <# } else { #>
-						<#= member.GetDeserializeMethodString() #>;
+						reader.Skip();
 <# } #>
-<# } else {#>
-						__<#= member.Name #>__ = <#= member.GetDeserializeMethodString() #>;
 <# } #>
 						break;
 <# } #>
@@ -108,19 +108,19 @@ using MsgPack = global::MessagePack;
 				}
 			}
 
-<# if (!canOverwrite) { #>
-			var ____result = new <#= Info.GetConstructorString()  #>;
+<# if (Info.MustDeserializeFieldsFirst) { #>
+			var ____result = new <#= Info.GetConstructorString() #>;
 <# bool memberAssignExists = false;
   for (var memberIndex = 0; memberIndex <= Info.MaxKey; memberIndex++) {
   var member = Info.GetMember(memberIndex);
-  if (member == null || !member.IsWritable || Info.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
+  if (member == null || !member.IsWritable || member.IsInitOnly || Info.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
   memberAssignExists = true;#>
 			if (length <= <#= memberIndex #>)
 			{
 				goto MEMBER_ASSIGNMENT_END;
 			}
 
-			____result.<#= member.Name #> = __<#= member.Name #>__;
+			____result.<#= member.Name #> = <#= member.LocalVariableName #>;
 <# } #>
 <# if (memberAssignExists) { #>
 

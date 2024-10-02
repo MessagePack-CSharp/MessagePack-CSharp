@@ -48,7 +48,7 @@ internal static class StringKeyFormatterDeserializeHelper
             }
             else
             {
-                if (!member.IsConstructorParameter)
+                if (!member.IsConstructorParameter && !member.Info.IsInitOnly)
                 {
                     buffer.Append("__").Append(member.Info.Name).Append("__IsInitialized = true;\r\n").Append(indent);
                     for (var i = 0; i < tabCount; i++)
