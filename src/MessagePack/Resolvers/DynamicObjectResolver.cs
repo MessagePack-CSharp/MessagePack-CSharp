@@ -1750,9 +1750,17 @@ namespace MessagePack.Internal
                     if (isIntKeyMode ? intMembers.TryGetValue(member.IntKey, out var conflictingMember) : stringMembers.TryGetValue(member.StringKey!, out conflictingMember))
                     {
                         // Quietly skip duplicate if this is an override property.
-                        if (member.PropertyInfo != null && ((conflictingMember.PropertyInfo?.SetMethod?.IsVirtual ?? false) || (conflictingMember.PropertyInfo?.GetMethod?.IsVirtual ?? false)))
+                        if (member.PropertyInfo is not null && conflictingMember.PropertyInfo is not null
+                            && member.PropertyInfo.Name == conflictingMember.PropertyInfo.Name)
                         {
-                            return false;
+                            // According to MethodBase.IsVirtual docs an overridable property should be 'IsVirtual == true && IsFinal == false'.
+                            // Property methods can be marked 'virtual final' in case of 'sealed override' or when implementing interface implicitly.
+                            var isGetMethodOverridable = (conflictingMember.PropertyInfo.GetMethod?.IsVirtual ?? false) && !(conflictingMember.PropertyInfo.GetMethod?.IsFinal ?? false);
+                            var isSetMethodOverridable = (conflictingMember.PropertyInfo.SetMethod?.IsVirtual ?? false) && !(conflictingMember.PropertyInfo.SetMethod?.IsFinal ?? false);
+                            if (isGetMethodOverridable || isSetMethodOverridable)
+                            {
+                                return false;
+                            }
                         }
 
                         var memberInfo = (MemberInfo?)member.PropertyInfo ?? member.FieldInfo;
