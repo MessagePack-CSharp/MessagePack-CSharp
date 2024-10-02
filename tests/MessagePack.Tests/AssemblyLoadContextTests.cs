@@ -23,19 +23,12 @@ using Xunit;
 
 public class AssemblyLoadContextTests : IDisposable
 {
-    private readonly AssemblyLoadContext loadContext;
-    private readonly Stream sharedAssemblyStream;
-
-    public AssemblyLoadContextTests()
-    {
-        this.loadContext = new AssemblyLoadContext("TestContext", isCollectible: true);
-        this.sharedAssemblyStream = this.GetSharedDataAssemblyStream();
-    }
+    private static readonly string SharedDataAssemblyName = typeof(RootUnionType).Assembly.Location;
+    private readonly AssemblyLoadContext loadContext = new AssemblyLoadContext("TestContext", isCollectible: true);
 
     public void Dispose()
     {
         this.loadContext.Unload();
-        this.sharedAssemblyStream.Dispose();
     }
 
     [Fact]
@@ -49,7 +42,7 @@ public class AssemblyLoadContextTests : IDisposable
 
         Assert.True(o1 is SubUnionType1);
 
-        var assembly = this.loadContext.LoadFromStream(sharedAssemblyStream);
+        var assembly = this.loadContext.LoadFromAssemblyPath(SharedDataAssemblyName);
         object unionTypeInOtherContext = assembly.CreateInstance(typeof(SubUnionType1).FullName);
         Type rootUnionType = assembly.GetType(typeof(RootUnionType).FullName);
 
@@ -70,7 +63,7 @@ public class AssemblyLoadContextTests : IDisposable
 
         Assert.Equal(typeof(ByteEnum), o1.GetType());
 
-        var assembly = this.loadContext.LoadFromStream(sharedAssemblyStream);
+        var assembly = this.loadContext.LoadFromAssemblyPath(SharedDataAssemblyName);
         Type enumType = assembly.GetType(typeof(ByteEnum).FullName);
         object e2 = Enum.GetValues(enumType).GetValue(1);
 
@@ -91,7 +84,7 @@ public class AssemblyLoadContextTests : IDisposable
 
         Assert.Equal(typeof(FirstSimpleData), o1.GetType());
 
-        var assembly = this.loadContext.LoadFromStream(sharedAssemblyStream);
+        var assembly = this.loadContext.LoadFromAssemblyPath(SharedDataAssemblyName);
         Type objectType = assembly.GetType(typeof(FirstSimpleData).FullName);
         object e2 = assembly.CreateInstance(typeof(FirstSimpleData).FullName);
 
@@ -116,7 +109,7 @@ public class AssemblyLoadContextTests : IDisposable
 
         Assert.Equal(typeof(FirstSimpleData), o1.GetType());
 
-        var assembly = this.loadContext.LoadFromStream(sharedAssemblyStream);
+        var assembly = this.loadContext.LoadFromAssemblyPath(SharedDataAssemblyName);
         Type objectType = assembly.GetType(typeof(FirstSimpleData).FullName);
         object e2 = assembly.CreateInstance(typeof(FirstSimpleData).FullName);
 
@@ -124,19 +117,6 @@ public class AssemblyLoadContextTests : IDisposable
         var o2 = MessagePackSerializer.Deserialize(objectType, b2, options: options);
 
         Assert.Equal(o2.GetType(), e2.GetType());
-    }
-
-    private Stream GetSharedDataAssemblyStream()
-    {
-        string assemblyPath = typeof(RootUnionType).Assembly.Location;
-        MemoryStream stream = new MemoryStream();
-        using (var sourceStream = File.OpenRead(assemblyPath))
-        {
-            sourceStream.CopyTo(stream);
-        }
-
-        stream.Seek(0, SeekOrigin.Begin);
-        return stream;
     }
 
     private MessagePackSerializerOptions CreateSerializerOptions()
