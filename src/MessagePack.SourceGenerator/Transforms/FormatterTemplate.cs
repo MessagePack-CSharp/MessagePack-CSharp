@@ -154,7 +154,7 @@ namespace MessagePack.SourceGenerator.Transforms
  bool memberAssignExists = false;
   for (var memberIndex = 0; memberIndex <= Info.MaxKey; memberIndex++) {
   var member = Info.GetMember(memberIndex);
-  if (member == null || !member.IsWritable || member.IsInitOnly || Info.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
+  if (member == null || !member.IsWritable || member.IsInitOnly || member.IsRequired || Info.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
   memberAssignExists = true;
             this.Write("\t\t\tif (length <= ");
             this.Write(this.ToStringHelper.ToStringWithCulture(memberIndex));

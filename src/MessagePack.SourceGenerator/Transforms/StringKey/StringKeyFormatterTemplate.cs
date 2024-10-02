@@ -126,7 +126,9 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\t\t\tvar length = reader.ReadMapHeader();\r\n");
  if (Info.MustDeserializeFieldsFirst) {
 	foreach (var member in Info.Members.Where(x => x.IsWritable || Info.ConstructorParameters.Any(p => p.Equals(x)))) {
-		if (!member.IsInitOnly && !Info.ConstructorParameters.Any(p => p.Equals(member))) { 
+		// Until C# allows for optionally setting init-only properties (https://github.com/dotnet/csharplang/issues/6117)
+		// we will unconditionally set them, and thus have no reason to track whether the local variable has been initialized.
+		if (!member.IsInitOnly && !member.IsRequired && !Info.ConstructorParameters.Any(p => p.Equals(member))) { 
             this.Write("\t\t\tvar ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.LocalVariableName));
             this.Write("IsInitialized = false;\r\n");
@@ -152,7 +154,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\t\t\tvar ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.GetConstructorString()));
             this.Write(";\r\n");
- foreach (var member in Info.Members.Where(x => x.IsWritable && !x.IsInitOnly && !Info.ConstructorParameters.Any(p => p.Equals(x)))) { 
+ foreach (var member in Info.Members.Where(x => x.IsWritable && !x.IsInitOnly && !x.IsRequired && !Info.ConstructorParameters.Any(p => p.Equals(x)))) { 
             this.Write("\t\t\tif (");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.LocalVariableName));
             this.Write("IsInitialized)\r\n\t\t\t{\r\n\t\t\t\t____result.");

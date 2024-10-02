@@ -86,7 +86,9 @@ using MsgPack = global::MessagePack;
 			var length = reader.ReadMapHeader();
 <# if (Info.MustDeserializeFieldsFirst) {
 	foreach (var member in Info.Members.Where(x => x.IsWritable || Info.ConstructorParameters.Any(p => p.Equals(x)))) {
-		if (!member.IsInitOnly && !Info.ConstructorParameters.Any(p => p.Equals(member))) { #>
+		// Until C# allows for optionally setting init-only properties (https://github.com/dotnet/csharplang/issues/6117)
+		// we will unconditionally set them, and thus have no reason to track whether the local variable has been initialized.
+		if (!member.IsInitOnly && !member.IsRequired && !Info.ConstructorParameters.Any(p => p.Equals(member))) { #>
 			var <#= member.LocalVariableName #>IsInitialized = false;
 <#		} #>
 			var <#= member.LocalVariableName #> = default(<#= member.Type #>);
@@ -110,7 +112,7 @@ using MsgPack = global::MessagePack;
 
 <# if (Info.MustDeserializeFieldsFirst) { #>
 			var ____result = new <#= Info.GetConstructorString() #>;
-<# foreach (var member in Info.Members.Where(x => x.IsWritable && !x.IsInitOnly && !Info.ConstructorParameters.Any(p => p.Equals(x)))) { #>
+<# foreach (var member in Info.Members.Where(x => x.IsWritable && !x.IsInitOnly && !x.IsRequired && !Info.ConstructorParameters.Any(p => p.Equals(x)))) { #>
 			if (<#= member.LocalVariableName #>IsInitialized)
 			{
 				____result.<#= member.Name #> = <#= member.LocalVariableName #>;

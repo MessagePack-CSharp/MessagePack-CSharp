@@ -8,6 +8,7 @@ public record MemberSerializationInfo(
     bool IsWritable,
     bool IsReadable,
     bool IsInitOnly,
+    bool IsRequired,
     int IntKey,
     string StringKey,
     string Name,

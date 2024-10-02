@@ -65,6 +65,12 @@ public class ExecutionTests
         this.AssertRoundtrip(new HasInitProperty { A = 1, B = 4, C = 5 });
     }
 
+    [Fact]
+    public void ClassWithRequiredMembers()
+    {
+        this.AssertRoundtrip(new HasRequiredMembers { A = 1, B = 4, C = 5, D = 6 });
+    }
+
 #if !FORCE_MAP_MODE // forced map mode simply doesn't support private fields at all as it only notices internal and public members.
     [Fact]
     public void PrivateFieldIsSerialized()

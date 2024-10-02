@@ -16,9 +16,12 @@ public record ObjectSerializationInfo : ResolverRegisterInfo
 
     public required MemberSerializationInfo[] ConstructorParameters { get; init; }
 
-    public required MemberSerializationInfo[] InitProperties { get; init; }
+    /// <summary>
+    /// Gets the members that are either init-only properties or required (and therefore must appear in an object initializer).
+    /// </summary>
+    public required MemberSerializationInfo[] InitMembers { get; init; }
 
-    public bool MustDeserializeFieldsFirst => this.ConstructorParameters.Length > 0 || this.InitProperties.Length > 0;
+    public bool MustDeserializeFieldsFirst => this.ConstructorParameters.Length > 0 || this.InitMembers.Length > 0;
 
     public required bool IsIntKey { get; init; }
 
@@ -80,7 +83,7 @@ public record ObjectSerializationInfo : ResolverRegisterInfo
             IncludesPrivateMembers = includesPrivateMembers,
             GenericTypeParameters = genericTypeParameters,
             ConstructorParameters = constructorParameters,
-            InitProperties = members.Where(x => x.IsProperty && x.IsInitOnly && !constructorParameters.Contains(x)).ToArray(),
+            InitMembers = members.Where(x => ((x.IsProperty && x.IsInitOnly) || x.IsRequired) && !constructorParameters.Contains(x)).ToArray(),
             IsIntKey = isIntKey,
             Members = members,
             HasIMessagePackSerializationCallbackReceiver = hasIMessagePackSerializationCallbackReceiver,
@@ -113,11 +116,11 @@ public record ObjectSerializationInfo : ResolverRegisterInfo
 
         builder.Append(')');
 
-        if (this.InitProperties.Length > 0)
+        if (this.InitMembers.Length > 0)
         {
             builder.Append(" { ");
 
-            for (int i = 0; i < this.InitProperties.Length; i++)
+            for (int i = 0; i < this.InitMembers.Length; i++)
             {
                 if (i != 0)
                 {
@@ -128,9 +131,9 @@ public record ObjectSerializationInfo : ResolverRegisterInfo
                 // was provided in the deserialized stream.
                 // However the C# language does not provide a means to do this, so we always assign them.
                 // https://github.com/dotnet/csharplang/issues/6117
-                builder.Append(this.InitProperties[i].Name);
+                builder.Append(this.InitMembers[i].Name);
                 builder.Append(" = ");
-                builder.Append(this.InitProperties[i].LocalVariableName);
+                builder.Append(this.InitMembers[i].LocalVariableName);
             }
 
             builder.Append(" }");
