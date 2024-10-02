@@ -36,13 +36,13 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        internal static readonly Lazy<DynamicAssembly> DynamicAssembly;
+        internal static readonly DynamicAssemblyFactory DynamicAssemblyFactory;
 
         static DynamicObjectResolver()
         {
             Instance = new DynamicObjectResolver();
             Options = new MessagePackSerializerOptions(Instance);
-            DynamicAssembly = new Lazy<DynamicAssembly>(() => new DynamicAssembly(ModuleName));
+            DynamicAssemblyFactory = new DynamicAssemblyFactory(ModuleName);
         }
 
         private DynamicObjectResolver()
@@ -52,7 +52,7 @@ namespace MessagePack.Resolvers
 #if NETFRAMEWORK
         internal AssemblyBuilder Save()
         {
-            return DynamicAssembly.Value.Save();
+            return DynamicAssemblyFactory.GetDynamicAssembly(type: null).Save();
         }
 #endif
 
@@ -97,7 +97,7 @@ namespace MessagePack.Resolvers
                 TypeInfo? formatterTypeInfo;
                 try
                 {
-                    formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssembly.Value, typeof(T), false, false);
+                    formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssemblyFactory.GetDynamicAssembly(typeof(T)), typeof(T), false, false);
                 }
                 catch (InitAccessorInGenericClassNotSupportedException)
                 {
@@ -179,7 +179,7 @@ namespace MessagePack.Resolvers
 
         private const string ModuleName = "MessagePack.Resolvers.DynamicContractlessObjectResolver";
 
-        private static readonly Lazy<DynamicAssembly> DynamicAssembly;
+        private static readonly DynamicAssemblyFactory DynamicAssemblyFactory;
 
         private DynamicContractlessObjectResolver()
         {
@@ -187,13 +187,13 @@ namespace MessagePack.Resolvers
 
         static DynamicContractlessObjectResolver()
         {
-            DynamicAssembly = new Lazy<DynamicAssembly>(() => new DynamicAssembly(ModuleName));
+            DynamicAssemblyFactory = new DynamicAssemblyFactory(ModuleName);
         }
 
 #if NETFRAMEWORK
         internal AssemblyBuilder Save()
         {
-            return DynamicAssembly.Value.Save();
+            return DynamicAssemblyFactory.GetDynamicAssembly(type: null).Save();
         }
 #endif
 
@@ -240,7 +240,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                TypeInfo? formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssembly.Value, typeof(T), true, true);
+                TypeInfo? formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssemblyFactory.GetDynamicAssembly(typeof(T)), typeof(T), true, true);
                 if (formatterTypeInfo == null)
                 {
                     return;
