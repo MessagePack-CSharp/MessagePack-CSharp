@@ -35,7 +35,7 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        private static readonly Lazy<DynamicAssembly> DynamicAssembly;
+        private static readonly DynamicAssemblyFactory DynamicAssemblyFactory;
 
         private static int nameSequence = 0;
 
@@ -43,7 +43,7 @@ namespace MessagePack.Resolvers
         {
             Instance = new DynamicUnionResolver();
             Options = new MessagePackSerializerOptions(Instance);
-            DynamicAssembly = new Lazy<DynamicAssembly>(() => new DynamicAssembly(ModuleName));
+            DynamicAssemblyFactory = new DynamicAssemblyFactory(ModuleName);
         }
 
         private DynamicUnionResolver()
@@ -53,7 +53,7 @@ namespace MessagePack.Resolvers
 #if NETFRAMEWORK
         internal AssemblyBuilder Save()
         {
-            return DynamicAssembly.Value.Save();
+            return DynamicAssemblyFactory.GetDynamicAssembly(type: null).Save();
         }
 #endif
 
@@ -131,7 +131,7 @@ namespace MessagePack.Resolvers
                 Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
                 using (MonoProtection.EnterRefEmitLock())
                 {
-                    TypeBuilder typeBuilder = DynamicAssembly.Value.DefineType("MessagePack.Formatters." + DynamicObjectTypeBuilder.SubtractFullNameRegex.Replace(type.FullName!, string.Empty).Replace(".", "_") + "Formatter" + +Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
+                    TypeBuilder typeBuilder = DynamicAssemblyFactory.GetDynamicAssembly(type).DefineType("MessagePack.Formatters." + DynamicObjectTypeBuilder.SubtractFullNameRegex.Replace(type.FullName!, string.Empty).Replace(".", "_") + "Formatter" + +Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
                     FieldBuilder? typeToKeyAndJumpMap = null; // Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>
                     FieldBuilder? keyToJumpMap = null; // Dictionary<int, int>

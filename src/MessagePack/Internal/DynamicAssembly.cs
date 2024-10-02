@@ -24,6 +24,11 @@ namespace MessagePack.Internal
         // don't expose ModuleBuilder
         //// public ModuleBuilder ModuleBuilder { get { return moduleBuilder; } }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DynamicAssembly"/> class.
+        /// Please use <see cref="DynamicAssemblyFactory"/> instead in order to work across different AssemblyLoadContext that may have duplicate modules.
+        /// </summary>
+        /// <param name="moduleName">Name of the module to be generated.</param>
         public DynamicAssembly(string moduleName)
         {
 #if NETFRAMEWORK // We don't ship a net472 target, but we might add one for debugging purposes
