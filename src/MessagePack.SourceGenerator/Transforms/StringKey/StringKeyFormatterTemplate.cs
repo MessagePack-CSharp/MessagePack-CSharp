@@ -124,43 +124,44 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\t\t\tvar formatterResolver = options.Resolver;\r\n");
  } 
             this.Write("\t\t\tvar length = reader.ReadMapHeader();\r\n");
- var canOverwrite = Info.ConstructorParameters.Length == 0;
-		if (canOverwrite) { 
+ if (Info.MustDeserializeFieldsFirst) {
+	foreach (var member in Info.Members.Where(x => x.IsWritable || Info.ConstructorParameters.Any(p => p.Equals(x)))) {
+		// Until C# allows for optionally setting init-only properties (https://github.com/dotnet/csharplang/issues/6117)
+		// we will unconditionally set them, and thus have no reason to track whether the local variable has been initialized.
+		if (!member.IsInitOnly && !member.IsRequired && !Info.ConstructorParameters.Any(p => p.Equals(member))) { 
+            this.Write("\t\t\tvar ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.LocalVariableName));
+            this.Write("IsInitialized = false;\r\n");
+		} 
+            this.Write("\t\t\tvar ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.LocalVariableName));
+            this.Write(" = default(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Type));
+            this.Write(");\r\n");
+	} 
+ } else { 
             this.Write("\t\t\tvar ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.GetConstructorString()));
             this.Write(";\r\n");
- } else {
-			foreach (var member in Info.Members.Where(x => x.IsWritable || Info.ConstructorParameters.Any(p => p.Equals(x)))) { 
- if (Info.ConstructorParameters.All(p => !p.Equals(member))) { 
-            this.Write("\t\t\tvar __");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("__IsInitialized = false;\r\n");
- } 
-            this.Write("\t\t\tvar __");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("__ = default(");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Type));
-            this.Write(");\r\n");
- } 
  } 
             this.Write("\r\n\t\t\tfor (int i = 0; i < length; i++)\r\n\t\t\t{\r\n\t\t\t\tvar stringKey = global::MessageP" +
                     "ack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);\r\n\t\t\t\tswitch (stringKey.L" +
                     "ength)\r\n\t\t\t\t{\r\n\t\t\t\t\tdefault:\r\n\t\t\t\t\tFAIL:\r\n\t\t\t\t\t  reader.Skip();\r\n\t\t\t\t\t  continue" +
                     ";\r\n");
-            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(Info, "					", canOverwrite)));
+            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(Info, "					", !Info.MustDeserializeFieldsFirst)));
             this.Write("\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n");
- if (!canOverwrite) { 
+ if (Info.MustDeserializeFieldsFirst) { 
             this.Write("\t\t\tvar ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.GetConstructorString()));
             this.Write(";\r\n");
- foreach (var member in Info.Members.Where(x => x.IsWritable && !Info.ConstructorParameters.Any(p => p.Equals(x)))) { 
-            this.Write("\t\t\tif (__");
+ foreach (var member in Info.Members.Where(x => x.IsWritable && !x.IsInitOnly && !x.IsRequired && !Info.ConstructorParameters.Any(p => p.Equals(x)))) { 
+            this.Write("\t\t\tif (");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.LocalVariableName));
+            this.Write("IsInitialized)\r\n\t\t\t{\r\n\t\t\t\t____result.");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("__IsInitialized)\r\n\t\t\t{\r\n\t\t\t\t____result.");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write(" = __");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("__;\r\n\t\t\t}\r\n\r\n");
+            this.Write(" = ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.LocalVariableName));
+            this.Write(";\r\n\t\t\t}\r\n\r\n");
  } 
  } 
  } 

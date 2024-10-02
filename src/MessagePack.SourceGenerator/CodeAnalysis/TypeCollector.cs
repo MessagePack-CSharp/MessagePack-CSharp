@@ -5,6 +5,7 @@
 #pragma warning disable SA1649 // File name should match first type name
 
 using System.Collections.Immutable;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -731,20 +732,21 @@ public class TypeCollector
                     continue;
                 }
 
-                var isReadable = item.GetMethod is not null;
-                var isWritable = item.SetMethod is not null;
+                bool isReadable = item.GetMethod is not null;
+                bool isWritable = item.SetMethod is not null;
                 if (!isReadable && !isWritable)
                 {
                     continue;
                 }
 
+                bool isInitOnly = item.SetMethod?.IsInitOnly is true;
                 AttributeData? keyAttribute = attributes.FirstOrDefault(attributes => attributes.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute));
                 string stringKey = keyAttribute?.ConstructorArguments.Length == 1 && keyAttribute.ConstructorArguments[0].Value is string name ? name : item.Name;
 
                 includesPrivateMembers |= item.GetMethod is not null && !IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility);
                 includesPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
                 FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
-                MemberSerializationInfo member = new(true, isWritable, isReadable, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
+                MemberSerializationInfo member = new(true, isWritable, isReadable, isInitOnly, item.IsRequired, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                 stringMembers.Add(member.StringKey, (member, item.Type));
 
                 if (specialFormatter is null)
@@ -768,7 +770,7 @@ public class TypeCollector
                 string stringKey = keyAttribute?.ConstructorArguments.Length == 1 && keyAttribute.ConstructorArguments[0].Value is string name ? name : item.Name;
 
                 FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
-                MemberSerializationInfo member = new(false, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
+                MemberSerializationInfo member = new(false, IsWritable: !item.IsReadOnly, IsReadable: true, IsInitOnly: false, item.IsRequired, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                 stringMembers.Add(member.StringKey, (member, item.Type));
                 if (specialFormatter is null)
                 {
@@ -803,8 +805,9 @@ public class TypeCollector
                     continue;
                 }
 
-                var isReadable = item.GetMethod is not null;
-                var isWritable = item.SetMethod is not null;
+                bool isReadable = item.GetMethod is not null;
+                bool isWritable = item.SetMethod is not null;
+                bool isInitOnly = item.SetMethod?.IsInitOnly is true;
                 if (!isReadable && !isWritable)
                 {
                     continue;
@@ -870,7 +873,7 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
+                        var member = new MemberSerializationInfo(true, isWritable, isReadable, isInitOnly, item.IsRequired, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                         intMembers.Add(member.IntKey, (member, item.Type));
                     }
                     else if (stringKey is not null)
@@ -880,7 +883,7 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
+                        var member = new MemberSerializationInfo(true, isWritable, isReadable, isInitOnly, item.IsRequired, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                         stringMembers.Add(member.StringKey, (member, item.Type));
                     }
                 }
@@ -957,7 +960,7 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
+                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, IsInitOnly: false, item.IsRequired, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                         intMembers.Add(member.IntKey, (member, item.Type));
                     }
                     else
@@ -967,7 +970,7 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
+                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, IsInitOnly: false, item.IsRequired, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                         stringMembers.Add(member.StringKey, (member, item.Type));
                     }
                 }

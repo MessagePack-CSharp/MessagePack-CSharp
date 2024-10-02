@@ -29,7 +29,7 @@ public class ExecutionTests
     [Fact]
     public void ClassWithPropertiesWithGetterAndCtor()
     {
-        this.AssertRoundtrip(new HasPropertiesWithGetterAndCtor(1, "four"));
+        this.AssertRoundtrip(new HasPropertiesWithGetterAndCtor(1, "four") { C = 3 });
     }
 
     [Fact]
@@ -57,6 +57,18 @@ public class ExecutionTests
     {
         this.AssertRoundtrip(new MyCustomType());
         this.AssertRoundtrip(new MyCustomType2());
+    }
+
+    [Fact]
+    public void ClassWithInitProperty()
+    {
+        this.AssertRoundtrip(new HasInitProperty { A = 1, B = 4, C = 5 });
+    }
+
+    [Fact]
+    public void ClassWithRequiredMembers()
+    {
+        this.AssertRoundtrip(new HasRequiredMembers { A = 1, B = 4, C = 5, D = 6 });
     }
 
 #if !FORCE_MAP_MODE // forced map mode simply doesn't support private fields at all as it only notices internal and public members.

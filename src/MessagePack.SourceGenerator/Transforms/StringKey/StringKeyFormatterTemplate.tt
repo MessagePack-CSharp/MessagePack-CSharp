@@ -84,16 +84,17 @@ using MsgPack = global::MessagePack;
 			var formatterResolver = options.Resolver;
 <# } #>
 			var length = reader.ReadMapHeader();
-<# var canOverwrite = Info.ConstructorParameters.Length == 0;
-		if (canOverwrite) { #>
+<# if (Info.MustDeserializeFieldsFirst) {
+	foreach (var member in Info.Members.Where(x => x.IsWritable || Info.ConstructorParameters.Any(p => p.Equals(x)))) {
+		// Until C# allows for optionally setting init-only properties (https://github.com/dotnet/csharplang/issues/6117)
+		// we will unconditionally set them, and thus have no reason to track whether the local variable has been initialized.
+		if (!member.IsInitOnly && !member.IsRequired && !Info.ConstructorParameters.Any(p => p.Equals(member))) { #>
+			var <#= member.LocalVariableName #>IsInitialized = false;
+<#		} #>
+			var <#= member.LocalVariableName #> = default(<#= member.Type #>);
+<#	} #>
+<# } else { #>
 			var ____result = new <#= Info.GetConstructorString() #>;
-<# } else {
-			foreach (var member in Info.Members.Where(x => x.IsWritable || Info.ConstructorParameters.Any(p => p.Equals(x)))) { #>
-<# if (Info.ConstructorParameters.All(p => !p.Equals(member))) { #>
-			var __<#= member.Name #>__IsInitialized = false;
-<# } #>
-			var __<#= member.Name #>__ = default(<#= member.Type #>);
-<# } #>
 <# } #>
 
 			for (int i = 0; i < length; i++)
@@ -105,16 +106,16 @@ using MsgPack = global::MessagePack;
 					FAIL:
 					  reader.Skip();
 					  continue;
-<#= StringKeyFormatterDeserializeHelper.Classify(Info, "					", canOverwrite) #>
+<#= StringKeyFormatterDeserializeHelper.Classify(Info, "					", !Info.MustDeserializeFieldsFirst) #>
 				}
 			}
 
-<# if (!canOverwrite) { #>
+<# if (Info.MustDeserializeFieldsFirst) { #>
 			var ____result = new <#= Info.GetConstructorString() #>;
-<# foreach (var member in Info.Members.Where(x => x.IsWritable && !Info.ConstructorParameters.Any(p => p.Equals(x)))) { #>
-			if (__<#= member.Name #>__IsInitialized)
+<# foreach (var member in Info.Members.Where(x => x.IsWritable && !x.IsInitOnly && !x.IsRequired && !Info.ConstructorParameters.Any(p => p.Equals(x)))) { #>
+			if (<#= member.LocalVariableName #>IsInitialized)
 			{
-				____result.<#= member.Name #> = __<#= member.Name #>__;
+				____result.<#= member.Name #> = <#= member.LocalVariableName #>;
 			}
 
 <# } #>
