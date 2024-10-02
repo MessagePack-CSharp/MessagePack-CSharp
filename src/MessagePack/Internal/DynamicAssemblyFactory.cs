@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-#if NET6_0_OR_GREATER
+#if NET
 using System.Runtime.Loader;
 #endif
 
@@ -13,29 +13,25 @@ namespace MessagePack.Internal
 {
     /// <summary>
     /// This class is responsible for managing DynamicAssembly instance creation taking into account
-    /// AssemblyLoadContext when running under .Net.
+    /// AssemblyLoadContext when running under .NET.
     /// </summary>
     internal class DynamicAssemblyFactory
     {
         private readonly string moduleName;
 
-        private Lazy<DynamicAssembly> singletonAssembly;
+        private readonly Lazy<DynamicAssembly> singletonAssembly;
 
-#if NET6_0_OR_GREATER
-        private Dictionary<AssemblyLoadContext, DynamicAssembly> alcCache;
+#if NET
+        private readonly Dictionary<AssemblyLoadContext, DynamicAssembly> alcCache = new();
 #endif
 
         public DynamicAssemblyFactory(string moduleName)
         {
             this.moduleName = moduleName;
             this.singletonAssembly = new Lazy<DynamicAssembly>(() => new DynamicAssembly(this.moduleName));
-
-#if NET6_0_OR_GREATER
-            this.alcCache = new Dictionary<AssemblyLoadContext, DynamicAssembly>();
-#endif
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         public DynamicAssembly GetDynamicAssembly(Type? type)
         {
             if (type is null || AssemblyLoadContext.GetLoadContext(type.Assembly) is not AssemblyLoadContext loadContext)
@@ -45,7 +41,7 @@ namespace MessagePack.Internal
             else
             {
                 DynamicAssembly? assembly = null;
-                lock (alcCache)
+                lock (this.alcCache)
                 {
                     if (!this.alcCache.TryGetValue(loadContext, out assembly))
                     {
