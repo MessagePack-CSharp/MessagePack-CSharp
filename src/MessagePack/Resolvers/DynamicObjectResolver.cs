@@ -1753,8 +1753,8 @@ namespace MessagePack.Internal
                         if (member.PropertyInfo is not null && conflictingMember.PropertyInfo is not null
                             && member.PropertyInfo.Name == conflictingMember.PropertyInfo.Name)
                         {
-                            // Implicit interface implementations of get/set methods are marked 'virtual final'
-                            // Therefore an overridable property should be 'IsVirtual == true && IsFinal == false'
+                            // According to MethodBase.IsVirtual docs an overridable property should be 'IsVirtual == true && IsFinal == false'.
+                            // Property methods can be marked 'virtual final' in case of 'sealed override' or when implementing interface implicitly.
                             var isGetMethodOverridable = (conflictingMember.PropertyInfo.GetMethod?.IsVirtual ?? false) && !(conflictingMember.PropertyInfo.GetMethod?.IsFinal ?? false);
                             var isSetMethodOverridable = (conflictingMember.PropertyInfo.SetMethod?.IsVirtual ?? false) && !(conflictingMember.PropertyInfo.SetMethod?.IsFinal ?? false);
                             if (isGetMethodOverridable || isSetMethodOverridable)
