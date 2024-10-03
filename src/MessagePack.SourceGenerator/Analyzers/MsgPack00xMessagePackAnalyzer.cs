@@ -399,6 +399,12 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
 
         foreach (INamedTypeSymbol type in container.GetTypeMembers())
         {
+            if (type.DeclaringSyntaxReferences.FirstOrDefault()?.SyntaxTree.FilePath.Contains("MessagePack.SourceGenerator") is true)
+            {
+                // We do not want to find source generated formatters during analysis.
+                continue;
+            }
+
             if (FormatterDescriptor.TryCreate(type, out FormatterDescriptor? formatter))
             {
                 yield return formatter;
