@@ -225,7 +225,7 @@ namespace MessagePack.Internal
             { typeof(MessagePack.Nil) },
         };
 
-        public static TypeInfo? BuildType(DynamicAssembly assembly, Type type, bool forceStringKey, bool contractless, bool allowPrivate)
+        internal static TypeInfo? BuildType(DynamicAssembly assembly, Type type, bool forceStringKey, bool contractless, bool allowPrivate)
         {
             if (ignoreTypes.Contains(type))
             {
@@ -1376,16 +1376,16 @@ namespace MessagePack.Internal
 
         internal static class CodeGenHelpersTypeInfo
         {
-            public static readonly MethodInfo GetEncodedStringBytes = typeof(CodeGenHelpers).GetRuntimeMethod(nameof(CodeGenHelpers.GetEncodedStringBytes), new[] { typeof(string) })!;
+            internal static readonly MethodInfo GetEncodedStringBytes = typeof(CodeGenHelpers).GetRuntimeMethod(nameof(CodeGenHelpers.GetEncodedStringBytes), new[] { typeof(string) })!;
         }
 
         internal static class EmitInfo
         {
-            public static readonly MethodInfo GetTypeFromHandle = ExpressionUtility.GetMethodInfo(() => Type.GetTypeFromHandle(default(RuntimeTypeHandle)));
-            public static readonly MethodInfo TypeGetProperty = ExpressionUtility.GetMethodInfo((Type t) => t.GetTypeInfo().GetProperty(default(string)!, default(BindingFlags)));
-            public static readonly MethodInfo TypeGetField = ExpressionUtility.GetMethodInfo((Type t) => t.GetTypeInfo().GetField(default(string)!, default(BindingFlags)));
-            public static readonly MethodInfo GetCustomAttributeMessagePackFormatterAttribute = ExpressionUtility.GetMethodInfo(() => CustomAttributeExtensions.GetCustomAttribute<MessagePackFormatterAttribute>(default(MemberInfo)!, default(bool)));
-            public static readonly MethodInfo ActivatorCreateInstance = ExpressionUtility.GetMethodInfo(() => Activator.CreateInstance(default(Type)!, default(object[])));
+            internal static readonly MethodInfo GetTypeFromHandle = ExpressionUtility.GetMethodInfo(() => Type.GetTypeFromHandle(default(RuntimeTypeHandle)));
+            internal static readonly MethodInfo TypeGetProperty = ExpressionUtility.GetMethodInfo((Type t) => t.GetTypeInfo().GetProperty(default(string)!, default(BindingFlags)));
+            internal static readonly MethodInfo TypeGetField = ExpressionUtility.GetMethodInfo((Type t) => t.GetTypeInfo().GetField(default(string)!, default(BindingFlags)));
+            internal static readonly MethodInfo GetCustomAttributeMessagePackFormatterAttribute = ExpressionUtility.GetMethodInfo(() => CustomAttributeExtensions.GetCustomAttribute<MessagePackFormatterAttribute>(default(MemberInfo)!, default(bool)));
+            internal static readonly MethodInfo ActivatorCreateInstance = ExpressionUtility.GetMethodInfo(() => Activator.CreateInstance(default(Type)!, default(object[])));
 
             internal static class MessagePackFormatterAttr
             {
@@ -1396,35 +1396,35 @@ namespace MessagePack.Internal
 
         private class DeserializeInfo
         {
-            public ObjectSerializationInfo.EmittableMember? MemberInfo { get; set; }
+            internal ObjectSerializationInfo.EmittableMember? MemberInfo { get; set; }
 
-            public LocalBuilder? LocalVariable { get; set; }
+            internal LocalBuilder? LocalVariable { get; set; }
 
-            public LocalBuilder? IsInitializedLocalVariable { get; set; }
+            internal LocalBuilder? IsInitializedLocalVariable { get; set; }
 
-            public Label SwitchLabel { get; set; }
+            internal Label SwitchLabel { get; set; }
         }
     }
 
     internal class ObjectSerializationInfo
     {
-        public Type Type { get; }
+        internal Type Type { get; }
 
-        public bool IsIntKey { get; }
+        internal bool IsIntKey { get; }
 
-        public bool IsStringKey => !this.IsIntKey;
+        internal bool IsStringKey => !this.IsIntKey;
 
-        public bool IsClass { get; }
+        internal bool IsClass { get; }
 
-        public bool IsStruct => !this.IsClass;
+        internal bool IsStruct => !this.IsClass;
 
-        public bool ShouldUseFormatterResolver { get; private set; }
+        internal bool ShouldUseFormatterResolver { get; private set; }
 
-        public ConstructorInfo? BestmatchConstructor { get; }
+        internal ConstructorInfo? BestmatchConstructor { get; }
 
-        public EmittableMemberAndConstructorParameter[] ConstructorParameters { get; }
+        internal EmittableMemberAndConstructorParameter[] ConstructorParameters { get; }
 
-        public EmittableMember[] Members { get; }
+        internal EmittableMember[] Members { get; }
 
         private ObjectSerializationInfo(Type type, EmittableMemberAndConstructorParameter[] constructorParameters, EmittableMember[] members, bool isClass, ConstructorInfo? bestmatchConstructor, bool isIntKey)
         {
@@ -1448,7 +1448,7 @@ namespace MessagePack.Internal
 #endif
         }
 
-        public static ObjectSerializationInfo? CreateOrNull(Type type, bool forceStringKey, bool contractless, bool allowPrivate)
+        internal static ObjectSerializationInfo? CreateOrNull(Type type, bool forceStringKey, bool contractless, bool allowPrivate)
         {
             TypeInfo ti = type.GetTypeInfo();
             var isClass = ti.IsClass || ti.IsInterface || ti.IsAbstract;
@@ -1941,7 +1941,7 @@ namespace MessagePack.Internal
             }
         }
 
-        public class EmittableMemberAndConstructorParameter
+        internal class EmittableMemberAndConstructorParameter
         {
             internal EmittableMemberAndConstructorParameter(EmittableMember memberInfo, ParameterInfo constructorParameter)
             {
@@ -1949,48 +1949,48 @@ namespace MessagePack.Internal
                 this.ConstructorParameter = constructorParameter;
             }
 
-            public EmittableMember MemberInfo { get; }
+            internal EmittableMember MemberInfo { get; }
 
-            public ParameterInfo ConstructorParameter { get; }
+            internal ParameterInfo ConstructorParameter { get; }
         }
 
-        public class EmittableMember
+        internal class EmittableMember
         {
             internal EmittableMember(MemberInfo memberInfo)
             {
                 this.MemberInfo = memberInfo;
             }
 
-            public bool IsProperty => this.PropertyInfo is not null;
+            internal bool IsProperty => this.PropertyInfo is not null;
 
-            public bool IsField => this.FieldInfo is not null;
+            internal bool IsField => this.FieldInfo is not null;
 
-            public bool IsWritable { get; set; }
+            internal bool IsWritable { get; set; }
 
-            public bool IsWrittenByConstructor { get; set; }
+            internal bool IsWrittenByConstructor { get; set; }
 
             /// <summary>
             /// Gets a value indicating whether the property can only be set by an object initializer, a constructor, or another `init` member.
             /// </summary>
-            public bool IsInitOnly => this.PropertyInfo?.GetSetMethod(true)?.ReturnParameter.GetRequiredCustomModifiers().Any(modifierType => modifierType.FullName == "System.Runtime.CompilerServices.IsExternalInit") ?? false;
+            internal bool IsInitOnly => this.PropertyInfo?.GetSetMethod(true)?.ReturnParameter.GetRequiredCustomModifiers().Any(modifierType => modifierType.FullName == "System.Runtime.CompilerServices.IsExternalInit") ?? false;
 
-            public bool IsReadable { get; set; }
+            internal bool IsReadable { get; set; }
 
-            public int IntKey { get; set; }
+            internal int IntKey { get; set; }
 
-            public string? StringKey { get; set; }
+            internal string? StringKey { get; set; }
 
-            public Type Type => this.FieldInfo?.FieldType ?? this.PropertyInfo!.PropertyType;
+            internal Type Type => this.FieldInfo?.FieldType ?? this.PropertyInfo!.PropertyType;
 
-            public MemberInfo MemberInfo { get; }
+            internal MemberInfo MemberInfo { get; }
 
-            public FieldInfo? FieldInfo => this.MemberInfo as FieldInfo;
+            internal FieldInfo? FieldInfo => this.MemberInfo as FieldInfo;
 
-            public string Name => this.PropertyInfo?.Name ?? this.FieldInfo!.Name;
+            internal string Name => this.PropertyInfo?.Name ?? this.FieldInfo!.Name;
 
-            public PropertyInfo? PropertyInfo => this.MemberInfo as PropertyInfo;
+            internal PropertyInfo? PropertyInfo => this.MemberInfo as PropertyInfo;
 
-            public bool IsValueType
+            internal bool IsValueType
             {
                 get
                 {
@@ -2002,7 +2002,7 @@ namespace MessagePack.Internal
             /// <summary>
             /// Gets or sets a value indicating whether this member is explicitly opted in with an attribute.
             /// </summary>
-            public bool IsExplicitContract { get; set; }
+            internal bool IsExplicitContract { get; set; }
 
 #if !NET6_0_OR_GREATER
             /// <summary>
@@ -2016,21 +2016,21 @@ namespace MessagePack.Internal
             internal bool IsProblematicInitProperty { get; set; }
 #endif
 
-            public MessagePackFormatterAttribute? GetMessagePackFormatterAttribute()
+            internal MessagePackFormatterAttribute? GetMessagePackFormatterAttribute()
             {
                 return this.PropertyInfo is not null
                     ? this.PropertyInfo.GetCustomAttribute<MessagePackFormatterAttribute>(true)
                     : this.FieldInfo!.GetCustomAttribute<MessagePackFormatterAttribute>(true);
             }
 
-            public DataMemberAttribute? GetDataMemberAttribute()
+            internal DataMemberAttribute? GetDataMemberAttribute()
             {
                 return this.PropertyInfo is not null
                     ? this.PropertyInfo.GetCustomAttribute<DataMemberAttribute>(true)
                     : this.FieldInfo!.GetCustomAttribute<DataMemberAttribute>(true);
             }
 
-            public void EmitLoadValue(ILGenerator il)
+            internal void EmitLoadValue(ILGenerator il)
             {
                 if (this.PropertyInfo is not null)
                 {
@@ -2059,7 +2059,7 @@ namespace MessagePack.Internal
             }
 #endif
 
-            public void EmitPreStoreValue(TypeBuilder typeBuilder, ILGenerator il, LocalBuilder localResult)
+            internal void EmitPreStoreValue(TypeBuilder typeBuilder, ILGenerator il, LocalBuilder localResult)
             {
 #if !NET6_0_OR_GREATER
                 if (this.PropertyInfo is not null && this.IsProblematicInitProperty)
@@ -2095,7 +2095,7 @@ namespace MessagePack.Internal
                 }
             }
 
-            public void EmitStoreValue(ILGenerator il, TypeBuilder typeBuilder)
+            internal void EmitStoreValue(ILGenerator il, TypeBuilder typeBuilder)
             {
                 if (this.PropertyInfo is not null)
                 {
@@ -2152,7 +2152,7 @@ namespace MessagePack.Internal
 
     internal class MessagePackDynamicObjectResolverException : MessagePackSerializationException
     {
-        public MessagePackDynamicObjectResolverException(string message)
+        internal MessagePackDynamicObjectResolverException(string message)
             : base(message)
         {
         }
