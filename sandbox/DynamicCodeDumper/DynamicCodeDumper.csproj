@@ -109,6 +109,9 @@
     <Compile Include="..\..\src\MessagePack\MessagePackWriter.cs">
       <Link>Code\MessagePackWriter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\Resolvers\SkipClrVisibilityChecks.cs">
+      <Link>Code\SkipClrVisibilityChecks.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\SequencePool.cs">
       <Link>Code\SequencePool.cs</Link>
     </Compile>
@@ -158,5 +161,6 @@
   <ItemGroup>
     <PackageReference Include="Nerdbank.Streams" />
     <PackageReference Include="Microsoft.NET.StringTools" />
+    <PackageReference Include="System.Collections.Immutable" />
   </ItemGroup>
 </Project>

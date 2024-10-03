@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 #if NET
@@ -19,45 +21,82 @@ namespace MessagePack.Internal
     {
         private readonly string moduleName;
 
-        private readonly Lazy<DynamicAssembly> singletonAssembly;
-
 #if NET
         private readonly Dictionary<AssemblyLoadContext, DynamicAssembly> alcCache = new();
 #endif
 
+        private DynamicAssembly? singletonAssembly;
+
+        private ImmutableHashSet<AssemblyName> lastCreatedDynamicAssemblySkipVisibilityChecks = SkipClrVisibilityChecks.EmptySet.Add(Assembly.GetExecutingAssembly().GetName());
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DynamicAssemblyFactory"/> class.
+        /// </summary>
+        /// <param name="moduleName">An arbitrary name that will be used for the module of the created dynamic assembly.</param>
         public DynamicAssemblyFactory(string moduleName)
         {
             this.moduleName = moduleName;
-            this.singletonAssembly = new Lazy<DynamicAssembly>(() => new DynamicAssembly(this.moduleName));
         }
+
+        [return: NotNullIfNotNull("type")]
+        public DynamicAssembly? GetDynamicAssembly(Type? type, bool allowPrivate)
+        {
+            if (type is null)
+            {
+                return this.singletonAssembly;
+            }
 
 #if NET
-        public DynamicAssembly GetDynamicAssembly(Type? type)
-        {
-            if (type is null || AssemblyLoadContext.GetLoadContext(type.Assembly) is not AssemblyLoadContext loadContext)
-            {
-                return this.singletonAssembly.Value;
-            }
-            else
-            {
-                DynamicAssembly? assembly = null;
-                lock (this.alcCache)
-                {
-                    if (!this.alcCache.TryGetValue(loadContext, out assembly))
-                    {
-                        assembly = new DynamicAssembly(this.moduleName);
-                        this.alcCache[loadContext] = assembly;
-                    }
+            AssemblyLoadContext? loadContext = AssemblyLoadContext.GetLoadContext(type.Assembly);
+#endif
 
-                    return assembly;
+            if (allowPrivate)
+            {
+                ImmutableHashSet<AssemblyName>.Builder skipVisibilityAssemblies = this.lastCreatedDynamicAssemblySkipVisibilityChecks.ToBuilder();
+                int originalCount = skipVisibilityAssemblies.Count;
+                SkipClrVisibilityChecks.GetSkipVisibilityChecksRequirements(type.GetTypeInfo(), skipVisibilityAssemblies);
+
+                lock (this)
+                {
+                    if (skipVisibilityAssemblies.Count > originalCount)
+                    {
+                        // Each set of assemblies is a proper superset of the last one, so we can just keep the last one.
+                        // Make sure we take the proper union now that we're in a lock.
+                        skipVisibilityAssemblies.UnionWith(this.lastCreatedDynamicAssemblySkipVisibilityChecks);
+                        this.lastCreatedDynamicAssemblySkipVisibilityChecks = skipVisibilityAssemblies.ToImmutable();
+                        DynamicAssembly newAssembly = NewAssembly();
+
+#if NET
+                        if (loadContext is not null)
+                        {
+                            return this.alcCache[loadContext] = newAssembly;
+                        }
+#endif
+
+                        return this.singletonAssembly = newAssembly;
+                    }
                 }
             }
-        }
-#else
-        public DynamicAssembly GetDynamicAssembly(Type? type)
-        {
-            return this.singletonAssembly.Value;
-        }
+
+            lock (this)
+            {
+#if NET
+                if (loadContext is not null)
+                {
+                    if (!this.alcCache.TryGetValue(loadContext, out DynamicAssembly? existing))
+                    {
+                        existing = NewAssembly();
+                        this.alcCache[loadContext] = existing;
+                    }
+
+                    return existing;
+                }
 #endif
+
+                return this.singletonAssembly ??= NewAssembly();
+            }
+
+            DynamicAssembly NewAssembly() => new(this.moduleName, this.lastCreatedDynamicAssemblySkipVisibilityChecks);
+        }
     }
 }
