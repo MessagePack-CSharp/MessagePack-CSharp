@@ -135,20 +135,20 @@ namespace MessagePack
         public MessagePackReader CreatePeekReader() => this;
 
         /// <summary>
-        /// Advances the reader to the next MessagePack primitive to be read.
+        /// Advances the reader to the next MessagePack structure to be read.
         /// </summary>
         /// <remarks>
-        /// The entire primitive is skipped, including content of maps or arrays, or any other type with payloads.
+        /// The entire structure is skipped, including content of maps or arrays, or any other type with payloads.
         /// To get the raw MessagePack sequence that was skipped, use <see cref="ReadRaw()"/> instead.
         /// </remarks>
         public void Skip() => ThrowInsufficientBufferUnless(this.TrySkip());
 
         /// <summary>
-        /// Advances the reader to the next MessagePack primitive to be read.
+        /// Advances the reader to the next MessagePack structure to be read.
         /// </summary>
         /// <returns><see langword="true"/> if the entire structure beginning at the current <see cref="Position"/> is found in the <see cref="Sequence"/>; <see langword="false"/> otherwise.</returns>
         /// <remarks>
-        /// The entire primitive is skipped, including content of maps or arrays, or any other type with payloads.
+        /// The entire structure is skipped, including content of maps or arrays, or any other type with payloads.
         /// To get the raw MessagePack sequence that was skipped, use <see cref="ReadRaw()"/> instead.
         /// WARNING: when false is returned, the position of the reader is undefined.
         /// </remarks>
@@ -309,7 +309,7 @@ namespace MessagePack
         {
             ThrowInsufficientBufferUnless(this.TryReadArrayHeader(out int count));
 
-            // Protect against corrupted or mischievious data that may lead to allocating way too much memory.
+            // Protect against corrupted or mischievous data that may lead to allocating way too much memory.
             // We allow for each primitive to be the minimal 1 byte in size.
             // Formatters that know each element is larger can optionally add a stronger check.
             ThrowInsufficientBufferUnless(this.reader.Remaining >= count);
@@ -387,7 +387,7 @@ namespace MessagePack
         {
             ThrowInsufficientBufferUnless(this.TryReadMapHeader(out int count));
 
-            // Protect against corrupted or mischievious data that may lead to allocating way too much memory.
+            // Protect against corrupted or mischievous data that may lead to allocating way too much memory.
             // We allow for each primitive to be the minimal 1 byte in size, and we have a key=value map, so that's 2 bytes.
             // Formatters that know each element is larger can optionally add a stronger check.
             ThrowInsufficientBufferUnless(this.reader.Remaining >= count * 2);
@@ -803,7 +803,7 @@ namespace MessagePack
         {
             ThrowInsufficientBufferUnless(this.TryReadExtensionFormatHeader(out ExtensionHeader header));
 
-            // Protect against corrupted or mischievious data that may lead to allocating way too much memory.
+            // Protect against corrupted or mischievous data that may lead to allocating way too much memory.
             ThrowInsufficientBufferUnless(this.reader.Remaining >= header.Length);
 
             return header;
