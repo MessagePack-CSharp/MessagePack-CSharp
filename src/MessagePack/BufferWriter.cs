@@ -101,14 +101,15 @@ namespace MessagePack
 
         internal SequencePool.Rental SequenceRental => _rental;
 
-        public Span<byte> GetSpan(int sizeHint)
+        /// <inheritdoc cref="IBufferWriter{T}.GetSpan(int)"/>
+        public Span<byte> GetSpan(int sizeHint = 0)
         {
             Ensure(sizeHint);
             return this.Span;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref byte GetPointer(int sizeHint)
+        public ref byte GetPointer(int sizeHint = 0)
         {
             Ensure(sizeHint);
 
@@ -175,7 +176,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="count">The number of bytes that must be allocated in a single buffer.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Ensure(int count = 1)
+        public void Ensure(int count = 0)
         {
             if (_span.Length < count)
             {
