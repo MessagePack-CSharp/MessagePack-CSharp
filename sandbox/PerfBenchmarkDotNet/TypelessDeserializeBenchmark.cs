@@ -73,7 +73,3 @@ namespace PerfBenchmarkDotNet
         }
     }
 }
-
-#pragma warning restore SA1200 // Using directives should be placed correctly
-#pragma warning restore SA1403 // File may only contain a single namespace
-
