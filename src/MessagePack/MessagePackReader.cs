@@ -135,20 +135,20 @@ namespace MessagePack
         public MessagePackReader CreatePeekReader() => this;
 
         /// <summary>
-        /// Advances the reader to the next MessagePack primitive to be read.
+        /// Advances the reader to the next MessagePack structure to be read.
         /// </summary>
         /// <remarks>
-        /// The entire primitive is skipped, including content of maps or arrays, or any other type with payloads.
+        /// The entire structure is skipped, including content of maps or arrays, or any other type with payloads.
         /// To get the raw MessagePack sequence that was skipped, use <see cref="ReadRaw()"/> instead.
         /// </remarks>
         public void Skip() => ThrowInsufficientBufferUnless(this.TrySkip());
 
         /// <summary>
-        /// Advances the reader to the next MessagePack primitive to be read.
+        /// Advances the reader to the next MessagePack structure to be read.
         /// </summary>
         /// <returns><see langword="true"/> if the entire structure beginning at the current <see cref="Position"/> is found in the <see cref="Sequence"/>; <see langword="false"/> otherwise.</returns>
         /// <remarks>
-        /// The entire primitive is skipped, including content of maps or arrays, or any other type with payloads.
+        /// The entire structure is skipped, including content of maps or arrays, or any other type with payloads.
         /// To get the raw MessagePack sequence that was skipped, use <see cref="ReadRaw()"/> instead.
         /// WARNING: when false is returned, the position of the reader is undefined.
         /// </remarks>
@@ -189,7 +189,7 @@ namespace MessagePack
                 case MessagePackCode.Str8:
                 case MessagePackCode.Str16:
                 case MessagePackCode.Str32:
-                    return this.TryGetStringLengthInBytes(out int length) && this.reader.TryAdvance(length);
+                    return this.TryGetStringLengthInBytes(out uint length) && this.reader.TryAdvance(length);
                 case MessagePackCode.Bin8:
                 case MessagePackCode.Bin16:
                 case MessagePackCode.Bin32:
@@ -309,7 +309,7 @@ namespace MessagePack
         {
             ThrowInsufficientBufferUnless(this.TryReadArrayHeader(out int count));
 
-            // Protect against corrupted or mischievious data that may lead to allocating way too much memory.
+            // Protect against corrupted or mischievous data that may lead to allocating way too much memory.
             // We allow for each primitive to be the minimal 1 byte in size.
             // Formatters that know each element is larger can optionally add a stronger check.
             ThrowInsufficientBufferUnless(this.reader.Remaining >= count);
@@ -327,48 +327,36 @@ namespace MessagePack
         /// <param name="count">Receives the number of elements in the array if the entire array header could be read.</param>
         /// <returns><see langword="true"/> if there was sufficient buffer and an array header was found; <see langword="false"/> if the buffer incompletely describes an array header.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown if a code other than an array header is encountered.</exception>
-        /// <remarks>
-        /// When this method returns <see langword="false"/> the position of the reader is left in an undefined position.
-        /// The caller is expected to recreate the reader (presumably with a longer sequence to read from) before continuing.
-        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryReadArrayHeader(out int count)
         {
-            count = -1;
-            if (!this.reader.TryRead(out byte code))
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadArrayHeader(this.reader.UnreadSpan, out uint uintCount, out int tokenSize);
+retry:
+            switch (readResult)
             {
-                return false;
-            }
-
-            switch (code)
-            {
-                case MessagePackCode.Array16:
-                    if (!this.reader.TryReadBigEndian(out short shortValue))
+                case MessagePackPrimitives.ReadResult.Success:
+                    count = checked((int)uintCount);
+                    this.reader.Advance(tokenSize);
+                    return true;
+                case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
+                case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    Span<byte> buffer = stackalloc byte[tokenSize];
+                    if (this.reader.TryCopyTo(buffer))
                     {
+                        readResult = MessagePackPrimitives.TryReadArrayHeader(buffer, out uintCount, out tokenSize);
+                        goto retry;
+                    }
+                    else
+                    {
+                        count = 0;
                         return false;
                     }
 
-                    count = unchecked((ushort)shortValue);
-                    break;
-                case MessagePackCode.Array32:
-                    if (!this.reader.TryReadBigEndian(out int intValue))
-                    {
-                        return false;
-                    }
-
-                    count = intValue;
-                    break;
                 default:
-                    if (code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MaxFixArray)
-                    {
-                        count = code & 0xF;
-                        break;
-                    }
-
-                    throw ThrowInvalidCode(code);
+                    throw ThrowUnreachable();
             }
-
-            return true;
         }
 
         /// <summary>
@@ -387,7 +375,7 @@ namespace MessagePack
         {
             ThrowInsufficientBufferUnless(this.TryReadMapHeader(out int count));
 
-            // Protect against corrupted or mischievious data that may lead to allocating way too much memory.
+            // Protect against corrupted or mischievous data that may lead to allocating way too much memory.
             // We allow for each primitive to be the minimal 1 byte in size, and we have a key=value map, so that's 2 bytes.
             // Formatters that know each element is larger can optionally add a stronger check.
             ThrowInsufficientBufferUnless(this.reader.Remaining >= count * 2);
@@ -405,47 +393,35 @@ namespace MessagePack
         /// <param name="count">Receives the number of key=value pairs in the map if the entire map header can be read.</param>
         /// <returns><see langword="true"/> if there was sufficient buffer and a map header was found; <see langword="false"/> if the buffer incompletely describes an map header.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown if a code other than an map header is encountered.</exception>
-        /// <remarks>
-        /// When this method returns <see langword="false"/> the position of the reader is left in an undefined position.
-        /// The caller is expected to recreate the reader (presumably with a longer sequence to read from) before continuing.
-        /// </remarks>
         public bool TryReadMapHeader(out int count)
         {
-            count = -1;
-            if (!this.reader.TryRead(out byte code))
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadMapHeader(this.reader.UnreadSpan, out uint uintCount, out int tokenSize);
+retry:
+            switch (readResult)
             {
-                return false;
-            }
-
-            switch (code)
-            {
-                case MessagePackCode.Map16:
-                    if (!this.reader.TryReadBigEndian(out short shortValue))
+                case MessagePackPrimitives.ReadResult.Success:
+                    count = checked((int)uintCount);
+                    this.reader.Advance(tokenSize);
+                    return true;
+                case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
+                case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    Span<byte> buffer = stackalloc byte[tokenSize];
+                    if (this.reader.TryCopyTo(buffer))
                     {
+                        readResult = MessagePackPrimitives.TryReadMapHeader(buffer, out uintCount, out tokenSize);
+                        goto retry;
+                    }
+                    else
+                    {
+                        count = 0;
                         return false;
                     }
 
-                    count = unchecked((ushort)shortValue);
-                    break;
-                case MessagePackCode.Map32:
-                    if (!this.reader.TryReadBigEndian(out int intValue))
-                    {
-                        return false;
-                    }
-
-                    count = intValue;
-                    break;
                 default:
-                    if (code >= MessagePackCode.MinFixMap && code <= MessagePackCode.MaxFixMap)
-                    {
-                        count = (byte)(code & 0xF);
-                        break;
-                    }
-
-                    throw ThrowInvalidCode(code);
+                    throw ThrowUnreachable();
             }
-
-            return true;
         }
 
         /// <summary>
@@ -492,51 +468,30 @@ namespace MessagePack
         /// <returns>The value.</returns>
         public unsafe float ReadSingle()
         {
-            ThrowInsufficientBufferUnless(this.reader.TryRead(out byte code));
-
-            switch (code)
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out float value, out int tokenSize);
+retry:
+            switch (readResult)
             {
-                case MessagePackCode.Float32:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out float floatValue));
-                    return floatValue;
-                case MessagePackCode.Float64:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out double doubleValue));
-                    return (float)doubleValue;
-                case MessagePackCode.Int8:
-                    ThrowInsufficientBufferUnless(this.reader.TryRead(out sbyte sbyteValue));
-                    return sbyteValue;
-                case MessagePackCode.Int16:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out short shortValue));
-                    return shortValue;
-                case MessagePackCode.Int32:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out int intValue));
-                    return intValue;
-                case MessagePackCode.Int64:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out long longValue));
-                    return longValue;
-                case MessagePackCode.UInt8:
-                    ThrowInsufficientBufferUnless(this.reader.TryRead(out byte byteValue));
-                    return byteValue;
-                case MessagePackCode.UInt16:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out ushort ushortValue));
-                    return ushortValue;
-                case MessagePackCode.UInt32:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out uint uintValue));
-                    return uintValue;
-                case MessagePackCode.UInt64:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out ulong ulongValue));
-                    return ulongValue;
-                default:
-                    if (code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt)
+                case MessagePackPrimitives.ReadResult.Success:
+                    this.reader.Advance(tokenSize);
+                    return value;
+                case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
+                case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    Span<byte> buffer = stackalloc byte[tokenSize];
+                    if (this.reader.TryCopyTo(buffer))
                     {
-                        return unchecked((sbyte)code);
+                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        goto retry;
                     }
-                    else if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
+                    else
                     {
-                        return code;
+                        throw ThrowNotEnoughBytesException();
                     }
 
-                    throw ThrowInvalidCode(code);
+                default:
+                    throw ThrowUnreachable();
             }
         }
 
@@ -558,51 +513,30 @@ namespace MessagePack
         /// <returns>The value.</returns>
         public unsafe double ReadDouble()
         {
-            ThrowInsufficientBufferUnless(this.reader.TryRead(out byte code));
-
-            switch (code)
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out double value, out int tokenSize);
+retry:
+            switch (readResult)
             {
-                case MessagePackCode.Float64:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out double doubleValue));
-                    return doubleValue;
-                case MessagePackCode.Float32:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out float floatValue));
-                    return floatValue;
-                case MessagePackCode.Int8:
-                    ThrowInsufficientBufferUnless(this.reader.TryRead(out byte byteValue));
-                    return unchecked((sbyte)byteValue);
-                case MessagePackCode.Int16:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out short shortValue));
-                    return shortValue;
-                case MessagePackCode.Int32:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out int intValue));
-                    return intValue;
-                case MessagePackCode.Int64:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out long longValue));
-                    return longValue;
-                case MessagePackCode.UInt8:
-                    ThrowInsufficientBufferUnless(this.reader.TryRead(out byteValue));
-                    return byteValue;
-                case MessagePackCode.UInt16:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out shortValue));
-                    return unchecked((ushort)shortValue);
-                case MessagePackCode.UInt32:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out intValue));
-                    return unchecked((uint)intValue);
-                case MessagePackCode.UInt64:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out longValue));
-                    return unchecked((ulong)longValue);
-                default:
-                    if (code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt)
+                case MessagePackPrimitives.ReadResult.Success:
+                    this.reader.Advance(tokenSize);
+                    return value;
+                case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
+                case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    Span<byte> buffer = stackalloc byte[tokenSize];
+                    if (this.reader.TryCopyTo(buffer))
                     {
-                        return unchecked((sbyte)code);
+                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        goto retry;
                     }
-                    else if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
+                    else
                     {
-                        return code;
+                        throw ThrowNotEnoughBytesException();
                     }
 
-                    throw ThrowInvalidCode(code);
+                default:
+                    throw ThrowUnreachable();
             }
         }
 
@@ -614,7 +548,34 @@ namespace MessagePack
         /// Expects extension type code <see cref="ReservedMessagePackExtensionTypeCode.DateTime"/>.
         /// </summary>
         /// <returns>The value.</returns>
-        public DateTime ReadDateTime() => this.ReadDateTime(this.ReadExtensionFormatHeader());
+        public DateTime ReadDateTime()
+        {
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out DateTime value, out int tokenSize);
+retry:
+            switch (readResult)
+            {
+                case MessagePackPrimitives.ReadResult.Success:
+                    this.reader.Advance(tokenSize);
+                    return value;
+                case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
+                case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    Span<byte> buffer = stackalloc byte[tokenSize];
+                    if (this.reader.TryCopyTo(buffer))
+                    {
+                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        goto retry;
+                    }
+                    else
+                    {
+                        throw ThrowNotEnoughBytesException();
+                    }
+
+                default:
+                    throw ThrowUnreachable();
+            }
+        }
 
         /// <summary>
         /// Reads a <see cref="DateTime"/> from a value encoded with
@@ -627,29 +588,30 @@ namespace MessagePack
         /// <returns>The value.</returns>
         public DateTime ReadDateTime(ExtensionHeader header)
         {
-            if (header.TypeCode != ReservedMessagePackExtensionTypeCode.DateTime)
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, header, out DateTime value, out int tokenSize);
+retry:
+            switch (readResult)
             {
-                throw new MessagePackSerializationException(string.Format("Extension TypeCode is invalid. typeCode: {0}", header.TypeCode));
-            }
+                case MessagePackPrimitives.ReadResult.Success:
+                    this.reader.Advance(tokenSize);
+                    return value;
+                case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
+                case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    Span<byte> buffer = stackalloc byte[tokenSize];
+                    if (this.reader.TryCopyTo(buffer))
+                    {
+                        readResult = MessagePackPrimitives.TryRead(buffer, header, out value, out tokenSize);
+                        goto retry;
+                    }
+                    else
+                    {
+                        throw ThrowNotEnoughBytesException();
+                    }
 
-            switch (header.Length)
-            {
-                case 4:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out int intValue));
-                    return DateTimeConstants.UnixEpoch.AddSeconds(unchecked((uint)intValue));
-                case 8:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out long longValue));
-                    ulong ulongValue = unchecked((ulong)longValue);
-                    long nanoseconds = (long)(ulongValue >> 34);
-                    ulong seconds = ulongValue & 0x00000003ffffffffL;
-                    return DateTimeConstants.UnixEpoch.AddSeconds(seconds).AddTicks(nanoseconds / DateTimeConstants.NanosecondsPerTick);
-                case 12:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out intValue));
-                    nanoseconds = unchecked((uint)intValue);
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out longValue));
-                    return DateTimeConstants.UnixEpoch.AddSeconds(longValue).AddTicks(nanoseconds / DateTimeConstants.NanosecondsPerTick);
                 default:
-                    throw new MessagePackSerializationException($"Length of extension was {header.Length}. Either 4 or 8 were expected.");
+                    throw ThrowUnreachable();
             }
         }
 
@@ -674,7 +636,7 @@ namespace MessagePack
                 return null;
             }
 
-            int length = this.GetBytesLength();
+            uint length = this.GetBytesLength();
             ThrowInsufficientBufferUnless(this.reader.Remaining >= length);
             ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
             this.reader.Advance(length);
@@ -699,7 +661,7 @@ namespace MessagePack
                 return null;
             }
 
-            int length = this.GetStringLengthInBytes();
+            uint length = this.GetStringLengthInBytes();
             ThrowInsufficientBufferUnless(this.reader.Remaining >= length);
             ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
             this.reader.Advance(length);
@@ -731,7 +693,7 @@ namespace MessagePack
             }
 
             long oldPosition = this.reader.Consumed;
-            int length = this.GetStringLengthInBytes();
+            int length = checked((int)this.GetStringLengthInBytes());
             ThrowInsufficientBufferUnless(this.reader.Remaining >= length);
 
             if (this.reader.CurrentSpanIndex + length <= this.reader.CurrentSpan.Length)
@@ -764,7 +726,7 @@ namespace MessagePack
                 return null;
             }
 
-            int byteLength = this.GetStringLengthInBytes();
+            uint byteLength = this.GetStringLengthInBytes();
 
             ReadOnlySpan<byte> unreadSpan = this.reader.UnreadSpan;
             ////UnityEngine.Debug.Log(reader.CurrentSpan[0]);
@@ -772,7 +734,7 @@ namespace MessagePack
             if (unreadSpan.Length >= byteLength)
             {
                 // Fast path: all bytes to decode appear in the same span.
-                string value = StringEncoding.UTF8.GetString(unreadSpan.Slice(0, byteLength));
+                string value = StringEncoding.UTF8.GetString(unreadSpan.Slice(0, checked((int)byteLength)));
                 this.reader.Advance(byteLength);
                 return value;
             }
@@ -803,7 +765,7 @@ namespace MessagePack
         {
             ThrowInsufficientBufferUnless(this.TryReadExtensionFormatHeader(out ExtensionHeader header));
 
-            // Protect against corrupted or mischievious data that may lead to allocating way too much memory.
+            // Protect against corrupted or mischievous data that may lead to allocating way too much memory.
             ThrowInsufficientBufferUnless(this.reader.Remaining >= header.Length);
 
             return header;
@@ -830,65 +792,32 @@ namespace MessagePack
         /// </remarks>
         public bool TryReadExtensionFormatHeader(out ExtensionHeader extensionHeader)
         {
-            extensionHeader = default;
-            if (!this.reader.TryRead(out byte code))
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadExtensionHeader(this.reader.UnreadSpan, out extensionHeader, out int tokenSize);
+retry:
+            switch (readResult)
             {
-                return false;
-            }
-
-            uint length;
-            switch (code)
-            {
-                case MessagePackCode.FixExt1:
-                    length = 1;
-                    break;
-                case MessagePackCode.FixExt2:
-                    length = 2;
-                    break;
-                case MessagePackCode.FixExt4:
-                    length = 4;
-                    break;
-                case MessagePackCode.FixExt8:
-                    length = 8;
-                    break;
-                case MessagePackCode.FixExt16:
-                    length = 16;
-                    break;
-                case MessagePackCode.Ext8:
-                    if (!this.reader.TryRead(out byte byteLength))
+                case MessagePackPrimitives.ReadResult.Success:
+                    this.reader.Advance(tokenSize);
+                    return true;
+                case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
+                case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    Span<byte> buffer = stackalloc byte[tokenSize];
+                    if (this.reader.TryCopyTo(buffer))
                     {
+                        readResult = MessagePackPrimitives.TryReadExtensionHeader(buffer, out extensionHeader, out tokenSize);
+                        goto retry;
+                    }
+                    else
+                    {
+                        extensionHeader = default;
                         return false;
                     }
 
-                    length = byteLength;
-                    break;
-                case MessagePackCode.Ext16:
-                    if (!this.reader.TryReadBigEndian(out short shortLength))
-                    {
-                        return false;
-                    }
-
-                    length = unchecked((ushort)shortLength);
-                    break;
-                case MessagePackCode.Ext32:
-                    if (!this.reader.TryReadBigEndian(out int intLength))
-                    {
-                        return false;
-                    }
-
-                    length = unchecked((uint)intLength);
-                    break;
                 default:
-                    throw ThrowInvalidCode(code);
+                    throw ThrowUnreachable();
             }
-
-            if (!this.reader.TryRead(out byte typeCode))
-            {
-                return false;
-            }
-
-            extensionHeader = new ExtensionHeader(unchecked((sbyte)typeCode), length);
-            return true;
         }
 
         /// <summary>
@@ -957,61 +886,56 @@ namespace MessagePack
             }
         }
 
-        private int GetBytesLength()
+        [DoesNotReturn]
+        private static Exception ThrowUnreachable() => throw new Exception("Presumed unreachable point in code reached.");
+
+        private uint GetBytesLength()
         {
-            ThrowInsufficientBufferUnless(this.TryGetBytesLength(out int length));
+            ThrowInsufficientBufferUnless(this.TryGetBytesLength(out uint length));
             return length;
         }
 
-        private bool TryGetBytesLength(out int length)
+        private bool TryGetBytesLength(out uint length)
         {
-            if (!this.reader.TryRead(out byte code))
+            bool usingBinaryHeader = true;
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadBinHeader(this.reader.UnreadSpan, out length, out int tokenSize);
+retry:
+            switch (readResult)
             {
-                length = 0;
-                return false;
-            }
-
-            // In OldSpec mode, Bin didn't exist, so Str was used. Str8 didn't exist either.
-            switch (code)
-            {
-                case MessagePackCode.Bin8:
-                    if (this.reader.TryRead(out byte byteLength))
+                case MessagePackPrimitives.ReadResult.Success:
+                    this.reader.Advance(tokenSize);
+                    return true;
+                case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    if (usingBinaryHeader)
                     {
-                        length = byteLength;
-                        return true;
+                        usingBinaryHeader = false;
+                        readResult = MessagePackPrimitives.TryReadStringHeader(this.reader.UnreadSpan, out length, out tokenSize);
+                        goto retry;
+                    }
+                    else
+                    {
+                        throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
                     }
 
-                    break;
-                case MessagePackCode.Bin16:
-                case MessagePackCode.Str16: // OldSpec compatibility
-                    if (this.reader.TryReadBigEndian(out short shortLength))
+                case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    Span<byte> buffer = stackalloc byte[tokenSize];
+                    if (this.reader.TryCopyTo(buffer))
                     {
-                        length = unchecked((ushort)shortLength);
-                        return true;
+                        readResult = usingBinaryHeader
+                            ? MessagePackPrimitives.TryReadBinHeader(buffer, out length, out tokenSize)
+                            : MessagePackPrimitives.TryReadStringHeader(buffer, out length, out tokenSize);
+                        goto retry;
+                    }
+                    else
+                    {
+                        length = default;
+                        return false;
                     }
 
-                    break;
-                case MessagePackCode.Bin32:
-                case MessagePackCode.Str32: // OldSpec compatibility
-                    if (this.reader.TryReadBigEndian(out length))
-                    {
-                        return true;
-                    }
-
-                    break;
                 default:
-                    // OldSpec compatibility
-                    if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
-                    {
-                        length = code & 0x1F;
-                        return true;
-                    }
-
-                    throw ThrowInvalidCode(code);
+                    throw ThrowUnreachable();
             }
-
-            length = 0;
-            return false;
         }
 
         /// <summary>
@@ -1020,74 +944,44 @@ namespace MessagePack
         /// <param name="length">Receives the length of the next string, if there were enough bytes to read it.</param>
         /// <returns><see langword="true"/> if there were enough bytes to read the length of the next string; <see langword="false"/> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TryGetStringLengthInBytes(out int length)
+        private bool TryGetStringLengthInBytes(out uint length)
         {
-            if (!this.reader.TryRead(out byte code))
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadStringHeader(this.reader.UnreadSpan, out length, out int tokenSize);
+retry:
+            switch (readResult)
             {
-                length = 0;
-                return false;
-            }
+                case MessagePackPrimitives.ReadResult.Success:
+                    this.reader.Advance(tokenSize);
+                    return true;
+                case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
+                case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    Span<byte> buffer = stackalloc byte[tokenSize];
+                    if (this.reader.TryCopyTo(buffer))
+                    {
+                        readResult = MessagePackPrimitives.TryReadStringHeader(buffer, out length, out tokenSize);
+                        goto retry;
+                    }
+                    else
+                    {
+                        length = default;
+                        return false;
+                    }
 
-            if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
-            {
-                length = code & 0x1F;
-                return true;
+                default:
+                    throw ThrowUnreachable();
             }
-
-            return this.TryGetStringLengthInBytesSlow(code, out length);
         }
 
         /// <summary>
         /// Gets the length of the next string.
         /// </summary>
         /// <returns>The length of the next string.</returns>
-        private int GetStringLengthInBytes()
+        private uint GetStringLengthInBytes()
         {
-            ThrowInsufficientBufferUnless(this.TryGetStringLengthInBytes(out int length));
+            ThrowInsufficientBufferUnless(this.TryGetStringLengthInBytes(out uint length));
             return length;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TryGetStringLengthInBytesSlow(byte code, out int length)
-        {
-            switch (code)
-            {
-                case MessagePackCode.Str8:
-                    if (this.reader.TryRead(out byte byteValue))
-                    {
-                        length = byteValue;
-                        return true;
-                    }
-
-                    break;
-                case MessagePackCode.Str16:
-                    if (this.reader.TryReadBigEndian(out short shortValue))
-                    {
-                        length = unchecked((ushort)shortValue);
-                        return true;
-                    }
-
-                    break;
-                case MessagePackCode.Str32:
-                    if (this.reader.TryReadBigEndian(out int intValue))
-                    {
-                        length = intValue;
-                        return true;
-                    }
-
-                    break;
-                default:
-                    if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
-                    {
-                        length = code & 0x1F;
-                        return true;
-                    }
-
-                    throw ThrowInvalidCode(code);
-            }
-
-            length = 0;
-            return false;
         }
 
         /// <summary>
@@ -1095,16 +989,16 @@ namespace MessagePack
         /// </summary>
         /// <param name="byteLength">The length of the string to be decoded, in bytes.</param>
         /// <returns>The decoded string.</returns>
-        private string ReadStringSlow(int byteLength)
+        private string ReadStringSlow(uint byteLength)
         {
             ThrowInsufficientBufferUnless(this.reader.Remaining >= byteLength);
 
             // We need to decode bytes incrementally across multiple spans.
-            int maxCharLength = StringEncoding.UTF8.GetMaxCharCount(byteLength);
+            int remainingByteLength = checked((int)byteLength);
+            int maxCharLength = StringEncoding.UTF8.GetMaxCharCount(remainingByteLength);
             char[] charArray = ArrayPool<char>.Shared.Rent(maxCharLength);
             System.Text.Decoder decoder = StringEncoding.UTF8.GetDecoder();
 
-            int remainingByteLength = byteLength;
             int initializedChars = 0;
             while (remainingByteLength > 0)
             {

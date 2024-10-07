@@ -109,6 +109,15 @@
     <Compile Include="..\..\src\MessagePack\MessagePackWriter.cs">
       <Link>Code\MessagePackWriter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\MessagePackPrimitives.Writers.cs">
+      <Link>Code\MessagePackPrimitives.Writers.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\MessagePackPrimitives.Readers.cs">
+      <Link>Code\MessagePackPrimitives.Readers.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\MessagePackPrimitives.Readers.Integers.cs">
+      <Link>Code\MessagePackPrimitives.Readers.Integers.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\Resolvers\SkipClrVisibilityChecks.cs">
       <Link>Code\SkipClrVisibilityChecks.cs</Link>
     </Compile>

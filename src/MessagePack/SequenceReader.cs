@@ -100,7 +100,7 @@ namespace MessagePack
         /// <summary>
         /// Gets a value indicating whether there is no more data in the <see cref="Sequence"/>.
         /// </summary>
-        public bool End => !this.moreData;
+        public readonly bool End => !this.moreData;
 
         /// <summary>
         /// Gets the underlying <see cref="ReadOnlySequence{T}"/> for the reader.
@@ -141,7 +141,7 @@ namespace MessagePack
         /// <summary>
         /// Gets the unread portion of the <see cref="CurrentSpan"/>.
         /// </summary>
-        public ReadOnlySpan<T> UnreadSpan
+        public readonly ReadOnlySpan<T> UnreadSpan
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => this.CurrentSpan.Slice(this.CurrentSpanIndex);
@@ -451,7 +451,7 @@ namespace MessagePack
         /// <param name="destination">Destination to copy to.</param>
         /// <returns>True if there is enough data to copy to the <paramref name="destination"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryCopyTo(Span<T> destination)
+        public readonly bool TryCopyTo(Span<T> destination)
         {
             ReadOnlySpan<T> firstSpan = this.UnreadSpan;
             if (firstSpan.Length >= destination.Length)
@@ -460,12 +460,14 @@ namespace MessagePack
                 return true;
             }
 
-            return this.TryCopyMultisegment(destination);
+            return !this.sequence.IsEmpty && this.TryCopyMultisegment(destination);
         }
 
-        internal bool TryCopyMultisegment(Span<T> destination)
+        private readonly bool TryCopyMultisegment(Span<T> destination)
         {
-            if (this.Remaining < destination.Length)
+            long length = this.length < 0 ? this.sequence.Length : this.length;
+            long remaining = length - this.Consumed;
+            if (remaining < destination.Length)
             {
                 return false;
             }
@@ -476,7 +478,7 @@ namespace MessagePack
             int copied = firstSpan.Length;
 
             SequencePosition next = this.nextPosition;
-            while (this.Sequence.TryGet(ref next, out ReadOnlyMemory<T> nextSegment, true))
+            while (this.sequence.TryGet(ref next, out ReadOnlyMemory<T> nextSegment, true))
             {
                 if (nextSegment.Length > 0)
                 {
