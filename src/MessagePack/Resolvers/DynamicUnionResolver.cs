@@ -51,9 +51,9 @@ namespace MessagePack.Resolvers
         }
 
 #if NETFRAMEWORK
-        internal AssemblyBuilder Save()
+        internal AssemblyBuilder? Save()
         {
-            return DynamicAssemblyFactory.GetDynamicAssembly(type: null).Save();
+            return DynamicAssemblyFactory.GetDynamicAssembly(type: null, allowPrivate: false)?.Save();
         }
 #endif
 
@@ -131,7 +131,7 @@ namespace MessagePack.Resolvers
                 Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
                 using (MonoProtection.EnterRefEmitLock())
                 {
-                    TypeBuilder typeBuilder = DynamicAssemblyFactory.GetDynamicAssembly(type).DefineType("MessagePack.Formatters." + DynamicObjectTypeBuilder.SubtractFullNameRegex.Replace(type.FullName!, string.Empty).Replace(".", "_") + "Formatter" + +Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
+                    TypeBuilder typeBuilder = DynamicAssemblyFactory.GetDynamicAssembly(type, false).DefineType("MessagePack.Formatters." + DynamicObjectTypeBuilder.SubtractFullNameRegex.Replace(type.FullName!, string.Empty).Replace(".", "_") + "Formatter" + +Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
                     FieldBuilder? typeToKeyAndJumpMap = null; // Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>
                     FieldBuilder? keyToJumpMap = null; // Dictionary<int, int>

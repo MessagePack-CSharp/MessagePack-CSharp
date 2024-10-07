@@ -37,9 +37,9 @@ namespace MessagePack.Resolvers
         }
 
 #if NETFRAMEWORK
-        internal AssemblyBuilder Save()
+        internal AssemblyBuilder? Save()
         {
-            return DynamicAssemblyFactory.GetDynamicAssembly(type: null).Save();
+            return DynamicAssemblyFactory.GetDynamicAssembly(type: null, allowPrivate: false)?.Save();
         }
 #endif
 
@@ -78,12 +78,12 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                TypeInfo formatterTypeInfo = BuildType(typeof(T));
+                TypeInfo formatterTypeInfo = BuildType(typeof(T), allowPrivate: false);
                 Formatter = (IMessagePackFormatter<T>?)Activator.CreateInstance(formatterTypeInfo.AsType());
             }
         }
 
-        private static TypeInfo BuildType(Type enumType)
+        private static TypeInfo BuildType(Type enumType, bool allowPrivate)
         {
             Type underlyingType = Enum.GetUnderlyingType(enumType);
             Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(enumType);
@@ -93,7 +93,7 @@ namespace MessagePack.Resolvers
             {
                 using (MonoProtection.EnterRefEmitLock())
                 {
-                    TypeBuilder typeBuilder = DynamicAssemblyFactory.GetDynamicAssembly(enumType).DefineType("MessagePack.Formatters." + enumType.FullName!.Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
+                    TypeBuilder typeBuilder = DynamicAssemblyFactory.GetDynamicAssembly(enumType, allowPrivate).DefineType("MessagePack.Formatters." + enumType.FullName!.Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
                     // void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options);
                     {

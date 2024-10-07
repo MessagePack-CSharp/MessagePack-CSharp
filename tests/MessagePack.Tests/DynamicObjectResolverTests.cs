@@ -321,12 +321,20 @@ namespace MessagePack.Tests
 #if !UNITY_2018_3_OR_NEWER
 
         [Fact]
+        public void RoundtripGenericClass_StandardResolverFallsBackOnInitProperty_Map()
+        {
+            var person = new GenericPersonMap<int> { Name = "bob" };
+            var options = StandardResolver.Options;
+            var deserialized = Roundtrip(person, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+        [Fact]
         public void RoundtripGenericClass_StandardResolverFallsBackOnInitProperty()
         {
             var person = new GenericPerson<int> { Name = "bob" };
             var options = StandardResolver.Options;
-            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
-            var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, options);
+            var deserialized = Roundtrip(person, options);
             Assert.Equal(person.Name, deserialized.Name);
         }
 
@@ -355,9 +363,33 @@ namespace MessagePack.Tests
         {
             var person = new GenericPerson<int> { Name = "bob" };
             var options = StandardResolverAllowPrivate.Options;
-            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
-            var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, options);
+            var deserialized = Roundtrip(person, options);
             Assert.Equal(person.Name, deserialized.Name);
+        }
+
+        [Fact]
+        public void RoundtripGenericClass_AllowPrivateStandardResolver_Map()
+        {
+            var person = new GenericPersonMap<int> { Name = "bob" };
+            var options = StandardResolverAllowPrivate.Options;
+            var deserialized = Roundtrip(person, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+        [Fact]
+        public void RoundtripGenericClass_AllowPrivateStandardResolver_Struct()
+        {
+            var person = new GenericPersonStruct<int> { Name = "bob" };
+            var options = StandardResolverAllowPrivate.Options;
+            var deserialized = Roundtrip(person, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+        private T Roundtrip<T>(T value, MessagePackSerializerOptions options)
+        {
+            byte[] msgpack = MessagePackSerializer.Serialize(value, options);
+            logger.WriteLine(MessagePackSerializer.ConvertToJson(msgpack));
+            return MessagePackSerializer.Deserialize<T>(msgpack, options);
         }
 
 #endif
@@ -660,6 +692,20 @@ namespace MessagePack.Tests
         public class GenericPerson<T>
         {
             [Key(0)]
+            public string Name { get; init; }
+        }
+
+        [MessagePackObject]
+        public struct GenericPersonStruct<T>
+        {
+            [Key(0)]
+            public string Name { get; init; }
+        }
+
+        [MessagePackObject]
+        public class GenericPersonMap<T>
+        {
+            [Key("Name")]
             public string Name { get; init; }
         }
 

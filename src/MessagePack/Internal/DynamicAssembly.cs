@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Immutable;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -29,7 +30,8 @@ namespace MessagePack.Internal
         /// Please use <see cref="DynamicAssemblyFactory"/> instead in order to work across different AssemblyLoadContext that may have duplicate modules.
         /// </summary>
         /// <param name="moduleName">Name of the module to be generated.</param>
-        public DynamicAssembly(string moduleName)
+        /// <param name="skipVisibilityChecksTo">The names of assemblies that should be fully accessible to this dynamic one, bypassing visibility checks.</param>
+        public DynamicAssembly(string moduleName, ImmutableHashSet<AssemblyName> skipVisibilityChecksTo)
         {
 #if NETFRAMEWORK // We don't ship a net472 target, but we might add one for debugging purposes
             AssemblyBuilderAccess builderAccess = AssemblyBuilderAccess.RunAndSave;
@@ -39,6 +41,9 @@ namespace MessagePack.Internal
 #endif
             this.assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(moduleName), builderAccess);
             this.moduleBuilder = this.assemblyBuilder.DefineDynamicModule(moduleName + ".dll");
+
+            SkipClrVisibilityChecks skipChecks = new(this.assemblyBuilder, this.moduleBuilder);
+            skipChecks.SkipVisibilityChecksFor(skipVisibilityChecksTo);
         }
 
         /* requires lock on mono environment. see: https://github.com/neuecc/MessagePack-CSharp/issues/161 */
