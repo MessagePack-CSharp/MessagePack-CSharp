@@ -681,7 +681,7 @@ public class TypeCollector
     private ObjectSerializationInfo? GetObjectInfo(INamedTypeSymbol formattedType)
     {
         var isClass = !formattedType.IsValueType;
-        bool includesPrivateMembers = false;
+        bool includesSerializedPrivateMembers = false;
 
         AttributeData? contractAttr = formattedType.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute));
         if (contractAttr is null)
@@ -689,9 +689,19 @@ public class TypeCollector
             ////this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject, ((BaseTypeDeclarationSyntax)type.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
         }
 
-        var isIntKey = true;
-        var intMembers = new Dictionary<int, (MemberSerializationInfo Info, ITypeSymbol TypeSymbol)>();
-        var stringMembers = new Dictionary<string, (MemberSerializationInfo Info, ITypeSymbol TypeSymbol)>();
+        bool isIntKey = true;
+        Dictionary<int, (MemberSerializationInfo Info, ITypeSymbol TypeSymbol)> intMembers = new();
+        Dictionary<string, (MemberSerializationInfo Info, ITypeSymbol TypeSymbol)> stringMembers = new();
+
+        // We default to not requiring non-public members to be attributed,
+        // but as soon as the first non-public member *is* attributed,
+        // we'll require all non-public members to be attributed.
+        // Historically, only public members were able to be serialized by default,
+        // so the analyzer only highlighted missing attributes on public members.
+        // But once it's clear that the developer is serializing non-public members,
+        // we need to raise the bar for all non-public members.
+        bool nonPublicMembersShouldBeAttributed = false;
+        List<Diagnostic> deferredDiagnosticsForNonPublicMembers = new();
 
         FormatterDescriptor? GetSpecialFormatter(ISymbol member)
         {
@@ -743,8 +753,8 @@ public class TypeCollector
                 AttributeData? keyAttribute = attributes.FirstOrDefault(attributes => attributes.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute));
                 string stringKey = keyAttribute?.ConstructorArguments.Length == 1 && keyAttribute.ConstructorArguments[0].Value is string name ? name : item.Name;
 
-                includesPrivateMembers |= item.GetMethod is not null && !IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility);
-                includesPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
+                includesSerializedPrivateMembers |= item.GetMethod is not null && !IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility);
+                includesSerializedPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
                 FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
                 MemberSerializationInfo member = new(true, isWritable, isReadable, isInitOnly, item.IsRequired, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
                 stringMembers.Add(member.StringKey, (member, item.Type));
@@ -802,6 +812,7 @@ public class TypeCollector
                     return typeReferencesIgnoreDataMemberAttribute != null && (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass.ApproximatelyEqual(typeReferencesIgnoreDataMemberAttribute));
                 }))
                 {
+                    nonPublicMembersShouldBeAttributed |= (item.DeclaredAccessibility & Accessibility.Public) != Accessibility.Public;
                     continue;
                 }
 
@@ -813,8 +824,6 @@ public class TypeCollector
                     continue;
                 }
 
-                includesPrivateMembers |= item.GetMethod is not null && !IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility);
-                includesPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
                 FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
                 TypedConstant? key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
                 if (key is null)
@@ -826,7 +835,15 @@ public class TypeCollector
                             var syntax = item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
                             var identifier = (syntax as PropertyDeclarationSyntax)?.Identifier ?? (syntax as ParameterSyntax)?.Identifier;
 
-                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.MemberNeedsKey, identifier?.GetLocation(), formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
+                            Diagnostic diagnostic = Diagnostic.Create(MsgPack00xMessagePackAnalyzer.MemberNeedsKey, identifier?.GetLocation(), formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name);
+                            if (nonPublicMembersShouldBeAttributed || (item.DeclaredAccessibility & Accessibility.Public) == Accessibility.Public)
+                            {
+                                this.reportDiagnostic?.Invoke(diagnostic);
+                            }
+                            else
+                            {
+                                deferredDiagnosticsForNonPublicMembers.Add(diagnostic);
+                            }
                         }
                         else if (formattedType.BaseType is not null)
                         {
@@ -846,6 +863,12 @@ public class TypeCollector
                 }
                 else
                 {
+                    // If this attributed member is non-public, then all non-public members should be attributed.
+                    nonPublicMembersShouldBeAttributed |= (item.DeclaredAccessibility & Accessibility.Public) != Accessibility.Public;
+
+                    includesSerializedPrivateMembers |= item.GetMethod is not null && !IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility);
+                    includesSerializedPrivateMembers |= item.SetMethod is not null && !IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility);
+
                     var intKey = key is { Value: int intKeyValue } ? intKeyValue : default(int?);
                     var stringKey = key is { Value: string stringKeyValue } ? stringKeyValue : default;
                     if (intKey == null && stringKey == null)
@@ -918,21 +941,34 @@ public class TypeCollector
 
                 if (item.GetAttributes().Any(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute)))
                 {
+                    nonPublicMembersShouldBeAttributed |= (item.DeclaredAccessibility & Accessibility.Public) != Accessibility.Public;
                     continue;
                 }
 
-                includesPrivateMembers |= !IsAllowedAccessibility(item.DeclaredAccessibility);
                 FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
                 TypedConstant? key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
                 if (key is null)
                 {
                     if (contractAttr is not null)
                     {
-                        this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.MemberNeedsKey, item.DeclaringSyntaxReferences[0].GetSyntax().GetLocation(), formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
+                        Diagnostic diagnostic = Diagnostic.Create(MsgPack00xMessagePackAnalyzer.MemberNeedsKey, item.DeclaringSyntaxReferences[0].GetSyntax().GetLocation(), formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name);
+                        if (nonPublicMembersShouldBeAttributed || (item.DeclaredAccessibility & Accessibility.Public) == Accessibility.Public)
+                        {
+                            this.reportDiagnostic?.Invoke(diagnostic);
+                        }
+                        else
+                        {
+                            deferredDiagnosticsForNonPublicMembers.Add(diagnostic);
+                        }
                     }
                 }
                 else
                 {
+                    // If this attributed member is non-public, then all non-public members should be attributed.
+                    nonPublicMembersShouldBeAttributed |= (item.DeclaredAccessibility & Accessibility.Public) != Accessibility.Public;
+
+                    includesSerializedPrivateMembers |= !IsAllowedAccessibility(item.DeclaredAccessibility);
+
                     var intKey = key is { Value: int intKeyValue } ? intKeyValue : default(int?);
                     var stringKey = key is { Value: string stringKeyValue } ? stringKeyValue : default;
                     if (intKey == null && stringKey == null)
@@ -979,6 +1015,16 @@ public class TypeCollector
             }
         }
 
+        // If we discovered midway through that we should be reporting diagnostics for non-public members,
+        // report the ones we missed along the way.
+        if (nonPublicMembersShouldBeAttributed && this.reportDiagnostic is not null)
+        {
+            foreach (Diagnostic deferred in deferredDiagnosticsForNonPublicMembers)
+            {
+                this.reportDiagnostic(deferred);
+            }
+        }
+
         // GetConstructor
         var ctorEnumerator = default(IEnumerator<IMethodSymbol>);
         var ctor = formattedType.Constructors.SingleOrDefault(x => x.GetAttributes().Any(y => y.AttributeClass != null && y.AttributeClass.ApproximatelyEqual(this.typeReferences.SerializationConstructorAttribute)));
@@ -1005,7 +1051,7 @@ public class TypeCollector
         var constructorParameters = new List<MemberSerializationInfo>();
         if (ctor is not null)
         {
-            includesPrivateMembers |= !IsAllowedAccessibility(ctor.DeclaredAccessibility);
+            includesSerializedPrivateMembers |= !IsAllowedAccessibility(ctor.DeclaredAccessibility);
 
             var constructorLookupDictionary = stringMembers.ToLookup(x => x.Value.Info.Name, x => x, StringComparer.OrdinalIgnoreCase);
             do
@@ -1134,7 +1180,7 @@ public class TypeCollector
             return null;
         }
 
-        if (includesPrivateMembers)
+        if (includesSerializedPrivateMembers && nonPublicMembersShouldBeAttributed)
         {
             // If the data type or any nesting types are not declared with partial, we cannot emit the formatter as a nested type within the data type
             // as required in order to access the private members.
@@ -1159,7 +1205,7 @@ public class TypeCollector
         ObjectSerializationInfo info = ObjectSerializationInfo.Create(
             formattedType,
             isClass: isClass,
-            includesPrivateMembers: includesPrivateMembers,
+            includesPrivateMembers: includesSerializedPrivateMembers,
             genericTypeParameters: formattedType.IsGenericType ? formattedType.TypeParameters.Select(ToGenericTypeParameterInfo).ToArray() : Array.Empty<GenericTypeParameterInfo>(),
             constructorParameters: constructorParameters.ToArray(),
             isIntKey: isIntKey,

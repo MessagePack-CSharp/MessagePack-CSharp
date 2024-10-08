@@ -31,6 +31,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string MessagePackObjectAttributeShortName = Constants.MessagePackObjectAttributeName;
     public const string KeyAttributeShortName = "KeyAttribute";
     public const string IgnoreShortName = "IgnoreMemberAttribute";
+    public const string DataMemberShortName = "DataMemberAttribute";
     public const string IgnoreDataMemberShortName = "IgnoreDataMemberAttribute";
 
     private const string InvalidMessagePackObjectTitle = "MessagePackObject validation";

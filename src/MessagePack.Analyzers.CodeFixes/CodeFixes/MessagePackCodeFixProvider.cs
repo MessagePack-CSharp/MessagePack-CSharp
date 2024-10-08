@@ -138,19 +138,31 @@ public class MessagePackCodeFixProvider : CodeFixProvider
         }
     }
 
-    private static IEnumerable<ISymbol> FindMembersMissingAttributes(INamedTypeSymbol type) => type.GetAllMembers()
-        .Where(x => x.Kind == SymbolKind.Property || x.Kind == SymbolKind.Field)
-        .Where(x => x.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.IgnoreShortName) == null && x.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.IgnoreDataMemberShortName) == null)
-        .Where(x => !x.IsStatic)
-        .Where(x =>
-        {
-            return x switch
+    private static IEnumerable<ISymbol> FindMembersMissingAttributes(INamedTypeSymbol type)
+    {
+        bool nonPublicMembersNeedAttributes = false;
+        ISymbol[] candidateMembers = type.GetAllMembers()
+            .Where(x => x.Kind == SymbolKind.Property || x.Kind == SymbolKind.Field)
+            .Where(x => !x.IsStatic)
+            .Where(x =>
             {
-                IPropertySymbol p => p.ExplicitInterfaceImplementations.Length == 0,
-                IFieldSymbol f => !f.IsImplicitlyDeclared,
-                _ => throw new NotSupportedException("Unsupported member type."),
-            };
-        });
+                return x switch
+                {
+                    IPropertySymbol p => p.ExplicitInterfaceImplementations.Length == 0,
+                    IFieldSymbol f => !f.IsImplicitlyDeclared,
+                    _ => throw new NotSupportedException("Unsupported member type."),
+                };
+            }).ToArray();
+
+        // Do any non-public members carry attributes?
+        nonPublicMembersNeedAttributes |= candidateMembers.Any(x => HasAnyIgnoreAttribute(x) || HasAnyKeyAttribute(x));
+
+        return candidateMembers
+            .Where(x => !HasAnyIgnoreAttribute(x) && (nonPublicMembersNeedAttributes || (x.DeclaredAccessibility & Accessibility.Public) == Accessibility.Public));
+
+        static bool HasAnyIgnoreAttribute(ISymbol symbol) => symbol.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.IgnoreShortName) is not null || symbol.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.IgnoreDataMemberShortName) is not null;
+        static bool HasAnyKeyAttribute(ISymbol symbol) => symbol.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.KeyAttributeShortName) is not null || symbol.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.DataMemberShortName) is not null;
+    }
 
     private static async Task<Solution> AddKeyAttributeAsync(Document document, INamedTypeSymbol type, CancellationToken cancellationToken)
     {

@@ -40,7 +40,10 @@ internal static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
             var compilationOptions = (CSharpCompilationOptions)base.CreateCompilationOptions();
             return compilationOptions
                 .WithWarningLevel(99)
-                .WithSpecificDiagnosticOptions(compilationOptions.SpecificDiagnosticOptions.SetItem("CS1591", ReportDiagnostic.Suppress));
+                .WithSpecificDiagnosticOptions(compilationOptions.SpecificDiagnosticOptions
+                    .SetItem("CS1591", ReportDiagnostic.Suppress) // documentation required
+                    .SetItem("CS0169", ReportDiagnostic.Suppress) // unused field
+                    .SetItem("CS0414", ReportDiagnostic.Suppress)); // field assigned but never used
         }
 
         private static string ReadManifestResource(Assembly assembly, string resourceName)
