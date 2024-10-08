@@ -25,13 +25,13 @@ using MessagePack;
     {
         string testSource = """
 [MessagePackObject]
-internal class MyMessagePackObject
+public class MyMessagePackObject
 {
     [Key(0)]
-    internal MyEnum EnumValue { get; set; }
+    public MyEnum EnumValue { get; set; }
 }
 
-internal enum MyEnum
+public enum MyEnum
 {
     A, B, C
 }
@@ -207,13 +207,13 @@ using MessagePack;
 using MessagePack.Formatters;
 
 [MessagePackObject]
-internal record HasPropertyWithCustomFormatterAttribute
+public record HasPropertyWithCustomFormatterAttribute
 {
     [Key(0), MessagePackFormatter(typeof(UnserializableRecordFormatter))]
-    internal UnserializableRecord CustomValue { get; set; }
+    public UnserializableRecord CustomValue { get; set; }
 }
 
-record UnserializableRecord
+public record UnserializableRecord
 {
     internal int Value { get; set; }
 }

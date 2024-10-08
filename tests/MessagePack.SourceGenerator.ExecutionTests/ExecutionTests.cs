@@ -3,16 +3,9 @@
 
 using MessagePack.Formatters;
 
-public class ExecutionTests
+public class ExecutionTests(ITestOutputHelper logger)
 {
     private static readonly MessagePackSerializerOptions SerializerOptions = MessagePackSerializerOptions.Standard;
-
-    private readonly ITestOutputHelper logger;
-
-    public ExecutionTests(ITestOutputHelper logger)
-    {
-        this.logger = logger;
-    }
 
     [Fact]
     public void ClassWithEnumProperty()
@@ -81,11 +74,16 @@ public class ExecutionTests
 
     private T AssertRoundtrip<T>(T value)
     {
-        byte[] serialized = MessagePackSerializer.Serialize(value, SerializerOptions);
-        this.logger.WriteLine(MessagePackSerializer.ConvertToJson(serialized, SerializerOptions));
-        T after = MessagePackSerializer.Deserialize<T>(serialized, SerializerOptions);
+        var after = Roundtrip(value);
         Assert.Equal(value, after);
         return after;
+    }
+
+    private T Roundtrip<T>(T value, MessagePackSerializerOptions? options = null)
+    {
+        byte[] serialized = MessagePackSerializer.Serialize(value, options ?? SerializerOptions);
+        logger.WriteLine(MessagePackSerializer.ConvertToJson(serialized, options ?? SerializerOptions));
+        return MessagePackSerializer.Deserialize<T>(serialized, options ?? SerializerOptions);
     }
 
     internal record MyCustomType

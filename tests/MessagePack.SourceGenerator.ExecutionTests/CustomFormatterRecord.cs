@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 [MessagePackFormatter(typeof(CustomFormatterRecordFormatter))]
-internal record CustomFormatterRecord
+public record CustomFormatterRecord
 {
     internal int Value { get; set; }
 }

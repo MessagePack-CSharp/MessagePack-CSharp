@@ -158,6 +158,41 @@ public class Foo
     }
 
     /// <summary>
+    /// Verifies that all members require attributes if AllowPrivate = true is set on the attribute.
+    /// </summary>
+    [Fact]
+    public async Task AddAttributesToMembers_AllowPrivateAttribute()
+    {
+        string input = Preamble + @"
+[MessagePackObject(AllowPrivate = true)]
+public class Foo
+{
+    public string {|MsgPack004:Member1|} { get; set; }
+    internal string {|MsgPack004:Member2|} { get; set; }
+}
+";
+
+        string output = Preamble + @"
+[MessagePackObject(AllowPrivate = true)]
+public class Foo
+{
+    [Key(0)]
+    public string Member1 { get; set; }
+    [Key(1)]
+    internal string Member2 { get; set; }
+}
+";
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
+    }
+
+    /// <summary>
     /// Verifies that our annotated member analyzer automatically starts enforcing that
     /// non-public members are annotated after the first non-public member is annotated.
     /// </summary>
@@ -200,8 +235,6 @@ public class {|MsgPack011:Foo|}
             CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
         }.RunAsync();
     }
-
-    // TODO: add tests for MapMode
 
     [Fact]
     public async Task AddIgnoreAttributesToMembers()

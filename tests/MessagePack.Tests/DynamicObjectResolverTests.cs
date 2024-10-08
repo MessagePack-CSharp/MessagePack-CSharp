@@ -318,6 +318,62 @@ namespace MessagePack.Tests
             Assert.Equal(-98, instance.Prop2);
         }
 
+        [Fact]
+        public void TestMapModeAgainstVariousVisibility()
+        {
+            ClassWithUseMapAndMembersOfVariousVisibility original = new()
+            {
+                PublicProperty = 1,
+                InternalProperty = 2,
+                PublicField = 4,
+                InternalField = 5,
+            };
+            original.PrivateFieldAccessor() = 3;
+            original.SetPrivateProperty(6);
+
+            ClassWithUseMapAndMembersOfVariousVisibility deserialized = Roundtrip(original, MessagePackSerializerOptions.Standard);
+            Assert.Equal(original.PublicProperty, deserialized.PublicProperty);
+            Assert.Equal(original.PublicField, deserialized.PublicField);
+            Assert.Equal(0, deserialized.InternalProperty);
+            Assert.Equal(0, deserialized.InternalField);
+            Assert.Equal(0, deserialized.GetPrivateProperty());
+            Assert.Equal(0, deserialized.PrivateFieldAccessor());
+        }
+
+        [Fact]
+        public void TestMapModeAgainstVariousVisibility_AllowPrivateAttribute()
+        {
+            ClassWithUseMapAndMembersOfVariousVisibilityAllowPrivate original = new()
+            {
+                PublicProperty = 1,
+                InternalProperty = 2,
+                PublicField = 4,
+                InternalField = 5,
+            };
+            original.PrivateFieldAccessor() = 3;
+            original.SetPrivateProperty(6);
+
+            ClassWithUseMapAndMembersOfVariousVisibilityAllowPrivate deserialized = Roundtrip(original, MessagePackSerializerOptions.Standard);
+            Assert.Equal(original, deserialized);
+        }
+
+        [Fact]
+        public void TestMapModeAgainstVariousVisibility_AllowPrivateResolver()
+        {
+            ClassWithUseMapAndMembersOfVariousVisibility original = new()
+            {
+                PublicProperty = 1,
+                InternalProperty = 2,
+                PublicField = 4,
+                InternalField = 5,
+            };
+            original.PrivateFieldAccessor() = 3;
+            original.SetPrivateProperty(6);
+
+            ClassWithUseMapAndMembersOfVariousVisibility deserialized = Roundtrip(original, StandardResolverAllowPrivate.Options);
+            Assert.Equal(original, deserialized);
+        }
+
 #if !UNITY_2018_3_OR_NEWER
 
         [Fact]

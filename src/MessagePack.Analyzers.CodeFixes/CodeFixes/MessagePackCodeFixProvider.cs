@@ -154,8 +154,9 @@ public class MessagePackCodeFixProvider : CodeFixProvider
                 };
             }).ToArray();
 
-        // Do any non-public members carry attributes?
-        nonPublicMembersNeedAttributes |= candidateMembers.Any(x => HasAnyIgnoreAttribute(x) || HasAnyKeyAttribute(x));
+        // Do we need to attribute non-public members? We do if the user opted in or if any non-public members carry attributes.
+        bool? allowPrivateAttribute = (bool?)type.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.MessagePackObjectAttributeShortName)?.NamedArguments.FirstOrDefault(a => a.Key == MsgPack00xMessagePackAnalyzer.AllowPrivatePropertyName).Value.Value;
+        nonPublicMembersNeedAttributes |= allowPrivateAttribute is true || candidateMembers.Any(x => HasAnyIgnoreAttribute(x) || HasAnyKeyAttribute(x));
 
         return candidateMembers
             .Where(x => !HasAnyIgnoreAttribute(x) && (nonPublicMembersNeedAttributes || (x.DeclaredAccessibility & Accessibility.Public) == Accessibility.Public));
@@ -173,7 +174,7 @@ public class MessagePackCodeFixProvider : CodeFixProvider
         var startOrder = targets
             .Select(x => x.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.KeyAttributeShortName))
             .Where(x => x != null)
-            .Select(x => x.ConstructorArguments[0])
+            .Select(x => x!.ConstructorArguments[0])
             .Where(x => !x.IsNull)
             .Where(x => x.Value is int)
             .Select(x => (int)x.Value!)

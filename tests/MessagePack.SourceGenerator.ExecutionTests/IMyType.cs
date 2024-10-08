@@ -3,6 +3,6 @@
 
 [Union(0, typeof(Derived1))]
 [Union(1, typeof(Derived2))]
-internal interface IMyType
+public interface IMyType
 {
 }

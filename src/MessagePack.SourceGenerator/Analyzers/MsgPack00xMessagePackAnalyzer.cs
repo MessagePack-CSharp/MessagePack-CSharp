@@ -33,6 +33,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string IgnoreShortName = "IgnoreMemberAttribute";
     public const string DataMemberShortName = "DataMemberAttribute";
     public const string IgnoreDataMemberShortName = "IgnoreDataMemberAttribute";
+    public const string AllowPrivatePropertyName = "AllowPrivate";
 
     private const string InvalidMessagePackObjectTitle = "MessagePackObject validation";
     private const DiagnosticSeverity InvalidMessagePackObjectSeverity = DiagnosticSeverity.Error;
