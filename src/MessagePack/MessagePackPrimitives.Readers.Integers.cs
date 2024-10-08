@@ -14,14 +14,14 @@ namespace MessagePack;
 partial class MessagePackPrimitives
 {
     /// <summary>
-    /// Tries to read an <see cref="byte"/> value from:
+    /// Tries to read an <see cref="Byte"/> value from:
     /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
     /// Some value between <see cref="MessagePackCode.MinFixInt"/> and <see cref="MessagePackCode.MaxFixInt"/>,
     /// or any of the other MsgPack integer types.
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, out byte value, out int tokenSize)
+    public static ReadResult TryReadByte(ReadOnlySpan<byte> source, out Byte value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
@@ -40,7 +40,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((byte)source[1]);
+                value = checked((Byte)source[1]);
                 return ReadResult.Success;
             case MessagePackCode.Int8:
                 tokenSize = 2;
@@ -50,7 +50,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((byte)unchecked((sbyte)source[1]));
+                value = checked((Byte)unchecked((sbyte)source[1]));
                 return ReadResult.Success;
             case MessagePackCode.UInt16:
                 tokenSize = 3;
@@ -60,7 +60,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((byte)ushortResult);
+                value = checked((Byte)ushortResult);
                 return ReadResult.Success;
             case MessagePackCode.Int16:
                 tokenSize = 3;
@@ -70,7 +70,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((byte)shortResult);
+                value = checked((Byte)shortResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt32:
                 tokenSize = 5;
@@ -80,7 +80,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((byte)uintResult);
+                value = checked((Byte)uintResult);
                 return ReadResult.Success;
             case MessagePackCode.Int32:
                 tokenSize = 5;
@@ -90,7 +90,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((byte)intResult);
+                value = checked((Byte)intResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt64:
                 tokenSize = 9;
@@ -100,7 +100,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((byte)ulongResult);
+                value = checked((Byte)ulongResult);
                 return ReadResult.Success;
             case MessagePackCode.Int64:
                 tokenSize = 9;
@@ -110,13 +110,13 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((byte)longResult);
+                value = checked((Byte)longResult);
                 return ReadResult.Success;
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((byte)unchecked((sbyte)source[0]));
+                value = checked((Byte)unchecked((sbyte)source[0]));
                 return ReadResult.Success;
             case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (byte)source[0];
+                value = (Byte)source[0];
                 return ReadResult.Success;
             default:
                 value = 0;
@@ -125,14 +125,14 @@ partial class MessagePackPrimitives
     }
 
     /// <summary>
-    /// Tries to read an <see cref="ushort"/> value from:
+    /// Tries to read an <see cref="UInt16"/> value from:
     /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
     /// Some value between <see cref="MessagePackCode.MinFixInt"/> and <see cref="MessagePackCode.MaxFixInt"/>,
     /// or any of the other MsgPack integer types.
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, out ushort value, out int tokenSize)
+    public static ReadResult TryReadUInt16(ReadOnlySpan<byte> source, out UInt16 value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
@@ -151,7 +151,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ushort)source[1]);
+                value = checked((UInt16)source[1]);
                 return ReadResult.Success;
             case MessagePackCode.Int8:
                 tokenSize = 2;
@@ -161,7 +161,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ushort)unchecked((sbyte)source[1]));
+                value = checked((UInt16)unchecked((sbyte)source[1]));
                 return ReadResult.Success;
             case MessagePackCode.UInt16:
                 tokenSize = 3;
@@ -171,7 +171,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ushort)ushortResult);
+                value = checked((UInt16)ushortResult);
                 return ReadResult.Success;
             case MessagePackCode.Int16:
                 tokenSize = 3;
@@ -181,7 +181,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ushort)shortResult);
+                value = checked((UInt16)shortResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt32:
                 tokenSize = 5;
@@ -191,7 +191,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ushort)uintResult);
+                value = checked((UInt16)uintResult);
                 return ReadResult.Success;
             case MessagePackCode.Int32:
                 tokenSize = 5;
@@ -201,7 +201,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ushort)intResult);
+                value = checked((UInt16)intResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt64:
                 tokenSize = 9;
@@ -211,7 +211,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ushort)ulongResult);
+                value = checked((UInt16)ulongResult);
                 return ReadResult.Success;
             case MessagePackCode.Int64:
                 tokenSize = 9;
@@ -221,13 +221,13 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ushort)longResult);
+                value = checked((UInt16)longResult);
                 return ReadResult.Success;
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((ushort)unchecked((sbyte)source[0]));
+                value = checked((UInt16)unchecked((sbyte)source[0]));
                 return ReadResult.Success;
             case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (ushort)source[0];
+                value = (UInt16)source[0];
                 return ReadResult.Success;
             default:
                 value = 0;
@@ -236,14 +236,14 @@ partial class MessagePackPrimitives
     }
 
     /// <summary>
-    /// Tries to read an <see cref="uint"/> value from:
+    /// Tries to read an <see cref="UInt32"/> value from:
     /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
     /// Some value between <see cref="MessagePackCode.MinFixInt"/> and <see cref="MessagePackCode.MaxFixInt"/>,
     /// or any of the other MsgPack integer types.
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, out uint value, out int tokenSize)
+    public static ReadResult TryReadUInt32(ReadOnlySpan<byte> source, out UInt32 value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
@@ -262,7 +262,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((uint)source[1]);
+                value = checked((UInt32)source[1]);
                 return ReadResult.Success;
             case MessagePackCode.Int8:
                 tokenSize = 2;
@@ -272,7 +272,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((uint)unchecked((sbyte)source[1]));
+                value = checked((UInt32)unchecked((sbyte)source[1]));
                 return ReadResult.Success;
             case MessagePackCode.UInt16:
                 tokenSize = 3;
@@ -282,7 +282,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((uint)ushortResult);
+                value = checked((UInt32)ushortResult);
                 return ReadResult.Success;
             case MessagePackCode.Int16:
                 tokenSize = 3;
@@ -292,7 +292,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((uint)shortResult);
+                value = checked((UInt32)shortResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt32:
                 tokenSize = 5;
@@ -302,7 +302,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((uint)uintResult);
+                value = checked((UInt32)uintResult);
                 return ReadResult.Success;
             case MessagePackCode.Int32:
                 tokenSize = 5;
@@ -312,7 +312,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((uint)intResult);
+                value = checked((UInt32)intResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt64:
                 tokenSize = 9;
@@ -322,7 +322,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((uint)ulongResult);
+                value = checked((UInt32)ulongResult);
                 return ReadResult.Success;
             case MessagePackCode.Int64:
                 tokenSize = 9;
@@ -332,13 +332,13 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((uint)longResult);
+                value = checked((UInt32)longResult);
                 return ReadResult.Success;
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((uint)unchecked((sbyte)source[0]));
+                value = checked((UInt32)unchecked((sbyte)source[0]));
                 return ReadResult.Success;
             case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (uint)source[0];
+                value = (UInt32)source[0];
                 return ReadResult.Success;
             default:
                 value = 0;
@@ -347,14 +347,14 @@ partial class MessagePackPrimitives
     }
 
     /// <summary>
-    /// Tries to read an <see cref="ulong"/> value from:
+    /// Tries to read an <see cref="UInt64"/> value from:
     /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
     /// Some value between <see cref="MessagePackCode.MinFixInt"/> and <see cref="MessagePackCode.MaxFixInt"/>,
     /// or any of the other MsgPack integer types.
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, out ulong value, out int tokenSize)
+    public static ReadResult TryReadUInt64(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
@@ -373,7 +373,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ulong)source[1]);
+                value = checked((UInt64)source[1]);
                 return ReadResult.Success;
             case MessagePackCode.Int8:
                 tokenSize = 2;
@@ -383,7 +383,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ulong)unchecked((sbyte)source[1]));
+                value = checked((UInt64)unchecked((sbyte)source[1]));
                 return ReadResult.Success;
             case MessagePackCode.UInt16:
                 tokenSize = 3;
@@ -393,7 +393,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ulong)ushortResult);
+                value = checked((UInt64)ushortResult);
                 return ReadResult.Success;
             case MessagePackCode.Int16:
                 tokenSize = 3;
@@ -403,7 +403,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ulong)shortResult);
+                value = checked((UInt64)shortResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt32:
                 tokenSize = 5;
@@ -413,7 +413,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ulong)uintResult);
+                value = checked((UInt64)uintResult);
                 return ReadResult.Success;
             case MessagePackCode.Int32:
                 tokenSize = 5;
@@ -423,7 +423,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ulong)intResult);
+                value = checked((UInt64)intResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt64:
                 tokenSize = 9;
@@ -433,7 +433,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ulong)ulongResult);
+                value = checked((UInt64)ulongResult);
                 return ReadResult.Success;
             case MessagePackCode.Int64:
                 tokenSize = 9;
@@ -443,13 +443,13 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((ulong)longResult);
+                value = checked((UInt64)longResult);
                 return ReadResult.Success;
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((ulong)unchecked((sbyte)source[0]));
+                value = checked((UInt64)unchecked((sbyte)source[0]));
                 return ReadResult.Success;
             case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (ulong)source[0];
+                value = (UInt64)source[0];
                 return ReadResult.Success;
             default:
                 value = 0;
@@ -458,14 +458,14 @@ partial class MessagePackPrimitives
     }
 
     /// <summary>
-    /// Tries to read an <see cref="sbyte"/> value from:
+    /// Tries to read an <see cref="SByte"/> value from:
     /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
     /// Some value between <see cref="MessagePackCode.MinFixInt"/> and <see cref="MessagePackCode.MaxFixInt"/>,
     /// or any of the other MsgPack integer types.
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, out sbyte value, out int tokenSize)
+    public static ReadResult TryReadSByte(ReadOnlySpan<byte> source, out SByte value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
@@ -484,7 +484,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((sbyte)source[1]);
+                value = checked((SByte)source[1]);
                 return ReadResult.Success;
             case MessagePackCode.Int8:
                 tokenSize = 2;
@@ -494,7 +494,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((sbyte)unchecked((sbyte)source[1]));
+                value = checked((SByte)unchecked((sbyte)source[1]));
                 return ReadResult.Success;
             case MessagePackCode.UInt16:
                 tokenSize = 3;
@@ -504,7 +504,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((sbyte)ushortResult);
+                value = checked((SByte)ushortResult);
                 return ReadResult.Success;
             case MessagePackCode.Int16:
                 tokenSize = 3;
@@ -514,7 +514,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((sbyte)shortResult);
+                value = checked((SByte)shortResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt32:
                 tokenSize = 5;
@@ -524,7 +524,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((sbyte)uintResult);
+                value = checked((SByte)uintResult);
                 return ReadResult.Success;
             case MessagePackCode.Int32:
                 tokenSize = 5;
@@ -534,7 +534,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((sbyte)intResult);
+                value = checked((SByte)intResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt64:
                 tokenSize = 9;
@@ -544,7 +544,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((sbyte)ulongResult);
+                value = checked((SByte)ulongResult);
                 return ReadResult.Success;
             case MessagePackCode.Int64:
                 tokenSize = 9;
@@ -554,13 +554,13 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((sbyte)longResult);
+                value = checked((SByte)longResult);
                 return ReadResult.Success;
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((sbyte)unchecked((sbyte)source[0]));
+                value = checked((SByte)unchecked((sbyte)source[0]));
                 return ReadResult.Success;
             case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (sbyte)source[0];
+                value = (SByte)source[0];
                 return ReadResult.Success;
             default:
                 value = 0;
@@ -569,14 +569,14 @@ partial class MessagePackPrimitives
     }
 
     /// <summary>
-    /// Tries to read an <see cref="short"/> value from:
+    /// Tries to read an <see cref="Int16"/> value from:
     /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
     /// Some value between <see cref="MessagePackCode.MinFixInt"/> and <see cref="MessagePackCode.MaxFixInt"/>,
     /// or any of the other MsgPack integer types.
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, out short value, out int tokenSize)
+    public static ReadResult TryReadInt16(ReadOnlySpan<byte> source, out Int16 value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
@@ -595,7 +595,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((short)source[1]);
+                value = checked((Int16)source[1]);
                 return ReadResult.Success;
             case MessagePackCode.Int8:
                 tokenSize = 2;
@@ -605,7 +605,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((short)unchecked((sbyte)source[1]));
+                value = checked((Int16)unchecked((sbyte)source[1]));
                 return ReadResult.Success;
             case MessagePackCode.UInt16:
                 tokenSize = 3;
@@ -615,7 +615,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((short)ushortResult);
+                value = checked((Int16)ushortResult);
                 return ReadResult.Success;
             case MessagePackCode.Int16:
                 tokenSize = 3;
@@ -625,7 +625,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((short)shortResult);
+                value = checked((Int16)shortResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt32:
                 tokenSize = 5;
@@ -635,7 +635,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((short)uintResult);
+                value = checked((Int16)uintResult);
                 return ReadResult.Success;
             case MessagePackCode.Int32:
                 tokenSize = 5;
@@ -645,7 +645,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((short)intResult);
+                value = checked((Int16)intResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt64:
                 tokenSize = 9;
@@ -655,7 +655,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((short)ulongResult);
+                value = checked((Int16)ulongResult);
                 return ReadResult.Success;
             case MessagePackCode.Int64:
                 tokenSize = 9;
@@ -665,13 +665,13 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((short)longResult);
+                value = checked((Int16)longResult);
                 return ReadResult.Success;
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((short)unchecked((sbyte)source[0]));
+                value = checked((Int16)unchecked((sbyte)source[0]));
                 return ReadResult.Success;
             case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (short)source[0];
+                value = (Int16)source[0];
                 return ReadResult.Success;
             default:
                 value = 0;
@@ -680,14 +680,14 @@ partial class MessagePackPrimitives
     }
 
     /// <summary>
-    /// Tries to read an <see cref="int"/> value from:
+    /// Tries to read an <see cref="Int32"/> value from:
     /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
     /// Some value between <see cref="MessagePackCode.MinFixInt"/> and <see cref="MessagePackCode.MaxFixInt"/>,
     /// or any of the other MsgPack integer types.
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, out int value, out int tokenSize)
+    public static ReadResult TryReadInt32(ReadOnlySpan<byte> source, out Int32 value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
@@ -706,7 +706,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((int)source[1]);
+                value = checked((Int32)source[1]);
                 return ReadResult.Success;
             case MessagePackCode.Int8:
                 tokenSize = 2;
@@ -716,7 +716,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((int)unchecked((sbyte)source[1]));
+                value = checked((Int32)unchecked((sbyte)source[1]));
                 return ReadResult.Success;
             case MessagePackCode.UInt16:
                 tokenSize = 3;
@@ -726,7 +726,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((int)ushortResult);
+                value = checked((Int32)ushortResult);
                 return ReadResult.Success;
             case MessagePackCode.Int16:
                 tokenSize = 3;
@@ -736,7 +736,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((int)shortResult);
+                value = checked((Int32)shortResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt32:
                 tokenSize = 5;
@@ -746,7 +746,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((int)uintResult);
+                value = checked((Int32)uintResult);
                 return ReadResult.Success;
             case MessagePackCode.Int32:
                 tokenSize = 5;
@@ -756,7 +756,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((int)intResult);
+                value = checked((Int32)intResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt64:
                 tokenSize = 9;
@@ -766,7 +766,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((int)ulongResult);
+                value = checked((Int32)ulongResult);
                 return ReadResult.Success;
             case MessagePackCode.Int64:
                 tokenSize = 9;
@@ -776,13 +776,13 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((int)longResult);
+                value = checked((Int32)longResult);
                 return ReadResult.Success;
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((int)unchecked((sbyte)source[0]));
+                value = checked((Int32)unchecked((sbyte)source[0]));
                 return ReadResult.Success;
             case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (int)source[0];
+                value = (Int32)source[0];
                 return ReadResult.Success;
             default:
                 value = 0;
@@ -791,14 +791,14 @@ partial class MessagePackPrimitives
     }
 
     /// <summary>
-    /// Tries to read an <see cref="long"/> value from:
+    /// Tries to read an <see cref="Int64"/> value from:
     /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
     /// Some value between <see cref="MessagePackCode.MinFixInt"/> and <see cref="MessagePackCode.MaxFixInt"/>,
     /// or any of the other MsgPack integer types.
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, out long value, out int tokenSize)
+    public static ReadResult TryReadInt64(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
@@ -817,7 +817,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((long)source[1]);
+                value = checked((Int64)source[1]);
                 return ReadResult.Success;
             case MessagePackCode.Int8:
                 tokenSize = 2;
@@ -827,7 +827,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((long)unchecked((sbyte)source[1]));
+                value = checked((Int64)unchecked((sbyte)source[1]));
                 return ReadResult.Success;
             case MessagePackCode.UInt16:
                 tokenSize = 3;
@@ -837,7 +837,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((long)ushortResult);
+                value = checked((Int64)ushortResult);
                 return ReadResult.Success;
             case MessagePackCode.Int16:
                 tokenSize = 3;
@@ -847,7 +847,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((long)shortResult);
+                value = checked((Int64)shortResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt32:
                 tokenSize = 5;
@@ -857,7 +857,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((long)uintResult);
+                value = checked((Int64)uintResult);
                 return ReadResult.Success;
             case MessagePackCode.Int32:
                 tokenSize = 5;
@@ -867,7 +867,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((long)intResult);
+                value = checked((Int64)intResult);
                 return ReadResult.Success;
             case MessagePackCode.UInt64:
                 tokenSize = 9;
@@ -877,7 +877,7 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((long)ulongResult);
+                value = checked((Int64)ulongResult);
                 return ReadResult.Success;
             case MessagePackCode.Int64:
                 tokenSize = 9;
@@ -887,13 +887,13 @@ partial class MessagePackPrimitives
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((long)longResult);
+                value = checked((Int64)longResult);
                 return ReadResult.Success;
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((long)unchecked((sbyte)source[0]));
+                value = checked((Int64)unchecked((sbyte)source[0]));
                 return ReadResult.Success;
             case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (long)source[0];
+                value = (Int64)source[0];
                 return ReadResult.Success;
             default:
                 value = 0;
@@ -902,12 +902,12 @@ partial class MessagePackPrimitives
     }
 
     /// <summary>
-    /// Tries to read an <see cref="float"/> value from a <see cref="MessagePackCode.Float64"/> or <see cref="MessagePackCode.Float32"/>
+    /// Tries to read an <see cref="Single"/> value from a <see cref="MessagePackCode.Float64"/> or <see cref="MessagePackCode.Float32"/>
     /// or any of the integer types.
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static unsafe ReadResult TryRead(ReadOnlySpan<byte> source, out float value, out int tokenSize)
+    public static unsafe ReadResult TryReadSingle(ReadOnlySpan<byte> source, out Single value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length < 1)
@@ -938,16 +938,16 @@ partial class MessagePackPrimitives
                 }
 
                 AssumesTrue(TryReadBigEndian(source.Slice(1), out ulong ulongValue));
-                value = (float)(*(double*)&ulongValue);
+                value = (Single)(*(double*)&ulongValue);
                 return ReadResult.Success;
             case MessagePackCode.Int8 or MessagePackCode.Int16 or MessagePackCode.Int32 or MessagePackCode.Int64:
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                ReadResult result = TryRead(source, out long longValue, out tokenSize);
+                ReadResult result = TryReadInt64(source, out long longValue, out tokenSize);
                 value = longValue;
                 return result;
             case MessagePackCode.UInt8 or MessagePackCode.UInt16 or MessagePackCode.UInt32 or MessagePackCode.UInt64:
             case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                result = TryRead(source, out ulongValue, out tokenSize);
+                result = TryReadUInt64(source, out ulongValue, out tokenSize);
                 value = ulongValue;
                 return result;
             default:
@@ -957,12 +957,12 @@ partial class MessagePackPrimitives
     }
 
     /// <summary>
-    /// Tries to read an <see cref="double"/> value from a <see cref="MessagePackCode.Float64"/> or <see cref="MessagePackCode.Float32"/>
+    /// Tries to read an <see cref="Double"/> value from a <see cref="MessagePackCode.Float64"/> or <see cref="MessagePackCode.Float32"/>
     /// or any of the integer types.
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static unsafe ReadResult TryRead(ReadOnlySpan<byte> source, out double value, out int tokenSize)
+    public static unsafe ReadResult TryReadDouble(ReadOnlySpan<byte> source, out Double value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length < 1)
@@ -993,16 +993,16 @@ partial class MessagePackPrimitives
                 }
 
                 AssumesTrue(TryReadBigEndian(source.Slice(1), out ulong ulongValue));
-                value = (double)(*(double*)&ulongValue);
+                value = (Double)(*(double*)&ulongValue);
                 return ReadResult.Success;
             case MessagePackCode.Int8 or MessagePackCode.Int16 or MessagePackCode.Int32 or MessagePackCode.Int64:
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                ReadResult result = TryRead(source, out long longValue, out tokenSize);
+                ReadResult result = TryReadInt64(source, out long longValue, out tokenSize);
                 value = longValue;
                 return result;
             case MessagePackCode.UInt8 or MessagePackCode.UInt16 or MessagePackCode.UInt32 or MessagePackCode.UInt64:
             case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                result = TryRead(source, out ulongValue, out tokenSize);
+                result = TryReadUInt64(source, out ulongValue, out tokenSize);
                 value = ulongValue;
                 return result;
             default:

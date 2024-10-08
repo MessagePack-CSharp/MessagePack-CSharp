@@ -193,7 +193,7 @@ partial class MessagePackPrimitives
     /// <remarks>
     /// Reads a <see cref="MessagePackCode.True"/> or <see cref="MessagePackCode.False"/> value from the buffer.
     /// </remarks>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, out bool value, out int tokenSize)
+    public static ReadResult TryReadBool(ReadOnlySpan<byte> source, out bool value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
@@ -226,9 +226,9 @@ partial class MessagePackPrimitives
     /// <remarks>
     /// Reads a ushort value using <see cref="TryReadBigEndian(ReadOnlySpan{byte}, out ushort)"/> from the buffer and interprets it as a <see langword="char" />.
     /// </remarks>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, out char value, out int tokenSize)
+    public static ReadResult TryReadChar(ReadOnlySpan<byte> source, out char value, out int tokenSize)
     {
-        ReadResult result = TryRead(source, out ushort ordinal, out tokenSize);
+        ReadResult result = TryReadUInt16(source, out ushort ordinal, out tokenSize);
         if (result == ReadResult.Success)
         {
             value = (char)ordinal;
@@ -250,9 +250,9 @@ partial class MessagePackPrimitives
     /// <returns>The result classification of the read operation.</returns>
     /// <remarks>
     /// Reads the extension header using <see cref="TryReadExtensionHeader(ReadOnlySpan{byte}, out ExtensionHeader, out int)"/>
-    /// then the extension itself using <see cref="TryRead(ReadOnlySpan{byte}, ExtensionHeader, out DateTime, out int)"/>.
+    /// then the extension itself using <see cref="TryReadDateTime(ReadOnlySpan{byte}, ExtensionHeader, out DateTime, out int)"/>.
     /// </remarks>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, out DateTime value, out int tokenSize)
+    public static ReadResult TryReadDateTime(ReadOnlySpan<byte> source, out DateTime value, out int tokenSize)
     {
         ReadResult result = TryReadExtensionHeader(source, out ExtensionHeader header, out tokenSize);
         if (result != ReadResult.Success)
@@ -261,7 +261,7 @@ partial class MessagePackPrimitives
             return result;
         }
 
-        result = TryRead(source.Slice(tokenSize), header, out value, out int extensionSize);
+        result = TryReadDateTime(source.Slice(tokenSize), header, out value, out int extensionSize);
         tokenSize += extensionSize;
         return result;
     }
@@ -274,7 +274,7 @@ partial class MessagePackPrimitives
     /// <param name="value">Receives the timestamp if successful.</param>
     /// <param name="tokenSize">Receives the number of bytes read from the source, or the minimum length of <paramref name="source"/> required to read the data.</param>
     /// <returns>The result classification of the read operation.</returns>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, ExtensionHeader header, out DateTime value, out int tokenSize)
+    public static ReadResult TryReadDateTime(ReadOnlySpan<byte> source, ExtensionHeader header, out DateTime value, out int tokenSize)
     {
         tokenSize = checked((int)header.Length);
         if (header.TypeCode != ReservedMessagePackExtensionTypeCode.DateTime)

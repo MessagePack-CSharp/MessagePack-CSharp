@@ -468,7 +468,7 @@ retry:
         /// <returns>The value.</returns>
         public unsafe float ReadSingle()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out float value, out int tokenSize);
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadSingle(this.reader.UnreadSpan, out float value, out int tokenSize);
 retry:
             switch (readResult)
             {
@@ -482,7 +482,7 @@ retry:
                     Span<byte> buffer = stackalloc byte[tokenSize];
                     if (this.reader.TryCopyTo(buffer))
                     {
-                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        readResult = MessagePackPrimitives.TryReadSingle(buffer, out value, out tokenSize);
                         goto retry;
                     }
                     else
@@ -513,7 +513,7 @@ retry:
         /// <returns>The value.</returns>
         public unsafe double ReadDouble()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out double value, out int tokenSize);
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadDouble(this.reader.UnreadSpan, out double value, out int tokenSize);
 retry:
             switch (readResult)
             {
@@ -527,7 +527,7 @@ retry:
                     Span<byte> buffer = stackalloc byte[tokenSize];
                     if (this.reader.TryCopyTo(buffer))
                     {
-                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        readResult = MessagePackPrimitives.TryReadDouble(buffer, out value, out tokenSize);
                         goto retry;
                     }
                     else
@@ -550,7 +550,7 @@ retry:
         /// <returns>The value.</returns>
         public DateTime ReadDateTime()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out DateTime value, out int tokenSize);
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadDateTime(this.reader.UnreadSpan, out DateTime value, out int tokenSize);
 retry:
             switch (readResult)
             {
@@ -564,7 +564,7 @@ retry:
                     Span<byte> buffer = stackalloc byte[tokenSize];
                     if (this.reader.TryCopyTo(buffer))
                     {
-                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        readResult = MessagePackPrimitives.TryReadDateTime(buffer, out value, out tokenSize);
                         goto retry;
                     }
                     else
@@ -588,7 +588,7 @@ retry:
         /// <returns>The value.</returns>
         public DateTime ReadDateTime(ExtensionHeader header)
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, header, out DateTime value, out int tokenSize);
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadDateTime(this.reader.UnreadSpan, header, out DateTime value, out int tokenSize);
 retry:
             switch (readResult)
             {
@@ -602,7 +602,7 @@ retry:
                     Span<byte> buffer = stackalloc byte[tokenSize];
                     if (this.reader.TryCopyTo(buffer))
                     {
-                        readResult = MessagePackPrimitives.TryRead(buffer, header, out value, out tokenSize);
+                        readResult = MessagePackPrimitives.TryReadDateTime(buffer, header, out value, out tokenSize);
                         goto retry;
                     }
                     else

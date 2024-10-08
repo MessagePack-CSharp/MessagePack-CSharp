@@ -23,7 +23,7 @@ namespace MessagePack
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public Byte ReadByte()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out Byte value, out int tokenSize);
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadByte(this.reader.UnreadSpan, out Byte value, out int tokenSize);
 retry:
             switch (readResult)
             {
@@ -37,7 +37,7 @@ retry:
                     Span<byte> buffer = stackalloc byte[tokenSize];
                     if (this.reader.TryCopyTo(buffer))
                     {
-                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        readResult = MessagePackPrimitives.TryReadByte(buffer, out value, out tokenSize);
                         goto retry;
                     }
                     else
@@ -60,7 +60,7 @@ retry:
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public UInt16 ReadUInt16()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out UInt16 value, out int tokenSize);
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadUInt16(this.reader.UnreadSpan, out UInt16 value, out int tokenSize);
 retry:
             switch (readResult)
             {
@@ -74,7 +74,7 @@ retry:
                     Span<byte> buffer = stackalloc byte[tokenSize];
                     if (this.reader.TryCopyTo(buffer))
                     {
-                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        readResult = MessagePackPrimitives.TryReadUInt16(buffer, out value, out tokenSize);
                         goto retry;
                     }
                     else
@@ -97,7 +97,7 @@ retry:
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public UInt32 ReadUInt32()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out UInt32 value, out int tokenSize);
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadUInt32(this.reader.UnreadSpan, out UInt32 value, out int tokenSize);
 retry:
             switch (readResult)
             {
@@ -111,7 +111,7 @@ retry:
                     Span<byte> buffer = stackalloc byte[tokenSize];
                     if (this.reader.TryCopyTo(buffer))
                     {
-                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        readResult = MessagePackPrimitives.TryReadUInt32(buffer, out value, out tokenSize);
                         goto retry;
                     }
                     else
@@ -134,7 +134,7 @@ retry:
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public UInt64 ReadUInt64()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out UInt64 value, out int tokenSize);
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadUInt64(this.reader.UnreadSpan, out UInt64 value, out int tokenSize);
 retry:
             switch (readResult)
             {
@@ -148,7 +148,7 @@ retry:
                     Span<byte> buffer = stackalloc byte[tokenSize];
                     if (this.reader.TryCopyTo(buffer))
                     {
-                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        readResult = MessagePackPrimitives.TryReadUInt64(buffer, out value, out tokenSize);
                         goto retry;
                     }
                     else
@@ -171,7 +171,7 @@ retry:
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public SByte ReadSByte()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out SByte value, out int tokenSize);
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadSByte(this.reader.UnreadSpan, out SByte value, out int tokenSize);
 retry:
             switch (readResult)
             {
@@ -185,7 +185,7 @@ retry:
                     Span<byte> buffer = stackalloc byte[tokenSize];
                     if (this.reader.TryCopyTo(buffer))
                     {
-                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        readResult = MessagePackPrimitives.TryReadSByte(buffer, out value, out tokenSize);
                         goto retry;
                     }
                     else
@@ -208,7 +208,7 @@ retry:
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public Int16 ReadInt16()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out Int16 value, out int tokenSize);
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadInt16(this.reader.UnreadSpan, out Int16 value, out int tokenSize);
 retry:
             switch (readResult)
             {
@@ -222,7 +222,7 @@ retry:
                     Span<byte> buffer = stackalloc byte[tokenSize];
                     if (this.reader.TryCopyTo(buffer))
                     {
-                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        readResult = MessagePackPrimitives.TryReadInt16(buffer, out value, out tokenSize);
                         goto retry;
                     }
                     else
@@ -245,7 +245,7 @@ retry:
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public Int32 ReadInt32()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out Int32 value, out int tokenSize);
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadInt32(this.reader.UnreadSpan, out Int32 value, out int tokenSize);
 retry:
             switch (readResult)
             {
@@ -259,7 +259,7 @@ retry:
                     Span<byte> buffer = stackalloc byte[tokenSize];
                     if (this.reader.TryCopyTo(buffer))
                     {
-                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        readResult = MessagePackPrimitives.TryReadInt32(buffer, out value, out tokenSize);
                         goto retry;
                     }
                     else
@@ -282,7 +282,7 @@ retry:
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public Int64 ReadInt64()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead(this.reader.UnreadSpan, out Int64 value, out int tokenSize);
+            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadInt64(this.reader.UnreadSpan, out Int64 value, out int tokenSize);
 retry:
             switch (readResult)
             {
@@ -296,7 +296,7 @@ retry:
                     Span<byte> buffer = stackalloc byte[tokenSize];
                     if (this.reader.TryCopyTo(buffer))
                     {
-                        readResult = MessagePackPrimitives.TryRead(buffer, out value, out tokenSize);
+                        readResult = MessagePackPrimitives.TryReadInt64(buffer, out value, out tokenSize);
                         goto retry;
                     }
                     else

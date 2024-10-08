@@ -15,7 +15,7 @@ namespace MessagePack;
 
 partial class MessagePackPrimitives
 {<#
-string[] allTypes = ["byte", "ushort", "uint", "ulong", "sbyte", "short", "int", "long"];
+var allTypes = new Type[] { typeof(byte), typeof(ushort), typeof(uint), typeof(ulong), typeof(sbyte), typeof(short), typeof(int), typeof(long) }.Select(t => t.Name);
 foreach (var intType in allTypes) {
 #>
 
@@ -27,7 +27,7 @@ foreach (var intType in allTypes) {
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryRead(ReadOnlySpan<byte> source, out <#=intType#> value, out int tokenSize)
+    public static ReadResult TryRead<#=intType#>(ReadOnlySpan<byte> source, out <#=intType#> value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
@@ -130,7 +130,7 @@ foreach (var intType in allTypes) {
         }
     }
 <# }
-string[] floatingPointTypes = ["float", "double"];
+var floatingPointTypes = new Type[] { typeof(float), typeof(double) }.Select(t => t.Name);
 foreach (var floatType in floatingPointTypes) { #>
 
     /// <summary>
@@ -139,7 +139,7 @@ foreach (var floatType in floatingPointTypes) { #>
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static unsafe ReadResult TryRead(ReadOnlySpan<byte> source, out <#=floatType#> value, out int tokenSize)
+    public static unsafe ReadResult TryRead<#=floatType#>(ReadOnlySpan<byte> source, out <#=floatType#> value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length < 1)
@@ -174,12 +174,12 @@ foreach (var floatType in floatingPointTypes) { #>
                 return ReadResult.Success;
             case MessagePackCode.Int8 or MessagePackCode.Int16 or MessagePackCode.Int32 or MessagePackCode.Int64:
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                ReadResult result = TryRead(source, out long longValue, out tokenSize);
+                ReadResult result = TryReadInt64(source, out long longValue, out tokenSize);
                 value = longValue;
                 return result;
             case MessagePackCode.UInt8 or MessagePackCode.UInt16 or MessagePackCode.UInt32 or MessagePackCode.UInt64:
             case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                result = TryRead(source, out ulongValue, out tokenSize);
+                result = TryReadUInt64(source, out ulongValue, out tokenSize);
                 value = ulongValue;
                 return result;
             default:
