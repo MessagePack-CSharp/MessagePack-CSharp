@@ -58,6 +58,24 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
         await VerifyCS.Test.RunDefaultAsync(logger, testSource);
     }
 
+    [Fact]
+    public async Task FormatterForClassWithPrivateMembers_MapMode()
+    {
+        string testSource = $$"""
+            using MessagePack;
+
+            [MessagePackObject(AllowPrivate = true)]
+            partial class MyObject
+            {
+                [Key(0)]
+                private int value;
+                [IgnoreMember]
+                public int Value { get => value; set => this.value = value; }
+            }
+            """;
+        await VerifyCS.Test.RunDefaultAsync(logger, testSource, new AnalyzerOptions { Generator = new() { Formatters = new() { UsesMapMode = true } } });
+    }
+
     [Theory]
     [InlineData("class", LanguageVersion.CSharp7_3)]
     [InlineData("record", LanguageVersion.CSharp9)]
