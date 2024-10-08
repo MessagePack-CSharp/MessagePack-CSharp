@@ -123,6 +123,119 @@ public class Foo
         }.RunAsync();
     }
 
+    /// <summary>
+    /// Verifies that only public members require attributes (so long as no non-public member is already attributed.)
+    /// </summary>
+    [Fact]
+    public async Task AddAttributesToMembers_PublicOnly()
+    {
+        string input = Preamble + @"
+[MessagePackObject]
+public class Foo
+{
+    public string {|MsgPack004:Member1|} { get; set; }
+    internal string Member2 { get; set; }
+}
+";
+
+        string output = Preamble + @"
+[MessagePackObject]
+public class Foo
+{
+    [Key(0)]
+    public string Member1 { get; set; }
+    internal string Member2 { get; set; }
+}
+";
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
+    }
+
+    /// <summary>
+    /// Verifies that all members require attributes if AllowPrivate = true is set on the attribute.
+    /// </summary>
+    [Fact]
+    public async Task AddAttributesToMembers_AllowPrivateAttribute()
+    {
+        string input = Preamble + @"
+[MessagePackObject(AllowPrivate = true)]
+public class Foo
+{
+    public string {|MsgPack004:Member1|} { get; set; }
+    internal string {|MsgPack004:Member2|} { get; set; }
+}
+";
+
+        string output = Preamble + @"
+[MessagePackObject(AllowPrivate = true)]
+public class Foo
+{
+    [Key(0)]
+    public string Member1 { get; set; }
+    [Key(1)]
+    internal string Member2 { get; set; }
+}
+";
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
+    }
+
+    /// <summary>
+    /// Verifies that our annotated member analyzer automatically starts enforcing that
+    /// non-public members are annotated after the first non-public member is annotated.
+    /// </summary>
+    [Fact]
+    public async Task AddAttributesToMembers_MixedVisibility()
+    {
+        string input = Preamble + @"
+[{|MsgPack015:MessagePackObject|}]
+public class Foo
+{
+    private string {|MsgPack004:member4|};
+    [Key(0)]
+    public string Member1 { get; set; }
+    [Key(1)]
+    internal string Member2 { get; set; }
+    public string {|MsgPack004:Member3|} { get; set; }
+}
+";
+
+        string output = Preamble + @"
+[{|MsgPack015:MessagePackObject|}]
+public class {|MsgPack011:Foo|}
+{
+    [Key(2)]
+    private string member4;
+    [Key(0)]
+    public string Member1 { get; set; }
+    [Key(1)]
+    internal string Member2 { get; set; }
+    [Key(3)]
+    public string Member3 { get; set; }
+}
+";
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
+    }
+
     [Fact]
     public async Task AddIgnoreAttributesToMembers()
     {
@@ -130,8 +243,8 @@ public class Foo
 [MessagePackObject]
 public class Foo
 {
-    internal string {|MsgPack004:member1 = null|};
-    internal string {|MsgPack004:member2 = null|};
+    public string {|MsgPack004:member1 = null|};
+    public string {|MsgPack004:member2 = null|};
     [Key(0)]
     public string Member3 { get; set; }
 }
@@ -142,9 +255,9 @@ public class Foo
 public class Foo
 {
     [IgnoreMember]
-    internal string member1 = null;
+    public string member1 = null;
     [IgnoreMember]
-    internal string member2 = null;
+    public string member2 = null;
     [Key(0)]
     public string Member3 { get; set; }
 }

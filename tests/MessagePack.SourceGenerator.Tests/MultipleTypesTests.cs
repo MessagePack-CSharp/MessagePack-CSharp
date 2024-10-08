@@ -19,12 +19,12 @@ public class MultipleTypesTests
 using MessagePack;
 
 [MessagePackObject]
-class Object1
+public class Object1
 {
 }
 
 [MessagePackObject]
-class Object2
+public class Object2
 {
 }
 """;

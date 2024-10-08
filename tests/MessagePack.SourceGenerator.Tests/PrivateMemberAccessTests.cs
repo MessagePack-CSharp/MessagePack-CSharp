@@ -17,7 +17,7 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
             using System;
             using MessagePack;
 
-            [MessagePackObject]
+            [MessagePackObject(AllowPrivate = true)]
             partial {{type}} MyObject
             {
                 [Key(0)]
@@ -45,7 +45,7 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
 
             namespace A
             {
-                [MessagePackObject]
+                [MessagePackObject(AllowPrivate = true)]
                 partial class MyObject
                 {
                     [Key(0)]
@@ -58,6 +58,24 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
         await VerifyCS.Test.RunDefaultAsync(logger, testSource);
     }
 
+    [Fact]
+    public async Task FormatterForClassWithPrivateMembers_MapMode()
+    {
+        string testSource = $$"""
+            using MessagePack;
+
+            [MessagePackObject(AllowPrivate = true)]
+            partial class MyObject
+            {
+                [Key(0)]
+                private int value;
+                [IgnoreMember]
+                public int Value { get => value; set => this.value = value; }
+            }
+            """;
+        await VerifyCS.Test.RunDefaultAsync(logger, testSource, new AnalyzerOptions { Generator = new() { Formatters = new() { UsesMapMode = true } } });
+    }
+
     [Theory]
     [InlineData("class", LanguageVersion.CSharp7_3)]
     [InlineData("record", LanguageVersion.CSharp9)]
@@ -68,7 +86,7 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
             using System;
             using MessagePack;
 
-            [MessagePackObject]
+            [MessagePackObject(AllowPrivate = true)]
             {{type}} {|MsgPack011:MyObject|}
             {
                 [Key(0)]
@@ -92,7 +110,7 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
 
             {{type}} Outer
             {
-                [MessagePackObject]
+                [MessagePackObject(AllowPrivate = true)]
                 internal partial {{type}} {|MsgPack011:MyObject|}
                 {
                     [Key(0)]

@@ -25,13 +25,16 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string InaccessibleDataTypeId = "MsgPack012";
     public const string InaccessibleFormatterInstanceId = "MsgPack013";
     public const string NullableReferenceTypeFormatterId = "MsgPack014";
+    public const string MessagePackObjectAllowPrivateId = "MsgPack015";
 
     internal const string Category = "Usage";
 
     public const string MessagePackObjectAttributeShortName = Constants.MessagePackObjectAttributeName;
     public const string KeyAttributeShortName = "KeyAttribute";
     public const string IgnoreShortName = "IgnoreMemberAttribute";
+    public const string DataMemberShortName = "DataMemberAttribute";
     public const string IgnoreDataMemberShortName = "IgnoreDataMemberAttribute";
+    public const string AllowPrivatePropertyName = "AllowPrivate";
 
     private const string InvalidMessagePackObjectTitle = "MessagePackObject validation";
     private const DiagnosticSeverity InvalidMessagePackObjectSeverity = DiagnosticSeverity.Error;
@@ -267,6 +270,15 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(NullableReferenceTypeFormatterId));
 
+    public static readonly DiagnosticDescriptor MessagePackObjectAllowPrivateRequired = new(
+        id: MessagePackObjectAllowPrivateId,
+        title: "MessagePackObjectAttribute.AllowPrivate should be set",
+        category: Category,
+        messageFormat: "MessagePackObjectAttribute.AllowPrivate should be set to true because the type is not public and/or at least one of its non-public members are attributed for serialization",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(MessagePackObjectAllowPrivateId));
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         TypeMustBeMessagePackObject,
         MessageFormatterMustBeMessagePackFormatter,
@@ -290,7 +302,8 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         InaccessibleFormatterType,
         PartialTypeRequired,
         InaccessibleDataType,
-        NullableReferenceTypeFormatter);
+        NullableReferenceTypeFormatter,
+        MessagePackObjectAllowPrivateRequired);
 
     public override void Initialize(AnalysisContext context)
     {

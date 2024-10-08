@@ -46,6 +46,21 @@ public static class CodeAnalysisUtilities
                select x.FirstDeclaration;
     }
 
+    internal static Accessibility GetEffectiveAccessibility(this ITypeSymbol target)
+    {
+        Accessibility effective = target.DeclaredAccessibility;
+        while (target.ContainingType is not null)
+        {
+            target = target.ContainingType;
+            if (target.DeclaredAccessibility < effective)
+            {
+                effective = target.DeclaredAccessibility;
+            }
+        }
+
+        return effective;
+    }
+
     internal static IEnumerable<(ITypeSymbol Symbol, BaseTypeDeclarationSyntax? FirstDeclaration)> EnumerateTypeAndContainingTypes(ITypeSymbol target)
     {
         ITypeSymbol? focusedSymbol = target;

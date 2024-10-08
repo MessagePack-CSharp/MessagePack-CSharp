@@ -2,6 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 [MessagePackObject]
-internal record Derived2 : IMyType
+public record Derived2 : IMyType
 {
 }

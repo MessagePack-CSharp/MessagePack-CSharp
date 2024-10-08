@@ -2,8 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 [MessagePackObject]
-internal record UnionContainer
+public record UnionContainer
 {
     [Key(0)]
-    internal IMyType? Value { get; set; }
+    public IMyType? Value { get; set; }
 }
