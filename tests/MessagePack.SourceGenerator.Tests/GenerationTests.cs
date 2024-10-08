@@ -48,24 +48,24 @@ public enum MyEnum
 using MessagePack;
 
 [MessagePackObject]
-internal class MyMessagePackObject
+public class MyMessagePackObject
 {
     [Key(0)]
-    internal NS1.MyEnum EnumValue1 { get; set; }
+    public NS1.MyEnum EnumValue1 { get; set; }
 
     [Key(1)]
-    internal NS2.MyEnum EnumValue2 { get; set; }
+    public NS2.MyEnum EnumValue2 { get; set; }
 }
 
 namespace NS1 {
-    internal enum MyEnum
+    public enum MyEnum
     {
         A, B, C
     }
 }
 
 namespace NS2 {
-    internal enum MyEnum
+    public enum MyEnum
     {
         D, E
     }
@@ -82,30 +82,30 @@ namespace NS2 {
 using MessagePack;
 
 [MessagePackObject]
-internal class MyMessagePackObject
+public class MyMessagePackObject
 {
     [Key(0)]
-    internal NS1.MyType<int> Value1 { get; set; }
+    public NS1.MyType<int> Value1 { get; set; }
 
     [Key(1)]
-    internal NS2.MyType<int> Value2 { get; set; }
+    public NS2.MyType<int> Value2 { get; set; }
 }
 
 namespace NS1 {
     [MessagePackObject]
-    internal class MyType<T>
+    public class MyType<T>
     {
         [Key(0)]
-        internal string Foo { get; set; }
+        public string Foo { get; set; }
     }
 }
 
 namespace NS2 {
     [MessagePackObject]
-    internal class MyType<T>
+    public class MyType<T>
     {
         [Key(0)]
-        internal string Foo { get; set; }
+        public string Foo { get; set; }
     }
 }
 """;
@@ -120,30 +120,30 @@ namespace NS2 {
 using MessagePack;
 
 [MessagePackObject]
-internal class MyMessagePackObject
+public class MyMessagePackObject
 {
     [Key(0)]
-    internal NS1.MyType Value1 { get; set; }
+    public NS1.MyType Value1 { get; set; }
 
     [Key(1)]
-    internal NS2.MyType Value2 { get; set; }
+    public NS2.MyType Value2 { get; set; }
 }
 
 namespace NS1 {
     [MessagePackObject]
-    internal class MyType
+    public class MyType
     {
         [Key(0)]
-        internal string Foo { get; set; }
+        public string Foo { get; set; }
     }
 }
 
 namespace NS2 {
     [MessagePackObject]
-    internal class MyType
+    public class MyType
     {
         [Key(0)]
-        internal string Foo { get; set; }
+        public string Foo { get; set; }
     }
 }
 """;
@@ -158,20 +158,20 @@ namespace NS2 {
 using MessagePack;
 
 [MessagePackObject]
-internal class MyMessagePackObject
+public class MyMessagePackObject
 {
     [Key(0)]
-    internal NS1.MyType Value1 { get; set; }
+    public NS1.MyType Value1 { get; set; }
 
     [Key(1)]
-    internal NS2.MyType Value2 { get; set; }
+    public NS2.MyType Value2 { get; set; }
 
     [Key(2)]
-    internal NS3.MyType<int> Value3 { get; set; }
+    public NS3.MyType<int> Value3 { get; set; }
 }
 
 namespace NS1 {
-    internal enum MyType
+    public enum MyType
     {
         A, B
     }
@@ -179,19 +179,19 @@ namespace NS1 {
 
 namespace NS2 {
     [MessagePackObject]
-    internal class MyType
+    public class MyType
     {
         [Key(0)]
-        internal string Foo { get; set; }
+        public string Foo { get; set; }
     }
 }
 
 namespace NS3 {
     [MessagePackObject]
-    internal class MyType<T>
+    public class MyType<T>
     {
         [Key(0)]
-        internal string Foo { get; set; }
+        public string Foo { get; set; }
     }
 }
 """;
@@ -240,21 +240,21 @@ class UnserializableRecordFormatter : IMessagePackFormatter<UnserializableRecord
         string testSource = """
 [Union(0, typeof(Derived1))]
 [Union(1, typeof(Derived2))]
-internal interface IMyType
+public interface IMyType
 {
 }
 
 [MessagePackObject]
-internal class Derived1 : IMyType {}
+public class Derived1 : IMyType {}
 
 [MessagePackObject]
-internal class Derived2 : IMyType {}
+public class Derived2 : IMyType {}
 
 [MessagePackObject]
-internal class MyMessagePackObject
+public class MyMessagePackObject
 {
     [Key(0)]
-    internal IMyType UnionValue { get; set; }
+    public IMyType UnionValue { get; set; }
 }
 """;
         testSource = TestUtilities.WrapTestSource(testSource, container);
@@ -270,17 +270,17 @@ using MessagePack;
 using System.Collections.Generic;
 
 [MessagePackObject]
-internal class ContainerObject
+public class ContainerObject
 {
     [Key(0)]
-    internal SubObject[] ArrayOfCustomObjects { get; set; }
+    public SubObject[] ArrayOfCustomObjects { get; set; }
 
     [Key(1)]
-    internal List<SubObject>[] ArrayOfCustomObjectList { get; set; }
+    public List<SubObject>[] ArrayOfCustomObjectList { get; set; }
 }
 
 [MessagePackObject]
-internal class SubObject
+public class SubObject
 {
 }
 """;
@@ -295,10 +295,10 @@ using MessagePack;
 using System.Collections.Generic;
 
 [MessagePackObject]
-internal class ContainerObject
+public class ContainerObject
 {
     [Key(0)]
-    internal int[][] TwoDimensionalJaggedIntArray { get; set; }
+    public int[][] TwoDimensionalJaggedIntArray { get; set; }
 }
 """;
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
@@ -312,17 +312,17 @@ using MessagePack;
 using System;
 
 [MessagePackObject]
-internal class ContainerObject
+public class ContainerObject
 {
     [Key(0)]
-    internal MyGenericType<int> TupleProperty { get; set; }
+    public MyGenericType<int> TupleProperty { get; set; }
 }
 
 [MessagePackObject]
-internal class MyGenericType<T>
+public class MyGenericType<T>
 {
     [Key(0)]
-    internal T Value { get; set; }
+    public T Value { get; set; }
 }
 """;
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
@@ -352,10 +352,10 @@ public class GenericClass<T1, T2>
     public async Task AdditionalAllowTypes()
     {
         string testSource = Preamble + """
-class MyCustomType { }
+public class MyCustomType { }
 
 [MessagePackObject]
-class TypeWithAutoGeneratedFormatter
+public class TypeWithAutoGeneratedFormatter
 {
     [Key(0)]
     public MyCustomType Value { get; set; }
@@ -378,7 +378,7 @@ class TypeWithAutoGeneratedFormatter
 [assembly: MessagePackKnownFormatterAttribute(typeof(MyCustomTypeFormatter))]
 
 [MessagePackObject]
-class TypeWithAutoGeneratedFormatter
+public class TypeWithAutoGeneratedFormatter
 {
     [Key(0)]
     public MyCustomType Value { get; set; }
@@ -416,12 +416,12 @@ class TypeWithAutoGeneratedFormatter
     }
 
     [Fact]
-    public async Task AdditionalFormatterTypes_RedundantAttibute()
+    public async Task AdditionalFormatterTypes_RedundantAttribute()
     {
         string testSource = Preamble + """
 [assembly: MessagePackKnownFormatterAttribute(typeof(MyCustomTypeFormatter))]
 
-class MyCustomType { }
+public class MyCustomType { }
 
 class MyCustomTypeFormatter : MessagePack.Formatters.IMessagePackFormatter<MyCustomType>
 {
@@ -437,7 +437,7 @@ class MyCustomTypeFormatter : MessagePack.Formatters.IMessagePackFormatter<MyCus
 }
 
 [MessagePackObject]
-class TypeWithAutoGeneratedFormatter
+public class TypeWithAutoGeneratedFormatter
 {
     [Key(0)]
     public MyCustomType Value { get; set; }
@@ -450,7 +450,7 @@ class TypeWithAutoGeneratedFormatter
     public async Task ImplicitFormatterTypes()
     {
         string testSource = Preamble + """
-class MyCustomType { }
+public class MyCustomType { }
 
 class MyCustomTypeFormatter : MessagePack.Formatters.IMessagePackFormatter<MyCustomType>
 {
@@ -466,7 +466,7 @@ class MyCustomTypeFormatter : MessagePack.Formatters.IMessagePackFormatter<MyCus
 }
 
 [MessagePackObject]
-class TypeWithAutoGeneratedFormatter
+public class TypeWithAutoGeneratedFormatter
 {
     [Key(0)]
     public MyCustomType Value { get; set; }
@@ -483,17 +483,17 @@ using MessagePack;
 using System;
 
 [MessagePackObject]
-internal class ContainerObject
+public class ContainerObject
 {
     [Key(0)]
-    internal MyGenericType<int> TupleProperty { get; set; }
+    public MyGenericType<int> TupleProperty { get; set; }
 }
 
 [MessagePackObject]
-internal class MyGenericType<T>
+public class MyGenericType<T>
 {
     [Key(0)]
-    internal T Value { get; set; }
+    public T Value { get; set; }
 }
 """;
         await new VerifyCS.Test(ReferencesSet.MessagePackAnnotations)
@@ -515,10 +515,10 @@ internal class MyGenericType<T>
             namespace A
             {
                 [MessagePackObject]
-                internal class B
+                public class B
                 {
                     [MessagePackObject]
-                    internal class C
+                    public class C
                     {
                     }
                 }
@@ -537,15 +537,15 @@ internal class MyGenericType<T>
             namespace A
             {
                 [MessagePackObject]
-                internal class B
+                public class B
                 {
                     [MessagePackObject]
-                    internal class C
+                    public class C
                     {
                     }
 
                     [Key(0)]
-                    internal C[] array;
+                    public C[] array;
                 }
             }
             """;
@@ -558,7 +558,7 @@ internal class MyGenericType<T>
         string testSource = """
             using MessagePack;
             using MessagePack.Formatters;
-            class A {}
+            public class A {}
             class F : IMessagePackFormatter<A> {
                 public static readonly IMessagePackFormatter<A> Instance = new F();
                 private F() {}
@@ -566,9 +566,9 @@ internal class MyGenericType<T>
                 public A Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => default;
             }
             [MessagePackObject]
-            class G {
+            public class G {
                 [Key(0), MessagePackFormatter(typeof(F))]
-                internal A a;
+                public A a;
             }
             """;
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
@@ -581,9 +581,9 @@ internal class MyGenericType<T>
             using MessagePack;
             using MessagePack.Formatters;
             [MessagePackObject]
-            class G {
+            public class G {
                 [Key(0), MessagePackFormatter(typeof(StringInterningFormatter))]
-                internal string a;
+                public string a;
             }
             """;
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
@@ -612,7 +612,7 @@ internal class MyGenericType<T>
     {
         string testSource = """
             using MessagePack;
-            [MessagePackObject]
+            [MessagePackObject(AllowPrivate = true)]
             partial class A {
                 [SerializationConstructor]
                 A(int x) => this.X = x;
@@ -633,12 +633,12 @@ internal class MyGenericType<T>
             using System.Linq;
             using System.Collections.Generic;
             [MessagePackObject]
-            class A {
+            public class A {
                 [SerializationConstructor]
-                internal A(IReadOnlyList<int> x) => this.X = x.ToList();
+                public A(IReadOnlyList<int> x) => this.X = x.ToList();
 
                 [Key(0)]
-                internal List<int> X { get; }
+                public List<int> X { get; }
             }
             """;
 

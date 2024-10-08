@@ -68,7 +68,7 @@ public partial class CompositeResolverTests
     }
 
     [MessagePackObject]
-    internal class MPO
+    public class MPO
     {
     }
 }

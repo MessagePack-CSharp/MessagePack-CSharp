@@ -200,7 +200,7 @@ public class Foo
     public async Task AddAttributesToMembers_MixedVisibility()
     {
         string input = Preamble + @"
-[MessagePackObject]
+[{|MsgPack015:MessagePackObject|}]
 public class Foo
 {
     private string {|MsgPack004:member4|};
@@ -213,7 +213,7 @@ public class Foo
 ";
 
         string output = Preamble + @"
-[MessagePackObject]
+[{|MsgPack015:MessagePackObject|}]
 public class {|MsgPack011:Foo|}
 {
     [Key(2)]

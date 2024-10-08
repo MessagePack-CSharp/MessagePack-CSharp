@@ -1180,6 +1180,22 @@ public class TypeCollector
             return null;
         }
 
+        if (allowPrivateAttribute is not true && (nonPublicMembersAreSerialized || ctor is { DeclaredAccessibility: not Accessibility.Public } || formattedType.GetEffectiveAccessibility() is not Accessibility.Public))
+        {
+            if (contractAttr.ApplicationSyntaxReference?.GetSyntax(this.cancellationToken) is AttributeSyntax attSyntax)
+            {
+                Location location = attSyntax.GetLocation();
+
+                // If the user is explicitly setting AllowPrivate = false, set the location more precisely.
+                if (allowPrivateAttribute is false)
+                {
+                    location = attSyntax.ArgumentList?.Arguments.First(a => a.NameEquals?.Name.Identifier.ValueText == Constants.AllowPrivatePropertyName)?.Expression.GetLocation() ?? location;
+                }
+
+                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.MessagePackObjectAllowPrivateRequired, location));
+            }
+        }
+
         // Do not source generate the formatter for this type if the attribute opted out.
         if (suppressSourceGeneration is true)
         {

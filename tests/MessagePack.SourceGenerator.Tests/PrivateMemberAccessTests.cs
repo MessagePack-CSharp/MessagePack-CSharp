@@ -17,7 +17,7 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
             using System;
             using MessagePack;
 
-            [MessagePackObject]
+            [MessagePackObject(AllowPrivate = true)]
             partial {{type}} MyObject
             {
                 [Key(0)]
@@ -45,7 +45,7 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
 
             namespace A
             {
-                [MessagePackObject]
+                [MessagePackObject(AllowPrivate = true)]
                 partial class MyObject
                 {
                     [Key(0)]
@@ -68,7 +68,7 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
             using System;
             using MessagePack;
 
-            [MessagePackObject]
+            [MessagePackObject(AllowPrivate = true)]
             {{type}} {|MsgPack011:MyObject|}
             {
                 [Key(0)]
@@ -92,7 +92,7 @@ public class PrivateMemberAccessTests(ITestOutputHelper logger)
 
             {{type}} Outer
             {
-                [MessagePackObject]
+                [MessagePackObject(AllowPrivate = true)]
                 internal partial {{type}} {|MsgPack011:MyObject|}
                 {
                     [Key(0)]

@@ -19,5 +19,6 @@ ID | Title
 [MsgPack012](MsgPack012.md) | Inaccessible data type
 [MsgPack013](MsgPack013.md) | Inaccessible formatter instance
 [MsgPack014](MsgPack014.md) | Nullable reference type formatter
+[MsgPack015](MsgPack015.md) | MessagePackObjectAttribute.AllowPrivate should be set
 
 [1]: https://nuget.org/packages/MessagePackAnalyzer

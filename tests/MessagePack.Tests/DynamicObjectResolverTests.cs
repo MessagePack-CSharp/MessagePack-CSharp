@@ -374,6 +374,23 @@ namespace MessagePack.Tests
             Assert.Equal(original, deserialized);
         }
 
+        [Fact]
+        public void InternalTypeWithPublicMembers()
+        {
+            var original = new InternalClassWithPublicMembers { PublicProperty = 3 };
+
+            // We expect serialization to fail because we're not using the AllowPrivate resolver,
+            // nor is the type attributed with the AllowPrivate setting.
+            Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Serialize(original, MessagePackSerializerOptions.Standard));
+        }
+
+        [MessagePackObject] // This class specifically tests a case when AllowPrivate is NOT set to true.
+        internal record InternalClassWithPublicMembers
+        {
+            [Key(0)]
+            public int PublicProperty { get; set; }
+        }
+
 #if !UNITY_2018_3_OR_NEWER
 
         [Fact]
