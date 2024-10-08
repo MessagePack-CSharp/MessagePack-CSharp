@@ -1,4 +1,4 @@
-# MsgPack012 Nullable reference type formatter
+# MsgPack014 Nullable reference type formatter
 
 Custom formatters of reference types should be prepared to handle `null` references.
 
