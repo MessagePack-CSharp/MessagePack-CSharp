@@ -16,6 +16,7 @@ using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
+using Perfolizer.Metrology;
 
 namespace Benchmark
 {
@@ -110,7 +111,7 @@ namespace Benchmark
                 var cultureInfo = summary.GetCultureInfo();
                 if (style.PrintUnitsInContent)
                 {
-                    return SizeValue.FromBytes(byteSize).ToString(style.SizeUnit, cultureInfo);
+                    return SizeValue.FromBytes(byteSize).ToString(style.SizeUnit, null, cultureInfo);
                 }
 
                 return byteSize.ToString("0.##", cultureInfo);
