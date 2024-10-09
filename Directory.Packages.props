@@ -4,7 +4,7 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
-    <BenchmarkDotNetVersion>0.13.12</BenchmarkDotNetVersion>
+    <BenchmarkDotNetVersion>0.14.0</BenchmarkDotNetVersion>
     <!-- https://learn.microsoft.com/en-us/visualstudio/extensibility/roslyn-version-support?view=vs-2022 -->
     <MicrosoftCodeAnalysisVersion>4.8.0</MicrosoftCodeAnalysisVersion>
     <MicrosoftCodeAnalysisVersion Condition="'$(IsAnalyzerProject)'=='true'">4.3.0</MicrosoftCodeAnalysisVersion>
@@ -74,9 +74,9 @@
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
   <ItemGroup Condition="'$(NonShipping)'=='true'">
-    <PackageVersion Update="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
-    <PackageVersion Update="System.Collections.Immutable" Version="7.0.0" />
-    <PackageVersion Update="System.Reflection.Metadata" Version="7.0.0" />
+    <PackageVersion Update="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
+    <PackageVersion Update="System.Collections.Immutable" Version="8.0.0" />
+    <PackageVersion Update="System.Reflection.Metadata" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
     <GlobalPackageReference Include="CSharpIsNullAnalyzer" Version="0.1.593" />
