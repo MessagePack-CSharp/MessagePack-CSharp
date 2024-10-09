@@ -41,9 +41,7 @@
     <ProjectReference Include="..\MessagePack.Annotations\MessagePack.Annotations.csproj" />
     <!-- We don't consume the analyzers in this library itself,
          but we reference the project to add a package dependency so users of this library will automatically get the analyzers. -->
-    <ProjectReference Include="..\MessagePack.Analyzers\MessagePack.Analyzers.csproj"
-                      PrivateAssets="none"
-                      Condition="'$(ExcludeRestorePackageImports)' != ''"  />
+    <ProjectReference Include="..\MessagePack.Analyzers\MessagePack.Analyzers.csproj" PrivateAssets="none" Condition="'$(ExcludeRestorePackageImports)' != ''" />
   </ItemGroup>
 
   <ItemGroup>
@@ -66,6 +64,10 @@
     <None Update="Internal\UnsafeMemory.tt">
       <LastGenOutput>UnsafeMemory.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Update="MessagePackPrimitives.Readers.Integers.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>MessagePackPrimitives.Readers.Integers.cs</LastGenOutput>
     </None>
     <None Update="MessagePackReader.Integers.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
@@ -98,6 +100,11 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>UnsafeMemory.tt</DependentUpon>
+    </Compile>
+    <Compile Update="MessagePackPrimitives.Readers.Integers.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>MessagePackPrimitives.Readers.Integers.tt</DependentUpon>
     </Compile>
     <Compile Update="MessagePackReader.Integers.cs">
       <DesignTime>True</DesignTime>
