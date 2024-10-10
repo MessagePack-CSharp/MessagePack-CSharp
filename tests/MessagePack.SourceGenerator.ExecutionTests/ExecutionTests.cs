@@ -64,6 +64,12 @@ public class ExecutionTests(ITestOutputHelper logger)
         this.AssertRoundtrip(new HasRequiredMembers { A = 1, B = 4, C = 5, D = 6 });
     }
 
+    [Fact]
+    public void DeserializingConstructorStartsWithIdx1()
+    {
+        this.AssertRoundtrip(new DeserializingConstructorStartsWithIdx1("foo"));
+    }
+
 #if !FORCE_MAP_MODE // forced map mode simply doesn't support private fields at all as it only notices internal and public members.
     [Fact]
     public void PrivateFieldIsSerialized()
