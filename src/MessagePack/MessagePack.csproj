@@ -42,8 +42,7 @@
     <!-- We don't consume the analyzers in this library itself,
          but we reference the project to add a package dependency so users of this library will automatically get the analyzers. -->
     <ProjectReference Include="..\MessagePack.Analyzers\MessagePack.Analyzers.csproj"
-                      PrivateAssets="none"
-                      Condition="'$(ExcludeRestorePackageImports)' != ''"  />
+                      PrivateAssets="none" />
   </ItemGroup>
 
   <ItemGroup>
