@@ -22,6 +22,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// UnionResolver by dynamic code generation.
     /// </summary>
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
     public sealed class DynamicUnionResolver : IFormatterResolver
     {
         private const string ModuleName = "MessagePack.Resolvers.DynamicUnionResolver";
@@ -63,7 +64,8 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
-        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] T>
+        [RequiresDynamicCode(Constants.DynamicFormatters)]
+        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;
 
@@ -94,7 +96,9 @@ namespace MessagePack.Resolvers
             }
         }
 
-        private static TypeInfo? BuildType(Type type)
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+        private static TypeInfo? BuildType(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] Type type)
         {
             TypeInfo ti = type.GetTypeInfo();
 

@@ -34,7 +34,7 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
-        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>
+        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;
 
@@ -88,7 +88,8 @@ namespace MessagePack.Internal
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)
-        internal static object? GetFormatter([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type t)
+        internal static object? GetFormatter(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)] Type t)
         {
             TypeInfo ti = t.GetTypeInfo();
 
