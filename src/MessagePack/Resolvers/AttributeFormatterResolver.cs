@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using MessagePack.Formatters;
@@ -11,6 +12,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// Get formatter from <see cref="MessagePackFormatterAttribute"/>.
     /// </summary>
+    [RequiresDynamicCode(Constants.ClosingGenerics)]
     public sealed class AttributeFormatterResolver : IFormatterResolver
     {
         /// <summary>
@@ -27,6 +29,7 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         private static class FormatterCache<T>
         {
             internal static readonly IMessagePackFormatter<T>? Formatter;

@@ -3,6 +3,7 @@
 
 using System;
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
@@ -14,6 +15,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// EnumResolver by dynamic code generation, serialized underlying type.
     /// </summary>
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
     public sealed class DynamicEnumResolver : IFormatterResolver
     {
         /// <summary>
@@ -48,7 +50,8 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
-        private static class FormatterCache<T>
+        [RequiresDynamicCode(Constants.DynamicFormatters)]
+        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;
 
@@ -83,7 +86,10 @@ namespace MessagePack.Resolvers
             }
         }
 
-        private static TypeInfo BuildType(Type enumType, bool allowPrivate)
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+        private static TypeInfo BuildType(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] Type enumType,
+            bool allowPrivate)
         {
             Type underlyingType = Enum.GetUnderlyingType(enumType);
             Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(enumType);

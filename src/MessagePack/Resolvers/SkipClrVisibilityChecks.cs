@@ -80,7 +80,7 @@ internal class SkipClrVisibilityChecks
     /// Scans a given type for references to non-public types and adds any assemblies that declare those types
     /// to a given set.
     /// </summary>
-    /// <param name="typeInfo">The type which may be internal. This should never be an array. Use <see cref="Type.GetElementType()"/> until you get a non-array element before calling this method.</param>
+    /// <param name="typeInfo">The type which may be internal.</param>
     /// <param name="referencedAssemblies">The set of assemblies to add to where non-public types are found.</param>
     internal static void GetSkipVisibilityChecksRequirements(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] TypeInfo typeInfo,
@@ -88,7 +88,6 @@ internal class SkipClrVisibilityChecks
     {
         if (typeInfo.IsArray)
         {
-            //throw new ArgumentException("This is an array. Call with the array element type instead.", nameof(typeInfo));
             GetSkipVisibilityChecksRequirements(typeInfo.GetElementType()!.GetTypeInfo(), referencedAssemblies);
         }
 

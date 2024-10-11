@@ -17,9 +17,7 @@ namespace MessagePack.Internal
     /// This class is responsible for managing DynamicAssembly instance creation taking into account
     /// AssemblyLoadContext when running under .NET.
     /// </summary>
-#if NET8_0_OR_GREATER
     [RequiresDynamicCode(Constants.DynamicFormatters)]
-#endif
     internal class DynamicAssemblyFactory
     {
         private readonly string moduleName;

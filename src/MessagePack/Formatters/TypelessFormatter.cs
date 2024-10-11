@@ -23,6 +23,7 @@ namespace MessagePack.Formatters
     /// Force serialize object as typeless.
     /// </summary>
     [RequiresUnreferencedCode("Deserializes objects into types whose names are determined by the data.")]
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
     public sealed class ForceTypelessFormatter<T> : IMessagePackFormatter<T?>
     {
         public void Serialize(ref MessagePackWriter writer, T? value, MessagePackSerializerOptions options)
@@ -41,9 +42,8 @@ namespace MessagePack.Formatters
     /// <summary>
     /// For `object` field that holds derived from `object` value, ex: var arr = new object[] { 1, "a", new Model() };.
     /// </summary>
-#if NET8_0_OR_GREATER
-    [RequiresUnreferencedCode("Deserializes objects into types whose names are determined by the data.")]
-#endif
+    [RequiresUnreferencedCode(Constants.Typeless)]
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
     public sealed class TypelessFormatter : IMessagePackFormatter<object?>
     {
         private delegate void SerializeMethod(object dynamicContractlessFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);

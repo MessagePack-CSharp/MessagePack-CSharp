@@ -18,6 +18,7 @@ using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
+    [RequiresDynamicCode(Constants.ClosingGenerics)]
     public sealed class DynamicGenericResolver : IFormatterResolver
     {
         /// <summary>
@@ -34,6 +35,7 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;
@@ -88,6 +90,7 @@ namespace MessagePack.Internal
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         internal static object? GetFormatter(
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)] Type t)
         {
@@ -374,6 +377,7 @@ namespace MessagePack.Internal
             return null;
         }
 
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         private static object? CreateInstance(Type genericType, Type[] genericTypeArguments, params object?[] arguments)
         {
             return Activator.CreateInstance(genericType.MakeGenericType(genericTypeArguments), arguments);

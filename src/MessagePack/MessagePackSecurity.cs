@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
@@ -254,6 +255,7 @@ namespace MessagePack
         /// A special hash-resistent equality comparer that defers picking the actual implementation
         /// till it can check the runtime type of each value to be hashed.
         /// </summary>
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         private class ObjectFallbackEqualityComparer : IEqualityComparer<object>, IEqualityComparer
         {
             private static readonly Lazy<MethodInfo> GetHashCollisionResistantEqualityComparerOpenGenericMethod = new Lazy<MethodInfo>(() => typeof(MessagePackSecurity).GetTypeInfo().DeclaredMethods.Single(m => m.Name == nameof(MessagePackSecurity.GetHashCollisionResistantEqualityComparer) && m.IsGenericMethod));
