@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 #pragma warning disable SA1402 // File may only contain a single type
@@ -165,7 +166,13 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class GenericDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary>
+    public sealed class GenericDictionaryFormatter<
+        TKey,
+        TValue,
+#if NET8_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary>
         where TDictionary : class?, IDictionary<TKey, TValue>, new()
         where TKey : notnull
     {
@@ -180,7 +187,13 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class GenericReadOnlyDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, TDictionary>
+    public sealed class GenericReadOnlyDictionaryFormatter<
+        TKey,
+        TValue,
+#if NET8_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        TDictionary> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, TDictionary>
         where TDictionary : class?, IReadOnlyDictionary<TKey, TValue>
         where TKey : notnull
     {

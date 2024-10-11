@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -87,7 +88,11 @@ namespace MessagePack.Internal
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)
-        internal static object? GetFormatter(Type t)
+        internal static object? GetFormatter(
+#if NET8_0_OR_GREATER
+          [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+            Type t)
         {
             TypeInfo ti = t.GetTypeInfo();
 

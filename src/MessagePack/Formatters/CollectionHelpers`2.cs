@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace MessagePack.Formatters
@@ -11,7 +12,12 @@ namespace MessagePack.Formatters
     /// </summary>
     /// <typeparam name="TCollection">The concrete type of collection to create.</typeparam>
     /// <typeparam name="TEqualityComparer">The type of equality comparer that we would hope to pass into the collection's constructor.</typeparam>
-    internal static class CollectionHelpers<TCollection, TEqualityComparer>
+    internal static class CollectionHelpers<
+#if NET8_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        TCollection,
+        TEqualityComparer>
         where TCollection : new()
     {
         /// <summary>

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using MessagePack.Formatters;
 using MessagePack.Internal;
@@ -24,7 +25,11 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
-        private static class FormatterCache<T>
+        private static class FormatterCache<
+#if NET8_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+            T>
         {
             private static readonly object?[] FormatterCtorArgs = new object?[] { true };
 

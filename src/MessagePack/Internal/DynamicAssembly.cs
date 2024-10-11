@@ -3,11 +3,15 @@
 
 using System;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Emit;
 
 namespace MessagePack.Internal
 {
+#if NET8_0_OR_GREATER
+    [RequiresDynamicCode("This class explicitly serves dynamic assemblies.")]
+#endif
     internal class DynamicAssembly
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -50,9 +54,22 @@ namespace MessagePack.Internal
 
         public TypeBuilder DefineType(string name, TypeAttributes attr) => this.moduleBuilder.DefineType(name, attr);
 
-        public TypeBuilder DefineType(string name, TypeAttributes attr, Type? parent) => this.moduleBuilder.DefineType(name, attr, parent);
+        public TypeBuilder DefineType(
+            string name,
+            TypeAttributes attr,
+#if NET8_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+            Type? parent) => this.moduleBuilder.DefineType(name, attr, parent);
 
-        public TypeBuilder DefineType(string name, TypeAttributes attr, Type? parent, Type[]? interfaces) => this.moduleBuilder.DefineType(name, attr, parent, interfaces);
+        public TypeBuilder DefineType(
+            string name,
+            TypeAttributes attr,
+#if NET8_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+            Type? parent,
+            Type[]? interfaces) => this.moduleBuilder.DefineType(name, attr, parent, interfaces);
 
 #if NETFRAMEWORK
 

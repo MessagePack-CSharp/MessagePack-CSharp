@@ -17,6 +17,9 @@ namespace MessagePack.Internal
     /// This class is responsible for managing DynamicAssembly instance creation taking into account
     /// AssemblyLoadContext when running under .NET.
     /// </summary>
+#if NET8_0_OR_GREATER
+    [RequiresDynamicCode("This class explicitly serves dynamic assemblies.")]
+#endif
     internal class DynamicAssemblyFactory
     {
         private readonly string moduleName;
@@ -39,7 +42,12 @@ namespace MessagePack.Internal
         }
 
         [return: NotNullIfNotNull("type")]
-        public DynamicAssembly? GetDynamicAssembly(Type? type, bool allowPrivate)
+        public DynamicAssembly? GetDynamicAssembly(
+#if NET8_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
+#endif
+            Type? type,
+            bool allowPrivate)
         {
             if (type is null)
             {

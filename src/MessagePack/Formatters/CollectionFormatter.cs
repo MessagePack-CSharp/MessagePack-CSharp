@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -478,7 +479,12 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class GenericEnumerableFormatter<TElement, TCollection> : CollectionFormatterBase<TElement, TElement[], TCollection>
+    public sealed class GenericEnumerableFormatter<
+        TElement,
+#if NET8_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        TCollection> : CollectionFormatterBase<TElement, TElement[], TCollection>
         where TCollection : IEnumerable<TElement>
     {
         protected override TElement[] Create(int count, MessagePackSerializerOptions options)
@@ -1199,7 +1205,11 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NonGenericDictionaryFormatter<T> : IMessagePackFormatter<T?>
+    public sealed class NonGenericDictionaryFormatter<
+#if NET8_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        T> : IMessagePackFormatter<T?>
         where T : class, IDictionary, new()
     {
         public void Serialize(ref MessagePackWriter writer, T? value, MessagePackSerializerOptions options)
