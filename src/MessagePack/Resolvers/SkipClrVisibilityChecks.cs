@@ -23,7 +23,7 @@ namespace MessagePack;
 /// allowing the assembly to access private members of another assembly.
 /// </summary>
 #if NET8_0_OR_GREATER
-[RequiresDynamicCode("This class explicitly serves dynamic assemblies.")]
+[RequiresDynamicCode(Constants.DynamicFormatters)]
 #endif
 internal class SkipClrVisibilityChecks
 {
@@ -83,10 +83,7 @@ internal class SkipClrVisibilityChecks
     /// <param name="typeInfo">The type which may be internal. This should never be an array. Use <see cref="Type.GetElementType()"/> until you get a non-array element before calling this method.</param>
     /// <param name="referencedAssemblies">The set of assemblies to add to where non-public types are found.</param>
     internal static void GetSkipVisibilityChecksRequirements(
-#if NET8_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
-#endif
-        TypeInfo typeInfo,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] TypeInfo typeInfo,
         ImmutableHashSet<AssemblyName>.Builder referencedAssemblies)
     {
         if (typeInfo.IsArray)

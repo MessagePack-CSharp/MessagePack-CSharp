@@ -13,10 +13,7 @@ namespace MessagePack.Formatters
     /// <typeparam name="TCollection">The concrete type of collection to create.</typeparam>
     /// <typeparam name="TEqualityComparer">The type of equality comparer that we would hope to pass into the collection's constructor.</typeparam>
     internal static class CollectionHelpers<
-#if NET8_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-#endif
-        TCollection,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCollection,
         TEqualityComparer>
         where TCollection : new()
     {

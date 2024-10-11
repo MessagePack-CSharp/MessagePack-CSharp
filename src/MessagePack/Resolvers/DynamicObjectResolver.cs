@@ -22,6 +22,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// ObjectResolver by dynamic code generation.
     /// </summary>
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
     public sealed class DynamicObjectResolver : IFormatterResolver
     {
         private const string ModuleName = "MessagePack.Resolvers.DynamicObjectResolver";
@@ -59,7 +60,9 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
-        internal static IMessagePackFormatter<T>? BuildFormatterHelper<T>(IFormatterResolver self, DynamicAssemblyFactory dynamicAssemblyFactory, bool forceStringKey, bool contractless, bool allowPrivate)
+        internal static IMessagePackFormatter<T>? BuildFormatterHelper<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods | DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] T>(
+            IFormatterResolver self, DynamicAssemblyFactory dynamicAssemblyFactory, bool forceStringKey, bool contractless, bool allowPrivate)
         {
             TypeInfo ti = typeof(T).GetTypeInfo();
 
@@ -99,7 +102,8 @@ namespace MessagePack.Resolvers
             return formatterTypeInfo is null ? null : (IMessagePackFormatter<T>)ResolverUtilities.ActivateFormatter(formatterTypeInfo.AsType());
         }
 
-        private static class FormatterCache<T>
+        [RequiresDynamicCode(Constants.DynamicFormatters)]
+        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods | DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter = BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, false, false, false);
         }
@@ -108,6 +112,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// ObjectResolver by dynamic code generation, allow private member.
     /// </summary>
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
     public sealed class DynamicObjectResolverAllowPrivate : IFormatterResolver
     {
         private const string ModuleName = "MessagePack.Resolvers.DynamicObjectResolverAllowPrivate";
@@ -125,7 +130,8 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
-        private static class FormatterCache<T>
+        [RequiresDynamicCode(Constants.DynamicFormatters)]
+        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods | DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] T>
         {
             internal static readonly IMessagePackFormatter<T>? Formatter = DynamicObjectResolver.BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, false, false, true);
         }
@@ -134,6 +140,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// ObjectResolver by dynamic code generation, no needs MessagePackObject attribute and serialized key as string.
     /// </summary>
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
     public sealed class DynamicContractlessObjectResolver : IFormatterResolver
     {
         private const string ModuleName = "MessagePack.Resolvers.DynamicContractlessObjectResolver";
@@ -163,7 +170,8 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
-        private static class FormatterCache<T>
+        [RequiresDynamicCode(Constants.DynamicFormatters)]
+        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods | DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter = typeof(T) == typeof(object) ? null :
                 DynamicObjectResolver.BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, true, true, false);
@@ -173,6 +181,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// ObjectResolver by dynamic code generation, no needs MessagePackObject attribute and serialized key as string, allow private member.
     /// </summary>
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
     public sealed class DynamicContractlessObjectResolverAllowPrivate : IFormatterResolver
     {
         private const string ModuleName = "MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate";
@@ -186,7 +195,8 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
-        private static class FormatterCache<T>
+        [RequiresDynamicCode(Constants.DynamicFormatters)]
+        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods | DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter = typeof(T) == typeof(object) ? null :
                 DynamicObjectResolver.BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, true, true, true);
@@ -196,6 +206,7 @@ namespace MessagePack.Resolvers
 
 namespace MessagePack.Internal
 {
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
     internal static class DynamicObjectTypeBuilder
     {
         internal static readonly Regex SubtractFullNameRegex = new(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", DynamicAssembly.AvoidDynamicCode ? RegexOptions.None : RegexOptions.Compiled);
@@ -226,7 +237,13 @@ namespace MessagePack.Internal
             { typeof(MessagePack.Nil) },
         };
 
-        internal static TypeInfo? BuildType(DynamicAssembly assembly, Type type, bool forceStringKey, bool contractless, bool allowPrivate)
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+        internal static TypeInfo? BuildType(
+            DynamicAssembly assembly,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)] Type type,
+            bool forceStringKey,
+            bool contractless,
+            bool allowPrivate)
         {
             if (ignoreTypes.Contains(type))
             {
@@ -455,7 +472,13 @@ namespace MessagePack.Internal
         }
 
         // void Serialize(ref [arg:1]MessagePackWriter writer, [arg:2]T value, [arg:3]MessagePackSerializerOptions options);
-        private static void BuildSerialize(Type type, ObjectSerializationInfo info, ILGenerator il, Action emitStringByteKeys, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, int firstArgIndex)
+        private static void BuildSerialize(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods)] Type type,
+            ObjectSerializationInfo info,
+            ILGenerator il,
+            Action emitStringByteKeys,
+            Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter,
+            int firstArgIndex)
         {
             var argWriter = new ArgumentField(il, firstArgIndex);
             var argValue = new ArgumentField(il, firstArgIndex + 1, type);
@@ -643,7 +666,13 @@ namespace MessagePack.Internal
         }
 
         // T Deserialize([arg:1]ref MessagePackReader reader, [arg:2]MessagePackSerializerOptions options);
-        private static void BuildDeserialize(Type type, ObjectSerializationInfo info, TypeBuilder typeBuilder, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, int firstArgIndex)
+        private static void BuildDeserialize(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.NonPublicMethods | DynamicallyAccessedMemberTypes.PublicMethods)] Type type,
+            ObjectSerializationInfo info,
+            TypeBuilder typeBuilder,
+            ILGenerator il,
+            Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter,
+            int firstArgIndex)
         {
             var argReader = new ArgumentField(il, firstArgIndex, @ref: true);
             var argOptions = new ArgumentField(il, firstArgIndex + 1);
@@ -1085,7 +1114,11 @@ namespace MessagePack.Internal
             il.EmitCall(readerDepthSet);
         }
 
-        private static void BuildDeserializeInternalOnAfterDeserialize(Type type, ObjectSerializationInfo info, ILGenerator il, LocalBuilder localResult)
+        private static void BuildDeserializeInternalOnAfterDeserialize(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.NonPublicMethods | DynamicallyAccessedMemberTypes.PublicMethods)] Type type,
+            ObjectSerializationInfo info,
+            ILGenerator il,
+            LocalBuilder localResult)
         {
             if (type.GetTypeInfo().ImplementedInterfaces.All(x => x != typeof(IMessagePackSerializationCallbackReceiver)))
             {
@@ -1366,6 +1399,7 @@ namespace MessagePack.Internal
 
         internal static class MessagePackReaderTypeInfo
         {
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods)]
             internal static readonly TypeInfo TypeInfo = typeof(MessagePackReader).GetTypeInfo();
 
             internal static readonly MethodInfo ReadArrayHeader = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadArrayHeader), Type.EmptyTypes)!;
@@ -1449,7 +1483,11 @@ namespace MessagePack.Internal
 #endif
         }
 
-        internal static ObjectSerializationInfo? CreateOrNull(Type type, bool forceStringKey, bool contractless, bool allowPrivate)
+        internal static ObjectSerializationInfo? CreateOrNull(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)] Type type,
+            bool forceStringKey,
+            bool contractless,
+            bool allowPrivate)
         {
             TypeInfo ti = type.GetTypeInfo();
             var isClass = ti.IsClass || ti.IsInterface || ti.IsAbstract;
@@ -1881,7 +1919,8 @@ namespace MessagePack.Internal
                 ;
         }
 
-        private static IEnumerable<FieldInfo> GetAllFields(Type type)
+        private static IEnumerable<FieldInfo> GetAllFields(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] Type type)
         {
             if (type.BaseType is object)
             {
@@ -1898,7 +1937,8 @@ namespace MessagePack.Internal
             }
         }
 
-        private static IEnumerable<PropertyInfo> GetAllProperties(Type type)
+        private static IEnumerable<PropertyInfo> GetAllProperties(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] Type type)
         {
             if (type.BaseType is object)
             {
@@ -1915,7 +1955,8 @@ namespace MessagePack.Internal
             }
         }
 
-        private static bool IsClassRecord(TypeInfo type)
+        private static bool IsClassRecord(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)] TypeInfo type)
         {
             // The only truly unique thing about a C# 9 record class is the presence of a <Clone>$ method,
             // which cannot be declared in C# because of the reserved characters in its name.

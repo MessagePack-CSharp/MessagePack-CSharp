@@ -10,7 +10,7 @@ using System.Reflection.Emit;
 namespace MessagePack.Internal
 {
 #if NET8_0_OR_GREATER
-    [RequiresDynamicCode("This class explicitly serves dynamic assemblies.")]
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
 #endif
     internal class DynamicAssembly
     {
@@ -57,18 +57,13 @@ namespace MessagePack.Internal
         public TypeBuilder DefineType(
             string name,
             TypeAttributes attr,
-#if NET8_0_OR_GREATER
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-#endif
-            Type? parent) => this.moduleBuilder.DefineType(name, attr, parent);
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type? parent)
+            => this.moduleBuilder.DefineType(name, attr, parent);
 
         public TypeBuilder DefineType(
             string name,
             TypeAttributes attr,
-#if NET8_0_OR_GREATER
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-#endif
-            Type? parent,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type? parent,
             Type[]? interfaces) => this.moduleBuilder.DefineType(name, attr, parent, interfaces);
 
 #if NETFRAMEWORK

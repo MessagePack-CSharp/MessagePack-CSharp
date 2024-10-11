@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
@@ -109,10 +110,13 @@ namespace MessagePack
         /// </summary>
         /// <param name="key">The distinguishing value that identifies a particular subtype.</param>
         /// <param name="subType">The full name (should be assembly qualified) of the derived or implementing type.</param>
+#if NET8_0_OR_GREATER
+        [RequiresUnreferencedCode("The type named in 'subType' may be trimmed.")]
+#endif
         public UnionAttribute(int key, string subType)
         {
             this.Key = key;
-            this.SubType = Type.GetType(subType, throwOnError: true);
+            this.SubType = Type.GetType(subType, throwOnError: true) ?? throw new Exception("SubType not found");
         }
     }
 

@@ -169,10 +169,8 @@ namespace MessagePack.Formatters
     public sealed class GenericDictionaryFormatter<
         TKey,
         TValue,
-#if NET8_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-#endif
-        TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary>
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TDictionary>
+        : DictionaryFormatterBase<TKey, TValue, TDictionary>
         where TDictionary : class?, IDictionary<TKey, TValue>, new()
         where TKey : notnull
     {
@@ -190,10 +188,8 @@ namespace MessagePack.Formatters
     public sealed class GenericReadOnlyDictionaryFormatter<
         TKey,
         TValue,
-#if NET8_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-#endif
-        TDictionary> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, TDictionary>
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TDictionary>
+        : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, TDictionary>
         where TDictionary : class?, IReadOnlyDictionary<TKey, TValue>
         where TKey : notnull
     {

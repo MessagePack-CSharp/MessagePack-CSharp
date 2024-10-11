@@ -4,6 +4,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -62,7 +63,7 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
-        private static class FormatterCache<T>
+        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;
 

@@ -481,10 +481,8 @@ namespace MessagePack.Formatters
 
     public sealed class GenericEnumerableFormatter<
         TElement,
-#if NET8_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-#endif
-        TCollection> : CollectionFormatterBase<TElement, TElement[], TCollection>
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCollection>
+        : CollectionFormatterBase<TElement, TElement[], TCollection>
         where TCollection : IEnumerable<TElement>
     {
         protected override TElement[] Create(int count, MessagePackSerializerOptions options)
@@ -1205,11 +1203,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NonGenericDictionaryFormatter<
-#if NET8_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-#endif
-        T> : IMessagePackFormatter<T?>
+    public sealed class NonGenericDictionaryFormatter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T> : IMessagePackFormatter<T?>
         where T : class, IDictionary, new()
     {
         public void Serialize(ref MessagePackWriter writer, T? value, MessagePackSerializerOptions options)

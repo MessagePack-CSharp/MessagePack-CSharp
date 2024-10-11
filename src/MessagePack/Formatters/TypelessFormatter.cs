@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -21,6 +22,7 @@ namespace MessagePack.Formatters
     /// <summary>
     /// Force serialize object as typeless.
     /// </summary>
+    [RequiresUnreferencedCode("Deserializes objects into types whose names are determined by the data.")]
     public sealed class ForceTypelessFormatter<T> : IMessagePackFormatter<T?>
     {
         public void Serialize(ref MessagePackWriter writer, T? value, MessagePackSerializerOptions options)
@@ -39,6 +41,9 @@ namespace MessagePack.Formatters
     /// <summary>
     /// For `object` field that holds derived from `object` value, ex: var arr = new object[] { 1, "a", new Model() };.
     /// </summary>
+#if NET8_0_OR_GREATER
+    [RequiresUnreferencedCode("Deserializes objects into types whose names are determined by the data.")]
+#endif
     public sealed class TypelessFormatter : IMessagePackFormatter<object?>
     {
         private delegate void SerializeMethod(object dynamicContractlessFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
@@ -113,6 +118,9 @@ namespace MessagePack.Formatters
             Deserializers.TryAdd(typeof(object), _ => (object p1, ref MessagePackReader p2, MessagePackSerializerOptions p3) => new object());
         }
 
+#if NET8_0_OR_GREATER
+        [RequiresUnreferencedCode("Types with variations on the name from the 'type' parameter may be loaded.")]
+#endif
         private string BuildTypeName(Type type, MessagePackSerializerOptions options)
         {
             if (options.OmitAssemblyVersion)
@@ -258,6 +266,9 @@ namespace MessagePack.Formatters
         /// Does not support deserializing of anonymous types
         /// Type should be covered by preceeding resolvers in complex/standard resolver.
         /// </summary>
+#if NET8_0_OR_GREATER
+        [RequiresUnreferencedCode("Loads types by name.")]
+#endif
         private object DeserializeByTypeName(ArraySegment<byte> typeName, ref MessagePackReader byteSequence, MessagePackSerializerOptions options)
         {
             Requires.Argument(typeName.Array is not null, nameof(typeName), "Array cannot be null.");

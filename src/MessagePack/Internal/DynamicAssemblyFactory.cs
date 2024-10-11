@@ -18,7 +18,7 @@ namespace MessagePack.Internal
     /// AssemblyLoadContext when running under .NET.
     /// </summary>
 #if NET8_0_OR_GREATER
-    [RequiresDynamicCode("This class explicitly serves dynamic assemblies.")]
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
 #endif
     internal class DynamicAssemblyFactory
     {
@@ -43,10 +43,7 @@ namespace MessagePack.Internal
 
         [return: NotNullIfNotNull("type")]
         public DynamicAssembly? GetDynamicAssembly(
-#if NET8_0_OR_GREATER
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
-#endif
-            Type? type,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] Type? type,
             bool allowPrivate)
         {
             if (type is null)

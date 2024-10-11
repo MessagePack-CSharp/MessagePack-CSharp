@@ -16,6 +16,7 @@
     <Compile Include="..\..\src\MessagePack\BufferWriter.cs">
       <Link>Code\BufferWriter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\Constants.cs" Link="Constants.cs" />
     <Compile Include="..\..\src\MessagePack\Formatters\IMessagePackFormatter`1.cs">
       <Link>Code\IMessagePackFormatter`1.cs</Link>
     </Compile>
@@ -109,6 +110,7 @@
     <Compile Include="..\..\src\MessagePack\MessagePackWriter.cs">
       <Link>Code\MessagePackWriter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\PolyfillAttributes.cs" Link="PolyfillAttributes.cs" />
     <Compile Include="..\..\src\MessagePack\Resolvers\SkipClrVisibilityChecks.cs">
       <Link>Code\SkipClrVisibilityChecks.cs</Link>
     </Compile>

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using MessagePack.Formatters;
 using MessagePack.Internal;
 
@@ -18,6 +19,7 @@ namespace MessagePack.Resolvers
     /// Serialized binary is valid MessagePack binary used ext-format and custom typecode(100).
     /// Inside ext - assembly qualified type name, and serialized object.
     /// </summary>
+    [RequiresUnreferencedCode("Deserializes objects into types whose names are determined by the data.")]
     public sealed class TypelessObjectResolver : IFormatterResolver
     {
         public static readonly IFormatterResolver Instance = new TypelessObjectResolver();
@@ -38,6 +40,7 @@ namespace MessagePack.Resolvers
             return Cache<T>.Formatter!;
         }
 
+        [RequiresUnreferencedCode("Deserializes objects into types whose names are determined by the data.")]
         private static class Cache<T>
         {
             public static readonly IMessagePackFormatter<T?>? Formatter;

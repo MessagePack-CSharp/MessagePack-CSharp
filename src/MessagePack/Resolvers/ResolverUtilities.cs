@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using MessagePack.Formatters;
 
@@ -9,7 +10,9 @@ namespace MessagePack.Internal
 {
     internal static class ResolverUtilities
     {
-        internal static IMessagePackFormatter ActivateFormatter(Type formatterType, object?[]? args = null)
+        internal static IMessagePackFormatter ActivateFormatter(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields)] Type formatterType,
+            object?[]? args = null)
         {
             if (args == null || args.Length == 0)
             {
@@ -32,7 +35,7 @@ namespace MessagePack.Internal
             }
         }
 
-        internal static FieldInfo? FetchSingletonField(Type formatterType)
+        internal static FieldInfo? FetchSingletonField([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] Type formatterType)
         {
             if (formatterType.GetField("Instance", BindingFlags.Static | BindingFlags.Public) is FieldInfo fieldInfo && fieldInfo.IsInitOnly)
             {
