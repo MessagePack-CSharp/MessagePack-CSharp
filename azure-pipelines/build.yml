@@ -24,6 +24,7 @@ jobs:
   - template: dotnet.yml
     parameters:
       RunTests: ${{ parameters.RunTests }}
+      osRID: win
 
 - job: Linux
   pool:
@@ -36,6 +37,7 @@ jobs:
   - template: dotnet.yml
     parameters:
       RunTests: ${{ parameters.RunTests }}
+      osRID: linux
   - script: dotnet format --verify-no-changes --no-restore
     displayName: 💅 Verify formatted code
 
@@ -51,6 +53,7 @@ jobs:
   - template: dotnet.yml
     parameters:
       RunTests: ${{ parameters.RunTests }}
+      osRID: osx
 
 - job: WrapUp
   dependsOn:
