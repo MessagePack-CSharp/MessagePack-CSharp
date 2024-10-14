@@ -39,13 +39,12 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 
 	private static class GeneratedMessagePackResolverGetFormatterHelper
 	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(5)
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(4)
 		{
-			{ typeof(global::System.Int32[]), 0 },
-			{ typeof(global::System.Collections.Generic.IEnumerable<global::System.Guid>), 1 },
-			{ typeof(global::TempProject.Wrapper<global::System.Collections.Generic.IEnumerable<global::System.Guid>>), 2 },
-			{ typeof(global::TempProject.Wrapper<int[]>), 3 },
-			{ typeof(global::TempProject.Wrapper<string>), 4 },
+			{ typeof(global::System.Collections.Generic.IEnumerable<global::System.Guid>), 0 },
+			{ typeof(global::TempProject.Wrapper<global::System.Collections.Generic.IEnumerable<global::System.Guid>>), 1 },
+			{ typeof(global::TempProject.Wrapper<int[]>), 2 },
+			{ typeof(global::TempProject.Wrapper<string>), 3 },
 		};
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(1)
 		{
@@ -58,11 +57,10 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				switch (closedKey)
 				{
-					case 0: return new MsgPack::Formatters.ArrayFormatter<global::System.Int32>();
-					case 1: return new MsgPack::Formatters.InterfaceEnumerableFormatter<global::System.Guid>();
-					case 2: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
-					case 3: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<int[]>();
-					case 4: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<string>();
+					case 0: return new MsgPack::Formatters.InterfaceEnumerableFormatter<global::System.Guid>();
+					case 1: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
+					case 2: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<int[]>();
+					case 3: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<string>();
 					default: return null; // unreachable
 				};
 			}
