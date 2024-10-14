@@ -41,7 +41,7 @@ namespace MessagePack.Internal
 
         [return: NotNullIfNotNull("type")]
         public DynamicAssembly? GetDynamicAssembly(
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] Type? type,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type? type,
             bool allowPrivate)
         {
             if (type is null)

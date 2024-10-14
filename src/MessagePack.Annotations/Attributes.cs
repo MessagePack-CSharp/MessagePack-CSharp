@@ -129,7 +129,7 @@ namespace MessagePack
     public class MessagePackFormatterAttribute : Attribute
     {
 #if NET8_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.Interfaces)]
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
         public Type FormatterType { get; }
 

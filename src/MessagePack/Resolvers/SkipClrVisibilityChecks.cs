@@ -83,7 +83,7 @@ internal class SkipClrVisibilityChecks
     /// <param name="typeInfo">The type which may be internal.</param>
     /// <param name="referencedAssemblies">The set of assemblies to add to where non-public types are found.</param>
     internal static void GetSkipVisibilityChecksRequirements(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] TypeInfo typeInfo,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TypeInfo typeInfo,
         ImmutableHashSet<AssemblyName>.Builder referencedAssemblies)
     {
         if (typeInfo.IsArray)

@@ -65,7 +65,7 @@ namespace MessagePack.Resolvers
         }
 
         [RequiresDynamicCode(Constants.DynamicFormatters)]
-        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] T>
+        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;
 
@@ -98,7 +98,7 @@ namespace MessagePack.Resolvers
 
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
         private static TypeInfo? BuildType(
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] Type type)
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
         {
             TypeInfo ti = type.GetTypeInfo();
 
