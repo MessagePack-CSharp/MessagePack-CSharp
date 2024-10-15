@@ -21,6 +21,26 @@ public static class RoslynAnalyzerExtensions
         }
     }
 
+    public static EqualityMatch IsApproximatelyEqualOrDerivedFrom(this INamedTypeSymbol? left, INamedTypeSymbol? right)
+    {
+        if (left is IErrorTypeSymbol || right is IErrorTypeSymbol)
+        {
+            return left?.ToDisplayString() == right?.ToDisplayString() ? EqualityMatch.Equal : EqualityMatch.NotEqual;
+        }
+        else if (SymbolEqualityComparer.Default.Equals(left, right))
+        {
+            return EqualityMatch.Equal;
+        }
+        else if (left is not null && right is not null && left.EnumerateBaseType().Any(bt => SymbolEqualityComparer.Default.Equals(bt, right)))
+        {
+            return EqualityMatch.LeftDerivesFromRight;
+        }
+        else
+        {
+            return EqualityMatch.NotEqual;
+        }
+    }
+
     public static IEnumerable<INamedTypeSymbol> EnumerateBaseType(this ITypeSymbol symbol)
     {
         INamedTypeSymbol? t = symbol.BaseType;
@@ -122,5 +142,12 @@ public static class RoslynAnalyzerExtensions
     {
         return symbol.GetMembers()
             .Concat(symbol.AllInterfaces.SelectMany(x => x.GetMembers()));
+    }
+
+    public enum EqualityMatch
+    {
+        NotEqual,
+        Equal,
+        LeftDerivesFromRight,
     }
 }

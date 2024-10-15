@@ -20,3 +20,5 @@ MsgPack012 | Usage | Error | MsgPack00xMessagePackAnalyzer
 MsgPack013 | Usage | Warning | Formatter has no accessible instance for the source generated resolver
 MsgPack014 | Usage | Warning | Formatters of reference types should implement `IMessagePackFormatter<T?>`
 MsgPack015 | Usage | Warning | MessagePackObjectAttribute.AllowPrivate should be set
+MsgPack016 | Usage | Error | KeyAttribute-derived attributes are not supported by AOT formatters
+MsgPack017 | Usage | Warning | Property with init accessor and initializer

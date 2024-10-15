@@ -26,6 +26,8 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string InaccessibleFormatterInstanceId = "MsgPack013";
     public const string NullableReferenceTypeFormatterId = "MsgPack014";
     public const string MessagePackObjectAllowPrivateId = "MsgPack015";
+    public const string AOTDerivedKeyId = "MsgPack016";
+    public const string AOTInitPropertyId = "MsgPack017";
 
     internal const string Category = "Usage";
 
@@ -211,6 +213,26 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTLimitationsId));
 
+    public static readonly DiagnosticDescriptor AOTDerivedKeyAttribute = new DiagnosticDescriptor(
+        id: AOTDerivedKeyId,
+        title: "KeyAttribute derivatives",
+        category: Category,
+        messageFormat: "KeyAttribute-derived attributes are not supported by AOT formatters",
+        description: "Use [Key(x)] attributes directly, or switch off source generation for this type using [MessagePackObject(SuppressSourceGeneration = true)].",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTDerivedKeyId));
+
+    public static readonly DiagnosticDescriptor AOTInitProperty = new(
+        id: AOTInitPropertyId,
+        title: "Property with init accessor and initializer",
+        category: Category,
+        messageFormat: "The value of a property with an init accessor and an initializer will be reset to the default value for the type upon deserialization when no value for them is deserialized",
+        description: "Due to a limitation in the C# language, properties with init accessor must be set by source generated deserializers unconditionally. When the data stream lacks a value for the property, it will be set with the default value for the property type, overriding a default that an initializer might set.",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTInitPropertyId));
+
     public static readonly DiagnosticDescriptor CollidingFormatters = new(
         id: CollidingFormattersId,
         title: "Colliding formatters",
@@ -297,6 +319,8 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         DeserializingConstructorParameterNameDuplicate,
         AotUnionAttributeRequiresTypeArg,
         AotArrayRankTooHigh,
+        AOTDerivedKeyAttribute,
+        AOTInitProperty,
         CollidingFormatters,
         InaccessibleFormatterInstance,
         InaccessibleFormatterType,
