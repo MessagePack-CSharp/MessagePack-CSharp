@@ -1062,6 +1062,9 @@ public class TypeCollector
             nestedFormatterRequired |= IsPartialTypeRequired(ctor.DeclaredAccessibility);
 
             var constructorLookupDictionary = stringMembers.ToLookup(x => x.Value.Info.Name, x => x, StringComparer.OrdinalIgnoreCase);
+            IReadOnlyDictionary<int, (MemberSerializationInfo Info, ITypeSymbol TypeSymbol)> ctorParamIndexIntMembersDictionary = intMembers
+                .OrderBy(x => x.Key).Select((x, i) => (Key: x.Value, Index: i))
+                .ToDictionary(x => x.Index, x => x.Key);
             do
             {
                 constructorParameters.Clear();
@@ -1070,7 +1073,7 @@ public class TypeCollector
                 {
                     if (isIntKey)
                     {
-                        if (intMembers.TryGetValue(ctorParamIndex, out (MemberSerializationInfo Info, ITypeSymbol TypeSymbol) member))
+                        if (ctorParamIndexIntMembersDictionary.TryGetValue(ctorParamIndex, out (MemberSerializationInfo Info, ITypeSymbol TypeSymbol) member))
                         {
                             if (this.compilation.ClassifyConversion(member.TypeSymbol, item.Type) is { IsImplicit: true } && member.Info.IsReadable)
                             {

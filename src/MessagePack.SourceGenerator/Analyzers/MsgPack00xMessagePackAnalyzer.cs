@@ -166,7 +166,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         title: "Deserializing constructors",
         category: Category,
         messageFormat: "Deserializing constructor parameter count mismatch",
-        description: "Constructor parameter count must meet or exceed the number of serialized members or the highest key index.",
+        description: "The deserializing constructor parameter count must meet or exceed the number of serialized members.",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(DeserializingConstructorId));
