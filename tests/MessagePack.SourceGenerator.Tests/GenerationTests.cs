@@ -672,4 +672,24 @@ public class MyGenericType<T>
             ExpectedDiagnostics = { DiagnosticResult.CompilerError("MsgPack007").WithLocation(0) },
         }.RunDefaultAsync(this.testOutputHelper);
     }
+
+    [Fact]
+    public async Task NoPrivateAccessNeeded()
+    {
+        // Test case came from https://github.com/MessagePack-CSharp/MessagePack-CSharp/issues/1993
+        string testSource = /* lang=c#-test */ """
+            using MessagePack;
+
+            [MessagePackObject]
+            public class Test3
+            {
+                [Key(0)]
+                public string Name { get; private set; }
+
+                [SerializationConstructor]
+                public Test3(string name) => Name = name;
+            }
+            """;
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
 }
