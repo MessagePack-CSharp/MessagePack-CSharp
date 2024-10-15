@@ -118,9 +118,7 @@ namespace MessagePack.Formatters
             Deserializers.TryAdd(typeof(object), _ => (object p1, ref MessagePackReader p2, MessagePackSerializerOptions p3) => new object());
         }
 
-#if NET8_0_OR_GREATER
         [RequiresUnreferencedCode("Types with variations on the name from the 'type' parameter may be loaded.")]
-#endif
         private string BuildTypeName(Type type, MessagePackSerializerOptions options)
         {
             if (options.OmitAssemblyVersion)
@@ -266,9 +264,7 @@ namespace MessagePack.Formatters
         /// Does not support deserializing of anonymous types
         /// Type should be covered by preceeding resolvers in complex/standard resolver.
         /// </summary>
-#if NET8_0_OR_GREATER
         [RequiresUnreferencedCode("Loads types by name.")]
-#endif
         private object DeserializeByTypeName(ArraySegment<byte> typeName, ref MessagePackReader byteSequence, MessagePackSerializerOptions options)
         {
             Requires.Argument(typeName.Array is not null, nameof(typeName), "Array cannot be null.");
