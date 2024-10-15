@@ -900,6 +900,16 @@ public class TypeCollector
                         this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.BothStringAndIntKeyAreNull, ((PropertyDeclarationSyntax)item.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
                     }
 
+                    // A property with an init accessor and an initializer has a default that will be discarded by the deserializer.
+                    if (suppressSourceGeneration is not true && isInitOnly)
+                    {
+                        EqualsValueClauseSyntax? initializer = item.DeclaringSyntaxReferences.Select(s => (s.GetSyntax(this.cancellationToken) as PropertyDeclarationSyntax)?.Initializer).FirstOrDefault(i => i is not null);
+                        if (initializer is not null)
+                        {
+                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.AOTInitProperty, initializer.GetLocation()));
+                        }
+                    }
+
                     if (searchFirst)
                     {
                         searchFirst = false;

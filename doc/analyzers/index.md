@@ -21,5 +21,6 @@ ID | Title
 [MsgPack014](MsgPack014.md) | Nullable reference type formatter
 [MsgPack015](MsgPack015.md) | MessagePackObjectAttribute.AllowPrivate should be set
 [MsgPack016](MsgPack016.md) | KeyAttribute-derived attributes are not supported by AOT formatters
+[MsgPack017](MsgPack017.md) | Property with init accessor and initializer
 
 [1]: https://nuget.org/packages/MessagePackAnalyzer

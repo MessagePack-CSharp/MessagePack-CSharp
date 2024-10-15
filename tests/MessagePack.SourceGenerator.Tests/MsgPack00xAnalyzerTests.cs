@@ -846,4 +846,35 @@ public class Bar : Foo
 
         await VerifyCS.VerifyAnalyzerAsync(test);
     }
+
+    [Fact]
+    public async Task InitPropertyInitializer()
+    {
+        string test = /* lang=c#-test */ """
+            using MessagePack;
+            
+            [MessagePackObject]
+            public class A
+            {
+                [Key(0)]
+                public string Prop1 { get; init; } {|MsgPack017:= "some default"|};
+
+                [Key(1)]
+                public string Prop2 { get; set; } = "some default";
+            }
+           
+           
+            [MessagePackObject(SuppressSourceGeneration = true)]
+            public class B
+            {
+                [Key(0)]
+                public string Prop1 { get; init; } = "some default";
+
+                [Key(1)]
+                public string Prop2 { get; set; } = "some default";
+            }
+            """;
+
+        await VerifyCS.VerifyAnalyzerAsync(test);
+    }
 }
