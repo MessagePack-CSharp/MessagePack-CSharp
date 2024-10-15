@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using MessagePack.Analyzers.CodeFixes;
+using MessagePack.SourceGenerator.Analyzers;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Testing;
 using VerifyCS = CSharpCodeFixVerifier<MessagePack.SourceGenerator.Analyzers.MsgPack00xMessagePackAnalyzer, MessagePack.Analyzers.CodeFixes.MessagePackCodeFixProvider>;
@@ -760,5 +761,89 @@ public class Bar : Foo
             TestCode = input,
             FixedCode = output,
         }.RunAsync();
+    }
+
+    [Fact]
+    public async Task DerivedAttributes()
+    {
+        string test = /* lang=c#-test */ """
+            using MessagePack;
+
+            [MessagePackObject]
+            public class A
+            {
+                [{|MsgPack016:CompositeKey(0, 1)|}]
+                public string Prop1 { get; set; }
+
+                [{|MsgPack016:CompositeKey(0, 2)|}]
+                public string Field2;
+            }
+
+            [MessagePackObject]
+            public class B : {|MsgPack016:A|}
+            {
+                [{|MsgPack016:CompositeKey(1, 1)|}]
+                public string Prop3 { get; set; }
+
+                [{|MsgPack016:CompositeKey(1, 2)|}]
+                public string Field4;
+            }
+
+            public class CompositeKeyAttribute : KeyAttribute
+            {
+                public CompositeKeyAttribute(byte level, int index)
+                    : base(CreateKey(level, index)) { }
+
+                public static string CreateKey(byte level, int index)
+                {
+                    var c = (char)('A' + level);
+                    return c + index.ToString("x");
+                }
+            }
+            """;
+
+        await VerifyCS.VerifyAnalyzerAsync(test);
+    }
+
+    [Fact]
+    public async Task DerivedAttributes_SourceGenerationDisabled()
+    {
+        string test = /* lang=c#-test */ """
+            using MessagePack;
+
+            [MessagePackObject(SuppressSourceGeneration = true)]
+            public class A
+            {
+                [CompositeKey(0, 1)]
+                public string Prop1 { get; set; }
+
+                [CompositeKey(0, 2)]
+                public string Field2;
+            }
+
+            [MessagePackObject(SuppressSourceGeneration = true)]
+            public class B : A
+            {
+                [CompositeKey(1, 1)]
+                public string Prop3 { get; set; }
+
+                [CompositeKey(1, 2)]
+                public string Field4;
+            }
+
+            public class CompositeKeyAttribute : KeyAttribute
+            {
+                public CompositeKeyAttribute(byte level, int index)
+                    : base(CreateKey(level, index)) { }
+
+                public static string CreateKey(byte level, int index)
+                {
+                    var c = (char)('A' + level);
+                    return c + index.ToString("x");
+                }
+            }
+            """;
+
+        await VerifyCS.VerifyAnalyzerAsync(test);
     }
 }

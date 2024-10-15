@@ -26,6 +26,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string InaccessibleFormatterInstanceId = "MsgPack013";
     public const string NullableReferenceTypeFormatterId = "MsgPack014";
     public const string MessagePackObjectAllowPrivateId = "MsgPack015";
+    public const string AOTDerivedKeyId = "MsgPack016";
 
     internal const string Category = "Usage";
 
@@ -211,6 +212,16 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTLimitationsId));
 
+    public static readonly DiagnosticDescriptor AOTDerivedKeyAttribute = new DiagnosticDescriptor(
+        id: AOTDerivedKeyId,
+        title: "KeyAttribute derivatives",
+        category: Category,
+        messageFormat: "KeyAttribute-derived attributes are not supported by AOT formatters",
+        description: "Use [Key(x)] attributes directly, or switch off source generation for this type using [MessagePackObject(SuppressSourceGeneration = true)].",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTDerivedKeyId));
+
     public static readonly DiagnosticDescriptor CollidingFormatters = new(
         id: CollidingFormattersId,
         title: "Colliding formatters",
@@ -297,6 +308,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         DeserializingConstructorParameterNameDuplicate,
         AotUnionAttributeRequiresTypeArg,
         AotArrayRankTooHigh,
+        AOTDerivedKeyAttribute,
         CollidingFormatters,
         InaccessibleFormatterInstance,
         InaccessibleFormatterType,
