@@ -50,7 +50,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				switch (closedKey)
 				{
-					case 0: return new global::Test3.Test3Formatter();
+					case 0: return new global::MessagePack.GeneratedMessagePackResolver.Test3Formatter();
 					default: return null; // unreachable
 				};
 			}

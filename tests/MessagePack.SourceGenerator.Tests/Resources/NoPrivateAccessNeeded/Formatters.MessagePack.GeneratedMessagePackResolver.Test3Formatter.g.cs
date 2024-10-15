@@ -6,7 +6,8 @@
 
 using MsgPack = global::MessagePack;
 
-partial class Test3 {
+namespace MessagePack {
+partial class GeneratedMessagePackResolver {
 
 	internal sealed class Test3Formatter : MsgPack::Formatters.IMessagePackFormatter<global::Test3>
 	{
@@ -54,4 +55,5 @@ partial class Test3 {
 			return ____result;
 		}
 	}
+}
 }

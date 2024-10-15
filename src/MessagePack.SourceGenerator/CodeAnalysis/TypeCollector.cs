@@ -5,6 +5,7 @@
 #pragma warning disable SA1649 // File name should match first type name
 
 using System.Collections.Immutable;
+using System.ComponentModel;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
@@ -682,6 +683,7 @@ public class TypeCollector
     {
         var isClass = !formattedType.IsValueType;
         bool nestedFormatterRequired = false;
+        List<IPropertySymbol> nestedFormatterRequiredIfPropertyIsNotSetByDeserializingCtor = new();
 
         AttributeData? contractAttr = formattedType.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute));
 
@@ -875,7 +877,10 @@ public class TypeCollector
                     nonPublicMembersAreSerialized |= (item.DeclaredAccessibility & Accessibility.Public) != Accessibility.Public;
 
                     nestedFormatterRequired |= item.GetMethod is not null && IsPartialTypeRequired(item.GetMethod.DeclaredAccessibility);
-                    nestedFormatterRequired |= item.SetMethod is not null && IsPartialTypeRequired(item.SetMethod.DeclaredAccessibility);
+                    if (item.SetMethod is not null && IsPartialTypeRequired(item.SetMethod.DeclaredAccessibility))
+                    {
+                        nestedFormatterRequiredIfPropertyIsNotSetByDeserializingCtor.Add(item);
+                    }
 
                     var intKey = key is { Value: int intKeyValue } ? intKeyValue : default(int?);
                     var stringKey = key is { Value: string stringKeyValue } ? stringKeyValue : default;
@@ -1205,6 +1210,13 @@ public class TypeCollector
         {
             // Skip any source generation
             return null;
+        }
+
+        // If any property had a private setter and does not appear in the deserializing constructor signature,
+        // we'll need a nested formatter.
+        foreach (IPropertySymbol property in nestedFormatterRequiredIfPropertyIsNotSetByDeserializingCtor)
+        {
+            nestedFormatterRequired |= !constructorParameters.Any(m => m.Name == property.Name);
         }
 
         if (nestedFormatterRequired && nonPublicMembersAreSerialized)
