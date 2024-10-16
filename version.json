@@ -7,6 +7,9 @@
     "^refs/heads/v\\d+(?:.\\d+)?$",
     "^refs/heads/develop$"
   ],
+  "nugetPackageVersion": {
+    "semVer": 2
+  },
   "cloudBuild": {
     "setVersionVariables": false
   }
