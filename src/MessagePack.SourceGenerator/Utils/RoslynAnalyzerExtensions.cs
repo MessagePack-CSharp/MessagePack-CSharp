@@ -124,6 +124,11 @@ public static class RoslynAnalyzerExtensions
         return false;
     }
 
+    /// <summary>
+    /// Enumerates all members of the given type.
+    /// </summary>
+    /// <param name="symbol">The symbol to read members for.</param>
+    /// <returns>The enumeration of members. Members are enumerated in the most derived type first, then each successive base type.</returns>
     public static IEnumerable<ISymbol> GetAllMembers(this ITypeSymbol symbol)
     {
         ITypeSymbol? t = symbol;

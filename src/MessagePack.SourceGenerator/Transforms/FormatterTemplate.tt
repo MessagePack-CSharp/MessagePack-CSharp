@@ -95,7 +95,7 @@ using MsgPack = global::MessagePack;
 						<#= member.LocalVariableName #> = <#= member.GetDeserializeMethodString() #>;
 <# } else {
   if (member.IsWritable) { #>
-						____result.<#= member.Name #> = <#= member.GetDeserializeMethodString() #>;
+						<#= member.GetMemberAccess("____result") #> = <#= member.GetDeserializeMethodString() #>;
 <# } else { #>
 						reader.Skip();
 <# } #>
@@ -120,7 +120,7 @@ using MsgPack = global::MessagePack;
 				goto MEMBER_ASSIGNMENT_END;
 			}
 
-			____result.<#= member.Name #> = <#= member.LocalVariableName #>;
+			<#= member.GetMemberAccess("____result") #> = <#= member.LocalVariableName #>;
 <# } #>
 <# if (memberAssignExists) { #>
 

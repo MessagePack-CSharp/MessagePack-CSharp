@@ -29,7 +29,7 @@ using MsgPack = global::MessagePack;
 		var member = list[i].Item1;
 		var binary = list[i].Item2; #>
 		// <#= member.StringKey #>
-		private static global::System.ReadOnlySpan<byte> GetSpan_<#= member.Name #>() => <#= EmbedStringHelper.ToByteArrayString(binary) #>;
+		private static global::System.ReadOnlySpan<byte> GetSpan_<#= member.UniqueIdentifier #>() => <#= EmbedStringHelper.ToByteArrayString(binary) #>;
 <# } #>
 <# if (list.Count != 0) { #>
 
@@ -59,7 +59,7 @@ using MsgPack = global::MessagePack;
 			writer.WriteMapHeader(<#= list.Count #>);
 <# foreach (var memberAndBinary in list) {
 		var member = memberAndBinary.Item1; #>
-			writer.WriteRaw(GetSpan_<#= member.Name #>());
+			writer.WriteRaw(GetSpan_<#= member.UniqueIdentifier #>());
 			<#= member.GetSerializeMethodString() #>;
 <# } #>
 		}
@@ -115,7 +115,7 @@ using MsgPack = global::MessagePack;
 <# foreach (var member in Info.Members.Where(x => x.IsWritable && !x.IsInitOnly && !x.IsRequired && !Info.ConstructorParameters.Any(p => p.Equals(x)))) { #>
 			if (<#= member.LocalVariableName #>IsInitialized)
 			{
-				____result.<#= member.Name #> = <#= member.LocalVariableName #>;
+				<#= member.GetMemberAccess("____result") #> = <#= member.LocalVariableName #>;
 			}
 
 <# } #>

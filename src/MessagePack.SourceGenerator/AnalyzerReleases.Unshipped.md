@@ -22,3 +22,4 @@ MsgPack014 | Usage | Warning | Formatters of reference types should implement `I
 MsgPack015 | Usage | Warning | MessagePackObjectAttribute.AllowPrivate should be set
 MsgPack016 | Usage | Error | KeyAttribute-derived attributes are not supported by AOT formatters
 MsgPack017 | Usage | Warning | Property with init accessor and initializer
+MsgPack018 | Usage | Error | Unique names required in force map mode

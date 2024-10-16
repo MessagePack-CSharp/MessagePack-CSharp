@@ -877,4 +877,35 @@ public class Bar : Foo
 
         await VerifyCS.VerifyAnalyzerAsync(test);
     }
+
+    [Fact]
+    public async Task NameCollisionsInForceMapMode()
+    {
+        string test = /* lang=c#-test */ """
+            using MessagePack;
+
+            [MessagePackObject(true)]
+            public class Base
+            {
+                public string Prop { get; set; }
+
+                public string Field;
+
+                public string TwoFaced { get; set; } // derived declares a *field* by the same name.
+            }
+
+            [MessagePackObject(true)]
+            public class Derived : Base
+            {
+                public new string {|MsgPack018:Prop|} { get; set; }
+
+                public new string {|MsgPack018:Field|};
+
+                public new string {|MsgPack018:TwoFaced|};
+            }
+            """
+        ;
+
+        await VerifyCS.VerifyAnalyzerAsync(test);
+    }
 }

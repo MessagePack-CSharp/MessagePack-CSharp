@@ -732,8 +732,49 @@ public class TypeCollector
         }
 
         HashSet<Diagnostic> reportedDiagnostics = new();
+        IEnumerable<ISymbol> instanceMembers = formattedType.GetAllMembers()
+            .Where(m => m is IFieldSymbol or IPropertySymbol && !(m.IsStatic || m.IsOverride || m.IsImplicitlyDeclared));
+
+        // The actual member identifiers of each serializable member,
+        // such that we'll recognize collisions as we enumerate members in base types
+        // and record that that happened so that the emitted source generator can apply the necessary casts.
+        // In particular this does NOT store substitute names given by KeyAttribute.Name.
+        // Members should be added to this set after they are verified to be accessible, instance, non-override properties,
+        // whether or not those members are serialized.
+        HashSet<string> collidingMemberNames = new(StringComparer.Ordinal);
+        HashSet<string> observedMemberNames = new(StringComparer.Ordinal);
+        foreach (ISymbol member in instanceMembers)
+        {
+            if (!observedMemberNames.Add(member.Name))
+            {
+                collidingMemberNames.Add(member.Name);
+            }
+        }
+
+        QualifiedNamedTypeName? GetDeclaringTypeIfColliding(ISymbol symbol) => collidingMemberNames.Contains(symbol.Name) && !SymbolEqualityComparer.Default.Equals(symbol.ContainingType, formattedType) ? new(symbol.ContainingType) : null;
+
         if (this.options.Generator.Formatters.UsesMapMode || (contractAttr?.ConstructorArguments[0] is { Value: true }))
         {
+            Dictionary<string, ISymbol> claimedKeys = new(StringComparer.Ordinal);
+            void ReportNonUniqueNameIfApplicable(ISymbol item, string stringKey)
+            {
+                if (claimedKeys.TryGetValue(stringKey, out ISymbol newSymbol))
+                {
+                    SyntaxNode? syntax = newSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax(this.cancellationToken);
+                    var location = syntax switch
+                    {
+                        PropertyDeclarationSyntax { Identifier: SyntaxToken propertyId } => propertyId.GetLocation(),
+                        VariableDeclaratorSyntax { Identifier: SyntaxToken fieldId } => fieldId.GetLocation(),
+                        not null => syntax.GetLocation(),
+                        _ => null,
+                    };
+
+                    reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.CollidingMemberNamesInForceMapMode, location));
+                }
+
+                claimedKeys[stringKey] = item;
+            }
+
             // All public members are serialize target except [Ignore] member.
             // Include private members if the type opted into that.
             Accessibility minimumAccessibility = allowPrivateAttribute is true ? Accessibility.Private : Accessibility.Public;
@@ -741,62 +782,81 @@ public class TypeCollector
 
             var hiddenIntKey = 0;
 
-            foreach (IPropertySymbol item in formattedType.GetAllMembers().OfType<IPropertySymbol>())
+            foreach (ISymbol baseItem in instanceMembers)
             {
-                ImmutableArray<AttributeData> attributes = item.GetAttributes();
-                if (attributes.Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)) ||
-                    item.IsStatic ||
-                    item.IsOverride ||
-                    item.IsImplicitlyDeclared ||
-                    item.DeclaredAccessibility < minimumAccessibility)
+                switch (baseItem)
                 {
-                    continue;
-                }
+                    case IPropertySymbol item:
+                        {
+                            ImmutableArray<AttributeData> attributes = item.GetAttributes();
+                            if (attributes.Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)) ||
+                                item.DeclaredAccessibility < minimumAccessibility)
+                            {
+                                continue;
+                            }
 
-                bool isReadable = item.GetMethod is not null;
-                bool isWritable = item.SetMethod is not null;
-                if (!isReadable && !isWritable)
-                {
-                    continue;
-                }
+                            bool isReadable = item.GetMethod is not null;
+                            bool isWritable = item.SetMethod is not null;
+                            if (!isReadable && !isWritable)
+                            {
+                                continue;
+                            }
 
-                bool isInitOnly = item.SetMethod?.IsInitOnly is true;
-                AttributeData? keyAttribute = attributes.FirstOrDefault(attributes => attributes.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute));
-                string stringKey = keyAttribute?.ConstructorArguments.Length == 1 && keyAttribute.ConstructorArguments[0].Value is string name ? name : item.Name;
+                            bool isInitOnly = item.SetMethod?.IsInitOnly is true;
+                            AttributeData? keyAttribute = attributes.FirstOrDefault(attributes => attributes.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute));
+                            string stringKey = keyAttribute?.ConstructorArguments.Length == 1 && keyAttribute.ConstructorArguments[0].Value is string name ? name : item.Name;
+                            ReportNonUniqueNameIfApplicable(item, stringKey);
 
-                nestedFormatterRequired |= item.GetMethod is not null && IsPartialTypeRequired(item.GetMethod.DeclaredAccessibility);
-                nestedFormatterRequired |= item.SetMethod is not null && IsPartialTypeRequired(item.SetMethod.DeclaredAccessibility);
-                FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
-                MemberSerializationInfo member = new(true, isWritable, isReadable, isInitOnly, item.IsRequired, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
-                stringMembers.Add(member.StringKey, (member, item.Type));
+                            nestedFormatterRequired |= item.GetMethod is not null && IsPartialTypeRequired(item.GetMethod.DeclaredAccessibility);
+                            nestedFormatterRequired |= item.SetMethod is not null && IsPartialTypeRequired(item.SetMethod.DeclaredAccessibility);
+                            FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
+                            MemberSerializationInfo member = new(true, isWritable, isReadable, isInitOnly, item.IsRequired, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter)
+                            {
+                                DeclaringType = GetDeclaringTypeIfColliding(item),
+                            };
+                            if (!stringMembers.ContainsKey(member.StringKey))
+                            {
+                                stringMembers.Add(member.StringKey, (member, item.Type));
+                            }
 
-                if (specialFormatter is null)
-                {
-                    this.CollectCore(item.Type); // recursive collect
-                }
-            }
+                            if (specialFormatter is null)
+                            {
+                                this.CollectCore(item.Type); // recursive collect
+                            }
+                        }
 
-            foreach (IFieldSymbol item in formattedType.GetAllMembers().OfType<IFieldSymbol>())
-            {
-                ImmutableArray<AttributeData> attributes = item.GetAttributes();
-                if (attributes.Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)) ||
-                    item.IsStatic ||
-                    item.IsImplicitlyDeclared ||
-                    item.DeclaredAccessibility < minimumAccessibility)
-                {
-                    continue;
-                }
+                        break;
+                    case IFieldSymbol item:
+                        {
+                            ImmutableArray<AttributeData> attributes = item.GetAttributes();
+                            if (attributes.Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)) ||
+                                item.DeclaredAccessibility < minimumAccessibility)
+                            {
+                                continue;
+                            }
 
-                AttributeData? keyAttribute = attributes.FirstOrDefault(attributes => attributes.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute));
-                string stringKey = keyAttribute?.ConstructorArguments.Length == 1 && keyAttribute.ConstructorArguments[0].Value is string name ? name : item.Name;
+                            AttributeData? keyAttribute = attributes.FirstOrDefault(attributes => attributes.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute));
+                            string stringKey = keyAttribute?.ConstructorArguments.Length == 1 && keyAttribute.ConstructorArguments[0].Value is string name ? name : item.Name;
+                            ReportNonUniqueNameIfApplicable(item, stringKey);
 
-                nestedFormatterRequired |= IsPartialTypeRequired(item.DeclaredAccessibility);
-                FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
-                MemberSerializationInfo member = new(false, IsWritable: !item.IsReadOnly, IsReadable: true, IsInitOnly: false, item.IsRequired, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
-                stringMembers.Add(member.StringKey, (member, item.Type));
-                if (specialFormatter is null)
-                {
-                    this.CollectCore(item.Type); // recursive collect
+                            nestedFormatterRequired |= IsPartialTypeRequired(item.DeclaredAccessibility);
+                            FormatterDescriptor? specialFormatter = GetSpecialFormatter(item);
+                            MemberSerializationInfo member = new(false, IsWritable: !item.IsReadOnly, IsReadable: true, IsInitOnly: false, item.IsRequired, hiddenIntKey++, stringKey, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter)
+                            {
+                                DeclaringType = GetDeclaringTypeIfColliding(item),
+                            };
+                            if (!stringMembers.ContainsKey(member.StringKey))
+                            {
+                                stringMembers.Add(member.StringKey, (member, item.Type));
+                            }
+
+                            if (specialFormatter is null)
+                            {
+                                this.CollectCore(item.Type); // recursive collect
+                            }
+                        }
+
+                        break;
                 }
             }
         }
@@ -806,16 +866,11 @@ public class TypeCollector
             var searchFirst = true;
             var hiddenIntKey = 0;
 
-            foreach (IPropertySymbol item in formattedType.GetAllMembers().OfType<IPropertySymbol>())
+            foreach (IPropertySymbol item in instanceMembers.OfType<IPropertySymbol>())
             {
                 if (item.IsIndexer)
                 {
                     continue; // .tt files don't generate good code for this yet: https://github.com/neuecc/MessagePack-CSharp/issues/390
-                }
-
-                if (item.IsStatic || item.IsImplicitlyDeclared)
-                {
-                    continue;
                 }
 
                 if (item.GetAttributes().Any(x =>
@@ -936,7 +991,10 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, isWritable, isReadable, isInitOnly, item.IsRequired, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
+                        var member = new MemberSerializationInfo(true, isWritable, isReadable, isInitOnly, item.IsRequired, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter)
+                        {
+                            DeclaringType = GetDeclaringTypeIfColliding(item),
+                        };
                         intMembers.Add(member.IntKey, (member, item.Type));
                     }
                     else if (stringKey is not null)
@@ -946,7 +1004,10 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, isWritable, isReadable, isInitOnly, item.IsRequired, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
+                        var member = new MemberSerializationInfo(true, isWritable, isReadable, isInitOnly, item.IsRequired, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter)
+                        {
+                            DeclaringType = GetDeclaringTypeIfColliding(item),
+                        };
                         stringMembers.Add(member.StringKey, (member, item.Type));
                     }
                 }
@@ -1068,7 +1129,10 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, IsInitOnly: false, item.IsRequired, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
+                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, IsInitOnly: false, item.IsRequired, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter)
+                        {
+                            DeclaringType = GetDeclaringTypeIfColliding(item),
+                        };
                         intMembers.Add(member.IntKey, (member, item.Type));
                     }
                     else
@@ -1078,7 +1142,10 @@ public class TypeCollector
                             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
-                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, IsInitOnly: false, item.IsRequired, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter);
+                        var member = new MemberSerializationInfo(true, IsWritable: !item.IsReadOnly, IsReadable: true, IsInitOnly: false, item.IsRequired, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), specialFormatter)
+                        {
+                            DeclaringType = GetDeclaringTypeIfColliding(item),
+                        };
                         stringMembers.Add(member.StringKey, (member, item.Type));
                     }
                 }

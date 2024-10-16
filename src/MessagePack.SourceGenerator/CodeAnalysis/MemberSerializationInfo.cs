@@ -18,13 +18,24 @@ public record MemberSerializationInfo(
 {
     private static readonly IReadOnlyCollection<string> PrimitiveTypes = new HashSet<string>(AnalyzerUtilities.PrimitiveTypes);
 
-    public string LocalVariableName => $"__{this.Name}__";
+    public string LocalVariableName => $"__{this.UniqueIdentifier}__";
+
+    public string UniqueIdentifier => this.DeclaringType is null ? this.Name : $"{this.DeclaringType.Name}_{this.Name}";
+
+    /// <summary>
+    /// Gets the declaring type of this member, if a derived type declares a new member
+    /// with the same identifier, thus requiring a source generator to cast
+    /// the target to the member's declaring type in order to access it.
+    /// </summary>
+    public required QualifiedNamedTypeName? DeclaringType { get; init; }
 
     public string GetSerializeMethodString()
     {
+        string memberRead = this.GetMemberAccess("value");
+
         if (CustomFormatter is not null)
         {
-            return $"this.__{this.Name}CustomFormatter__.Serialize(ref writer, value.{this.Name}, options)";
+            return $"this.__{this.Name}CustomFormatter__.Serialize(ref writer, {memberRead}, options)";
         }
         else if (PrimitiveTypes.Contains(this.Type))
         {
@@ -32,7 +43,7 @@ public record MemberSerializationInfo(
         }
         else
         {
-            return $"MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Serialize(ref writer, value.{this.Name}, options)";
+            return $"MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Serialize(ref writer, {memberRead}, options)";
         }
     }
 
@@ -58,4 +69,6 @@ public record MemberSerializationInfo(
             return $"MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Deserialize(ref reader, options)";
         }
     }
+
+    public string GetMemberAccess(string targetObject) => this.DeclaringType is null ? $"{targetObject}.{this.Name}" : $"(({this.DeclaringType.GetQualifiedName()}){targetObject}).{this.Name}";
 }

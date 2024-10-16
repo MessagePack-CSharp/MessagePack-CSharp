@@ -64,7 +64,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write("\t\t// ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.StringKey));
             this.Write("\r\n\t\tprivate static global::System.ReadOnlySpan<byte> GetSpan_");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.UniqueIdentifier));
             this.Write("() => ");
             this.Write(this.ToStringHelper.ToStringWithCulture(EmbedStringHelper.ToByteArrayString(binary)));
             this.Write(";\r\n");
@@ -97,7 +97,7 @@ namespace MessagePack.SourceGenerator.Transforms
  foreach (var memberAndBinary in list) {
 		var member = memberAndBinary.Item1; 
             this.Write("\t\t\twriter.WriteRaw(GetSpan_");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.UniqueIdentifier));
             this.Write("());\r\n\t\t\t");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetSerializeMethodString()));
             this.Write(";\r\n");
@@ -157,8 +157,8 @@ namespace MessagePack.SourceGenerator.Transforms
  foreach (var member in Info.Members.Where(x => x.IsWritable && !x.IsInitOnly && !x.IsRequired && !Info.ConstructorParameters.Any(p => p.Equals(x)))) { 
             this.Write("\t\t\tif (");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.LocalVariableName));
-            this.Write("IsInitialized)\r\n\t\t\t{\r\n\t\t\t\t____result.");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write("IsInitialized)\r\n\t\t\t{\r\n\t\t\t\t");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.GetMemberAccess("____result")));
             this.Write(" = ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.LocalVariableName));
             this.Write(";\r\n\t\t\t}\r\n\r\n");

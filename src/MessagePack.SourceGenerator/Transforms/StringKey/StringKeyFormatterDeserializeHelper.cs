@@ -44,7 +44,7 @@ internal static class StringKeyFormatterDeserializeHelper
         {
             if (canOverwrite)
             {
-                buffer.Append("____result.").Append(member.Info.Name).Append(" = ");
+                buffer.Append(member.Info.GetMemberAccess("____result")).Append(" = ");
             }
             else
             {

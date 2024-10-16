@@ -135,8 +135,8 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(";\r\n");
  } else {
   if (member.IsWritable) { 
-            this.Write("\t\t\t\t\t\t____result.");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write("\t\t\t\t\t\t");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.GetMemberAccess("____result")));
             this.Write(" = ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetDeserializeMethodString()));
             this.Write(";\r\n");
@@ -158,8 +158,8 @@ namespace MessagePack.SourceGenerator.Transforms
   memberAssignExists = true;
             this.Write("\t\t\tif (length <= ");
             this.Write(this.ToStringHelper.ToStringWithCulture(memberIndex));
-            this.Write(")\r\n\t\t\t{\r\n\t\t\t\tgoto MEMBER_ASSIGNMENT_END;\r\n\t\t\t}\r\n\r\n\t\t\t____result.");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write(")\r\n\t\t\t{\r\n\t\t\t\tgoto MEMBER_ASSIGNMENT_END;\r\n\t\t\t}\r\n\r\n\t\t\t");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.GetMemberAccess("____result")));
             this.Write(" = ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.LocalVariableName));
             this.Write(";\r\n");
