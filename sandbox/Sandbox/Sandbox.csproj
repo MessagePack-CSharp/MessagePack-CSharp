@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <Prefer32Bit>False</Prefer32Bit>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
