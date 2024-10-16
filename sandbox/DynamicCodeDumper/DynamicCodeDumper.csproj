@@ -79,6 +79,9 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSecurity.cs">
       <Link>Code\MessagePackSecurity.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SipHash.cs">
+      <Link>Code\SipHash.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MonoProtection.cs">
       <Link>Code\MonoProtection.cs</Link>
     </Compile>
