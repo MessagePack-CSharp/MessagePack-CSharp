@@ -1,4 +1,4 @@
-# MessagePack for C# (.NET, .NET Core, Unity, Xamarin)
+# MessagePack for C# (.NET Framework, .NET 6, Unity, Xamarin)
 
 [![NuGet](https://img.shields.io/nuget/v/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
 [![NuGet](https://img.shields.io/nuget/vpre/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
@@ -68,7 +68,7 @@ MessagePack has a compact binary size and a full set of general purpose expressi
 
 This library is distributed via NuGet. Special [Unity support](#unity) is available, too.
 
-We target .NET Standard 2.0 with special optimizations for .NET Core 2.1+, making it compatible with most reasonably recent .NET runtimes such as Core 2.0 and later, Framework 4.6.1 and later, Mono 5.4 and later and Unity 2018.3 and later.
+We target .NET Standard 2.0 with special optimizations for .NET 6+, making it compatible with most reasonably recent .NET runtimes such as Core 2.0 and later, Framework 4.6.1 and later, Mono 5.4 and later and Unity 2018.3 and later.
 The library code is pure C# (with Just-In-Time IL code generation on some platforms).
 
 ### NuGet packages
@@ -1566,7 +1566,7 @@ The `MessagePack.UnityShims` NuGet package is for .NET server-side serialization
 
 If you want to share a class between Unity and a server, you can use `SharedProject` or `Reference as Link` or a glob reference (with `LinkBase`), etc. Anyway, you need to share at source-code level. This is a sample project structure using a glob reference (recommended).
 
-- ServerProject(.NET 4.6/.NET Core/.NET Standard)
+- ServerProject(.NET Framework 4.6/.NET/.NET Standard)
   - \[`<Compile Include="..\UnityProject\Assets\Scripts\Shared\**\*.cs" LinkBase="Shared" />`\]
   - \[MessagePack\]
   - \[MessagePack.UnityShims\]
@@ -1673,7 +1673,7 @@ In Unity, you can use MessagePack CodeGen windows at `Windows -> MessagePack -> 
 
 ![](https://user-images.githubusercontent.com/46207/69414381-f14da400-0d55-11ea-9f8d-9af448d347dc.png)
 
-Install the .NET Core runtime, install mpc (as a .NET Core Tool as described above), and execute `dotnet mpc`. Currently this tool is experimental so please tell me your opinion.
+Install the .NET runtime, install mpc (as a .NET Tool as described above), and execute `dotnet mpc`. Currently this tool is experimental so please tell me your opinion.
 
 In Xamarin, you can install the [the `MessagePack.MSBuild.Tasks` NuGet package](doc/msbuildtask.md) into your projects to pre-compile fast serialization code and run in environments where JIT compilation is not allowed.
 
