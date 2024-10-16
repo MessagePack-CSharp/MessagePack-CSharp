@@ -1,6 +1,5 @@
 {
   "sdk": {
-    // Get the pinned version of the SDK from https://dotnet.microsoft.com/download/dotnet-core/2.2
-    "version": "2.2.300"
+    "version": "8.0.403"
   }
 }
