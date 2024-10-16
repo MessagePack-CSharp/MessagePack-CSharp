@@ -43,6 +43,19 @@ public class MapModeExecutionTests(ITestOutputHelper logger)
         AssertRoundtrip(original);
     }
 
+    [Fact]
+    public void NewPropertyInDerivedType_KeepsValueIndependent()
+    {
+        MapModeWithOverriddenKeyCollision.Derived expected = new()
+        {
+            Prop1 = "DerivedProp",
+        };
+        MapModeWithOverriddenKeyCollision.Base expectedBase = expected;
+        expectedBase.Prop1 = "BaseProp";
+
+        this.AssertRoundtrip(expected);
+    }
+
     private T AssertRoundtrip<T>(T value)
     {
         var after = Roundtrip(value);

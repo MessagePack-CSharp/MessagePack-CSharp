@@ -28,6 +28,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string MessagePackObjectAllowPrivateId = "MsgPack015";
     public const string AOTDerivedKeyId = "MsgPack016";
     public const string AOTInitPropertyId = "MsgPack017";
+    public const string CollidingMemberNamesInForceMapModeId = "MsgPack018";
 
     internal const string Category = "Usage";
 
@@ -301,6 +302,15 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(MessagePackObjectAllowPrivateId));
 
+    public static readonly DiagnosticDescriptor CollidingMemberNamesInForceMapMode = new(
+        id: CollidingMemberNamesInForceMapModeId,
+        title: "Unique names required in force map mode",
+        category: Category,
+        messageFormat: "All serialized member names must be unique in force map mode, but this member redeclares a member with the same name as one found on a base type",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(CollidingMemberNamesInForceMapModeId));
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         TypeMustBeMessagePackObject,
         MessageFormatterMustBeMessagePackFormatter,
@@ -327,7 +337,8 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         PartialTypeRequired,
         InaccessibleDataType,
         NullableReferenceTypeFormatter,
-        MessagePackObjectAllowPrivateRequired);
+        MessagePackObjectAllowPrivateRequired,
+        CollidingMemberNamesInForceMapMode);
 
     public override void Initialize(AnalysisContext context)
     {

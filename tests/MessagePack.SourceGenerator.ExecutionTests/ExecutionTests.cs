@@ -65,6 +65,23 @@ public class ExecutionTests(ITestOutputHelper logger)
     }
 
     [Fact]
+    public void NewPropertyInDerivedType_KeepsValueIndependent()
+    {
+        NewPropertyInDerivedType.Derived expected = new()
+        {
+            Prop = "DerivedProp",
+            Field = "DerivedField",
+            TwoFaced = "DerivedTwo",
+        };
+        NewPropertyInDerivedType.Base expectedBase = expected;
+        expectedBase.Prop = "BaseProp";
+        expectedBase.Field = "BaseField";
+        expectedBase.TwoFaced = "BaseTwo";
+
+        this.AssertRoundtrip(expected);
+    }
+
+    [Fact]
     public void DeserializingConstructorStartsWithIdx1()
     {
         this.AssertRoundtrip(new DeserializingConstructorStartsWithIdx1("foo"));
