@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\src\MessagePack\SipHash.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\**\*.cs" Exclude="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\T4\**\*.cs" />
   </ItemGroup>
 
