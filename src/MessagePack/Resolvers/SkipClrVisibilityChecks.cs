@@ -22,6 +22,9 @@ namespace MessagePack;
 /// Gives a dynamic assembly the ability to skip CLR visibility checks,
 /// allowing the assembly to access private members of another assembly.
 /// </summary>
+#if NET8_0_OR_GREATER
+[RequiresDynamicCode(Constants.DynamicFormatters)]
+#endif
 internal class SkipClrVisibilityChecks
 {
     /// <summary>
@@ -79,7 +82,9 @@ internal class SkipClrVisibilityChecks
     /// </summary>
     /// <param name="typeInfo">The type which may be internal.</param>
     /// <param name="referencedAssemblies">The set of assemblies to add to where non-public types are found.</param>
-    internal static void GetSkipVisibilityChecksRequirements(TypeInfo typeInfo, ImmutableHashSet<AssemblyName>.Builder referencedAssemblies)
+    internal static void GetSkipVisibilityChecksRequirements(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TypeInfo typeInfo,
+        ImmutableHashSet<AssemblyName>.Builder referencedAssemblies)
     {
         if (typeInfo.IsArray)
         {
@@ -93,38 +98,38 @@ internal class SkipClrVisibilityChecks
             AddTypeIfNonPublic(arg);
         }
 
-        foreach (MemberInfo member in typeInfo.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+        BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+        foreach (FieldInfo field in typeInfo.GetFields(bindingFlags))
         {
-            switch (member)
+            if (!field.IsPublic)
             {
-                case FieldInfo field:
-                    if (!field.IsPublic)
-                    {
-                        referencedAssemblies.Add(typeInfo.Assembly.GetName());
-                    }
+                referencedAssemblies.Add(typeInfo.Assembly.GetName());
+            }
 
-                    AddTypeIfNonPublic(field.FieldType);
-                    break;
-                case PropertyInfo property:
-                    if (property.SetMethod?.IsPublic is false || property.GetMethod?.IsPublic is false)
-                    {
-                        referencedAssemblies.Add(typeInfo.Assembly.GetName());
-                    }
+            AddTypeIfNonPublic(field.FieldType);
+        }
 
-                    AddTypeIfNonPublic(property.PropertyType);
-                    break;
-                case ConstructorInfo constructorInfo:
-                    if (!constructorInfo.IsPublic)
-                    {
-                        referencedAssemblies.Add(typeInfo.Assembly.GetName());
-                    }
+        foreach (PropertyInfo property in typeInfo.GetProperties(bindingFlags))
+        {
+            if (property.SetMethod?.IsPublic is false || property.GetMethod?.IsPublic is false)
+            {
+                referencedAssemblies.Add(typeInfo.Assembly.GetName());
+            }
 
-                    foreach (ParameterInfo parameter in constructorInfo.GetParameters())
-                    {
-                        AddTypeIfNonPublic(parameter.ParameterType);
-                    }
+            AddTypeIfNonPublic(property.PropertyType);
+        }
 
-                    break;
+        foreach (ConstructorInfo constructorInfo in typeInfo.GetConstructors(bindingFlags))
+        {
+            if (!constructorInfo.IsPublic)
+            {
+                referencedAssemblies.Add(typeInfo.Assembly.GetName());
+            }
+
+            foreach (ParameterInfo parameter in constructorInfo.GetParameters())
+            {
+                AddTypeIfNonPublic(parameter.ParameterType);
             }
         }
 
@@ -189,6 +194,9 @@ internal class SkipClrVisibilityChecks
     /// Defines the special IgnoresAccessChecksToAttribute type in the <see cref="moduleBuilder"/>.
     /// </summary>
     /// <returns>The generated attribute type.</returns>
+#if NET8_0_OR_GREATER
+    [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
     private TypeInfo EmitMagicAttribute()
     {
         TypeBuilder tb = this.moduleBuilder.DefineType(

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -31,6 +32,7 @@ namespace MessagePack.Internal
         /// </summary>
         /// <param name="moduleName">Name of the module to be generated.</param>
         /// <param name="skipVisibilityChecksTo">The names of assemblies that should be fully accessible to this dynamic one, bypassing visibility checks.</param>
+        [RequiresDynamicCode(Constants.DynamicFormatters)]
         public DynamicAssembly(string moduleName, ImmutableHashSet<AssemblyName> skipVisibilityChecksTo)
         {
 #if NETFRAMEWORK // We don't ship a net472 target, but we might add one for debugging purposes
@@ -50,9 +52,17 @@ namespace MessagePack.Internal
 
         public TypeBuilder DefineType(string name, TypeAttributes attr) => this.moduleBuilder.DefineType(name, attr);
 
-        public TypeBuilder DefineType(string name, TypeAttributes attr, Type? parent) => this.moduleBuilder.DefineType(name, attr, parent);
+        public TypeBuilder DefineType(
+            string name,
+            TypeAttributes attr,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type? parent)
+            => this.moduleBuilder.DefineType(name, attr, parent);
 
-        public TypeBuilder DefineType(string name, TypeAttributes attr, Type? parent, Type[]? interfaces) => this.moduleBuilder.DefineType(name, attr, parent, interfaces);
+        public TypeBuilder DefineType(
+            string name,
+            TypeAttributes attr,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type? parent,
+            Type[]? interfaces) => this.moduleBuilder.DefineType(name, attr, parent, interfaces);
 
 #if NETFRAMEWORK
 

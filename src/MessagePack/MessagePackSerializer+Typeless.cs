@@ -5,6 +5,7 @@
 
 using System;
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,8 @@ namespace MessagePack
         /// A convenience wrapper around <see cref="MessagePackSerializer"/> that assumes all generic type arguments are <see cref="object"/>
         /// causing the type of top-level objects to be recorded in the MessagePack stream and thus deserialized to the original type automatically.
         /// </summary>
+        [RequiresDynamicCode(Constants.DynamicFormattersIncluded)]
+        [RequiresUnreferencedCode(Constants.Typeless)]
         public static class Typeless
         {
             /// <summary>

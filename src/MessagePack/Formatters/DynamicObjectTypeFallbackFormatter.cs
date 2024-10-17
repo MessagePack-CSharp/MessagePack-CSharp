@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -12,6 +13,7 @@ namespace MessagePack.Formatters
     /// for which another resolver can provide a formatter for the runtime type.
     /// Its deserialization is limited to forwarding all calls to the <see cref="PrimitiveObjectFormatter"/>.
     /// </summary>
+    [RequiresDynamicCode(Constants.ClosingGenerics)]
     public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object?>
     {
         public static readonly IMessagePackFormatter<object?> Instance = new DynamicObjectTypeFallbackFormatter();

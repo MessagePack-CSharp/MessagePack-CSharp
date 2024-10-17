@@ -4,6 +4,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -21,6 +22,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// UnionResolver by dynamic code generation.
     /// </summary>
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
     public sealed class DynamicUnionResolver : IFormatterResolver
     {
         private const string ModuleName = "MessagePack.Resolvers.DynamicUnionResolver";
@@ -62,7 +64,8 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
-        private static class FormatterCache<T>
+        [RequiresDynamicCode(Constants.DynamicFormatters)]
+        private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;
 
@@ -93,7 +96,9 @@ namespace MessagePack.Resolvers
             }
         }
 
-        private static TypeInfo? BuildType(Type type)
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+        private static TypeInfo? BuildType(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
         {
             TypeInfo ti = type.GetTypeInfo();
 
