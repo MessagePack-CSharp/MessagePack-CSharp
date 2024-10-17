@@ -9,6 +9,10 @@ v3 adds many new diagnostic providers to the set of analyzers as well, with gene
 
 ## Breaking Changes
 
+- Secure by default: `MessagePackSerializerOptions.Security` defaults to `MessagePackSecurity.UntrustedData` instead of the v2 default of `MessagePackSecurity.TrustedData`.
+  This may have a small negative perf impact for deserialization.
+  It may also cause deserialization to fail if the object model requires hashing deserialized data for which no collision resistant hash function is known by the library.
+  [Learn more about security switches and customization](../README.md#security).
 - `MessagePackAnalyzer.json` is no longer used to configure the analyzer.
   Use `GeneratedMessagePackResolverAttribute`, `MessagePackKnownFormatterAttribute` and `MessagePackAssumedFormattableAttribute` instead.
 - The `mpc` CLI tool is no longer used to generate ahead-of-time (AOT) formatters and resolver.

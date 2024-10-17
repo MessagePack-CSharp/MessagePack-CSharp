@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Xunit;
 
@@ -96,7 +97,7 @@ namespace MessagePack.Tests.ExtensionTests
                 var array = new int[1 << i];
                 Random.Shared.NextBytes(MemoryMarshal.AsBytes<int>(array));
                 var set = array.ToFrozenSet();
-                Convert(set).IsStructuralEqualIgnoreCollectionOrder(set);
+                Convert(set.ToArray()).IsStructuralEqualIgnoreCollectionOrder(set.ToArray()); // reduce to an array to erase private runtime type differences
             }
         }
 
@@ -108,7 +109,7 @@ namespace MessagePack.Tests.ExtensionTests
                 var array = new KeyValuePair<int, int>[1 << i];
                 Random.Shared.NextBytes(MemoryMarshal.AsBytes<KeyValuePair<int, int>>(array));
                 var dictionary = array.ToFrozenDictionary();
-                Convert(dictionary).IsStructuralEqualIgnoreCollectionOrder(dictionary);
+                Convert(dictionary).ToArray().IsStructuralEqualIgnoreCollectionOrder(dictionary.ToArray()); // reduce to an array to erase private runtime type differences
             }
         }
     }
