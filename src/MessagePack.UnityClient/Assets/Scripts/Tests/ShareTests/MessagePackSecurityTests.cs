@@ -125,11 +125,8 @@ public class MessagePackSecurityTests
         Assert.NotNull(MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeUInt16Enum>());
         Assert.NotNull(MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeInt32Enum>());
         Assert.NotNull(MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeUInt32Enum>());
-
-        // Supporting enums with backing integers that exceed 32-bits would likely require Ref.Emit of new types
-        // since C# doesn't let us cast T to the underlying int type.
-        Assert.Throws<TypeAccessException>(() => MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeInt64Enum>());
-        Assert.Throws<TypeAccessException>(() => MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeUInt64Enum>());
+        Assert.NotNull(MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeInt64Enum>());
+        Assert.NotNull(MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeUInt64Enum>());
     }
 
     [Fact]
