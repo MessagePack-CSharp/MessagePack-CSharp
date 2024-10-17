@@ -4,8 +4,8 @@
 
 | Version | Supported | End-of-life date |
 | ------- | --------- | ---------------- |
-| 1.9.x   | ✅ | 2024-12-31 |
-| 2.5.x   | ✅ | 2025-12-31 |
+| 1.x     | ❌ |
+| 2.x     | ✅ | 2025-12-31 |
 | 3.x     | ✅ | not yet determined |
 
 Each supported major version is only serviced for security issues at its tip.
