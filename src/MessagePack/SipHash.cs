@@ -10,6 +10,7 @@ using System;
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
 namespace MessagePack
@@ -87,9 +88,6 @@ namespace MessagePack
         /// <returns>Returns 64-bit (8 bytes) SipHash tag.</returns>
         public long Compute(ReadOnlySpan<byte> data)
         {
-            static T Read<T>(in byte start)
-                where T : unmanaged => Unsafe.ReadUnaligned<T>(ref Unsafe.AsRef(in start));
-
             unchecked
             {
                 // SipHash internal state
@@ -109,7 +107,7 @@ namespace MessagePack
                 // Process the input data in blocks of 64 bits
                 for (int blockPosition = 0; blockPosition < finalBlockPosition; blockPosition += sizeof(ulong))
                 {
-                    block = Read<ulong>(data[blockPosition]);
+                    block = MemoryMarshal.Read<ulong>(data.Slice(blockPosition));
 
                     v3 ^= block;
 
@@ -153,22 +151,22 @@ namespace MessagePack
                 switch (data.Length & 7)
                 {
                     case 7:
-                        block |= Read<uint>(data[finalBlockPosition]) | (ulong)Read<ushort>(data[finalBlockPosition + 4]) << 32 | (ulong)data[finalBlockPosition + 6] << 48;
+                        block |= MemoryMarshal.Read<uint>(data.Slice(finalBlockPosition)) | (ulong)MemoryMarshal.Read<ushort>(data.Slice(finalBlockPosition + 4)) << 32 | (ulong)data[finalBlockPosition + 6] << 48;
                         break;
                     case 6:
-                        block |= Read<uint>(data[finalBlockPosition]) | (ulong)Read<ushort>(data[finalBlockPosition + 4]) << 32;
+                        block |= MemoryMarshal.Read<uint>(data.Slice(finalBlockPosition)) | (ulong)MemoryMarshal.Read<ushort>(data.Slice(finalBlockPosition + 4)) << 32;
                         break;
                     case 5:
-                        block |= Read<uint>(data[finalBlockPosition]) | (ulong)data[finalBlockPosition + 4] << 32;
+                        block |= MemoryMarshal.Read<uint>(data.Slice(finalBlockPosition)) | (ulong)data[finalBlockPosition + 4] << 32;
                         break;
                     case 4:
-                        block |= Read<uint>(data[finalBlockPosition]);
+                        block |= MemoryMarshal.Read<uint>(data.Slice(finalBlockPosition));
                         break;
                     case 3:
-                        block |= Read<ushort>(data[finalBlockPosition]) | (ulong)data[finalBlockPosition + 2] << 16;
+                        block |= MemoryMarshal.Read<ushort>(data.Slice(finalBlockPosition)) | (ulong)data[finalBlockPosition + 2] << 16;
                         break;
                     case 2:
-                        block |= Read<ushort>(data[finalBlockPosition]);
+                        block |= MemoryMarshal.Read<ushort>(data.Slice(finalBlockPosition));
                         break;
                     case 1:
                         block |= data[finalBlockPosition];
