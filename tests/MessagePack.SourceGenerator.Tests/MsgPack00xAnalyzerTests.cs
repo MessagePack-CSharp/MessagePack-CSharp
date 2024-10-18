@@ -908,4 +908,27 @@ public class Bar : Foo
 
         await VerifyCS.VerifyAnalyzerAsync(test);
     }
+
+    [Fact]
+    public async Task AbstractFormatterDoesNotAttractAttention()
+    {
+        string test = /* lang=c#-test */ """
+            using MessagePack;
+            using MessagePack.Formatters;
+
+            public abstract class AbstractFormatter1 : IMessagePackFormatter<object>
+            {
+                public abstract void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
+                public abstract object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options);
+            }
+
+            public abstract class AbstractFormatter2 : IMessagePackFormatter<object>
+            {
+                public abstract void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
+                public abstract object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options);
+            }
+            """;
+
+        await VerifyCS.VerifyAnalyzerAsync(test);
+    }
 }
