@@ -692,4 +692,29 @@ public class MyGenericType<T>
             """;
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
+
+    [Fact]
+    public async Task NoPrivateMemberCollected()
+    {
+        string testSource = /* lang=c#-test */ """
+            using MessagePack;
+            using System.Collections.Generic;
+
+            [MessagePackObject]
+            public class Test
+            {
+                protected struct Info
+                {
+                }
+
+                [Key(0)]
+                public string A { get; set; }
+
+                protected List<Info> B;
+
+                protected List<Info> C { get; set; }
+            }
+            """;
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
 }
