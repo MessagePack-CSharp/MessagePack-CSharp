@@ -513,7 +513,7 @@ MessagePack.MessagePackReader.CreatePeekReader() -> MessagePack.MessagePackReade
 MessagePack.MessagePackReader.End.get -> bool
 MessagePack.MessagePackReader.IsNil.get -> bool
 MessagePack.MessagePackReader.MessagePackReader(System.ReadOnlyMemory<byte> memory) -> void
-MessagePack.MessagePackReader.MessagePackReader(in System.Buffers.ReadOnlySequence<byte> readOnlySequence) -> void
+MessagePack.MessagePackReader.MessagePackReader(scoped in System.Buffers.ReadOnlySequence<byte> readOnlySequence) -> void
 MessagePack.MessagePackReader.NextCode.get -> byte
 MessagePack.MessagePackReader.NextMessagePackType.get -> MessagePack.MessagePackType
 MessagePack.MessagePackReader.Position.get -> System.SequencePosition

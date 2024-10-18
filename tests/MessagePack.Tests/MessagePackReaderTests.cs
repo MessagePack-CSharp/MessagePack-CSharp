@@ -404,6 +404,23 @@ namespace MessagePack.Tests
             {
             }
         }
+
+        /// <summary>
+        /// Verifies that a ref struct can create and store a MessagePackReader given a short-lived copy of a
+        /// <see cref="ReadOnlySequence{T}"/>.
+        /// </summary>
+        /// <remarks>
+        /// This is a 'test' simply by being declared, since C# won't compile it if it's not valid.
+        /// </remarks>
+        private ref struct MySequenceReader
+        {
+            private MessagePackReader reader;
+
+            public MySequenceReader(ReadOnlySequence<byte> seq)
+            {
+                this.reader = new MessagePackReader(seq);
+            }
+        }
     }
 
     internal static class MessagePackWriterExtensions
