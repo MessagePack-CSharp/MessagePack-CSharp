@@ -665,11 +665,16 @@ Untrusted data might come from over the network from an untrusted source (e.g. a
 
 Please be very mindful of these attack scenarios; many projects and companies, and serialization library users in general, have been bitten by untrusted user data deserialization in the past.
 
-When deserializing untrusted data, put MessagePack into a more secure mode by configuring your `MessagePackSerializerOptions.Security` property:
+You should also avoid the Typeless serializer/formatters/resolvers for untrusted data as that opens the door for the untrusted data to potentially deserialize unanticipated types that can compromise security.
+
+MessagePack v3 assumes the data you deserialize is untrusted and takes mitigating steps including use of collision resistant hash functions when deserializing dictionaries.
+The `UntrustedData` default mode merely hardens against some common attacks, but is no fully secure solution in itself.
+
+When you are deserializing data that you already trust and wish to use faster (insecure) hash functions, you can switch to trusted data mode by configuring your `MessagePackSerializerOptions.Security` property:
 
 ```cs
 var options = MessagePackSerializerOptions.Standard
-    .WithSecurity(MessagePackSecurity.UntrustedData);
+    .WithSecurity(MessagePackSecurity.TrustedData);
 
 // Pass the options explicitly for the greatest control.
 T object = MessagePackSerializer.Deserialize<T>(data, options);
@@ -678,9 +683,8 @@ T object = MessagePackSerializer.Deserialize<T>(data, options);
 MessagePackSerializer.DefaultOptions = options;
 ```
 
-You should also avoid the Typeless serializer/formatters/resolvers for untrusted data as that opens the door for the untrusted data to potentially deserialize unanticipated types that can compromise security.
-
-The `UntrustedData` mode merely hardens against some common attacks, but is no fully secure solution in itself.
+You can also derive your own type from the `MessagePackSecurity` class to customize security decisions and hash functions.
+Provide an instance of your derived type to the `MessagePackSerializationOptions` type to use it in your deserialization.
 
 ## Performance
 
