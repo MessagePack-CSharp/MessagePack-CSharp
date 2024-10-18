@@ -1010,25 +1010,25 @@ public class TypeCollector
                         };
                         stringMembers.Add(member.StringKey, (member, item.Type));
                     }
-                }
 
-                var messagePackFormatter = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0];
+                    var messagePackFormatter = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0];
 
-                if (messagePackFormatter == null)
-                {
-                    // recursive collect
-                    if (!this.CollectCore(item.Type))
+                    if (messagePackFormatter == null)
                     {
-                        var syntax = item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+                        // recursive collect
+                        if (!this.CollectCore(item.Type))
+                        {
+                            var syntax = item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
 
-                        var typeSyntax = (syntax as PropertyDeclarationSyntax)?.Type
-                            ?? (syntax as ParameterSyntax)?.Type; // for primary constructor
+                            var typeSyntax = (syntax as PropertyDeclarationSyntax)?.Type
+                                ?? (syntax as ParameterSyntax)?.Type; // for primary constructor
 
-                        // TODO: add the declaration of the referenced type as an additional location.
-                        this.reportDiagnostic?.Invoke(Diagnostic.Create(
-                            MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject,
-                            typeSyntax?.GetLocation(),
-                            item.Type.ToDisplayString(ShortTypeNameFormat)));
+                            // TODO: add the declaration of the referenced type as an additional location.
+                            this.reportDiagnostic?.Invoke(Diagnostic.Create(
+                                MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject,
+                                typeSyntax?.GetLocation(),
+                                item.Type.ToDisplayString(ShortTypeNameFormat)));
+                        }
                     }
                 }
             }
@@ -1148,9 +1148,9 @@ public class TypeCollector
                         };
                         stringMembers.Add(member.StringKey, (member, item.Type));
                     }
-                }
 
-                this.CollectCore(item.Type); // recursive collect
+                    this.CollectCore(item.Type); // recursive collect
+                }
             }
         }
 
