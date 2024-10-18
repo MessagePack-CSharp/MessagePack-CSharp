@@ -3,9 +3,11 @@
     <TargetFramework>net462</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MessagePack" />
     <PackageReference Include="IsExternalInit" />
     <PackageReference Include="System.Threading.Tasks.Extensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="System.Collections.Generic" />

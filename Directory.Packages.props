@@ -17,7 +17,6 @@
     <PackageVersion Include="Hyperion" Version="0.12.2" />
     <PackageVersion Include="IsExternalInit" Version="1.0.3" />
     <PackageVersion Include="Jil" version="2.17.0" />
-    <PackageVersion Include="MessagePack" Version="2.1.90" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageVersion Include="Microsoft.Build.Framework" Version="16.5.0" ExcludeAssets="runtime" />
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.5.5" />
@@ -54,9 +53,10 @@
     <PackageVersion Include="xunit" Version="2.8.1" />
     <PackageVersion Include="ZeroFormatter" Version="1.6.4" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net472'">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net472' or '$(TargetFramework)' == 'net462'">
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="6.0.0" />
+    <PackageVersion Include="System.Memory" Version="4.5.5" />
     <PackageVersion Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <PackageVersion Include="System.Reflection.Emit" Version="4.7.0" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
