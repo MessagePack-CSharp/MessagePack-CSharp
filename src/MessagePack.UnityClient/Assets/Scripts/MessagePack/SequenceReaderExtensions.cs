@@ -115,6 +115,7 @@ namespace MessagePack
         /// <param name="reader">The reader to read from.</param>
         /// <param name="value">Receives the value read.</param>
         /// <returns><see langword="true"/> if there was another byte in the sequence; <see langword="false"/> otherwise.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryRead(ref this SequenceReader<byte> reader, out sbyte value)
         {
             if (TryRead(ref reader, out byte byteValue))
@@ -131,6 +132,7 @@ namespace MessagePack
         /// Reads an <see cref="Int16"/> as big endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="Int16"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out short value)
         {
             if (!BitConverter.IsLittleEndian)
@@ -145,6 +147,7 @@ namespace MessagePack
         /// Reads an <see cref="UInt16"/> as big endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="UInt16"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out ushort value)
         {
             if (TryReadBigEndian(ref reader, out short shortValue))
@@ -157,6 +160,7 @@ namespace MessagePack
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryReadReverseEndianness(ref SequenceReader<byte> reader, out short value)
         {
             if (reader.TryRead(out value))
@@ -172,6 +176,7 @@ namespace MessagePack
         /// Reads an <see cref="Int32"/> as big endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="Int32"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out int value)
         {
             if (!BitConverter.IsLittleEndian)
@@ -186,6 +191,7 @@ namespace MessagePack
         /// Reads an <see cref="UInt32"/> as big endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="UInt32"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out uint value)
         {
             if (TryReadBigEndian(ref reader, out int intValue))
@@ -198,6 +204,7 @@ namespace MessagePack
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryReadReverseEndianness(ref SequenceReader<byte> reader, out int value)
         {
             if (reader.TryRead(out value))
