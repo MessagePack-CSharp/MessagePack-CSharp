@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using MessagePack.Formatters;
 
@@ -12,6 +13,7 @@ namespace MessagePack.Resolvers
     /// such that strong-types can be instantiated.
     /// Instead, <see cref="ExpandoObject"/> is used wherever a MessagePack <em>map</em> is encountered.
     /// </summary>
+    [RequiresDynamicCode(Constants.ClosingGenerics)]
     public static class ExpandoObjectResolver
     {
         /// <summary>

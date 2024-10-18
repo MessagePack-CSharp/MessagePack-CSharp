@@ -3,6 +3,7 @@
 
 using System;
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -14,69 +15,79 @@ namespace MessagePack
 {
     public partial class MessagePackSerializer
     {
-        private static readonly Func<Type, CompiledMethods> CreateCompiledMethods;
         private static readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods> Serializes = new MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods>(capacity: 64);
 
-        static MessagePackSerializer()
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
+        private class CompiledMethodsHelper
         {
-            CreateCompiledMethods = t => new CompiledMethods(t);
+            internal static readonly Func<Type, CompiledMethods> CreateCompiledMethods = t => new CompiledMethods(t);
         }
 
         /// <seealso cref="Serialize{T}(ref MessagePackWriter, T, MessagePackSerializerOptions)"/>
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         public static void Serialize(Type type, ref MessagePackWriter writer, object? obj, MessagePackSerializerOptions? options = null)
         {
             GetOrAdd(type).Serialize_MessagePackWriter_T_Options.Invoke(ref writer, obj, options);
         }
 
         /// <seealso cref="Serialize{T}(IBufferWriter{byte}, T, MessagePackSerializerOptions, CancellationToken)"/>
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         public static void Serialize(Type type, IBufferWriter<byte> writer, object? obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             GetOrAdd(type).Serialize_IBufferWriter_T_Options_CancellationToken.Invoke(writer, obj, options, cancellationToken);
         }
 
         /// <seealso cref="Serialize{T}(T, MessagePackSerializerOptions, CancellationToken)"/>
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         public static byte[] Serialize(Type type, object? obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).Serialize_T_Options.Invoke(obj, options, cancellationToken);
         }
 
         /// <seealso cref="Serialize{T}(Stream, T, MessagePackSerializerOptions, CancellationToken)"/>
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         public static void Serialize(Type type, Stream stream, object? obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             GetOrAdd(type).Serialize_Stream_T_Options_CancellationToken.Invoke(stream, obj, options, cancellationToken);
         }
 
         /// <seealso cref="SerializeAsync{T}(Stream, T, MessagePackSerializerOptions, CancellationToken)"/>
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         public static Task SerializeAsync(Type type, Stream stream, object? obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).SerializeAsync_Stream_T_Options_CancellationToken.Invoke(stream, obj, options, cancellationToken);
         }
 
         /// <seealso cref="Deserialize{T}(ref MessagePackReader, MessagePackSerializerOptions)"/>
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         public static object? Deserialize(Type type, ref MessagePackReader reader, MessagePackSerializerOptions? options = null)
         {
             return GetOrAdd(type).Deserialize_MessagePackReader_Options.Invoke(ref reader, options);
         }
 
         /// <seealso cref="Deserialize{T}(Stream, MessagePackSerializerOptions, CancellationToken)"/>
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         public static object? Deserialize(Type type, Stream stream, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).Deserialize_Stream_Options_CancellationToken.Invoke(stream, options, cancellationToken);
         }
 
         /// <seealso cref="DeserializeAsync{T}(Stream, MessagePackSerializerOptions, CancellationToken)"/>
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         public static ValueTask<object?> DeserializeAsync(Type type, Stream stream, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).DeserializeAsync_Stream_Options_CancellationToken.Invoke(stream, options, cancellationToken);
         }
 
         /// <seealso cref="Deserialize{T}(ReadOnlyMemory{byte}, MessagePackSerializerOptions, CancellationToken)"/>
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         public static object? Deserialize(Type type, ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).Deserialize_ReadOnlyMemory_Options.Invoke(bytes, options, cancellationToken);
         }
 
         /// <seealso cref="Deserialize{T}(in ReadOnlySequence{byte}, MessagePackSerializerOptions, CancellationToken)"/>
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         public static object? Deserialize(Type type, ReadOnlySequence<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).Deserialize_ReadOnlySequence_Options_CancellationToken.Invoke(bytes, options, cancellationToken);
@@ -100,9 +111,10 @@ namespace MessagePack
 
         private static async ValueTask<object?> DeserializeObjectAsync<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken) => await DeserializeAsync<T>(stream, options, cancellationToken).ConfigureAwait(false);
 
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         private static CompiledMethods GetOrAdd(Type type)
         {
-            return Serializes.GetOrAdd(type, CreateCompiledMethods);
+            return Serializes.GetOrAdd(type, CompiledMethodsHelper.CreateCompiledMethods);
         }
 
         private class CompiledMethods
@@ -132,6 +144,7 @@ namespace MessagePack
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning restore SA1310 // Field names should not contain underscore
 
+            [RequiresDynamicCode(Constants.ClosingGenerics)]
             internal CompiledMethods(Type type)
             {
                 TypeInfo ti = type.GetTypeInfo();
@@ -355,6 +368,7 @@ namespace MessagePack
             }
 
             // null is generic type marker.
+            [RequiresDynamicCode(Constants.ClosingGenerics)]
             private static MethodInfo GetMethod(string methodName, Type type, Type?[] parameters)
             {
                 return typeof(MessagePackSerializer).GetRuntimeMethods().Single(x =>

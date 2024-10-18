@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using MessagePack.Formatters;
 
 namespace MessagePack.Resolvers
@@ -11,6 +12,8 @@ namespace MessagePack.Resolvers
     /// Embeds the full name of .NET types for <see cref="object"/> typed fields/collection items
     /// Preserves .NET <see cref="DateTime"/> timezone.
     /// </summary>
+    [RequiresDynamicCode(Constants.DynamicFormattersIncluded)]
+    [RequiresUnreferencedCode(Constants.Typeless)]
     public sealed class TypelessContractlessStandardResolver : IFormatterResolver
     {
         /// <summary>

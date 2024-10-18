@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using Nerdbank.Streams;
 
@@ -148,6 +149,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="typeName">The name of the type to load. This is typically the <see cref="Type.AssemblyQualifiedName"/> but may use the assembly's simple name.</param>
         /// <returns>The loaded type or <see langword="null"/> if no matching type could be found.</returns>
+        [RequiresUnreferencedCode(Constants.Typeless)]
         public virtual Type? LoadType(string typeName)
         {
             Type? result = Type.GetType(typeName, false);

@@ -78,6 +78,7 @@ namespace MessagePack
 
         private static readonly MethodInfo GetFormatterRuntimeMethod = typeof(IFormatterResolver).GetRuntimeMethod(nameof(IFormatterResolver.GetFormatter), Type.EmptyTypes) ?? throw new Exception("Unable to find our own method.");
 
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         public static object? GetFormatterDynamic(this IFormatterResolver resolver, Type type)
         {
             if (resolver is null)
@@ -102,6 +103,7 @@ namespace MessagePack
             return formatterGetter(resolver);
         }
 
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         internal static object GetFormatterDynamicWithVerify(this IFormatterResolver resolver, Type type)
         {
             var result = GetFormatterDynamic(resolver, type);
