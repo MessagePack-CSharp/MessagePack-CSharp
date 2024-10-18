@@ -936,7 +936,14 @@ public class TypeCollector
                                             item.Name);
                                     if (reportedDiagnostics.Add(diagnostic))
                                     {
-                                        this.reportDiagnostic?.Invoke(diagnostic);
+                                        if (nonPublicMembersAreSerialized || (item.DeclaredAccessibility & Accessibility.Public) == Accessibility.Public)
+                                        {
+                                            this.reportDiagnostic?.Invoke(diagnostic);
+                                        }
+                                        else
+                                        {
+                                            deferredDiagnosticsForNonPublicMembers.Add(diagnostic);
+                                        }
                                     }
                                 }
                             }
@@ -1088,7 +1095,14 @@ public class TypeCollector
                                             item.Name);
                                     if (reportedDiagnostics.Add(diagnostic))
                                     {
-                                        this.reportDiagnostic?.Invoke(diagnostic);
+                                        if (nonPublicMembersAreSerialized || (item.DeclaredAccessibility & Accessibility.Public) == Accessibility.Public)
+                                        {
+                                            this.reportDiagnostic?.Invoke(diagnostic);
+                                        }
+                                        else
+                                        {
+                                            deferredDiagnosticsForNonPublicMembers.Add(diagnostic);
+                                        }
                                     }
                                 }
                             }

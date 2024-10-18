@@ -879,6 +879,34 @@ public class Bar : Foo
     }
 
     [Fact]
+    public async Task PrivateMembersInBaseClassNeedNoAttribution()
+    {
+        string test = /* lang=c#-test */ """
+            using MessagePack;
+
+            [MessagePackObject]
+            public class A
+            {
+                private int somePrivateField;
+
+                [Key(0)]
+                public int SomePublicProp { get; set; }
+
+                private int SomePrivateProp { get; set; }
+            }
+
+            [MessagePackObject]
+            public class B : A
+            {
+                [Key(1)]
+                public int SomePublicProp2 { get; set; }
+            }
+            """;
+
+        await VerifyCS.VerifyAnalyzerAsync(test);
+    }
+
+    [Fact]
     public async Task NameCollisionsInForceMapMode()
     {
         string test = /* lang=c#-test */ """
@@ -903,8 +931,7 @@ public class Bar : Foo
 
                 public new string {|MsgPack018:TwoFaced|};
             }
-            """
-        ;
+            """;
 
         await VerifyCS.VerifyAnalyzerAsync(test);
     }
