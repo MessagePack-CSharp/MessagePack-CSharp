@@ -20,7 +20,6 @@
     <PackageVersion Include="Hyperion" Version="0.12.2" />
     <PackageVersion Include="IsExternalInit" Version="1.0.3" />
     <PackageVersion Include="Jil" version="2.17.0" />
-    <PackageVersion Include="MessagePack" Version="2.1.90" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" version="3.3.4" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Common" version="$(MicrosoftCodeAnalysisVersion)" />
@@ -62,7 +61,7 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1'">
     <PackageVersion Include="System.Collections.Immutable" Version="7.0.0" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net472'">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net472' or '$(TargetFramework)' == 'net462'">
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="6.0.0" />
     <PackageVersion Include="System.Memory" Version="4.5.5" />
