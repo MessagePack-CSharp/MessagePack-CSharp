@@ -27,7 +27,7 @@ jobs:
 
 - job: Linux
   pool:
-    vmImage: Ubuntu 20.04
+    vmImage: Ubuntu-22.04
   steps:
   - checkout: self
     fetchDepth: 0 # avoid shallow clone so nbgv can do its work.
@@ -42,7 +42,7 @@ jobs:
 - job: macOS
   condition: ${{ parameters.includeMacOS }}
   pool:
-    vmImage: macOS-12
+    vmImage: macOS-14
   steps:
   - checkout: self
     fetchDepth: 0 # avoid shallow clone so nbgv can do its work.
