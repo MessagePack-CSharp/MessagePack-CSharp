@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace MessagePack
@@ -208,15 +209,73 @@ namespace MessagePack
         {
             switch (code)
             {
+                case byte x when IsNegativeFixInt(x):
                 case Int8:
                 case Int16:
                 case Int32:
                 case Int64:
                     return true;
                 default:
-                    return code >= MinNegativeFixInt && code <= MaxNegativeFixInt;
+                    return false;
             }
         }
+
+        /// <summary>
+        /// Checks whether a given messagepack code belong to positive fixint range.
+        /// </summary>
+        /// <param name="code">The messagepack code.</param>
+        /// <returns>A boolean value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool IsPositiveFixInt(byte code)
+        {
+            // Machine code is longer, extra `movzx` instructions.
+            // return CheckBitmask(code, 0x80, MinFixInt); // msgpack spec: 0xxxxxxx
+
+            // Due to data type limit JIT removes second check
+            return code <= MaxFixInt; // && code >= MinFixInt;
+        }
+
+        /// <summary>
+        /// Checks whether a given messagepack code belong to negative fixint range.
+        /// </summary>
+        /// <param name="code">The messagepack code.</param>
+        /// <returns>A boolean value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool IsNegativeFixInt(byte code)
+        {
+            // Machine code is longer, uses extra `movzx`, `and` intructions.
+            // return CheckBitmask(code, 0xe0, MinNegativeFixInt); // msgpack spec: 111xxxxx
+
+            // Due to data type limit JIT removes second check
+            return code >= MinNegativeFixInt; // && code <= MaxNegativeFixInt;
+        }
+
+        /// <summary>
+        /// Checks whether a given messagepack code belong to fixmap range.
+        /// </summary>
+        /// <param name="code">The messagepack code.</param>
+        /// <returns>A boolean value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool IsFixMap(byte code) => CheckBitmask(code, 0xf0, MinFixMap); // msgpack spec: 1000xxxx
+
+        /// <summary>
+        /// Checks whether a given messagepack code belong to fixarray range.
+        /// </summary>
+        /// <param name="code">The messagepack code.</param>
+        /// <returns>A boolean value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool IsFixArray(byte code) => CheckBitmask(code, 0xf0, MinFixArray); // msgpack spec: 1001xxxx
+
+        /// <summary>
+        /// Checks whether a given messagepack code belong to fixstr range.
+        /// </summary>
+        /// <param name="code">The messagepack code.</param>
+        /// <returns>A boolean value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool IsFixStr(byte code) => CheckBitmask(code, 0xe0, MinFixStr); // msgpack spec: 101xxxxx
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool CheckBitmask(byte code, byte bitmask, byte targetValue) => (code & bitmask) == targetValue;
     }
 
     /// <summary>
