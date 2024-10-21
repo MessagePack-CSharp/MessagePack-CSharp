@@ -305,38 +305,81 @@ public class Foo
     }
 
     [Fact]
-    public async Task AddAttributeToType()
+    public async Task AddAttributeToType_Properties()
     {
         // Don't use Preamble because we want to test that it works without a using statement at the top.
-        string input = @"
-public class Foo
-{
-    public string Member { get; set; }
-}
+        string input = /* lang=c#-test */ """
+            public class Foo
+            {
+                public string Member { get; set; }
+            }
 
-[MessagePack.MessagePackObject]
-public class Bar
-{
-    [MessagePack.Key(0)]
-    public {|MsgPack003:Foo|} Member { get; set; }
-}
-";
+            [MessagePack.MessagePackObject]
+            public class Bar
+            {
+                [MessagePack.Key(0)]
+                public {|MsgPack003:Foo|} Member { get; set; }
+            }
+            """;
 
-        string output = @"
-[MessagePack.MessagePackObject]
-public class Foo
-{
-    [MessagePack.Key(0)]
-    public string Member { get; set; }
-}
+        string output = /* lang=c#-test */ """
+            [MessagePack.MessagePackObject]
+            public class Foo
+            {
+                [MessagePack.Key(0)]
+                public string Member { get; set; }
+            }
 
-[MessagePack.MessagePackObject]
-public class Bar
-{
-    [MessagePack.Key(0)]
-    public Foo Member { get; set; }
-}
-";
+            [MessagePack.MessagePackObject]
+            public class Bar
+            {
+                [MessagePack.Key(0)]
+                public Foo Member { get; set; }
+            }
+            """;
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
+    }
+
+    [Fact]
+    public async Task AddAttributeToType_Fields()
+    {
+        // Don't use Preamble because we want to test that it works without a using statement at the top.
+        string input = /* lang=c#-test */ """
+            public class Foo
+            {
+                public string Member;
+            }
+
+            [MessagePack.MessagePackObject]
+            public class Bar
+            {
+                [MessagePack.Key(0)]
+                public {|MsgPack003:Foo|} Member;
+            }
+            """;
+
+        string output = /* lang=c#-test */ """
+            [MessagePack.MessagePackObject]
+            public class Foo
+            {
+                [MessagePack.Key(0)]
+                public string Member;
+            }
+
+            [MessagePack.MessagePackObject]
+            public class Bar
+            {
+                [MessagePack.Key(0)]
+                public Foo Member;
+            }
+            """;
 
         await new VerifyCS.Test
         {
@@ -852,7 +895,7 @@ public class Bar : Foo
     {
         string test = /* lang=c#-test */ """
             using MessagePack;
-            
+
             [MessagePackObject]
             public class A
             {
@@ -862,8 +905,8 @@ public class Bar : Foo
                 [Key(1)]
                 public string Prop2 { get; set; } = "some default";
             }
-           
-           
+
+
             [MessagePackObject(SuppressSourceGeneration = true)]
             public class B
             {
