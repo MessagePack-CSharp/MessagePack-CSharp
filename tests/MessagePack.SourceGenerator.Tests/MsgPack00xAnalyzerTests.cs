@@ -305,7 +305,7 @@ public class Foo
     }
 
     [Fact]
-    public async Task AddAttributeToType()
+    public async Task AddAttributeToType1()
     {
         // Don't use Preamble because we want to test that it works without a using statement at the top.
         string input = @"
@@ -335,6 +335,49 @@ public class Bar
 {
     [MessagePack.Key(0)]
     public Foo Member { get; set; }
+}
+";
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
+    }
+
+    [Fact]
+    public async Task AddAttributeToType2()
+    {
+        // Don't use Preamble because we want to test that it works without a using statement at the top.
+        string input = @"
+public class Foo
+{
+    public string Member;
+}
+
+[MessagePack.MessagePackObject]
+public class Bar
+{
+    [MessagePack.Key(0)]
+    public {|MsgPack003:Foo|} Member;
+}
+";
+
+        string output = @"
+[MessagePack.MessagePackObject]
+public class Foo
+{
+    [MessagePack.Key(0)]
+    public string Member;
+}
+
+[MessagePack.MessagePackObject]
+public class Bar
+{
+    [MessagePack.Key(0)]
+    public Foo Member;
 }
 ";
 

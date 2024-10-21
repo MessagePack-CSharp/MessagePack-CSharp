@@ -1163,7 +1163,24 @@ public class TypeCollector
                         stringMembers.Add(member.StringKey, (member, item.Type));
                     }
 
-                    this.CollectCore(item.Type); // recursive collect
+                    var messagePackFormatter = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0];
+
+                    if (messagePackFormatter == null)
+                    {
+                        // recursive collect
+                        if (!this.CollectCore(item.Type))
+                        {
+                            var syntax = item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+
+                            var typeSyntax = ((syntax as VariableDeclaratorSyntax)?.Parent as VariableDeclarationSyntax)?.Type;
+
+                            // TODO: add the declaration of the referenced type as an additional location.
+                            this.reportDiagnostic?.Invoke(Diagnostic.Create(
+                                MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject,
+                                typeSyntax?.GetLocation(),
+                                item.Type.ToDisplayString(ShortTypeNameFormat)));
+                        }
+                    }
                 }
             }
         }
