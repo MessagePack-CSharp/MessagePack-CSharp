@@ -117,7 +117,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="readOnlySequence">The sequence to read from.</param>
         /// <returns>The new reader.</returns>
-        public MessagePackReader Clone(in ReadOnlySequence<byte> readOnlySequence) => new MessagePackReader(readOnlySequence)
+        public MessagePackReader Clone(scoped in ReadOnlySequence<byte> readOnlySequence) => new MessagePackReader(readOnlySequence)
         {
             CancellationToken = this.CancellationToken,
             Depth = this.Depth,

@@ -68,7 +68,7 @@ namespace MessagePack.Internal
         /// </summary>
         /// <param name="sequence">The sequence to get a span for.</param>
         /// <returns>The span.</returns>
-        public static ReadOnlySpan<byte> GetSpanFromSequence(in ReadOnlySequence<byte> sequence)
+        public static ReadOnlySpan<byte> GetSpanFromSequence(scoped in ReadOnlySequence<byte> sequence)
         {
             if (sequence.IsSingleSegment)
             {
@@ -84,7 +84,7 @@ namespace MessagePack.Internal
         /// </summary>
         /// <param name="reader">The reader to use.</param>
         /// <returns>The span of UTF-8 encoded characters.</returns>
-        public static ReadOnlySpan<byte> ReadStringSpan(ref MessagePackReader reader)
+        public static ReadOnlySpan<byte> ReadStringSpan(scoped ref MessagePackReader reader)
         {
             if (!reader.TryReadStringSpan(out ReadOnlySpan<byte> result))
             {
