@@ -41,8 +41,8 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 	{
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(4)
 		{
-			{ typeof(global::TempProject.MyGenericObject<global::TempProject.MyGenericObject<int, string>, global::TempProject.MyGenericObject<int, string>>), 0 },
-			{ typeof(global::TempProject.MyGenericObject<int, string>), 1 },
+			{ typeof(global::TempProject.MyGenericObject<int, string>), 0 },
+			{ typeof(global::TempProject.MyGenericObject<global::TempProject.MyGenericObject<int, string>, global::TempProject.MyGenericObject<int, string>>), 1 },
 			{ typeof(global::TempProject.MyObject), 2 },
 			{ typeof(global::TempProject.MyObjectNested), 3 },
 		};
@@ -57,8 +57,8 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				switch (closedKey)
 				{
-					case 0: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<global::TempProject.MyGenericObject<int, string>, global::TempProject.MyGenericObject<int, string>>();
-					case 1: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<int, string>();
+					case 0: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<int, string>();
+					case 1: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<global::TempProject.MyGenericObject<int, string>, global::TempProject.MyGenericObject<int, string>>();
 					case 2: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter();
 					case 3: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectNestedFormatter();
 					default: return null; // unreachable

@@ -39,13 +39,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.DataType.GetQualifiedName()));
             this.Write(">\r\n");
- foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) {
-            this.Write("\t\twhere ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(typeArg.Name));
-            this.Write(" : ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(typeArg.Constraints));
-            this.Write("\r\n");
- }
+ TransformUtilities.EmitTypeConstraints(Info.Formatter, this.Write); 
             this.Write("\t{\r\n");
  foreach (var item in Info.Members) { 
  if (item.CustomFormatter != null) { 

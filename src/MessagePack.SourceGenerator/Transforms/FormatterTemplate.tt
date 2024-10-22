@@ -12,9 +12,7 @@ using MsgPack = global::MessagePack;
 
 <#  bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members);#>
 	internal sealed class <#= Info.Formatter.GetQualifiedName(Qualifiers.None) #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #>>
-<# foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
-		where <#= typeArg.Name #> : <#= typeArg.Constraints #>
-<# } #>
+<# TransformUtilities.EmitTypeConstraints(Info.Formatter, this.Write); #>
 	{
 <# foreach (var item in Info.Members) { #>
 <# if (item.CustomFormatter != null) { #>

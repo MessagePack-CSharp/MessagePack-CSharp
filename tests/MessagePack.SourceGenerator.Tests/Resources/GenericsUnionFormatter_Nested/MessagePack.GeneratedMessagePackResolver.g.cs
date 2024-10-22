@@ -41,19 +41,19 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 	{
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(13)
 		{
-			{ typeof(global::System.Collections.Generic.List<global::System.Collections.Generic.IEnumerable<global::System.Guid>>), 0 },
-			{ typeof(global::System.Collections.Generic.List<int[]>), 1 },
-			{ typeof(global::System.Collections.Generic.List<string>), 2 },
+			{ typeof(global::System.Collections.Generic.List<int[]>), 0 },
+			{ typeof(global::System.Collections.Generic.List<string>), 1 },
+			{ typeof(global::System.Collections.Generic.List<global::System.Collections.Generic.IEnumerable<global::System.Guid>>), 2 },
 			{ typeof(global::System.Collections.Generic.IEnumerable<global::System.Guid>), 3 },
-			{ typeof(global::TempProject.MyGenericObject<global::System.Collections.Generic.IEnumerable<global::System.Guid>>), 4 },
-			{ typeof(global::TempProject.MyGenericObject<int[]>), 5 },
-			{ typeof(global::TempProject.MyGenericObject<string>), 6 },
-			{ typeof(global::TempProject.MyInnerGenericObject<global::System.Collections.Generic.IEnumerable<global::System.Guid>>), 7 },
-			{ typeof(global::TempProject.MyInnerGenericObject<int[]>), 8 },
-			{ typeof(global::TempProject.MyInnerGenericObject<string>), 9 },
-			{ typeof(global::TempProject.Wrapper<global::System.Collections.Generic.IEnumerable<global::System.Guid>>), 10 },
-			{ typeof(global::TempProject.Wrapper<int[]>), 11 },
-			{ typeof(global::TempProject.Wrapper<string>), 12 },
+			{ typeof(global::TempProject.MyGenericObject<int[]>), 4 },
+			{ typeof(global::TempProject.MyGenericObject<string>), 5 },
+			{ typeof(global::TempProject.MyGenericObject<global::System.Collections.Generic.IEnumerable<global::System.Guid>>), 6 },
+			{ typeof(global::TempProject.MyInnerGenericObject<int[]>), 7 },
+			{ typeof(global::TempProject.MyInnerGenericObject<string>), 8 },
+			{ typeof(global::TempProject.MyInnerGenericObject<global::System.Collections.Generic.IEnumerable<global::System.Guid>>), 9 },
+			{ typeof(global::TempProject.Wrapper<int[]>), 10 },
+			{ typeof(global::TempProject.Wrapper<string>), 11 },
+			{ typeof(global::TempProject.Wrapper<global::System.Collections.Generic.IEnumerable<global::System.Guid>>), 12 },
 		};
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> openTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(3)
 		{
@@ -68,19 +68,19 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 			{
 				switch (closedKey)
 				{
-					case 0: return new MsgPack::Formatters.ListFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
-					case 1: return new MsgPack::Formatters.ListFormatter<int[]>();
-					case 2: return new MsgPack::Formatters.ListFormatter<string>();
+					case 0: return new MsgPack::Formatters.ListFormatter<int[]>();
+					case 1: return new MsgPack::Formatters.ListFormatter<string>();
+					case 2: return new MsgPack::Formatters.ListFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
 					case 3: return new MsgPack::Formatters.InterfaceEnumerableFormatter<global::System.Guid>();
-					case 4: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
-					case 5: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<int[]>();
-					case 6: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<string>();
-					case 7: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyInnerGenericObjectFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
-					case 8: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyInnerGenericObjectFormatter<int[]>();
-					case 9: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyInnerGenericObjectFormatter<string>();
-					case 10: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
-					case 11: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<int[]>();
-					case 12: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<string>();
+					case 4: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<int[]>();
+					case 5: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<string>();
+					case 6: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
+					case 7: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyInnerGenericObjectFormatter<int[]>();
+					case 8: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyInnerGenericObjectFormatter<string>();
+					case 9: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyInnerGenericObjectFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
+					case 10: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<int[]>();
+					case 11: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<string>();
+					case 12: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.WrapperFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>();
 					default: return null; // unreachable
 				};
 			}

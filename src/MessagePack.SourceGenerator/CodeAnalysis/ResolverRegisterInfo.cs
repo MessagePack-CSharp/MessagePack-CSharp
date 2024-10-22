@@ -42,8 +42,8 @@ public record ResolverRegisterInfo
                 Name = $"{dataTypeName.Name}Formatter",
                 Kind = TypeKind.Class,
                 AccessModifier = dataTypeName.AccessModifier,
-                TypeParameters = dataTypeName.TypeParameters,
-                TypeArguments = dataTypeName.TypeArguments,
+                TypeParameters = formatterLocation == FormatterPosition.UnderDataType ? ImmutableArray<GenericTypeParameterInfo>.Empty : dataTypeName.TypeParameters,
+                TypeArguments = formatterLocation == FormatterPosition.UnderDataType ? ImmutableArray<QualifiedTypeName>.Empty : dataTypeName.TypeArguments,
             },
         };
     }
@@ -76,7 +76,7 @@ public record ResolverRegisterInfo
     public required QualifiedTypeName DataType { get; init; }
 
     /// <summary>
-    /// Gets the namespace of the formatter.
+    /// Gets the name of the formatter.
     /// </summary>
     public required QualifiedNamedTypeName Formatter { get; init; }
 
@@ -95,7 +95,7 @@ public record ResolverRegisterInfo
     /// <summary>
     /// Gets the C# expression that will provide an instance of the formatter.
     /// </summary>
-    public virtual string GetFormatterInstanceForResolver() => $"new {this.GetFormatterNameForResolver()}()";
+    public virtual string GetFormatterInstanceForResolver() => $"new {this.GetFormatterNameForResolver(GenericParameterStyle.Arguments)}()";
 
     /// <summary>
     /// Gets a value indicating whether this data type is a generic type with unknown type arguments.

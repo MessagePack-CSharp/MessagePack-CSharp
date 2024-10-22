@@ -43,7 +43,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 		{
 			{ typeof(global::System.Nullable<(int, long)>), 0 },
 			{ typeof(global::System.Nullable<global::TempProject.MyEnum>), 1 },
-			{ typeof(global::System.ValueTuple<int, long>), 2 },
+			{ typeof((int, long)), 2 },
 			{ typeof(global::TempProject.MyEnum), 3 },
 			{ typeof(global::TempProject.MyObject), 4 },
 		};

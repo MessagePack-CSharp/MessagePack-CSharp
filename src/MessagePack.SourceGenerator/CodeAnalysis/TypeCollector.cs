@@ -465,7 +465,8 @@ public class TypeCollector
             {
                 Container = new NamespaceTypeContainer("MsgPack::Formatters"),
                 Name = formatterName,
-                TypeParameters = ImmutableArray.Create(elementTypeName.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments)),
+                TypeParameters = ImmutableArray.Create(new GenericTypeParameterInfo("T")),
+                TypeArguments = ImmutableArray.Create(elementTypeName),
             },
         };
         this.collectedArrayInfo.Add(info);
@@ -566,6 +567,7 @@ public class TypeCollector
                         Container = new NamespaceTypeContainer(formatterFullName.Substring(0, indexOfLastPeriod)),
                         Name = formatterFullName.Substring(indexOfLastPeriod + 1),
                         TypeParameters = GetTypeParameters(info.DataType),
+                        TypeArguments = GetTypeArguments(info.DataType),
                     },
                 };
 
@@ -644,8 +646,11 @@ public class TypeCollector
             this.collectedGenericInfo.Add(genericSerializationInfo);
         }
 
-        static ImmutableArray<string> GetTypeParameters(QualifiedTypeName qtn)
-            => qtn is QualifiedNamedTypeName named ? named.TypeParameters : ImmutableArray.Create<string>();
+        static ImmutableArray<GenericTypeParameterInfo> GetTypeParameters(QualifiedTypeName qtn)
+            => qtn is QualifiedNamedTypeName named ? named.TypeParameters : ImmutableArray<GenericTypeParameterInfo>.Empty;
+
+        static ImmutableArray<QualifiedTypeName> GetTypeArguments(QualifiedTypeName qtn)
+            => qtn is QualifiedNamedTypeName named ? named.TypeArguments : ImmutableArray<QualifiedTypeName>.Empty;
 
         return true;
     }
@@ -1402,7 +1407,7 @@ public class TypeCollector
             formattedType,
             isClass: isClass,
             nestedFormatterRequired: nestedFormatterRequired,
-            genericTypeParameters: formattedType.IsGenericType ? formattedType.TypeParameters.Select(ToGenericTypeParameterInfo).ToArray() : Array.Empty<GenericTypeParameterInfo>(),
+            genericTypeParameters: formattedType.IsGenericType ? formattedType.TypeParameters.Select(t => new GenericTypeParameterInfo(t)).ToArray() : Array.Empty<GenericTypeParameterInfo>(),
             constructorParameters: constructorParameters.ToArray(),
             isIntKey: isIntKey,
             members: isIntKey ? intMembers.Values.Select(v => v.Info).ToArray() : stringMembers.Values.Select(v => v.Info).ToArray(),
@@ -1419,42 +1424,6 @@ public class TypeCollector
         return from x in CodeAnalysisUtilities.EnumerateTypeAndContainingTypes(target)
                where x.FirstDeclaration?.Modifiers.Any(SyntaxKind.PartialKeyword) is false
                select x.FirstDeclaration;
-    }
-
-    private static GenericTypeParameterInfo ToGenericTypeParameterInfo(ITypeParameterSymbol typeParameter)
-    {
-        var constraints = new List<string>();
-
-        // `notnull`, `unmanaged`, `class`, `struct` constraint must come before any constraints.
-        if (typeParameter.HasNotNullConstraint)
-        {
-            constraints.Add("notnull");
-        }
-
-        if (typeParameter.HasReferenceTypeConstraint)
-        {
-            constraints.Add(typeParameter.ReferenceTypeConstraintNullableAnnotation == NullableAnnotation.Annotated ? "class?" : "class");
-        }
-
-        if (typeParameter.HasValueTypeConstraint)
-        {
-            constraints.Add(typeParameter.HasUnmanagedTypeConstraint ? "unmanaged" : "struct");
-        }
-
-        // constraint types (IDisposable, IEnumerable ...)
-        foreach (var t in typeParameter.ConstraintTypes)
-        {
-            var constraintTypeFullName = t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
-            constraints.Add(constraintTypeFullName);
-        }
-
-        // `new()` constraint must be last in constraints.
-        if (typeParameter.HasConstructorConstraint)
-        {
-            constraints.Add("new()");
-        }
-
-        return new GenericTypeParameterInfo(typeParameter.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), string.Join(", ", constraints));
     }
 
     private static Location? GetIdentifierLocation(INamedTypeSymbol type) => ((BaseTypeDeclarationSyntax?)type.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax())?.Identifier.GetLocation();

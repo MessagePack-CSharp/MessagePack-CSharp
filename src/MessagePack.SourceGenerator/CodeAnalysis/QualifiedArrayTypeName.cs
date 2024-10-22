@@ -25,6 +25,7 @@ public record QualifiedArrayTypeName : QualifiedTypeName, IComparable<QualifiedA
     {
         this.ArrayRank = symbol.Rank;
         this.ElementType = Create(symbol.ElementType);
+        this.ReferenceTypeNullableAnnotation = symbol.NullableAnnotation;
     }
 
     public required int ArrayRank
@@ -71,16 +72,21 @@ public record QualifiedArrayTypeName : QualifiedTypeName, IComparable<QualifiedA
 
     public override string ToString() => this.GetQualifiedName(Qualifiers.Namespace, GenericParameterStyle.Arguments);
 
-    public override string GetQualifiedName(Qualifiers qualifier = Qualifiers.GlobalNamespace, GenericParameterStyle genericStyle = GenericParameterStyle.Identifiers)
+    public override string GetQualifiedName(Qualifiers qualifier = Qualifiers.GlobalNamespace, GenericParameterStyle genericStyle = GenericParameterStyle.Identifiers, bool includeNullableAnnotation = false)
     {
         StringBuilder builder = new();
 
-        builder.Append(this.ElementType.GetQualifiedName(qualifier, genericStyle));
+        builder.Append(this.ElementType.GetQualifiedName(qualifier, genericStyle, includeNullableAnnotation));
 
         Debug.Assert(this.ArrayRank > 0, "ElementType is not null === ArrayRank > 0");
         builder.Append('[');
         builder.Append(',', this.ArrayRank - 1);
         builder.Append(']');
+
+        if (includeNullableAnnotation && this.ReferenceTypeNullableAnnotation == NullableAnnotation.Annotated)
+        {
+            builder.Append("?");
+        }
 
         return builder.ToString();
     }

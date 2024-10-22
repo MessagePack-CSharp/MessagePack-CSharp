@@ -754,6 +754,82 @@ public class MyGenericType<T>
     }
 
     [Fact]
+    public async Task GenericDataTypeWithPrivateMember()
+    {
+        string testSource = /* lang=c#-test */ """
+            #pragma warning disable CS0169 // unused field
+            using MessagePack;
+
+            [MessagePackObject(AllowPrivate = true)]
+            internal partial class HasPrivateSerializedMemberAndIsGenericOrdinal<T>
+                where T : struct
+            {
+                [Key(0)]
+                private int value;
+            }
+
+            [MessagePackObject(true, AllowPrivate = true)]
+            internal partial class HasPrivateSerializedMemberAndIsGenericNamed<T>
+                where T : struct
+            {
+                private int value;
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task GenericWithConstraintsThatReferenceTypeParameter()
+    {
+        string testSource = /* lang=c#-test */ """
+            using System.Collections.Generic;
+            using MessagePack;
+
+            [MessagePackObject]
+            public class GenericConstrainedClassIntKey<T1, T2>
+                where T1 : class
+                where T2 : class, IEqualityComparer<T1>
+            {
+                [Key(0)]
+                public T1 MyProperty0 { get; set; }
+
+                [Key(1)]
+                public T2 Comparer { get; set; }
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task InterfaceUnionUsedWithNullableRefAnnotation()
+    {
+        string testSource = /* lang=c#-test */ """
+            #nullable enable
+            using MessagePack;
+
+            [Union(0, typeof(Derived1))]
+            [Union(1, typeof(Derived2))]
+            public interface IMyType
+            {
+            }
+
+            class Derived1 : IMyType {}
+            class Derived2 : IMyType {}
+
+            [MessagePackObject]
+            public class UnionContainer
+            {
+                [Key(0)]
+                public IMyType? Value { get; set; }
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, languageVersion: LanguageVersion.CSharp11);
+    }
+
+    [Fact]
     public async Task NoFieldWithCustomFormatterCollected()
     {
         string testSource = /* lang=c#-test */ """
