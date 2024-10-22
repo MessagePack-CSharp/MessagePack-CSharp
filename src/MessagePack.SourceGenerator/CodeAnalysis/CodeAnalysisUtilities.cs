@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -80,21 +81,21 @@ public static class CodeAnalysisUtilities
             _ => throw new NotSupportedException(),
         };
 
-    internal static ImmutableArray<string> GetTypeParameters(ITypeSymbol dataType)
+    internal static ImmutableArray<GenericTypeParameterInfo> GetTypeParameters(ITypeSymbol dataType)
         => dataType switch
         {
-            INamedTypeSymbol namedType => namedType.TypeParameters.Select(t => t.Name).ToImmutableArray(),
+            INamedTypeSymbol namedType => namedType.TypeParameters.Select(t => new GenericTypeParameterInfo(t)).ToImmutableArray(),
             IArrayTypeSymbol arrayType => GetTypeParameters(arrayType.ElementType),
-            ITypeParameterSymbol => ImmutableArray<string>.Empty,
+            ITypeParameterSymbol => ImmutableArray<GenericTypeParameterInfo>.Empty,
             _ => throw new NotSupportedException(),
         };
 
-    internal static ImmutableArray<string> GetTypeArguments(ITypeSymbol dataType)
+    internal static ImmutableArray<QualifiedTypeName> GetTypeArguments(ITypeSymbol dataType)
         => dataType switch
         {
-            INamedTypeSymbol namedType => namedType.TypeArguments.Select(t => t.GetCanonicalTypeFullName()).ToImmutableArray(),
+            INamedTypeSymbol namedType => namedType.TypeArguments.Select(QualifiedTypeName.Create).ToImmutableArray(),
             IArrayTypeSymbol arrayType => GetTypeArguments(arrayType.ElementType),
-            ITypeParameterSymbol => ImmutableArray<string>.Empty,
+            ITypeParameterSymbol => ImmutableArray<QualifiedTypeName>.Empty,
             _ => throw new NotSupportedException(),
         };
 }

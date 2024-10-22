@@ -24,7 +24,7 @@ public abstract record QualifiedTypeName : IComparable<QualifiedTypeName>
         {
             IArrayTypeSymbol arrayType => new QualifiedArrayTypeName(arrayType),
             INamedTypeSymbol namedType => new QualifiedNamedTypeName(namedType),
-            ITypeParameterSymbol typeParam => new QualifiedNamedTypeName(typeParam),
+            ITypeParameterSymbol typeParam => new TypeParameter(typeParam),
             _ => throw new NotSupportedException(),
         };
     }
@@ -39,9 +39,11 @@ public abstract record QualifiedTypeName : IComparable<QualifiedTypeName>
     /// </summary>
     public abstract bool IsRecord { get; }
 
+    public NullableAnnotation ReferenceTypeNullableAnnotation { get; init; }
+
     protected string DebuggerDisplay => this.GetQualifiedName(Qualifiers.Namespace, GenericParameterStyle.Arguments);
 
-    public abstract string GetQualifiedName(Qualifiers qualifier = Qualifiers.GlobalNamespace, GenericParameterStyle genericStyle = GenericParameterStyle.Identifiers);
+    public abstract string GetQualifiedName(Qualifiers qualifier = Qualifiers.GlobalNamespace, GenericParameterStyle genericStyle = GenericParameterStyle.Identifiers, bool includeNullableAnnotation = false);
 
     /// <summary>
     /// Builds a string that acts as a suffix for a C# type name to represent the generic type parameters.
@@ -79,6 +81,10 @@ public abstract record QualifiedTypeName : IComparable<QualifiedTypeName>
         else if (left is QualifiedNamedTypeName leftNamed)
         {
             return right is QualifiedNamedTypeName rightNamed ? leftNamed.CompareTo(rightNamed) : 1;
+        }
+        else if (left is TypeParameter leftTypeParameter)
+        {
+            return right is TypeParameter rightTypeParameter ? leftTypeParameter.CompareTo(rightTypeParameter) : 1;
         }
         else
         {
