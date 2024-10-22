@@ -225,7 +225,6 @@ namespace MessagePack
         /// </summary>
         /// <param name="code">The messagepack code.</param>
         /// <returns>A boolean value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsPositiveFixInt(byte code)
         {
             // Machine code is longer, extra `movzx` instructions.
@@ -240,7 +239,6 @@ namespace MessagePack
         /// </summary>
         /// <param name="code">The messagepack code.</param>
         /// <returns>A boolean value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsNegativeFixInt(byte code)
         {
             // Machine code is longer, uses extra `movzx`, `and` intructions.
@@ -255,7 +253,6 @@ namespace MessagePack
         /// </summary>
         /// <param name="code">The messagepack code.</param>
         /// <returns>A boolean value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsFixMap(byte code) => CheckBitmask(code, 0xf0, MinFixMap); // msgpack spec: 1000xxxx
 
         /// <summary>
@@ -263,7 +260,6 @@ namespace MessagePack
         /// </summary>
         /// <param name="code">The messagepack code.</param>
         /// <returns>A boolean value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsFixArray(byte code) => CheckBitmask(code, 0xf0, MinFixArray); // msgpack spec: 1001xxxx
 
         /// <summary>
@@ -271,10 +267,8 @@ namespace MessagePack
         /// </summary>
         /// <param name="code">The messagepack code.</param>
         /// <returns>A boolean value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsFixStr(byte code) => CheckBitmask(code, 0xe0, MinFixStr); // msgpack spec: 101xxxxx
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool CheckBitmask(byte code, byte bitmask, byte targetValue) => (code & bitmask) == targetValue;
     }
 

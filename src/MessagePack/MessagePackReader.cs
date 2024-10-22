@@ -966,11 +966,10 @@ namespace MessagePack
                     }
 
                     break;
-                case byte x when MessagePackCode.IsFixStr(x): // OldSpec compatibility. Can leave last
+                case byte x when MessagePackCode.IsFixStr(x): // OldSpec compatibility
                     length = code & 0x1F;
                     return true;
                 default:
-
                     throw ThrowInvalidCode(code);
             }
 
