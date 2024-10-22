@@ -507,7 +507,7 @@ MessagePack.MessagePackRange
 MessagePack.MessagePackReader
 MessagePack.MessagePackReader.CancellationToken.get -> System.Threading.CancellationToken
 MessagePack.MessagePackReader.CancellationToken.set -> void
-MessagePack.MessagePackReader.Clone(in System.Buffers.ReadOnlySequence<byte> readOnlySequence) -> MessagePack.MessagePackReader
+MessagePack.MessagePackReader.Clone(scoped in System.Buffers.ReadOnlySequence<byte> readOnlySequence) -> MessagePack.MessagePackReader
 MessagePack.MessagePackReader.Consumed.get -> long
 MessagePack.MessagePackReader.CreatePeekReader() -> MessagePack.MessagePackReader
 MessagePack.MessagePackReader.End.get -> bool
@@ -753,8 +753,8 @@ static MessagePack.Formatters.PrimitiveObjectFormatter.IsSupportedType(System.Ty
 static MessagePack.Internal.AutomataKeyGen.GetKey(ref System.ReadOnlySpan<byte> span) -> ulong
 static MessagePack.Internal.CodeGenHelpers.GetArrayFromNullableSequence(in System.Buffers.ReadOnlySequence<byte>? sequence) -> byte[]?
 static MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes(string! value) -> byte[]!
-static MessagePack.Internal.CodeGenHelpers.GetSpanFromSequence(in System.Buffers.ReadOnlySequence<byte> sequence) -> System.ReadOnlySpan<byte>
-static MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref MessagePack.MessagePackReader reader) -> System.ReadOnlySpan<byte>
+static MessagePack.Internal.CodeGenHelpers.GetSpanFromSequence(scoped in System.Buffers.ReadOnlySequence<byte> sequence) -> System.ReadOnlySpan<byte>
+static MessagePack.Internal.CodeGenHelpers.ReadStringSpan(scoped ref MessagePack.MessagePackReader reader) -> System.ReadOnlySpan<byte>
 static MessagePack.Internal.UnsafeMemory32.WriteRaw1(ref MessagePack.MessagePackWriter writer, System.ReadOnlySpan<byte> src) -> void
 static MessagePack.Internal.UnsafeMemory32.WriteRaw10(ref MessagePack.MessagePackWriter writer, System.ReadOnlySpan<byte> src) -> void
 static MessagePack.Internal.UnsafeMemory32.WriteRaw11(ref MessagePack.MessagePackWriter writer, System.ReadOnlySpan<byte> src) -> void
