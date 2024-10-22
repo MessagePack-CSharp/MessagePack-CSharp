@@ -865,4 +865,37 @@ public class MyGenericType<T>
             """;
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
+
+    [Fact]
+    public async Task GenericCustomFormatter()
+    {
+        string testSource = /* lang=c#-test */ """
+            using System;
+            using MessagePack;
+            using MessagePack.Formatters;
+
+            [MessagePackObject(AllowPrivate = true)]
+            public partial class SampleObject
+            {
+                [Key(0)]
+                [MessagePackFormatter(typeof(ValueTupleFormatter<string>))]
+                private ValueTuple<string> TupleTest;
+            }
+
+            public sealed class ValueTupleFormatter<T1> : IMessagePackFormatter<ValueTuple<T1>>
+            {
+                public void Serialize(ref MessagePackWriter writer, ValueTuple<T1> value, MessagePackSerializerOptions options)
+                {
+                    throw new NotImplementedException();
+                }
+
+                public ValueTuple<T1> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+                {
+                    throw new NotImplementedException();
+                }
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
 }

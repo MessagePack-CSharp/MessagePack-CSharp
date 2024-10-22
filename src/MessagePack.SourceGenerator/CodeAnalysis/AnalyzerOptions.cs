@@ -258,8 +258,8 @@ public record FormatterDescriptor(QualifiedNamedTypeName Name, string? InstanceP
     public bool ExcludeFromSourceGeneratedResolver { get; init; }
 
     public string InstanceExpression => this.InstanceProvidingMember == ".ctor"
-        ? $"new {this.Name.GetQualifiedName()}()"
-        : $"{this.Name.GetQualifiedName()}.{this.InstanceProvidingMember}";
+        ? $"new {this.Name.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments)}()"
+        : $"{this.Name.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments)}.{this.InstanceProvidingMember}";
 
     public virtual bool Equals(FormatterDescriptor? other)
     {
