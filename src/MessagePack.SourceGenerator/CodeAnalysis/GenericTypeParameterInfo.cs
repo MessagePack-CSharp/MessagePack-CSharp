@@ -11,16 +11,28 @@ public record GenericTypeParameterInfo(string Name) : IComparable<GenericTypePar
 {
     private string? constraints;
 
-    public GenericTypeParameterInfo(ITypeParameterSymbol typeParameter)
+    private GenericTypeParameterInfo(ITypeParameterSymbol typeParameter, ImmutableStack<GenericTypeParameterInfo> recursionGuard)
         : this(typeParameter.Name)
     {
+        recursionGuard = recursionGuard.Push(this);
+
         this.HasUnmanagedTypeConstraint = typeParameter.HasUnmanagedTypeConstraint;
         this.HasReferenceTypeConstraint = typeParameter.HasReferenceTypeConstraint;
         this.HasValueTypeConstraint = typeParameter.HasValueTypeConstraint;
         this.HasNotNullConstraint = typeParameter.HasNotNullConstraint;
-        this.ConstraintTypes = typeParameter.ConstraintTypes.Select(t => QualifiedTypeName.Create(t)).ToImmutableArray();
+        this.ConstraintTypes = typeParameter.ConstraintTypes.Select(t => QualifiedTypeName.Create(t, recursionGuard)).ToImmutableArray();
         this.HasConstructorConstraint = typeParameter.HasConstructorConstraint;
         this.ReferenceTypeConstraintNullableAnnotation = typeParameter.ReferenceTypeConstraintNullableAnnotation;
+    }
+
+    public static GenericTypeParameterInfo Create(ITypeParameterSymbol typeParameter, ImmutableStack<GenericTypeParameterInfo>? recursionGuard = null)
+    {
+        if (recursionGuard?.FirstOrDefault(tpi => tpi.Name == typeParameter.Name) is { } existing)
+        {
+            return existing;
+        }
+
+        return new(typeParameter, recursionGuard ?? ImmutableStack<GenericTypeParameterInfo>.Empty);
     }
 
     public string Constraints => this.constraints ??= this.ConstructConstraintString();

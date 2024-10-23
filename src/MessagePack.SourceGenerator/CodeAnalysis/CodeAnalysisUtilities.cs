@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -81,20 +80,20 @@ public static class CodeAnalysisUtilities
             _ => throw new NotSupportedException(),
         };
 
-    internal static ImmutableArray<GenericTypeParameterInfo> GetTypeParameters(ITypeSymbol dataType)
+    internal static ImmutableArray<GenericTypeParameterInfo> GetTypeParameters(ITypeSymbol dataType, ImmutableStack<GenericTypeParameterInfo>? recursionGuard = null)
         => dataType switch
         {
-            INamedTypeSymbol namedType => namedType.TypeParameters.Select(t => new GenericTypeParameterInfo(t)).ToImmutableArray(),
+            INamedTypeSymbol namedType => namedType.TypeParameters.Select(t => GenericTypeParameterInfo.Create(t, recursionGuard)).ToImmutableArray(),
             IArrayTypeSymbol arrayType => GetTypeParameters(arrayType.ElementType),
             ITypeParameterSymbol => ImmutableArray<GenericTypeParameterInfo>.Empty,
             _ => throw new NotSupportedException(),
         };
 
-    internal static ImmutableArray<QualifiedTypeName> GetTypeArguments(ITypeSymbol dataType)
+    internal static ImmutableArray<QualifiedTypeName> GetTypeArguments(ITypeSymbol dataType, ImmutableStack<GenericTypeParameterInfo>? recursionGuard = null)
         => dataType switch
         {
-            INamedTypeSymbol namedType => namedType.TypeArguments.Select(QualifiedTypeName.Create).ToImmutableArray(),
-            IArrayTypeSymbol arrayType => GetTypeArguments(arrayType.ElementType),
+            INamedTypeSymbol namedType => namedType.TypeArguments.Select(t => QualifiedTypeName.Create(t, recursionGuard)).ToImmutableArray(),
+            IArrayTypeSymbol arrayType => GetTypeArguments(arrayType.ElementType, recursionGuard),
             ITypeParameterSymbol => ImmutableArray<QualifiedTypeName>.Empty,
             _ => throw new NotSupportedException(),
         };
