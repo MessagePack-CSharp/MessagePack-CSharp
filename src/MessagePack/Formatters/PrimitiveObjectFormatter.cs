@@ -200,13 +200,13 @@ namespace MessagePack.Formatters
             {
                 case MessagePackType.Integer:
                     var code = reader.NextCode;
-                    if (code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt)
-                    {
-                        return reader.ReadSByte();
-                    }
-                    else if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
+                    if (MessagePackCode.IsPositiveFixInt(code))
                     {
                         return reader.ReadByte();
+                    }
+                    else if (MessagePackCode.IsNegativeFixInt(code))
+                    {
+                        return reader.ReadSByte();
                     }
                     else if (code == MessagePackCode.Int8)
                     {

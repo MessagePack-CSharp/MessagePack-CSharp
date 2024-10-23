@@ -162,6 +162,7 @@ namespace MessagePack
             byte code = this.NextCode;
             switch (code)
             {
+                case byte x when MessagePackCode.IsPositiveFixInt(x) || MessagePackCode.IsNegativeFixInt(x):
                 case MessagePackCode.Nil:
                 case MessagePackCode.True:
                 case MessagePackCode.False:
@@ -180,12 +181,15 @@ namespace MessagePack
                 case MessagePackCode.UInt64:
                 case MessagePackCode.Float64:
                     return this.reader.TryAdvance(9);
+                case byte x when MessagePackCode.IsFixMap(x):
                 case MessagePackCode.Map16:
                 case MessagePackCode.Map32:
                     return this.TrySkipNextMap();
+                case byte x when MessagePackCode.IsFixArray(x):
                 case MessagePackCode.Array16:
                 case MessagePackCode.Array32:
                     return this.TrySkipNextArray();
+                case byte x when MessagePackCode.IsFixStr(x):
                 case MessagePackCode.Str8:
                 case MessagePackCode.Str16:
                 case MessagePackCode.Str32:
@@ -204,27 +208,6 @@ namespace MessagePack
                 case MessagePackCode.Ext32:
                     return this.TryReadExtensionFormatHeader(out ExtensionHeader header) && this.reader.TryAdvance(header.Length);
                 default:
-                    if ((code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt) ||
-                        (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt))
-                    {
-                        return this.reader.TryAdvance(1);
-                    }
-
-                    if (code >= MessagePackCode.MinFixMap && code <= MessagePackCode.MaxFixMap)
-                    {
-                        return this.TrySkipNextMap();
-                    }
-
-                    if (code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MaxFixArray)
-                    {
-                        return this.TrySkipNextArray();
-                    }
-
-                    if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
-                    {
-                        return this.TryGetStringLengthInBytes(out length) && this.reader.TryAdvance(length);
-                    }
-
                     // We don't actually expect to ever hit this point, since every code is supported.
                     Debug.Fail("Missing handler for code: " + code);
                     throw ThrowInvalidCode(code);
@@ -342,6 +325,9 @@ namespace MessagePack
 
             switch (code)
             {
+                case byte x when MessagePackCode.IsFixArray(x):
+                    count = code & 0xF;
+                    break;
                 case MessagePackCode.Array16:
                     if (!this.reader.TryReadBigEndian(out short shortValue))
                     {
@@ -359,12 +345,6 @@ namespace MessagePack
                     count = intValue;
                     break;
                 default:
-                    if (code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MaxFixArray)
-                    {
-                        count = code & 0xF;
-                        break;
-                    }
-
                     throw ThrowInvalidCode(code);
             }
 
@@ -419,6 +399,9 @@ namespace MessagePack
 
             switch (code)
             {
+                case byte x when MessagePackCode.IsFixMap(x):
+                    count = code & 0xF;
+                    break;
                 case MessagePackCode.Map16:
                     if (!this.reader.TryReadBigEndian(out short shortValue))
                     {
@@ -436,12 +419,6 @@ namespace MessagePack
                     count = intValue;
                     break;
                 default:
-                    if (code >= MessagePackCode.MinFixMap && code <= MessagePackCode.MaxFixMap)
-                    {
-                        count = (byte)(code & 0xF);
-                        break;
-                    }
-
                     throw ThrowInvalidCode(code);
             }
 
@@ -502,6 +479,10 @@ namespace MessagePack
                 case MessagePackCode.Float64:
                     ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out double doubleValue));
                     return (float)doubleValue;
+                case byte x when MessagePackCode.IsPositiveFixInt(x):
+                    return code;
+                case byte x when MessagePackCode.IsNegativeFixInt(x):
+                    return unchecked((sbyte)code);
                 case MessagePackCode.Int8:
                     ThrowInsufficientBufferUnless(this.reader.TryRead(out sbyte sbyteValue));
                     return sbyteValue;
@@ -527,15 +508,6 @@ namespace MessagePack
                     ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out ulong ulongValue));
                     return ulongValue;
                 default:
-                    if (code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt)
-                    {
-                        return unchecked((sbyte)code);
-                    }
-                    else if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
-                    {
-                        return code;
-                    }
-
                     throw ThrowInvalidCode(code);
             }
         }
@@ -568,6 +540,10 @@ namespace MessagePack
                 case MessagePackCode.Float32:
                     ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out float floatValue));
                     return floatValue;
+                case byte x when MessagePackCode.IsPositiveFixInt(x):
+                    return code;
+                case byte x when MessagePackCode.IsNegativeFixInt(x):
+                    return unchecked((sbyte)code);
                 case MessagePackCode.Int8:
                     ThrowInsufficientBufferUnless(this.reader.TryRead(out byte byteValue));
                     return unchecked((sbyte)byteValue);
@@ -593,15 +569,6 @@ namespace MessagePack
                     ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out longValue));
                     return unchecked((ulong)longValue);
                 default:
-                    if (code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt)
-                    {
-                        return unchecked((sbyte)code);
-                    }
-                    else if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
-                    {
-                        return code;
-                    }
-
                     throw ThrowInvalidCode(code);
             }
         }
@@ -999,14 +966,10 @@ namespace MessagePack
                     }
 
                     break;
+                case byte x when MessagePackCode.IsFixStr(x): // OldSpec compatibility
+                    length = code & 0x1F;
+                    return true;
                 default:
-                    // OldSpec compatibility
-                    if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
-                    {
-                        length = code & 0x1F;
-                        return true;
-                    }
-
                     throw ThrowInvalidCode(code);
             }
 
@@ -1028,7 +991,7 @@ namespace MessagePack
                 return false;
             }
 
-            if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
+            if (MessagePackCode.IsFixStr(code))
             {
                 length = code & 0x1F;
                 return true;
@@ -1052,6 +1015,9 @@ namespace MessagePack
         {
             switch (code)
             {
+                case byte x when MessagePackCode.IsFixStr(x):
+                    length = code & 0x1F;
+                    return true;
                 case MessagePackCode.Str8:
                     if (this.reader.TryRead(out byte byteValue))
                     {
@@ -1077,12 +1043,6 @@ namespace MessagePack
 
                     break;
                 default:
-                    if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
-                    {
-                        length = code & 0x1F;
-                        return true;
-                    }
-
                     throw ThrowInvalidCode(code);
             }
 

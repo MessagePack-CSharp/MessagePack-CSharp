@@ -119,6 +119,84 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void TryReadMapHeader_Ranges()
+        {
+            AssertCodeRange((ref MessagePackReader r) => r.TryReadMapHeader(out _), c => c is >= MessagePackCode.MinFixMap and <= MessagePackCode.MaxFixMap, c => c is MessagePackCode.Map16 or MessagePackCode.Map32);
+        }
+
+        [Fact]
+        public void TryReadArrayHeader_Ranges()
+        {
+            AssertCodeRange((ref MessagePackReader r) => r.TryReadArrayHeader(out _), c => c is >= MessagePackCode.MinFixArray and <= MessagePackCode.MaxFixArray, c => c is MessagePackCode.Array16 or MessagePackCode.Array32);
+        }
+
+        [Fact]
+        public void TryReadString_Ranges()
+        {
+            AssertCodeRange((ref MessagePackReader r) => r.TryReadStringSpan(out _), c => c is MessagePackCode.Nil, c => c is (>= MessagePackCode.MinFixStr and <= MessagePackCode.MaxFixStr) or MessagePackCode.Str8 or MessagePackCode.Str16 or MessagePackCode.Str32);
+        }
+
+        [Fact]
+        public void TryReadInt_Ranges()
+        {
+            AssertCodeRange((ref MessagePackReader r) => r.ReadInt32(), c => c is (>= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt) or (>= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt), c => c is MessagePackCode.Int64 or MessagePackCode.Int32 or MessagePackCode.Int16 or MessagePackCode.Int8 or MessagePackCode.UInt64 or MessagePackCode.UInt32 or MessagePackCode.UInt16 or MessagePackCode.UInt8);
+        }
+
+        private delegate void RangeChecker(ref MessagePackReader reader);
+
+        private void AssertCodeRange(RangeChecker predicate, Func<byte, bool> isOneByteRepresentation, Func<byte, bool> isIntroductoryByte)
+        {
+            bool mismatch = false;
+            byte[] buffer = new byte[1];
+            foreach (byte code in Enumerable.Range(byte.MinValue, byte.MaxValue))
+            {
+                try
+                {
+                    bool expectedOneByte = isOneByteRepresentation(code);
+                    bool expectedLeadingByte = isIntroductoryByte(code);
+                    if (expectedLeadingByte && expectedOneByte)
+                    {
+                        throw new Exception("Byte cannot be both a leading byte and a one-byte representation.");
+                    }
+
+                    bool expectedMatch = expectedOneByte || expectedLeadingByte;
+                    buffer[0] = code;
+                    MessagePackReader reader = new(buffer);
+                    bool actual;
+                    try
+                    {
+                        predicate(ref reader);
+                        actual = true;
+                    }
+                    catch (MessagePackSerializationException)
+                    {
+                        actual = false;
+                    }
+                    catch (EndOfStreamException) when (expectedLeadingByte)
+                    {
+                        actual = true;
+                    }
+
+                    if (expectedMatch != actual)
+                    {
+                        this.logger.WriteLine($"Byte 0x{code:x2} was {actual} but was expected to be {expectedMatch}.");
+                        mismatch = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    mismatch = true;
+                    this.logger.WriteLine($"Byte 0x{code:x2} threw an exception: {ex}");
+                }
+            }
+
+            if (mismatch)
+            {
+                throw new Exception("One or more byte values did not match the expected range.");
+            }
+        }
+
+        [Fact]
         public void ReadExtensionFormatHeader_MitigatesLargeAllocations()
         {
             var sequence = new Sequence<byte>();

@@ -48,6 +48,10 @@ foreach (var intType in allTypes) {
 
             switch (code)
             {
+                case byte x when MessagePackCode.IsPositiveFixInt(x):
+                    return (<#=intType.Name#>)code;
+                case byte x when MessagePackCode.IsNegativeFixInt(x):
+                    return checked((<#=intType.Name#>)unchecked((sbyte)code));
                 case MessagePackCode.UInt8:
                     ThrowInsufficientBufferUnless(this.reader.TryRead(out byte byteResult));
                     return checked((<#=intType.Name#>)byteResult);
@@ -73,16 +77,6 @@ foreach (var intType in allTypes) {
                     ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out long longResult));
                     return checked((<#=intType.Name#>)longResult);
                 default:
-                    if (code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt)
-                    {
-                        return checked((<#=intType.Name#>)unchecked((sbyte)code));
-                    }
-
-                    if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
-                    {
-                        return (<#=intType.Name#>)code;
-                    }
-
                     throw ThrowInvalidCode(code);
             }
         }
