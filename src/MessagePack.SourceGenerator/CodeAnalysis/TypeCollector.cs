@@ -110,6 +110,7 @@ public class TypeCollector
         { "System.Collections.Generic.Queue<>", "MsgPack::Formatters.QueueFormatter" },
         { "System.Collections.Generic.Stack<>", "MsgPack::Formatters.StackFormatter" },
         { "System.Collections.Generic.HashSet<>", "MsgPack::Formatters.HashSetFormatter" },
+        { "System.Collections.ObjectModel.Collection<>", "MsgPack::Formatters.CollectionFormatter" },
         { "System.Collections.ObjectModel.ReadOnlyCollection<>", "MsgPack::Formatters.ReadOnlyCollectionFormatter" },
         { "System.Collections.Generic.IList<>", "MsgPack::Formatters.InterfaceListFormatter2" },
         { "System.Collections.Generic.ICollection<>", "MsgPack::Formatters.InterfaceCollectionFormatter2" },

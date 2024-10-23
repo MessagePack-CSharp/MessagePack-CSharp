@@ -24,6 +24,8 @@ MessagePack.Formatters.ByteListFormatter.Serialize(ref MessagePack.MessagePackWr
 MessagePack.Formatters.CharListFormatter
 MessagePack.Formatters.CharListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<char>?
 MessagePack.Formatters.CharListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<char>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.CollectionFormatter<T>
+MessagePack.Formatters.CollectionFormatter<T>.CollectionFormatter() -> void
 MessagePack.Formatters.DoubleListFormatter
 MessagePack.Formatters.DoubleListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<double>?
 MessagePack.Formatters.DoubleListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<double>? value, MessagePack.MessagePackSerializerOptions! options) -> void

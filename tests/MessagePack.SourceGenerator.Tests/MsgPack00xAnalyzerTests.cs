@@ -1001,4 +1001,22 @@ public class Bar : Foo
 
         await VerifyCS.VerifyAnalyzerAsync(test);
     }
+
+    [Fact]
+    public async Task SystemCollectionsObjectModelCollection()
+    {
+        string test = /* lang=c#-test */ """
+            using MessagePack;
+            using System.Collections.ObjectModel;
+
+            [MessagePackObject]
+            public class A
+            {
+                [Key(0)]
+                public Collection<int> SampleCollection { get; set; }
+            }
+            """;
+
+        await VerifyCS.VerifyAnalyzerAsync(test);
+    }
 }
