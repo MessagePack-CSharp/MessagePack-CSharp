@@ -697,6 +697,24 @@ namespace MessagePack.Formatters
         }
     }
 
+    public sealed class CollectionFormatter<T> : CollectionFormatterBase<T, T[], Collection<T>>
+    {
+        protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
+        {
+            collection[index] = value;
+        }
+
+        protected override Collection<T> Complete(T[] intermediateCollection)
+        {
+            return new Collection<T>(intermediateCollection);
+        }
+
+        protected override T[] Create(int count, MessagePackSerializerOptions options)
+        {
+            return count == 0 ? Array.Empty<T>() : new T[count];
+        }
+    }
+
     public sealed class ReadOnlyCollectionFormatter<T> : CollectionFormatterBase<T, T[], ReadOnlyCollection<T>>
     {
         protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
