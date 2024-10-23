@@ -3,8 +3,6 @@
 
 #pragma warning disable SA1402 // File may only contain a single type
 
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -39,7 +37,7 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
     }
 
     [SetsRequiredMembers]
-    public QualifiedNamedTypeName(INamedTypeSymbol symbol)
+    public QualifiedNamedTypeName(INamedTypeSymbol symbol, ImmutableStack<GenericTypeParameterInfo>? recursionGuard = null)
     {
         this.Name = symbol.Name;
         this.Kind = symbol.TypeKind;
@@ -47,8 +45,8 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
         this.Container = symbol.ContainingType is { } nesting ? new NestingTypeContainer(new(nesting)) :
             symbol.ContainingNamespace?.GetFullNamespaceName() is string ns ? new NamespaceTypeContainer(ns) :
             null;
-        this.TypeParameters = CodeAnalysisUtilities.GetTypeParameters(symbol);
-        this.TypeArguments = CodeAnalysisUtilities.GetTypeArguments(symbol);
+        this.TypeParameters = CodeAnalysisUtilities.GetTypeParameters(symbol, recursionGuard);
+        this.TypeArguments = CodeAnalysisUtilities.GetTypeArguments(symbol, recursionGuard);
         this.ReferenceTypeNullableAnnotation = symbol.NullableAnnotation;
     }
 

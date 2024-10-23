@@ -5,13 +5,11 @@
 #pragma warning disable SA1649 // File name should match first type name
 
 using System.Collections.Immutable;
-using System.ComponentModel;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Operations;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
@@ -1407,7 +1405,7 @@ public class TypeCollector
             formattedType,
             isClass: isClass,
             nestedFormatterRequired: nestedFormatterRequired,
-            genericTypeParameters: formattedType.IsGenericType ? formattedType.TypeParameters.Select(t => new GenericTypeParameterInfo(t)).ToArray() : Array.Empty<GenericTypeParameterInfo>(),
+            genericTypeParameters: formattedType.IsGenericType ? formattedType.TypeParameters.Select(t => GenericTypeParameterInfo.Create(t)).ToArray() : Array.Empty<GenericTypeParameterInfo>(),
             constructorParameters: constructorParameters.ToArray(),
             isIntKey: isIntKey,
             members: isIntKey ? intMembers.Values.Select(v => v.Info).ToArray() : stringMembers.Values.Select(v => v.Info).ToArray(),
