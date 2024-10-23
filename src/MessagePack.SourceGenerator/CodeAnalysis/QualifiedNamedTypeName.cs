@@ -195,7 +195,7 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
                 case "Char": return "char";
                 case "String": return "string";
                 case "Object": return "object";
-                case "ValueTuple": return string.Format(this.TypeArguments.Length > 1 ? "({0})" : "global::System.ValueTuple<{0}>", string.Join(", ", this.TypeArguments.Select(ta => ta.GetQualifiedName(qualifier, genericStyle, includeNullableAnnotation))));
+                case "ValueTuple" when this.TypeArguments.Length > 1: return $"({string.Join(", ", this.TypeArguments.Select(ta => ta.GetQualifiedName(qualifier, genericStyle, includeNullableAnnotation)))})";
                 case "Nullable": return $"{this.TypeArguments[0].GetQualifiedName(qualifier, genericStyle, includeNullableAnnotation)}?";
             }
         }
