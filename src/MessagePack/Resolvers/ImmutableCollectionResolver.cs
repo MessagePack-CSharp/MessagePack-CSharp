@@ -7,6 +7,7 @@ using System.Collections.Frozen;
 #endif
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using MessagePack.Formatters;
 
@@ -14,6 +15,7 @@ using MessagePack.Formatters;
 
 namespace MessagePack.ImmutableCollection
 {
+    [RequiresDynamicCode(Constants.ClosingGenerics)]
     public class ImmutableCollectionResolver : IFormatterResolver
     {
         public static readonly ImmutableCollectionResolver Instance = new ImmutableCollectionResolver();
@@ -27,6 +29,7 @@ namespace MessagePack.ImmutableCollection
             return FormatterCache<T>.Formatter;
         }
 
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         private static class FormatterCache<T>
         {
             internal static readonly IMessagePackFormatter<T>? Formatter;
@@ -61,6 +64,7 @@ namespace MessagePack.ImmutableCollection
 #endif
         };
 
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         internal static object? GetFormatter(Type t)
         {
             TypeInfo ti = t.GetTypeInfo();
@@ -85,6 +89,7 @@ namespace MessagePack.ImmutableCollection
             return null;
         }
 
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         private static object? CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
         {
             return Activator.CreateInstance(genericType.MakeGenericType(genericTypeArguments), arguments);

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
@@ -91,6 +92,7 @@ namespace MessagePack
         /// <summary>
         /// Gets the derived or implementing type.
         /// </summary>
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
         public Type SubType { get; }
 
         /// <summary>
@@ -109,10 +111,12 @@ namespace MessagePack
         /// </summary>
         /// <param name="key">The distinguishing value that identifies a particular subtype.</param>
         /// <param name="subType">The full name (should be assembly qualified) of the derived or implementing type.</param>
-        public UnionAttribute(int key, string subType)
+        public UnionAttribute(
+            int key,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] string subType)
         {
             this.Key = key;
-            this.SubType = Type.GetType(subType, throwOnError: true);
+            this.SubType = Type.GetType(subType, throwOnError: true) ?? throw new Exception("SubType not found");
         }
     }
 
@@ -124,16 +128,17 @@ namespace MessagePack
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Enum | AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Parameter | AttributeTargets.ReturnValue, AllowMultiple = false, Inherited = true)]
     public class MessagePackFormatterAttribute : Attribute
     {
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicConstructors)]
         public Type FormatterType { get; }
 
         public object?[]? Arguments { get; }
 
-        public MessagePackFormatterAttribute(Type formatterType)
+        public MessagePackFormatterAttribute([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicConstructors)] Type formatterType)
         {
             this.FormatterType = formatterType ?? throw new ArgumentNullException(nameof(formatterType));
         }
 
-        public MessagePackFormatterAttribute(Type formatterType, params object?[]? arguments)
+        public MessagePackFormatterAttribute([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicConstructors)] Type formatterType, params object?[]? arguments)
         {
             this.FormatterType = formatterType ?? throw new ArgumentNullException(nameof(formatterType));
             this.Arguments = arguments;

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Serialization;
 using MessagePack.Internal;
@@ -10,7 +11,7 @@ using MessagePack.Internal;
 namespace MessagePack.Formatters
 {
     // Note:This implementation is 'not' fastest, should more improve.
-    public sealed class EnumAsStringFormatter<T> : IMessagePackFormatter<T>
+    public sealed class EnumAsStringFormatter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] T> : IMessagePackFormatter<T>
         where T : struct, Enum
     {
         private readonly bool ignoreCase;

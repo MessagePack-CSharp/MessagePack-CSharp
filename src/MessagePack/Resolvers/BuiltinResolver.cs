@@ -5,6 +5,7 @@ using System;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text;
 using MessagePack.Formatters;
@@ -17,6 +18,7 @@ using MessagePack.Resolvers;
 
 namespace MessagePack.Resolvers
 {
+    [RequiresDynamicCode(Constants.ClosingGenerics)]
     public sealed class BuiltinResolver : IFormatterResolver
     {
         /// <summary>
@@ -33,6 +35,7 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         private static class FormatterCache<T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;
@@ -189,6 +192,7 @@ namespace MessagePack.Internal
 #endif
         };
 
+        [RequiresDynamicCode(Constants.ClosingGenerics)]
         internal static object? GetFormatter(Type t)
         {
             if (FormatterMap.TryGetValue(t, out object? formatter))

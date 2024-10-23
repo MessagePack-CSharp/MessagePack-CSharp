@@ -5,6 +5,7 @@ using System;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
@@ -763,7 +764,8 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class LazyFormatter<T> : IMessagePackFormatter<Lazy<T>?>
+    public sealed class LazyFormatter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] T>
+        : IMessagePackFormatter<Lazy<T>?>
     {
         public void Serialize(ref MessagePackWriter writer, Lazy<T>? value, MessagePackSerializerOptions options)
         {
