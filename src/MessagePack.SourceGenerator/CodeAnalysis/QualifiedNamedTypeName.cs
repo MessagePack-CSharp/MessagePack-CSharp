@@ -183,6 +183,10 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
                 case "UInt64": return "ulong";
                 case "UInt32": return "uint";
                 case "UInt16": return "ushort";
+                case "Single": return "float";
+                case "Double": return "double";
+                case "Decimal": return "decimal";
+                case "Boolean": return "bool";
                 case "Byte": return "byte";
                 case "Int64": return "long";
                 case "Int32": return "int";
@@ -190,7 +194,8 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
                 case "SByte": return "sbyte";
                 case "Char": return "char";
                 case "String": return "string";
-                case "ValueTuple": return $"({string.Join(", ", this.TypeArguments.Select(ta => ta.GetQualifiedName(qualifier, genericStyle, includeNullableAnnotation)))})";
+                case "Object": return "object";
+                case "ValueTuple" when this.TypeArguments.Length > 1: return $"({string.Join(", ", this.TypeArguments.Select(ta => ta.GetQualifiedName(qualifier, genericStyle, includeNullableAnnotation)))})";
                 case "Nullable": return $"{this.TypeArguments[0].GetQualifiedName(qualifier, genericStyle, includeNullableAnnotation)}?";
             }
         }
