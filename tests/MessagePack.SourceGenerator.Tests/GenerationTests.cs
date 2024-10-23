@@ -898,4 +898,35 @@ public class MyGenericType<T>
 
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
+
+    [Fact]
+    public async Task SimplifiedNameForKeywordsAndSyntaxSugar()
+    {
+        string testSource = /* lang=c#-test */ """
+            using System;
+            using MessagePack;
+            using MessagePack.Formatters;
+
+            [MessagePackObject(AllowPrivate = true)]
+            public partial class SampleObject
+            {
+                [Key(0)]
+                public (bool, byte, sbyte) Value1;
+
+                [Key(1)]
+                public (short, ushort, int, uint) Value2;
+
+                [Key(2)]
+                public (long, ulong, float, double) Value3;
+
+                [Key(3)]
+                public (decimal, char, string, object) Value4;
+
+                [Key(4)]
+                public ValueTuple<int?> Value5;
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
 }
