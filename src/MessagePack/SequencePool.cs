@@ -79,7 +79,7 @@ namespace MessagePack
             this.arrayPool = arrayPool;
         }
 
-        /// <summary> Clears the inner pool, letting the <see cref="GC"/> to collect <i>pooled</i> objects. </summary>
+        /// <summary>Clears the pool, letting the <see cref="GC"/> collect the recycled buffers.</summary>
         public void Clear()
         {
             lock (this.pool)

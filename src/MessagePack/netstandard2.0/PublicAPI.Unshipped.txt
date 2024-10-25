@@ -48,6 +48,7 @@ MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver
 MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.SourceGeneratedFormatterResolver
 MessagePack.Resolvers.SourceGeneratedFormatterResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
+MessagePack.SequencePool.Clear() -> void
 static readonly MessagePack.Formatters.Matrix3x2Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Matrix3x2>!
 static readonly MessagePack.Formatters.Matrix4x4Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Matrix4x4>!
 static readonly MessagePack.Formatters.QuaternionFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Quaternion>!
