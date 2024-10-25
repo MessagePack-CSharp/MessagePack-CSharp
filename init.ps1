@@ -28,6 +28,8 @@
     No effect if -NoPrerequisites is specified.
 .PARAMETER NoRestore
     Skips the package restore step.
+.PARAMETER NoToolRestore
+    Skips the dotnet tool restore step.
 .PARAMETER AccessToken
     An optional access token for authenticating to Azure Artifacts authenticated feeds.
 .PARAMETER Interactive
@@ -45,6 +47,8 @@ Param (
     [switch]$UpgradePrerequisites,
     [Parameter()]
     [switch]$NoRestore,
+    [Parameter()]
+    [switch]$NoToolRestore,
     [Parameter()]
     [string]$AccessToken,
     [Parameter()]
@@ -79,17 +83,23 @@ Push-Location $PSScriptRoot
 try {
     $HeaderColor = 'Green'
 
-    if (!$NoRestore -and $PSCmdlet.ShouldProcess("NuGet packages", "Restore")) {
-        $RestoreArguments = @()
-        if ($Interactive)
-        {
-            $RestoreArguments += '--interactive'
-        }
+    $RestoreArguments = @()
+    if ($Interactive) {
+        $RestoreArguments += '--interactive'
+    }
 
+    if (!$NoRestore -and $PSCmdlet.ShouldProcess("NuGet packages", "Restore")) {
         Write-Host "Restoring NuGet packages" -ForegroundColor $HeaderColor
         dotnet restore @RestoreArguments
         if ($lastexitcode -ne 0) {
             throw "Failure while restoring packages."
+        }
+    }
+
+    if (!$NoToolRestore -and $PSCmdlet.ShouldProcess("dotnet tool", "restore")) {
+        dotnet tool restore @RestoreArguments
+        if ($lastexitcode -ne 0) {
+            throw "Failure while restoring dotnet CLI tools."
         }
     }
 

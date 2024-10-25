@@ -96,6 +96,7 @@ namespace PerfBenchmarkDotNet
             return (StringKeySerializerTarget)newmsgpack.MessagePack.MessagePackSerializer.Typeless.Deserialize(typelessWithStringKeyObj);
         }
 
+#if MsgPackCli
         [Benchmark]
         public IntKeySerializerTarget MsgPackCliMap()
         {
@@ -107,7 +108,9 @@ namespace PerfBenchmarkDotNet
         {
             return arrayContext.GetSerializer<IntKeySerializerTarget>().UnpackSingleObject(arrayObj);
         }
+#endif
 
+#if Protobuf
         [Benchmark]
         public IntKeySerializerTarget ProtobufNet()
         {
@@ -116,7 +119,9 @@ namespace PerfBenchmarkDotNet
                 return ProtoBuf.Serializer.Deserialize<IntKeySerializerTarget>(ms);
             }
         }
+#endif
 
+#if Hyperion
         [Benchmark]
         public IntKeySerializerTarget Hyperion()
         {
@@ -125,7 +130,9 @@ namespace PerfBenchmarkDotNet
                 return hyperionSerializer.Deserialize<IntKeySerializerTarget>(ms);
             }
         }
+#endif
 
+#if NewtonsoftJson
         [Benchmark]
         public IntKeySerializerTarget JsonNetString()
         {
@@ -142,7 +149,9 @@ namespace PerfBenchmarkDotNet
                 return jsonSerialzier.Deserialize<IntKeySerializerTarget>(jr);
             }
         }
+#endif
 
+#if Jil
         [Benchmark]
         public IntKeySerializerTarget JilString()
         {
@@ -158,9 +167,6 @@ namespace PerfBenchmarkDotNet
                 return Jil.JSON.Deserialize<IntKeySerializerTarget>(sr);
             }
         }
+#endif
     }
 }
-
-#pragma warning restore SA1200 // Using directives should be placed correctly
-#pragma warning restore SA1403 // File may only contain a single namespace
-

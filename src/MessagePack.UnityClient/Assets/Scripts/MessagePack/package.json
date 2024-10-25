@@ -1,8 +1,8 @@
 {
-    "name": "com.neuecc.messagepack",
+    "name": "com.github.messagepack-csharp",
     "displayName": "MessagePack",
-    "version": "2.5.140",
-    "unity": "2018.4",
+    "version": "3.0.0",
+    "unity": "2021.3",
     "description": "Extremely Fast MessagePack Serializer for C#.",
     "keywords": [
         "Serializer"

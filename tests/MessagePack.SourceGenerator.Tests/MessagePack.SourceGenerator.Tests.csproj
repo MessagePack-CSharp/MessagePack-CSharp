@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Resources\**\*.cs" />
+    <EmbeddedResource Include="Resources\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing.XUnit" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.CodeFix.Testing.XUnit" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Nerdbank.Streams" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.Combinatorial" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+  </ItemGroup>
+
+</Project>

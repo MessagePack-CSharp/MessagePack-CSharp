@@ -4,7 +4,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="IsExternalInit" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
