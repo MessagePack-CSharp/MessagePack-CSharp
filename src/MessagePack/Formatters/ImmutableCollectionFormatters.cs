@@ -6,6 +6,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 using MessagePack.Formatters;
 
 #pragma warning disable SA1402 // File may only contain a single type
@@ -53,13 +54,13 @@ namespace MessagePack.ImmutableCollection
                 }
 
                 IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
-                ImmutableArray<T>.Builder builder = ImmutableArray.CreateBuilder<T>(len);
+                T[] array = new T[len];
                 options.Security.DepthStep(ref reader);
                 try
                 {
                     for (int i = 0; i < len; i++)
                     {
-                        builder.Add(formatter.Deserialize(ref reader, options));
+                        array[i] = formatter.Deserialize(ref reader, options);
                     }
                 }
                 finally
@@ -67,7 +68,7 @@ namespace MessagePack.ImmutableCollection
                     reader.Depth--;
                 }
 
-                return builder.MoveToImmutable();
+                return ImmutableCollectionsMarshal.AsImmutableArray(array);
             }
         }
     }
