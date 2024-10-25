@@ -41,9 +41,9 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 	{
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(4)
 		{
-			{ typeof(global::System.ValueTuple<int, string, long>), 0 },
-			{ typeof(global::System.Collections.Generic.List<global::System.Collections.Generic.List<int>>), 1 },
-			{ typeof(global::System.Collections.Generic.List<int>), 2 },
+			{ typeof((int, string, long)), 0 },
+			{ typeof(global::System.Collections.Generic.List<int>), 1 },
+			{ typeof(global::System.Collections.Generic.List<global::System.Collections.Generic.List<int>>), 2 },
 			{ typeof(global::TempProject.MyObject), 3 },
 		};
 
@@ -54,8 +54,8 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 				switch (closedKey)
 				{
 					case 0: return new MsgPack::Formatters.ValueTupleFormatter<int, string, long>();
-					case 1: return new MsgPack::Formatters.ListFormatter<global::System.Collections.Generic.List<int>>();
-					case 2: return new MsgPack::Formatters.ListFormatter<int>();
+					case 1: return new MsgPack::Formatters.ListFormatter<int>();
+					case 2: return new MsgPack::Formatters.ListFormatter<global::System.Collections.Generic.List<int>>();
 					case 3: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter();
 					default: return null; // unreachable
 				};

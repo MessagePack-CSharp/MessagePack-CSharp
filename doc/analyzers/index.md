@@ -20,5 +20,8 @@ ID | Title
 [MsgPack013](MsgPack013.md) | Inaccessible formatter instance
 [MsgPack014](MsgPack014.md) | Nullable reference type formatter
 [MsgPack015](MsgPack015.md) | MessagePackObjectAttribute.AllowPrivate should be set
+[MsgPack016](MsgPack016.md) | KeyAttribute-derived attributes are not supported by AOT formatters
+[MsgPack017](MsgPack017.md) | Property with init accessor and initializer
+[MsgPack018](MsgPack018.md) | Unique names required in force map mode
 
 [1]: https://nuget.org/packages/MessagePackAnalyzer

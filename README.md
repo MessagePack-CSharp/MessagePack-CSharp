@@ -1,4 +1,4 @@
-# MessagePack for C# (.NET, .NET Core, Unity, Xamarin)
+# MessagePack for C# (.NET Framework, .NET 8, Unity, Xamarin)
 
 [![NuGet](https://img.shields.io/nuget/v/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
 [![NuGet](https://img.shields.io/nuget/vpre/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
@@ -68,7 +68,7 @@ MessagePack has a compact binary size and a full set of general purpose expressi
 
 This library is distributed via NuGet. Special [Unity support](#unity) is available, too.
 
-We target .NET Standard 2.0 with special optimizations for .NET 6+ and .NET Framework.
+We target .NET Standard 2.0 with special optimizations for .NET 8+ and .NET Framework.
 The library code is pure C# (with Just-In-Time IL code generation on some platforms or AOT safe source generators).
 
 ### NuGet packages
@@ -665,11 +665,16 @@ Untrusted data might come from over the network from an untrusted source (e.g. a
 
 Please be very mindful of these attack scenarios; many projects and companies, and serialization library users in general, have been bitten by untrusted user data deserialization in the past.
 
-When deserializing untrusted data, put MessagePack into a more secure mode by configuring your `MessagePackSerializerOptions.Security` property:
+You should also avoid the Typeless serializer/formatters/resolvers for untrusted data as that opens the door for the untrusted data to potentially deserialize unanticipated types that can compromise security.
+
+MessagePack v3 assumes the data you deserialize is untrusted and takes mitigating steps including use of collision resistant hash functions when deserializing dictionaries.
+The `UntrustedData` default mode merely hardens against some common attacks, but is no fully secure solution in itself.
+
+When you are deserializing data that you already trust and wish to use faster (insecure) hash functions, you can switch to trusted data mode by configuring your `MessagePackSerializerOptions.Security` property:
 
 ```cs
 var options = MessagePackSerializerOptions.Standard
-    .WithSecurity(MessagePackSecurity.UntrustedData);
+    .WithSecurity(MessagePackSecurity.TrustedData);
 
 // Pass the options explicitly for the greatest control.
 T object = MessagePackSerializer.Deserialize<T>(data, options);
@@ -678,9 +683,8 @@ T object = MessagePackSerializer.Deserialize<T>(data, options);
 MessagePackSerializer.DefaultOptions = options;
 ```
 
-You should also avoid the Typeless serializer/formatters/resolvers for untrusted data as that opens the door for the untrusted data to potentially deserialize unanticipated types that can compromise security.
-
-The `UntrustedData` mode merely hardens against some common attacks, but is no fully secure solution in itself.
+You can also derive your own type from the `MessagePackSecurity` class to customize security decisions and hash functions.
+Provide an instance of your derived type to the `MessagePackSerializationOptions` type to use it in your deserialization.
 
 ## Performance
 

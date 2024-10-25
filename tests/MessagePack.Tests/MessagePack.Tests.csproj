@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(TargetFrameworks);net472</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -8,16 +8,17 @@
     <NoWarn>$(NoWarn);CS1701</NoWarn>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
- </PropertyGroup>
+  </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\src\MessagePack\SipHash.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\**\*.cs" Exclude="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\T4\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\MessagePack.SourceGenerator.MapModeExecutionTests\ClassWithUseMapAndMembersOfVariousVisibility.cs" Link="ClassWithUseMapAndMembersOfVariousVisibility.cs" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\..\sandbox\SharedData\SharedData.csproj" />
     <ProjectReference Include="..\..\src\MessagePack.ImmutableCollection\MessagePack.ImmutableCollection.csproj" />

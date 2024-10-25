@@ -80,21 +80,21 @@ public static class CodeAnalysisUtilities
             _ => throw new NotSupportedException(),
         };
 
-    internal static ImmutableArray<string> GetTypeParameters(ITypeSymbol dataType)
+    internal static ImmutableArray<GenericTypeParameterInfo> GetTypeParameters(ITypeSymbol dataType, ImmutableStack<GenericTypeParameterInfo>? recursionGuard = null)
         => dataType switch
         {
-            INamedTypeSymbol namedType => namedType.TypeParameters.Select(t => t.Name).ToImmutableArray(),
+            INamedTypeSymbol namedType => namedType.TypeParameters.Select(t => GenericTypeParameterInfo.Create(t, recursionGuard)).ToImmutableArray(),
             IArrayTypeSymbol arrayType => GetTypeParameters(arrayType.ElementType),
-            ITypeParameterSymbol => ImmutableArray<string>.Empty,
+            ITypeParameterSymbol => ImmutableArray<GenericTypeParameterInfo>.Empty,
             _ => throw new NotSupportedException(),
         };
 
-    internal static ImmutableArray<string> GetTypeArguments(ITypeSymbol dataType)
+    internal static ImmutableArray<QualifiedTypeName> GetTypeArguments(ITypeSymbol dataType, ImmutableStack<GenericTypeParameterInfo>? recursionGuard = null)
         => dataType switch
         {
-            INamedTypeSymbol namedType => namedType.TypeArguments.Select(t => t.GetCanonicalTypeFullName()).ToImmutableArray(),
-            IArrayTypeSymbol arrayType => GetTypeArguments(arrayType.ElementType),
-            ITypeParameterSymbol => ImmutableArray<string>.Empty,
+            INamedTypeSymbol namedType => namedType.TypeArguments.Select(t => QualifiedTypeName.Create(t, recursionGuard)).ToImmutableArray(),
+            IArrayTypeSymbol arrayType => GetTypeArguments(arrayType.ElementType, recursionGuard),
+            ITypeParameterSymbol => ImmutableArray<QualifiedTypeName>.Empty,
             _ => throw new NotSupportedException(),
         };
 }

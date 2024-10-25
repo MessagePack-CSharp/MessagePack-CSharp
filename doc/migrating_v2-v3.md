@@ -1,13 +1,24 @@
 # Migrating from MessagePack v2 to v3
 
+The most significant change in v3 is that AOT source generation of formatters is on by default.
+These new formatters are comparable to the dynamic formatters generated at runtime in prior versions, but they have some limitations not shared by their dynamically generated counterparts.
+These limitation and other migration requirements and considerations are enumerated below or are called out by analyzers.
+
+The `MessagePackAnalyzer` nuget package, which was optional in v2, is now a nuget dependency, which means diagnostics may appear in your compilation after upgrading to v3 that you have not seen before.
+v3 adds many new diagnostic providers to the set of analyzers as well, with general help and specific help for handling the new source generated formatters.
+
 ## Breaking Changes
 
+- Secure by default: `MessagePackSerializerOptions.Security` defaults to `MessagePackSecurity.UntrustedData` instead of the v2 default of `MessagePackSecurity.TrustedData`.
+  This may have a small negative perf impact for deserialization.
+  It may also cause deserialization to fail if the object model requires hashing deserialized data for which no collision resistant hash function is known by the library.
+  [Learn more about security switches and customization](../README.md#security).
 - `MessagePackAnalyzer.json` is no longer used to configure the analyzer.
   Use `GeneratedMessagePackResolverAttribute`, `MessagePackKnownFormatterAttribute` and `MessagePackAssumedFormattableAttribute` instead.
 - The `mpc` CLI tool is no longer used to generate ahead-of-time (AOT) formatters and resolver.
   AOT code generation is "on by default" in v3 courtesy of our roslyn source generator.
 - Custom implementations of `IMessagePackFormatter<T>` should be `internal` for automatic inclusion in our source generated resolver.
-- Types annotated with `[MessagePackObject]` should be declared as `partial` to grant the source generated formatter access to private/protected members.
+- Types annotated with `[MessagePackObject]` should be declared as `partial` to grant the source generated formatter access to private/protected members, when applicable.
 - Unity users:
   - Use NuGetForUnity to acquire the `MessagePack` nuget package instead of acquiring source code via the .zip file on our Releases page.
   - Unity 2021.3 is no longer supported. The minimum required version is 2022.3.12f1.

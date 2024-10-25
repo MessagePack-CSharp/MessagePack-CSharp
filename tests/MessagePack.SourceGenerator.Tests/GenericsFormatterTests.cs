@@ -493,4 +493,24 @@ namespace TempProject
             },
         }.RunAsync();
     }
+
+    /// <summary>
+    /// Asserts that the generator can handle directly recursive generic constraints.
+    /// </summary>
+    [Fact]
+    public async Task RecursiveGenerics_Direct()
+    {
+        string testSource = /* lang=c#-test */ """
+            using System;
+            using MessagePack;
+
+            [MessagePackObject]
+            public class A<T>
+                where T : IEquatable<A<T>>
+            {
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
 }

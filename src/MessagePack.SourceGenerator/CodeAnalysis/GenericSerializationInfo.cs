@@ -17,11 +17,10 @@ public sealed record GenericSerializationInfo : ResolverRegisterInfo
     public static new GenericSerializationInfo Create(INamedTypeSymbol dataType, ResolverOptions resolverOptions, FormatterPosition formatterLocation = FormatterPosition.UnderResolver)
     {
         ResolverRegisterInfo basicInfo = ResolverRegisterInfo.Create(dataType, resolverOptions, formatterLocation);
-        ImmutableArray<string> typeArguments = CodeAnalysisUtilities.GetTypeArguments(dataType);
         return new GenericSerializationInfo
         {
-            DataType = ((QualifiedNamedTypeName)basicInfo.DataType) with { TypeParameters = typeArguments },
-            Formatter = basicInfo.Formatter with { TypeParameters = typeArguments },
+            DataType = basicInfo.DataType,
+            Formatter = basicInfo.Formatter,
         };
     }
 }

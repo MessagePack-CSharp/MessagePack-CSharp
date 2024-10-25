@@ -52,7 +52,10 @@ internal static class TransformUtilities
                     writer($" ");
                 }
 
-                writer($"partial {kind} {nestingType.Name} {{\r\n");
+                writer($"partial {kind} {nestingType.GetQualifiedName(Qualifiers.None, GenericParameterStyle.Identifiers)}");
+                bool anyConstraints = EmitTypeConstraints(nestingType, writer, leadingLineFeedIfAny: true);
+
+                writer(anyConstraints ? "{" : " {\r\n");
                 reverseAction.Push(new DisposeAction(() => writer("}\r\n")));
 
                 return new DisposeAction(() =>
@@ -65,6 +68,26 @@ internal static class TransformUtilities
             default:
                 throw new NotSupportedException();
         }
+    }
+
+    internal static bool EmitTypeConstraints(QualifiedNamedTypeName target, Action<string> writer, bool leadingLineFeedIfAny = false)
+    {
+        bool anyConstraints = false;
+        foreach (GenericTypeParameterInfo typeParameter in target.TypeParameters)
+        {
+            if (typeParameter.HasConstraints)
+            {
+                if (leadingLineFeedIfAny && !anyConstraints)
+                {
+                    writer("\r\n");
+                }
+
+                anyConstraints = true;
+                writer($"\t\twhere {typeParameter.Name} : {typeParameter.Constraints}\r\n");
+            }
+        }
+
+        return anyConstraints;
     }
 
     internal static IDisposable? EmitClassesForNamespace(this IFormatterTemplate template, out string formatterVisibility, Action<string> writer)

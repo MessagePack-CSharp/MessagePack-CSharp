@@ -75,8 +75,8 @@ public class MessagePackSerializerOptionsTests
     [Fact]
     public void Security()
     {
-        Assert.Same(MessagePackSecurity.TrustedData, MessagePackSerializerOptions.Standard.Security);
-        Assert.Same(MessagePackSecurity.UntrustedData, MessagePackSerializerOptions.Standard.WithSecurity(MessagePackSecurity.UntrustedData).Security);
+        Assert.Same(MessagePackSecurity.UntrustedData, MessagePackSerializerOptions.Standard.Security);
+        Assert.Same(MessagePackSecurity.TrustedData, MessagePackSerializerOptions.Standard.WithSecurity(MessagePackSecurity.TrustedData).Security);
     }
 
     [Fact]

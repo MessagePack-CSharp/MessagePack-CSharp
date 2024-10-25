@@ -21,6 +21,26 @@ public static class RoslynAnalyzerExtensions
         }
     }
 
+    public static EqualityMatch IsApproximatelyEqualOrDerivedFrom(this INamedTypeSymbol? left, INamedTypeSymbol? right)
+    {
+        if (left is IErrorTypeSymbol || right is IErrorTypeSymbol)
+        {
+            return left?.ToDisplayString() == right?.ToDisplayString() ? EqualityMatch.Equal : EqualityMatch.NotEqual;
+        }
+        else if (SymbolEqualityComparer.Default.Equals(left, right))
+        {
+            return EqualityMatch.Equal;
+        }
+        else if (left is not null && right is not null && left.EnumerateBaseType().Any(bt => SymbolEqualityComparer.Default.Equals(bt, right)))
+        {
+            return EqualityMatch.LeftDerivesFromRight;
+        }
+        else
+        {
+            return EqualityMatch.NotEqual;
+        }
+    }
+
     public static IEnumerable<INamedTypeSymbol> EnumerateBaseType(this ITypeSymbol symbol)
     {
         INamedTypeSymbol? t = symbol.BaseType;
@@ -104,6 +124,11 @@ public static class RoslynAnalyzerExtensions
         return false;
     }
 
+    /// <summary>
+    /// Enumerates all members of the given type.
+    /// </summary>
+    /// <param name="symbol">The symbol to read members for.</param>
+    /// <returns>The enumeration of members. Members are enumerated in the most derived type first, then each successive base type.</returns>
     public static IEnumerable<ISymbol> GetAllMembers(this ITypeSymbol symbol)
     {
         ITypeSymbol? t = symbol;
@@ -122,5 +147,12 @@ public static class RoslynAnalyzerExtensions
     {
         return symbol.GetMembers()
             .Concat(symbol.AllInterfaces.SelectMany(x => x.GetMembers()));
+    }
+
+    public enum EqualityMatch
+    {
+        NotEqual,
+        Equal,
+        LeftDerivesFromRight,
     }
 }
