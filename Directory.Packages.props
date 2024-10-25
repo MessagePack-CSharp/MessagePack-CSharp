@@ -61,7 +61,7 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1'">
     <PackageVersion Include="System.Collections.Immutable" Version="7.0.0" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net472' or '$(TargetFramework)' == 'net462'">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net472'">
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="8.0.0" />
     <PackageVersion Include="System.Memory" Version="4.5.5" />
