@@ -929,4 +929,22 @@ public class MyGenericType<T>
 
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
+
+    [Fact]
+    public async Task SystemCollectionsObjectModelCollection()
+    {
+        string testSource = /* lang=c#-test */ """
+            using MessagePack;
+            using System.Collections.ObjectModel;
+
+            [MessagePackObject]
+            public class A
+            {
+                [Key(0)]
+                public Collection<int> SampleCollection { get; set; }
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
 }
