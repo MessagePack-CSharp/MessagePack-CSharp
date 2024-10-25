@@ -541,7 +541,8 @@ public class TypeCollector
         }
 
         // collection
-        if (KnownGenericTypes.TryGetValue(genericTypeDefinitionString, out string formatterFullName))
+        string? formatterFullName;
+        if (KnownGenericTypes.TryGetValue(genericTypeDefinitionString, out formatterFullName))
         {
             foreach (ITypeSymbol item in type.TypeArguments)
             {
@@ -607,6 +608,32 @@ public class TypeCollector
             };
             this.collectedGenericInfo.Add(enumerableInfo);
             return true;
+        }
+
+        if (type.AllInterfaces.FirstOrDefault(x => !x.IsUnboundGenericType && x.ConstructUnboundGenericType() is { Name: nameof(ICollection<int>) }) is INamedTypeSymbol collectionIface
+            && type.InstanceConstructors.Any(ctor => ctor.Parameters.Length == 0))
+        {
+            this.CollectCore(collectionIface.TypeArguments[0]);
+
+            if (isOpenGenericType)
+            {
+                return true;
+            }
+            else
+            {
+                GenericSerializationInfo info = GenericSerializationInfo.Create(type, this.options.Generator.Resolver) with
+                {
+                    Formatter = new(TypeKind.Class)
+                    {
+                        Container = new NamespaceTypeContainer("MsgPack::Formatters"),
+                        Name = "GenericCollectionFormatter",
+                        TypeParameters = ImmutableArray.Create<GenericTypeParameterInfo>(new("TElement"), new("TCollection")),
+                        TypeArguments = ImmutableArray.Create<QualifiedTypeName>(QualifiedTypeName.Create(collectionIface.TypeArguments[0]), QualifiedTypeName.Create(type)),
+                    },
+                };
+
+                this.collectedGenericInfo.Add(info);
+            }
         }
 
         // Generic types
