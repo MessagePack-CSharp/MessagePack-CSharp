@@ -14,6 +14,7 @@ namespace MessagePack
     /// An immutable description of options for running the <see cref="MessagePackSerializer"/>.
     /// </summary>
 #endif
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public class MessagePackSerializerOptions
     {
         // see:http://msdn.microsoft.com/en-us/library/w3f99sx1.aspx
@@ -373,6 +374,7 @@ namespace MessagePack
         }
 
 #if !DYNAMICCODEDUMPER
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper
         {
             public static readonly MessagePackSerializerOptions Standard = new MessagePackSerializerOptions(Resolvers.StandardResolver.Instance);

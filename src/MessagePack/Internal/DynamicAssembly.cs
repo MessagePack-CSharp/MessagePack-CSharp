@@ -9,6 +9,8 @@ using System.Reflection.Emit;
 
 namespace MessagePack.Internal
 {
+    [RequiresUnreferencedCode(Constants.Wildcard)]
+    [RequiresDynamicCode(Constants.DynamicFormatters)]
     internal class DynamicAssembly
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -32,7 +34,6 @@ namespace MessagePack.Internal
         /// </summary>
         /// <param name="moduleName">Name of the module to be generated.</param>
         /// <param name="skipVisibilityChecksTo">The names of assemblies that should be fully accessible to this dynamic one, bypassing visibility checks.</param>
-        [RequiresDynamicCode(Constants.DynamicFormatters)]
         public DynamicAssembly(string moduleName, ImmutableHashSet<AssemblyName> skipVisibilityChecksTo)
         {
 #if NETFRAMEWORK // We don't ship a net472 target, but we might add one for debugging purposes

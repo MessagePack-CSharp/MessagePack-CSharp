@@ -10,6 +10,7 @@ using MessagePack.Internal;
 namespace MessagePack.Resolvers
 {
     [RequiresDynamicCode(Constants.ClosingGenerics)]
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public sealed class DynamicEnumAsStringIgnoreCaseResolver : IFormatterResolver
     {
         /// <summary>
@@ -27,6 +28,7 @@ namespace MessagePack.Resolvers
         }
 
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicFields)] T>
         {
             private static readonly object?[] FormatterCtorArgs = new object?[] { true };

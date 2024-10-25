@@ -23,6 +23,7 @@ namespace MessagePack.Resolvers
     /// UnionResolver by dynamic code generation.
     /// </summary>
     [RequiresDynamicCode(Constants.DynamicFormatters)]
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public sealed class DynamicUnionResolver : IFormatterResolver
     {
         private const string ModuleName = "MessagePack.Resolvers.DynamicUnionResolver";
@@ -65,6 +66,7 @@ namespace MessagePack.Resolvers
         }
 
         [RequiresDynamicCode(Constants.DynamicFormatters)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;

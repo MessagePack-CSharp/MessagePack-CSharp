@@ -18,6 +18,7 @@ namespace MessagePack
     /// <summary>
     /// Settings related to security, particularly relevant when deserializing data from untrusted sources.
     /// </summary>
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public class MessagePackSecurity
     {
         /// <summary>

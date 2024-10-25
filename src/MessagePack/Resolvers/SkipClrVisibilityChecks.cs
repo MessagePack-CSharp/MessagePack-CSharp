@@ -24,6 +24,7 @@ namespace MessagePack;
 /// </summary>
 #if NET8_0_OR_GREATER
 [RequiresDynamicCode(Constants.DynamicFormatters)]
+[RequiresUnreferencedCode(Constants.DynamicFormattersIncluded)]
 #endif
 internal class SkipClrVisibilityChecks
 {

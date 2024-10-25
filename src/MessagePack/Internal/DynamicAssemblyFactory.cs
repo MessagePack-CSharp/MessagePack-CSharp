@@ -18,6 +18,7 @@ namespace MessagePack.Internal
     /// AssemblyLoadContext when running under .NET.
     /// </summary>
     [RequiresDynamicCode(Constants.DynamicFormatters)]
+    [RequiresUnreferencedCode(Constants.DynamicFormattersIncluded)]
     internal class DynamicAssemblyFactory
     {
         private readonly string moduleName;

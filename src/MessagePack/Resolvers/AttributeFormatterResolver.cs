@@ -13,6 +13,7 @@ namespace MessagePack.Resolvers
     /// Get formatter from <see cref="MessagePackFormatterAttribute"/>.
     /// </summary>
     [RequiresDynamicCode(Constants.ClosingGenerics)]
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public sealed class AttributeFormatterResolver : IFormatterResolver
     {
         /// <summary>
@@ -30,6 +31,7 @@ namespace MessagePack.Resolvers
         }
 
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class FormatterCache<T>
         {
             internal static readonly IMessagePackFormatter<T>? Formatter;

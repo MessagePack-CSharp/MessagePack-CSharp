@@ -16,6 +16,7 @@ namespace MessagePack.Resolvers
     /// EnumResolver by dynamic code generation, serialized underlying type.
     /// </summary>
     [RequiresDynamicCode(Constants.DynamicFormatters)]
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public sealed class DynamicEnumResolver : IFormatterResolver
     {
         /// <summary>
@@ -51,6 +52,7 @@ namespace MessagePack.Resolvers
         }
 
         [RequiresDynamicCode(Constants.DynamicFormatters)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;

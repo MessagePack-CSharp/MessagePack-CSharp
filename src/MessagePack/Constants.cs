@@ -14,4 +14,6 @@ internal static class Constants
     internal const string AvoidDynamicCodeRuntimeCheck = "An AvoidDynamicCode runtime check guards the dynamic code path.";
 
     internal const string ClosingGenerics = "This method constructs generic types with type arguments determined at runtime.";
+
+    internal const string Wildcard = "This method cannot be statically analyzed, and probably relies on dynamic code and/or unreferenced code.";
 }

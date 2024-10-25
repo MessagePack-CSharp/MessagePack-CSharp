@@ -14,6 +14,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// Default composited resolver, builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> primitive.
     /// </summary>
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public sealed class StandardResolver : IFormatterResolver
     {
         /// <summary>
@@ -46,6 +47,7 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class FormatterCache<T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;
@@ -76,6 +78,7 @@ namespace MessagePack.Resolvers
         }
     }
 
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public sealed class ContractlessStandardResolver : IFormatterResolver
     {
         /// <summary>
@@ -108,6 +111,7 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class FormatterCache<T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;
@@ -138,6 +142,7 @@ namespace MessagePack.Resolvers
         }
     }
 
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public sealed class StandardResolverAllowPrivate : IFormatterResolver
     {
         /// <summary>
@@ -170,6 +175,7 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class FormatterCache<T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;
@@ -200,6 +206,7 @@ namespace MessagePack.Resolvers
         }
     }
 
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public sealed class ContractlessStandardResolverAllowPrivate : IFormatterResolver
     {
         /// <summary>
@@ -232,6 +239,7 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class FormatterCache<T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter;
@@ -265,6 +273,7 @@ namespace MessagePack.Resolvers
 
 namespace MessagePack.Internal
 {
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     internal static class StandardResolverHelper
     {
         [UnconditionalSuppressMessage("ReflectionAnalysis", "IL3050", Justification = Constants.AvoidDynamicCodeRuntimeCheck)]

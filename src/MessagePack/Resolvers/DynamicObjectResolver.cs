@@ -23,6 +23,7 @@ namespace MessagePack.Resolvers
     /// ObjectResolver by dynamic code generation.
     /// </summary>
     [RequiresDynamicCode(Constants.DynamicFormatters)]
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public sealed class DynamicObjectResolver : IFormatterResolver
     {
         private const string ModuleName = "MessagePack.Resolvers.DynamicObjectResolver";
@@ -103,6 +104,7 @@ namespace MessagePack.Resolvers
         }
 
         [RequiresDynamicCode(Constants.DynamicFormatters)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter = BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, false, false, false);
@@ -113,6 +115,7 @@ namespace MessagePack.Resolvers
     /// ObjectResolver by dynamic code generation, allow private member.
     /// </summary>
     [RequiresDynamicCode(Constants.DynamicFormatters)]
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public sealed class DynamicObjectResolverAllowPrivate : IFormatterResolver
     {
         private const string ModuleName = "MessagePack.Resolvers.DynamicObjectResolverAllowPrivate";
@@ -131,6 +134,7 @@ namespace MessagePack.Resolvers
         }
 
         [RequiresDynamicCode(Constants.DynamicFormatters)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
         {
             internal static readonly IMessagePackFormatter<T>? Formatter = DynamicObjectResolver.BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, false, false, true);
@@ -141,6 +145,7 @@ namespace MessagePack.Resolvers
     /// ObjectResolver by dynamic code generation, no needs MessagePackObject attribute and serialized key as string.
     /// </summary>
     [RequiresDynamicCode(Constants.DynamicFormatters)]
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public sealed class DynamicContractlessObjectResolver : IFormatterResolver
     {
         private const string ModuleName = "MessagePack.Resolvers.DynamicContractlessObjectResolver";
@@ -171,6 +176,7 @@ namespace MessagePack.Resolvers
         }
 
         [RequiresDynamicCode(Constants.DynamicFormatters)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter = typeof(T) == typeof(object) ? null :
@@ -182,6 +188,7 @@ namespace MessagePack.Resolvers
     /// ObjectResolver by dynamic code generation, no needs MessagePackObject attribute and serialized key as string, allow private member.
     /// </summary>
     [RequiresDynamicCode(Constants.DynamicFormatters)]
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     public sealed class DynamicContractlessObjectResolverAllowPrivate : IFormatterResolver
     {
         private const string ModuleName = "MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate";
@@ -196,6 +203,7 @@ namespace MessagePack.Resolvers
         }
 
         [RequiresDynamicCode(Constants.DynamicFormatters)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static class FormatterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter = typeof(T) == typeof(object) ? null :
@@ -207,6 +215,7 @@ namespace MessagePack.Resolvers
 namespace MessagePack.Internal
 {
     [RequiresDynamicCode(Constants.DynamicFormatters)]
+    [RequiresUnreferencedCode(Constants.Wildcard)]
     internal static class DynamicObjectTypeBuilder
     {
         internal static readonly Regex SubtractFullNameRegex = new(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", DynamicAssembly.AvoidDynamicCode ? RegexOptions.None : RegexOptions.Compiled);

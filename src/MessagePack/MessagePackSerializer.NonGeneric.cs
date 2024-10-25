@@ -18,6 +18,7 @@ namespace MessagePack
         private static readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods> Serializes = new MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods>(capacity: 64);
 
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private class CompiledMethodsHelper
         {
             internal static readonly Func<Type, CompiledMethods> CreateCompiledMethods = t => new CompiledMethods(t);
@@ -25,12 +26,14 @@ namespace MessagePack
 
         /// <seealso cref="Serialize{T}(ref MessagePackWriter, T, MessagePackSerializerOptions)"/>
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         public static void Serialize(Type type, ref MessagePackWriter writer, object? obj, MessagePackSerializerOptions? options = null)
         {
             GetOrAdd(type).Serialize_MessagePackWriter_T_Options.Invoke(ref writer, obj, options);
         }
 
         /// <seealso cref="Serialize{T}(IBufferWriter{byte}, T, MessagePackSerializerOptions, CancellationToken)"/>
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         [RequiresDynamicCode(Constants.ClosingGenerics)]
         public static void Serialize(Type type, IBufferWriter<byte> writer, object? obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
@@ -39,6 +42,7 @@ namespace MessagePack
 
         /// <seealso cref="Serialize{T}(T, MessagePackSerializerOptions, CancellationToken)"/>
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         public static byte[] Serialize(Type type, object? obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).Serialize_T_Options.Invoke(obj, options, cancellationToken);
@@ -46,6 +50,7 @@ namespace MessagePack
 
         /// <seealso cref="Serialize{T}(Stream, T, MessagePackSerializerOptions, CancellationToken)"/>
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         public static void Serialize(Type type, Stream stream, object? obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             GetOrAdd(type).Serialize_Stream_T_Options_CancellationToken.Invoke(stream, obj, options, cancellationToken);
@@ -53,6 +58,7 @@ namespace MessagePack
 
         /// <seealso cref="SerializeAsync{T}(Stream, T, MessagePackSerializerOptions, CancellationToken)"/>
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         public static Task SerializeAsync(Type type, Stream stream, object? obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).SerializeAsync_Stream_T_Options_CancellationToken.Invoke(stream, obj, options, cancellationToken);
@@ -60,6 +66,7 @@ namespace MessagePack
 
         /// <seealso cref="Deserialize{T}(ref MessagePackReader, MessagePackSerializerOptions)"/>
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         public static object? Deserialize(Type type, ref MessagePackReader reader, MessagePackSerializerOptions? options = null)
         {
             return GetOrAdd(type).Deserialize_MessagePackReader_Options.Invoke(ref reader, options);
@@ -67,6 +74,7 @@ namespace MessagePack
 
         /// <seealso cref="Deserialize{T}(Stream, MessagePackSerializerOptions, CancellationToken)"/>
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         public static object? Deserialize(Type type, Stream stream, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).Deserialize_Stream_Options_CancellationToken.Invoke(stream, options, cancellationToken);
@@ -74,6 +82,7 @@ namespace MessagePack
 
         /// <seealso cref="DeserializeAsync{T}(Stream, MessagePackSerializerOptions, CancellationToken)"/>
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         public static ValueTask<object?> DeserializeAsync(Type type, Stream stream, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).DeserializeAsync_Stream_Options_CancellationToken.Invoke(stream, options, cancellationToken);
@@ -81,6 +90,7 @@ namespace MessagePack
 
         /// <seealso cref="Deserialize{T}(ReadOnlyMemory{byte}, MessagePackSerializerOptions, CancellationToken)"/>
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         public static object? Deserialize(Type type, ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).Deserialize_ReadOnlyMemory_Options.Invoke(bytes, options, cancellationToken);
@@ -88,6 +98,7 @@ namespace MessagePack
 
         /// <seealso cref="Deserialize{T}(in ReadOnlySequence{byte}, MessagePackSerializerOptions, CancellationToken)"/>
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         public static object? Deserialize(Type type, ReadOnlySequence<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).Deserialize_ReadOnlySequence_Options_CancellationToken.Invoke(bytes, options, cancellationToken);
@@ -112,11 +123,14 @@ namespace MessagePack
         private static async ValueTask<object?> DeserializeObjectAsync<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken) => await DeserializeAsync<T>(stream, options, cancellationToken).ConfigureAwait(false);
 
         [RequiresDynamicCode(Constants.ClosingGenerics)]
+        [RequiresUnreferencedCode(Constants.Wildcard)]
         private static CompiledMethods GetOrAdd(Type type)
         {
             return Serializes.GetOrAdd(type, CompiledMethodsHelper.CreateCompiledMethods);
         }
 
+        [RequiresUnreferencedCode(Constants.Wildcard)]
+        [RequiresDynamicCode(Constants.Wildcard)]
         private class CompiledMethods
         {
             internal delegate void MessagePackWriterSerialize(ref MessagePackWriter writer, object? value, MessagePackSerializerOptions? options);
