@@ -79,6 +79,15 @@ namespace MessagePack
             this.arrayPool = arrayPool;
         }
 
+        /// <summary>Clears the pool, letting the <see cref="GC"/> collect the recycled buffers.</summary>
+        public void Clear()
+        {
+            lock (this.pool)
+            {
+                this.pool.Clear();
+            }
+        }
+
         /// <summary>
         /// Gets an instance of <see cref="Sequence{T}"/>
         /// This is taken from the recycled pool if one is available; otherwise a new one is created.
