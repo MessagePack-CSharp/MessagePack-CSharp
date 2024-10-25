@@ -62,20 +62,15 @@
     <PackageVersion Include="System.Collections.Immutable" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net472' or '$(TargetFramework)' == 'net462'">
-    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
-    <PackageVersion Include="System.Collections.Immutable" Version="6.0.0" />
+    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
+    <PackageVersion Include="System.Collections.Immutable" Version="8.0.0" />
     <PackageVersion Include="System.Memory" Version="4.5.5" />
     <PackageVersion Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <PackageVersion Include="System.Reflection.Emit" Version="4.7.0" />
-    <PackageVersion Include="System.Reflection.Metadata" Version="6.0.0" />
+    <PackageVersion Include="System.Reflection.Metadata" Version="8.0.1" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
-    <PackageVersion Include="System.Text.Json" Version="6.0.0" />
+    <PackageVersion Include="System.Text.Json" Version="8.0.5" />
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(NonShipping)'=='true'">
-    <PackageVersion Update="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
-    <PackageVersion Update="System.Collections.Immutable" Version="8.0.0" />
-    <PackageVersion Update="System.Reflection.Metadata" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
     <GlobalPackageReference Include="CSharpIsNullAnalyzer" Version="0.1.593" />
