@@ -63,6 +63,7 @@ MessagePack has a compact binary size and a full set of general purpose expressi
     - [StreamJsonRpc](#streamjsonrpc)
 - [How to build](#how-to-build)
 - [Author Info](#author-info)
+- [Code of Conduct & .NET Foundation notice](#coc)
 
 ## Installation
 
@@ -1692,3 +1693,12 @@ The StreamJsonRpc library is based on [JSON-RPC](https://www.jsonrpc.org/) and i
 ## How to build
 
 See our [contributor's guide](CONTRIBUTING.md).
+
+## <a name="coc"></a>Code of Conduct
+
+This project has adopted the code of conduct defined by the Contributor Covenant to clarify expected behavior in our community.
+For more information see the [.NET Foundation Code of Conduct](https://dotnetfoundation.org/code-of-conduct).
+
+## .NET Foundation
+
+This project is supported by the [.NET Foundation](https://dotnetfoundation.org).
