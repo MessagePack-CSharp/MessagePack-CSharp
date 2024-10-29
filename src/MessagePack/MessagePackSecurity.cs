@@ -20,7 +20,8 @@ namespace MessagePack
     public class MessagePackSecurity
     {
         /// <summary>
-        /// Gets an instance preconfigured with settings that omit all protections. Useful for deserializing fully-trusted and valid msgpack sequences.
+        /// Gets an instance preconfigured with settings that omit hash collision resistance protections.
+        /// Useful for deserializing fully-trusted and valid msgpack sequences.
         /// </summary>
         public static readonly MessagePackSecurity TrustedData = new MessagePackSecurity();
 
@@ -79,7 +80,7 @@ namespace MessagePack
         /// Since stack space occupied may vary by the kind of object deserialized, a conservative value for this property to defend against stack overflow attacks might be 500.
         /// </para>
         /// </remarks>
-        public int MaximumObjectGraphDepth { get; private set; } = int.MaxValue;
+        public int MaximumObjectGraphDepth { get; private set; } = 500;
 
         /// <summary>
         /// Gets a copy of these options with the <see cref="MaximumObjectGraphDepth"/> property set to a new value.

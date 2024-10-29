@@ -135,7 +135,7 @@ namespace MessagePack
         /// <value>
         /// The default value is to use <see cref="MessagePackSecurity.TrustedData"/>.
         /// </value>
-        public MessagePackSecurity Security { get; private set; } = MessagePackSecurity.UntrustedData;
+        public MessagePackSecurity Security { get; private set; } = MessagePackSecurity.TrustedData;
 
         /// <summary>
         /// Gets a thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
