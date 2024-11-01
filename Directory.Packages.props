@@ -45,7 +45,7 @@
     <PackageVersion Include="NUnit3TestAdapter" Version="4.5.0" />
     <PackageVersion Include="protobuf-net" Version="3.2.30" />
     <PackageVersion Include="RandomFixtureKit" Version="1.0.1" />
-    <PackageVersion Include="ReactiveProperty" Version="9.5.0" />
+    <PackageVersion Include="ReactiveProperty" Version="9.6.0" />
     <PackageVersion Include="Required" Version="1.0.0" />
     <PackageVersion Include="Sigil" version="5.0.0" />
     <PackageVersion Include="SpanJson" Version="4.2.0" />
