@@ -45,6 +45,17 @@ namespace MessagePack
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackWriter"/> struct.
         /// </summary>
+        /// <param name="span">The writer to use.</param>
+        public MessagePackWriter(Span<byte> span)
+            : this()
+        {
+            this.writer = new BufferWriter(span);
+            this.OldSpec = false;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MessagePackWriter"/> struct.
+        /// </summary>
         /// <param name="sequencePool">The pool from which to draw an <see cref="IBufferWriter{T}"/> if required..</param>
         /// <param name="array">An array to start with so we can avoid accessing the <paramref name="sequencePool"/> if possible.</param>
         internal MessagePackWriter(SequencePool sequencePool, byte[] array)
@@ -63,6 +74,8 @@ namespace MessagePack
         /// Gets or sets a value indicating whether to write in <see href="https://github.com/msgpack/msgpack/blob/master/spec-old.md">old spec</see> compatibility mode.
         /// </summary>
         public bool OldSpec { get; set; }
+
+        public long WrittenCount => writer.WrittenCount;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackWriter"/> struct,

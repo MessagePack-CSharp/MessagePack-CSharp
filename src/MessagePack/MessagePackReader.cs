@@ -54,6 +54,18 @@ namespace MessagePack
             this.Depth = 0;
         }
 
+        public MessagePackReader(ReadOnlySpan<byte> span)
+            : this()
+        {
+            this.reader = new SequenceReader<byte>(span);
+            this.Depth = 0;
+        }
+
+        public MessagePackReader(byte[] array)
+            : this(array.AsMemory())
+        {
+        }
+
         /// <summary>
         /// Gets or sets the cancellation token for this deserialization operation.
         /// </summary>
@@ -671,6 +683,47 @@ namespace MessagePack
             ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
             this.reader.Advance(length);
             return result;
+        }
+
+        /// <summary>
+        /// Reads a span of bytes, whose length is determined by a header of one of these types:
+        /// <see cref="MessagePackCode.Bin8"/>,
+        /// <see cref="MessagePackCode.Bin16"/>,
+        /// <see cref="MessagePackCode.Bin32"/>,
+        /// or to support OldSpec compatibility:
+        /// <see cref="MessagePackCode.Str16"/>,
+        /// <see cref="MessagePackCode.Str32"/>,
+        /// or something between <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
+        /// </summary>
+        /// <param name="span">Receives the span of bytes.</param>
+        /// <returns>
+        /// <see langword="true"/> if the bytes is contiguous in memory such that it could be set as a single span.
+        /// <see langword="false"/> if the read token is <see cref="MessagePackCode.Nil"/> or the bytes is not in a contiguous span.
+        /// </returns>
+        public bool TryReadBytes(out ReadOnlySpan<byte> span)
+        {
+            if (this.IsNil)
+            {
+                span = default;
+                return false;
+            }
+
+            long oldPosition = this.reader.Consumed;
+            int length = this.GetBytesLength();
+            ThrowInsufficientBufferUnless(this.reader.Remaining >= length);
+
+            if (this.reader.CurrentSpanIndex + length <= this.reader.CurrentSpan.Length)
+            {
+                span = this.reader.CurrentSpan.Slice(this.reader.CurrentSpanIndex, length);
+                this.reader.Advance(length);
+                return true;
+            }
+            else
+            {
+                this.reader.Rewind(this.reader.Consumed - oldPosition);
+                span = default;
+                return false;
+            }
         }
 
         /// <summary>

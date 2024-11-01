@@ -97,6 +97,22 @@ namespace MessagePack
             this.sequence = default;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public SequenceReader(ReadOnlySpan<T> span)
+        {
+            this.usingSequence = false;
+            this.CurrentSpanIndex = 0;
+            this.Consumed = 0;
+            this.memory = default;
+            this.CurrentSpan = span;
+            this.length = span.Length;
+            this.moreData = span.Length > 0;
+
+            this.currentPosition = default;
+            this.nextPosition = default;
+            this.sequence = default;
+        }
+
         /// <summary>
         /// Gets a value indicating whether there is no more data in the <see cref="Sequence"/>.
         /// </summary>
@@ -109,11 +125,20 @@ namespace MessagePack
         {
             get
             {
-                if (this.sequence.IsEmpty && !this.memory.IsEmpty)
+                if (this.sequence.IsEmpty)
                 {
-                    // We're in memory mode (instead of sequence mode).
-                    // Lazily fill in the sequence data.
-                    this.sequence = new ReadOnlySequence<T>(this.memory);
+                    if (!this.memory.IsEmpty)
+                    {
+                        // We're in memory mode (instead of sequence mode).
+                        // Lazily fill in the sequence data.
+                        this.sequence = new ReadOnlySequence<T>(this.memory);
+                    }
+                    else
+                    {
+                        // using only Span, can't create ReadOnlySequence so requires copy memory
+                        this.sequence = new ReadOnlySequence<T>(this.CurrentSpan.ToArray());
+                    }
+
                     this.currentPosition = this.sequence.Start;
                     this.nextPosition = this.sequence.End;
                 }

@@ -3,7 +3,6 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Copyright (c) Andrew Arnott. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
@@ -16,6 +15,9 @@ namespace MessagePack
     /// </summary>
     internal ref struct BufferWriter
     {
+        // used for Span<byte> overload
+        static readonly SequencePool InvalidSentinel = new SequencePool(0, default);
+
         /// <summary>
         /// The underlying <see cref="IBufferWriter{T}"/>.
         /// </summary>
@@ -84,6 +86,19 @@ namespace MessagePack
             _span = _segment.AsSpan();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal BufferWriter(Span<byte> span)
+        {
+            _buffered = 0;
+            _bytesCommitted = 0;
+            _sequencePool = InvalidSentinel;
+            _rental = default;
+            _output = null;
+
+            _segment = default;
+            _span = span;
+        }
+
         /// <summary>
         /// Gets the result of the last call to <see cref="IBufferWriter{T}.GetSpan(int)"/>.
         /// </summary>
@@ -93,6 +108,9 @@ namespace MessagePack
         /// Gets the total number of bytes written with this writer.
         /// </summary>
         public long BytesCommitted => _bytesCommitted;
+
+
+        public long WrittenCount => _buffered + _bytesCommitted;
 
         /// <summary>
         /// Gets the <see cref="IBufferWriter{T}"/> underlying this instance.
@@ -249,6 +267,11 @@ namespace MessagePack
         {
             if (this._sequencePool != null)
             {
+                if (this._sequencePool == InvalidSentinel)
+                {
+                    ThrowReachedEndOfSpan();
+                }
+
                 // We were writing to our private scratch memory, so we have to copy it into the actual writer.
                 _rental = _sequencePool.Rent();
                 _output = _rental.Value;
@@ -256,6 +279,11 @@ namespace MessagePack
                 _segment.AsSpan(0, _buffered).CopyTo(realSpan);
                 _sequencePool = null;
             }
+        }
+
+        static void ThrowReachedEndOfSpan()
+        {
+            throw new InvalidOperationException("Operation exceeded the initial span.");
         }
     }
 }
