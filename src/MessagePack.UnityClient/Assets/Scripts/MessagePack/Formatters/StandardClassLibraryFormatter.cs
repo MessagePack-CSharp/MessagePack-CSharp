@@ -143,8 +143,8 @@ namespace MessagePack.Formatters
 
         public void Serialize(ref MessagePackWriter writer, decimal value, MessagePackSerializerOptions options)
         {
-            var dest = writer.GetSpan(MessagePackRange.MaxFixStringLength);
-            if (System.Buffers.Text.Utf8Formatter.TryFormat(value, dest.Slice(1), out var written))
+            var dest = writer.GetSpan(1 + MessagePackRange.MaxFixStringLength);
+            if (System.Buffers.Text.Utf8Formatter.TryFormat(value, dest.Slice(1, MessagePackRange.MaxFixStringLength), out var written))
             {
                 // write header
                 dest[0] = (byte)(MessagePackCode.MinFixStr | written);
@@ -503,7 +503,7 @@ namespace MessagePack.Formatters
             {
                 // try to get bin8 buffer.
                 var span = writer.GetSpan(byte.MaxValue);
-                if (value.TryWriteBytes(span.Slice(2), out var written))
+                if (value.TryWriteBytes(span.Slice(2, byte.MaxValue), out var written))
                 {
                     span[0] = MessagePackCode.Bin8;
                     span[1] = (byte)written;
