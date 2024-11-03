@@ -40,6 +40,65 @@ partial class MessagePackPrimitives
         InsufficientBuffer,
     }
 
+    static partial class Decoders
+    {
+        internal static readonly IReadInt64[] Int64JumpTable;
+        internal static readonly IReadUInt64[] UInt64JumpTable;
+
+        static Decoders()
+        {
+            Int64JumpTable = new IReadInt64[256];
+            Int64JumpTable.AsSpan().Fill(ReadInt64Invalid.Instance);
+            Int64JumpTable[MessagePackCode.UInt8] = ReadInt64UInt8.Instance;
+            Int64JumpTable[MessagePackCode.UInt16] = ReadInt64UInt16.Instance;
+            Int64JumpTable[MessagePackCode.UInt32] = ReadInt64UInt32.Instance;
+            Int64JumpTable[MessagePackCode.UInt64] = ReadInt64UInt64.Instance;
+            Int64JumpTable[MessagePackCode.Int8] = ReadInt64Int8.Instance;
+            Int64JumpTable[MessagePackCode.Int16] = ReadInt64Int16.Instance;
+            Int64JumpTable[MessagePackCode.Int32] = ReadInt64Int32.Instance;
+            Int64JumpTable[MessagePackCode.Int64] = ReadInt64Int64.Instance;
+            for (int i = MessagePackCode.MinNegativeFixInt; i <= MessagePackCode.MaxNegativeFixInt; i++)
+            {
+                Int64JumpTable[i] = ReadInt64NegativeFixInt.Instance;
+            }
+
+            for (int i = MessagePackCode.MinFixInt; i <= MessagePackCode.MaxFixInt; i++)
+            {
+                Int64JumpTable[i] = ReadInt64FixInt.Instance;
+            }
+
+            UInt64JumpTable = new IReadUInt64[256];
+            UInt64JumpTable.AsSpan().Fill(ReadUInt64Invalid.Instance);
+            UInt64JumpTable[MessagePackCode.UInt8] = ReadUInt64UInt8.Instance;
+            UInt64JumpTable[MessagePackCode.UInt16] = ReadUInt64UInt16.Instance;
+            UInt64JumpTable[MessagePackCode.UInt32] = ReadUInt64UInt32.Instance;
+            UInt64JumpTable[MessagePackCode.UInt64] = ReadUInt64UInt64.Instance;
+            UInt64JumpTable[MessagePackCode.Int8] = ReadUInt64Int8.Instance;
+            UInt64JumpTable[MessagePackCode.Int16] = ReadUInt64Int16.Instance;
+            UInt64JumpTable[MessagePackCode.Int32] = ReadUInt64Int32.Instance;
+            UInt64JumpTable[MessagePackCode.Int64] = ReadUInt64Int64.Instance;
+            for (int i = MessagePackCode.MinNegativeFixInt; i <= MessagePackCode.MaxNegativeFixInt; i++)
+            {
+                UInt64JumpTable[i] = ReadUInt64NegativeFixInt.Instance;
+            }
+
+            for (int i = MessagePackCode.MinFixInt; i <= MessagePackCode.MaxFixInt; i++)
+            {
+                UInt64JumpTable[i] = ReadUInt64FixInt.Instance;
+            }
+        }
+
+        internal interface IReadInt64
+        {
+            ReadResult Read(ReadOnlySpan<byte> source, out long value, out int tokenSize);
+        }
+
+        internal interface IReadUInt64
+        {
+            ReadResult Read(ReadOnlySpan<byte> source, out ulong value, out int tokenSize);
+        }
+    }
+
     /// <summary>
     /// Tries to read a nil value from the specified buffer.
     /// </summary>

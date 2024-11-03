@@ -13,6 +13,457 @@ namespace MessagePack;
 
 partial class MessagePackPrimitives
 {
+    static partial class Decoders
+    {
+        private class ReadInt64Invalid : IReadInt64
+        {
+            internal static readonly ReadInt64Invalid Instance = new();
+
+            private ReadInt64Invalid()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            {
+                value = 0;
+                tokenSize = 1;
+                return ReadResult.TokenMismatch;
+            }
+        }
+
+        private class ReadInt64FixInt : IReadInt64
+        {
+            internal static readonly ReadInt64FixInt Instance = new();
+
+            private ReadInt64FixInt()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            {
+                tokenSize = 1;
+                value = source[0];
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadInt64NegativeFixInt : IReadInt64
+        {
+            internal static readonly ReadInt64NegativeFixInt Instance = new();
+
+            private ReadInt64NegativeFixInt()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            {
+                tokenSize = 1;
+                value = checked((Int64)unchecked((sbyte)source[0]));
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadInt64UInt8 : IReadInt64
+        {
+            internal static readonly ReadInt64UInt8 Instance = new();
+
+            private ReadInt64UInt8()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            {
+                tokenSize = 2;
+                if (source.Length < tokenSize)
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = source[1];
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadInt64UInt16 : IReadInt64
+        {
+            internal static readonly ReadInt64UInt16 Instance = new();
+
+            private ReadInt64UInt16()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            {
+                tokenSize = 3;
+                if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = ushortResult;
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadInt64UInt32 : IReadInt64
+        {
+            internal static readonly ReadInt64UInt32 Instance = new();
+
+            private ReadInt64UInt32()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            {
+                tokenSize = 5;
+                if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = uintResult;
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadInt64UInt64 : IReadInt64
+        {
+            internal static readonly ReadInt64UInt64 Instance = new();
+
+            private ReadInt64UInt64()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            {
+                tokenSize = 9;
+                if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((Int64)ulongResult);
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadInt64Int8 : IReadInt64
+        {
+            internal static readonly ReadInt64Int8 Instance = new();
+
+            private ReadInt64Int8()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            {
+                tokenSize = 2;
+                if (source.Length < tokenSize)
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((Int64)unchecked((sbyte)source[1]));
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadInt64Int16 : IReadInt64
+        {
+            internal static readonly ReadInt64Int16 Instance = new();
+
+            private ReadInt64Int16()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            {
+                tokenSize = 3;
+                if (!TryReadBigEndian(source.Slice(1), out short shortResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((Int64)shortResult);
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadInt64Int32 : IReadInt64
+        {
+            internal static readonly ReadInt64Int32 Instance = new();
+
+            private ReadInt64Int32()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            {
+                tokenSize = 5;
+                if (!TryReadBigEndian(source.Slice(1), out int intResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((Int64)intResult);
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadInt64Int64 : IReadInt64
+        {
+            internal static readonly ReadInt64Int64 Instance = new();
+
+            private ReadInt64Int64()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            {
+                tokenSize = 9;
+                if (!TryReadBigEndian(source.Slice(1), out long longResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((Int64)longResult);
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadUInt64Invalid : IReadUInt64
+        {
+            internal static readonly ReadUInt64Invalid Instance = new();
+
+            private ReadUInt64Invalid()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            {
+                value = 0;
+                tokenSize = 1;
+                return ReadResult.TokenMismatch;
+            }
+        }
+
+        private class ReadUInt64FixInt : IReadUInt64
+        {
+            internal static readonly ReadUInt64FixInt Instance = new();
+
+            private ReadUInt64FixInt()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            {
+                tokenSize = 1;
+                value = source[0];
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadUInt64NegativeFixInt : IReadUInt64
+        {
+            internal static readonly ReadUInt64NegativeFixInt Instance = new();
+
+            private ReadUInt64NegativeFixInt()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            {
+                tokenSize = 1;
+                value = checked((UInt64)unchecked((sbyte)source[0]));
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadUInt64UInt8 : IReadUInt64
+        {
+            internal static readonly ReadUInt64UInt8 Instance = new();
+
+            private ReadUInt64UInt8()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            {
+                tokenSize = 2;
+                if (source.Length < tokenSize)
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = source[1];
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadUInt64UInt16 : IReadUInt64
+        {
+            internal static readonly ReadUInt64UInt16 Instance = new();
+
+            private ReadUInt64UInt16()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            {
+                tokenSize = 3;
+                if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = ushortResult;
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadUInt64UInt32 : IReadUInt64
+        {
+            internal static readonly ReadUInt64UInt32 Instance = new();
+
+            private ReadUInt64UInt32()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            {
+                tokenSize = 5;
+                if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = uintResult;
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadUInt64UInt64 : IReadUInt64
+        {
+            internal static readonly ReadUInt64UInt64 Instance = new();
+
+            private ReadUInt64UInt64()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            {
+                tokenSize = 9;
+                if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((UInt64)ulongResult);
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadUInt64Int8 : IReadUInt64
+        {
+            internal static readonly ReadUInt64Int8 Instance = new();
+
+            private ReadUInt64Int8()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            {
+                tokenSize = 2;
+                if (source.Length < tokenSize)
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((UInt64)unchecked((sbyte)source[1]));
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadUInt64Int16 : IReadUInt64
+        {
+            internal static readonly ReadUInt64Int16 Instance = new();
+
+            private ReadUInt64Int16()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            {
+                tokenSize = 3;
+                if (!TryReadBigEndian(source.Slice(1), out short shortResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((UInt64)shortResult);
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadUInt64Int32 : IReadUInt64
+        {
+            internal static readonly ReadUInt64Int32 Instance = new();
+
+            private ReadUInt64Int32()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            {
+                tokenSize = 5;
+                if (!TryReadBigEndian(source.Slice(1), out int intResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((UInt64)intResult);
+                return ReadResult.Success;
+            }
+        }
+
+        private class ReadUInt64Int64 : IReadUInt64
+        {
+            internal static readonly ReadUInt64Int64 Instance = new();
+
+            private ReadUInt64Int64()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            {
+                tokenSize = 9;
+                if (!TryReadBigEndian(source.Slice(1), out long longResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((UInt64)longResult);
+                return ReadResult.Success;
+            }
+        }
+    }
+
     /// <summary>
     /// Tries to read an <see cref="Byte"/> value from:
     /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
@@ -23,104 +474,17 @@ partial class MessagePackPrimitives
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
     public static ReadResult TryReadByte(ReadOnlySpan<byte> source, out Byte value, out int tokenSize)
     {
-        tokenSize = 1;
-        if (source.Length == 0)
+        if (source.Length > 0)
         {
+            ReadResult result = Decoders.UInt64JumpTable[source[0]].Read(source, out ulong longValue, out tokenSize);
+            value = checked((Byte)longValue);
+            return result;
+        }
+        else
+        {
+            tokenSize = 1;
             value = 0;
             return ReadResult.EmptyBuffer;
-        }
-
-        switch (source[0])
-        {
-            case MessagePackCode.UInt8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Byte)source[1]);
-                return ReadResult.Success;
-            case MessagePackCode.Int8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Byte)unchecked((sbyte)source[1]));
-                return ReadResult.Success;
-            case MessagePackCode.UInt16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Byte)ushortResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out short shortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Byte)shortResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Byte)uintResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out int intResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Byte)intResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Byte)ulongResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out long longResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Byte)longResult);
-                return ReadResult.Success;
-            case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((Byte)unchecked((sbyte)source[0]));
-                return ReadResult.Success;
-            case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (Byte)source[0];
-                return ReadResult.Success;
-            default:
-                value = 0;
-                return ReadResult.TokenMismatch;
         }
     }
 
@@ -134,104 +498,17 @@ partial class MessagePackPrimitives
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
     public static ReadResult TryReadUInt16(ReadOnlySpan<byte> source, out UInt16 value, out int tokenSize)
     {
-        tokenSize = 1;
-        if (source.Length == 0)
+        if (source.Length > 0)
         {
+            ReadResult result = Decoders.UInt64JumpTable[source[0]].Read(source, out ulong longValue, out tokenSize);
+            value = checked((UInt16)longValue);
+            return result;
+        }
+        else
+        {
+            tokenSize = 1;
             value = 0;
             return ReadResult.EmptyBuffer;
-        }
-
-        switch (source[0])
-        {
-            case MessagePackCode.UInt8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt16)source[1]);
-                return ReadResult.Success;
-            case MessagePackCode.Int8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt16)unchecked((sbyte)source[1]));
-                return ReadResult.Success;
-            case MessagePackCode.UInt16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt16)ushortResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out short shortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt16)shortResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt16)uintResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out int intResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt16)intResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt16)ulongResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out long longResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt16)longResult);
-                return ReadResult.Success;
-            case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((UInt16)unchecked((sbyte)source[0]));
-                return ReadResult.Success;
-            case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (UInt16)source[0];
-                return ReadResult.Success;
-            default:
-                value = 0;
-                return ReadResult.TokenMismatch;
         }
     }
 
@@ -245,104 +522,17 @@ partial class MessagePackPrimitives
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
     public static ReadResult TryReadUInt32(ReadOnlySpan<byte> source, out UInt32 value, out int tokenSize)
     {
-        tokenSize = 1;
-        if (source.Length == 0)
+        if (source.Length > 0)
         {
+            ReadResult result = Decoders.UInt64JumpTable[source[0]].Read(source, out ulong longValue, out tokenSize);
+            value = checked((UInt32)longValue);
+            return result;
+        }
+        else
+        {
+            tokenSize = 1;
             value = 0;
             return ReadResult.EmptyBuffer;
-        }
-
-        switch (source[0])
-        {
-            case MessagePackCode.UInt8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt32)source[1]);
-                return ReadResult.Success;
-            case MessagePackCode.Int8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt32)unchecked((sbyte)source[1]));
-                return ReadResult.Success;
-            case MessagePackCode.UInt16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt32)ushortResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out short shortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt32)shortResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt32)uintResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out int intResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt32)intResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt32)ulongResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out long longResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt32)longResult);
-                return ReadResult.Success;
-            case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((UInt32)unchecked((sbyte)source[0]));
-                return ReadResult.Success;
-            case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (UInt32)source[0];
-                return ReadResult.Success;
-            default:
-                value = 0;
-                return ReadResult.TokenMismatch;
         }
     }
 
@@ -356,104 +546,17 @@ partial class MessagePackPrimitives
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
     public static ReadResult TryReadUInt64(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
     {
-        tokenSize = 1;
-        if (source.Length == 0)
+        if (source.Length > 0)
         {
+            ReadResult result = Decoders.UInt64JumpTable[source[0]].Read(source, out ulong longValue, out tokenSize);
+            value = checked((UInt64)longValue);
+            return result;
+        }
+        else
+        {
+            tokenSize = 1;
             value = 0;
             return ReadResult.EmptyBuffer;
-        }
-
-        switch (source[0])
-        {
-            case MessagePackCode.UInt8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt64)source[1]);
-                return ReadResult.Success;
-            case MessagePackCode.Int8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt64)unchecked((sbyte)source[1]));
-                return ReadResult.Success;
-            case MessagePackCode.UInt16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt64)ushortResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out short shortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt64)shortResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt64)uintResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out int intResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt64)intResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt64)ulongResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out long longResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((UInt64)longResult);
-                return ReadResult.Success;
-            case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((UInt64)unchecked((sbyte)source[0]));
-                return ReadResult.Success;
-            case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (UInt64)source[0];
-                return ReadResult.Success;
-            default:
-                value = 0;
-                return ReadResult.TokenMismatch;
         }
     }
 
@@ -467,104 +570,17 @@ partial class MessagePackPrimitives
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
     public static ReadResult TryReadSByte(ReadOnlySpan<byte> source, out SByte value, out int tokenSize)
     {
-        tokenSize = 1;
-        if (source.Length == 0)
+        if (source.Length > 0)
         {
+            ReadResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
+            value = checked((SByte)longValue);
+            return result;
+        }
+        else
+        {
+            tokenSize = 1;
             value = 0;
             return ReadResult.EmptyBuffer;
-        }
-
-        switch (source[0])
-        {
-            case MessagePackCode.UInt8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((SByte)source[1]);
-                return ReadResult.Success;
-            case MessagePackCode.Int8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((SByte)unchecked((sbyte)source[1]));
-                return ReadResult.Success;
-            case MessagePackCode.UInt16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((SByte)ushortResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out short shortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((SByte)shortResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((SByte)uintResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out int intResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((SByte)intResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((SByte)ulongResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out long longResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((SByte)longResult);
-                return ReadResult.Success;
-            case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((SByte)unchecked((sbyte)source[0]));
-                return ReadResult.Success;
-            case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (SByte)source[0];
-                return ReadResult.Success;
-            default:
-                value = 0;
-                return ReadResult.TokenMismatch;
         }
     }
 
@@ -578,104 +594,17 @@ partial class MessagePackPrimitives
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
     public static ReadResult TryReadInt16(ReadOnlySpan<byte> source, out Int16 value, out int tokenSize)
     {
-        tokenSize = 1;
-        if (source.Length == 0)
+        if (source.Length > 0)
         {
+            ReadResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
+            value = checked((Int16)longValue);
+            return result;
+        }
+        else
+        {
+            tokenSize = 1;
             value = 0;
             return ReadResult.EmptyBuffer;
-        }
-
-        switch (source[0])
-        {
-            case MessagePackCode.UInt8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int16)source[1]);
-                return ReadResult.Success;
-            case MessagePackCode.Int8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int16)unchecked((sbyte)source[1]));
-                return ReadResult.Success;
-            case MessagePackCode.UInt16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int16)ushortResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out short shortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int16)shortResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int16)uintResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out int intResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int16)intResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int16)ulongResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out long longResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int16)longResult);
-                return ReadResult.Success;
-            case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((Int16)unchecked((sbyte)source[0]));
-                return ReadResult.Success;
-            case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (Int16)source[0];
-                return ReadResult.Success;
-            default:
-                value = 0;
-                return ReadResult.TokenMismatch;
         }
     }
 
@@ -689,104 +618,17 @@ partial class MessagePackPrimitives
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
     public static ReadResult TryReadInt32(ReadOnlySpan<byte> source, out Int32 value, out int tokenSize)
     {
-        tokenSize = 1;
-        if (source.Length == 0)
+        if (source.Length > 0)
         {
+            ReadResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
+            value = checked((Int32)longValue);
+            return result;
+        }
+        else
+        {
+            tokenSize = 1;
             value = 0;
             return ReadResult.EmptyBuffer;
-        }
-
-        switch (source[0])
-        {
-            case MessagePackCode.UInt8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int32)source[1]);
-                return ReadResult.Success;
-            case MessagePackCode.Int8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int32)unchecked((sbyte)source[1]));
-                return ReadResult.Success;
-            case MessagePackCode.UInt16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int32)ushortResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out short shortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int32)shortResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int32)uintResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out int intResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int32)intResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int32)ulongResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out long longResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int32)longResult);
-                return ReadResult.Success;
-            case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((Int32)unchecked((sbyte)source[0]));
-                return ReadResult.Success;
-            case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (Int32)source[0];
-                return ReadResult.Success;
-            default:
-                value = 0;
-                return ReadResult.TokenMismatch;
         }
     }
 
@@ -800,104 +642,17 @@ partial class MessagePackPrimitives
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
     public static ReadResult TryReadInt64(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
     {
-        tokenSize = 1;
-        if (source.Length == 0)
+        if (source.Length > 0)
         {
+            ReadResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
+            value = checked((Int64)longValue);
+            return result;
+        }
+        else
+        {
+            tokenSize = 1;
             value = 0;
             return ReadResult.EmptyBuffer;
-        }
-
-        switch (source[0])
-        {
-            case MessagePackCode.UInt8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int64)source[1]);
-                return ReadResult.Success;
-            case MessagePackCode.Int8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int64)unchecked((sbyte)source[1]));
-                return ReadResult.Success;
-            case MessagePackCode.UInt16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int64)ushortResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out short shortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int64)shortResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int64)uintResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out int intResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int64)intResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int64)ulongResult);
-                return ReadResult.Success;
-            case MessagePackCode.Int64:
-                tokenSize = 9;
-                if (!TryReadBigEndian(source.Slice(1), out long longResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
-
-                value = checked((Int64)longResult);
-                return ReadResult.Success;
-            case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((Int64)unchecked((sbyte)source[0]));
-                return ReadResult.Success;
-            case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (Int64)source[0];
-                return ReadResult.Success;
-            default:
-                value = 0;
-                return ReadResult.TokenMismatch;
         }
     }
 

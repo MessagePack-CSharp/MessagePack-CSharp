@@ -1,4 +1,5 @@
 <#@ assembly name="System.Core" #>
+<#@ Import Namespace="System.Collections.Generic" #>
 <#@ Import Namespace="System.Linq" #>
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -14,31 +15,68 @@ using System.Buffers;
 namespace MessagePack;
 
 partial class MessagePackPrimitives
-{<#
-var allTypes = new Type[] { typeof(byte), typeof(ushort), typeof(uint), typeof(ulong), typeof(sbyte), typeof(short), typeof(int), typeof(long) }.Select(t => t.Name);
-foreach (var intType in allTypes) {
-#>
+{
+    static partial class Decoders
+    {<# foreach (string bigValueType in new[] { "Int64", "UInt64" }) { #>
 
-    /// <summary>
-    /// Tries to read an <see cref="<#=intType#>"/> value from:
-    /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
-    /// Some value between <see cref="MessagePackCode.MinFixInt"/> and <see cref="MessagePackCode.MaxFixInt"/>,
-    /// or any of the other MsgPack integer types.
-    /// </summary>
-    /// <returns>The value.</returns>
-    /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryRead<#=intType#>(ReadOnlySpan<byte> source, out <#=intType#> value, out int tokenSize)
-    {
-        tokenSize = 1;
-        if (source.Length == 0)
+        private class Read<#=bigValueType#>Invalid : IRead<#=bigValueType#>
         {
-            value = 0;
-            return ReadResult.EmptyBuffer;
+            internal static readonly Read<#=bigValueType#>Invalid Instance = new();
+
+            private Read<#=bigValueType#>Invalid()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out <#=bigValueType#> value, out int tokenSize)
+            {
+                value = 0;
+                tokenSize = 1;
+                return ReadResult.TokenMismatch;
+            }
         }
 
-        switch (source[0])
+        private class Read<#=bigValueType#>FixInt : IRead<#=bigValueType#>
         {
-            case MessagePackCode.UInt8:
+            internal static readonly Read<#=bigValueType#>FixInt Instance = new();
+
+            private Read<#=bigValueType#>FixInt()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out <#=bigValueType#> value, out int tokenSize)
+            {
+                tokenSize = 1;
+                value = source[0];
+                return ReadResult.Success;
+            }
+        }
+
+        private class Read<#=bigValueType#>NegativeFixInt : IRead<#=bigValueType#>
+        {
+            internal static readonly Read<#=bigValueType#>NegativeFixInt Instance = new();
+
+            private Read<#=bigValueType#>NegativeFixInt()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out <#=bigValueType#> value, out int tokenSize)
+            {
+                tokenSize = 1;
+                value = checked((<#=bigValueType#>)unchecked((sbyte)source[0]));
+                return ReadResult.Success;
+            }
+        }
+
+        private class Read<#=bigValueType#>UInt8 : IRead<#=bigValueType#>
+        {
+            internal static readonly Read<#=bigValueType#>UInt8 Instance = new();
+
+            private Read<#=bigValueType#>UInt8()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out <#=bigValueType#> value, out int tokenSize)
+            {
                 tokenSize = 2;
                 if (source.Length < tokenSize)
                 {
@@ -46,19 +84,21 @@ foreach (var intType in allTypes) {
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((<#=intType#>)source[1]);
+                value = source[1];
                 return ReadResult.Success;
-            case MessagePackCode.Int8:
-                tokenSize = 2;
-                if (source.Length < tokenSize)
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
+            }
+        }
 
-                value = checked((<#=intType#>)unchecked((sbyte)source[1]));
-                return ReadResult.Success;
-            case MessagePackCode.UInt16:
+        private class Read<#=bigValueType#>UInt16 : IRead<#=bigValueType#>
+        {
+            internal static readonly Read<#=bigValueType#>UInt16 Instance = new();
+
+            private Read<#=bigValueType#>UInt16()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out <#=bigValueType#> value, out int tokenSize)
+            {
                 tokenSize = 3;
                 if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
                 {
@@ -66,19 +106,21 @@ foreach (var intType in allTypes) {
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((<#=intType#>)ushortResult);
+                value = ushortResult;
                 return ReadResult.Success;
-            case MessagePackCode.Int16:
-                tokenSize = 3;
-                if (!TryReadBigEndian(source.Slice(1), out short shortResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
+            }
+        }
 
-                value = checked((<#=intType#>)shortResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt32:
+        private class Read<#=bigValueType#>UInt32 : IRead<#=bigValueType#>
+        {
+            internal static readonly Read<#=bigValueType#>UInt32 Instance = new();
+
+            private Read<#=bigValueType#>UInt32()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out <#=bigValueType#> value, out int tokenSize)
+            {
                 tokenSize = 5;
                 if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
                 {
@@ -86,19 +128,21 @@ foreach (var intType in allTypes) {
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((<#=intType#>)uintResult);
+                value = uintResult;
                 return ReadResult.Success;
-            case MessagePackCode.Int32:
-                tokenSize = 5;
-                if (!TryReadBigEndian(source.Slice(1), out int intResult))
-                {
-                    value = 0;
-                    return ReadResult.InsufficientBuffer;
-                }
+            }
+        }
 
-                value = checked((<#=intType#>)intResult);
-                return ReadResult.Success;
-            case MessagePackCode.UInt64:
+        private class Read<#=bigValueType#>UInt64 : IRead<#=bigValueType#>
+        {
+            internal static readonly Read<#=bigValueType#>UInt64 Instance = new();
+
+            private Read<#=bigValueType#>UInt64()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out <#=bigValueType#> value, out int tokenSize)
+            {
                 tokenSize = 9;
                 if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
                 {
@@ -106,9 +150,87 @@ foreach (var intType in allTypes) {
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((<#=intType#>)ulongResult);
+                value = checked((<#=bigValueType#>)ulongResult);
                 return ReadResult.Success;
-            case MessagePackCode.Int64:
+            }
+        }
+
+        private class Read<#=bigValueType#>Int8 : IRead<#=bigValueType#>
+        {
+            internal static readonly Read<#=bigValueType#>Int8 Instance = new();
+
+            private Read<#=bigValueType#>Int8()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out <#=bigValueType#> value, out int tokenSize)
+            {
+                tokenSize = 2;
+                if (source.Length < tokenSize)
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((<#=bigValueType#>)unchecked((sbyte)source[1]));
+                return ReadResult.Success;
+            }
+        }
+
+        private class Read<#=bigValueType#>Int16 : IRead<#=bigValueType#>
+        {
+            internal static readonly Read<#=bigValueType#>Int16 Instance = new();
+
+            private Read<#=bigValueType#>Int16()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out <#=bigValueType#> value, out int tokenSize)
+            {
+                tokenSize = 3;
+                if (!TryReadBigEndian(source.Slice(1), out short shortResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((<#=bigValueType#>)shortResult);
+                return ReadResult.Success;
+            }
+        }
+
+        private class Read<#=bigValueType#>Int32 : IRead<#=bigValueType#>
+        {
+            internal static readonly Read<#=bigValueType#>Int32 Instance = new();
+
+            private Read<#=bigValueType#>Int32()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out <#=bigValueType#> value, out int tokenSize)
+            {
+                tokenSize = 5;
+                if (!TryReadBigEndian(source.Slice(1), out int intResult))
+                {
+                    value = 0;
+                    return ReadResult.InsufficientBuffer;
+                }
+
+                value = checked((<#=bigValueType#>)intResult);
+                return ReadResult.Success;
+            }
+        }
+
+        private class Read<#=bigValueType#>Int64 : IRead<#=bigValueType#>
+        {
+            internal static readonly Read<#=bigValueType#>Int64 Instance = new();
+
+            private Read<#=bigValueType#>Int64()
+            {
+            }
+
+            public ReadResult Read(ReadOnlySpan<byte> source, out <#=bigValueType#> value, out int tokenSize)
+            {
                 tokenSize = 9;
                 if (!TryReadBigEndian(source.Slice(1), out long longResult))
                 {
@@ -116,17 +238,42 @@ foreach (var intType in allTypes) {
                     return ReadResult.InsufficientBuffer;
                 }
 
-                value = checked((<#=intType#>)longResult);
+                value = checked((<#=bigValueType#>)longResult);
                 return ReadResult.Success;
-            case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                value = checked((<#=intType#>)unchecked((sbyte)source[0]));
-                return ReadResult.Success;
-            case >= MessagePackCode.MinFixInt and <= MessagePackCode.MaxFixInt:
-                value = (<#=intType#>)source[0];
-                return ReadResult.Success;
-            default:
-                value = 0;
-                return ReadResult.TokenMismatch;
+            }
+        }
+<# } #>
+    }
+<#
+IEnumerable<string> signedTypes = new Type[] { typeof(sbyte), typeof(short), typeof(int), typeof(long) }.Select(t => t.Name);
+IEnumerable<string> unsignedTypes = new Type[] { typeof(byte), typeof(ushort), typeof(uint), typeof(ulong) }.Select(t => t.Name);
+IEnumerable<(string Name, bool Signed)> allTypes = unsignedTypes.Select(n => (n, false)).Concat(signedTypes.Select(n => (n, true)));
+foreach (var intType in allTypes) {
+    string jumpTable = intType.Signed ? "Int64JumpTable" : "UInt64JumpTable";
+    string bigValueType = intType.Signed ? "long" : "ulong";
+#>
+
+    /// <summary>
+    /// Tries to read an <see cref="<#=intType.Name#>"/> value from:
+    /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
+    /// Some value between <see cref="MessagePackCode.MinFixInt"/> and <see cref="MessagePackCode.MaxFixInt"/>,
+    /// or any of the other MsgPack integer types.
+    /// </summary>
+    /// <returns>The value.</returns>
+    /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
+    public static ReadResult TryRead<#=intType.Name#>(ReadOnlySpan<byte> source, out <#=intType.Name#> value, out int tokenSize)
+    {
+        if (source.Length > 0)
+        {
+            ReadResult result = Decoders.<#=jumpTable#>[source[0]].Read(source, out <#=bigValueType#> longValue, out tokenSize);
+            value = checked((<#=intType.Name#>)longValue);
+            return result;
+        }
+        else
+        {
+            tokenSize = 1;
+            value = 0;
+            return ReadResult.EmptyBuffer;
         }
     }
 <# }

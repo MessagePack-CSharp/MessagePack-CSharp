@@ -24,29 +24,39 @@ namespace MessagePack
         public Byte ReadByte()
         {
             MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadByte(this.reader.UnreadSpan, out Byte value, out int tokenSize);
-retry:
-            switch (readResult)
+            if (readResult == MessagePackPrimitives.ReadResult.Success)
             {
-                case MessagePackPrimitives.ReadResult.Success:
-                    this.reader.Advance(tokenSize);
-                    return value;
-                case MessagePackPrimitives.ReadResult.TokenMismatch:
-                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
-                case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
-                    Span<byte> buffer = stackalloc byte[tokenSize];
-                    if (this.reader.TryCopyTo(buffer))
-                    {
-                        readResult = MessagePackPrimitives.TryReadByte(buffer, out value, out tokenSize);
-                        goto retry;
-                    }
-                    else
-                    {
-                        throw ThrowNotEnoughBytesException();
-                    }
+                this.reader.Advance(tokenSize);
+                return value;
+            }
 
-                default:
-                    throw ThrowUnreachable();
+            return SlowPath(ref this, readResult, value, ref tokenSize);
+
+            static Byte SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, Byte value, ref int tokenSize)
+            {
+                switch (readResult)
+                {
+                    case MessagePackPrimitives.ReadResult.Success:
+                        self.reader.Advance(tokenSize);
+                        return value;
+                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                        throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
+                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                        Span<byte> buffer = stackalloc byte[tokenSize];
+                        if (self.reader.TryCopyTo(buffer))
+                        {
+                            readResult = MessagePackPrimitives.TryReadByte(buffer, out value, out tokenSize);
+                            return SlowPath(ref self, readResult, value, ref tokenSize);
+                        }
+                        else
+                        {
+                            throw ThrowNotEnoughBytesException();
+                        }
+
+                    default:
+                        throw ThrowUnreachable();
+                }
             }
         }
 
@@ -61,29 +71,39 @@ retry:
         public UInt16 ReadUInt16()
         {
             MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadUInt16(this.reader.UnreadSpan, out UInt16 value, out int tokenSize);
-retry:
-            switch (readResult)
+            if (readResult == MessagePackPrimitives.ReadResult.Success)
             {
-                case MessagePackPrimitives.ReadResult.Success:
-                    this.reader.Advance(tokenSize);
-                    return value;
-                case MessagePackPrimitives.ReadResult.TokenMismatch:
-                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
-                case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
-                    Span<byte> buffer = stackalloc byte[tokenSize];
-                    if (this.reader.TryCopyTo(buffer))
-                    {
-                        readResult = MessagePackPrimitives.TryReadUInt16(buffer, out value, out tokenSize);
-                        goto retry;
-                    }
-                    else
-                    {
-                        throw ThrowNotEnoughBytesException();
-                    }
+                this.reader.Advance(tokenSize);
+                return value;
+            }
 
-                default:
-                    throw ThrowUnreachable();
+            return SlowPath(ref this, readResult, value, ref tokenSize);
+
+            static UInt16 SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, UInt16 value, ref int tokenSize)
+            {
+                switch (readResult)
+                {
+                    case MessagePackPrimitives.ReadResult.Success:
+                        self.reader.Advance(tokenSize);
+                        return value;
+                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                        throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
+                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                        Span<byte> buffer = stackalloc byte[tokenSize];
+                        if (self.reader.TryCopyTo(buffer))
+                        {
+                            readResult = MessagePackPrimitives.TryReadUInt16(buffer, out value, out tokenSize);
+                            return SlowPath(ref self, readResult, value, ref tokenSize);
+                        }
+                        else
+                        {
+                            throw ThrowNotEnoughBytesException();
+                        }
+
+                    default:
+                        throw ThrowUnreachable();
+                }
             }
         }
 
@@ -98,29 +118,39 @@ retry:
         public UInt32 ReadUInt32()
         {
             MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadUInt32(this.reader.UnreadSpan, out UInt32 value, out int tokenSize);
-retry:
-            switch (readResult)
+            if (readResult == MessagePackPrimitives.ReadResult.Success)
             {
-                case MessagePackPrimitives.ReadResult.Success:
-                    this.reader.Advance(tokenSize);
-                    return value;
-                case MessagePackPrimitives.ReadResult.TokenMismatch:
-                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
-                case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
-                    Span<byte> buffer = stackalloc byte[tokenSize];
-                    if (this.reader.TryCopyTo(buffer))
-                    {
-                        readResult = MessagePackPrimitives.TryReadUInt32(buffer, out value, out tokenSize);
-                        goto retry;
-                    }
-                    else
-                    {
-                        throw ThrowNotEnoughBytesException();
-                    }
+                this.reader.Advance(tokenSize);
+                return value;
+            }
 
-                default:
-                    throw ThrowUnreachable();
+            return SlowPath(ref this, readResult, value, ref tokenSize);
+
+            static UInt32 SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, UInt32 value, ref int tokenSize)
+            {
+                switch (readResult)
+                {
+                    case MessagePackPrimitives.ReadResult.Success:
+                        self.reader.Advance(tokenSize);
+                        return value;
+                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                        throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
+                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                        Span<byte> buffer = stackalloc byte[tokenSize];
+                        if (self.reader.TryCopyTo(buffer))
+                        {
+                            readResult = MessagePackPrimitives.TryReadUInt32(buffer, out value, out tokenSize);
+                            return SlowPath(ref self, readResult, value, ref tokenSize);
+                        }
+                        else
+                        {
+                            throw ThrowNotEnoughBytesException();
+                        }
+
+                    default:
+                        throw ThrowUnreachable();
+                }
             }
         }
 
@@ -135,29 +165,39 @@ retry:
         public UInt64 ReadUInt64()
         {
             MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadUInt64(this.reader.UnreadSpan, out UInt64 value, out int tokenSize);
-retry:
-            switch (readResult)
+            if (readResult == MessagePackPrimitives.ReadResult.Success)
             {
-                case MessagePackPrimitives.ReadResult.Success:
-                    this.reader.Advance(tokenSize);
-                    return value;
-                case MessagePackPrimitives.ReadResult.TokenMismatch:
-                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
-                case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
-                    Span<byte> buffer = stackalloc byte[tokenSize];
-                    if (this.reader.TryCopyTo(buffer))
-                    {
-                        readResult = MessagePackPrimitives.TryReadUInt64(buffer, out value, out tokenSize);
-                        goto retry;
-                    }
-                    else
-                    {
-                        throw ThrowNotEnoughBytesException();
-                    }
+                this.reader.Advance(tokenSize);
+                return value;
+            }
 
-                default:
-                    throw ThrowUnreachable();
+            return SlowPath(ref this, readResult, value, ref tokenSize);
+
+            static UInt64 SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, UInt64 value, ref int tokenSize)
+            {
+                switch (readResult)
+                {
+                    case MessagePackPrimitives.ReadResult.Success:
+                        self.reader.Advance(tokenSize);
+                        return value;
+                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                        throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
+                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                        Span<byte> buffer = stackalloc byte[tokenSize];
+                        if (self.reader.TryCopyTo(buffer))
+                        {
+                            readResult = MessagePackPrimitives.TryReadUInt64(buffer, out value, out tokenSize);
+                            return SlowPath(ref self, readResult, value, ref tokenSize);
+                        }
+                        else
+                        {
+                            throw ThrowNotEnoughBytesException();
+                        }
+
+                    default:
+                        throw ThrowUnreachable();
+                }
             }
         }
 
@@ -172,29 +212,39 @@ retry:
         public SByte ReadSByte()
         {
             MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadSByte(this.reader.UnreadSpan, out SByte value, out int tokenSize);
-retry:
-            switch (readResult)
+            if (readResult == MessagePackPrimitives.ReadResult.Success)
             {
-                case MessagePackPrimitives.ReadResult.Success:
-                    this.reader.Advance(tokenSize);
-                    return value;
-                case MessagePackPrimitives.ReadResult.TokenMismatch:
-                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
-                case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
-                    Span<byte> buffer = stackalloc byte[tokenSize];
-                    if (this.reader.TryCopyTo(buffer))
-                    {
-                        readResult = MessagePackPrimitives.TryReadSByte(buffer, out value, out tokenSize);
-                        goto retry;
-                    }
-                    else
-                    {
-                        throw ThrowNotEnoughBytesException();
-                    }
+                this.reader.Advance(tokenSize);
+                return value;
+            }
 
-                default:
-                    throw ThrowUnreachable();
+            return SlowPath(ref this, readResult, value, ref tokenSize);
+
+            static SByte SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, SByte value, ref int tokenSize)
+            {
+                switch (readResult)
+                {
+                    case MessagePackPrimitives.ReadResult.Success:
+                        self.reader.Advance(tokenSize);
+                        return value;
+                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                        throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
+                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                        Span<byte> buffer = stackalloc byte[tokenSize];
+                        if (self.reader.TryCopyTo(buffer))
+                        {
+                            readResult = MessagePackPrimitives.TryReadSByte(buffer, out value, out tokenSize);
+                            return SlowPath(ref self, readResult, value, ref tokenSize);
+                        }
+                        else
+                        {
+                            throw ThrowNotEnoughBytesException();
+                        }
+
+                    default:
+                        throw ThrowUnreachable();
+                }
             }
         }
 
@@ -209,29 +259,39 @@ retry:
         public Int16 ReadInt16()
         {
             MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadInt16(this.reader.UnreadSpan, out Int16 value, out int tokenSize);
-retry:
-            switch (readResult)
+            if (readResult == MessagePackPrimitives.ReadResult.Success)
             {
-                case MessagePackPrimitives.ReadResult.Success:
-                    this.reader.Advance(tokenSize);
-                    return value;
-                case MessagePackPrimitives.ReadResult.TokenMismatch:
-                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
-                case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
-                    Span<byte> buffer = stackalloc byte[tokenSize];
-                    if (this.reader.TryCopyTo(buffer))
-                    {
-                        readResult = MessagePackPrimitives.TryReadInt16(buffer, out value, out tokenSize);
-                        goto retry;
-                    }
-                    else
-                    {
-                        throw ThrowNotEnoughBytesException();
-                    }
+                this.reader.Advance(tokenSize);
+                return value;
+            }
 
-                default:
-                    throw ThrowUnreachable();
+            return SlowPath(ref this, readResult, value, ref tokenSize);
+
+            static Int16 SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, Int16 value, ref int tokenSize)
+            {
+                switch (readResult)
+                {
+                    case MessagePackPrimitives.ReadResult.Success:
+                        self.reader.Advance(tokenSize);
+                        return value;
+                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                        throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
+                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                        Span<byte> buffer = stackalloc byte[tokenSize];
+                        if (self.reader.TryCopyTo(buffer))
+                        {
+                            readResult = MessagePackPrimitives.TryReadInt16(buffer, out value, out tokenSize);
+                            return SlowPath(ref self, readResult, value, ref tokenSize);
+                        }
+                        else
+                        {
+                            throw ThrowNotEnoughBytesException();
+                        }
+
+                    default:
+                        throw ThrowUnreachable();
+                }
             }
         }
 
@@ -246,29 +306,39 @@ retry:
         public Int32 ReadInt32()
         {
             MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadInt32(this.reader.UnreadSpan, out Int32 value, out int tokenSize);
-retry:
-            switch (readResult)
+            if (readResult == MessagePackPrimitives.ReadResult.Success)
             {
-                case MessagePackPrimitives.ReadResult.Success:
-                    this.reader.Advance(tokenSize);
-                    return value;
-                case MessagePackPrimitives.ReadResult.TokenMismatch:
-                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
-                case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
-                    Span<byte> buffer = stackalloc byte[tokenSize];
-                    if (this.reader.TryCopyTo(buffer))
-                    {
-                        readResult = MessagePackPrimitives.TryReadInt32(buffer, out value, out tokenSize);
-                        goto retry;
-                    }
-                    else
-                    {
-                        throw ThrowNotEnoughBytesException();
-                    }
+                this.reader.Advance(tokenSize);
+                return value;
+            }
 
-                default:
-                    throw ThrowUnreachable();
+            return SlowPath(ref this, readResult, value, ref tokenSize);
+
+            static Int32 SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, Int32 value, ref int tokenSize)
+            {
+                switch (readResult)
+                {
+                    case MessagePackPrimitives.ReadResult.Success:
+                        self.reader.Advance(tokenSize);
+                        return value;
+                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                        throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
+                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                        Span<byte> buffer = stackalloc byte[tokenSize];
+                        if (self.reader.TryCopyTo(buffer))
+                        {
+                            readResult = MessagePackPrimitives.TryReadInt32(buffer, out value, out tokenSize);
+                            return SlowPath(ref self, readResult, value, ref tokenSize);
+                        }
+                        else
+                        {
+                            throw ThrowNotEnoughBytesException();
+                        }
+
+                    default:
+                        throw ThrowUnreachable();
+                }
             }
         }
 
@@ -283,29 +353,39 @@ retry:
         public Int64 ReadInt64()
         {
             MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadInt64(this.reader.UnreadSpan, out Int64 value, out int tokenSize);
-retry:
-            switch (readResult)
+            if (readResult == MessagePackPrimitives.ReadResult.Success)
             {
-                case MessagePackPrimitives.ReadResult.Success:
-                    this.reader.Advance(tokenSize);
-                    return value;
-                case MessagePackPrimitives.ReadResult.TokenMismatch:
-                    throw ThrowInvalidCode(this.reader.UnreadSpan[0]);
-                case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                case MessagePackPrimitives.ReadResult.InsufficientBuffer:
-                    Span<byte> buffer = stackalloc byte[tokenSize];
-                    if (this.reader.TryCopyTo(buffer))
-                    {
-                        readResult = MessagePackPrimitives.TryReadInt64(buffer, out value, out tokenSize);
-                        goto retry;
-                    }
-                    else
-                    {
-                        throw ThrowNotEnoughBytesException();
-                    }
+                this.reader.Advance(tokenSize);
+                return value;
+            }
 
-                default:
-                    throw ThrowUnreachable();
+            return SlowPath(ref this, readResult, value, ref tokenSize);
+
+            static Int64 SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, Int64 value, ref int tokenSize)
+            {
+                switch (readResult)
+                {
+                    case MessagePackPrimitives.ReadResult.Success:
+                        self.reader.Advance(tokenSize);
+                        return value;
+                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                        throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
+                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
+                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                        Span<byte> buffer = stackalloc byte[tokenSize];
+                        if (self.reader.TryCopyTo(buffer))
+                        {
+                            readResult = MessagePackPrimitives.TryReadInt64(buffer, out value, out tokenSize);
+                            return SlowPath(ref self, readResult, value, ref tokenSize);
+                        }
+                        else
+                        {
+                            throw ThrowNotEnoughBytesException();
+                        }
+
+                    default:
+                        throw ThrowUnreachable();
+                }
             }
         }
     }

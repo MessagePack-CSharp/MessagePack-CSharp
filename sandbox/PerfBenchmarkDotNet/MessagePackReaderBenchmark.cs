@@ -31,9 +31,10 @@ namespace PerfBenchmarkDotNet
         public void ReadBytePrimitiveInt32()
         {
             int offset = 0;
+            ReadOnlySpan<byte> buffer = this.buffer;
             for (int i = 0; i < this.buffer.Length; i++)
             {
-                newmsgpack::MessagePack.MessagePackPrimitives.TryReadInt32(this.buffer.AsSpan(offset), out int value, out var readSize);
+                newmsgpack::MessagePack.MessagePackPrimitives.TryReadInt32(buffer.Slice(offset), out int value, out var readSize);
                 offset += readSize;
             }
         }
