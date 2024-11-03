@@ -145,6 +145,108 @@ static partial class MessagePackPrimitives
     /// <summary>
     /// Writes a signed integer value to the specified buffer, if the buffer is large enough.
     /// </summary>
+    /// <param name="destination">The buffer to write to. This should be at least 2 bytes in length to ensure success with any value for <paramref name="value"/>.</param>
+    /// <param name="value">The signed integer value to write.</param>
+    /// <param name="bytesWritten">The number of bytes required to write the value, whether successful or not.</param>
+    /// <returns>
+    /// <see langword="true" /> if <paramref name="destination"/> was large enough and the value written; otherwise, <see langword="false" />.
+    /// When <see langword="false"/>, the value of <paramref name="bytesWritten"/> indicates how many bytes are required to write the value successfully.
+    /// </returns>
+    /// <remarks>
+    /// The smallest possible representation is used for the value, which may be as few as 1 byte.
+    /// In addition to the built-in 1-byte code when within specific MessagePack-supported ranges,
+    /// any of the following encodings may also be used:
+    /// <see cref="MessagePackCode.UInt8"/>,
+    /// <see cref="MessagePackCode.Int8"/>.
+    /// </remarks>
+    public static bool TryWrite(Span<byte> destination, sbyte value, out int bytesWritten)
+    {
+        if (value >= 0)
+        {
+            return TryWrite(destination, unchecked((byte)value), out bytesWritten);
+        }
+
+        switch (value)
+        {
+            case >= MessagePackRange.MinFixNegativeInt: return TryWriteNegativeFixIntUnsafe(destination, value, out bytesWritten);
+            default: return TryWriteInt8(destination, value, out bytesWritten);
+        }
+    }
+
+    /// <summary>
+    /// Writes a signed integer value to the specified buffer, if the buffer is large enough.
+    /// </summary>
+    /// <param name="destination">The buffer to write to. This should be at least 3 bytes in length to ensure success with any value for <paramref name="value"/>.</param>
+    /// <param name="value">The signed integer value to write.</param>
+    /// <param name="bytesWritten">The number of bytes required to write the value, whether successful or not.</param>
+    /// <returns>
+    /// <see langword="true" /> if <paramref name="destination"/> was large enough and the value written; otherwise, <see langword="false" />.
+    /// When <see langword="false"/>, the value of <paramref name="bytesWritten"/> indicates how many bytes are required to write the value successfully.
+    /// </returns>
+    /// <remarks>
+    /// The smallest possible representation is used for the value, which may be as few as 1 byte.
+    /// In addition to the built-in 1-byte code when within specific MessagePack-supported ranges,
+    /// any of the following encodings may also be used:
+    /// <see cref="MessagePackCode.UInt8"/>,
+    /// <see cref="MessagePackCode.UInt16"/>,
+    /// <see cref="MessagePackCode.Int8"/>,
+    /// <see cref="MessagePackCode.Int16"/>.
+    /// </remarks>
+    public static bool TryWrite(Span<byte> destination, short value, out int bytesWritten)
+    {
+        if (value >= 0)
+        {
+            return TryWrite(destination, unchecked((ushort)value), out bytesWritten);
+        }
+
+        switch (value)
+        {
+            case >= MessagePackRange.MinFixNegativeInt: return TryWriteNegativeFixIntUnsafe(destination, unchecked((sbyte)value), out bytesWritten);
+            case >= sbyte.MinValue: return TryWriteInt8(destination, unchecked((sbyte)value), out bytesWritten);
+            default: return TryWriteInt16(destination, value, out bytesWritten);
+        }
+    }
+
+    /// <summary>
+    /// Writes a signed integer value to the specified buffer, if the buffer is large enough.
+    /// </summary>
+    /// <param name="destination">The buffer to write to. This should be at least 5 bytes in length to ensure success with any value for <paramref name="value"/>.</param>
+    /// <param name="value">The signed integer value to write.</param>
+    /// <param name="bytesWritten">The number of bytes required to write the value, whether successful or not.</param>
+    /// <returns>
+    /// <see langword="true" /> if <paramref name="destination"/> was large enough and the value written; otherwise, <see langword="false" />.
+    /// When <see langword="false"/>, the value of <paramref name="bytesWritten"/> indicates how many bytes are required to write the value successfully.
+    /// </returns>
+    /// <remarks>
+    /// The smallest possible representation is used for the value, which may be as few as 1 byte.
+    /// In addition to the built-in 1-byte code when within specific MessagePack-supported ranges,
+    /// any of the following encodings may also be used:
+    /// <see cref="MessagePackCode.UInt8"/>,
+    /// <see cref="MessagePackCode.UInt16"/>,
+    /// <see cref="MessagePackCode.UInt32"/>,
+    /// <see cref="MessagePackCode.Int8"/>,
+    /// <see cref="MessagePackCode.Int16"/>,
+    /// <see cref="MessagePackCode.Int32"/>.
+    /// </remarks>
+    public static bool TryWrite(Span<byte> destination, int value, out int bytesWritten)
+    {
+        if (value >= 0)
+        {
+            return TryWrite(destination, unchecked((uint)value), out bytesWritten);
+        }
+
+        switch (value)
+        {
+            case >= MessagePackRange.MinFixNegativeInt: return TryWriteNegativeFixIntUnsafe(destination, unchecked((sbyte)value), out bytesWritten);
+            case >= sbyte.MinValue: return TryWriteInt8(destination, unchecked((sbyte)value), out bytesWritten);
+            case >= short.MinValue: return TryWriteInt16(destination, unchecked((short)value), out bytesWritten);
+            default: return TryWriteInt32(destination, value, out bytesWritten);
+        }
+    }
+
+    /// <summary>
+    /// Writes a signed integer value to the specified buffer, if the buffer is large enough.
+    /// </summary>
     /// <param name="destination">The buffer to write to. This should be at least 9 bytes in length to ensure success with any value for <paramref name="value"/>.</param>
     /// <param name="value">The signed integer value to write.</param>
     /// <param name="bytesWritten">The number of bytes required to write the value, whether successful or not.</param>
@@ -167,22 +269,23 @@ static partial class MessagePackPrimitives
     /// </remarks>
     public static bool TryWrite(Span<byte> destination, long value, out int bytesWritten)
     {
-        switch (value)
+        if (value >= 0)
         {
-            case >= 0: return TryWrite(destination, (ulong)value, out bytesWritten);
-            case >= MessagePackRange.MinFixNegativeInt:
-                bytesWritten = 1;
-                if (destination.Length < bytesWritten)
-                {
-                    return false;
-                }
+            return TryWrite(destination, unchecked((ulong)value), out bytesWritten);
+        }
 
-                destination[0] = unchecked((byte)value);
-                return true;
-            case >= sbyte.MinValue: return TryWriteInt8(destination, (sbyte)value, out bytesWritten);
-            case >= short.MinValue: return TryWriteInt16(destination, (short)value, out bytesWritten);
-            case >= int.MinValue: return TryWriteInt32(destination, (int)value, out bytesWritten);
-            default: return TryWriteInt64(destination, value, out bytesWritten);
+        return SlowPath(destination, value, out bytesWritten);
+        static bool SlowPath(Span<byte> destination, long value, out int bytesWritten)
+        {
+            switch (value)
+            {
+                case >= 0: return TryWrite(destination, (ulong)value, out bytesWritten);
+                case >= MessagePackRange.MinFixNegativeInt: return TryWriteNegativeFixIntUnsafe(destination, unchecked((sbyte)value), out bytesWritten);
+                case >= sbyte.MinValue: return TryWriteInt8(destination, (sbyte)value, out bytesWritten);
+                case >= short.MinValue: return TryWriteInt16(destination, (short)value, out bytesWritten);
+                case >= int.MinValue: return TryWriteInt32(destination, (int)value, out bytesWritten);
+                default: return TryWriteInt64(destination, value, out bytesWritten);
+            }
         }
     }
 
@@ -293,6 +396,96 @@ static partial class MessagePackPrimitives
     /// <summary>
     /// Writes an unsigned integer value to the specified buffer, if the buffer is large enough.
     /// </summary>
+    /// <param name="destination">The buffer to write to. This should be at least 2 bytes in length to ensure success with any value for <paramref name="value"/>.</param>
+    /// <param name="value">The unsigned integer value to write.</param>
+    /// <param name="bytesWritten">The number of bytes required to write the value, whether successful or not.</param>
+    /// <returns>
+    /// <see langword="true" /> if <paramref name="destination"/> was large enough and the value written; otherwise, <see langword="false" />.
+    /// When <see langword="false"/>, the value of <paramref name="bytesWritten"/> indicates how many bytes are required to write the value successfully.
+    /// </returns>
+    /// <remarks>
+    /// The smallest possible representation is used for the value, which may be as few as 1 byte.
+    /// In addition to the built-in 1-byte code when within specific MessagePack-supported ranges,
+    /// any of the following encodings may also be used:
+    /// <see cref="MessagePackCode.UInt8"/>.
+    /// </remarks>
+    public static bool TryWrite(Span<byte> destination, byte value, out int bytesWritten)
+    {
+        switch (value)
+        {
+            case <= MessagePackRange.MaxFixPositiveInt:
+                return TryWriteFixIntUnsafe(destination, unchecked((byte)value), out bytesWritten);
+            default:
+                return TryWriteUInt8(destination, value, out bytesWritten);
+        }
+    }
+
+    /// <summary>
+    /// Writes an unsigned integer value to the specified buffer, if the buffer is large enough.
+    /// </summary>
+    /// <param name="destination">The buffer to write to. This should be at least 3 bytes in length to ensure success with any value for <paramref name="value"/>.</param>
+    /// <param name="value">The unsigned integer value to write.</param>
+    /// <param name="bytesWritten">The number of bytes required to write the value, whether successful or not.</param>
+    /// <returns>
+    /// <see langword="true" /> if <paramref name="destination"/> was large enough and the value written; otherwise, <see langword="false" />.
+    /// When <see langword="false"/>, the value of <paramref name="bytesWritten"/> indicates how many bytes are required to write the value successfully.
+    /// </returns>
+    /// <remarks>
+    /// The smallest possible representation is used for the value, which may be as few as 1 byte.
+    /// In addition to the built-in 1-byte code when within specific MessagePack-supported ranges,
+    /// any of the following encodings may also be used:
+    /// <see cref="MessagePackCode.UInt8"/>,
+    /// <see cref="MessagePackCode.UInt16"/>.
+    /// </remarks>
+    public static bool TryWrite(Span<byte> destination, ushort value, out int bytesWritten)
+    {
+        switch (value)
+        {
+            case <= MessagePackRange.MaxFixPositiveInt:
+                return TryWriteFixIntUnsafe(destination, unchecked((byte)value), out bytesWritten);
+            case <= byte.MaxValue:
+                return TryWriteUInt8(destination, unchecked((byte)value), out bytesWritten);
+            default:
+                return TryWriteUInt16(destination, value, out bytesWritten);
+        }
+    }
+
+    /// <summary>
+    /// Writes an unsigned integer value to the specified buffer, if the buffer is large enough.
+    /// </summary>
+    /// <param name="destination">The buffer to write to. This should be at least 5 bytes in length to ensure success with any value for <paramref name="value"/>.</param>
+    /// <param name="value">The unsigned integer value to write.</param>
+    /// <param name="bytesWritten">The number of bytes required to write the value, whether successful or not.</param>
+    /// <returns>
+    /// <see langword="true" /> if <paramref name="destination"/> was large enough and the value written; otherwise, <see langword="false" />.
+    /// When <see langword="false"/>, the value of <paramref name="bytesWritten"/> indicates how many bytes are required to write the value successfully.
+    /// </returns>
+    /// <remarks>
+    /// The smallest possible representation is used for the value, which may be as few as 1 byte.
+    /// In addition to the built-in 1-byte code when within specific MessagePack-supported ranges,
+    /// any of the following encodings may also be used:
+    /// <see cref="MessagePackCode.UInt8"/>,
+    /// <see cref="MessagePackCode.UInt16"/>,
+    /// <see cref="MessagePackCode.UInt32"/>.
+    /// </remarks>
+    public static bool TryWrite(Span<byte> destination, uint value, out int bytesWritten)
+    {
+        switch (value)
+        {
+            case <= MessagePackRange.MaxFixPositiveInt:
+                return TryWriteFixIntUnsafe(destination, unchecked((byte)value), out bytesWritten);
+            case <= byte.MaxValue:
+                return TryWriteUInt8(destination, unchecked((byte)value), out bytesWritten);
+            case <= ushort.MaxValue:
+                return TryWriteUInt16(destination, unchecked((ushort)value), out bytesWritten);
+            default:
+                return TryWriteUInt32(destination, value, out bytesWritten);
+        }
+    }
+
+    /// <summary>
+    /// Writes an unsigned integer value to the specified buffer, if the buffer is large enough.
+    /// </summary>
     /// <param name="destination">The buffer to write to. This should be at least 9 bytes in length to ensure success with any value for <paramref name="value"/>.</param>
     /// <param name="value">The unsigned integer value to write.</param>
     /// <param name="bytesWritten">The number of bytes required to write the value, whether successful or not.</param>
@@ -311,49 +504,26 @@ static partial class MessagePackPrimitives
     /// </remarks>
     public static bool TryWrite(Span<byte> destination, ulong value, out int bytesWritten)
     {
-        switch (value)
+        if (value <= MessagePackRange.MaxFixPositiveInt)
         {
-            case <= MessagePackRange.MaxFixPositiveInt:
-                bytesWritten = 1;
-                if (destination.Length < bytesWritten)
-                {
-                    return false;
-                }
+            return TryWriteFixIntUnsafe(destination, unchecked((byte)value), out bytesWritten);
+        }
 
-                destination[0] = unchecked((byte)value);
-                return true;
-            case <= byte.MaxValue:
-                bytesWritten = 2;
-                if (destination.Length < bytesWritten)
-                {
-                    return false;
-                }
+        return SlowPath(destination, value, out bytesWritten);
 
-                destination[0] = MessagePackCode.UInt8;
-                destination[1] = unchecked((byte)value);
-                return true;
-            case <= ushort.MaxValue:
-                bytesWritten = 3;
-                if (destination.Length < bytesWritten)
-                {
-                    return false;
-                }
-
-                destination[0] = MessagePackCode.UInt16;
-                WriteBigEndian(destination.Slice(1), (ushort)value);
-                return true;
-            case <= uint.MaxValue:
-                bytesWritten = 5;
-                if (destination.Length < bytesWritten)
-                {
-                    return false;
-                }
-
-                destination[0] = MessagePackCode.UInt32;
-                WriteBigEndian(destination.Slice(1), (uint)value);
-                return true;
-            default:
-                return TryWriteUInt64(destination, value, out bytesWritten);
+        static bool SlowPath(Span<byte> destination, ulong value, out int bytesWritten)
+        {
+            switch (value)
+            {
+                case <= byte.MaxValue:
+                    return TryWriteUInt8(destination, unchecked((byte)value), out bytesWritten);
+                case <= ushort.MaxValue:
+                    return TryWriteUInt16(destination, unchecked((ushort)value), out bytesWritten);
+                case <= uint.MaxValue:
+                    return TryWriteUInt32(destination, unchecked((uint)value), out bytesWritten);
+                default:
+                    return TryWriteUInt64(destination, value, out bytesWritten);
+            }
         }
     }
 
@@ -855,6 +1025,55 @@ static partial class MessagePackPrimitives
                 destination[5] = unchecked(typeCode);
                 return true;
         }
+    }
+
+    /// <summary>
+    /// Writes a very small integer into just one byte of msgpack data.
+    /// This method does *not* ensure that the value is within the range of a fixint.
+    /// The caller must ensure that the value is less than or equal to <see cref="MessagePackCode.MaxFixInt"/>.
+    /// </summary>
+    /// <param name="destination">The buffer to write to. This should be at least 5 bytes in length to ensure success.</param>
+    /// <param name="value">The single-precision floating-point value to write.</param>
+    /// <param name="bytesWritten">The number of bytes required to write the value, whether successful or not.</param>
+    /// <returns>
+    /// <see langword="true" /> if <paramref name="destination"/> was large enough and the value written; otherwise, <see langword="false" />.
+    /// When <see langword="false"/>, the value of <paramref name="bytesWritten"/> indicates how many bytes are required to write the value successfully.
+    /// </returns>
+    private static bool TryWriteFixIntUnsafe(Span<byte> destination, byte value, out int bytesWritten)
+    {
+        bytesWritten = 1;
+        if (destination.Length < bytesWritten)
+        {
+            return false;
+        }
+
+        destination[0] = unchecked(value);
+        return true;
+    }
+
+    /// <summary>
+    /// Writes a very small magnitude negative integer into just one byte of msgpack data.
+    /// This method does *not* ensure that the value is within the range of a fixint.
+    /// The caller must ensure that the value is between <see cref="MessagePackCode.MinNegativeFixInt"/>
+    /// and <see cref="MessagePackCode.MaxNegativeFixInt"/>, inclusive.
+    /// </summary>
+    /// <param name="destination">The buffer to write to. This should be at least 5 bytes in length to ensure success.</param>
+    /// <param name="value">The single-precision floating-point value to write.</param>
+    /// <param name="bytesWritten">The number of bytes required to write the value, whether successful or not.</param>
+    /// <returns>
+    /// <see langword="true" /> if <paramref name="destination"/> was large enough and the value written; otherwise, <see langword="false" />.
+    /// When <see langword="false"/>, the value of <paramref name="bytesWritten"/> indicates how many bytes are required to write the value successfully.
+    /// </returns>
+    private static bool TryWriteNegativeFixIntUnsafe(Span<byte> destination, sbyte value, out int bytesWritten)
+    {
+        bytesWritten = 1;
+        if (destination.Length < bytesWritten)
+        {
+            return false;
+        }
+
+        destination[0] = unchecked((byte)value);
+        return true;
     }
 
     [DoesNotReturn]

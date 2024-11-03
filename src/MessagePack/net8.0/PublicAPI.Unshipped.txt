@@ -127,12 +127,18 @@ static MessagePack.MessagePackPrimitives.TryReadUInt16(System.ReadOnlySpan<byte>
 static MessagePack.MessagePackPrimitives.TryReadUInt32(System.ReadOnlySpan<byte> source, out uint value, out int tokenSize) -> MessagePack.MessagePackPrimitives.ReadResult
 static MessagePack.MessagePackPrimitives.TryReadUInt64(System.ReadOnlySpan<byte> source, out ulong value, out int tokenSize) -> MessagePack.MessagePackPrimitives.ReadResult
 static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, bool value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, byte value, out int bytesWritten) -> bool
 static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, char value, out int bytesWritten) -> bool
 static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, double value, out int bytesWritten) -> bool
 static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, float value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, int value, out int bytesWritten) -> bool
 static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, long value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, sbyte value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, short value, out int bytesWritten) -> bool
 static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, System.DateTime value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, uint value, out int bytesWritten) -> bool
 static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, ulong value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, ushort value, out int bytesWritten) -> bool
 static MessagePack.MessagePackPrimitives.TryWriteArrayHeader(System.Span<byte> destination, uint count, out int bytesWritten) -> bool
 static MessagePack.MessagePackPrimitives.TryWriteBinHeader(System.Span<byte> destination, uint length, out int bytesWritten) -> bool
 static MessagePack.MessagePackPrimitives.TryWriteExtensionFormatHeader(System.Span<byte> destination, MessagePack.ExtensionHeader extensionHeader, out int bytesWritten) -> bool
