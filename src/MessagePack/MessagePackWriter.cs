@@ -4,13 +4,9 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
-using MessagePack.Internal;
-using Microsoft;
 
 namespace MessagePack
 {
@@ -703,38 +699,12 @@ namespace MessagePack
             }
         }
 
-        private static void WriteBigEndian(int value, Span<byte> span) => WriteBigEndian(unchecked((uint)value), span);
-
-        private static void WriteBigEndian(long value, Span<byte> span) => WriteBigEndian(unchecked((ulong)value), span);
-
-        private static void WriteBigEndian(ushort value, Span<byte> span)
-        {
-            unchecked
-            {
-                // Write to highest index first so the JIT skips bounds checks on subsequent writes.
-                span[1] = (byte)value;
-                span[0] = (byte)(value >> 8);
-            }
-        }
-
         private static unsafe void WriteBigEndian(ushort value, byte* span)
         {
             unchecked
             {
                 span[0] = (byte)(value >> 8);
                 span[1] = (byte)value;
-            }
-        }
-
-        private static void WriteBigEndian(uint value, Span<byte> span)
-        {
-            unchecked
-            {
-                // Write to highest index first so the JIT skips bounds checks on subsequent writes.
-                span[3] = (byte)value;
-                span[2] = (byte)(value >> 8);
-                span[1] = (byte)(value >> 16);
-                span[0] = (byte)(value >> 24);
             }
         }
 
@@ -748,26 +718,6 @@ namespace MessagePack
                 span[3] = (byte)value;
             }
         }
-
-        private static void WriteBigEndian(ulong value, Span<byte> span)
-        {
-            unchecked
-            {
-                // Write to highest index first so the JIT skips bounds checks on subsequent writes.
-                span[7] = (byte)value;
-                span[6] = (byte)(value >> 8);
-                span[5] = (byte)(value >> 16);
-                span[4] = (byte)(value >> 24);
-                span[3] = (byte)(value >> 32);
-                span[2] = (byte)(value >> 40);
-                span[1] = (byte)(value >> 48);
-                span[0] = (byte)(value >> 56);
-            }
-        }
-
-        private static unsafe void WriteBigEndian(float value, Span<byte> span) => WriteBigEndian(*(int*)&value, span);
-
-        private static unsafe void WriteBigEndian(double value, Span<byte> span) => WriteBigEndian(*(long*)&value, span);
 
         /// <summary>
         /// Estimates the length of the header required for a given string.
