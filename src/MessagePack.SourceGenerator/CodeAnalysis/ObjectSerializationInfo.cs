@@ -10,8 +10,6 @@ public record ObjectSerializationInfo : ResolverRegisterInfo
 {
     public required bool IsClass { get; init; }
 
-    public bool IncludesPrivateMembers { get; init; }
-
     public required GenericTypeParameterInfo[] GenericTypeParameters { get; init; }
 
     public required MemberSerializationInfo[] ConstructorParameters { get; init; }
@@ -61,7 +59,7 @@ public record ObjectSerializationInfo : ResolverRegisterInfo
     public static ObjectSerializationInfo Create(
         INamedTypeSymbol dataType,
         bool isClass,
-        bool includesPrivateMembers,
+        bool nestedFormatterRequired,
         GenericTypeParameterInfo[] genericTypeParameters,
         MemberSerializationInfo[] constructorParameters,
         bool isIntKey,
@@ -74,13 +72,12 @@ public record ObjectSerializationInfo : ResolverRegisterInfo
         ResolverRegisterInfo basicInfo = ResolverRegisterInfo.Create(
             dataType,
             resolverOptions,
-            includesPrivateMembers ? FormatterPosition.UnderDataType : FormatterPosition.UnderResolver);
+            nestedFormatterRequired ? FormatterPosition.UnderDataType : FormatterPosition.UnderResolver);
         return new ObjectSerializationInfo
         {
             DataType = basicInfo.DataType,
             Formatter = basicInfo.Formatter,
             IsClass = isClass,
-            IncludesPrivateMembers = includesPrivateMembers,
             GenericTypeParameters = genericTypeParameters,
             ConstructorParameters = constructorParameters,
             InitMembers = members.Where(x => ((x.IsProperty && x.IsInitOnly) || x.IsRequired) && !constructorParameters.Contains(x)).ToArray(),

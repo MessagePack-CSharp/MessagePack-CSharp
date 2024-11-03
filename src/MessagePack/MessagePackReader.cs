@@ -47,7 +47,7 @@ namespace MessagePack
         /// Initializes a new instance of the <see cref="MessagePackReader"/> struct.
         /// </summary>
         /// <param name="readOnlySequence">The sequence to read from.</param>
-        public MessagePackReader(in ReadOnlySequence<byte> readOnlySequence)
+        public MessagePackReader(scoped in ReadOnlySequence<byte> readOnlySequence)
             : this()
         {
             this.reader = new SequenceReader<byte>(readOnlySequence);
@@ -117,7 +117,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="readOnlySequence">The sequence to read from.</param>
         /// <returns>The new reader.</returns>
-        public MessagePackReader Clone(in ReadOnlySequence<byte> readOnlySequence) => new MessagePackReader(readOnlySequence)
+        public MessagePackReader Clone(scoped in ReadOnlySequence<byte> readOnlySequence) => new MessagePackReader(readOnlySequence)
         {
             CancellationToken = this.CancellationToken,
             Depth = this.Depth,
@@ -162,6 +162,7 @@ namespace MessagePack
             byte code = this.NextCode;
             switch (code)
             {
+                case byte x when MessagePackCode.IsPositiveFixInt(x) || MessagePackCode.IsNegativeFixInt(x):
                 case MessagePackCode.Nil:
                 case MessagePackCode.True:
                 case MessagePackCode.False:
@@ -180,12 +181,15 @@ namespace MessagePack
                 case MessagePackCode.UInt64:
                 case MessagePackCode.Float64:
                     return this.reader.TryAdvance(9);
+                case byte x when MessagePackCode.IsFixMap(x):
                 case MessagePackCode.Map16:
                 case MessagePackCode.Map32:
                     return this.TrySkipNextMap();
+                case byte x when MessagePackCode.IsFixArray(x):
                 case MessagePackCode.Array16:
                 case MessagePackCode.Array32:
                     return this.TrySkipNextArray();
+                case byte x when MessagePackCode.IsFixStr(x):
                 case MessagePackCode.Str8:
                 case MessagePackCode.Str16:
                 case MessagePackCode.Str32:
@@ -204,27 +208,6 @@ namespace MessagePack
                 case MessagePackCode.Ext32:
                     return this.TryReadExtensionFormatHeader(out ExtensionHeader header) && this.reader.TryAdvance(header.Length);
                 default:
-                    if ((code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt) ||
-                        (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt))
-                    {
-                        return this.reader.TryAdvance(1);
-                    }
-
-                    if (code >= MessagePackCode.MinFixMap && code <= MessagePackCode.MaxFixMap)
-                    {
-                        return this.TrySkipNextMap();
-                    }
-
-                    if (code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MaxFixArray)
-                    {
-                        return this.TrySkipNextArray();
-                    }
-
-                    if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
-                    {
-                        return this.TryGetStringLengthInBytes(out length) && this.reader.TryAdvance(length);
-                    }
-
                     // We don't actually expect to ever hit this point, since every code is supported.
                     Debug.Fail("Missing handler for code: " + code);
                     throw ThrowInvalidCode(code);

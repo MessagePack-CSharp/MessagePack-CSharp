@@ -2,10 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Text;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
@@ -18,16 +15,20 @@ public abstract record QualifiedTypeName : IComparable<QualifiedTypeName>
     /// Initializes a new instance of the <see cref="QualifiedTypeName"/> class.
     /// </summary>
     /// <param name="symbol">The symbol this instance will identify.</param>
-    public static QualifiedTypeName Create(ITypeSymbol symbol)
+    /// <param name="recursionGuard">A stack of objects that serves to avoid infinite recursion when generic constraints are written in terms of themselves.</param>
+    public static QualifiedTypeName Create(ITypeSymbol symbol, ImmutableStack<GenericTypeParameterInfo>? recursionGuard = null)
     {
         return symbol switch
         {
             IArrayTypeSymbol arrayType => new QualifiedArrayTypeName(arrayType),
-            INamedTypeSymbol namedType => new QualifiedNamedTypeName(namedType),
-            ITypeParameterSymbol typeParam => new QualifiedNamedTypeName(typeParam),
+            INamedTypeSymbol namedType => new QualifiedNamedTypeName(namedType, recursionGuard),
+            ITypeParameterSymbol typeParam => new TypeParameter(typeParam),
             _ => throw new NotSupportedException(),
         };
     }
+
+    /// <inheritdoc cref="Create(ITypeSymbol, ImmutableStack{GenericTypeParameterInfo}?)"/>
+    public static QualifiedTypeName Create(ITypeSymbol symbol) => Create(symbol, null);
 
     /// <summary>
     /// Gets the kind of type.
@@ -39,9 +40,11 @@ public abstract record QualifiedTypeName : IComparable<QualifiedTypeName>
     /// </summary>
     public abstract bool IsRecord { get; }
 
+    public NullableAnnotation ReferenceTypeNullableAnnotation { get; init; }
+
     protected string DebuggerDisplay => this.GetQualifiedName(Qualifiers.Namespace, GenericParameterStyle.Arguments);
 
-    public abstract string GetQualifiedName(Qualifiers qualifier = Qualifiers.GlobalNamespace, GenericParameterStyle genericStyle = GenericParameterStyle.Identifiers);
+    public abstract string GetQualifiedName(Qualifiers qualifier = Qualifiers.GlobalNamespace, GenericParameterStyle genericStyle = GenericParameterStyle.Identifiers, bool includeNullableAnnotation = false);
 
     /// <summary>
     /// Builds a string that acts as a suffix for a C# type name to represent the generic type parameters.
@@ -79,6 +82,10 @@ public abstract record QualifiedTypeName : IComparable<QualifiedTypeName>
         else if (left is QualifiedNamedTypeName leftNamed)
         {
             return right is QualifiedNamedTypeName rightNamed ? leftNamed.CompareTo(rightNamed) : 1;
+        }
+        else if (left is TypeParameter leftTypeParameter)
+        {
+            return right is TypeParameter rightTypeParameter ? leftTypeParameter.CompareTo(rightTypeParameter) : 1;
         }
         else
         {

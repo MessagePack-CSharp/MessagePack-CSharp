@@ -2,8 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 [MessagePackObject]
-internal record HasPropertyWithCustomFormatterAttribute
+public record HasPropertyWithCustomFormatterAttribute
 {
     [Key(0), MessagePackFormatter(typeof(UnserializableRecordFormatter))]
-    internal UnserializableRecord? CustomValue { get; set; }
+    public UnserializableRecord? CustomValue { get; set; }
 }

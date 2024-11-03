@@ -14,8 +14,8 @@ public class MsgPack011PartialTypeRequiredTests
             #pragma warning disable CS0169
             using MessagePack;
 
-            [MessagePackObject]
-            class {|MsgPack011:MyObject|}
+            [{|MsgPack015:MessagePackObject|}]
+            public class {|MsgPack011:MyObject|}
             {
                 [Key(0)]
                 private int value;
@@ -26,8 +26,8 @@ public class MsgPack011PartialTypeRequiredTests
             #pragma warning disable CS0169
             using MessagePack;
 
-            [MessagePackObject]
-            partial class MyObject
+            [{|MsgPack015:MessagePackObject|}]
+            public partial class MyObject
             {
                 [Key(0)]
                 private int value;
@@ -44,9 +44,9 @@ public class MsgPack011PartialTypeRequiredTests
             using MessagePack;
 
             [MessagePackObject]
-            class {|#1:Outer|}
+            public class {|#1:Outer|}
             {
-                [MessagePackObject]
+                [{|MsgPack015:MessagePackObject|}]
                 internal class {|#0:Inner|}
                 {
                     [Key(0)]
@@ -59,9 +59,9 @@ public class MsgPack011PartialTypeRequiredTests
             using MessagePack;
 
             [MessagePackObject]
-            partial class Outer
+            public partial class Outer
             {
-                [MessagePackObject]
+                [{|MsgPack015:MessagePackObject|}]
                 internal partial class Inner
                 {
                     [Key(0)]
@@ -93,10 +93,10 @@ public class MsgPack011PartialTypeRequiredTests
             using MessagePack;
 
             [MessagePackObject]
-            class {|#1:Outer|}
+            public class {|#1:Outer|}
             {
-                [MessagePackObject]
-                internal partial class {|#0:Inner|}
+                [{|MsgPack015:MessagePackObject|}]
+                public partial class {|#0:Inner|}
                 {
                     [Key(0)]
                     private Outer Value { get; set; }
@@ -108,10 +108,10 @@ public class MsgPack011PartialTypeRequiredTests
             using MessagePack;
 
             [MessagePackObject]
-            partial class Outer
+            public partial class Outer
             {
-                [MessagePackObject]
-                internal partial class Inner
+                [{|MsgPack015:MessagePackObject|}]
+                public partial class Inner
                 {
                     [Key(0)]
                     private Outer Value { get; set; }

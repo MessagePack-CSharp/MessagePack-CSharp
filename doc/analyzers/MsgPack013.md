@@ -1,4 +1,4 @@
-# MsgPack012 Inaccessible formatter instance
+# MsgPack013 Inaccessible formatter instance
 
 A custom `IMessagePackFormatter<T>` implementation must have an accessible instance to be included in the source generated resolver.
 

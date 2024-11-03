@@ -41,6 +41,20 @@ namespace MessagePack
         /// will generate a formatter at runtime instead.
         /// </remarks>
         public bool SuppressSourceGeneration { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether generated formatters should allow non-public members to be serialized and deserialized.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is particularly important to set when <see cref="KeyAsPropertyName"/> is set to <see langword="true" /> if non-public members should be included.
+        /// </para>
+        /// <para>
+        /// This property can also ensure non-public members are serialized by the <c>DynamicObjectResolver</c> so that the application doesn't have to use
+        /// <c>DynamicObjectResolverAllowPrivate</c> explicitly for an object to be properly serialized.
+        /// </para>
+        /// </remarks>
+        public bool AllowPrivate { get; set; }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = true)]

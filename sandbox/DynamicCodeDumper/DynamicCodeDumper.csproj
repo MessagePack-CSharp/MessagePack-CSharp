@@ -133,6 +133,9 @@
     <Compile Include="..\..\src\MessagePack\SafeBitConverter.cs">
       <Link>Code\SafeBitConverter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\SipHash.cs">
+      <Link>Code\SipHash.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\MessagePackCode.cs">
       <Link>Code\MessagePackCode.cs</Link>
     </Compile>

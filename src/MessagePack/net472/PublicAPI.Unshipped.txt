@@ -54,6 +54,7 @@ MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver
 MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.SourceGeneratedFormatterResolver
 MessagePack.Resolvers.SourceGeneratedFormatterResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
+MessagePack.SequencePool.Clear() -> void
 static MessagePack.MessagePackPrimitives.TryReadArrayHeader(System.ReadOnlySpan<byte> source, out uint count, out int tokenSize) -> MessagePack.MessagePackPrimitives.ReadResult
 static MessagePack.MessagePackPrimitives.TryReadBinHeader(System.ReadOnlySpan<byte> source, out uint length, out int tokenSize) -> MessagePack.MessagePackPrimitives.ReadResult
 static MessagePack.MessagePackPrimitives.TryReadBool(System.ReadOnlySpan<byte> source, out bool value, out int tokenSize) -> MessagePack.MessagePackPrimitives.ReadResult

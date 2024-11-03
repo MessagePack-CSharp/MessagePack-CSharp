@@ -3,8 +3,6 @@
 
 #pragma warning disable SA1402 // File may only contain a single type
 
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -39,7 +37,7 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
     }
 
     [SetsRequiredMembers]
-    public QualifiedNamedTypeName(INamedTypeSymbol symbol)
+    public QualifiedNamedTypeName(INamedTypeSymbol symbol, ImmutableStack<GenericTypeParameterInfo>? recursionGuard = null)
     {
         this.Name = symbol.Name;
         this.Kind = symbol.TypeKind;
@@ -47,8 +45,9 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
         this.Container = symbol.ContainingType is { } nesting ? new NestingTypeContainer(new(nesting)) :
             symbol.ContainingNamespace?.GetFullNamespaceName() is string ns ? new NamespaceTypeContainer(ns) :
             null;
-        this.TypeParameters = CodeAnalysisUtilities.GetTypeParameters(symbol);
-        this.TypeArguments = CodeAnalysisUtilities.GetTypeArguments(symbol);
+        this.TypeParameters = CodeAnalysisUtilities.GetTypeParameters(symbol, recursionGuard);
+        this.TypeArguments = CodeAnalysisUtilities.GetTypeArguments(symbol, recursionGuard);
+        this.ReferenceTypeNullableAnnotation = symbol.NullableAnnotation;
     }
 
     [SetsRequiredMembers]
@@ -56,6 +55,7 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
     {
         this.Name = symbol.Name;
         this.Kind = TypeKind.TypeParameter;
+        this.ReferenceTypeNullableAnnotation = symbol.ReferenceTypeConstraintNullableAnnotation;
     }
 
     /// <summary>
@@ -94,12 +94,12 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
     /// <summary>
     /// Gets the generic type parameters that belong to the type (e.g. T, T2).
     /// </summary>
-    public ImmutableArray<string> TypeParameters { get; init; } = ImmutableArray<string>.Empty;
+    public ImmutableArray<GenericTypeParameterInfo> TypeParameters { get; init; } = ImmutableArray<GenericTypeParameterInfo>.Empty;
 
     /// <summary>
     /// Gets the generic type arguments that may be present to close a generic type (e.g. <c>string</c>).
     /// </summary>
-    public ImmutableArray<string> TypeArguments { get; init; } = ImmutableArray<string>.Empty;
+    public ImmutableArray<QualifiedTypeName> TypeArguments { get; init; } = ImmutableArray<QualifiedTypeName>.Empty;
 
     /// <summary>
     /// Gets the number of generic type parameters that belong to the type.
@@ -152,7 +152,16 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
 
         for (int i = 0; i < this.TypeParameters.Length; i++)
         {
-            result = StringComparer.Ordinal.Compare(this.TypeParameters[i], other.TypeParameters[i]);
+            result = this.TypeParameters[i].CompareTo(other.TypeParameters[i]);
+            if (result != 0)
+            {
+                return result;
+            }
+        }
+
+        for (int i = 0; i < this.TypeArguments.Length; i++)
+        {
+            result = this.TypeArguments[i].CompareTo(other.TypeArguments[i]);
             if (result != 0)
             {
                 return result;
@@ -162,8 +171,33 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
         return 0;
     }
 
-    public override string GetQualifiedName(Qualifiers qualifier = Qualifiers.GlobalNamespace, GenericParameterStyle genericStyle = GenericParameterStyle.Identifiers)
+    public override string GetQualifiedName(Qualifiers qualifier = Qualifiers.GlobalNamespace, GenericParameterStyle genericStyle = GenericParameterStyle.Identifiers, bool includeNullableAnnotation = false)
     {
+        // Optimize for C# keywords and syntax sugar.
+        if (this.Container is NamespaceTypeContainer { Namespace: "System" })
+        {
+            switch (this.Name)
+            {
+                case "UInt64": return "ulong";
+                case "UInt32": return "uint";
+                case "UInt16": return "ushort";
+                case "Single": return "float";
+                case "Double": return "double";
+                case "Decimal": return "decimal";
+                case "Boolean": return "bool";
+                case "Byte": return "byte";
+                case "Int64": return "long";
+                case "Int32": return "int";
+                case "Int16": return "short";
+                case "SByte": return "sbyte";
+                case "Char": return "char";
+                case "String": return "string";
+                case "Object": return "object";
+                case "ValueTuple" when this.TypeArguments.Length > 1: return $"({string.Join(", ", this.TypeArguments.Select(ta => ta.GetQualifiedName(qualifier, genericStyle, includeNullableAnnotation)))})";
+                case "Nullable": return $"{this.TypeArguments[0].GetQualifiedName(qualifier, genericStyle, includeNullableAnnotation)}?";
+            }
+        }
+
         StringBuilder builder = new();
 
         switch (this.Container)
@@ -171,7 +205,7 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
             case NestingTypeContainer { NestingType: { } nesting }:
                 if (qualifier >= Qualifiers.ContainingTypes)
                 {
-                    builder.Append(nesting.GetQualifiedName(qualifier, genericStyle));
+                    builder.Append(nesting.GetQualifiedName(qualifier, genericStyle, includeNullableAnnotation));
                     builder.Append('.');
                 }
 
@@ -197,23 +231,23 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
         builder.Append(this.Name);
         builder.Append(this.GetTypeParametersOrArgs(genericStyle));
 
+        if (includeNullableAnnotation && this.ReferenceTypeNullableAnnotation == NullableAnnotation.Annotated)
+        {
+            builder.Append("?");
+        }
+
         return builder.ToString();
     }
 
     public override string GetTypeParametersOrArgs(GenericParameterStyle style)
     {
-        if (this.TypeParameters.IsEmpty || style == GenericParameterStyle.None)
-        {
-            return string.Empty;
-        }
-
         return style switch
         {
-            GenericParameterStyle.Identifiers => $"<{string.Join(", ", this.TypeParameters)}>",
-            GenericParameterStyle.Arguments => $"<{string.Join(", ", this.TypeArguments)}>",
-            GenericParameterStyle.TypeDefinition => $"<{new string(',', this.Arity - 1)}>",
-            GenericParameterStyle.ArityOnly => $"`{this.Arity}",
-            _ => throw new NotImplementedException(),
+            GenericParameterStyle.Identifiers when !this.TypeParameters.IsEmpty => $"<{string.Join(", ", this.TypeParameters.Select(tp => tp.Name))}>",
+            GenericParameterStyle.Arguments when !this.TypeArguments.IsEmpty => $"<{string.Join(", ", this.TypeArguments.Select(ta => ta.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments, includeNullableAnnotation: true)))}>",
+            GenericParameterStyle.TypeDefinition when this.Arity > 0 => $"<{new string(',', this.Arity - 1)}>",
+            GenericParameterStyle.ArityOnly when this.Arity > 0 => $"`{this.Arity}",
+            _ => string.Empty,
         };
     }
 }

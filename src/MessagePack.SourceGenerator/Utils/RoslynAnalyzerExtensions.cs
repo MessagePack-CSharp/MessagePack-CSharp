@@ -21,6 +21,26 @@ public static class RoslynAnalyzerExtensions
         }
     }
 
+    public static EqualityMatch IsApproximatelyEqualOrDerivedFrom(this INamedTypeSymbol? left, INamedTypeSymbol? right)
+    {
+        if (left is IErrorTypeSymbol || right is IErrorTypeSymbol)
+        {
+            return left?.ToDisplayString() == right?.ToDisplayString() ? EqualityMatch.Equal : EqualityMatch.NotEqual;
+        }
+        else if (SymbolEqualityComparer.Default.Equals(left, right))
+        {
+            return EqualityMatch.Equal;
+        }
+        else if (left is not null && right is not null && left.EnumerateBaseType().Any(bt => SymbolEqualityComparer.Default.Equals(bt, right)))
+        {
+            return EqualityMatch.LeftDerivesFromRight;
+        }
+        else
+        {
+            return EqualityMatch.NotEqual;
+        }
+    }
+
     public static IEnumerable<INamedTypeSymbol> EnumerateBaseType(this ITypeSymbol symbol)
     {
         INamedTypeSymbol? t = symbol.BaseType;
@@ -31,14 +51,14 @@ public static class RoslynAnalyzerExtensions
         }
     }
 
-    public static AttributeData FindAttribute(this IEnumerable<AttributeData> attributeDataList, string typeName)
+    public static AttributeData? FindAttribute(this IEnumerable<AttributeData> attributeDataList, string typeName)
     {
         return attributeDataList
             .Where(x => x.AttributeClass?.ToDisplayString() == typeName)
             .FirstOrDefault();
     }
 
-    public static AttributeData FindAttributeShortName(this IEnumerable<AttributeData> attributeDataList, string typeName)
+    public static AttributeData? FindAttributeShortName(this IEnumerable<AttributeData> attributeDataList, string typeName)
     {
         return attributeDataList
             .Where(x => x.AttributeClass?.Name == typeName)
@@ -50,7 +70,7 @@ public static class RoslynAnalyzerExtensions
         IPropertySymbol? loopingProperty = property;
         do
         {
-            AttributeData data = FindAttributeShortName(loopingProperty.GetAttributes(), typeName);
+            AttributeData? data = FindAttributeShortName(loopingProperty.GetAttributes(), typeName);
             if (data != null)
             {
                 return data;
@@ -63,7 +83,7 @@ public static class RoslynAnalyzerExtensions
         return null;
     }
 
-    public static AttributeSyntax FindAttribute(this BaseTypeDeclarationSyntax typeDeclaration, SemanticModel model, string typeName)
+    public static AttributeSyntax? FindAttribute(this BaseTypeDeclarationSyntax typeDeclaration, SemanticModel model, string typeName)
     {
         return typeDeclaration.AttributeLists
             .SelectMany(x => x.Attributes)
@@ -71,7 +91,7 @@ public static class RoslynAnalyzerExtensions
             .FirstOrDefault();
     }
 
-    public static INamedTypeSymbol FindBaseTargetType(this ITypeSymbol symbol, string typeName)
+    public static INamedTypeSymbol? FindBaseTargetType(this ITypeSymbol symbol, string typeName)
     {
         return symbol.EnumerateBaseType()
             .Where(x => x.OriginalDefinition?.ToDisplayString() == typeName)
@@ -104,6 +124,11 @@ public static class RoslynAnalyzerExtensions
         return false;
     }
 
+    /// <summary>
+    /// Enumerates all members of the given type.
+    /// </summary>
+    /// <param name="symbol">The symbol to read members for.</param>
+    /// <returns>The enumeration of members. Members are enumerated in the most derived type first, then each successive base type.</returns>
     public static IEnumerable<ISymbol> GetAllMembers(this ITypeSymbol symbol)
     {
         ITypeSymbol? t = symbol;
@@ -122,5 +147,12 @@ public static class RoslynAnalyzerExtensions
     {
         return symbol.GetMembers()
             .Concat(symbol.AllInterfaces.SelectMany(x => x.GetMembers()));
+    }
+
+    public enum EqualityMatch
+    {
+        NotEqual,
+        Equal,
+        LeftDerivesFromRight,
     }
 }

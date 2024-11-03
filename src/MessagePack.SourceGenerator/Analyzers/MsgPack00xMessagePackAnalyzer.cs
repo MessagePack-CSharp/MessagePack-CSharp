@@ -25,13 +25,19 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string InaccessibleDataTypeId = "MsgPack012";
     public const string InaccessibleFormatterInstanceId = "MsgPack013";
     public const string NullableReferenceTypeFormatterId = "MsgPack014";
+    public const string MessagePackObjectAllowPrivateId = "MsgPack015";
+    public const string AOTDerivedKeyId = "MsgPack016";
+    public const string AOTInitPropertyId = "MsgPack017";
+    public const string CollidingMemberNamesInForceMapModeId = "MsgPack018";
 
     internal const string Category = "Usage";
 
     public const string MessagePackObjectAttributeShortName = Constants.MessagePackObjectAttributeName;
     public const string KeyAttributeShortName = "KeyAttribute";
     public const string IgnoreShortName = "IgnoreMemberAttribute";
+    public const string DataMemberShortName = "DataMemberAttribute";
     public const string IgnoreDataMemberShortName = "IgnoreDataMemberAttribute";
+    public const string AllowPrivatePropertyName = "AllowPrivate";
 
     private const string InvalidMessagePackObjectTitle = "MessagePackObject validation";
     private const DiagnosticSeverity InvalidMessagePackObjectSeverity = DiagnosticSeverity.Error;
@@ -163,7 +169,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         title: "Deserializing constructors",
         category: Category,
         messageFormat: "Deserializing constructor parameter count mismatch",
-        description: "Constructor parameter count must meet or exceed the number of serialized members or the highest key index.",
+        description: "The deserializing constructor parameter count must meet or exceed the number of serialized members.",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(DeserializingConstructorId));
@@ -207,6 +213,26 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTLimitationsId));
+
+    public static readonly DiagnosticDescriptor AOTDerivedKeyAttribute = new DiagnosticDescriptor(
+        id: AOTDerivedKeyId,
+        title: "KeyAttribute derivatives",
+        category: Category,
+        messageFormat: "KeyAttribute-derived attributes are not supported by AOT formatters",
+        description: "Use [Key(x)] attributes directly, or switch off source generation for this type using [MessagePackObject(SuppressSourceGeneration = true)].",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTDerivedKeyId));
+
+    public static readonly DiagnosticDescriptor AOTInitProperty = new(
+        id: AOTInitPropertyId,
+        title: "Property with init accessor and initializer",
+        category: Category,
+        messageFormat: "The value of a property with an init accessor and an initializer will be reset to the default value for the type upon deserialization when no value for them is deserialized",
+        description: "Due to a limitation in the C# language, properties with init accessor must be set by source generated deserializers unconditionally. When the data stream lacks a value for the property, it will be set with the default value for the property type, overriding a default that an initializer might set.",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTInitPropertyId));
 
     public static readonly DiagnosticDescriptor CollidingFormatters = new(
         id: CollidingFormattersId,
@@ -267,6 +293,24 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(NullableReferenceTypeFormatterId));
 
+    public static readonly DiagnosticDescriptor MessagePackObjectAllowPrivateRequired = new(
+        id: MessagePackObjectAllowPrivateId,
+        title: "MessagePackObjectAttribute.AllowPrivate should be set",
+        category: Category,
+        messageFormat: "MessagePackObjectAttribute.AllowPrivate should be set to true because the type is not public and/or at least one of its non-public members are attributed for serialization",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(MessagePackObjectAllowPrivateId));
+
+    public static readonly DiagnosticDescriptor CollidingMemberNamesInForceMapMode = new(
+        id: CollidingMemberNamesInForceMapModeId,
+        title: "Unique names required in force map mode",
+        category: Category,
+        messageFormat: "All serialized member names must be unique in force map mode, but this member redeclares a member with the same name as one found on a base type",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(CollidingMemberNamesInForceMapModeId));
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         TypeMustBeMessagePackObject,
         MessageFormatterMustBeMessagePackFormatter,
@@ -285,12 +329,16 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         DeserializingConstructorParameterNameDuplicate,
         AotUnionAttributeRequiresTypeArg,
         AotArrayRankTooHigh,
+        AOTDerivedKeyAttribute,
+        AOTInitProperty,
         CollidingFormatters,
         InaccessibleFormatterInstance,
         InaccessibleFormatterType,
         PartialTypeRequired,
         InaccessibleDataType,
-        NullableReferenceTypeFormatter);
+        NullableReferenceTypeFormatter,
+        MessagePackObjectAllowPrivateRequired,
+        CollidingMemberNamesInForceMapMode);
 
     public override void Initialize(AnalysisContext context)
     {

@@ -218,6 +218,12 @@ public record FormatterDescriptor(QualifiedNamedTypeName Name, string? InstanceP
     /// <returns><see langword="true"/> if <paramref name="type"/> represents a formatter.</returns>
     public static bool TryCreate(INamedTypeSymbol type, [NotNullWhen(true)] out FormatterDescriptor? formatter)
     {
+        if (type.IsAbstract)
+        {
+            formatter = null;
+            return false;
+        }
+
         var formattedTypes =
             AnalyzerUtilities.SearchTypeForFormatterImplementations(type)
             .Select(i => new FormattableType(i, type.ContainingAssembly))
@@ -252,8 +258,8 @@ public record FormatterDescriptor(QualifiedNamedTypeName Name, string? InstanceP
     public bool ExcludeFromSourceGeneratedResolver { get; init; }
 
     public string InstanceExpression => this.InstanceProvidingMember == ".ctor"
-        ? $"new {this.Name.GetQualifiedName()}()"
-        : $"{this.Name.GetQualifiedName()}.{this.InstanceProvidingMember}";
+        ? $"new {this.Name.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments)}()"
+        : $"{this.Name.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments)}.{this.InstanceProvidingMember}";
 
     public virtual bool Equals(FormatterDescriptor? other)
     {

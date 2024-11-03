@@ -1,4 +1,4 @@
-# MessagePack for C# (.NET, .NET Core, Unity, Xamarin)
+# MessagePack for C# (.NET Framework, .NET 8, Unity, Xamarin)
 
 [![NuGet](https://img.shields.io/nuget/v/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
 [![NuGet](https://img.shields.io/nuget/vpre/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
@@ -68,7 +68,7 @@ MessagePack has a compact binary size and a full set of general purpose expressi
 
 This library is distributed via NuGet. Special [Unity support](#unity) is available, too.
 
-We target .NET Standard 2.0 with special optimizations for .NET 6+ and .NET Framework.
+We target .NET Standard 2.0 with special optimizations for .NET 8+ and .NET Framework.
 The library code is pure C# (with Just-In-Time IL code generation on some platforms or AOT safe source generators).
 
 ### NuGet packages

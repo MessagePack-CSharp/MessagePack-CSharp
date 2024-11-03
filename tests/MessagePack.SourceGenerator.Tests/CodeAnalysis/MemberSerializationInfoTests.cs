@@ -19,7 +19,10 @@ public class MemberSerializationInfoTests
             "name",
             "SomeType",
             "shortName",
-            null);
+            null)
+        {
+            DeclaringType = null,
+        };
         MemberSerializationInfo info1b = new(
            true,
            false,
@@ -31,7 +34,10 @@ public class MemberSerializationInfoTests
            "name",
            "SomeType",
            "shortName",
-           null);
+           null)
+        {
+            DeclaringType = null,
+        };
 
         MemberSerializationInfo info2 = new(
            false,
@@ -44,7 +50,10 @@ public class MemberSerializationInfoTests
            "name",
            "SomeType",
            "shortName",
-           null);
+           null)
+        {
+            DeclaringType = null,
+        };
 
         Assert.Equal(info1b, info1a);
         Assert.NotEqual(info2, info1a);
