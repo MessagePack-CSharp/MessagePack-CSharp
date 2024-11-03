@@ -7,7 +7,6 @@ extern alias oldmsgpack;
 using System;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
-using Nerdbank.Streams;
 
 namespace PerfBenchmarkDotNet
 {
@@ -28,6 +27,18 @@ namespace PerfBenchmarkDotNet
         }
 
         [Benchmark(OperationsPerInvoke = BufferLength)]
+        [BenchmarkCategory("2.0")]
+        public void ReadBytePrimitiveInt32()
+        {
+            int offset = 0;
+            for (int i = 0; i < this.buffer.Length; i++)
+            {
+                newmsgpack::MessagePack.MessagePackPrimitives.TryReadInt32(this.buffer.AsSpan(offset), out int value, out var readSize);
+                offset += readSize;
+            }
+        }
+
+        [Benchmark(OperationsPerInvoke = BufferLength, Baseline = true)]
         [BenchmarkCategory("2.0")]
         public void ReadByte20()
         {
