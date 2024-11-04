@@ -23,11 +23,11 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
             {
                 value = 0;
                 tokenSize = 1;
-                return ReadResult.TokenMismatch;
+                return DecodeResult.TokenMismatch;
             }
         }
 
@@ -39,11 +39,11 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
             {
                 tokenSize = 1;
                 value = source[0];
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -55,11 +55,11 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
             {
                 tokenSize = 1;
                 value = checked((Int64)unchecked((sbyte)source[0]));
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -71,17 +71,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
             {
                 tokenSize = 2;
                 if (source.Length < tokenSize)
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = source[1];
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -93,17 +93,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
             {
                 tokenSize = 3;
                 if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = ushortResult;
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -115,17 +115,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
             {
                 tokenSize = 5;
                 if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = uintResult;
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -137,17 +137,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
             {
                 tokenSize = 9;
                 if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = checked((Int64)ulongResult);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -159,17 +159,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
             {
                 tokenSize = 2;
                 if (source.Length < tokenSize)
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = checked((Int64)unchecked((sbyte)source[1]));
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -181,17 +181,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
             {
                 tokenSize = 3;
                 if (!TryReadBigEndian(source.Slice(1), out short shortResult))
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = checked((Int64)shortResult);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -203,17 +203,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
             {
                 tokenSize = 5;
                 if (!TryReadBigEndian(source.Slice(1), out int intResult))
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = checked((Int64)intResult);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -225,17 +225,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
             {
                 tokenSize = 9;
                 if (!TryReadBigEndian(source.Slice(1), out long longResult))
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = checked((Int64)longResult);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -247,11 +247,11 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
             {
                 value = 0;
                 tokenSize = 1;
-                return ReadResult.TokenMismatch;
+                return DecodeResult.TokenMismatch;
             }
         }
 
@@ -263,11 +263,11 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
             {
                 tokenSize = 1;
                 value = source[0];
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -279,11 +279,11 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
             {
                 tokenSize = 1;
                 value = checked((UInt64)unchecked((sbyte)source[0]));
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -295,17 +295,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
             {
                 tokenSize = 2;
                 if (source.Length < tokenSize)
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = source[1];
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -317,17 +317,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
             {
                 tokenSize = 3;
                 if (!TryReadBigEndian(source.Slice(1), out ushort ushortResult))
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = ushortResult;
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -339,17 +339,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
             {
                 tokenSize = 5;
                 if (!TryReadBigEndian(source.Slice(1), out uint uintResult))
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = uintResult;
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -361,17 +361,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
             {
                 tokenSize = 9;
                 if (!TryReadBigEndian(source.Slice(1), out ulong ulongResult))
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = checked((UInt64)ulongResult);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -383,17 +383,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
             {
                 tokenSize = 2;
                 if (source.Length < tokenSize)
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = checked((UInt64)unchecked((sbyte)source[1]));
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -405,17 +405,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
             {
                 tokenSize = 3;
                 if (!TryReadBigEndian(source.Slice(1), out short shortResult))
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = checked((UInt64)shortResult);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -427,17 +427,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
             {
                 tokenSize = 5;
                 if (!TryReadBigEndian(source.Slice(1), out int intResult))
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = checked((UInt64)intResult);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
 
@@ -449,17 +449,17 @@ partial class MessagePackPrimitives
             {
             }
 
-            public ReadResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+            public DecodeResult Read(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
             {
                 tokenSize = 9;
                 if (!TryReadBigEndian(source.Slice(1), out long longResult))
                 {
                     value = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 value = checked((UInt64)longResult);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             }
         }
     }
@@ -472,11 +472,11 @@ partial class MessagePackPrimitives
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryReadByte(ReadOnlySpan<byte> source, out Byte value, out int tokenSize)
+    public static DecodeResult TryReadByte(ReadOnlySpan<byte> source, out Byte value, out int tokenSize)
     {
         if (source.Length > 0)
         {
-            ReadResult result = Decoders.UInt64JumpTable[source[0]].Read(source, out ulong longValue, out tokenSize);
+            DecodeResult result = Decoders.UInt64JumpTable[source[0]].Read(source, out ulong longValue, out tokenSize);
             value = checked((Byte)longValue);
             return result;
         }
@@ -484,7 +484,7 @@ partial class MessagePackPrimitives
         {
             tokenSize = 1;
             value = 0;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
     }
 
@@ -496,11 +496,11 @@ partial class MessagePackPrimitives
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryReadUInt16(ReadOnlySpan<byte> source, out UInt16 value, out int tokenSize)
+    public static DecodeResult TryReadUInt16(ReadOnlySpan<byte> source, out UInt16 value, out int tokenSize)
     {
         if (source.Length > 0)
         {
-            ReadResult result = Decoders.UInt64JumpTable[source[0]].Read(source, out ulong longValue, out tokenSize);
+            DecodeResult result = Decoders.UInt64JumpTable[source[0]].Read(source, out ulong longValue, out tokenSize);
             value = checked((UInt16)longValue);
             return result;
         }
@@ -508,7 +508,7 @@ partial class MessagePackPrimitives
         {
             tokenSize = 1;
             value = 0;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
     }
 
@@ -520,11 +520,11 @@ partial class MessagePackPrimitives
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryReadUInt32(ReadOnlySpan<byte> source, out UInt32 value, out int tokenSize)
+    public static DecodeResult TryReadUInt32(ReadOnlySpan<byte> source, out UInt32 value, out int tokenSize)
     {
         if (source.Length > 0)
         {
-            ReadResult result = Decoders.UInt64JumpTable[source[0]].Read(source, out ulong longValue, out tokenSize);
+            DecodeResult result = Decoders.UInt64JumpTable[source[0]].Read(source, out ulong longValue, out tokenSize);
             value = checked((UInt32)longValue);
             return result;
         }
@@ -532,7 +532,7 @@ partial class MessagePackPrimitives
         {
             tokenSize = 1;
             value = 0;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
     }
 
@@ -544,11 +544,11 @@ partial class MessagePackPrimitives
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryReadUInt64(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
+    public static DecodeResult TryReadUInt64(ReadOnlySpan<byte> source, out UInt64 value, out int tokenSize)
     {
         if (source.Length > 0)
         {
-            ReadResult result = Decoders.UInt64JumpTable[source[0]].Read(source, out ulong longValue, out tokenSize);
+            DecodeResult result = Decoders.UInt64JumpTable[source[0]].Read(source, out ulong longValue, out tokenSize);
             value = checked((UInt64)longValue);
             return result;
         }
@@ -556,7 +556,7 @@ partial class MessagePackPrimitives
         {
             tokenSize = 1;
             value = 0;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
     }
 
@@ -568,11 +568,11 @@ partial class MessagePackPrimitives
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryReadSByte(ReadOnlySpan<byte> source, out SByte value, out int tokenSize)
+    public static DecodeResult TryReadSByte(ReadOnlySpan<byte> source, out SByte value, out int tokenSize)
     {
         if (source.Length > 0)
         {
-            ReadResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
+            DecodeResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
             value = checked((SByte)longValue);
             return result;
         }
@@ -580,7 +580,7 @@ partial class MessagePackPrimitives
         {
             tokenSize = 1;
             value = 0;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
     }
 
@@ -592,11 +592,11 @@ partial class MessagePackPrimitives
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryReadInt16(ReadOnlySpan<byte> source, out Int16 value, out int tokenSize)
+    public static DecodeResult TryReadInt16(ReadOnlySpan<byte> source, out Int16 value, out int tokenSize)
     {
         if (source.Length > 0)
         {
-            ReadResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
+            DecodeResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
             value = checked((Int16)longValue);
             return result;
         }
@@ -604,7 +604,7 @@ partial class MessagePackPrimitives
         {
             tokenSize = 1;
             value = 0;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
     }
 
@@ -616,11 +616,11 @@ partial class MessagePackPrimitives
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryReadInt32(ReadOnlySpan<byte> source, out Int32 value, out int tokenSize)
+    public static DecodeResult TryReadInt32(ReadOnlySpan<byte> source, out Int32 value, out int tokenSize)
     {
         if (source.Length > 0)
         {
-            ReadResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
+            DecodeResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
             value = checked((Int32)longValue);
             return result;
         }
@@ -628,7 +628,7 @@ partial class MessagePackPrimitives
         {
             tokenSize = 1;
             value = 0;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
     }
 
@@ -640,11 +640,11 @@ partial class MessagePackPrimitives
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static ReadResult TryReadInt64(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
+    public static DecodeResult TryReadInt64(ReadOnlySpan<byte> source, out Int64 value, out int tokenSize)
     {
         if (source.Length > 0)
         {
-            ReadResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
+            DecodeResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
             value = checked((Int64)longValue);
             return result;
         }
@@ -652,7 +652,7 @@ partial class MessagePackPrimitives
         {
             tokenSize = 1;
             value = 0;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
     }
 
@@ -662,13 +662,13 @@ partial class MessagePackPrimitives
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static unsafe ReadResult TryReadSingle(ReadOnlySpan<byte> source, out Single value, out int tokenSize)
+    public static unsafe DecodeResult TryReadSingle(ReadOnlySpan<byte> source, out Single value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length < 1)
         {
             value = default;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
 
         switch (source[0])
@@ -678,26 +678,26 @@ partial class MessagePackPrimitives
                 if (source.Length < tokenSize)
                 {
                     value = default;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 AssumesTrue(TryReadBigEndian(source.Slice(1), out uint uintValue));
                 value = *(float*)&uintValue;
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case MessagePackCode.Float64:
                 tokenSize = 9;
                 if (source.Length < tokenSize)
                 {
                     value = default;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 AssumesTrue(TryReadBigEndian(source.Slice(1), out ulong ulongValue));
                 value = (Single)(*(double*)&ulongValue);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case MessagePackCode.Int8 or MessagePackCode.Int16 or MessagePackCode.Int32 or MessagePackCode.Int64:
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                ReadResult result = TryReadInt64(source, out long longValue, out tokenSize);
+                DecodeResult result = TryReadInt64(source, out long longValue, out tokenSize);
                 value = longValue;
                 return result;
             case MessagePackCode.UInt8 or MessagePackCode.UInt16 or MessagePackCode.UInt32 or MessagePackCode.UInt64:
@@ -707,7 +707,7 @@ partial class MessagePackPrimitives
                 return result;
             default:
                 value = default;
-                return ReadResult.TokenMismatch;
+                return DecodeResult.TokenMismatch;
         }
     }
 
@@ -717,13 +717,13 @@ partial class MessagePackPrimitives
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
-    public static unsafe ReadResult TryReadDouble(ReadOnlySpan<byte> source, out Double value, out int tokenSize)
+    public static unsafe DecodeResult TryReadDouble(ReadOnlySpan<byte> source, out Double value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length < 1)
         {
             value = default;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
 
         switch (source[0])
@@ -733,26 +733,26 @@ partial class MessagePackPrimitives
                 if (source.Length < tokenSize)
                 {
                     value = default;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 AssumesTrue(TryReadBigEndian(source.Slice(1), out uint uintValue));
                 value = *(float*)&uintValue;
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case MessagePackCode.Float64:
                 tokenSize = 9;
                 if (source.Length < tokenSize)
                 {
                     value = default;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 AssumesTrue(TryReadBigEndian(source.Slice(1), out ulong ulongValue));
                 value = (Double)(*(double*)&ulongValue);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case MessagePackCode.Int8 or MessagePackCode.Int16 or MessagePackCode.Int32 or MessagePackCode.Int64:
             case >= MessagePackCode.MinNegativeFixInt and <= MessagePackCode.MaxNegativeFixInt:
-                ReadResult result = TryReadInt64(source, out long longValue, out tokenSize);
+                DecodeResult result = TryReadInt64(source, out long longValue, out tokenSize);
                 value = longValue;
                 return result;
             case MessagePackCode.UInt8 or MessagePackCode.UInt16 or MessagePackCode.UInt32 or MessagePackCode.UInt64:
@@ -762,7 +762,7 @@ partial class MessagePackPrimitives
                 return result;
             default:
                 value = default;
-                return ReadResult.TokenMismatch;
+                return DecodeResult.TokenMismatch;
         }
     }
 }

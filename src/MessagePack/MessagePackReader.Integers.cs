@@ -23,8 +23,8 @@ namespace MessagePack
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public Byte ReadByte()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadByte(this.reader.UnreadSpan, out Byte value, out int tokenSize);
-            if (readResult == MessagePackPrimitives.ReadResult.Success)
+            MessagePackPrimitives.DecodeResult readResult = MessagePackPrimitives.TryReadByte(this.reader.UnreadSpan, out Byte value, out int tokenSize);
+            if (readResult == MessagePackPrimitives.DecodeResult.Success)
             {
                 this.reader.Advance(tokenSize);
                 return value;
@@ -32,17 +32,17 @@ namespace MessagePack
 
             return SlowPath(ref this, readResult, value, ref tokenSize);
 
-            static Byte SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, Byte value, ref int tokenSize)
+            static Byte SlowPath(ref MessagePackReader self, MessagePackPrimitives.DecodeResult readResult, Byte value, ref int tokenSize)
             {
                 switch (readResult)
                 {
-                    case MessagePackPrimitives.ReadResult.Success:
+                    case MessagePackPrimitives.DecodeResult.Success:
                         self.reader.Advance(tokenSize);
                         return value;
-                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    case MessagePackPrimitives.DecodeResult.TokenMismatch:
                         throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
-                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    case MessagePackPrimitives.DecodeResult.EmptyBuffer:
+                    case MessagePackPrimitives.DecodeResult.InsufficientBuffer:
                         Span<byte> buffer = stackalloc byte[tokenSize];
                         if (self.reader.TryCopyTo(buffer))
                         {
@@ -70,8 +70,8 @@ namespace MessagePack
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public UInt16 ReadUInt16()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadUInt16(this.reader.UnreadSpan, out UInt16 value, out int tokenSize);
-            if (readResult == MessagePackPrimitives.ReadResult.Success)
+            MessagePackPrimitives.DecodeResult readResult = MessagePackPrimitives.TryReadUInt16(this.reader.UnreadSpan, out UInt16 value, out int tokenSize);
+            if (readResult == MessagePackPrimitives.DecodeResult.Success)
             {
                 this.reader.Advance(tokenSize);
                 return value;
@@ -79,17 +79,17 @@ namespace MessagePack
 
             return SlowPath(ref this, readResult, value, ref tokenSize);
 
-            static UInt16 SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, UInt16 value, ref int tokenSize)
+            static UInt16 SlowPath(ref MessagePackReader self, MessagePackPrimitives.DecodeResult readResult, UInt16 value, ref int tokenSize)
             {
                 switch (readResult)
                 {
-                    case MessagePackPrimitives.ReadResult.Success:
+                    case MessagePackPrimitives.DecodeResult.Success:
                         self.reader.Advance(tokenSize);
                         return value;
-                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    case MessagePackPrimitives.DecodeResult.TokenMismatch:
                         throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
-                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    case MessagePackPrimitives.DecodeResult.EmptyBuffer:
+                    case MessagePackPrimitives.DecodeResult.InsufficientBuffer:
                         Span<byte> buffer = stackalloc byte[tokenSize];
                         if (self.reader.TryCopyTo(buffer))
                         {
@@ -117,8 +117,8 @@ namespace MessagePack
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public UInt32 ReadUInt32()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadUInt32(this.reader.UnreadSpan, out UInt32 value, out int tokenSize);
-            if (readResult == MessagePackPrimitives.ReadResult.Success)
+            MessagePackPrimitives.DecodeResult readResult = MessagePackPrimitives.TryReadUInt32(this.reader.UnreadSpan, out UInt32 value, out int tokenSize);
+            if (readResult == MessagePackPrimitives.DecodeResult.Success)
             {
                 this.reader.Advance(tokenSize);
                 return value;
@@ -126,17 +126,17 @@ namespace MessagePack
 
             return SlowPath(ref this, readResult, value, ref tokenSize);
 
-            static UInt32 SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, UInt32 value, ref int tokenSize)
+            static UInt32 SlowPath(ref MessagePackReader self, MessagePackPrimitives.DecodeResult readResult, UInt32 value, ref int tokenSize)
             {
                 switch (readResult)
                 {
-                    case MessagePackPrimitives.ReadResult.Success:
+                    case MessagePackPrimitives.DecodeResult.Success:
                         self.reader.Advance(tokenSize);
                         return value;
-                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    case MessagePackPrimitives.DecodeResult.TokenMismatch:
                         throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
-                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    case MessagePackPrimitives.DecodeResult.EmptyBuffer:
+                    case MessagePackPrimitives.DecodeResult.InsufficientBuffer:
                         Span<byte> buffer = stackalloc byte[tokenSize];
                         if (self.reader.TryCopyTo(buffer))
                         {
@@ -164,8 +164,8 @@ namespace MessagePack
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public UInt64 ReadUInt64()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadUInt64(this.reader.UnreadSpan, out UInt64 value, out int tokenSize);
-            if (readResult == MessagePackPrimitives.ReadResult.Success)
+            MessagePackPrimitives.DecodeResult readResult = MessagePackPrimitives.TryReadUInt64(this.reader.UnreadSpan, out UInt64 value, out int tokenSize);
+            if (readResult == MessagePackPrimitives.DecodeResult.Success)
             {
                 this.reader.Advance(tokenSize);
                 return value;
@@ -173,17 +173,17 @@ namespace MessagePack
 
             return SlowPath(ref this, readResult, value, ref tokenSize);
 
-            static UInt64 SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, UInt64 value, ref int tokenSize)
+            static UInt64 SlowPath(ref MessagePackReader self, MessagePackPrimitives.DecodeResult readResult, UInt64 value, ref int tokenSize)
             {
                 switch (readResult)
                 {
-                    case MessagePackPrimitives.ReadResult.Success:
+                    case MessagePackPrimitives.DecodeResult.Success:
                         self.reader.Advance(tokenSize);
                         return value;
-                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    case MessagePackPrimitives.DecodeResult.TokenMismatch:
                         throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
-                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    case MessagePackPrimitives.DecodeResult.EmptyBuffer:
+                    case MessagePackPrimitives.DecodeResult.InsufficientBuffer:
                         Span<byte> buffer = stackalloc byte[tokenSize];
                         if (self.reader.TryCopyTo(buffer))
                         {
@@ -211,8 +211,8 @@ namespace MessagePack
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public SByte ReadSByte()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadSByte(this.reader.UnreadSpan, out SByte value, out int tokenSize);
-            if (readResult == MessagePackPrimitives.ReadResult.Success)
+            MessagePackPrimitives.DecodeResult readResult = MessagePackPrimitives.TryReadSByte(this.reader.UnreadSpan, out SByte value, out int tokenSize);
+            if (readResult == MessagePackPrimitives.DecodeResult.Success)
             {
                 this.reader.Advance(tokenSize);
                 return value;
@@ -220,17 +220,17 @@ namespace MessagePack
 
             return SlowPath(ref this, readResult, value, ref tokenSize);
 
-            static SByte SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, SByte value, ref int tokenSize)
+            static SByte SlowPath(ref MessagePackReader self, MessagePackPrimitives.DecodeResult readResult, SByte value, ref int tokenSize)
             {
                 switch (readResult)
                 {
-                    case MessagePackPrimitives.ReadResult.Success:
+                    case MessagePackPrimitives.DecodeResult.Success:
                         self.reader.Advance(tokenSize);
                         return value;
-                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    case MessagePackPrimitives.DecodeResult.TokenMismatch:
                         throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
-                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    case MessagePackPrimitives.DecodeResult.EmptyBuffer:
+                    case MessagePackPrimitives.DecodeResult.InsufficientBuffer:
                         Span<byte> buffer = stackalloc byte[tokenSize];
                         if (self.reader.TryCopyTo(buffer))
                         {
@@ -258,8 +258,8 @@ namespace MessagePack
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public Int16 ReadInt16()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadInt16(this.reader.UnreadSpan, out Int16 value, out int tokenSize);
-            if (readResult == MessagePackPrimitives.ReadResult.Success)
+            MessagePackPrimitives.DecodeResult readResult = MessagePackPrimitives.TryReadInt16(this.reader.UnreadSpan, out Int16 value, out int tokenSize);
+            if (readResult == MessagePackPrimitives.DecodeResult.Success)
             {
                 this.reader.Advance(tokenSize);
                 return value;
@@ -267,17 +267,17 @@ namespace MessagePack
 
             return SlowPath(ref this, readResult, value, ref tokenSize);
 
-            static Int16 SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, Int16 value, ref int tokenSize)
+            static Int16 SlowPath(ref MessagePackReader self, MessagePackPrimitives.DecodeResult readResult, Int16 value, ref int tokenSize)
             {
                 switch (readResult)
                 {
-                    case MessagePackPrimitives.ReadResult.Success:
+                    case MessagePackPrimitives.DecodeResult.Success:
                         self.reader.Advance(tokenSize);
                         return value;
-                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    case MessagePackPrimitives.DecodeResult.TokenMismatch:
                         throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
-                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    case MessagePackPrimitives.DecodeResult.EmptyBuffer:
+                    case MessagePackPrimitives.DecodeResult.InsufficientBuffer:
                         Span<byte> buffer = stackalloc byte[tokenSize];
                         if (self.reader.TryCopyTo(buffer))
                         {
@@ -305,8 +305,8 @@ namespace MessagePack
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public Int32 ReadInt32()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadInt32(this.reader.UnreadSpan, out Int32 value, out int tokenSize);
-            if (readResult == MessagePackPrimitives.ReadResult.Success)
+            MessagePackPrimitives.DecodeResult readResult = MessagePackPrimitives.TryReadInt32(this.reader.UnreadSpan, out Int32 value, out int tokenSize);
+            if (readResult == MessagePackPrimitives.DecodeResult.Success)
             {
                 this.reader.Advance(tokenSize);
                 return value;
@@ -314,17 +314,17 @@ namespace MessagePack
 
             return SlowPath(ref this, readResult, value, ref tokenSize);
 
-            static Int32 SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, Int32 value, ref int tokenSize)
+            static Int32 SlowPath(ref MessagePackReader self, MessagePackPrimitives.DecodeResult readResult, Int32 value, ref int tokenSize)
             {
                 switch (readResult)
                 {
-                    case MessagePackPrimitives.ReadResult.Success:
+                    case MessagePackPrimitives.DecodeResult.Success:
                         self.reader.Advance(tokenSize);
                         return value;
-                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    case MessagePackPrimitives.DecodeResult.TokenMismatch:
                         throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
-                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    case MessagePackPrimitives.DecodeResult.EmptyBuffer:
+                    case MessagePackPrimitives.DecodeResult.InsufficientBuffer:
                         Span<byte> buffer = stackalloc byte[tokenSize];
                         if (self.reader.TryCopyTo(buffer))
                         {
@@ -352,8 +352,8 @@ namespace MessagePack
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public Int64 ReadInt64()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryReadInt64(this.reader.UnreadSpan, out Int64 value, out int tokenSize);
-            if (readResult == MessagePackPrimitives.ReadResult.Success)
+            MessagePackPrimitives.DecodeResult readResult = MessagePackPrimitives.TryReadInt64(this.reader.UnreadSpan, out Int64 value, out int tokenSize);
+            if (readResult == MessagePackPrimitives.DecodeResult.Success)
             {
                 this.reader.Advance(tokenSize);
                 return value;
@@ -361,17 +361,17 @@ namespace MessagePack
 
             return SlowPath(ref this, readResult, value, ref tokenSize);
 
-            static Int64 SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, Int64 value, ref int tokenSize)
+            static Int64 SlowPath(ref MessagePackReader self, MessagePackPrimitives.DecodeResult readResult, Int64 value, ref int tokenSize)
             {
                 switch (readResult)
                 {
-                    case MessagePackPrimitives.ReadResult.Success:
+                    case MessagePackPrimitives.DecodeResult.Success:
                         self.reader.Advance(tokenSize);
                         return value;
-                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    case MessagePackPrimitives.DecodeResult.TokenMismatch:
                         throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
-                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    case MessagePackPrimitives.DecodeResult.EmptyBuffer:
+                    case MessagePackPrimitives.DecodeResult.InsufficientBuffer:
                         Span<byte> buffer = stackalloc byte[tokenSize];
                         if (self.reader.TryCopyTo(buffer))
                         {

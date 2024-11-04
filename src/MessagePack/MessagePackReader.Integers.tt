@@ -44,8 +44,8 @@ foreach (var intType in allTypes) {
         /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
         public <#=intType.Name#> Read<#=intType.Name#>()
         {
-            MessagePackPrimitives.ReadResult readResult = MessagePackPrimitives.TryRead<#=intType.Name#>(this.reader.UnreadSpan, out <#= intType.Name #> value, out int tokenSize);
-            if (readResult == MessagePackPrimitives.ReadResult.Success)
+            MessagePackPrimitives.DecodeResult readResult = MessagePackPrimitives.TryRead<#=intType.Name#>(this.reader.UnreadSpan, out <#= intType.Name #> value, out int tokenSize);
+            if (readResult == MessagePackPrimitives.DecodeResult.Success)
             {
                 this.reader.Advance(tokenSize);
                 return value;
@@ -53,17 +53,17 @@ foreach (var intType in allTypes) {
 
             return SlowPath(ref this, readResult, value, ref tokenSize);
 
-            static <#= intType.Name #> SlowPath(ref MessagePackReader self, MessagePackPrimitives.ReadResult readResult, <#= intType.Name #> value, ref int tokenSize)
+            static <#= intType.Name #> SlowPath(ref MessagePackReader self, MessagePackPrimitives.DecodeResult readResult, <#= intType.Name #> value, ref int tokenSize)
             {
                 switch (readResult)
                 {
-                    case MessagePackPrimitives.ReadResult.Success:
+                    case MessagePackPrimitives.DecodeResult.Success:
                         self.reader.Advance(tokenSize);
                         return value;
-                    case MessagePackPrimitives.ReadResult.TokenMismatch:
+                    case MessagePackPrimitives.DecodeResult.TokenMismatch:
                         throw ThrowInvalidCode(self.reader.UnreadSpan[0]);
-                    case MessagePackPrimitives.ReadResult.EmptyBuffer:
-                    case MessagePackPrimitives.ReadResult.InsufficientBuffer:
+                    case MessagePackPrimitives.DecodeResult.EmptyBuffer:
+                    case MessagePackPrimitives.DecodeResult.InsufficientBuffer:
                         Span<byte> buffer = stackalloc byte[tokenSize];
                         if (self.reader.TryCopyTo(buffer))
                         {

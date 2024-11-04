@@ -17,7 +17,7 @@ partial class MessagePackPrimitives
     /// <summary>
     /// Enumerates the possible outcomes of a read operation.
     /// </summary>
-    public enum ReadResult
+    public enum DecodeResult
     {
         /// <summary>
         /// The token was successfully read from the buffer.
@@ -90,12 +90,12 @@ partial class MessagePackPrimitives
 
         internal interface IReadInt64
         {
-            ReadResult Read(ReadOnlySpan<byte> source, out long value, out int tokenSize);
+            DecodeResult Read(ReadOnlySpan<byte> source, out long value, out int tokenSize);
         }
 
         internal interface IReadUInt64
         {
-            ReadResult Read(ReadOnlySpan<byte> source, out ulong value, out int tokenSize);
+            DecodeResult Read(ReadOnlySpan<byte> source, out ulong value, out int tokenSize);
         }
     }
 
@@ -108,18 +108,18 @@ partial class MessagePackPrimitives
     /// <remarks>
     /// Reads a <see cref="MessagePackCode.Nil"/> value from the buffer.
     /// </remarks>
-    public static ReadResult TryReadNil(ReadOnlySpan<byte> source, out int tokenSize)
+    public static DecodeResult TryReadNil(ReadOnlySpan<byte> source, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
         {
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
 
         return source[0] switch
         {
-            MessagePackCode.Nil => ReadResult.Success,
-            _ => ReadResult.TokenMismatch,
+            MessagePackCode.Nil => DecodeResult.Success,
+            _ => DecodeResult.TokenMismatch,
         };
     }
 
@@ -136,32 +136,32 @@ partial class MessagePackPrimitives
     /// <see cref="MessagePackCode.Array32"/>, or
     /// some built-in code between <see cref="MessagePackCode.MinFixArray"/> and <see cref="MessagePackCode.MaxFixArray"/>.
     /// </remarks>
-    public static ReadResult TryReadArrayHeader(ReadOnlySpan<byte> source, out uint count, out int tokenSize)
+    public static DecodeResult TryReadArrayHeader(ReadOnlySpan<byte> source, out uint count, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
         {
             count = 0;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
 
         switch (source[0])
         {
             case >= MessagePackCode.MinFixArray and <= MessagePackCode.MaxFixArray:
                 count = (byte)(source[0] & 0xF);
-                return ReadResult.Success;
+                return DecodeResult.Success;
 
             case MessagePackCode.Array16:
                 tokenSize = 3;
                 if (TryReadBigEndian(source.Slice(1), out ushort ushortValue))
                 {
                     count = ushortValue;
-                    return ReadResult.Success;
+                    return DecodeResult.Success;
                 }
                 else
                 {
                     count = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
             case MessagePackCode.Array32:
@@ -169,17 +169,17 @@ partial class MessagePackPrimitives
                 if (TryReadBigEndian(source.Slice(1), out uint uintValue))
                 {
                     count = uintValue;
-                    return ReadResult.Success;
+                    return DecodeResult.Success;
                 }
                 else
                 {
                     count = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
             default:
                 count = 0;
-                return ReadResult.TokenMismatch;
+                return DecodeResult.TokenMismatch;
         }
     }
 
@@ -196,31 +196,31 @@ partial class MessagePackPrimitives
     /// <see cref="MessagePackCode.Map32"/>, or
     /// some built-in code between <see cref="MessagePackCode.MinFixMap"/> and <see cref="MessagePackCode.MaxFixMap"/>.
     /// </remarks>
-    public static ReadResult TryReadMapHeader(ReadOnlySpan<byte> source, out uint count, out int tokenSize)
+    public static DecodeResult TryReadMapHeader(ReadOnlySpan<byte> source, out uint count, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
         {
             count = 0;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
 
         switch (source[0])
         {
             case >= MessagePackCode.MinFixMap and <= MessagePackCode.MaxFixMap:
                 count = (byte)(source[0] & 0xF);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case MessagePackCode.Map16:
                 tokenSize = 3;
                 if (TryReadBigEndian(source.Slice(1), out ushort ushortValue))
                 {
                     count = ushortValue;
-                    return ReadResult.Success;
+                    return DecodeResult.Success;
                 }
                 else
                 {
                     count = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
             case MessagePackCode.Map32:
@@ -228,17 +228,17 @@ partial class MessagePackPrimitives
                 if (TryReadBigEndian(source.Slice(1), out uint uintValue))
                 {
                     count = uintValue;
-                    return ReadResult.Success;
+                    return DecodeResult.Success;
                 }
                 else
                 {
                     count = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
             default:
                 count = 0;
-                return ReadResult.TokenMismatch;
+                return DecodeResult.TokenMismatch;
         }
     }
 
@@ -252,26 +252,26 @@ partial class MessagePackPrimitives
     /// <remarks>
     /// Reads a <see cref="MessagePackCode.True"/> or <see cref="MessagePackCode.False"/> value from the buffer.
     /// </remarks>
-    public static ReadResult TryReadBool(ReadOnlySpan<byte> source, out bool value, out int tokenSize)
+    public static DecodeResult TryReadBool(ReadOnlySpan<byte> source, out bool value, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length == 0)
         {
             value = default;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
 
         switch (source[0])
         {
             case MessagePackCode.True:
                 value = true;
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case MessagePackCode.False:
                 value = false;
-                return ReadResult.Success;
+                return DecodeResult.Success;
             default:
                 value = false;
-                return ReadResult.TokenMismatch;
+                return DecodeResult.TokenMismatch;
         }
     }
 
@@ -285,10 +285,10 @@ partial class MessagePackPrimitives
     /// <remarks>
     /// Reads a ushort value using <see cref="TryReadBigEndian(ReadOnlySpan{byte}, out ushort)"/> from the buffer and interprets it as a <see langword="char" />.
     /// </remarks>
-    public static ReadResult TryReadChar(ReadOnlySpan<byte> source, out char value, out int tokenSize)
+    public static DecodeResult TryReadChar(ReadOnlySpan<byte> source, out char value, out int tokenSize)
     {
-        ReadResult result = TryReadUInt16(source, out ushort ordinal, out tokenSize);
-        if (result == ReadResult.Success)
+        DecodeResult result = TryReadUInt16(source, out ushort ordinal, out tokenSize);
+        if (result == DecodeResult.Success)
         {
             value = (char)ordinal;
         }
@@ -311,10 +311,10 @@ partial class MessagePackPrimitives
     /// Reads the extension header using <see cref="TryReadExtensionHeader(ReadOnlySpan{byte}, out ExtensionHeader, out int)"/>
     /// then the extension itself using <see cref="TryReadDateTime(ReadOnlySpan{byte}, ExtensionHeader, out DateTime, out int)"/>.
     /// </remarks>
-    public static ReadResult TryReadDateTime(ReadOnlySpan<byte> source, out DateTime value, out int tokenSize)
+    public static DecodeResult TryReadDateTime(ReadOnlySpan<byte> source, out DateTime value, out int tokenSize)
     {
-        ReadResult result = TryReadExtensionHeader(source, out ExtensionHeader header, out tokenSize);
-        if (result != ReadResult.Success)
+        DecodeResult result = TryReadExtensionHeader(source, out ExtensionHeader header, out tokenSize);
+        if (result != DecodeResult.Success)
         {
             value = default;
             return result;
@@ -333,19 +333,19 @@ partial class MessagePackPrimitives
     /// <param name="value">Receives the timestamp if successful.</param>
     /// <param name="tokenSize">Receives the number of bytes read from the source, or the minimum length of <paramref name="source"/> required to read the data.</param>
     /// <returns>The result classification of the read operation.</returns>
-    public static ReadResult TryReadDateTime(ReadOnlySpan<byte> source, ExtensionHeader header, out DateTime value, out int tokenSize)
+    public static DecodeResult TryReadDateTime(ReadOnlySpan<byte> source, ExtensionHeader header, out DateTime value, out int tokenSize)
     {
         tokenSize = checked((int)header.Length);
         if (header.TypeCode != ReservedMessagePackExtensionTypeCode.DateTime)
         {
             value = default;
-            return ReadResult.TokenMismatch;
+            return DecodeResult.TokenMismatch;
         }
 
         if (source.Length < tokenSize)
         {
             value = default;
-            return ReadResult.InsufficientBuffer;
+            return DecodeResult.InsufficientBuffer;
         }
 
         switch (header.Length)
@@ -353,22 +353,22 @@ partial class MessagePackPrimitives
             case 4:
                 AssumesTrue(TryReadBigEndian(source, out uint uintValue));
                 value = DateTimeConstants.UnixEpoch.AddSeconds(uintValue);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case 8:
                 AssumesTrue(TryReadBigEndian(source, out ulong ulongValue));
                 long nanoseconds = (long)(ulongValue >> 34);
                 ulong seconds = ulongValue & 0x00000003ffffffffL;
                 value = DateTimeConstants.UnixEpoch.AddSeconds(seconds).AddTicks(nanoseconds / DateTimeConstants.NanosecondsPerTick);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case 12:
                 AssumesTrue(TryReadBigEndian(source, out uintValue));
                 nanoseconds = uintValue;
                 AssumesTrue(TryReadBigEndian(source.Slice(sizeof(uint)), out long longValue));
                 value = DateTimeConstants.UnixEpoch.AddSeconds(longValue).AddTicks(nanoseconds / DateTimeConstants.NanosecondsPerTick);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             default:
                 value = default;
-                return ReadResult.TokenMismatch;
+                return DecodeResult.TokenMismatch;
         }
     }
 
@@ -390,13 +390,13 @@ partial class MessagePackPrimitives
     /// <see cref="MessagePackCode.Ext16"/>, or
     /// <see cref="MessagePackCode.Ext32"/>.
     /// </remarks>
-    public static ReadResult TryReadExtensionHeader(ReadOnlySpan<byte> source, out ExtensionHeader extensionHeader, out int tokenSize)
+    public static DecodeResult TryReadExtensionHeader(ReadOnlySpan<byte> source, out ExtensionHeader extensionHeader, out int tokenSize)
     {
         tokenSize = 2;
         if (source.Length < tokenSize)
         {
             extensionHeader = default;
-            return source.Length == 0 ? ReadResult.EmptyBuffer : ReadResult.InsufficientBuffer;
+            return source.Length == 0 ? DecodeResult.EmptyBuffer : DecodeResult.InsufficientBuffer;
         }
 
         uint length = 0;
@@ -422,7 +422,7 @@ partial class MessagePackPrimitives
                 if (source.Length < tokenSize)
                 {
                     extensionHeader = default;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 length = source[1];
@@ -432,7 +432,7 @@ partial class MessagePackPrimitives
                 if (source.Length < tokenSize)
                 {
                     extensionHeader = default;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 AssumesTrue(TryReadBigEndian(source.Slice(1), out ushort ushortValue));
@@ -443,7 +443,7 @@ partial class MessagePackPrimitives
                 if (source.Length < tokenSize)
                 {
                     extensionHeader = default;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 AssumesTrue(TryReadBigEndian(source.Slice(1), out uint uintValue));
@@ -451,12 +451,12 @@ partial class MessagePackPrimitives
                 break;
             default:
                 extensionHeader = default;
-                return ReadResult.TokenMismatch;
+                return DecodeResult.TokenMismatch;
         }
 
         sbyte typeCode = unchecked((sbyte)source[tokenSize - 1]);
         extensionHeader = new ExtensionHeader(typeCode, length);
-        return ReadResult.Success;
+        return DecodeResult.Success;
     }
 
     /// <summary>
@@ -479,13 +479,13 @@ partial class MessagePackPrimitives
     /// This should be read using <see cref="TryReadStringHeader(ReadOnlySpan{byte}, out uint, out int)"/>.
     /// </para>
     /// </remarks>
-    public static ReadResult TryReadBinHeader(ReadOnlySpan<byte> source, out uint length, out int tokenSize)
+    public static DecodeResult TryReadBinHeader(ReadOnlySpan<byte> source, out uint length, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length < tokenSize)
         {
             length = 0;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
 
         switch (source[0])
@@ -495,36 +495,36 @@ partial class MessagePackPrimitives
                 if (source.Length < tokenSize)
                 {
                     length = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 length = source[1];
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case MessagePackCode.Bin16:
                 tokenSize = 3;
                 if (source.Length < tokenSize)
                 {
                     length = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 AssumesTrue(TryReadBigEndian(source.Slice(1), out ushort ushortValue));
                 length = ushortValue;
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case MessagePackCode.Bin32:
                 tokenSize = 5;
                 if (source.Length < tokenSize)
                 {
                     length = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 AssumesTrue(TryReadBigEndian(source.Slice(1), out uint uintValue));
                 length = uintValue;
-                return ReadResult.Success;
+                return DecodeResult.Success;
             default:
                 length = 0;
-                return ReadResult.TokenMismatch;
+                return DecodeResult.TokenMismatch;
         }
     }
 
@@ -548,13 +548,13 @@ partial class MessagePackPrimitives
     /// introduced using string headers.
     /// </para>
     /// </remarks>
-    public static ReadResult TryReadStringHeader(ReadOnlySpan<byte> source, out uint length, out int tokenSize)
+    public static DecodeResult TryReadStringHeader(ReadOnlySpan<byte> source, out uint length, out int tokenSize)
     {
         tokenSize = 1;
         if (source.Length < tokenSize)
         {
             length = 0;
-            return ReadResult.EmptyBuffer;
+            return DecodeResult.EmptyBuffer;
         }
 
         switch (source[0])
@@ -564,39 +564,39 @@ partial class MessagePackPrimitives
                 if (source.Length < tokenSize)
                 {
                     length = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 length = source[1];
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case MessagePackCode.Str16:
                 tokenSize = 3;
                 if (source.Length < tokenSize)
                 {
                     length = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 AssumesTrue(TryReadBigEndian(source.Slice(1), out ushort ushortValue));
                 length = ushortValue;
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case MessagePackCode.Str32:
                 tokenSize = 5;
                 if (source.Length < tokenSize)
                 {
                     length = 0;
-                    return ReadResult.InsufficientBuffer;
+                    return DecodeResult.InsufficientBuffer;
                 }
 
                 AssumesTrue(TryReadBigEndian(source.Slice(1), out uint uintValue));
                 length = uintValue;
-                return ReadResult.Success;
+                return DecodeResult.Success;
             case >= MessagePackCode.MinFixStr and <= MessagePackCode.MaxFixStr:
                 length = (byte)(source[0] & 0x1F);
-                return ReadResult.Success;
+                return DecodeResult.Success;
             default:
                 length = 0;
-                return ReadResult.TokenMismatch;
+                return DecodeResult.TokenMismatch;
         }
     }
 
