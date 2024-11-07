@@ -4,12 +4,9 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
-using MessagePack.Internal;
-using Microsoft;
 
 namespace MessagePack
 {
@@ -87,8 +84,8 @@ namespace MessagePack
         public void WriteNil()
         {
             Span<byte> span = this.writer.GetSpan(1);
-            span[0] = MessagePackCode.Nil;
-            this.writer.Advance(1);
+            AssumesTrue(MessagePackPrimitives.TryWriteNil(span, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -128,26 +125,9 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WriteArrayHeader(uint count)
         {
-            if (count <= MessagePackRange.MaxFixArrayCount)
-            {
-                Span<byte> span = this.writer.GetSpan(1);
-                span[0] = (byte)(MessagePackCode.MinFixArray | count);
-                this.writer.Advance(1);
-            }
-            else if (count <= ushort.MaxValue)
-            {
-                Span<byte> span = this.writer.GetSpan(3);
-                span[0] = MessagePackCode.Array16;
-                WriteBigEndian((ushort)count, span.Slice(1));
-                this.writer.Advance(3);
-            }
-            else
-            {
-                Span<byte> span = this.writer.GetSpan(5);
-                span[0] = MessagePackCode.Array32;
-                WriteBigEndian(count, span.Slice(1));
-                this.writer.Advance(5);
-            }
+            Span<byte> span = this.writer.GetSpan(5);
+            AssumesTrue(MessagePackPrimitives.TryWriteArrayHeader(span, count, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -168,26 +148,9 @@ namespace MessagePack
         /// <param name="count">The number of key=value pairs that will be written in the map.</param>
         public void WriteMapHeader(uint count)
         {
-            if (count <= MessagePackRange.MaxFixMapCount)
-            {
-                Span<byte> span = this.writer.GetSpan(1);
-                span[0] = (byte)(MessagePackCode.MinFixMap | count);
-                this.writer.Advance(1);
-            }
-            else if (count <= ushort.MaxValue)
-            {
-                Span<byte> span = this.writer.GetSpan(3);
-                span[0] = MessagePackCode.Map16;
-                WriteBigEndian((ushort)count, span.Slice(1));
-                this.writer.Advance(3);
-            }
-            else
-            {
-                Span<byte> span = this.writer.GetSpan(5);
-                span[0] = MessagePackCode.Map32;
-                WriteBigEndian(count, span.Slice(1));
-                this.writer.Advance(5);
-            }
+            Span<byte> span = this.writer.GetSpan(5);
+            AssumesTrue(MessagePackPrimitives.TryWriteMapHeader(span, count, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -196,16 +159,9 @@ namespace MessagePack
         /// <param name="value">The value.</param>
         public void Write(byte value)
         {
-            if (value <= MessagePackCode.MaxFixInt)
-            {
-                Span<byte> span = this.writer.GetSpan(1);
-                span[0] = value;
-                this.writer.Advance(1);
-            }
-            else
-            {
-                this.WriteUInt8(value);
-            }
+            Span<byte> span = this.writer.GetSpan(2);
+            AssumesTrue(MessagePackPrimitives.TryWrite(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -215,9 +171,8 @@ namespace MessagePack
         public void WriteUInt8(byte value)
         {
             Span<byte> span = this.writer.GetSpan(2);
-            span[0] = MessagePackCode.UInt8;
-            span[1] = value;
-            this.writer.Advance(2);
+            AssumesTrue(MessagePackPrimitives.TryWriteUInt8(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -226,16 +181,9 @@ namespace MessagePack
         /// <param name="value">The value.</param>
         public void Write(sbyte value)
         {
-            if (value < MessagePackRange.MinFixNegativeInt)
-            {
-                this.WriteInt8(value);
-            }
-            else
-            {
-                Span<byte> span = this.writer.GetSpan(1);
-                span[0] = unchecked((byte)value);
-                this.writer.Advance(1);
-            }
+            Span<byte> span = this.writer.GetSpan(2);
+            AssumesTrue(MessagePackPrimitives.TryWrite(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -245,9 +193,8 @@ namespace MessagePack
         public void WriteInt8(sbyte value)
         {
             Span<byte> span = this.writer.GetSpan(2);
-            span[0] = MessagePackCode.Int8;
-            span[1] = unchecked((byte)value);
-            this.writer.Advance(2);
+            AssumesTrue(MessagePackPrimitives.TryWriteInt8(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -256,23 +203,9 @@ namespace MessagePack
         /// <param name="value">The value.</param>
         public void Write(ushort value)
         {
-            if (value <= MessagePackRange.MaxFixPositiveInt)
-            {
-                Span<byte> span = this.writer.GetSpan(1);
-                span[0] = unchecked((byte)value);
-                this.writer.Advance(1);
-            }
-            else if (value <= byte.MaxValue)
-            {
-                Span<byte> span = this.writer.GetSpan(2);
-                span[0] = MessagePackCode.UInt8;
-                span[1] = unchecked((byte)value);
-                this.writer.Advance(2);
-            }
-            else
-            {
-                this.WriteUInt16(value);
-            }
+            Span<byte> span = this.writer.GetSpan(3);
+            AssumesTrue(MessagePackPrimitives.TryWrite(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -282,9 +215,8 @@ namespace MessagePack
         public void WriteUInt16(ushort value)
         {
             Span<byte> span = this.writer.GetSpan(3);
-            span[0] = MessagePackCode.UInt16;
-            WriteBigEndian(value, span.Slice(1));
-            this.writer.Advance(3);
+            AssumesTrue(MessagePackPrimitives.TryWriteUInt16(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -298,31 +230,9 @@ namespace MessagePack
         /// <param name="value">The value to write.</param>
         public void Write(short value)
         {
-            if (value >= 0)
-            {
-                this.Write((ushort)value);
-            }
-            else
-            {
-                // negative int(use int)
-                if (value >= MessagePackRange.MinFixNegativeInt)
-                {
-                    Span<byte> span = this.writer.GetSpan(1);
-                    span[0] = unchecked((byte)value);
-                    this.writer.Advance(1);
-                }
-                else if (value >= sbyte.MinValue)
-                {
-                    Span<byte> span = this.writer.GetSpan(2);
-                    span[0] = MessagePackCode.Int8;
-                    span[1] = unchecked((byte)value);
-                    this.writer.Advance(2);
-                }
-                else
-                {
-                    this.WriteInt16(value);
-                }
-            }
+            Span<byte> span = this.writer.GetSpan(3);
+            AssumesTrue(MessagePackPrimitives.TryWrite(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -332,9 +242,8 @@ namespace MessagePack
         public void WriteInt16(short value)
         {
             Span<byte> span = this.writer.GetSpan(3);
-            span[0] = MessagePackCode.Int16;
-            WriteBigEndian(value, span.Slice(1));
-            this.writer.Advance(3);
+            AssumesTrue(MessagePackPrimitives.TryWriteInt16(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -348,30 +257,9 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write(uint value)
         {
-            if (value <= MessagePackRange.MaxFixPositiveInt)
-            {
-                Span<byte> span = this.writer.GetSpan(1);
-                span[0] = unchecked((byte)value);
-                this.writer.Advance(1);
-            }
-            else if (value <= byte.MaxValue)
-            {
-                Span<byte> span = this.writer.GetSpan(2);
-                span[0] = MessagePackCode.UInt8;
-                span[1] = unchecked((byte)value);
-                this.writer.Advance(2);
-            }
-            else if (value <= ushort.MaxValue)
-            {
-                Span<byte> span = this.writer.GetSpan(3);
-                span[0] = MessagePackCode.UInt16;
-                WriteBigEndian((ushort)value, span.Slice(1));
-                this.writer.Advance(3);
-            }
-            else
-            {
-                this.WriteUInt32(value);
-            }
+            Span<byte> span = this.writer.GetSpan(5);
+            AssumesTrue(MessagePackPrimitives.TryWrite(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -381,9 +269,8 @@ namespace MessagePack
         public void WriteUInt32(uint value)
         {
             Span<byte> span = this.writer.GetSpan(5);
-            span[0] = MessagePackCode.UInt32;
-            WriteBigEndian(value, span.Slice(1));
-            this.writer.Advance(5);
+            AssumesTrue(MessagePackPrimitives.TryWriteUInt32(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -400,38 +287,9 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write(int value)
         {
-            if (value >= 0)
-            {
-                this.Write((uint)value);
-            }
-            else
-            {
-                // negative int(use int)
-                if (value >= MessagePackRange.MinFixNegativeInt)
-                {
-                    Span<byte> span = this.writer.GetSpan(1);
-                    span[0] = unchecked((byte)value);
-                    this.writer.Advance(1);
-                }
-                else if (value >= sbyte.MinValue)
-                {
-                    Span<byte> span = this.writer.GetSpan(2);
-                    span[0] = MessagePackCode.Int8;
-                    span[1] = unchecked((byte)value);
-                    this.writer.Advance(2);
-                }
-                else if (value >= short.MinValue)
-                {
-                    Span<byte> span = this.writer.GetSpan(3);
-                    span[0] = MessagePackCode.Int16;
-                    WriteBigEndian((short)value, span.Slice(1));
-                    this.writer.Advance(3);
-                }
-                else
-                {
-                    this.WriteInt32(value);
-                }
-            }
+            Span<byte> span = this.writer.GetSpan(5);
+            AssumesTrue(MessagePackPrimitives.TryWrite(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -441,9 +299,8 @@ namespace MessagePack
         public void WriteInt32(int value)
         {
             Span<byte> span = this.writer.GetSpan(5);
-            span[0] = MessagePackCode.Int32;
-            WriteBigEndian(value, span.Slice(1));
-            this.writer.Advance(5);
+            AssumesTrue(MessagePackPrimitives.TryWriteInt32(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -459,37 +316,9 @@ namespace MessagePack
         /// <param name="value">The value to write.</param>
         public void Write(ulong value)
         {
-            if (value <= MessagePackRange.MaxFixPositiveInt)
-            {
-                Span<byte> span = this.writer.GetSpan(1);
-                span[0] = unchecked((byte)value);
-                this.writer.Advance(1);
-            }
-            else if (value <= byte.MaxValue)
-            {
-                Span<byte> span = this.writer.GetSpan(2);
-                span[0] = MessagePackCode.UInt8;
-                span[1] = unchecked((byte)value);
-                this.writer.Advance(2);
-            }
-            else if (value <= ushort.MaxValue)
-            {
-                Span<byte> span = this.writer.GetSpan(3);
-                span[0] = MessagePackCode.UInt16;
-                WriteBigEndian((ushort)value, span.Slice(1));
-                this.writer.Advance(3);
-            }
-            else if (value <= uint.MaxValue)
-            {
-                Span<byte> span = this.writer.GetSpan(5);
-                span[0] = MessagePackCode.UInt32;
-                WriteBigEndian((uint)value, span.Slice(1));
-                this.writer.Advance(5);
-            }
-            else
-            {
-                this.WriteUInt64(value);
-            }
+            Span<byte> span = this.writer.GetSpan(9);
+            AssumesTrue(MessagePackPrimitives.TryWrite(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -499,9 +328,8 @@ namespace MessagePack
         public void WriteUInt64(ulong value)
         {
             Span<byte> span = this.writer.GetSpan(9);
-            span[0] = MessagePackCode.UInt64;
-            WriteBigEndian(value, span.Slice(1));
-            this.writer.Advance(9);
+            AssumesTrue(MessagePackPrimitives.TryWriteUInt64(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -519,45 +347,9 @@ namespace MessagePack
         /// <param name="value">The value to write.</param>
         public void Write(long value)
         {
-            if (value >= 0)
-            {
-                this.Write((ulong)value);
-            }
-            else
-            {
-                // negative int(use int)
-                if (value >= MessagePackRange.MinFixNegativeInt)
-                {
-                    Span<byte> span = this.writer.GetSpan(1);
-                    span[0] = unchecked((byte)value);
-                    this.writer.Advance(1);
-                }
-                else if (value >= sbyte.MinValue)
-                {
-                    Span<byte> span = this.writer.GetSpan(2);
-                    span[0] = MessagePackCode.Int8;
-                    span[1] = unchecked((byte)value);
-                    this.writer.Advance(2);
-                }
-                else if (value >= short.MinValue)
-                {
-                    Span<byte> span = this.writer.GetSpan(3);
-                    span[0] = MessagePackCode.Int16;
-                    WriteBigEndian((short)value, span.Slice(1));
-                    this.writer.Advance(3);
-                }
-                else if (value >= int.MinValue)
-                {
-                    Span<byte> span = this.writer.GetSpan(5);
-                    span[0] = MessagePackCode.Int32;
-                    WriteBigEndian((int)value, span.Slice(1));
-                    this.writer.Advance(5);
-                }
-                else
-                {
-                    this.WriteInt64(value);
-                }
-            }
+            Span<byte> span = this.writer.GetSpan(9);
+            AssumesTrue(MessagePackPrimitives.TryWrite(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -567,9 +359,8 @@ namespace MessagePack
         public void WriteInt64(long value)
         {
             Span<byte> span = this.writer.GetSpan(9);
-            span[0] = MessagePackCode.Int64;
-            WriteBigEndian(value, span.Slice(1));
-            this.writer.Advance(9);
+            AssumesTrue(MessagePackPrimitives.TryWriteInt64(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -579,15 +370,20 @@ namespace MessagePack
         public void Write(bool value)
         {
             Span<byte> span = this.writer.GetSpan(1);
-            span[0] = value ? MessagePackCode.True : MessagePackCode.False;
-            this.writer.Advance(1);
+            AssumesTrue(MessagePackPrimitives.TryWrite(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
         /// Writes a <see cref="char"/> value using a 1-byte code when possible, otherwise as <see cref="MessagePackCode.UInt8"/> or <see cref="MessagePackCode.UInt16"/>.
         /// </summary>
         /// <param name="value">The value.</param>
-        public void Write(char value) => this.Write((ushort)value);
+        public void Write(char value)
+        {
+            Span<byte> span = this.writer.GetSpan(3);
+            AssumesTrue(MessagePackPrimitives.TryWrite(span, value, out int written));
+            this.writer.Advance(written);
+        }
 
         /// <summary>
         /// Writes a <see cref="MessagePackCode.Float32"/> value.
@@ -596,9 +392,8 @@ namespace MessagePack
         public void Write(float value)
         {
             Span<byte> span = this.writer.GetSpan(5);
-            span[0] = MessagePackCode.Float32;
-            WriteBigEndian(value, span.Slice(1));
-            this.writer.Advance(5);
+            AssumesTrue(MessagePackPrimitives.TryWrite(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -608,9 +403,8 @@ namespace MessagePack
         public void Write(double value)
         {
             Span<byte> span = this.writer.GetSpan(9);
-            span[0] = MessagePackCode.Float64;
-            WriteBigEndian(value, span.Slice(1));
-            this.writer.Advance(9);
+            AssumesTrue(MessagePackPrimitives.TryWrite(span, value, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -626,86 +420,9 @@ namespace MessagePack
             }
             else
             {
-                // Timestamp spec
-                // https://github.com/msgpack/msgpack/pull/209
-                // FixExt4(-1) => seconds |  [1970-01-01 00:00:00 UTC, 2106-02-07 06:28:16 UTC) range
-                // FixExt8(-1) => nanoseconds + seconds | [1970-01-01 00:00:00.000000000 UTC, 2514-05-30 01:53:04.000000000 UTC) range
-                // Ext8(12,-1) => nanoseconds + seconds | [-584554047284-02-23 16:59:44 UTC, 584554051223-11-09 07:00:16.000000000 UTC) range
-
-                // The spec requires UTC. Convert to UTC if we're sure the value was expressed as Local time.
-                // If it's Unspecified, we want to leave it alone since .NET will change the value when we convert
-                // and we simply don't know, so we should leave it as-is.
-                if (dateTime.Kind == DateTimeKind.Local)
-                {
-                    dateTime = dateTime.ToUniversalTime();
-                }
-
-                var secondsSinceBclEpoch = dateTime.Ticks / TimeSpan.TicksPerSecond;
-                var seconds = secondsSinceBclEpoch - DateTimeConstants.BclSecondsAtUnixEpoch;
-                var nanoseconds = (dateTime.Ticks % TimeSpan.TicksPerSecond) * DateTimeConstants.NanosecondsPerTick;
-
-                // reference pseudo code.
-                /*
-                struct timespec {
-                    long tv_sec;  // seconds
-                    long tv_nsec; // nanoseconds
-                } time;
-                if ((time.tv_sec >> 34) == 0)
-                {
-                    uint64_t data64 = (time.tv_nsec << 34) | time.tv_sec;
-                    if (data & 0xffffffff00000000L == 0)
-                    {
-                        // timestamp 32
-                        uint32_t data32 = data64;
-                        serialize(0xd6, -1, data32)
-                    }
-                    else
-                    {
-                        // timestamp 64
-                        serialize(0xd7, -1, data64)
-                    }
-                }
-                else
-                {
-                    // timestamp 96
-                    serialize(0xc7, 12, -1, time.tv_nsec, time.tv_sec)
-                }
-                */
-
-                if ((seconds >> 34) == 0)
-                {
-                    var data64 = unchecked((ulong)((nanoseconds << 34) | seconds));
-                    if ((data64 & 0xffffffff00000000L) == 0)
-                    {
-                        // timestamp 32(seconds in 32-bit unsigned int)
-                        var data32 = (UInt32)data64;
-                        Span<byte> span = this.writer.GetSpan(6);
-                        span[0] = MessagePackCode.FixExt4;
-                        span[1] = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
-                        WriteBigEndian(data32, span.Slice(2));
-                        this.writer.Advance(6);
-                    }
-                    else
-                    {
-                        // timestamp 64(nanoseconds in 30-bit unsigned int | seconds in 34-bit unsigned int)
-                        Span<byte> span = this.writer.GetSpan(10);
-                        span[0] = MessagePackCode.FixExt8;
-                        span[1] = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
-                        WriteBigEndian(data64, span.Slice(2));
-                        this.writer.Advance(10);
-                    }
-                }
-                else
-                {
-                    // timestamp 96( nanoseconds in 32-bit unsigned int | seconds in 64-bit signed int )
-                    Span<byte> span = this.writer.GetSpan(15);
-                    span[0] = MessagePackCode.Ext8;
-                    span[1] = 12;
-                    span[2] = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
-                    WriteBigEndian((uint)nanoseconds, span.Slice(3));
-                    WriteBigEndian(seconds, span.Slice(7));
-                    this.writer.Advance(15);
-                }
+                Span<byte> span = this.writer.GetSpan(15);
+                AssumesTrue(MessagePackPrimitives.TryWrite(span, dateTime, out int written));
+                this.writer.Advance(written);
             }
         }
 
@@ -794,36 +511,9 @@ namespace MessagePack
 
             // When we write the header, we'll ask for all the space we need for the payload as well
             // as that may help ensure we only allocate a buffer once.
-            if (length <= byte.MaxValue)
-            {
-                var size = length + 2;
-                Span<byte> span = this.writer.GetSpan(size);
-
-                span[0] = MessagePackCode.Bin8;
-                span[1] = (byte)length;
-
-                this.writer.Advance(2);
-            }
-            else if (length <= UInt16.MaxValue)
-            {
-                var size = length + 3;
-                Span<byte> span = this.writer.GetSpan(size);
-
-                span[0] = MessagePackCode.Bin16;
-                WriteBigEndian((ushort)length, span.Slice(1));
-
-                this.writer.Advance(3);
-            }
-            else
-            {
-                var size = length + 5;
-                Span<byte> span = this.writer.GetSpan(size);
-
-                span[0] = MessagePackCode.Bin32;
-                WriteBigEndian(length, span.Slice(1));
-
-                this.writer.Advance(5);
-            }
+            Span<byte> span = this.writer.GetSpan(length + 5);
+            AssumesTrue(MessagePackPrimitives.TryWriteBinHeader(span, (uint)length, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -877,33 +567,9 @@ namespace MessagePack
         {
             // When we write the header, we'll ask for all the space we need for the payload as well
             // as that may help ensure we only allocate a buffer once.
-            if (byteCount <= MessagePackRange.MaxFixStringLength)
-            {
-                Span<byte> span = this.writer.GetSpan(byteCount + 1);
-                span[0] = (byte)(MessagePackCode.MinFixStr | byteCount);
-                this.writer.Advance(1);
-            }
-            else if (byteCount <= byte.MaxValue && !this.OldSpec)
-            {
-                Span<byte> span = this.writer.GetSpan(byteCount + 2);
-                span[0] = MessagePackCode.Str8;
-                span[1] = unchecked((byte)byteCount);
-                this.writer.Advance(2);
-            }
-            else if (byteCount <= ushort.MaxValue)
-            {
-                Span<byte> span = this.writer.GetSpan(byteCount + 3);
-                span[0] = MessagePackCode.Str16;
-                WriteBigEndian((ushort)byteCount, span.Slice(1));
-                this.writer.Advance(3);
-            }
-            else
-            {
-                Span<byte> span = this.writer.GetSpan(byteCount + 5);
-                span[0] = MessagePackCode.Str32;
-                WriteBigEndian(byteCount, span.Slice(1));
-                this.writer.Advance(5);
-            }
+            Span<byte> span = this.writer.GetSpan(byteCount + 5);
+            AssumesTrue(MessagePackPrimitives.TryWriteStringHeader(span, (uint)byteCount, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -966,71 +632,11 @@ namespace MessagePack
         /// <param name="extensionHeader">The extension header.</param>
         public void WriteExtensionFormatHeader(ExtensionHeader extensionHeader)
         {
-            int dataLength = (int)extensionHeader.Length;
-            byte typeCode = unchecked((byte)extensionHeader.TypeCode);
-            switch (dataLength)
-            {
-                case 1:
-                    Span<byte> span = this.writer.GetSpan(2);
-                    span[0] = MessagePackCode.FixExt1;
-                    span[1] = unchecked(typeCode);
-                    this.writer.Advance(2);
-                    return;
-                case 2:
-                    span = this.writer.GetSpan(2);
-                    span[0] = MessagePackCode.FixExt2;
-                    span[1] = unchecked(typeCode);
-                    this.writer.Advance(2);
-                    return;
-                case 4:
-                    span = this.writer.GetSpan(2);
-                    span[0] = MessagePackCode.FixExt4;
-                    span[1] = unchecked(typeCode);
-                    this.writer.Advance(2);
-                    return;
-                case 8:
-                    span = this.writer.GetSpan(2);
-                    span[0] = MessagePackCode.FixExt8;
-                    span[1] = unchecked(typeCode);
-                    this.writer.Advance(2);
-                    return;
-                case 16:
-                    span = this.writer.GetSpan(2);
-                    span[0] = MessagePackCode.FixExt16;
-                    span[1] = unchecked(typeCode);
-                    this.writer.Advance(2);
-                    return;
-                default:
-                    unchecked
-                    {
-                        if (dataLength <= byte.MaxValue)
-                        {
-                            span = this.writer.GetSpan(dataLength + 3);
-                            span[0] = MessagePackCode.Ext8;
-                            span[1] = unchecked((byte)dataLength);
-                            span[2] = unchecked(typeCode);
-                            this.writer.Advance(3);
-                        }
-                        else if (dataLength <= UInt16.MaxValue)
-                        {
-                            span = this.writer.GetSpan(dataLength + 4);
-                            span[0] = MessagePackCode.Ext16;
-                            WriteBigEndian((ushort)dataLength, span.Slice(1));
-                            span[3] = unchecked(typeCode);
-                            this.writer.Advance(4);
-                        }
-                        else
-                        {
-                            span = this.writer.GetSpan(dataLength + 6);
-                            span[0] = MessagePackCode.Ext32;
-                            WriteBigEndian(dataLength, span.Slice(1));
-                            span[5] = unchecked(typeCode);
-                            this.writer.Advance(6);
-                        }
-                    }
-
-                    break;
-            }
+            // When we write the header, we'll ask for all the space we need for the payload as well
+            // as that may help ensure we only allocate a buffer once.
+            Span<byte> span = this.writer.GetSpan((int)(extensionHeader.Length + 6));
+            AssumesTrue(MessagePackPrimitives.TryWriteExtensionFormatHeader(span, extensionHeader, out int written));
+            this.writer.Advance(written);
         }
 
         /// <summary>
@@ -1073,39 +679,6 @@ namespace MessagePack
         /// <seealso cref="IBufferWriter{T}.Advance(int)"/>
         public void Advance(int length) => this.writer.Advance(length);
 
-        /// <summary>
-        /// Writes a 16-bit integer in big endian format.
-        /// </summary>
-        /// <param name="value">The integer.</param>
-        internal void WriteBigEndian(ushort value)
-        {
-            Span<byte> span = this.writer.GetSpan(2);
-            WriteBigEndian(value, span);
-            this.writer.Advance(2);
-        }
-
-        /// <summary>
-        /// Writes a 32-bit integer in big endian format.
-        /// </summary>
-        /// <param name="value">The integer.</param>
-        internal void WriteBigEndian(uint value)
-        {
-            Span<byte> span = this.writer.GetSpan(4);
-            WriteBigEndian(value, span);
-            this.writer.Advance(4);
-        }
-
-        /// <summary>
-        /// Writes a 64-bit integer in big endian format.
-        /// </summary>
-        /// <param name="value">The integer.</param>
-        internal void WriteBigEndian(ulong value)
-        {
-            Span<byte> span = this.writer.GetSpan(8);
-            WriteBigEndian(value, span);
-            this.writer.Advance(8);
-        }
-
         internal byte[] FlushAndGetArray()
         {
             if (this.writer.TryGetUncommittedSpan(out ReadOnlySpan<byte> span))
@@ -1126,40 +699,12 @@ namespace MessagePack
             }
         }
 
-        private static void WriteBigEndian(short value, Span<byte> span) => WriteBigEndian(unchecked((ushort)value), span);
-
-        private static void WriteBigEndian(int value, Span<byte> span) => WriteBigEndian(unchecked((uint)value), span);
-
-        private static void WriteBigEndian(long value, Span<byte> span) => WriteBigEndian(unchecked((ulong)value), span);
-
-        private static void WriteBigEndian(ushort value, Span<byte> span)
-        {
-            unchecked
-            {
-                // Write to highest index first so the JIT skips bounds checks on subsequent writes.
-                span[1] = (byte)value;
-                span[0] = (byte)(value >> 8);
-            }
-        }
-
         private static unsafe void WriteBigEndian(ushort value, byte* span)
         {
             unchecked
             {
                 span[0] = (byte)(value >> 8);
                 span[1] = (byte)value;
-            }
-        }
-
-        private static void WriteBigEndian(uint value, Span<byte> span)
-        {
-            unchecked
-            {
-                // Write to highest index first so the JIT skips bounds checks on subsequent writes.
-                span[3] = (byte)value;
-                span[2] = (byte)(value >> 8);
-                span[1] = (byte)(value >> 16);
-                span[0] = (byte)(value >> 24);
             }
         }
 
@@ -1173,26 +718,6 @@ namespace MessagePack
                 span[3] = (byte)value;
             }
         }
-
-        private static void WriteBigEndian(ulong value, Span<byte> span)
-        {
-            unchecked
-            {
-                // Write to highest index first so the JIT skips bounds checks on subsequent writes.
-                span[7] = (byte)value;
-                span[6] = (byte)(value >> 8);
-                span[5] = (byte)(value >> 16);
-                span[4] = (byte)(value >> 24);
-                span[3] = (byte)(value >> 32);
-                span[2] = (byte)(value >> 40);
-                span[1] = (byte)(value >> 48);
-                span[0] = (byte)(value >> 56);
-            }
-        }
-
-        private static unsafe void WriteBigEndian(float value, Span<byte> span) => WriteBigEndian(*(int*)&value, span);
-
-        private static unsafe void WriteBigEndian(double value, Span<byte> span) => WriteBigEndian(*(long*)&value, span);
 
         /// <summary>
         /// Estimates the length of the header required for a given string.
@@ -1330,6 +855,14 @@ namespace MessagePack
                 > long.MaxValue => 9,
                 _ => GetEncodedLength((long)value),
             };
+        }
+
+        private static void AssumesTrue([DoesNotReturnIf(false)] bool condition)
+        {
+            if (!condition)
+            {
+                throw new Exception("Internal error.");
+            }
         }
     }
 }

@@ -20,6 +20,9 @@
     <Compile Include="..\..\src\MessagePack\ExtensionHeader.cs" />
     <Compile Include="..\..\src\MessagePack\ExtensionResult.cs" />
     <Compile Include="..\..\src\MessagePack\MessagePackCode.cs" />
+    <Compile Include="..\..\src\MessagePack\MessagePackPrimitives.Writers.cs" />
+    <Compile Include="..\..\src\MessagePack\MessagePackPrimitives.Readers.cs" />
+    <Compile Include="..\..\src\MessagePack\MessagePackPrimitives.Readers.Integers.cs" />
     <Compile Include="..\..\src\MessagePack\MessagePackReader.cs" />
     <Compile Include="..\..\src\MessagePack\MessagePackSerializationException.cs" />
     <Compile Include="..\..\src\MessagePack\MessagePackReader.Integers.cs" />

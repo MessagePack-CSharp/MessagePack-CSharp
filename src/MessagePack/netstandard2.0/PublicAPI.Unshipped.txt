@@ -43,11 +43,64 @@ MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.GeneratedAsse
 MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.MajorVersion.get -> int
 MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.MinorVersion.get -> int
 MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.ResolverType.get -> System.Type!
+MessagePack.MessagePackPrimitives
+MessagePack.MessagePackPrimitives.DecodeResult
+MessagePack.MessagePackPrimitives.DecodeResult.EmptyBuffer = 2 -> MessagePack.MessagePackPrimitives.DecodeResult
+MessagePack.MessagePackPrimitives.DecodeResult.InsufficientBuffer = 3 -> MessagePack.MessagePackPrimitives.DecodeResult
+MessagePack.MessagePackPrimitives.DecodeResult.Success = 0 -> MessagePack.MessagePackPrimitives.DecodeResult
+MessagePack.MessagePackPrimitives.DecodeResult.TokenMismatch = 1 -> MessagePack.MessagePackPrimitives.DecodeResult
 MessagePack.ReservedExtensionTypeCodes
 MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver
 MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.SourceGeneratedFormatterResolver
 MessagePack.Resolvers.SourceGeneratedFormatterResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
+static MessagePack.MessagePackPrimitives.TryReadArrayHeader(System.ReadOnlySpan<byte> source, out uint count, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadBinHeader(System.ReadOnlySpan<byte> source, out uint length, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadBool(System.ReadOnlySpan<byte> source, out bool value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadByte(System.ReadOnlySpan<byte> source, out byte value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadChar(System.ReadOnlySpan<byte> source, out char value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadDateTime(System.ReadOnlySpan<byte> source, MessagePack.ExtensionHeader header, out System.DateTime value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadDateTime(System.ReadOnlySpan<byte> source, out System.DateTime value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadDouble(System.ReadOnlySpan<byte> source, out double value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadExtensionHeader(System.ReadOnlySpan<byte> source, out MessagePack.ExtensionHeader extensionHeader, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadInt16(System.ReadOnlySpan<byte> source, out short value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadInt32(System.ReadOnlySpan<byte> source, out int value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadInt64(System.ReadOnlySpan<byte> source, out long value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadMapHeader(System.ReadOnlySpan<byte> source, out uint count, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadNil(System.ReadOnlySpan<byte> source, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadSByte(System.ReadOnlySpan<byte> source, out sbyte value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadSingle(System.ReadOnlySpan<byte> source, out float value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadStringHeader(System.ReadOnlySpan<byte> source, out uint length, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadUInt16(System.ReadOnlySpan<byte> source, out ushort value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadUInt32(System.ReadOnlySpan<byte> source, out uint value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadUInt64(System.ReadOnlySpan<byte> source, out ulong value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, bool value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, byte value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, char value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, double value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, float value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, int value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, long value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, sbyte value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, short value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, System.DateTime value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, uint value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, ulong value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, ushort value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteArrayHeader(System.Span<byte> destination, uint count, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteBinHeader(System.Span<byte> destination, uint length, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteExtensionFormatHeader(System.Span<byte> destination, MessagePack.ExtensionHeader extensionHeader, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteInt16(System.Span<byte> destination, short value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteInt32(System.Span<byte> destination, int value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteInt64(System.Span<byte> destination, long value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteInt8(System.Span<byte> destination, sbyte value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteMapHeader(System.Span<byte> destination, uint count, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteNil(System.Span<byte> destination, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteStringHeader(System.Span<byte> destination, uint byteCount, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteUInt16(System.Span<byte> destination, ushort value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteUInt32(System.Span<byte> destination, uint value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteUInt64(System.Span<byte> destination, ulong value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteUInt8(System.Span<byte> destination, byte value, out int bytesWritten) -> bool
 MessagePack.SequencePool.Clear() -> void
 static readonly MessagePack.Formatters.Matrix3x2Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Matrix3x2>!
 static readonly MessagePack.Formatters.Matrix4x4Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Matrix4x4>!
