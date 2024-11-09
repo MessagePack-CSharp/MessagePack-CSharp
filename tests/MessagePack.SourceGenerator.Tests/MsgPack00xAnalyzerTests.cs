@@ -318,7 +318,7 @@ public class Foo
             public class Bar
             {
                 [MessagePack.Key(0)]
-                public {|MsgPack003:Foo|} Member { get; set; }
+                public Foo {|MsgPack003:Member|} { get; set; }
             }
             """;
 
@@ -361,7 +361,7 @@ public class Foo
             public class Bar
             {
                 [MessagePack.Key(0)]
-                public {|MsgPack003:Foo|} Member;
+                public Foo {|MsgPack003:Member|};
             }
             """;
 
@@ -391,6 +391,92 @@ public class Foo
     }
 
     [Fact]
+    public async Task AddAttributeToType_Nullable()
+    {
+        // Don't use Preamble because we want to test that it works without a using statement at the top.
+        string input = /* lang=c#-test */ """
+            public struct Foo
+            {
+                public string Member;
+            }
+
+            [MessagePack.MessagePackObject]
+            public class Bar
+            {
+                [MessagePack.Key(0)]
+                public Foo? {|MsgPack003:Member|};
+            }
+            """;
+
+        string output = /* lang=c#-test */ """
+            [MessagePack.MessagePackObject]
+            public struct Foo
+            {
+                [MessagePack.Key(0)]
+                public string Member;
+            }
+
+            [MessagePack.MessagePackObject]
+            public class Bar
+            {
+                [MessagePack.Key(0)]
+                public Foo? Member;
+            }
+            """;
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
+    }
+
+    [Fact]
+    public async Task AddAttributeToType_Generic()
+    {
+        // Don't use Preamble because we want to test that it works without a using statement at the top.
+        string input = /* lang=c#-test */ """
+            public struct Foo
+            {
+                public string Member;
+            }
+
+            [MessagePack.MessagePackObject]
+            public class Bar
+            {
+                [MessagePack.Key(0)]
+                public System.Collections.Generic.List<Foo> {|MsgPack003:Member|};
+            }
+            """;
+
+        string output = /* lang=c#-test */ """
+            [MessagePack.MessagePackObject]
+            public struct Foo
+            {
+                [MessagePack.Key(0)]
+                public string Member;
+            }
+
+            [MessagePack.MessagePackObject]
+            public class Bar
+            {
+                [MessagePack.Key(0)]
+                public System.Collections.Generic.List<Foo> Member;
+            }
+            """;
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            FixedCode = output,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+            CodeActionEquivalenceKey = MessagePackCodeFixProvider.AddKeyAttributeEquivanceKey,
+        }.RunAsync();
+    }
+
+    [Fact]
     public async Task AddAttributeToTypeForRecord1()
     {
         // Don't use Preamble because we want to test that it works without a using statement at the top.
@@ -404,7 +490,7 @@ public class Foo
 public record Bar
 {
     [MessagePack.Key(0)]
-    public {|MsgPack003:Foo|} Member { get; set; }
+    public Foo {|MsgPack003:Member|} { get; set; }
 }
 ";
 
@@ -447,7 +533,7 @@ public record Foo
 public record Bar
 {
     [MessagePack.Key(0)]
-    public {|MsgPack003:Foo|} Member { get; set; }
+    public Foo {|MsgPack003:Member|} { get; set; }
 }
 ";
 
@@ -487,7 +573,7 @@ public class Foo
 }
 
 [MessagePack.MessagePackObject]
-public record Bar([property: MessagePack.Key(0)] {|MsgPack003:Foo|} Member);
+public record Bar([property: MessagePack.Key(0)] Foo {|MsgPack003:Member|});
 
 namespace System.Runtime.CompilerServices
 {
@@ -590,7 +676,7 @@ public class Bar : Foo
             public class Bar
             {
                 [Key(0)]
-                public {|MsgPack003:Foo<int>|} MemberUserGeneric { get; set; }
+                public Foo<int> {|MsgPack003:MemberUserGeneric|} { get; set; }
 
                 [Key(1)]
                 public System.Collections.Generic.List<int> MemberKnownGeneric { get; set; }
