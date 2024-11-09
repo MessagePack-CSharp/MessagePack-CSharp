@@ -676,7 +676,7 @@ public class Bar : Foo
             public class Bar
             {
                 [Key(0)]
-                public Foo<int> {|MsgPack003:{|MsgPack003:MemberUserGeneric|}|} { get; set; }
+                public Foo<int> {|MsgPack003:MemberUserGeneric|} { get; set; }
 
                 [Key(1)]
                 public System.Collections.Generic.List<int> MemberKnownGeneric { get; set; }

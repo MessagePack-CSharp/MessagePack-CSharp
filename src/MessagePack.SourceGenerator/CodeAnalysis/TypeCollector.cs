@@ -1309,11 +1309,14 @@ public class TypeCollector
 
         if (contractAttr is null)
         {
-            Location location = callerSymbol is not null ? callerSymbol.Locations[0] : formattedType.Locations[0];
-            var targetName = callerSymbol is not null ? callerSymbol.ContainingType.Name + "." + callerSymbol.Name : formattedType.Name;
+            if (formattedType.IsDefinition)
+            {
+                Location location = callerSymbol is not null ? callerSymbol.Locations[0] : formattedType.Locations[0];
+                var targetName = callerSymbol is not null ? callerSymbol.ContainingType.Name + "." + callerSymbol.Name : formattedType.Name;
 
-            ImmutableDictionary<string, string?> typeInfo = ImmutableDictionary.Create<string, string?>().Add("type", formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
-            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject, location, typeInfo, targetName));
+                ImmutableDictionary<string, string?> typeInfo = ImmutableDictionary.Create<string, string?>().Add("type", formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject, location, typeInfo, targetName));
+            }
 
             // Indicate to our caller that we don't have a valid object.
             return null;
