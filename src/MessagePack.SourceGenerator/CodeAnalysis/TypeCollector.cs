@@ -190,7 +190,7 @@ public class TypeCollector
     private readonly ITypeSymbol? targetType;
 
     // visitor workspace:
-    private readonly Dictionary<ITypeSymbol, bool> alreadyCollected = new(SymbolEqualityComparer.Default);
+    private readonly HashSet<ITypeSymbol> alreadyCollected = new(SymbolEqualityComparer.Default);
     private readonly ImmutableSortedSet<ObjectSerializationInfo>.Builder collectedObjectInfo = ImmutableSortedSet.CreateBuilder<ObjectSerializationInfo>(ResolverRegisterInfoComparer.Default);
     private readonly ImmutableSortedSet<EnumSerializationInfo>.Builder collectedEnumInfo = ImmutableSortedSet.CreateBuilder<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default);
     private readonly ImmutableSortedSet<GenericSerializationInfo>.Builder collectedGenericInfo = ImmutableSortedSet.CreateBuilder<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default);
@@ -271,111 +271,92 @@ public class TypeCollector
     }
 
     // Gate of recursive collect
-    private bool CollectCore(ITypeSymbol typeSymbol, ISymbol? callerSymbol = null)
+    private void CollectCore(ITypeSymbol typeSymbol, ISymbol? callerSymbol = null)
     {
         this.cancellationToken.ThrowIfCancellationRequested();
 
-        if (this.alreadyCollected.TryGetValue(typeSymbol, out bool result))
+        if (!this.alreadyCollected.Add(typeSymbol))
         {
-            return result;
+            return;
         }
 
         var typeSymbolString = typeSymbol.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToString();
         if (!string.IsNullOrEmpty(typeSymbolString) && EmbeddedTypes.Contains(typeSymbolString))
         {
-            result = true;
-            this.alreadyCollected.Add(typeSymbol, result);
-            return result;
+            return;
         }
 
         FormattableType formattableType = new(typeSymbol, null);
         if (this.options.AssumedFormattableTypes.Contains(formattableType) || this.options.AssumedFormattableTypes.Contains(formattableType with { IsFormatterInSameAssembly = true }))
         {
-            result = true;
-            this.alreadyCollected.Add(typeSymbol, result);
-            return result;
+            return;
         }
 
         if (typeSymbol is IArrayTypeSymbol arrayTypeSymbol)
         {
-            return RecursiveProtection(() => this.CollectArray((IArrayTypeSymbol)this.ToTupleUnderlyingType(arrayTypeSymbol), callerSymbol));
+            this.CollectArray((IArrayTypeSymbol)this.ToTupleUnderlyingType(arrayTypeSymbol), callerSymbol);
+            return;
         }
 
         if (typeSymbol is ITypeParameterSymbol)
         {
-            result = true;
-            this.alreadyCollected.Add(typeSymbol, result);
-            return result;
+            return;
         }
 
         if (!IsAllowAccessibility(typeSymbol))
         {
-            result = false;
-            this.alreadyCollected.Add(typeSymbol, result);
-            return result;
+            return;
         }
 
         if (!(typeSymbol is INamedTypeSymbol type))
         {
-            result = false;
-            this.alreadyCollected.Add(typeSymbol, result);
-            return result;
+            return;
         }
 
         var customFormatterAttr = typeSymbol.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute));
         if (customFormatterAttr != null)
         {
             this.CheckValidMessagePackFormatterAttribute(customFormatterAttr);
-            result = true;
-            this.alreadyCollected.Add(typeSymbol, result);
-            return result;
+            return;
         }
 
         if (type.EnumUnderlyingType != null)
         {
-            return RecursiveProtection(() => this.CollectEnum(type, type.EnumUnderlyingType));
+            this.CollectEnum(type, type.EnumUnderlyingType);
+            return;
         }
 
         if (type.IsGenericType)
         {
-            return RecursiveProtection(() => this.CollectGeneric((INamedTypeSymbol)this.ToTupleUnderlyingType(type), callerSymbol));
+            this.CollectGeneric((INamedTypeSymbol)this.ToTupleUnderlyingType(type), callerSymbol);
+            return;
         }
 
         if (type.Locations[0].IsInMetadata)
         {
-            result = true;
-            this.alreadyCollected.Add(typeSymbol, result);
-            return result;
+            return;
         }
 
         if (type.TypeKind == TypeKind.Interface || (type.TypeKind == TypeKind.Class && type.IsAbstract))
         {
-            return RecursiveProtection(() => this.CollectUnion(type));
+            this.CollectUnion(type);
+            return;
         }
 
-        return RecursiveProtection(() => this.CollectObject(type, callerSymbol));
-
-        bool RecursiveProtection(Func<bool> func)
-        {
-            this.alreadyCollected.Add(typeSymbol, true);
-            bool result = func();
-            this.alreadyCollected[typeSymbol] = result;
-            return result;
-        }
+        this.CollectObject(type, callerSymbol);
     }
 
-    private bool CollectEnum(INamedTypeSymbol type, ISymbol enumUnderlyingType)
+    private void CollectEnum(INamedTypeSymbol type, ISymbol enumUnderlyingType)
     {
         this.collectedEnumInfo.Add(EnumSerializationInfo.Create(type, enumUnderlyingType, this.options.Generator.Resolver));
-        return true;
     }
 
-    private bool CollectUnion(INamedTypeSymbol type)
+    private void CollectUnion(INamedTypeSymbol type)
     {
         if (!options.IsGeneratingSource)
         {
             // In analyzer-only mode, this method doesn't work.
-            return true;
+            return;
         }
 
         ImmutableArray<TypedConstant>[] unionAttrs = type.GetAttributes().Where(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments).ToArray();
@@ -405,7 +386,6 @@ public class TypeCollector
             this.options.Generator.Resolver);
 
         this.collectedUnionInfo.Add(info);
-        return true;
     }
 
     private void CollectGenericUnion(INamedTypeSymbol type)
@@ -420,7 +400,7 @@ public class TypeCollector
         do
         {
             var x = enumerator.Current;
-            if (x[1] is { Value: INamedTypeSymbol unionType } && !this.alreadyCollected.ContainsKey(unionType))
+            if (x[1] is { Value: INamedTypeSymbol unionType } && !this.alreadyCollected.Contains(unionType))
             {
                 this.CollectCore(unionType);
             }
@@ -428,18 +408,15 @@ public class TypeCollector
         while (enumerator.MoveNext());
     }
 
-    private bool CollectArray(IArrayTypeSymbol array, ISymbol? callerSymbol)
+    private void CollectArray(IArrayTypeSymbol array, ISymbol? callerSymbol)
     {
         ITypeSymbol elemType = array.ElementType;
 
-        if (!this.CollectCore(elemType, callerSymbol))
-        {
-            return false;
-        }
+        this.CollectCore(elemType, callerSymbol);
 
         if (elemType is ITypeParameterSymbol || (elemType is INamedTypeSymbol symbol && IsOpenGenericTypeRecursively(symbol)))
         {
-            return true;
+            return;
         }
 
         QualifiedTypeName elementTypeName = QualifiedTypeName.Create(elemType);
@@ -454,7 +431,7 @@ public class TypeCollector
         if (formatterName is null)
         {
             ////this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.AotArrayRankTooHigh));
-            return false;
+            return;
         }
 
         var info = ResolverRegisterInfo.CreateArray(array, this.options.Generator.Resolver) with
@@ -468,7 +445,6 @@ public class TypeCollector
             },
         };
         this.collectedArrayInfo.Add(info);
-        return true;
     }
 
     private ITypeSymbol ToTupleUnderlyingType(ITypeSymbol typeSymbol)
@@ -493,7 +469,7 @@ public class TypeCollector
         return namedType;
     }
 
-    private bool CollectGeneric(INamedTypeSymbol type, ISymbol? callerSymbol)
+    private void CollectGeneric(INamedTypeSymbol type, ISymbol? callerSymbol)
     {
         INamedTypeSymbol typeDefinition = type.ConstructUnboundGenericType();
         var genericTypeDefinitionString = typeDefinition.ToDisplayString();
@@ -506,21 +482,18 @@ public class TypeCollector
         // special case
         if (fullName == "global::System.ArraySegment<byte>" || fullName == "global::System.ArraySegment<byte>?")
         {
-            return true;
+            return;
         }
 
         // nullable
         if (genericTypeDefinitionString == "T?")
         {
             var firstTypeArgument = type.TypeArguments[0];
-            if (!this.CollectCore(firstTypeArgument, callerSymbol))
-            {
-                return false;
-            }
+            this.CollectCore(firstTypeArgument, callerSymbol);
 
             if (EmbeddedTypes.Contains(firstTypeArgument.ToString()!))
             {
-                return true;
+                return;
             }
 
             if (!isOpenGenericType)
@@ -537,7 +510,7 @@ public class TypeCollector
                 this.collectedGenericInfo.Add(info);
             }
 
-            return true;
+            return;
         }
 
         // collection
@@ -553,7 +526,7 @@ public class TypeCollector
 
             if (isOpenGenericType)
             {
-                return true;
+                return;
             }
             else
             {
@@ -575,7 +548,7 @@ public class TypeCollector
 
             if (genericTypeDefinitionString != "System.Linq.ILookup<,>")
             {
-                return true;
+                return;
             }
 
             formatterName = KnownGenericTypes["System.Linq.IGrouping<,>"];
@@ -607,7 +580,7 @@ public class TypeCollector
                 Formatter = enumerableInfo.Formatter with { Name = formatterName },
             };
             this.collectedGenericInfo.Add(enumerableInfo);
-            return true;
+            return;
         }
 
         if (type.AllInterfaces.FirstOrDefault(x => !x.IsUnboundGenericType && x.ConstructUnboundGenericType() is { Name: nameof(ICollection<int>) }) is INamedTypeSymbol collectionIface
@@ -617,7 +590,7 @@ public class TypeCollector
 
             if (isOpenGenericType)
             {
-                return true;
+                return;
             }
             else
             {
@@ -633,7 +606,7 @@ public class TypeCollector
                 };
 
                 this.collectedGenericInfo.Add(info);
-                return true;
+                return;
             }
         }
 
@@ -641,7 +614,7 @@ public class TypeCollector
         if (type.IsDefinition)
         {
             this.CollectGenericUnion(type);
-            return this.CollectObject(type, callerSymbol);
+            this.CollectObject(type, callerSymbol);
         }
         else
         {
@@ -651,19 +624,13 @@ public class TypeCollector
             this.GetObjectInfo(type, callerSymbol);
 
             // Collect generic type definition, that is not collected when it is defined outside target project.
-            if (!this.CollectCore(type.OriginalDefinition, callerSymbol))
-            {
-                return false;
-            }
+            this.CollectCore(type.OriginalDefinition, callerSymbol);
         }
 
         // Collect substituted types for the type parameters (e.g. Bar in Foo<Bar>)
         foreach (var item in type.TypeArguments)
         {
-            if (!this.CollectCore(item, callerSymbol))
-            {
-                return false;
-            }
+            this.CollectCore(item, callerSymbol);
         }
 
         if (!isOpenGenericType)
@@ -677,22 +644,18 @@ public class TypeCollector
 
         static ImmutableArray<QualifiedTypeName> GetTypeArguments(QualifiedTypeName qtn)
             => qtn is QualifiedNamedTypeName named ? named.TypeArguments : ImmutableArray<QualifiedTypeName>.Empty;
-
-        return true;
     }
 
-    private bool CollectObject(INamedTypeSymbol type, ISymbol? callerSymbol)
+    private void CollectObject(INamedTypeSymbol type, ISymbol? callerSymbol)
     {
         ObjectSerializationInfo? info = this.GetObjectInfo(type, callerSymbol);
         if (info is not null)
         {
             this.collectedObjectInfo.Add(info);
         }
-
-        return info is not null;
     }
 
-    private bool CheckValidMessagePackFormatterAttribute(AttributeData formatterAttribute)
+    private void CheckValidMessagePackFormatterAttribute(AttributeData formatterAttribute)
     {
         if (formatterAttribute.ConstructorArguments[0].Value is ITypeSymbol formatterType)
         {
@@ -704,11 +667,7 @@ public class TypeCollector
                 ImmutableDictionary<string, string?> typeInfo = ImmutableDictionary.Create<string, string?>().Add("type", formatterType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                 this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.MessageFormatterMustBeMessagePackFormatter, location, typeInfo));
             }
-
-            return isMessagePackFormatter;
         }
-
-        return false;
     }
 
     private ObjectSerializationInfo? GetObjectInfo(INamedTypeSymbol formattedType, ISymbol? callerSymbol)
