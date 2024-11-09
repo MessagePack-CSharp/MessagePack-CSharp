@@ -947,4 +947,38 @@ public class MyGenericType<T>
 
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
+
+    [Fact]
+    public async Task CustomFormatterForGenericWithConstraints()
+    {
+        string testSource = /* lang=c#-test */ """
+            using System;
+            using MessagePack;
+            using MessagePack.Formatters;
+
+            [MessagePackObject]
+            public partial class SampleObject
+            {
+                [Key(0)]
+                public MyGenericObject<string> Value;
+            }
+
+            public class MyGenericObject<T> where T : ICloneable { }
+
+            public sealed class MyGenericObjectFormatter<T> : IMessagePackFormatter<MyGenericObject<T>> where T : ICloneable
+            {
+                public void Serialize(ref MessagePackWriter writer, MyGenericObject<T> value, MessagePackSerializerOptions options)
+                {
+                    throw new NotImplementedException();
+                }
+
+                public MyGenericObject<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+                {
+                    throw new NotImplementedException();
+                }
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
 }

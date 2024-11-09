@@ -20,7 +20,7 @@ public record GenericTypeParameterInfo(string Name) : IComparable<GenericTypePar
         this.HasReferenceTypeConstraint = typeParameter.HasReferenceTypeConstraint;
         this.HasValueTypeConstraint = typeParameter.HasValueTypeConstraint;
         this.HasNotNullConstraint = typeParameter.HasNotNullConstraint;
-        this.ConstraintTypes = typeParameter.ConstraintTypes.Select(t => QualifiedTypeName.Create(t, recursionGuard)).ToImmutableArray();
+        this.ConstraintTypes = typeParameter.ConstraintTypes.Select(t => QualifiedTypeName.Create(t, recursionGuard)).ToImmutableEquatableArray();
         this.HasConstructorConstraint = typeParameter.HasConstructorConstraint;
         this.ReferenceTypeConstraintNullableAnnotation = typeParameter.ReferenceTypeConstraintNullableAnnotation;
     }
@@ -49,7 +49,7 @@ public record GenericTypeParameterInfo(string Name) : IComparable<GenericTypePar
 
     public bool HasNotNullConstraint { get; init; }
 
-    public ImmutableArray<QualifiedTypeName> ConstraintTypes { get; init; }
+    public ImmutableEquatableArray<QualifiedTypeName> ConstraintTypes { get; init; } = ImmutableEquatableArray<QualifiedTypeName>.Empty;
 
     public bool HasConstructorConstraint { get; init; }
 
