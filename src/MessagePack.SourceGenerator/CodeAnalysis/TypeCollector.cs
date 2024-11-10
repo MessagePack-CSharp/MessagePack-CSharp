@@ -70,9 +70,29 @@ public class TypeCollector
         "decimal[]",
         "char[]",
         "string[]",
+        "object[]",
         "System.DateTime[]",
         "System.ArraySegment<byte>",
-        "System.ArraySegment<byte>?",
+        "System.Memory<byte>",
+        "System.ReadOnlyMemory<byte>",
+        "System.Buffers.ReadOnlySequence<byte>",
+
+        // List
+        "System.Collections.Generic.List<short>",
+        "System.Collections.Generic.List<int>",
+        "System.Collections.Generic.List<long>",
+        "System.Collections.Generic.List<ushort>",
+        "System.Collections.Generic.List<uint>",
+        "System.Collections.Generic.List<ulong>",
+        "System.Collections.Generic.List<float>",
+        "System.Collections.Generic.List<double>",
+        "System.Collections.Generic.List<bool>",
+        "System.Collections.Generic.List<byte>",
+        "System.Collections.Generic.List<sbyte>",
+        "System.Collections.Generic.List<char>",
+        "System.Collections.Generic.List<string>",
+        "System.Collections.Generic.List<object>",
+        "System.Collections.Generic.List<System.DateTime>",
 
         // extensions
         "UnityEngine.Vector2",
@@ -100,6 +120,15 @@ public class TypeCollector
         "UnityEngine.BoundsInt",
 
         "System.Reactive.Unit",
+
+        "System.Numerics.BigInteger",
+        "System.Numerics.Complex",
+        "System.Numerics.Vector2",
+        "System.Numerics.Vector3",
+        "System.Numerics.Vector4",
+        "System.Numerics.Quaternion",
+        "System.Numerics.Matrix3x2",
+        "System.Numerics.Matrix4x4",
     });
 
     private static readonly Dictionary<string, string> KnownGenericTypes = new()
@@ -155,6 +184,9 @@ public class TypeCollector
         { "System.Collections.Generic.KeyValuePair<,>", "MsgPack::Formatters.KeyValuePairFormatter" },
         { "System.Threading.Tasks.ValueTask<>", "MsgPack::Formatters.KeyValuePairFormatter" },
         { "System.ArraySegment<>", "MsgPack::Formatters.ArraySegmentFormatter" },
+        { "System.Memory<>", "MsgPack::Formatters.MemoryFormatter" },
+        { "System.ReadOnlyMemory<>", "MsgPack::Formatters.ReadOnlyMemoryFormatter" },
+        { "System.Buffers.ReadOnlySequence<>", "MsgPack::Formatters.ReadOnlySequenceFormatter" },
 
         // extensions
         { "System.Collections.Immutable.ImmutableArray<>", "MsgPack::ImmutableCollection.ImmutableArrayFormatter" },
@@ -479,22 +511,17 @@ public class TypeCollector
         string formattedTypeFullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         string? formatterName;
 
-        // special case
-        if (fullName == "global::System.ArraySegment<byte>" || fullName == "global::System.ArraySegment<byte>?")
-        {
-            return;
-        }
-
         // nullable
         if (genericTypeDefinitionString == "T?")
         {
             var firstTypeArgument = type.TypeArguments[0];
-            this.CollectCore(firstTypeArgument, callerSymbol);
 
             if (EmbeddedTypes.Contains(firstTypeArgument.ToString()!))
             {
                 return;
             }
+
+            this.CollectCore(firstTypeArgument, callerSymbol);
 
             if (!isOpenGenericType)
             {
