@@ -503,8 +503,8 @@ namespace MessagePack.Formatters
             if (!writer.OldSpec)
             {
                 // try to get bin8 buffer.
-                var span = writer.GetSpan(byte.MaxValue);
-                if (value.TryWriteBytes(span[2..byte.MaxValue], out var written))
+                var span = writer.GetSpan(2 + byte.MaxValue);
+                if (value.TryWriteBytes(span.Slice(2, byte.MaxValue), out var written))
                 {
                     span[0] = MessagePackCode.Bin8;
                     span[1] = (byte)written;
