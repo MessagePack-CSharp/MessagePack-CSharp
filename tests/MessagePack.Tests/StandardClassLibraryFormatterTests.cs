@@ -2,8 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Concurrent;
-using System.Linq;
 using System.Numerics;
 using Nerdbank.Streams;
 using Xunit;
