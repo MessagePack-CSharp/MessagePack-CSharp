@@ -2,6 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Numerics;
 using Nerdbank.Streams;
 using Xunit;
 using Xunit.Abstractions;
@@ -76,6 +79,28 @@ namespace MessagePack.Tests
             var input = new byte[] { 0xDD, 0, 0, 0, 3, 1, 2, 3 };
             byte[] byte_array = MessagePackSerializer.Deserialize<byte[]>(input);
             Assert.Equal(new byte[] { 1, 2, 3 }, byte_array);
+        }
+
+        [Theory]
+        [InlineData(299)]
+        [InlineData(300)]
+        public void BigInteger(int end)
+        {
+            // Test case came from https://github.com/MessagePack-CSharp/MessagePack-CSharp/issues/2060
+            var start = 1;
+
+            var x = ParallelEnumerable
+                .Range(start, end)
+                .Aggregate(
+                    () => System.Numerics.BigInteger.One,
+                    (localProduct, i) => localProduct * i,
+                    (totalProduct, localProduct) => totalProduct * localProduct,
+                    finalProduct => finalProduct);
+
+            var bytes = MessagePackSerializer.Serialize(x);
+            var y = MessagePackSerializer.Deserialize<BigInteger>(bytes);
+
+            Assert.Equal(x, y);
         }
 
 #if NET6_0_OR_GREATER
