@@ -42,7 +42,7 @@ namespace MessagePack
         /// <summary>
         /// The array pool which we share with all <see cref="Sequence{T}"/> objects created by this <see cref="SequencePool"/> instance.
         /// </summary>
-        private readonly ArrayPool<byte> arrayPool;
+        private readonly object arrayPoolOrMemoryPool;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SequencePool"/> class.
@@ -76,7 +76,18 @@ namespace MessagePack
         public SequencePool(int maxSize, ArrayPool<byte> arrayPool)
         {
             this.maxSize = maxSize;
-            this.arrayPool = arrayPool;
+            this.arrayPoolOrMemoryPool = arrayPool;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SequencePool"/> class.
+        /// </summary>
+        /// <param name="maxSize">The maximum size to allow the pool to grow.</param>
+        /// <param name="memoryPool">Memory pool that will be used.</param>
+        public SequencePool(int maxSize, MemoryPool<byte> memoryPool)
+        {
+            this.maxSize = maxSize;
+            this.arrayPoolOrMemoryPool = memoryPool;
         }
 
         /// <summary>
@@ -94,9 +105,13 @@ namespace MessagePack
                 }
             }
 
+            var sequence = this.arrayPoolOrMemoryPool is ArrayPool<byte> arrayPool
+                ? new Sequence<byte>(arrayPool) { MinimumSpanLength = MinimumSpanLength }
+                : new Sequence<byte>((MemoryPool<byte>)this.arrayPoolOrMemoryPool) { MinimumSpanLength = MinimumSpanLength };
+
             // Configure the newly created object to share a common array pool with the other instances,
             // otherwise each one will have its own ArrayPool which would likely waste a lot of memory.
-            return new Rental(this, new Sequence<byte>(this.arrayPool) { MinimumSpanLength = MinimumSpanLength });
+            return new Rental(this, sequence);
         }
 
         private void Return(Sequence<byte> value)
