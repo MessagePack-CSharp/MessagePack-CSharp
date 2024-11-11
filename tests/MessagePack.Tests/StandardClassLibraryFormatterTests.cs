@@ -84,9 +84,9 @@ namespace MessagePack.Tests
         [Theory]
         [InlineData(600)]
         [InlineData(650)]
-        public void BigInteger(int end)
+        public void BigInteger(int length)
         {
-            var x = System.Numerics.BigInteger.Parse(new string('1', end));
+            var x = System.Numerics.BigInteger.Parse(new string('1', length));
             var bytes = MessagePackSerializer.Serialize(x);
             var y = MessagePackSerializer.Deserialize<BigInteger>(bytes);
 
