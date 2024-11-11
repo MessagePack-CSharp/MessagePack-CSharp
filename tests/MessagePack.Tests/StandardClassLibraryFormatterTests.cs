@@ -82,21 +82,11 @@ namespace MessagePack.Tests
         }
 
         [Theory]
-        [InlineData(299)]
-        [InlineData(300)]
+        [InlineData(600)]
+        [InlineData(650)]
         public void BigInteger(int end)
         {
-            // Test case came from https://github.com/MessagePack-CSharp/MessagePack-CSharp/issues/2060
-            var start = 1;
-
-            var x = ParallelEnumerable
-                .Range(start, end)
-                .Aggregate(
-                    () => System.Numerics.BigInteger.One,
-                    (localProduct, i) => localProduct * i,
-                    (totalProduct, localProduct) => totalProduct * localProduct,
-                    finalProduct => finalProduct);
-
+            var x = System.Numerics.BigInteger.Parse(new string('1', end));
             var bytes = MessagePackSerializer.Serialize(x);
             var y = MessagePackSerializer.Deserialize<BigInteger>(bytes);
 
