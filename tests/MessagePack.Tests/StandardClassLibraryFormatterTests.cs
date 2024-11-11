@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Numerics;
 using Nerdbank.Streams;
 using Xunit;
 using Xunit.Abstractions;
@@ -76,6 +77,18 @@ namespace MessagePack.Tests
             var input = new byte[] { 0xDD, 0, 0, 0, 3, 1, 2, 3 };
             byte[] byte_array = MessagePackSerializer.Deserialize<byte[]>(input);
             Assert.Equal(new byte[] { 1, 2, 3 }, byte_array);
+        }
+
+        [Theory]
+        [InlineData(600)]
+        [InlineData(650)]
+        public void BigInteger(int length)
+        {
+            var x = System.Numerics.BigInteger.Parse(new string('1', length));
+            var bytes = MessagePackSerializer.Serialize(x);
+            var y = MessagePackSerializer.Deserialize<BigInteger>(bytes);
+
+            Assert.Equal(x, y);
         }
 
 #if NET6_0_OR_GREATER
