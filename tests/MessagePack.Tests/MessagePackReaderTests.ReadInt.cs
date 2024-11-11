@@ -22,6 +22,7 @@ namespace MessagePack.Tests
             // * FixInt
             // ** non-boundary
             (3, Encode((ref MessagePackWriter w) => w.WriteByte(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteByte(3))),
             (3, Encode((ref MessagePackWriter w) => w.WriteUInt16(3))),
             (3, Encode((ref MessagePackWriter w) => w.WriteUInt32(3))),
             (3, Encode((ref MessagePackWriter w) => w.WriteUInt64(3))),
