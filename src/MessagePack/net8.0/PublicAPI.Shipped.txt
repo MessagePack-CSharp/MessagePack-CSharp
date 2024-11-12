@@ -1170,7 +1170,7 @@ MessagePack.SequencePool
 MessagePack.SequencePool.SequencePool() -> void
 MessagePack.SequencePool.SequencePool(int maxSize) -> void
 MessagePack.SequencePool.SequencePool(int maxSize, System.Buffers.ArrayPool<byte>! arrayPool) -> void
-MessagePack.SequencePool.SequencePool(int maxSize, System.Buffers.MemoryPool<byte>! arrayPool) -> void
+MessagePack.SequencePool.SequencePool(int maxSize, System.Buffers.MemoryPool<byte>! memoryPool) -> void
 MessagePack.TinyJsonException.TinyJsonException(System.Runtime.Serialization.SerializationInfo! info, System.Runtime.Serialization.StreamingContext context) -> void
 static MessagePack.Nil.operator !=(MessagePack.Nil left, MessagePack.Nil right) -> bool
 static MessagePack.Nil.operator ==(MessagePack.Nil left, MessagePack.Nil right) -> bool
