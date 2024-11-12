@@ -115,11 +115,13 @@ namespace MessagePack
             }
 
             var sequence = this.arrayPoolOrMemoryPool is ArrayPool<byte> arrayPool
-                ? new Sequence<byte>(arrayPool) { MinimumSpanLength = MinimumSpanLength }
-                : new Sequence<byte>((MemoryPool<byte>)this.arrayPoolOrMemoryPool) { MinimumSpanLength = MinimumSpanLength };
+                ? new Sequence<byte>(arrayPool)
+                : new Sequence<byte>((MemoryPool<byte>)this.arrayPoolOrMemoryPool);
+
+            sequence.MinimumSpanLength = MinimumSpanLength;
 
             // Configure the newly created object to share a common array pool with the other instances,
-            // otherwise each one will have its own ArrayPool which would likely waste a lot of memory.
+            // otherwise each one will have its own ArrayPool or MemoryPool which would likely waste a lot of memory.
             return new Rental(this, sequence);
         }
 
