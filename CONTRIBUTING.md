@@ -22,8 +22,7 @@ Alternatively you may build from the command line using `msbuild.exe` or:
 
 ## Unity
 
-Unity Project requires several dependency DLL's. At first, run `copy_assets.bat` under `src\MessagePack.UnityClient`.
-Then open that directory in the Unity Editor.
+See the ReadMe for the target directory `src\MessagePack.UnityClient` for information on building and managing with Unity. Unity's CI is managed in `unity.yml` in GitHub Actions.
 
 ## Where to find our CI feed
 

@@ -1,0 +1,141 @@
+﻿<#@ template debug="false" hostspecific="false" linePragmas="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+
+#pragma warning disable CS8669 // We may leak nullable annotations into generated code.
+
+using MsgPack = global::MessagePack;
+
+<# using (this.EmitNestingTypesAndNamespaces(this.Write)) { #>
+
+<#  bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members);#>
+	internal sealed class <#= Info.Formatter.GetQualifiedName(Qualifiers.None) #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #>>
+<# TransformUtilities.EmitTypeConstraints(Info.Formatter, this.Write); #>
+	{
+<# foreach (var item in Info.Members) { #>
+<# if (item.CustomFormatter != null) { #>
+		private readonly <#= item.CustomFormatter.InstanceTypeName.GetQualifiedName(genericStyle: GenericParameterStyle.Arguments) #> __<#= item.Name #>CustomFormatter__ = <#= item.CustomFormatter.InstanceExpression #>;
+<# } #>
+<# } #>
+
+		public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #> value, MsgPack::MessagePackSerializerOptions options)
+		{
+<# if (Info.IsClass) { #>
+			if (value == null)
+			{
+				writer.WriteNil();
+				return;
+			}
+
+<# }
+
+  if (isFormatterResolverNecessary) { #>
+			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
+<# }
+
+ if (Info.HasIMessagePackSerializationCallbackReceiver) {
+  if (Info.NeedsCastOnBefore) { #>
+			((MsgPack::IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
+<# } else { #>
+			value.OnBeforeSerialize();
+<# } #>
+<# } #>
+			writer.WriteArrayHeader(<#= Info.MaxKey + 1 #>);
+<# for (var i = 0; i <= Info.MaxKey; i++) {
+  var member = Info.GetMember(i);
+  if (member == null) { #>
+			writer.WriteNil();
+<# } else { #>
+			<#= member.GetSerializeMethodString() #>;
+<# } #>
+<# } #>
+		}
+
+		public <#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
+		{
+			if (reader.TryReadNil())
+			{
+<# if (Info.IsClass) { #>
+				return null;
+<# } else { #>
+				throw new global::System.InvalidOperationException("typecode is null, struct not supported");
+<# } #>
+			}
+
+<# if (Info.MaxKey == -1 && !Info.HasIMessagePackSerializationCallbackReceiver) { #>
+			reader.Skip();
+			return new <#= Info.GetConstructorString()  #>;
+<# } else { #>
+			options.Security.DepthStep(ref reader);
+<# if (isFormatterResolverNecessary) { #>
+			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
+<# } #>
+			var length = reader.ReadArrayHeader();
+<# if (Info.MustDeserializeFieldsFirst) { 
+	foreach (var member in Info.Members) { #>
+			var <#= member.LocalVariableName #> = default(<#= member.Type #>);
+<#	}
+} else { #>
+			var ____result = new <#= Info.GetConstructorString()  #>;
+<# } #>
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+<# for (var memberIndex = 0; memberIndex <= Info.MaxKey; memberIndex++) {
+  var member = Info.GetMember(memberIndex);
+  if (member == null) { continue; } #>
+					case <#= member.IntKey #>:
+<# if (Info.MustDeserializeFieldsFirst) { #>
+						<#= member.LocalVariableName #> = <#= member.GetDeserializeMethodString() #>;
+<# } else {
+  if (member.IsWritable) { #>
+						<#= member.GetMemberAccess("____result") #> = <#= member.GetDeserializeMethodString() #>;
+<# } else { #>
+						reader.Skip();
+<# } #>
+<# } #>
+						break;
+<# } #>
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+<# if (Info.MustDeserializeFieldsFirst) { #>
+			var ____result = new <#= Info.GetConstructorString() #>;
+<# bool memberAssignExists = false;
+  for (var memberIndex = 0; memberIndex <= Info.MaxKey; memberIndex++) {
+  var member = Info.GetMember(memberIndex);
+  if (member == null || !member.IsWritable || member.IsInitOnly || member.IsRequired || Info.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
+  memberAssignExists = true;#>
+			if (length <= <#= memberIndex #>)
+			{
+				goto MEMBER_ASSIGNMENT_END;
+			}
+
+			<#= member.GetMemberAccess("____result") #> = <#= member.LocalVariableName #>;
+<# } #>
+<# if (memberAssignExists) { #>
+
+		MEMBER_ASSIGNMENT_END:
+<# }
+ }
+
+ if (Info.HasIMessagePackSerializationCallbackReceiver) {
+  if (Info.NeedsCastOnAfter) { #>
+			((MsgPack::IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+<# } else { #>
+			____result.OnAfterDeserialize();
+<# } #>
+<# } #>
+			reader.Depth--;
+			return ____result;
+<# } #>
+		}
+	}
+<# } #>

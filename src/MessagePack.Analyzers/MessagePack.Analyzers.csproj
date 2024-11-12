@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>MessagePackAnalyzer</PackageId>
+
+    <Description>Analyzers and source generator for MessagePack for C#. Verify rules for [MessagePackObject] and code fix for [Key]. A roslyn source generator for AOT or faster startup of applications that use the MessagePack nuget package.</Description>
+    <Title>MessagePack Source Generator and Analyzer</Title>
+    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Analyzer</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackBuildOutputs</TargetsForTfmSpecificContentInPackage>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <IncludeSymbols>false</IncludeSymbols>
+    <DevelopmentDependency>true</DevelopmentDependency>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="build\**" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+
+  <ItemDefinitionGroup>
+    <!-- We need this, even with SuppressDependenciesWhenPacking=true because the
+         dependencies will otherwise show up as dependencies in packages built by projects
+         that reference this one. Probably due to transitive pinning. -->
+    <PackageReference PrivateAssets="all" />
+    <ProjectReference PrivateAssets="all" />
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj" ExcludeAssets="compile" />
+    <ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" ExcludeAssets="compile" />
+  </ItemGroup>
+
+  <Target Name="PackBuildOutputs" DependsOnTargets="ResolveProjectReferences;DebugSymbolsProjectOutputGroup">
+    <PropertyGroup>
+      <RoslynVersionForVSMajorMinor>$(MicrosoftCodeAnalysisVersion.Substring(0, $(MicrosoftCodeAnalysisVersion.LastIndexOf('.'))))</RoslynVersionForVSMajorMinor>
+    </PropertyGroup>
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="%(_ResolvedProjectReferencePaths.Identity)" PackagePath="analyzers\roslyn$(RoslynVersionForVSMajorMinor)\cs\" Condition="'%(_ResolvedProjectReferencePaths.ForUnity)'!='true'" />
+    </ItemGroup>
+  </Target>
+</Project>

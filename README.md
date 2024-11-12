@@ -1,4 +1,4 @@
-# MessagePack for C# (.NET Framework, .NET 6, Unity, Xamarin)
+# MessagePack for C# (.NET Framework, .NET 8, Unity, Xamarin)
 
 [![NuGet](https://img.shields.io/nuget/v/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
 [![NuGet](https://img.shields.io/nuget/vpre/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
@@ -57,7 +57,7 @@ MessagePack has a compact binary size and a full set of general purpose expressi
 - [IgnoreFormatter](#ignoreformatter)
 - [Reserved Extension Types](#reserved-extension-types)
 - [Unity support](#unity-support)
-- [AOT Code Generation (support for Unity/Xamarin)](#aot-code-generation-support-for-unityxamarin)
+- [AOT Code Generation (support for Unity/Xamarin)](#aot)
 - [RPC](#rpc)
     - [MagicOnion](#magiconion)
     - [StreamJsonRpc](#streamjsonrpc)
@@ -69,8 +69,8 @@ MessagePack has a compact binary size and a full set of general purpose expressi
 
 This library is distributed via NuGet. Special [Unity support](#unity) is available, too.
 
-We target .NET Standard 2.0 with special optimizations for .NET 6+, making it compatible with most reasonably recent .NET runtimes such as Core 2.0 and later, Framework 4.6.1 and later, Mono 5.4 and later and Unity 2018.3 and later.
-The library code is pure C# (with Just-In-Time IL code generation on some platforms).
+We target .NET Standard 2.0 with special optimizations for .NET 8+ and .NET Framework.
+The library code is pure C# (with Just-In-Time IL code generation on some platforms or AOT safe source generators).
 
 ### NuGet packages
 
@@ -96,11 +96,12 @@ Install-Package MessagePack.AspNetCoreMvcFormatter
 
 ### Unity
 
-For Unity projects, the [Releases](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases) page provides downloadable `.unitypackage` files. When using in Unity IL2CPP or Xamarin AOT environments, please carefully read the [pre-code generation section](#aot).
+For Unity projects, please read the [Unity Support](#unity-support) section to install.
 
-### Migration notes from v1.x
+### Migration notes from prior versions
 
-If you were using MessagePack for C# v1.x, check out the ["How to update to our new v2.x version"](doc/migration.md) document.
+Migrating from a prior major version of MessagePack to the latest?
+Check out [these instructions](doc/migration.md).
 
 ## Quick Start
 
@@ -164,20 +165,21 @@ By default, a `MessagePackObject` annotation is required. This can be made optio
 
 The MessagePackAnalyzer package aids with:
 
-1. Automating definitions for your serializable objects.
 1. Produces compiler warnings upon incorrect attribute use, member accessibility, and more.
+1. Automating attributing of your serializable classes and members.
+1. Optionally improving startup time through [AOT formatter generation](#aot).
+
+The first two of these features is demonstrated below:
 
 ![analyzergif](https://cloud.githubusercontent.com/assets/46207/23837445/ce734eae-07cb-11e7-9758-d69f0f095bc1.gif)
 
-If you want to allow a specific custom type (for example, when registering a custom type), put `MessagePackAnalyzer.json` at the project root and change the Build Action to `AdditionalFiles`.
+Two assembly-level attributes exist to help with mixing in your own custom formatters with the automatically generated ones:
+- `MessagePackKnownFormatterAttribute` - Identifies classes that implement `IMessagePackFormatter<T>`.
+The `T` type argument will _not_ produce an analyzer warning when `T` is used elsewhere in a serializable object.
+When using a source generated resolver, the resolver will refer to this formatter for the appropriate type(s).
+- `MessagePackAssumedFormattableAttribute` - Identifies types that are assumed to have an `IMessagePackFormatter<T>` *somewhere*, and that will be combined within an `IFormatterResolver` at runtime to ensure the specified type can be serialized.
+This attribute will suppress the analyzer warning from using that type although the type does not have a `[MessagePackObject]` attribute on it.
 
-![image](https://cloud.githubusercontent.com/assets/46207/23837427/8a8d507c-07cb-11e7-9277-5a566eb0bfde.png)
-
-An example `MessagePackAnalyzer.json`:
-
-```json
-[ "MyNamespace.FooClass", "MyNameSpace.BarStruct" ]
-```
 
 ## Built-in supported types
 
@@ -349,7 +351,10 @@ You can use `[DataContract]` annotations instead of `[MessagePackObject]` ones. 
 
 Then `[DataMember(Order = int)]` will behave the same as `[Key(int)]`, `[DataMember(Name = string)]` the same as `[Key(string)]`, and `[DataMember]` the same as `[Key(nameof(member name)]`.
 
-Using `DataContract`, e.g. in shared libraries, makes your classes/structs independent from MessagePack for C# serialization. However, it is not supported by the analyzers nor in code generation by the `mpc` tool. Also, features like `UnionAttribute`, `MessagePackFormatter`, `SerializationConstructor`, etc can not be used. Due to this, we recommend that you use the specific MessagePack for C# annotations when possible.
+Using `DataContract`, e.g. in shared libraries, makes your classes/structs independent from MessagePack for C# serialization.
+However, it is not supported by the analyzers nor source generator.
+Also, features like `UnionAttribute`, `MessagePackFormatter`, `SerializationConstructor`, etc can not be used.
+Due to this, we recommend that you use the specific MessagePack for C# annotations when possible.
 
 ## Serializing readonly/immutable object members  (SerializationConstructor)
 
@@ -1530,17 +1535,49 @@ Within the *reserved* ranges, this library defines or implements extensions that
 
 ## Unity support
 
-Unity lowest supported version is `2018.3`, API Compatibility Level supports both `.NET 4.x` and `.NET Standard 2.0`.
+The minimum supported Unity version will be `2022.3.12f1`, as it is necessary to support IL2CPP via C# Source Generator.
 
-You can install the `unitypackage` from the [Releases](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases) page.
-If your build targets .NET Framework 4.x and runs on mono, you can use it as is.
-But if your build targets IL2CPP, you can not use `Dynamic***Resolver`, so it is required to use pre-code generation. Please see [pre-code generation section](#aot).
+There are two installation steps required to use it in Unity. Do both, not just one.
 
-MessagePack for C# includes some additional `System.*.dll` libraries that originally provides in NuGet. They are located under `Plugins`. If other packages use these libraries (e.g. Unity Collections package using `System.Runtime.CompilerServices.Unsafe.dll`), to avoid conflicts, please delete the DLL under `Plugins`.
+1. Install `MessagePack` from NuGet using [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity)
+   Open Window from NuGet -> Manage NuGet Packages, Search "MessagePack" and Press Install.
 
-Currently `CompositeResolver.Create` does not work on IL2CPP, so it is recommended to use `StaticCompositeResolver.Instance.Register` instead.
+2. Install `MessagePack.Unity` package by referencing the git URL.
+   Open Package Manager window and press `Add Package from git URL...`, enter following path
 
-In Unity, MessagePackSerializer can serialize `Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`, `AnimationCurve`, `Keyframe`, `Matrix4x4`, `Gradient`, `Color32`, `RectOffset`, `LayerMask`, `Vector2Int`, `Vector3Int`, `RangeInt`, `RectInt`, `BoundsInt` and their nullable, array and list types with the built-in extension `UnityResolver`. It is included in StandardResolver by default.
+   ```
+   https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.UnityClient/Assets/Scripts/MessagePack
+   ```
+
+   MessagePack uses the ..* release tag, so you can specify a version like #v3.0.0. For example: `https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.UnityClient/Assets/Scripts/MessagePack#v3.0.0`
+
+In Unity, MessagePackSerializer can serialize `Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`, `AnimationCurve`, `Keyframe`, `Matrix4x4`, `Gradient`, `Color32`, `RectOffset`, `LayerMask`, `Vector2Int`, `Vector3Int`, `RangeInt`, `RectInt`, `BoundsInt` and their nullable, array and list types with the built-in extension `UnityResolver`.
+
+`MessagePack.Unity` automatically adds `UnityResolver` to the default options Resolver when the application starts with code like this in the unity package to enable this serialization:
+
+```csharp
+[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+private static void Init()
+{
+    MessagePackSerializer.DefaultOptions = MessagePackSerializerOptions.Standard.WithResolver(UnityResolver.InstanceWithStandardResolver);
+}
+```
+
+If you want to customize the Resolver or change the DefaultOptions, it would be good to keep this in mind.
+
+### Share types with .NET
+
+The `MessagePack.UnityShims` NuGet package is for .NET server-side serialization support to communicate with Unity. It includes shims for Vector3 etc and the Safe/Unsafe serialization extension.
+
+There are several ways to share types between .NET and Unity:
+
+* Share using symbolic links
+* Place the actual files on the Unity side and reference them as link files in the .NET csproj
+* Use UPM local references to reference the .NET project from the Unity side
+
+While the setup is a bit challenging, the smoothest way to share is using UPM local references. For detailed steps, please refer to the [MagicOnion Sample](https://github.com/Cysharp/MagicOnion/tree/main/samples/ChatApp).
+
+### UnsafeBlitResolver
 
 MessagePack for C# has an additional unsafe extension.  `UnsafeBlitResolver` is special resolver for extremely fast but unsafe serialization/deserialization of struct arrays.
 
@@ -1563,135 +1600,49 @@ var options = MessagePackSerializerOptions.Standard.WithResolver(StaticComposite
 MessagePackSerializer.DefaultOptions = options;
 ```
 
-The `MessagePack.UnityShims` NuGet package is for .NET server-side serialization support to communicate with Unity. It includes shims for Vector3 etc and the Safe/Unsafe serialization extension.
+## <a name="aot"></a>AOT Code Generation
 
-If you want to share a class between Unity and a server, you can use `SharedProject` or `Reference as Link` or a glob reference (with `LinkBase`), etc. Anyway, you need to share at source-code level. This is a sample project structure using a glob reference (recommended).
+A source generator is provided in the `MessagePackAnalyzer` package, which is automatically installed when you install `MessagePack` via NuGet.
+This will source generate the formatters required for all your `[MessagePackObject]`-annotated data types during compilation for the fastest possible startup and runtime.
+An `IFormatterResolver` is also generated that bundles all source generated and user-written formatters together.
+The `StandardResolver` includes the `SourceGeneratedFormatterResolver` which discovers and uses your source generated resolver automatically.
 
-- ServerProject(.NET Framework 4.6/.NET/.NET Standard)
-  - \[`<Compile Include="..\UnityProject\Assets\Scripts\Shared\**\*.cs" LinkBase="Shared" />`\]
-  - \[MessagePack\]
-  - \[MessagePack.UnityShims\]
-- UnityProject
-  - \[Concrete SharedCodes\]
-  - \[MessagePack\](not dll/NuGet, use MessagePack.Unity.unitypackage's sourcecode)
+Therefore, in the usual scenario, it will work with AOT Safe without any special handling.
 
-## <a name="aot"></a>AOT Code Generation (support for Unity/Xamarin)
-
-By default, MessagePack for C# serializes custom objects by [generating IL](https://msdn.microsoft.com/en-us/library/system.reflection.emit.ilgenerator.aspx) on the fly at runtime to create custom, highly tuned formatters for each type. This code generation has a minor upfront performance cost.
-Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime code generation, MessagePack provides a way for you to run a code generator ahead of time as well.
+At runtime, if a source generated or hand-written formatter cannot be found for a given `[MessagePackObject]` type, MessagePack will generate the formatters on the fly using [Reflection.Emit](https://learn.microsoft.com/dotnet/api/system.reflection.emit.ilgenerator) to create highly-tuned formatters for each type.
+This code generation has a minor upfront performance cost.
 
 > Note: When using Unity, dynamic code generation only works when targeting .NET Framework 4.x + mono runtime.
 For all other Unity targets, AOT is required.
 
-If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation. `mpc` (MessagePackCompiler) is the code generator of MessagePack for C#. mpc uses [Roslyn](https://github.com/dotnet/roslyn) to analyze source code.
+### Customizations
 
-First of all, mpc requires [.NET 6+ Runtime](https://dotnet.microsoft.com/download). The easiest way to acquire and run mpc is as a dotnet tool.
+You can customize the generated source through properties on the `GeneratedMessagePackResolverAttribute`.
 
-```
-dotnet tool install --global MessagePack.Generator
-```
-
-Installing it as a local tool allows you to include the tools and versions that you use in your source control system. Run these commands in the root of your repo:
-
-```
-dotnet new tool-manifest
-dotnet tool install MessagePack.Generator
-```
-
-Check in your `.config\dotnet-tools.json` file. On another machine you can "restore" your tool using the `dotnet tool restore` command.
-
-Once you have the tool installed, simply invoke using `dotnet mpc` within your repo:
-
-```
-dotnet mpc --help
-
-Usage: mpc [options...]
-
-Options:
-  -i, -input <String>                                Input path to MSBuild project file or the directory containing Unity source files. (Required)
-  -o, -output <String>                               Output file path(.cs) or directory(multiple generate file). (Required)
-  -c, -conditionalSymbol <String>                    Conditional compiler symbols, split with ','. (Default: null)
-  -r, -resolverName <String>                         Set resolver name. (Default: GeneratedResolver)
-  -n, -namespace <String>                            Set namespace root name. (Default: MessagePack)
-  -m, -useMapMode <Boolean>                          Force use map mode serialization. (Default: False)
-  -ms, -multipleIfDirectiveOutputSymbols <String>    Generate #if-- files by symbols, split with ','. (Default: null)
-```
-
-`mpc` targets C# code with `[MessagePackObject]` or `[Union]` annotations.
-
-```cmd
-// Simple Sample:
-dotnet mpc -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs"
-
-// Use force map simulate DynamicContractlessObjectResolver
-dotnet mpc -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs" -m
-```
-
-By default, `mpc` generates the resolver as `MessagePack.Resolvers.GeneratedResolver` and formatters as`MessagePack.Formatters.*`.
-
-Here is the full sample code to register a generated resolver in Unity.
-
-```csharp
-using MessagePack;
-using MessagePack.Resolvers;
-using UnityEngine;
-
-public class Startup
+```cs
+[GeneratedMessagePackResolver]
+partial class MyResolver
 {
-    static bool serializerRegistered = false;
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    static void Initialize()
-    {
-        if (!serializerRegistered)
-        {
-            StaticCompositeResolver.Instance.Register(
-                 MessagePack.Resolvers.GeneratedResolver.Instance,
-                 MessagePack.Resolvers.StandardResolver.Instance
-            );
-
-            var option = MessagePackSerializerOptions.Standard.WithResolver(StaticCompositeResolver.Instance);
-
-            MessagePackSerializer.DefaultOptions = option;
-            serializerRegistered = true;
-        }
-    }
-
-#if UNITY_EDITOR
-
-
-    [UnityEditor.InitializeOnLoadMethod]
-    static void EditorInitialize()
-    {
-        Initialize();
-    }
-
-#endif
 }
 ```
 
-In Unity, you can use MessagePack CodeGen windows at `Windows -> MessagePack -> CodeGenerator`.
+When exposing the generated resolver publicly, consumers outside the library should aggregate the resolver using its `Instance` property, which contains *only* the generated formatters.
 
-![](https://user-images.githubusercontent.com/46207/69414381-f14da400-0d55-11ea-9f8d-9af448d347dc.png)
+Two assembly-level attributes exist to help with mixing in your own custom formatters with the automatically generated ones:
+- `MessagePackKnownFormatterAttribute`
+- `MessagePackAssumedFormattableAttribute`
 
-Install the .NET runtime, install mpc (as a .NET Tool as described above), and execute `dotnet mpc`. Currently this tool is experimental so please tell me your opinion.
-
-In Xamarin, you can install the [the `MessagePack.MSBuild.Tasks` NuGet package](doc/msbuildtask.md) into your projects to pre-compile fast serialization code and run in environments where JIT compilation is not allowed.
-
-## RPC
-
-MessagePack advocated [MessagePack RPC](https://github.com/msgpack-rpc/msgpack-rpc), but work on it has stopped and it is not widely used.
+Learn more about using a mix of your own custom formatters and automatically generated ones in [the Analyzer section](#analyzer).
 
 ### MagicOnion
 
-I've created a gRPC based MessagePack HTTP/2 RPC streaming framework called [MagicOnion](https://github.com/Cysharp/MagicOnion). gRPC usually communicates with Protocol Buffers using IDL. But MagicOnion uses MessagePack for C# and does not need IDL. When communicating C# to C#, schemaless (or rather C# classes as schema) is better than using IDL.
+[MagicOnion](https://github.com/Cysharp/MagicOnion) is a code-first gRPC framework based on grpc-dotnet and MessagePack. gRPC usually communicates with Protocol Buffers using IDL. But MagicOnion uses MessagePack for C# and does not need IDL. When communicating C# to C#, schemaless (or rather C# classes as schema) is better than using IDL.
 
 ### StreamJsonRpc
 
 The StreamJsonRpc library is based on [JSON-RPC](https://www.jsonrpc.org/) and includes [a pluggable formatter architecture](https://github.com/microsoft/vs-streamjsonrpc/blob/master/doc/extensibility.md#alternative-formatters) and as of v2.3 includes [MessagePack support](https://github.com/microsoft/vs-streamjsonrpc/blob/master/doc/extensibility.md#message-formatterss).
 
 ## How to build
-
 See our [contributor's guide](CONTRIBUTING.md).
 
 ## <a name="coc"></a>Code of Conduct
