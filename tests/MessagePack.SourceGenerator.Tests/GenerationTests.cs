@@ -691,10 +691,10 @@ public class MyGenericType<T>
             [MessagePackObject]
             class A {
                 [SerializationConstructor]
-                internal A({|#0:ImmutableList<int> x|}) => this.X = x.ToList();
+                internal A({|#0:ImmutableList<int?> x|}) => this.X = x.ToList();
 
                 [Key(0)]
-                internal List<int> X { get; }
+                internal List<int?> X { get; }
             }
             """;
 
@@ -976,6 +976,169 @@ public class MyGenericType<T>
                 {
                     throw new NotImplementedException();
                 }
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task EmbeddedTypes()
+    {
+        string testSource = /* lang=c#-test */ """
+            using System;
+            using System.Buffers;
+            using System.Collections.Generic;
+            using System.Numerics;
+            using MessagePack;
+
+            [MessagePackObject]
+            public class A
+            {
+                [Key(0)]
+                public Memory<byte> Value1 { get; set; }
+
+                [Key(1)]
+                public Memory<byte>? Value2 { get; set; }
+
+                [Key(2)]
+                public ReadOnlyMemory<byte> Value3 { get; set; }
+
+                [Key(3)]
+                public ReadOnlyMemory<byte>? Value4 { get; set; }
+
+                [Key(4)]
+                public ReadOnlySequence<byte> Value5 { get; set; }
+
+                [Key(5)]
+                public ReadOnlySequence<byte>? Value6 { get; set; }
+
+                [Key(6)]
+                public List<Int16> Value7 { get; set; }
+
+                [Key(7)]
+                public List<Int32> Value8 { get; set; }
+
+                [Key(8)]
+                public List<Int64> Value9 { get; set; }
+
+                [Key(9)]
+                public List<UInt16> Value10 { get; set; }
+
+                [Key(10)]
+                public List<UInt32> Value11 { get; set; }
+
+                [Key(11)]
+                public List<UInt64> Value12 { get; set; }
+
+                [Key(12)]
+                public List<Single> Value13 { get; set; }
+
+                [Key(13)]
+                public List<Double> Value14 { get; set; }
+
+                [Key(14)]
+                public List<Boolean> Value15 { get; set; }
+
+                [Key(15)]
+                public List<byte> Value16 { get; set; }
+
+                [Key(16)]
+                public List<SByte> Value17 { get; set; }
+
+                [Key(17)]
+                public List<Char> Value18 { get; set; }
+
+                [Key(18)]
+                public List<DateTime> Value19 { get; set; }
+
+                [Key(19)]
+                public List<string> Value20 { get; set; }
+
+                [Key(20)]
+                public List<object> Value21 { get; set; }
+
+                [Key(21)]
+                public object[] Value22 { get; set; }
+
+                [Key(22)]
+                public BigInteger Value23 { get; set; }
+
+                [Key(23)]
+                public BigInteger? Value24 { get; set; }
+
+                [Key(24)]
+                public Complex Value25 { get; set; }
+
+                [Key(25)]
+                public Complex? Value26 { get; set; }
+
+                [Key(26)]
+                public Vector2 Value27 { get; set; }
+
+                [Key(27)]
+                public Vector2? Value28 { get; set; }
+
+                [Key(28)]
+                public Vector3 Value29 { get; set; }
+
+                [Key(29)]
+                public Vector3? Value30 { get; set; }
+
+                [Key(30)]
+                public Vector4 Value31 { get; set; }
+
+                [Key(31)]
+                public Vector4? Value32 { get; set; }
+
+                [Key(32)]
+                public Quaternion Value33 { get; set; }
+
+                [Key(33)]
+                public Quaternion? Value34 { get; set; }
+
+                [Key(34)]
+                public Matrix3x2 Value135 { get; set; }
+
+                [Key(35)]
+                public Matrix3x2? Value36 { get; set; }
+
+                [Key(36)]
+                public Matrix4x4 Value137 { get; set; }
+
+                [Key(37)]
+                public Matrix4x4? Value38 { get; set; }
+
+                [Key(38)]
+                public ArraySegment<byte> Value39 { get; set; }
+
+                [Key(39)]
+                public ArraySegment<byte>? Value40 { get; set; }
+            }
+            """;
+
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
+    }
+
+    [Fact]
+    public async Task SystemMemoryTypes()
+    {
+        string testSource = /* lang=c#-test */ """
+            using System;
+            using System.Buffers;
+            using MessagePack;
+
+            [MessagePackObject]
+            public class A
+            {
+                [Key(0)]
+                public Memory<int> Value1 { get; set; }
+
+                [Key(1)]
+                public ReadOnlyMemory<int> Value2 { get; set; }
+
+                [Key(2)]
+                public ReadOnlySequence<int> Value3 { get; set; }
             }
             """;
 
