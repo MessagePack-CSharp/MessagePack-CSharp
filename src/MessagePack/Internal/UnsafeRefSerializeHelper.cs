@@ -1200,19 +1200,19 @@ internal static class UnsafeRefSerializeHelper
                         Unsafe.Add(ref outputIterator, outputOffset) = MessagePackCode.Float32;
                         Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 1), shuffled.GetElement(0));
                         Unsafe.Add(ref outputIterator, outputOffset + 5) = MessagePackCode.Float32;
-                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 6), shuffled.GetElement(0));
+                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 6), shuffled.GetElement(1));
                         Unsafe.Add(ref outputIterator, outputOffset + 10) = MessagePackCode.Float32;
-                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 11), shuffled.GetElement(0));
+                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 11), shuffled.GetElement(2));
                         Unsafe.Add(ref outputIterator, outputOffset + 15) = MessagePackCode.Float32;
-                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 16), shuffled.GetElement(0));
+                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 16), shuffled.GetElement(3));
                         Unsafe.Add(ref outputIterator, outputOffset + 20) = MessagePackCode.Float32;
-                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 21), shuffled.GetElement(0));
+                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 21), shuffled.GetElement(4));
                         Unsafe.Add(ref outputIterator, outputOffset + 25) = MessagePackCode.Float32;
-                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 26), shuffled.GetElement(0));
+                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 26), shuffled.GetElement(5));
                         Unsafe.Add(ref outputIterator, outputOffset + 30) = MessagePackCode.Float32;
-                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 31), shuffled.GetElement(0));
+                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 31), shuffled.GetElement(6));
                         Unsafe.Add(ref outputIterator, outputOffset + 35) = MessagePackCode.Float32;
-                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 35), shuffled.GetElement(0));
+                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 36), shuffled.GetElement(7));
                     }
 
                     writer.Advance(outputLength);
@@ -1241,11 +1241,11 @@ internal static class UnsafeRefSerializeHelper
                         Unsafe.Add(ref outputIterator, outputOffset) = MessagePackCode.Float32;
                         Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 1), shuffled.GetElement(0));
                         Unsafe.Add(ref outputIterator, outputOffset + 5) = MessagePackCode.Float32;
-                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 6), shuffled.GetElement(0));
+                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 6), shuffled.GetElement(1));
                         Unsafe.Add(ref outputIterator, outputOffset + 10) = MessagePackCode.Float32;
-                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 11), shuffled.GetElement(0));
+                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 11), shuffled.GetElement(2));
                         Unsafe.Add(ref outputIterator, outputOffset + 15) = MessagePackCode.Float32;
-                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 16), shuffled.GetElement(0));
+                        Unsafe.WriteUnaligned(ref Unsafe.Add(ref outputIterator, outputOffset + 16), shuffled.GetElement(3));
                     }
 
                     writer.Advance(outputLength);

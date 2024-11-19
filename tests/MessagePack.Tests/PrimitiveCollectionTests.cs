@@ -82,6 +82,12 @@ public class PrimitiveCollectionTests
         [new ushort[17] { sbyte.MaxValue - 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, (ushort)sbyte.MaxValue, sbyte.MaxValue - 1, }], // 1byte
         [new uint[17] { sbyte.MaxValue - 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, (uint)sbyte.MaxValue, sbyte.MaxValue - 1, }], // 1byte
         [new ulong[17] { sbyte.MaxValue - 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, (ulong)sbyte.MaxValue, sbyte.MaxValue - 1, }], // 1byte
+        [new float[15] { float.MinValue, -2f, -3f, -4f, 0f, 1f, 2f, 3f, 4f, 5.43f, 6f, 7f, 12.10f, 11f, float.MaxValue, }],
+        [new float[16] { float.MinValue, -2f, -3f, -4f, 0f, 1f, 2f, 3f, 4f, 5.43f, 6f, 7f, 12.10f, 11f, 12f, float.MaxValue, }],
+        [new float[17] { float.MinValue, -2f, -3f, -4f, 0f, 1f, 2f, 3f, 4f, 5.43f, 6f, 7f, 12.10f, 11f, 12f, 13f, float.MaxValue, }],
+        [new double[15] { double.MinValue, -2.0, -3.0, -4.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.43, 6.0, 7.0, 12.10, 11.0, double.MaxValue, }],
+        [new double[16] { double.MinValue, -2.0, -3.0, -4.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.43, 6.0, 7.0, 12.10, 11.0, 12.0, double.MaxValue, }],
+        [new double[17] { double.MinValue, -2.0, -3.0, -4.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.43, 6.0, 7.0, 12.10, 11.0, 12.0, 13.0, double.MaxValue, }],
     ];
 
     [Theory]
