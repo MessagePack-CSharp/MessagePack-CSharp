@@ -24,12 +24,21 @@ Alternatively you may build from the command line using `msbuild.exe` or:
 
 See the ReadMe for the target directory `src\MessagePack.UnityClient` for information on building and managing with Unity. Unity's CI is managed in `unity.yml` in GitHub Actions.
 
-## Where to find our CI feed
+## How to Publish Package
 
-Once a change is in a shipping branch (e.g. `v1.8`, `v2.0`, `master`), our CI will build it and push the built package
-to [our CI feed](https://dev.azure.com/ils0086/MessagePack-CSharp/_packaging?_a=feed&feed=MessagePack-CI). To depend on
-one of the packages that are on our CI feed (but not yet on nuget.org) you can add this to your nuget.config file:
+Package publishing is triggered via GitHub Actions using workflow_dispatch. Follow these steps:
 
-```xml
-<add key="MessagePack-CI" value="https://pkgs.dev.azure.com/ils0086/MessagePack-CSharp/_packaging/MessagePack-CI/nuget/v3/index.json" />
-```
+1. Select Actions -> "Run release build and publish to NuGet"
+2. Enter a version tag (e.g., `v3.0.1`)
+3. Click "Run workflow"
+
+![image](https://github.com/user-attachments/assets/74886c88-f6d1-4108-8ce1-02d3d1b31f1f)
+
+The workflow will:
+- Update the version in [MessagePack.UnityClient/Assets/Scripts/MessagePack/package.json](https://github.com/MessagePack-CSharp/MessagePack-CSharp/blob/master/src/MessagePack.UnityClient/Assets/Scripts/MessagePack/package.json)
+- Commit and push the change
+- Build the .NET library
+- Publish to [NuGet/MessagePack](https://www.nuget.org/packages/MessagePack)
+- Create a draft GitHub release
+
+After CI completion, edit the release draft to add relevant release notes and announcements.

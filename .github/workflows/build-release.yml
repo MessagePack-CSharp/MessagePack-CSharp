@@ -1,0 +1,62 @@
+name: Run release build and publish to NuGet
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "tag: git tag you want create. (sample v1.0.0)"
+        required: true
+      dry-run:
+        description: "dry-run: false = create release/nuget. true = never create release/nuget."
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  update-packagejson: # for-unity, need to update package.json from tag
+    uses: Cysharp/Actions/.github/workflows/update-packagejson.yaml@main
+    with:
+      file-path: |
+        ./src/MemoryPack.Unity/Assets/MemoryPack.Unity/package.json
+      tag: ${{ inputs.tag }}
+      dry-run: ${{ inputs.dry-run }}
+      push-tag: false
+
+  build-dotnet:
+    needs: [update-packagejson]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - run: echo ${{ needs.update-packagejson.outputs.sha }}
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.update-packagejson.outputs.sha }}
+      - uses: Cysharp/Actions/.github/actions/setup-dotnet@main
+      # pack nuget
+      - run: dotnet build -c Release -p:Version=${{ inputs.tag }}
+      - run: dotnet test -c Release --no-build
+      - run: dotnet pack -c Release --no-build -p:Version=${{ inputs.tag }} -o ./publish
+      - uses: Cysharp/Actions/.github/actions/upload-artifact@main
+        with:
+          name: nuget
+          path: ./publish
+          retention-days: 1
+
+  # release TODO:Cysharp/create-release needs credential
+  # create-release:
+  #   needs: [update-packagejson, build-dotnet]
+  #   uses: Cysharp/Actions/.github/workflows/create-release.yaml@main
+  #   with:
+  #     dry-run: ${{ inputs.dry-run }}
+  #     commit-id: ${{ needs.update-packagejson.outputs.sha }}
+  #     tag: ${{ inputs.tag }}
+  #     nuget-push: true
+  #     release-upload: true
+  #   secrets: inherit
+
+  cleanup:
+    if: ${{ needs.update-packagejson.outputs.is-branch-created == 'true' }}
+    needs: [update-packagejson, create-release]
+    uses: Cysharp/Actions/.github/workflows/clean-packagejson-branch.yaml@main
+    with:
+      branch: ${{ needs.update-packagejson.outputs.branch-name }}

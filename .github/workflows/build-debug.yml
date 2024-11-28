@@ -15,7 +15,7 @@ env:
   BUILD_CONFIG: Debug
 
 jobs:
-  unity:
+  build-dotnet:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
