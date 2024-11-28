@@ -949,6 +949,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="condition">A boolean value.</param>
         /// <exception cref="EndOfStreamException">Thrown if <paramref name="condition"/> is <see langword="false"/>.</exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void ThrowInsufficientBufferUnless(bool condition)
         {
             if (!condition)
