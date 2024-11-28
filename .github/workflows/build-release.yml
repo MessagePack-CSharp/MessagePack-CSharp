@@ -17,7 +17,7 @@ jobs:
     uses: Cysharp/Actions/.github/workflows/update-packagejson.yaml@main
     with:
       file-path: |
-        ./src/MemoryPack.Unity/Assets/MemoryPack.Unity/package.json
+        ./src/MessagePack.UnityClient/Assets/Scripts/MessagePack/package.json
       tag: ${{ inputs.tag }}
       dry-run: ${{ inputs.dry-run }}
       push-tag: false
