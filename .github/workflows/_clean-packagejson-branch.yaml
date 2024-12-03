@@ -1,4 +1,4 @@
-name: (R) Update package.json
+name: (R) Clean package.json branch
 
 on:
   workflow_call:

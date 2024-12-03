@@ -1,46 +1,6 @@
 name: (R) Create Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      commit-id:
-        description: "commit-id: CommitId to create release & tag."
-        required: false
-        type: string
-      dry-run:
-        description: "dry-run: true = no upload. false = dry run changes && delete release after 60s."
-        required: true
-        type: boolean
-      require-validation:
-        description: "require-validation: true require validation must pass, false to keep going even validation failed."
-        required: false
-        type: boolean
-        default: true
-      tag:
-        description: "tag: Git tag to create. (sample 1.0.0)"
-        required: true
-        type: string
-      # nuget
-      nuget-push:
-        description: "nuget-push: true = upload nuget package. false = not upload"
-        required: false
-        type: boolean
-        default: false
-      # release
-      release-asset-path:
-        description: "release assets path to upload. This is a list of paths separated by a newline."
-        required: false
-        type: string
-      release-format: # see: https://docs.github.com/en/actions/learn-github-actions/expressions#format
-        description: "release-format: if 'Ver.{0}' is specified, the release title will be 'Ver.1.0.0'. set '{0}' if no prefix is preferred."
-        required: false
-        type: string
-        default: 'Ver.{0}'
-      release-upload:
-        description: "release-upload: true = upload assets. false = not upload"
-        required: false
-        type: boolean
-        default: false
   workflow_call:
     inputs:
       commit-id:
@@ -78,11 +38,6 @@ on:
         description: "release assets path to upload. This is a list of paths separated by a newline."
         required: false
         type: string
-      release-format: # see: https://docs.github.com/en/actions/learn-github-actions/expressions#format
-        description: "Release format. (if 'Ver.{0}' is specified, the release title will be 'Ver.1.0.0'. set '{0}' if no prefix is preferred.)"
-        required: false
-        type: string
-        default: 'Ver.{0}'
       release-upload:
         description: "true = upload assets. false = not upload"
         required: false
@@ -147,12 +102,12 @@ jobs:
           git tag ${{ inputs.tag }}
           git push origin ${{ inputs.tag }}
       - name: Create Release
-        run: gh release create ${{ inputs.tag }} --draft --verify-tag --title "${{ format(inputs.release-format, inputs.tag) }}" --generate-notes
+        run: gh release create ${{ inputs.tag }} --draft --verify-tag --title "${{ inputs.tag }}" --generate-notes
       - name: Wait and Verify Release Name is expected
         run: |
           sleep 5s
           actual=$(gh api --paginate /repos/${{ github.repository }}/releases?per_page=100 --jq '.[] | select(.tag_name == "${{ inputs.tag }}") | .name')
-          expected="${{ format(inputs.release-format, inputs.tag) }}"
+          expected="${{ inputs.tag }}"
           if [[ "$actual" != "$expected" ]]; then
             echo "Release name is not as expected. expected: $expected, actual: $actual"
             exit 1
