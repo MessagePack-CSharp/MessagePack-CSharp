@@ -22,11 +22,9 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
-    - uses: actions/setup-dotnet@v4
-      with:
-        global-json-file: global.json
+    - uses: ./.github/actions/setup-dotnet
     - run: dotnet build -c ${{ env.BUILD_CONFIG }} # require dotnet build (Debug) before Unity build.
-    
+
     - name: restore and run local tool for NuGetForUnity
       working-directory: ./src/MessagePack.UnityClient
       run: |
@@ -59,6 +57,7 @@ jobs:
     - name: Execute UnitTest
       run: ./src/MessagePack.UnityClient/bin/UnitTest/StandaloneLinux64_IL2CPP/test
 
-    - uses: Cysharp/Actions/.github/actions/check-metas@main # check meta files
+    # check meta files
+    - uses: ./.github/actions/check-metas
       with:
         directory: src/MessagePack.UnityClient
