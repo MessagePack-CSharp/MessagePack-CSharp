@@ -71,6 +71,20 @@ jobs:
         run: |
           while read -r asset_path; do
             if [[ "${asset_path}" == "" ]]; then continue; fi
+            # is it a wildcard?
+            # shellcheck disable=SC2086
+            if [[ "$asset_path" == *\** || "$asset_path" == *\?* ]]; then
+              # shellcheck disable=SC2086
+              if ! ls -l ${asset_path}; then
+                echo "Specified nuget package not found. path: $asset_path"
+                if [[ "${asset_path}" == *.nupkg ]]; then
+                  echo ".nupkg must be included in the artifact."
+                  exit 1
+                fi
+              fi
+              continue
+            fi
+            # is it a file?
             if [[ ! -f "${asset_path}" ]]; then
               echo "Specified asset not found. path: ${asset_path}"
               exit 1
@@ -113,6 +127,15 @@ jobs:
         run: |
           while read -r asset_path; do
             if [[ "${asset_path}" == "" ]]; then continue; fi
+            # is it a wildcard?
+            # shellcheck disable=SC2086
+            if [[ "$asset_path" == *\** || "$asset_path" == *\?* ]]; then
+              for file in ${asset_path}; do
+                gh release upload ${{ inputs.tag }} "${file}"
+              done
+              continue
+            fi
+            # is it a file?
             gh release upload ${{ inputs.tag }} "${asset_path}"
           done <<< "${{ inputs.release-asset-path }}"
         if: ${{ inputs.release-upload }}
@@ -137,7 +160,7 @@ jobs:
           done <<< "${{ inputs.nuget-path }}"
 
       # Clean up
-      - name: Clean up. Wait 60s and delete releas if dry-run or failure. (dry-run=${{ inputs.dry-run }}})
+      - name: Clean up. Wait 60s and delete release if dry-run or failure. (dry-run=${{ inputs.dry-run }}})
         if: ${{ inputs.dry-run || failure() }}
         run: |
           if gh release list | grep Draft | grep ${{ inputs.tag }}; then

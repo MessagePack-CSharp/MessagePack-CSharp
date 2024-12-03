@@ -56,14 +56,8 @@ jobs:
       nuget-push: true
       release-upload: true
       release-asset-path: |
-        ./publish/MessagePack.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
-        MessagePack.Annotations.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
-        MessagePack.AspNetCoreMvcFormatter.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
-        MessagePack.Experimental.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
-        MessagePack.ImmutableCollection.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
-        MessagePack.ReactiveProperty.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
-        MessagePack.UnityShims.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
-        MessagePackAnalyzer.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
+        ./nuget/*.nupkg
+        ./nuget/*.snupkg
       tag: ${{ inputs.tag }}
     secrets: inherit
 
