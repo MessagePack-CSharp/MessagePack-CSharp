@@ -52,15 +52,18 @@ jobs:
       tag: ${{ steps.trim.outputs.tag }}
       normalized_tag: ${{ steps.trim.outputs.normalized_tag }}
     steps:
+      - name: tag must begin with v
+        run: |
+          input_tag="${{ inputs.tag }}"
+          if [[ "$input_tag" != v* ]]; then
+            echo "Tag must begin with v. Current tag: $input_tag"
+            exit 1
+          fi
       - name: Set version without "v" prefix
         id: trim
         run: |
           input_tag="${{ inputs.tag }}"
-          if [[ "$input_tag" == v* ]]; then
-            normalized_tag="${input_tag:1}"
-          else
-            normalized_tag="$input_tag"
-          fi
+          normalized_tag="${input_tag:1}"
           echo "normalized_tag=$normalized_tag" | tee -a "$GITHUB_OUTPUT"
           echo "tag=${{ inputs.tag }}" | tee -a "$GITHUB_OUTPUT"
 
