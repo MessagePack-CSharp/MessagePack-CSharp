@@ -7,11 +7,6 @@ on:
         description: "package.json path to update. You can input multiline paths. Supported files are `package.json`, `plugin.cfg` and `Directory.Build.props`"
         required: true
         type: string
-      require-validation:
-        description: "true require validation must pass, false to keep going even validation failed."
-        required: false
-        type: boolean
-        default: true
       tag:
         description: "git tag you want create. (sample v1.0.0)"
         required: true
@@ -25,11 +20,6 @@ on:
         required: false
         type: boolean
         default: true
-      ref:
-        description: "checkout ref"
-        required: false
-        type: string
-        default: ''
     outputs:
       sha:
         description: "Git commit sha after package.json has changed."
@@ -82,8 +72,6 @@ jobs:
           echo "branch-name=test-release/${{ inputs.tag }}" | tee -a "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.ref }}
 
       # package.json
       # "version": 1.2.3 -> "version": 2.0.0
@@ -159,9 +147,6 @@ jobs:
             git commit -m "feat: Update package.json to ${{ needs.validate.outputs.normalized_tag }}" -m "Commit by [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" -a
             echo "sha=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
             echo "is-branch-created=${{ inputs.dry-run }}" | tee -a "$GITHUB_OUTPUT"
-          elif [[ "${{ inputs.ref }}" != "" ]]; then
-            echo "sha=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
-            echo "is-branch-created=false" | tee -a "$GITHUB_OUTPUT"
           else
             echo "sha=" | tee -a "$GITHUB_OUTPUT"
             echo "is-branch-created=false" | tee -a "$GITHUB_OUTPUT"
@@ -176,7 +161,6 @@ jobs:
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }} # auto generated token
-          branch: ${{ inputs.ref }}
           tags: ${{ inputs.push-tag }}
 
       - name: Push changes (dry-run)

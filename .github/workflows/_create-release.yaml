@@ -11,11 +11,6 @@ on:
         description: "true = no upload. false = dry run changes && delete release after 60s."
         required: true
         type: boolean
-      require-validation:
-        description: "true require validation must pass, false to keep going even validation failed."
-        required: false
-        type: boolean
-        default: true
       tag:
         description: "Git tag to create. (sample 1.0.0)"
         required: true
