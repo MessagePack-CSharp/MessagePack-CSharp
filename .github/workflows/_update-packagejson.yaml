@@ -96,9 +96,6 @@ jobs:
               if [[ "${file_name}" == "package.json" ]]; then
                 # Unity `"version": "VersionString",`
                 sed -i -e "s/\(\"version\":\) \"\(.*\)\",/\1 \"${{ needs.validate.outputs.normalized_tag }}\",/" "${file_path}"
-              elif [[ "${file_name}" == "plugin.cfg" ]]; then
-                # Godot `version="VersionString"`
-                sed -i -e "s/\(version=\)\"\(.*\)\"/\1\"${{ needs.validate.outputs.normalized_tag }}\"/" "${file_path}"
               elif [[ "${file_name}" == "Directory.Build.props" ]]; then
                 # .NET `<VersionPrefix>VersionString</VersionPrefix>`
                 sed -i -e 's|<VersionPrefix>.*</VersionPrefix>|<VersionPrefix>${{ needs.validate.outputs.normalized_tag }}</VersionPrefix>|g' "${file_path}"
@@ -115,8 +112,6 @@ jobs:
             echo "::group::Validate Change"
               if [[ "${file_name}" == "package.json" ]]; then
                 actual=$(grep "version" "$file_path" | cut -d ':' -f 2 | tr -d ',' | tr -d '"' | tr -d ' ')
-              elif [[ "${file_name}" == "plugin.cfg" ]]; then
-                actual=$(grep "version=" "$file_path" | cut -d '=' -f 2 | tr -d '"')
               elif [[ "${file_name}" == "Directory.Build.props" ]]; then
                 # -P is for perl regex, only available in GNU grep
                 actual=$(grep -oP '<VersionPrefix>\K.*(?=</VersionPrefix>)' "$file_path")
