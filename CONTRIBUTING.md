@@ -2,7 +2,7 @@
 
 ## Dependencies
 
-* [Visual Studio 2019](https://visualstudio.microsoft.com/)
+* [Visual Studio 2022](https://visualstudio.microsoft.com/)
 * [Unity Editor](https://unity3d.com/unity/editor) (optional)
 * .NET Core SDK and runtimes (run `init` to install)
 
@@ -14,7 +14,7 @@ To get VS to find the toolsets when launched from the Start Menu, run `init -Ins
 
 ## How to Build
 
-Open `MessagePack.sln` on Visual Studio 2019.
+Open `MessagePack.sln` on Visual Studio 2022.
 
 Alternatively you may build from the command line using `msbuild.exe` or:
 
@@ -42,3 +42,16 @@ The workflow will:
 - Create a draft GitHub release
 
 After CI completion, edit the release draft to add relevant release notes and announcements.
+
+### Secret
+
+The following secrets are managed at the organization level:
+
+* `UNITY_EMAIL`
+* `UNITY_LICENSE`
+* `UNITY_PASSWORD`
+* `NUGET_KEY`
+
+The `UNITY_*` secrets are personal license keys required for Unity builds.
+
+`NUGET_KEY` is a key required for releasing nupkg files, and since it has a 365-day expiration period, the key needs to be regenerated when it expires.
