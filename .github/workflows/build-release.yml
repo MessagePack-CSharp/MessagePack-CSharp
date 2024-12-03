@@ -13,15 +13,17 @@ on:
         type: boolean
 
 jobs:
-  update-packagejson: # for-unity, need to update package.json from tag
-    uses: Cysharp/Actions/.github/workflows/update-packagejson.yaml@main
+  # for unity. need update package.json from tag
+  update-packagejson:
+    uses: ./.github/workflows/_update-packagejson.yaml
     with:
       file-path: |
         ./src/MessagePack.UnityClient/Assets/Scripts/MessagePack/package.json
       tag: ${{ inputs.tag }}
       dry-run: ${{ inputs.dry-run }}
-      push-tag: false
+      push-tag: true
 
+  # for dotnet. Build nuget package
   build-dotnet:
     needs: [update-packagejson]
     runs-on: ubuntu-latest
@@ -31,32 +33,37 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.update-packagejson.outputs.sha }}
-      - uses: Cysharp/Actions/.github/actions/setup-dotnet@main
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
       # pack nuget
-      - run: dotnet build -c Release -p:Version=${{ inputs.tag }}
+      - run: dotnet build -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }}
       - run: dotnet test -c Release --no-build
-      - run: dotnet pack -c Release --no-build -p:Version=${{ inputs.tag }} -o ./publish
-      - uses: Cysharp/Actions/.github/actions/upload-artifact@main
+      - run: dotnet pack -c Release --no-build -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish
+      - name: upload artifacts
+        uses: actions/upload-artifact@v4 # must sync with actions/download-artifact@v4 in create-release
         with:
           name: nuget
           path: ./publish
-          retention-days: 1
+          if-no-files-found: 'error' # default 'warn'
+          retention-days: 1 # expire in 1 day
 
-  # release TODO:Cysharp/create-release needs credential
-  # create-release:
-  #   needs: [update-packagejson, build-dotnet]
-  #   uses: Cysharp/Actions/.github/workflows/create-release.yaml@main
-  #   with:
-  #     dry-run: ${{ inputs.dry-run }}
-  #     commit-id: ${{ needs.update-packagejson.outputs.sha }}
-  #     tag: ${{ inputs.tag }}
-  #     nuget-push: true
-  #     release-upload: true
-  #   secrets: inherit
+  # create release and upload nuget
+  create-release:
+    needs: [update-packagejson, build-dotnet]
+    uses: ./.github/workflows/_create-release.yaml
+    with:
+      commit-id: ${{ needs.update-packagejson.outputs.sha }}
+      dry-run: ${{ inputs.dry-run }}
+      nuget-push: true
+      release-upload: true
+      tag: ${{ inputs.tag }}
+    secrets: inherit
 
+  # delete dry-run created git branch
   cleanup:
     if: ${{ needs.update-packagejson.outputs.is-branch-created == 'true' }}
     needs: [update-packagejson, create-release]
-    uses: Cysharp/Actions/.github/workflows/clean-packagejson-branch.yaml@main
+    uses: ./.github/workflows/_clean-packagejson-branch.yaml
     with:
       branch: ${{ needs.update-packagejson.outputs.branch-name }}
