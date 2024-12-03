@@ -23,7 +23,11 @@ namespace MessagePack
         /// Gets an instance preconfigured with settings that omit hash collision resistance protections.
         /// Useful for deserializing fully-trusted and valid msgpack sequences.
         /// </summary>
-        public static readonly MessagePackSecurity TrustedData = new MessagePackSecurity();
+        public static readonly MessagePackSecurity TrustedData = new MessagePackSecurity()
+        {
+            HashCollisionResistant = false,
+            MaximumObjectGraphDepth = 500,
+        };
 
         /// <summary>
         /// Gets an instance preconfigured with protections applied with reasonable settings for deserializing untrusted msgpack sequences.
