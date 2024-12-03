@@ -109,9 +109,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.commit-id }}
-      - uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: global.json
+      - uses: ./.github/actions/setup-dotnet
 
       # Download(All) Artifacts to $GITHUB_WORKSPACE
       - name: donload artifacts
