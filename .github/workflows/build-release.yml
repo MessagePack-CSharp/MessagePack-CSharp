@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v4 # must sync with actions/download-artifact@v4 in create-release
         with:
           name: nuget
-          path: ./publish
+          path: ./nuget/
           if-no-files-found: 'error' # default 'warn'
           retention-days: 1 # expire in 1 day
 
@@ -55,6 +55,15 @@ jobs:
       dry-run: ${{ inputs.dry-run }}
       nuget-push: true
       release-upload: true
+      release-asset-path: |
+        ./publish/MessagePack.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
+        MessagePack.Annotations.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
+        MessagePack.AspNetCoreMvcFormatter.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
+        MessagePack.Experimental.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
+        MessagePack.ImmutableCollection.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
+        MessagePack.ReactiveProperty.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
+        MessagePack.UnityShims.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
+        MessagePackAnalyzer.${{ needs.update-packagejson.outputs.normalized_tag }}.nupkg
       tag: ${{ inputs.tag }}
     secrets: inherit
 
