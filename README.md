@@ -1608,6 +1608,8 @@ An `IFormatterResolver` is also generated that bundles all source generated and 
 The `StandardResolver` includes the `SourceGeneratedFormatterResolver` which discovers and uses your source generated resolver automatically.
 
 Therefore, in the usual scenario, it will work with AOT Safe without any special handling.
+If you prefer to restrict your resolver to source-generated formatters, you should use the `MessagePack.GeneratedMessagePackResolver`, which is source generated into your project for that purpose.
+This type's name and namespace can be customized by applying `[GeneratedMessagePackResolver]` to a `partial class` that you define, at which point that class becomes the resolver for you to use.
 
 At runtime, if a source generated or hand-written formatter cannot be found for a given `[MessagePackObject]` type, MessagePack will generate the formatters on the fly using [Reflection.Emit](https://learn.microsoft.com/dotnet/api/system.reflection.emit.ilgenerator) to create highly-tuned formatters for each type.
 This code generation has a minor upfront performance cost.
