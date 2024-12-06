@@ -80,12 +80,6 @@ To install with NuGet, just install the `MessagePack` package:
 Install-Package MessagePack
 ```
 
-Install the optional C# [analyzers](doc/analyzers/index.md) package to get warnings about coding mistakes and automatic fix suggestions to save you time:
-
-```ps1
-Install-Package MessagePackAnalyzer
-```
-
 There are also a range of official and third party Extension Packages available (learn more in our [extensions section](#extensions)):
 
 ```ps1
@@ -163,7 +157,7 @@ By default, a `MessagePackObject` annotation is required. This can be made optio
 
 ## Analyzer
 
-The MessagePackAnalyzer package aids with:
+The MessagePackAnalyzer package(includes in default) aids with:
 
 1. Produces compiler warnings upon incorrect attribute use, member accessibility, and more.
 1. Automating attributing of your serializable classes and members.
