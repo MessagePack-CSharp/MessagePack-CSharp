@@ -7,6 +7,8 @@
     <Title>MessagePack for C#, Experimental Plugins</Title>
     <Description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Experimental implementations.</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer</PackageTags>
+    <!-- TODO:v3.0.3 upload issue so disable temporary -->
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
