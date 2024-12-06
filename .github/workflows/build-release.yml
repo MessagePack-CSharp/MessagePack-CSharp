@@ -47,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v4 # must sync with actions/download-artifact@v4 in create-release
         with:
           name: nuget
-          path: ./nuget/
+          path: ./publish/
           if-no-files-found: 'error' # default 'warn'
           retention-days: 1 # expire in 1 day
 
