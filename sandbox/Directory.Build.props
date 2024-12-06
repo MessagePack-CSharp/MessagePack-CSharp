@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <NonShipping>true</NonShipping>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove($(MSBuildThisFile), $(MSBuildThisFileDirectory)..))" />
+</Project>

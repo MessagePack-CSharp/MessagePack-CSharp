@@ -50,7 +50,3 @@ namespace PerfBenchmarkDotNet
         public int DeserializeLz4BlockArray() => MessagePackSerializer.Deserialize<int>(binLz4ContiguousBlock, lz4ContiguousBlockOptions);
     }
 }
-
-#pragma warning restore SA1200 // Using directives should be placed correctly
-#pragma warning restore SA1403 // File may only contain a single namespace
-

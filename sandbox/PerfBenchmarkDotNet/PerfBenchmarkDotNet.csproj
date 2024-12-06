@@ -1,9 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net472;net6.0</TargetFrameworks>
+    <TargetFrameworks>net472;net8.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IncludeAll Condition="'$(IncludeAll)'==''">true</IncludeAll>
+    <IncludeJil Condition="'$(IncludeJil)'=='' and '$(IncludeAll)'=='true'">true</IncludeJil>
+    <IncludeMsgPackCli Condition="'$(IncludeMsgPackCli)'=='' and '$(IncludeAll)'=='true'">true</IncludeMsgPackCli>
+    <IncludeProtobuf Condition="'$(IncludeProtobuf)'=='' and '$(IncludeAll)'=='true'">true</IncludeProtobuf>
+    <IncludeZeroFormatter Condition="'$(IncludeZeroFormatter)'=='' and '$(IncludeAll)'=='true'">true</IncludeZeroFormatter>
+    <IncludeNewtonsoftJson Condition="'$(IncludeNewtonsoftJson)'=='' and '$(IncludeAll)'=='true'">true</IncludeNewtonsoftJson>
+    <IncludeHyperion Condition="'$(IncludeHyperion)'=='' and '$(IncludeAll)'=='true'">true</IncludeHyperion>
+
+    <DefineConstants Condition="'$(IncludeJil)'=='true'">$(DefineConstants);Jil</DefineConstants>
+    <DefineConstants Condition="'$(IncludeMsgPackCli)'=='true'">$(DefineConstants);MsgPackCli</DefineConstants>
+    <DefineConstants Condition="'$(IncludeProtobuf)'=='true'">$(DefineConstants);Protobuf</DefineConstants>
+    <DefineConstants Condition="'$(IncludeZeroFormatter)'=='true'">$(DefineConstants);ZeroFormatter</DefineConstants>
+    <DefineConstants Condition="'$(IncludeNewtonsoftJson)'=='true'">$(DefineConstants);NewtonsoftJson</DefineConstants>
+    <DefineConstants Condition="'$(IncludeHyperion)'=='true'">$(DefineConstants);Hyperion</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MessagePack_1_6_0_3, Version=1.6.0.3, Culture=neutral, PublicKeyToken=b4a0369545f0a1be, processorArchitecture=MSIL">
@@ -13,18 +29,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" version="0.11.4" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.11.4" />
-    <PackageReference Include="Hyperion" version="0.9.6" />
-    <PackageReference Include="Jil" version="2.15.4" />
-    <PackageReference Include="MessagePack" version="1.4.3" />
-    <PackageReference Include="MsgPack.Cli" version="0.9.0-rc1" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.8.57" />
-    <PackageReference Include="Newtonsoft.Json" version="10.0.3" />
-    <PackageReference Include="protobuf-net" version="2.3.2" />
-    <PackageReference Include="RandomFixtureKit" Version="1.0.0" />
-    <PackageReference Include="Sigil" version="4.7.0" />
-    <PackageReference Include="ZeroFormatter" version="1.6.4" />
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" />
+    <PackageReference Include="Hyperion" />
+    <PackageReference Include="Jil" />
+    <PackageReference Include="MsgPack.Cli" />
+    <PackageReference Include="Nerdbank.Streams" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="protobuf-net" />
+    <PackageReference Include="RandomFixtureKit" />
+    <PackageReference Include="ZeroFormatter" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack.Annotations\MessagePack.Annotations.csproj">

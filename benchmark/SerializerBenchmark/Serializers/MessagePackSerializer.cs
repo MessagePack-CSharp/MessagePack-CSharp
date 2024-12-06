@@ -1,9 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-extern alias oldmsgpack;
 extern alias newmsgpack;
+extern alias oldmsgpack;
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace Benchmark.Serializers
@@ -205,9 +206,9 @@ namespace Benchmark.Serializers
 
         private static class Cache<T>
         {
-            #pragma warning disable SA1401 // Fields should be private
+#pragma warning disable SA1401 // Fields should be private
             public static newmsgpack::MessagePack.Formatters.IMessagePackFormatter<T> Formatter;
-            #pragma warning restore SA1401 // Fields should be private
+#pragma warning restore SA1401 // Fields should be private
 
             static Cache()
             {

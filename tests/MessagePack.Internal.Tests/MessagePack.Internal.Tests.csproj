@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
-    <CodeAnalysisRuleSet>..\MessagePack.Tests\MessagePack.Tests.ruleset</CodeAnalysisRuleSet>
+    <TargetFrameworks>net8.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -9,18 +8,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MsgPack.Cli" version="0.9.0-beta2" />
-    <PackageReference Include="xunit" version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.0" />
+    <PackageReference Include="MsgPack.Cli" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\MessagePackBinaryTest.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\TestConstants.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\MessagePackReaderTests.cs" />
+    <Compile Include="..\MessagePack.Tests\MessagePackBinaryTest.cs" />
+    <Compile Include="..\MessagePack.Tests\TestConstants.cs" />
+    <Compile Include="..\MessagePack.Tests\MessagePackReaderTests.cs" />
     <Compile Include="..\MessagePack.Tests\MessagePackReaderTests.ReadInt.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\MessagePackReaderTests.ReadString.cs" />
+    <Compile Include="..\MessagePack.Tests\MessagePackReaderTests.ReadString.cs" />
     <Compile Include="..\MessagePack.Tests\Utils\ChainingAssertion.Xunit.cs" />
   </ItemGroup>
 </Project>

@@ -4,7 +4,7 @@
 /* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
  * CHANGE THE .tt FILE INSTEAD. */
 
-#if !UNITY_2018_3_OR_NEWER
+#pragma warning disable SA1402 // File may only contain a single type
 
 using System;
 using System.Buffers;
@@ -897,5 +897,3 @@ namespace MessagePack.Internal
         }
     }
 }
-
-#endif

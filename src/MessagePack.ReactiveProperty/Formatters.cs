@@ -8,6 +8,7 @@ using System.Reactive.Concurrency;
 using MessagePack.Formatters;
 using Reactive.Bindings;
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.ReactivePropertyExtension
@@ -109,9 +110,9 @@ namespace MessagePack.ReactivePropertyExtension
     }
 
     // [Mode, SchedulerId, Value] : length should be three.
-    public class ReactivePropertyFormatter<T> : IMessagePackFormatter<ReactiveProperty<T>>
+    public class ReactivePropertyFormatter<T> : IMessagePackFormatter<ReactiveProperty<T>?>
     {
-        public void Serialize(ref MessagePackWriter writer, ReactiveProperty<T> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, ReactiveProperty<T>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -127,7 +128,7 @@ namespace MessagePack.ReactivePropertyExtension
             }
         }
 
-        public ReactiveProperty<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public ReactiveProperty<T>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -332,9 +333,9 @@ namespace MessagePack.ReactivePropertyExtension
     }
 
     // [Mode, Value]
-    public class ReactivePropertySlimFormatter<T> : IMessagePackFormatter<ReactivePropertySlim<T>>
+    public class ReactivePropertySlimFormatter<T> : IMessagePackFormatter<ReactivePropertySlim<T>?>
     {
-        public void Serialize(ref MessagePackWriter writer, ReactivePropertySlim<T> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, ReactivePropertySlim<T>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -349,7 +350,7 @@ namespace MessagePack.ReactivePropertyExtension
             }
         }
 
-        public ReactivePropertySlim<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public ReactivePropertySlim<T>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

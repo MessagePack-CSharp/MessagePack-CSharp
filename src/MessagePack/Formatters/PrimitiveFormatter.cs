@@ -6,7 +6,15 @@
 
 using System;
 using System.Buffers;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using MessagePack.Internal;
 
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
+
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
@@ -63,7 +71,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class Int16ArrayFormatter : IMessagePackFormatter<Int16[]>
+    public sealed class Int16ArrayFormatter : IMessagePackFormatter<Int16[]?>
     {
         public static readonly Int16ArrayFormatter Instance = new Int16ArrayFormatter();
 
@@ -71,7 +79,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int16[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Int16[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -80,14 +88,19 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
+                if (value.Length > 0)
                 {
-                    writer.Write(value[i]);
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
                 }
             }
         }
 
-        public Int16[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Int16[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -109,6 +122,58 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+
+#if NET8_0_OR_GREATER
+    public sealed class Int16ListFormatter : IMessagePackFormatter<List<Int16>?>
+    {
+        public static readonly Int16ListFormatter Instance = new Int16ListFormatter();
+
+        private Int16ListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<Int16>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<Int16>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<Int16>(len);
+            CollectionsMarshal.SetCount(list, len);
+            var span = CollectionsMarshal.AsSpan(list);
+            for (int i = 0; i < len; i++)
+            {
+                span[i] = reader.ReadInt16();
+            }
+
+            return list;
+        }
+    }
+#endif
 
     public sealed class Int32Formatter : IMessagePackFormatter<Int32>
     {
@@ -162,7 +227,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class Int32ArrayFormatter : IMessagePackFormatter<Int32[]>
+    public sealed class Int32ArrayFormatter : IMessagePackFormatter<Int32[]?>
     {
         public static readonly Int32ArrayFormatter Instance = new Int32ArrayFormatter();
 
@@ -170,7 +235,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int32[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Int32[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -179,14 +244,19 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
+                if (value.Length > 0)
                 {
-                    writer.Write(value[i]);
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
                 }
             }
         }
 
-        public Int32[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Int32[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -208,6 +278,58 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+
+#if NET8_0_OR_GREATER
+    public sealed class Int32ListFormatter : IMessagePackFormatter<List<Int32>?>
+    {
+        public static readonly Int32ListFormatter Instance = new Int32ListFormatter();
+
+        private Int32ListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<Int32>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<Int32>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<Int32>(len);
+            CollectionsMarshal.SetCount(list, len);
+            var span = CollectionsMarshal.AsSpan(list);
+            for (int i = 0; i < len; i++)
+            {
+                span[i] = reader.ReadInt32();
+            }
+
+            return list;
+        }
+    }
+#endif
 
     public sealed class Int64Formatter : IMessagePackFormatter<Int64>
     {
@@ -261,7 +383,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class Int64ArrayFormatter : IMessagePackFormatter<Int64[]>
+    public sealed class Int64ArrayFormatter : IMessagePackFormatter<Int64[]?>
     {
         public static readonly Int64ArrayFormatter Instance = new Int64ArrayFormatter();
 
@@ -269,7 +391,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int64[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Int64[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -278,14 +400,19 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
+                if (value.Length > 0)
                 {
-                    writer.Write(value[i]);
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
                 }
             }
         }
 
-        public Int64[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Int64[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -307,6 +434,58 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+
+#if NET8_0_OR_GREATER
+    public sealed class Int64ListFormatter : IMessagePackFormatter<List<Int64>?>
+    {
+        public static readonly Int64ListFormatter Instance = new Int64ListFormatter();
+
+        private Int64ListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<Int64>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<Int64>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<Int64>(len);
+            CollectionsMarshal.SetCount(list, len);
+            var span = CollectionsMarshal.AsSpan(list);
+            for (int i = 0; i < len; i++)
+            {
+                span[i] = reader.ReadInt64();
+            }
+
+            return list;
+        }
+    }
+#endif
 
     public sealed class UInt16Formatter : IMessagePackFormatter<UInt16>
     {
@@ -360,7 +539,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class UInt16ArrayFormatter : IMessagePackFormatter<UInt16[]>
+    public sealed class UInt16ArrayFormatter : IMessagePackFormatter<UInt16[]?>
     {
         public static readonly UInt16ArrayFormatter Instance = new UInt16ArrayFormatter();
 
@@ -368,7 +547,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt16[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, UInt16[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -377,14 +556,19 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
+                if (value.Length > 0)
                 {
-                    writer.Write(value[i]);
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
                 }
             }
         }
 
-        public UInt16[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public UInt16[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -406,6 +590,58 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+
+#if NET8_0_OR_GREATER
+    public sealed class UInt16ListFormatter : IMessagePackFormatter<List<UInt16>?>
+    {
+        public static readonly UInt16ListFormatter Instance = new UInt16ListFormatter();
+
+        private UInt16ListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<UInt16>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<UInt16>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<UInt16>(len);
+            CollectionsMarshal.SetCount(list, len);
+            var span = CollectionsMarshal.AsSpan(list);
+            for (int i = 0; i < len; i++)
+            {
+                span[i] = reader.ReadUInt16();
+            }
+
+            return list;
+        }
+    }
+#endif
 
     public sealed class UInt32Formatter : IMessagePackFormatter<UInt32>
     {
@@ -459,7 +695,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class UInt32ArrayFormatter : IMessagePackFormatter<UInt32[]>
+    public sealed class UInt32ArrayFormatter : IMessagePackFormatter<UInt32[]?>
     {
         public static readonly UInt32ArrayFormatter Instance = new UInt32ArrayFormatter();
 
@@ -467,7 +703,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt32[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, UInt32[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -476,14 +712,19 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
+                if (value.Length > 0)
                 {
-                    writer.Write(value[i]);
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
                 }
             }
         }
 
-        public UInt32[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public UInt32[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -505,6 +746,58 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+
+#if NET8_0_OR_GREATER
+    public sealed class UInt32ListFormatter : IMessagePackFormatter<List<UInt32>?>
+    {
+        public static readonly UInt32ListFormatter Instance = new UInt32ListFormatter();
+
+        private UInt32ListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<UInt32>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<UInt32>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<UInt32>(len);
+            CollectionsMarshal.SetCount(list, len);
+            var span = CollectionsMarshal.AsSpan(list);
+            for (int i = 0; i < len; i++)
+            {
+                span[i] = reader.ReadUInt32();
+            }
+
+            return list;
+        }
+    }
+#endif
 
     public sealed class UInt64Formatter : IMessagePackFormatter<UInt64>
     {
@@ -558,7 +851,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class UInt64ArrayFormatter : IMessagePackFormatter<UInt64[]>
+    public sealed class UInt64ArrayFormatter : IMessagePackFormatter<UInt64[]?>
     {
         public static readonly UInt64ArrayFormatter Instance = new UInt64ArrayFormatter();
 
@@ -566,7 +859,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt64[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, UInt64[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -575,14 +868,19 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
+                if (value.Length > 0)
                 {
-                    writer.Write(value[i]);
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
                 }
             }
         }
 
-        public UInt64[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public UInt64[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -604,6 +902,58 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+
+#if NET8_0_OR_GREATER
+    public sealed class UInt64ListFormatter : IMessagePackFormatter<List<UInt64>?>
+    {
+        public static readonly UInt64ListFormatter Instance = new UInt64ListFormatter();
+
+        private UInt64ListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<UInt64>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<UInt64>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<UInt64>(len);
+            CollectionsMarshal.SetCount(list, len);
+            var span = CollectionsMarshal.AsSpan(list);
+            for (int i = 0; i < len; i++)
+            {
+                span[i] = reader.ReadUInt64();
+            }
+
+            return list;
+        }
+    }
+#endif
 
     public sealed class SingleFormatter : IMessagePackFormatter<Single>
     {
@@ -657,7 +1007,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class SingleArrayFormatter : IMessagePackFormatter<Single[]>
+    public sealed class SingleArrayFormatter : IMessagePackFormatter<Single[]?>
     {
         public static readonly SingleArrayFormatter Instance = new SingleArrayFormatter();
 
@@ -665,7 +1015,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Single[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Single[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -674,14 +1024,19 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
+                if (value.Length > 0)
                 {
-                    writer.Write(value[i]);
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
                 }
             }
         }
 
-        public Single[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Single[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -703,6 +1058,58 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+
+#if NET8_0_OR_GREATER
+    public sealed class SingleListFormatter : IMessagePackFormatter<List<Single>?>
+    {
+        public static readonly SingleListFormatter Instance = new SingleListFormatter();
+
+        private SingleListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<Single>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<Single>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<Single>(len);
+            CollectionsMarshal.SetCount(list, len);
+            var span = CollectionsMarshal.AsSpan(list);
+            for (int i = 0; i < len; i++)
+            {
+                span[i] = reader.ReadSingle();
+            }
+
+            return list;
+        }
+    }
+#endif
 
     public sealed class DoubleFormatter : IMessagePackFormatter<Double>
     {
@@ -756,7 +1163,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class DoubleArrayFormatter : IMessagePackFormatter<Double[]>
+    public sealed class DoubleArrayFormatter : IMessagePackFormatter<Double[]?>
     {
         public static readonly DoubleArrayFormatter Instance = new DoubleArrayFormatter();
 
@@ -764,7 +1171,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Double[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Double[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -773,14 +1180,19 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
+                if (value.Length > 0)
                 {
-                    writer.Write(value[i]);
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
                 }
             }
         }
 
-        public Double[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Double[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -802,6 +1214,58 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+
+#if NET8_0_OR_GREATER
+    public sealed class DoubleListFormatter : IMessagePackFormatter<List<Double>?>
+    {
+        public static readonly DoubleListFormatter Instance = new DoubleListFormatter();
+
+        private DoubleListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<Double>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<Double>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<Double>(len);
+            CollectionsMarshal.SetCount(list, len);
+            var span = CollectionsMarshal.AsSpan(list);
+            for (int i = 0; i < len; i++)
+            {
+                span[i] = reader.ReadDouble();
+            }
+
+            return list;
+        }
+    }
+#endif
 
     public sealed class BooleanFormatter : IMessagePackFormatter<Boolean>
     {
@@ -855,7 +1319,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class BooleanArrayFormatter : IMessagePackFormatter<Boolean[]>
+    public sealed class BooleanArrayFormatter : IMessagePackFormatter<Boolean[]?>
     {
         public static readonly BooleanArrayFormatter Instance = new BooleanArrayFormatter();
 
@@ -863,7 +1327,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Boolean[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Boolean[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -872,14 +1336,19 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
+                if (value.Length > 0)
                 {
-                    writer.Write(value[i]);
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
                 }
             }
         }
 
-        public Boolean[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Boolean[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -889,18 +1358,108 @@ namespace MessagePack.Formatters
             var len = reader.ReadArrayHeader();
             if (len == 0)
             {
-                return Array.Empty<Boolean>();
+                return [];
             }
 
             var array = new Boolean[len];
-            for (int i = 0; i < array.Length; i++)
+#if NET6_0_OR_GREATER
+            ref var output = ref MemoryMarshal.GetArrayDataReference(array);
+#else
+            ref var output = ref array[0];
+#endif
+
+            var inputOffset = 0;
+            var sequence = reader.ReadRaw(len);
+            foreach (var memory in sequence)
             {
-                array[i] = reader.ReadBoolean();
+                var inputSpan = memory.Span;
+                if (inputSpan.IsEmpty)
+                {
+                    continue;
+                }
+
+#if NET6_0_OR_GREATER
+                var errorIndex = UnsafeRefDeserializeHelper.Deserialize(ref MemoryMarshal.GetReference(inputSpan), inputSpan.Length, ref Unsafe.Add(ref output, inputOffset));
+#else
+                var errorIndex = UnsafeRefDeserializeHelper.Deserialize(ref Unsafe.AsRef(in inputSpan[0]), inputSpan.Length, ref Unsafe.Add(ref output, inputOffset));
+#endif
+                if (errorIndex >= 0)
+                {
+                    throw new MessagePackSerializationException($"Unexpected msgpack code {inputSpan[errorIndex]} ({MessagePackCode.ToFormatName(inputSpan[errorIndex])}) at {errorIndex + inputOffset} encountered.");
+                }
+
+                inputOffset += inputSpan.Length;
             }
 
             return array;
         }
     }
+
+#if NET8_0_OR_GREATER
+    public sealed class BooleanListFormatter : IMessagePackFormatter<List<Boolean>?>
+    {
+        public static readonly BooleanListFormatter Instance = new BooleanListFormatter();
+
+        private BooleanListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<Boolean>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<Boolean>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<Boolean>(len);
+            CollectionsMarshal.SetCount(list, len);
+            ref var output = ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(list));
+            var inputOffset = 0;
+            var sequence = reader.ReadRaw(len);
+            foreach (var memory in sequence)
+            {
+                var inputSpan = memory.Span;
+                if (inputSpan.IsEmpty)
+                {
+                    continue;
+                }
+
+                var errorIndex = UnsafeRefDeserializeHelper.Deserialize(ref MemoryMarshal.GetReference(inputSpan), inputSpan.Length, ref Unsafe.Add(ref output, inputOffset));
+                if (errorIndex >= 0)
+                {
+                    throw new MessagePackSerializationException($"Unexpected msgpack code {inputSpan[errorIndex]} ({MessagePackCode.ToFormatName(inputSpan[errorIndex])}) at {errorIndex + inputOffset} encountered.");
+                }
+
+                inputOffset += inputSpan.Length;
+            }
+
+            return list;
+        }
+    }
+#endif
 
     public sealed class ByteFormatter : IMessagePackFormatter<Byte>
     {
@@ -954,6 +1513,76 @@ namespace MessagePack.Formatters
         }
     }
 
+#if NET8_0_OR_GREATER
+    public sealed class ByteListFormatter : IMessagePackFormatter<List<Byte>?>
+    {
+        public static readonly ByteListFormatter Instance = new ByteListFormatter();
+
+        private ByteListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<Byte>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.Write(CollectionsMarshal.AsSpan(value));
+            }
+        }
+
+        public List<Byte>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.NextMessagePackType == MessagePackType.Array)
+            {
+                int len = reader.ReadArrayHeader();
+                if (len == 0)
+                {
+                    return [];
+                }
+
+                var list = new List<byte>(len);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    CollectionsMarshal.SetCount(list, len);
+                    var span = CollectionsMarshal.AsSpan(list);
+                    for (int i = 0; i < len; i++)
+                    {
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        span[i] = reader.ReadByte();
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
+
+                return list;
+            }
+            else
+            {
+                var sequence = reader.ReadBytes();
+                if (sequence == null)
+                {
+                    return null;
+                }
+
+                int len = checked((int)sequence.Value.Length);
+                var list = new List<byte>(len);
+                CollectionsMarshal.SetCount(list, len);
+                var span = CollectionsMarshal.AsSpan(list);
+                sequence.Value.CopyTo(span);
+                return list;
+            }
+        }
+    }
+
+#endif
+
     public sealed class SByteFormatter : IMessagePackFormatter<SByte>
     {
         public static readonly SByteFormatter Instance = new SByteFormatter();
@@ -1006,7 +1635,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class SByteArrayFormatter : IMessagePackFormatter<SByte[]>
+    public sealed class SByteArrayFormatter : IMessagePackFormatter<SByte[]?>
     {
         public static readonly SByteArrayFormatter Instance = new SByteArrayFormatter();
 
@@ -1014,7 +1643,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, SByte[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, SByte[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -1023,14 +1652,19 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
+                if (value.Length > 0)
                 {
-                    writer.Write(value[i]);
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
                 }
             }
         }
 
-        public SByte[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public SByte[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -1052,6 +1686,58 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+
+#if NET8_0_OR_GREATER
+    public sealed class SByteListFormatter : IMessagePackFormatter<List<SByte>?>
+    {
+        public static readonly SByteListFormatter Instance = new SByteListFormatter();
+
+        private SByteListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<SByte>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<SByte>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<SByte>(len);
+            CollectionsMarshal.SetCount(list, len);
+            var span = CollectionsMarshal.AsSpan(list);
+            for (int i = 0; i < len; i++)
+            {
+                span[i] = reader.ReadSByte();
+            }
+
+            return list;
+        }
+    }
+#endif
 
     public sealed class CharFormatter : IMessagePackFormatter<Char>
     {
@@ -1105,7 +1791,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class CharArrayFormatter : IMessagePackFormatter<Char[]>
+    public sealed class CharArrayFormatter : IMessagePackFormatter<Char[]?>
     {
         public static readonly CharArrayFormatter Instance = new CharArrayFormatter();
 
@@ -1113,7 +1799,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Char[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Char[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -1122,14 +1808,19 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
+                if (value.Length > 0)
                 {
-                    writer.Write(value[i]);
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetArrayDataReference(value), value.Length);
+#else
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref value[0], value.Length);
+#endif
                 }
             }
         }
 
-        public Char[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Char[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -1151,6 +1842,58 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+
+#if NET8_0_OR_GREATER
+    public sealed class CharListFormatter : IMessagePackFormatter<List<Char>?>
+    {
+        public static readonly CharListFormatter Instance = new CharListFormatter();
+
+        private CharListFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, List<Char>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Count);
+                if (value.Count > 0)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    UnsafeRefSerializeHelper.Serialize(ref writer, ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(value)), value.Count);
+                }
+            }
+        }
+
+        public List<Char>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return [];
+            }
+
+            var list = new List<Char>(len);
+            CollectionsMarshal.SetCount(list, len);
+            var span = CollectionsMarshal.AsSpan(list);
+            for (int i = 0; i < len; i++)
+            {
+                span[i] = reader.ReadChar();
+            }
+
+            return list;
+        }
+    }
+#endif
 
     public sealed class DateTimeFormatter : IMessagePackFormatter<DateTime>
     {
@@ -1204,7 +1947,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class DateTimeArrayFormatter : IMessagePackFormatter<DateTime[]>
+    public sealed class DateTimeArrayFormatter : IMessagePackFormatter<DateTime[]?>
     {
         public static readonly DateTimeArrayFormatter Instance = new DateTimeArrayFormatter();
 
@@ -1212,7 +1955,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, DateTime[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, DateTime[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -1228,7 +1971,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public DateTime[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public DateTime[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

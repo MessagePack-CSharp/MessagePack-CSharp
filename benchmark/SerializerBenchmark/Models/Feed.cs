@@ -1,12 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-extern alias oldmsgpack;
 extern alias newmsgpack;
+extern alias oldmsgpack;
 
 using System.Collections.Generic;
 using ProtoBuf;
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace Benchmark.Models

@@ -16,6 +16,7 @@ using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
+using Perfolizer.Metrology;
 
 namespace Benchmark
 {
@@ -27,7 +28,7 @@ namespace Benchmark
             Job baseConfig = Job.ShortRun.WithIterationCount(1).WithWarmupCount(1);
 
             // Add(baseConfig.With(Runtime.Clr).With(Jit.RyuJit).With(Platform.X64));
-            this.AddJob(baseConfig.WithRuntime(CoreRuntime.Core31).WithJit(Jit.RyuJit).WithPlatform(Platform.X64));
+            this.AddJob(baseConfig.WithEnvironmentVariable(new("DOTNET_TieredPGO", "0")).WithRuntime(CoreRuntime.Core80).WithJit(Jit.RyuJit).WithPlatform(Platform.X64));
 
             this.AddExporter(MarkdownExporter.GitHub);
             this.AddExporter(CsvExporter.Default);
@@ -42,7 +43,7 @@ namespace Benchmark
         {
             public bool SeparateLogicalGroups => false;
 
-            public IEnumerable<BenchmarkCase> GetExecutionOrder(ImmutableArray<BenchmarkCase> benchmarksCase)
+            public IEnumerable<BenchmarkCase> GetExecutionOrder(ImmutableArray<BenchmarkCase> benchmarksCase, IEnumerable<BenchmarkLogicalGroupRule> order)
             {
                 return benchmarksCase;
             }
@@ -57,7 +58,7 @@ namespace Benchmark
                 return null;
             }
 
-            public IEnumerable<IGrouping<string, BenchmarkCase>> GetLogicalGroupOrder(IEnumerable<IGrouping<string, BenchmarkCase>> logicalGroups)
+            public IEnumerable<IGrouping<string, BenchmarkCase>> GetLogicalGroupOrder(IEnumerable<IGrouping<string, BenchmarkCase>> logicalGroups, IEnumerable<BenchmarkLogicalGroupRule> order)
             {
                 return logicalGroups;
             }
@@ -110,7 +111,7 @@ namespace Benchmark
                 var cultureInfo = summary.GetCultureInfo();
                 if (style.PrintUnitsInContent)
                 {
-                    return SizeValue.FromBytes(byteSize).ToString(style.SizeUnit, cultureInfo);
+                    return SizeValue.FromBytes(byteSize).ToString(style.SizeUnit, null, cultureInfo);
                 }
 
                 return byteSize.ToString("0.##", cultureInfo);

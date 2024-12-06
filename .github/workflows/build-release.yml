@@ -1,0 +1,70 @@
+name: Run release build and publish to NuGet
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "tag: git tag you want create. (sample v1.0.0)"
+        required: true
+      dry-run:
+        description: "dry-run: false = create release/nuget. true = never create release/nuget."
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  # for unity. need update package.json from tag
+  update-packagejson:
+    uses: ./.github/workflows/_update-packagejson.yaml
+    with:
+      file-path: |
+        ./src/MessagePack.UnityClient/Assets/Scripts/MessagePack/package.json
+      tag: ${{ inputs.tag }}
+      dry-run: ${{ inputs.dry-run }}
+      push-tag: true
+
+  # for dotnet. Build nuget package
+  build-dotnet:
+    needs: [update-packagejson]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - run: echo ${{ needs.update-packagejson.outputs.sha }}
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.update-packagejson.outputs.sha }}
+      - uses: ./.github/actions/setup-dotnet
+      # pack nuget
+      - run: dotnet build -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }}
+      - run: dotnet test -c Release --no-build
+      - run: dotnet pack -c Release --no-build -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish
+      - name: upload artifacts
+        uses: actions/upload-artifact@v4 # must sync with actions/download-artifact@v4 in create-release
+        with:
+          name: nuget
+          path: ./nuget/
+          if-no-files-found: 'error' # default 'warn'
+          retention-days: 1 # expire in 1 day
+
+  # create release and upload nuget
+  create-release:
+    needs: [update-packagejson, build-dotnet]
+    uses: ./.github/workflows/_create-release.yaml
+    with:
+      commit-id: ${{ needs.update-packagejson.outputs.sha }}
+      dry-run: ${{ inputs.dry-run }}
+      nuget-push: true
+      release-upload: true
+      release-asset-path: |
+        ./nuget/*.nupkg
+        ./nuget/*.snupkg
+      tag: ${{ inputs.tag }}
+    secrets: inherit
+
+  # delete dry-run created git branch
+  cleanup:
+    if: ${{ needs.update-packagejson.outputs.is-branch-created == 'true' }}
+    needs: [update-packagejson, create-release]
+    uses: ./.github/workflows/_clean-packagejson-branch.yaml
+    with:
+      branch: ${{ needs.update-packagejson.outputs.branch-name }}

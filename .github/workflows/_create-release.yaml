@@ -1,0 +1,169 @@
+name: (R) Create Release
+
+on:
+  workflow_call:
+    inputs:
+      commit-id:
+        description: "CommitId to create release & tag."
+        required: true
+        type: string
+      dry-run:
+        description: "true = no upload. false = dry run changes && delete release after 60s."
+        required: true
+        type: boolean
+      tag:
+        description: "Git tag to create. (sample 1.0.0)"
+        required: true
+        type: string
+      # nuget
+      nuget-path:
+        description: "nuget path to upload."
+        required: false
+        type: string
+        default: |
+          ./nuget/*.nupkg
+          ./nuget/*.snupkg
+      nuget-push:
+        description: "true = upload nuget package. false = not upload"
+        required: false
+        type: boolean
+        default: false
+      # release
+      release-asset-path:
+        description: "release assets path to upload. This is a list of paths separated by a newline."
+        required: false
+        type: string
+      release-upload:
+        description: "true = upload assets. false = not upload"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  create-release:
+    name: Create Release
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # auto generated token
+      GH_REPO: ${{ github.repository }}
+      NUGET_KEY: ${{ secrets.NUGET_KEY }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate inputs - unitypackage
+        shell: bash
+        if: ${{ inputs.release-upload && inputs.release-asset-path == '' }}
+        run: |
+          echo "Validation error! 'inputs.release-asset-path' cannot be blank when 'inputs.release-upload' is true."
+          exit 1
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit-id }}
+      - uses: ./.github/actions/setup-dotnet
+
+      # Download(All) Artifacts to $GITHUB_WORKSPACE
+      - name: donload artifacts
+        uses: actions/download-artifact@v4 # must sync with actions/upload-artifact@v4 in build-release
+      - name: Show download aritifacts
+        run: ls -lR
+      - name: Validate package exists in artifact - release assets
+        if: ${{ inputs.release-upload }}
+        run: |
+          while read -r asset_path; do
+            if [[ "${asset_path}" == "" ]]; then continue; fi
+            # is it a wildcard?
+            # shellcheck disable=SC2086
+            if [[ "$asset_path" == *\** || "$asset_path" == *\?* ]]; then
+              # shellcheck disable=SC2086
+              if ! ls -l ${asset_path}; then
+                echo "Specified nuget package not found. path: $asset_path"
+                if [[ "${asset_path}" == *.nupkg ]]; then
+                  echo ".nupkg must be included in the artifact."
+                  exit 1
+                fi
+              fi
+              continue
+            fi
+            # is it a file?
+            if [[ ! -f "${asset_path}" ]]; then
+              echo "Specified asset not found. path: ${asset_path}"
+              exit 1
+            fi
+          done <<< "${{ inputs.release-asset-path }}"
+      - name: Validate package exists in artifact - NuGet
+        if: ${{ inputs.nuget-push }}
+        run: |
+          while read -r nuget_path; do
+            if [[ "${nuget_path}" == "" ]]; then continue; fi
+            # shellcheck disable=SC2086
+            if ! ls -l ${nuget_path}; then
+              echo "Specified nuget package not found. path: $nuget_path"
+              if [[ "${nuget_path}" == *.nupkg ]]; then
+                echo ".nupkg must be included in the artifact."
+                exit 1
+              fi
+            fi
+          done <<< "${{ inputs.nuget-path }}"
+
+      # Create Releases
+      - name: Create Tag
+        run: |
+          git tag ${{ inputs.tag }}
+          git push origin ${{ inputs.tag }}
+      - name: Create Release
+        run: gh release create ${{ inputs.tag }} --draft --verify-tag --title "${{ inputs.tag }}" --generate-notes
+      - name: Wait and Verify Release Name is expected
+        run: |
+          sleep 5s
+          actual=$(gh api --paginate /repos/${{ github.repository }}/releases?per_page=100 --jq '.[] | select(.tag_name == "${{ inputs.tag }}") | .name')
+          expected="${{ inputs.tag }}"
+          if [[ "$actual" != "$expected" ]]; then
+            echo "Release name is not as expected. expected: $expected, actual: $actual"
+            exit 1
+          else
+            echo "Release name is expected! expected: $expected, actual: $actual"
+          fi
+      - name: Upload asset files to release
+        run: |
+          while read -r asset_path; do
+            if [[ "${asset_path}" == "" ]]; then continue; fi
+            # is it a wildcard?
+            # shellcheck disable=SC2086
+            if [[ "$asset_path" == *\** || "$asset_path" == *\?* ]]; then
+              for file in ${asset_path}; do
+                gh release upload ${{ inputs.tag }} "${file}"
+              done
+              continue
+            fi
+            # is it a file?
+            gh release upload ${{ inputs.tag }} "${asset_path}"
+          done <<< "${{ inputs.release-asset-path }}"
+        if: ${{ inputs.release-upload }}
+
+      # Upload to NuGet
+      - name: Upload to NuGet (DryRun=${{ inputs.dry-run }})
+        if: ${{ inputs.nuget-push }}
+        run: |
+          while read -r nuget_path; do
+            if [[ "$nuget_path" == "" ]]; then continue; fi
+            # shellcheck disable=SC2086
+            if ! ls -l ${nuget_path} >/dev/null 2>&1;then
+              echo "skipping nuget push, $nuget_path not found."
+              continue
+            fi
+
+            if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+              echo "(dry run) dotnet nuget push \"${nuget_path}\" --skip-duplicate -s https://api.nuget.org/v3/index.json -k \"${{ env.NUGET_KEY }}\""
+            else
+              dotnet nuget push "${nuget_path}" --skip-duplicate -s https://api.nuget.org/v3/index.json -k "${{ env.NUGET_KEY }}"
+            fi
+          done <<< "${{ inputs.nuget-path }}"
+
+      # Clean up
+      - name: Clean up. Wait 60s and delete release if dry-run or failure. (dry-run=${{ inputs.dry-run }}})
+        if: ${{ inputs.dry-run || failure() }}
+        run: |
+          if gh release list | grep Draft | grep ${{ inputs.tag }}; then
+            sleep 60
+            gh release delete ${{ inputs.tag }} --yes --cleanup-tag
+          fi

@@ -5,19 +5,15 @@
     <RootNamespace>MessagePack.Unity</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-    <IsPackable>true</IsPackable>
     <Title>MessagePack for C# Extension Support for Unity(add pseudo Vector type and fast Vectory[] extension formatter)</Title>
     <Description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for Unity.</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\**\*.cs"
-             Exclude="**\MessagePackWindow.cs"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\ThisLibraryExtensionTypeCodes.cs" Link="ThisLibraryExtensionTypeCodes.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters.cs"/>
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityResolver.cs"/>
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Extension\*.cs" LinkBase="Extension" />
   </ItemGroup>
 
   <ItemGroup>

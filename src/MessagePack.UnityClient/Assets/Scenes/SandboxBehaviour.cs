@@ -21,6 +21,11 @@ public class SandboxBehaviour : MonoBehaviour
     }
 }
 
+[GeneratedMessagePackResolver]
+partial class MyResolver
+{
+}
+
 class SimpleBufferWriter : IBufferWriter<byte>
 {
     public byte[] buffer = new byte[1024];
@@ -40,4 +45,11 @@ class SimpleBufferWriter : IBufferWriter<byte>
     {
         return buffer;
     }
+}
+
+[MessagePackObject]
+public class MyObject
+{
+    [Key(0)]
+    public int MyProperty { get; set; }
 }

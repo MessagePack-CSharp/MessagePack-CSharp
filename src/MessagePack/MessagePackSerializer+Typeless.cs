@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !UNITY_2018_3_OR_NEWER
+#nullable enable
 
 using System;
 using System.Buffers;
@@ -33,27 +33,27 @@ namespace MessagePack
             /// </remarks>
             public static MessagePackSerializerOptions DefaultOptions { get; set; } = Resolvers.TypelessContractlessStandardResolver.Options;
 
-            public static void Serialize(ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options = null) => Serialize<object>(ref writer, obj, options ?? DefaultOptions);
+            public static void Serialize(ref MessagePackWriter writer, object? obj, MessagePackSerializerOptions? options = null) => Serialize<object?>(ref writer, obj, options ?? DefaultOptions);
 
-            public static void Serialize(IBufferWriter<byte> writer, object obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => Serialize<object>(writer, obj, options ?? DefaultOptions, cancellationToken);
+            public static void Serialize(IBufferWriter<byte> writer, object? obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => Serialize<object?>(writer, obj, options ?? DefaultOptions, cancellationToken);
 
-            public static byte[] Serialize(object obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => Serialize<object>(obj, options ?? DefaultOptions, cancellationToken);
+            public static byte[] Serialize(object? obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => Serialize<object?>(obj, options ?? DefaultOptions, cancellationToken);
 
-            public static void Serialize(Stream stream, object obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => Serialize<object>(stream, obj, options ?? DefaultOptions, cancellationToken);
+            public static void Serialize(Stream stream, object? obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => Serialize<object?>(stream, obj, options ?? DefaultOptions, cancellationToken);
 
-            public static Task SerializeAsync(Stream stream, object obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => SerializeAsync<object>(stream, obj, options ?? DefaultOptions, cancellationToken);
+            public static Task SerializeAsync(Stream stream, object? obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => SerializeAsync<object?>(stream, obj, options ?? DefaultOptions, cancellationToken);
 
-            public static object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options = null) => Deserialize<object>(ref reader, options ?? DefaultOptions);
+            public static object? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions? options = null) => Deserialize<object?>(ref reader, options ?? DefaultOptions);
 
-            public static object Deserialize(in ReadOnlySequence<byte> byteSequence, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => Deserialize<object>(byteSequence, options ?? DefaultOptions, cancellationToken);
+            public static object? Deserialize(in ReadOnlySequence<byte> byteSequence, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => Deserialize<object?>(byteSequence, options ?? DefaultOptions, cancellationToken);
 
-            public static object Deserialize(Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => Deserialize<object>(stream, options ?? DefaultOptions, cancellationToken);
+            public static object? Deserialize(Stream stream, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => Deserialize<object?>(stream, options ?? DefaultOptions, cancellationToken);
 
-            public static object Deserialize(Memory<byte> bytes, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => Deserialize<object>(bytes, options ?? DefaultOptions, cancellationToken);
+            public static object? Deserialize(Memory<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => Deserialize<object?>(bytes, options ?? DefaultOptions, cancellationToken);
 
-            public static ValueTask<object> DeserializeAsync(Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => DeserializeAsync<object>(stream, options ?? DefaultOptions, cancellationToken);
+            public static object? Deserialize(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => Deserialize<object?>(bytes, options ?? DefaultOptions, cancellationToken);
+
+            public static ValueTask<object?> DeserializeAsync(Stream stream, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => DeserializeAsync<object?>(stream, options ?? DefaultOptions, cancellationToken);
         }
     }
 }
-
-#endif

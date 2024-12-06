@@ -13,6 +13,7 @@
 using System;
 using System.Buffers;
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
@@ -23,9 +24,12 @@ namespace MessagePack.Formatters
     var t = "Tuple<" + ts + ">";
 #>
 
-    public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
+    public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>?>
+<# if (i == 8) { #>
+        where TRest : notnull
+<# } #>
     {
-        public void Serialize(ref MessagePackWriter writer, <#= t #> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, <#= t #>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -42,7 +46,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public <#= t #> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public <#= t #>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

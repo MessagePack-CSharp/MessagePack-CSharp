@@ -20,32 +20,49 @@
     Per-machine requires elevation and will download and install all SDKs and runtimes to machine-wide locations so all applications can find it.
 .PARAMETER NoPrerequisites
     Skips the installation of prerequisite software (e.g. SDKs, tools).
+.PARAMETER NoNuGetCredProvider
+    Skips the installation of the NuGet credential provider. Useful in pipelines with the `NuGetAuthenticate` task, as a workaround for https://github.com/microsoft/artifacts-credprovider/issues/244.
+    This switch is ignored and installation is skipped when -NoPrerequisites is specified.
 .PARAMETER UpgradePrerequisites
     Takes time to install prerequisites even if they are already present in case they need to be upgraded.
     No effect if -NoPrerequisites is specified.
 .PARAMETER NoRestore
     Skips the package restore step.
+.PARAMETER NoToolRestore
+    Skips the dotnet tool restore step.
 .PARAMETER AccessToken
     An optional access token for authenticating to Azure Artifacts authenticated feeds.
+.PARAMETER Interactive
+    Runs NuGet restore in interactive mode. This can turn authentication failures into authentication challenges.
 #>
-[CmdletBinding(SupportsShouldProcess=$true)]
+[CmdletBinding(SupportsShouldProcess = $true)]
 Param (
-    [ValidateSet('repo','user','machine')]
-    [string]$InstallLocality='user',
+    [ValidateSet('repo', 'user', 'machine')]
+    [string]$InstallLocality = 'user',
     [Parameter()]
     [switch]$NoPrerequisites,
+    [Parameter()]
+    [switch]$NoNuGetCredProvider,
     [Parameter()]
     [switch]$UpgradePrerequisites,
     [Parameter()]
     [switch]$NoRestore,
     [Parameter()]
-    [string]$AccessToken
+    [switch]$NoToolRestore,
+    [Parameter()]
+    [string]$AccessToken,
+    [Parameter()]
+    [switch]$Interactive
 )
 
 $EnvVars = @{}
+$PrependPath = @()
 
 if (!$NoPrerequisites) {
-    & "$PSScriptRoot\tools\Install-NuGetCredProvider.ps1" -AccessToken $AccessToken -Force:$UpgradePrerequisites
+    if (!$NoNuGetCredProvider) {
+        & "$PSScriptRoot\tools\Install-NuGetCredProvider.ps1" -AccessToken $AccessToken -Force:$UpgradePrerequisites
+    }
+
     & "$PSScriptRoot\tools\Install-DotNetSdk.ps1" -InstallLocality $InstallLocality
     if ($LASTEXITCODE -eq 3010) {
         Exit 3010
@@ -59,22 +76,34 @@ if (!$NoPrerequisites) {
 }
 
 # Workaround nuget credential provider bug that causes very unreliable package restores on Azure Pipelines
-$env:NUGET_PLUGIN_HANDSHAKE_TIMEOUT_IN_SECONDS=20
-$env:NUGET_PLUGIN_REQUEST_TIMEOUT_IN_SECONDS=20
+$env:NUGET_PLUGIN_HANDSHAKE_TIMEOUT_IN_SECONDS = 20
+$env:NUGET_PLUGIN_REQUEST_TIMEOUT_IN_SECONDS = 20
 
 Push-Location $PSScriptRoot
 try {
     $HeaderColor = 'Green'
 
+    $RestoreArguments = @()
+    if ($Interactive) {
+        $RestoreArguments += '--interactive'
+    }
+
     if (!$NoRestore -and $PSCmdlet.ShouldProcess("NuGet packages", "Restore")) {
         Write-Host "Restoring NuGet packages" -ForegroundColor $HeaderColor
-        dotnet restore
+        dotnet restore @RestoreArguments
         if ($lastexitcode -ne 0) {
             throw "Failure while restoring packages."
         }
     }
 
-    & "$PSScriptRoot/tools/Set-EnvVars.ps1" -Variables $EnvVars | Out-Null
+    if (!$NoToolRestore -and $PSCmdlet.ShouldProcess("dotnet tool", "restore")) {
+        dotnet tool restore @RestoreArguments
+        if ($lastexitcode -ne 0) {
+            throw "Failure while restoring dotnet CLI tools."
+        }
+    }
+
+    & "$PSScriptRoot/tools/Set-EnvVars.ps1" -Variables $EnvVars -PrependPath $PrependPath | Out-Null
 }
 catch {
     Write-Error $error[0]
