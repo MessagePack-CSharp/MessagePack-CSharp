@@ -37,6 +37,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.update-packagejson.outputs.sha }}
+          depth: 0
       - uses: ./.github/actions/setup-dotnet
       # pack nuget
       - run: dotnet build -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }}
