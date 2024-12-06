@@ -12,6 +12,10 @@ on:
         default: false
         type: boolean
 
+permissions:
+  actions: write
+  contents: write
+
 jobs:
   # for unity. need update package.json from tag
   update-packagejson:
