@@ -42,7 +42,7 @@ jobs:
       # pack nuget
       - run: dotnet build -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }}
       - run: dotnet test -c Release --no-build
-      - run: dotnet pack -c Release --no-build -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish
+      - run: dotnet pack -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish
       - name: upload artifacts
         uses: actions/upload-artifact@v4 # must sync with actions/download-artifact@v4 in create-release
         with:
