@@ -7,7 +7,7 @@
     <BenchmarkDotNetVersion>0.14.0</BenchmarkDotNetVersion>
     <!-- https://learn.microsoft.com/en-us/visualstudio/extensibility/roslyn-version-support?view=vs-2022 -->
     <MicrosoftCodeAnalysisVersion>4.8.0</MicrosoftCodeAnalysisVersion>
-    <MicrosoftCodeAnalysisVersion Condition="'$(IsAnalyzerProject)'=='true'">4.3.0</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisVersion Condition="'$(IsAnalyzerProject)'=='true'">4.8.0</MicrosoftCodeAnalysisVersion>
     <MicrosoftCodeAnalysisTestingVersion>1.1.2</MicrosoftCodeAnalysisTestingVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -21,7 +21,7 @@
     <PackageVersion Include="IsExternalInit" Version="1.0.3" />
     <PackageVersion Include="Jil" version="2.17.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" version="3.3.4" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" version="3.11.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Common" version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" Version="$(MicrosoftCodeAnalysisTestingVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" version="$(MicrosoftCodeAnalysisVersion)" />
