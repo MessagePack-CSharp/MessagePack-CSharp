@@ -1,0 +1,52 @@
+name: Setup .NET SDKs
+description: Setup .NET SDKs and environment variables
+inputs:
+  global-json-file:
+    description: "path to the global.json file."
+    required: false
+    default: "global.json"
+  skip-env:
+    description: "Optional skip environment set."
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    # see: https://github.com/actions/setup-dotnet
+    - uses: actions/setup-dotnet@v4
+      with:
+        global-json-file: ${{ inputs.global-json-file }}
+
+    # see: https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-environment-variables
+    # GitHub Actions Hosted Runner default environment contains some .NET Environment.
+    # * DOTNET_MUTILEVEL_LOOKUP=0
+    # * DOTNET_NOLOGO=1
+    # * DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+    # Do not set the following environment variables:
+    # * NUGET_XMLDOC_MODE=skip <- pulumi and some other packge restore will fail.
+    - name: "Configure Environment Variables (.NET SDK)"
+      shell: bash
+      run: |
+        echo "::group::Configure .NET Environment Variables."
+          echo "COMPlus_EnableDiagnostics=0" | tee -a "$GITHUB_ENV"
+          echo "DOTNET_CLI_TELEMETRY_OPTOUT=1" | tee -a "$GITHUB_ENV"
+          echo "DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION=1" | tee -a "$GITHUB_ENV"
+          echo "MSBUILDDISABLENODEREUSE=1" | tee -a "$GITHUB_ENV"
+          echo "TERM=xterm" | tee -a "$GITHUB_ENV"
+        echo "::endgroup::"
+      if: ${{ inputs.skip-env == 'false' }}
+
+    - name: dotnet version
+      shell: bash
+      run: |
+        echo "::group::Show dotnet version"
+          dotnet --version
+        echo "::endgroup::"
+
+    - name: List installed .NET SDKs
+      shell: bash
+      run: |
+        echo "::group::List installed .NET SDKs"
+          dotnet --list-sdks
+        echo "::endgroup::"

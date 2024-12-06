@@ -1,0 +1,168 @@
+name: (R) Update package.json
+
+on:
+  workflow_call:
+    inputs:
+      file-path:
+        description: "package.json path to update. You can input multiline paths. Supported files are `package.json`, `plugin.cfg` and `Directory.Build.props`"
+        required: true
+        type: string
+      tag:
+        description: "git tag you want create. (sample v1.0.0)"
+        required: true
+        type: string
+      dry-run:
+        description: "true to simularate commit but not push change."
+        required: true
+        type: boolean
+      push-tag:
+        description: "true = push tag. false = no push tag."
+        required: false
+        type: boolean
+        default: true
+    outputs:
+      sha:
+        description: "Git commit sha after package.json has changed."
+        value: ${{ jobs.update-packagejson.outputs.sha }}
+      branch-name:
+        description: Git branch name created.
+        value: ${{ jobs.update-packagejson.outputs.branch-name }}
+      is-branch-created:
+        description: Indicate is Git branch created or not.
+        value: ${{ jobs.update-packagejson.outputs.is-branch-created }}
+      normalized_tag:
+        description: Normalized tag with out v prefix.
+        value: ${{ jobs.validate.outputs.normalized_tag }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      tag: ${{ steps.trim.outputs.tag }}
+      normalized_tag: ${{ steps.trim.outputs.normalized_tag }}
+    steps:
+      - name: tag must begin with v
+        run: |
+          input_tag="${{ inputs.tag }}"
+          if [[ "$input_tag" != v* ]]; then
+            echo "Tag must begin with v. Current tag: $input_tag"
+            exit 1
+          fi
+      - name: Set version without "v" prefix
+        id: trim
+        run: |
+          input_tag="${{ inputs.tag }}"
+          normalized_tag="${input_tag:1}"
+          echo "normalized_tag=$normalized_tag" | tee -a "$GITHUB_OUTPUT"
+          echo "tag=${{ inputs.tag }}" | tee -a "$GITHUB_OUTPUT"
+
+  update-packagejson:
+    needs: [validate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+      branch-name: ${{ steps.configure.outputs.branch-name }}
+      is-branch-created: ${{ steps.commit.outputs.is-branch-created }}
+    steps:
+      - name: Configure Output variables
+        id: configure
+        run: |
+          echo "branch-name=test-release/${{ inputs.tag }}" | tee -a "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+
+      # package.json
+      # "version": 1.2.3 -> "version": 2.0.0
+      # plugin.cfg
+      # version="1.2.3" -> version="2.0.0"
+      #
+      # TIPS: `grep -v "^$"` is used to remove empty line.
+      - name: Update files to version ${{ needs.validate.outputs.normalized_tag }}
+        run: |
+          expected="${{ needs.validate.outputs.normalized_tag }}"
+          while read -r file_path; do
+            if [[ "$file_path" == "" ]]; then continue; fi
+
+            echo "Start $file_path"
+            file_name=$(basename "$file_path")
+
+            echo "::group::Before"
+              cat "$file_path"
+            echo "::endgroup::"
+
+            echo "::group::Updating"
+              if [[ "${file_name}" == "package.json" ]]; then
+                # Unity `"version": "VersionString",`
+                sed -i -e "s/\(\"version\":\) \"\(.*\)\",/\1 \"${{ needs.validate.outputs.normalized_tag }}\",/" "${file_path}"
+              elif [[ "${file_name}" == "Directory.Build.props" ]]; then
+                # .NET `<VersionPrefix>VersionString</VersionPrefix>`
+                sed -i -e 's|<VersionPrefix>.*</VersionPrefix>|<VersionPrefix>${{ needs.validate.outputs.normalized_tag }}</VersionPrefix>|g' "${file_path}"
+              else
+                echo "Unknown file name ${file_name} is specified."
+                exit 1
+              fi
+            echo "::endgroup::"
+
+            echo "::group::After"
+              cat "$file_path"
+            echo "::endgroup::"
+
+            echo "::group::Validate Change"
+              if [[ "${file_name}" == "package.json" ]]; then
+                actual=$(grep "version" "$file_path" | cut -d ':' -f 2 | tr -d ',' | tr -d '"' | tr -d ' ')
+              elif [[ "${file_name}" == "Directory.Build.props" ]]; then
+                # -P is for perl regex, only available in GNU grep
+                actual=$(grep -oP '<VersionPrefix>\K.*(?=</VersionPrefix>)' "$file_path")
+              else
+                echo "Validation for ${file_name} is not implemented."
+                exit 1
+              fi
+
+              if [[ "$actual" != "$expected" ]]; then
+                echo "Failed. Path: $file_path, Expected: $expected, Actual: $actual"
+                exit 1
+              else
+                echo "Success. Path: $file_path, Expected: $expected, Actual: $actual"
+              fi
+            echo "::endgroup::"
+          done <<< "${{ inputs.file-path }}"
+
+      - name: Check update on git
+        id: check_update
+        run: git diff --exit-code || echo "changed=1" | tee -a "$GITHUB_OUTPUT"
+
+      - name: Commit files (updated? = ${{ steps.check_update.outputs.changed == '1' }})
+        id: commit
+        run: |
+          if [[ "${{ steps.check_update.outputs.changed }}" == "1" ]]; then
+            git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git commit -m "feat: Update package.json to ${{ needs.validate.outputs.normalized_tag }}" -m "Commit by [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" -a
+            echo "sha=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
+            echo "is-branch-created=${{ inputs.dry-run }}" | tee -a "$GITHUB_OUTPUT"
+          else
+            echo "sha=" | tee -a "$GITHUB_OUTPUT"
+            echo "is-branch-created=false" | tee -a "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Tag
+        if: ${{ steps.check_update.outputs.changed == '1' && inputs.push-tag }}
+        run: git tag ${{ inputs.tag }}
+
+      - name: Push changes
+        if: ${{ !inputs.dry-run && steps.check_update.outputs.changed == '1' }}
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }} # auto generated token
+          tags: ${{ inputs.push-tag }}
+
+      - name: Push changes (dry-run)
+        if: ${{ inputs.dry-run && steps.check_update.outputs.changed == '1' }}
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }} # auto generated token
+          branch: "refs/heads/${{ steps.configure.outputs.branch-name }}"
+          tags: false
+          force: true

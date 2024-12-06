@@ -1,0 +1,27 @@
+name: Run .NET Debug Build and Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+    - master
+    - develop
+  pull_request:
+    branches:
+    - master
+    - develop
+
+env:
+  BUILD_CONFIG: Debug
+
+jobs:
+  build-dotnet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+    - uses: ./.github/actions/setup-dotnet
+    - run: dotnet build -c ${{ env.BUILD_CONFIG }}
+    - run: dotnet test -c ${{ env.BUILD_CONFIG }} --no-build
