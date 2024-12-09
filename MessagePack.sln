@@ -51,8 +51,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{301F812B-8AEE-4DC2-8009-4510F02294AD}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
-		azure-pipelines.yml = azure-pipelines.yml
-		azure-pipelines\build.yml = azure-pipelines\build.yml
 		Directory.Build.props = Directory.Build.props
 		Directory.Packages.props = Directory.Packages.props
 		global.json = global.json

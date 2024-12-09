@@ -1,4 +1,4 @@
-name: Run .NET Debug Build and Test
+name: Run .NET Build and Test
 
 on:
   workflow_dispatch:
@@ -11,9 +11,6 @@ on:
     - master
     - develop
 
-env:
-  BUILD_CONFIG: Debug
-
 jobs:
   build-dotnet:
     runs-on: ubuntu-latest
@@ -23,5 +20,5 @@ jobs:
       with:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
     - uses: ./.github/actions/setup-dotnet
-    - run: dotnet build -c ${{ env.BUILD_CONFIG }}
-    - run: dotnet test -c ${{ env.BUILD_CONFIG }} --no-build
+    - run: dotnet build -c Release -t:build,pack
+    - run: dotnet test -c Release --no-build
