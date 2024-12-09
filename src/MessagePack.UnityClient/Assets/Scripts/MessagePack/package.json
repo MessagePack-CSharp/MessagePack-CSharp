@@ -1,7 +1,7 @@
 {
     "name": "com.github.messagepack-csharp",
     "displayName": "MessagePack",
-    "version": "3.0.300",
+    "version": "3.0.301",
     "unity": "2021.3",
     "description": "Extremely Fast MessagePack Serializer for C#.",
     "keywords": [
