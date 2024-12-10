@@ -14,6 +14,12 @@ namespace Assets.Scripts.Tests
     public class IL2CPPTest
     {
         [Test]
+        public void CheckGeneraterMessagePackResolverExists()
+        {
+            _ = GeneratedMessagePackResolver.Instance;
+        }
+
+        [Test]
         public void SimpleSerializeAndDeserialize()
         {
             var mc = new MyClass() { Age = 99, Name = "foo" };
