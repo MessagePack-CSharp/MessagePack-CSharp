@@ -13,6 +13,13 @@ namespace Assets.Scripts.Tests
 {
     public class IL2CPPTest
     {
+        //In CI, failing?
+        //[Test]
+        //public void CheckGeneraterMessagePackResolverExists()
+        //{
+        //    _ = GeneratedMessagePackResolver.Instance;
+        //}
+
         [Test]
         public void SimpleSerializeAndDeserialize()
         {

@@ -1,0 +1,176 @@
+const MessagePack.ReservedExtensionTypeCodes.Lz4Block = 99 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.Lz4BlockArray = 98 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.TypelessFormatter = 100 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityBounds = 35 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityColor = 34 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityDouble = 39 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityFloat = 38 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityInt = 37 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityQuaternion = 33 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityRect = 36 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityVector2 = 30 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityVector3 = 31 -> sbyte
+const MessagePack.ReservedExtensionTypeCodes.UnityVector4 = 32 -> sbyte
+MessagePack.CompositeResolverAttribute
+MessagePack.CompositeResolverAttribute.CompositeResolverAttribute(params System.Type![]! formattersAndResolvers) -> void
+MessagePack.CompositeResolverAttribute.IncludeLocalFormatters.get -> bool
+MessagePack.CompositeResolverAttribute.IncludeLocalFormatters.set -> void
+MessagePack.Formatters.BooleanListFormatter
+MessagePack.Formatters.BooleanListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<bool>?
+MessagePack.Formatters.BooleanListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<bool>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.ByteListFormatter
+MessagePack.Formatters.ByteListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<byte>?
+MessagePack.Formatters.ByteListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<byte>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.CharListFormatter
+MessagePack.Formatters.CharListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<char>?
+MessagePack.Formatters.CharListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<char>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.DoubleListFormatter
+MessagePack.Formatters.DoubleListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<double>?
+MessagePack.Formatters.DoubleListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<double>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.EnumAsStringFormatter<T>.EnumAsStringFormatter(bool ignoreCase) -> void
+MessagePack.Formatters.Int16ListFormatter
+MessagePack.Formatters.Int16ListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<short>?
+MessagePack.Formatters.Int16ListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<short>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.Int32ListFormatter
+MessagePack.Formatters.Int32ListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<int>?
+MessagePack.Formatters.Int32ListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<int>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.Int64ListFormatter
+MessagePack.Formatters.Int64ListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<long>?
+MessagePack.Formatters.Int64ListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<long>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.Matrix3x2Formatter
+MessagePack.Formatters.Matrix3x2Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Matrix3x2
+MessagePack.Formatters.Matrix3x2Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Matrix3x2 value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.Matrix4x4Formatter
+MessagePack.Formatters.Matrix4x4Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Matrix4x4
+MessagePack.Formatters.Matrix4x4Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Matrix4x4 value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>
+MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.PriorityQueue<TElement, TPriority>?
+MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.PriorityQueueFormatter() -> void
+MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.PriorityQueueFormatter(System.Collections.Generic.IComparer<TPriority>? comparer) -> void
+MessagePack.Formatters.PriorityQueueFormatter<TElement, TPriority>.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.PriorityQueue<TElement, TPriority>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.QuaternionFormatter
+MessagePack.Formatters.QuaternionFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Quaternion
+MessagePack.Formatters.QuaternionFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Quaternion value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.SByteListFormatter
+MessagePack.Formatters.SByteListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<sbyte>?
+MessagePack.Formatters.SByteListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<sbyte>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.SingleListFormatter
+MessagePack.Formatters.SingleListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<float>?
+MessagePack.Formatters.SingleListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<float>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.UInt16ListFormatter
+MessagePack.Formatters.UInt16ListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<ushort>?
+MessagePack.Formatters.UInt16ListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<ushort>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.UInt32ListFormatter
+MessagePack.Formatters.UInt32ListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<uint>?
+MessagePack.Formatters.UInt32ListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<uint>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.UInt64ListFormatter
+MessagePack.Formatters.UInt64ListFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Generic.List<ulong>?
+MessagePack.Formatters.UInt64ListFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Generic.List<ulong>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.Vector2Formatter
+MessagePack.Formatters.Vector2Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Vector2
+MessagePack.Formatters.Vector2Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Vector2 value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.Vector3Formatter
+MessagePack.Formatters.Vector3Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Vector3
+MessagePack.Formatters.Vector3Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Vector3 value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.Vector4Formatter
+MessagePack.Formatters.Vector4Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Numerics.Vector4
+MessagePack.Formatters.Vector4Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Numerics.Vector4 value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.GeneratedMessagePackResolverAttribute
+MessagePack.GeneratedMessagePackResolverAttribute.GeneratedMessagePackResolverAttribute() -> void
+MessagePack.GeneratedMessagePackResolverAttribute.UseMapMode.get -> bool
+MessagePack.GeneratedMessagePackResolverAttribute.UseMapMode.set -> void
+MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>
+MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Frozen.FrozenDictionary<TKey, TValue>?
+MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.FrozenDictionaryFormatter() -> void
+MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.FrozenDictionaryFormatter(System.Collections.Generic.IEqualityComparer<TKey>? comparer) -> void
+MessagePack.ImmutableCollection.FrozenDictionaryFormatter<TKey, TValue>.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Frozen.FrozenDictionary<TKey, TValue>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.ImmutableCollection.FrozenSetFormatter<T>
+MessagePack.ImmutableCollection.FrozenSetFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Collections.Frozen.FrozenSet<T>?
+MessagePack.ImmutableCollection.FrozenSetFormatter<T>.FrozenSetFormatter() -> void
+MessagePack.ImmutableCollection.FrozenSetFormatter<T>.FrozenSetFormatter(System.Collections.Generic.IEqualityComparer<T>! comparer) -> void
+MessagePack.ImmutableCollection.FrozenSetFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Frozen.FrozenSet<T>? value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute
+MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.GeneratedAssemblyMessagePackResolverAttribute(System.Type! resolverType, int majorVersion, int minorVersion) -> void
+MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.MajorVersion.get -> int
+MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.MinorVersion.get -> int
+MessagePack.Internal.GeneratedAssemblyMessagePackResolverAttribute.ResolverType.get -> System.Type!
+MessagePack.MessagePackPrimitives
+MessagePack.MessagePackPrimitives.DecodeResult
+MessagePack.MessagePackPrimitives.DecodeResult.EmptyBuffer = 2 -> MessagePack.MessagePackPrimitives.DecodeResult
+MessagePack.MessagePackPrimitives.DecodeResult.InsufficientBuffer = 3 -> MessagePack.MessagePackPrimitives.DecodeResult
+MessagePack.MessagePackPrimitives.DecodeResult.Success = 0 -> MessagePack.MessagePackPrimitives.DecodeResult
+MessagePack.MessagePackPrimitives.DecodeResult.TokenMismatch = 1 -> MessagePack.MessagePackPrimitives.DecodeResult
+MessagePack.ReservedExtensionTypeCodes
+MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver
+MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
+MessagePack.Resolvers.SourceGeneratedFormatterResolver
+MessagePack.Resolvers.SourceGeneratedFormatterResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
+MessagePack.SequencePool.Clear() -> void
+static MessagePack.MessagePackPrimitives.TryReadArrayHeader(System.ReadOnlySpan<byte> source, out uint count, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadBinHeader(System.ReadOnlySpan<byte> source, out uint length, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadBool(System.ReadOnlySpan<byte> source, out bool value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadByte(System.ReadOnlySpan<byte> source, out byte value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadChar(System.ReadOnlySpan<byte> source, out char value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadDateTime(System.ReadOnlySpan<byte> source, MessagePack.ExtensionHeader header, out System.DateTime value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadDateTime(System.ReadOnlySpan<byte> source, out System.DateTime value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadDouble(System.ReadOnlySpan<byte> source, out double value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadExtensionHeader(System.ReadOnlySpan<byte> source, out MessagePack.ExtensionHeader extensionHeader, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadInt16(System.ReadOnlySpan<byte> source, out short value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadInt32(System.ReadOnlySpan<byte> source, out int value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadInt64(System.ReadOnlySpan<byte> source, out long value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadMapHeader(System.ReadOnlySpan<byte> source, out uint count, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadNil(System.ReadOnlySpan<byte> source, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadSByte(System.ReadOnlySpan<byte> source, out sbyte value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadSingle(System.ReadOnlySpan<byte> source, out float value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadStringHeader(System.ReadOnlySpan<byte> source, out uint length, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadUInt16(System.ReadOnlySpan<byte> source, out ushort value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadUInt32(System.ReadOnlySpan<byte> source, out uint value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryReadUInt64(System.ReadOnlySpan<byte> source, out ulong value, out int tokenSize) -> MessagePack.MessagePackPrimitives.DecodeResult
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, bool value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, byte value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, char value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, double value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, float value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, int value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, long value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, sbyte value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, short value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, System.DateTime value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, uint value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, ulong value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWrite(System.Span<byte> destination, ushort value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteArrayHeader(System.Span<byte> destination, uint count, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteBinHeader(System.Span<byte> destination, uint length, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteExtensionFormatHeader(System.Span<byte> destination, MessagePack.ExtensionHeader extensionHeader, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteInt16(System.Span<byte> destination, short value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteInt32(System.Span<byte> destination, int value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteInt64(System.Span<byte> destination, long value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteInt8(System.Span<byte> destination, sbyte value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteMapHeader(System.Span<byte> destination, uint count, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteNil(System.Span<byte> destination, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteStringHeader(System.Span<byte> destination, uint byteCount, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteUInt16(System.Span<byte> destination, ushort value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteUInt32(System.Span<byte> destination, uint value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteUInt64(System.Span<byte> destination, ulong value, out int bytesWritten) -> bool
+static MessagePack.MessagePackPrimitives.TryWriteUInt8(System.Span<byte> destination, byte value, out int bytesWritten) -> bool
+static readonly MessagePack.Formatters.BooleanListFormatter.Instance -> MessagePack.Formatters.BooleanListFormatter!
+static readonly MessagePack.Formatters.ByteListFormatter.Instance -> MessagePack.Formatters.ByteListFormatter!
+static readonly MessagePack.Formatters.CharListFormatter.Instance -> MessagePack.Formatters.CharListFormatter!
+static readonly MessagePack.Formatters.DoubleListFormatter.Instance -> MessagePack.Formatters.DoubleListFormatter!
+static readonly MessagePack.Formatters.Int16ListFormatter.Instance -> MessagePack.Formatters.Int16ListFormatter!
+static readonly MessagePack.Formatters.Int32ListFormatter.Instance -> MessagePack.Formatters.Int32ListFormatter!
+static readonly MessagePack.Formatters.Int64ListFormatter.Instance -> MessagePack.Formatters.Int64ListFormatter!
+static readonly MessagePack.Formatters.Matrix3x2Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Matrix3x2>!
+static readonly MessagePack.Formatters.Matrix4x4Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Matrix4x4>!
+static readonly MessagePack.Formatters.QuaternionFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Quaternion>!
+static readonly MessagePack.Formatters.SByteListFormatter.Instance -> MessagePack.Formatters.SByteListFormatter!
+static readonly MessagePack.Formatters.SingleListFormatter.Instance -> MessagePack.Formatters.SingleListFormatter!
+static readonly MessagePack.Formatters.UInt16ListFormatter.Instance -> MessagePack.Formatters.UInt16ListFormatter!
+static readonly MessagePack.Formatters.UInt32ListFormatter.Instance -> MessagePack.Formatters.UInt32ListFormatter!
+static readonly MessagePack.Formatters.UInt64ListFormatter.Instance -> MessagePack.Formatters.UInt64ListFormatter!
+static readonly MessagePack.Formatters.Vector2Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Vector2>!
+static readonly MessagePack.Formatters.Vector3Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Vector3>!
+static readonly MessagePack.Formatters.Vector4Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.Vector4>!
+static readonly MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver.Instance -> MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver!
+static readonly MessagePack.Resolvers.SourceGeneratedFormatterResolver.Instance -> MessagePack.Resolvers.SourceGeneratedFormatterResolver!
+static MessagePack.MessagePackSerializer.Typeless.Deserialize(System.ReadOnlyMemory<byte> bytes, MessagePack.MessagePackSerializerOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> object?
