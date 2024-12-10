@@ -858,6 +858,25 @@ namespace MessagePack.Formatters
         }
     }
 
+    public sealed class RuneFormatter : IMessagePackFormatter<Rune>
+    {
+        public static readonly IMessagePackFormatter<Rune> Instance = new RuneFormatter();
+
+        private RuneFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Rune value, MessagePackSerializerOptions options)
+        {
+            writer.Write(value.Value);
+        }
+
+        public Rune Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return new Rune(reader.ReadInt32());
+        }
+    }
+
 #endif
 
 #if NET7_0_OR_GREATER

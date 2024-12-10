@@ -182,6 +182,7 @@ namespace MessagePack.Internal
 
 #if NET5_0_OR_GREATER
             { typeof(System.Half), HalfFormatter.Instance },
+            { typeof(System.Text.Rune), RuneFormatter.Instance },
 #endif
 #if NET6_0_OR_GREATER
             { typeof(DateOnly), DateOnlyFormatter.Instance },

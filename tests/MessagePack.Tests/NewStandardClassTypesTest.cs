@@ -7,8 +7,19 @@ using System.Threading.Tasks;
 
 namespace MessagePack.Tests;
 
-public class Net9NewTypes
+public class NewStandardClassTypesTest
 {
+    // NET 5
+
+    [Fact]
+    public void RuneTest()
+    {
+        Rune v = Rune.GetRuneAt("あ", 0);
+        var bin = MessagePackSerializer.Serialize(v);
+        var v2 = MessagePackSerializer.Deserialize<Rune>(bin);
+        v2.Should().Be(v);
+    }
+
     // NET7
 
     [Theory]
