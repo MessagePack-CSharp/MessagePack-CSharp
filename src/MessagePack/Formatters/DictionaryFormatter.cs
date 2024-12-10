@@ -309,4 +309,22 @@ namespace MessagePack.Formatters
             return new ConcurrentDictionary<TKey, TValue>(options.Security.GetEqualityComparer<TKey>());
         }
     }
+
+#if NET9_0_OR_GREATER
+
+    public sealed class OrderedDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, System.Collections.Generic.OrderedDictionary<TKey, TValue>>
+        where TKey : notnull
+    {
+        protected override void Add(OrderedDictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
+        {
+            collection.TryAdd(key, value);
+        }
+
+        protected override OrderedDictionary<TKey, TValue> Create(int count, MessagePackSerializerOptions options)
+        {
+            return new OrderedDictionary<TKey, TValue>(options.Security.GetEqualityComparer<TKey>());
+        }
+    }
+
+#endif
 }
