@@ -20,12 +20,6 @@
       "source": "local",
       "dependencies": {}
     },
-    "com.github.messagepack.sourcegenerator.internal": {
-      "version": "file:../../../bin/MessagePack.SourceGenerator/Debug/netstandard2.0",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {}
-    },
     "com.unity.ai.navigation": {
       "version": "1.1.5",
       "depth": 0,
