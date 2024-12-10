@@ -10,6 +10,8 @@ using MessagePack.Formatters;
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
+// namespace is wrong, but for compatibility, keep it.
+// https://github.com/MessagePack-CSharp/MessagePack-CSharp/issues/2089
 namespace MessagePack.ImmutableCollection
 {
     public sealed class FrozenDictionaryFormatter<TKey, TValue> : IMessagePackFormatter<FrozenDictionary<TKey, TValue>?>
