@@ -111,7 +111,7 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
             static void AddGeneratedSources(ProjectState project, string testMethod, bool withPrefix)
             {
                 string prefix = withPrefix ? $"{project.Name}." : string.Empty;
-                string expectedPrefix = $"{ThisAssembly.AssemblyName}.Resources.{testMethod}.{prefix}"
+                string expectedPrefix = $"{typeof(Test).Assembly.GetName().Name}.Resources.{testMethod}.{prefix}"
                     .Replace(' ', '_')
                     .Replace(',', '_')
                     .Replace('(', '_')
@@ -132,7 +132,12 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
 
                     using var reader = new StreamReader(resourceStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: true);
                     var name = resourceName.Substring(expectedPrefix.Length);
-                    project.GeneratedSources.Add((typeof(TSourceGenerator), name, reader.ReadToEnd()));
+                    var code = reader.ReadToEnd();
+                    var version = MessagePack.SourceGenerator.ThisAssembly.Version;
+                    code = code.Replace(
+                        "[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(MessagePack.GeneratedMessagePackResolver), 3, 0)]",
+                        $"[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(MessagePack.GeneratedMessagePackResolver), {version.Major}, {version.Minor})]");
+                    project.GeneratedSources.Add((typeof(TSourceGenerator), name, code));
                 }
             }
 
@@ -198,7 +203,7 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
                 expectedNames.Add(Path.GetFileName(tree.FilePath));
             }
 
-            var currentTestPrefix = $"{ThisAssembly.AssemblyName}.Resources.{this.testMethod}.{fileNamePrefix}";
+            var currentTestPrefix = $"{typeof(Test).Assembly.GetName().Name}.Resources.{this.testMethod}.{fileNamePrefix}";
             foreach (var name in this.GetType().Assembly.GetManifestResourceNames())
             {
                 if (!name.StartsWith(currentTestPrefix))
