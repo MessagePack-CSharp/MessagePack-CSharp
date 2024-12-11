@@ -885,7 +885,7 @@ namespace MessagePack.Formatters
     {
         public static readonly IMessagePackFormatter<Int128> Instance = new Int128Formatter();
 
-        const int Size = 16; // always bytes-written is 16
+        private const int Size = 16; // always bytes-written is 16
 
         private Int128Formatter()
         {
@@ -925,14 +925,15 @@ namespace MessagePack.Formatters
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static bool TryReadLittleEndian<T>(ReadOnlySpan<byte> source, out T value) where T : IBinaryInteger<T> => T.TryReadLittleEndian(source, isUnsigned: false, out value);
+        private static bool TryReadLittleEndian<T>(ReadOnlySpan<byte> source, out T value)
+            where T : IBinaryInteger<T> => T.TryReadLittleEndian(source, isUnsigned: false, out value);
     }
 
     public sealed class UInt128Formatter : IMessagePackFormatter<UInt128>
     {
         public static readonly IMessagePackFormatter<UInt128> Instance = new UInt128Formatter();
 
-        const int Size = 16; // always bytes-written is 16
+        private const int Size = 16; // always bytes-written is 16
 
         private UInt128Formatter()
         {
@@ -969,7 +970,8 @@ namespace MessagePack.Formatters
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static bool TryReadLittleEndian<T>(ReadOnlySpan<byte> source, out T value) where T : IBinaryInteger<T> => T.TryReadLittleEndian(source, isUnsigned: true, out value);
+        private static bool TryReadLittleEndian<T>(ReadOnlySpan<byte> source, out T value)
+            where T : IBinaryInteger<T> => T.TryReadLittleEndian(source, isUnsigned: true, out value);
     }
 #endif
 
