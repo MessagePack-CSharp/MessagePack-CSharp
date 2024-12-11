@@ -258,5 +258,8 @@ dotnet_diagnostic.SA1508.severity = none
 # SA1512: Single-line comments should not be followed by blank line
 dotnet_diagnostic.SA1512.severity = none
 
+# SA1515: Single-line comment should be preceded by blank line
+dotnet_diagnostic.SA1515.severity = none
+
 [*.sln]
 indent_style = tab

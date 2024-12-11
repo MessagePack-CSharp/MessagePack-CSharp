@@ -18,7 +18,7 @@ using System.Runtime.InteropServices;
 
 #pragma warning disable SA1402 // File may only contain a single type
 
-namespace Nerdbank.Streams
+namespace Nerdbank.Streams // NOTE: invalid namespace, should modify
 {
     /// <summary>
     /// Manages a sequence of elements, readily castable as a <see cref="ReadOnlySequence{T}"/>.
