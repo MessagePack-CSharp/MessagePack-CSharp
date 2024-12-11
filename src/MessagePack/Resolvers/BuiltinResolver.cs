@@ -65,10 +65,6 @@ namespace MessagePack.Internal
             { typeof(byte), ByteFormatter.Instance },
             { typeof(sbyte), SByteFormatter.Instance },
             { typeof(DateTime), DateTimeFormatter.Instance },
-#if NET6_0_OR_GREATER
-            { typeof(DateOnly), DateOnlyFormatter.Instance },
-            { typeof(TimeOnly), TimeOnlyFormatter.Instance },
-#endif
             { typeof(char), CharFormatter.Instance },
 
             // Nullable Primitive
@@ -186,6 +182,15 @@ namespace MessagePack.Internal
 
 #if NET5_0_OR_GREATER
             { typeof(System.Half), HalfFormatter.Instance },
+            { typeof(System.Text.Rune), RuneFormatter.Instance },
+#endif
+#if NET6_0_OR_GREATER
+            { typeof(DateOnly), DateOnlyFormatter.Instance },
+            { typeof(TimeOnly), TimeOnlyFormatter.Instance },
+#endif
+#if NET7_0_OR_GREATER
+            { typeof(Int128), Int128Formatter.Instance },
+            { typeof(UInt128), UInt128Formatter.Instance },
 #endif
         };
 

@@ -54,9 +54,6 @@ namespace MessagePack.Internal
               { typeof(List<>), typeof(ListFormatter<>) },
               { typeof(LinkedList<>), typeof(LinkedListFormatter<>) },
               { typeof(Queue<>), typeof(QueueFormatter<>) },
-#if NET6_0_OR_GREATER
-              { typeof(PriorityQueue<,>), typeof(PriorityQueueFormatter<,>) },
-#endif
               { typeof(Stack<>), typeof(StackFormatter<>) },
               { typeof(HashSet<>), typeof(HashSetFormatter<>) },
               { typeof(ReadOnlyCollection<>), typeof(ReadOnlyCollectionFormatter<>) },
@@ -74,9 +71,7 @@ namespace MessagePack.Internal
               { typeof(IReadOnlyList<>), typeof(InterfaceReadOnlyListFormatter<>) },
               { typeof(IReadOnlyCollection<>), typeof(InterfaceReadOnlyCollectionFormatter<>) },
               { typeof(ISet<>), typeof(InterfaceSetFormatter<>) },
-#if NET5_0_OR_GREATER
-              { typeof(IReadOnlySet<>), typeof(InterfaceReadOnlySetFormatter<>) },
-#endif
+
               { typeof(System.Collections.Concurrent.ConcurrentBag<>), typeof(ConcurrentBagFormatter<>) },
               { typeof(System.Collections.Concurrent.ConcurrentQueue<>), typeof(ConcurrentQueueFormatter<>) },
               { typeof(System.Collections.Concurrent.ConcurrentStack<>), typeof(ConcurrentStackFormatter<>) },
@@ -84,6 +79,16 @@ namespace MessagePack.Internal
               { typeof(IReadOnlyDictionary<,>), typeof(InterfaceReadOnlyDictionaryFormatter<,>) },
               { typeof(System.Collections.Concurrent.ConcurrentDictionary<,>), typeof(ConcurrentDictionaryFormatter<,>) },
               { typeof(Lazy<>), typeof(LazyFormatter<>) },
+#if NET5_0_OR_GREATER
+              { typeof(IReadOnlySet<>), typeof(InterfaceReadOnlySetFormatter<>) },
+#endif
+#if NET6_0_OR_GREATER
+              { typeof(PriorityQueue<,>), typeof(PriorityQueueFormatter<,>) },
+#endif
+#if NET9_0_OR_GREATER
+              { typeof(OrderedDictionary<,>), typeof(OrderedDictionaryFormatter<,>) },
+              { typeof(ReadOnlySet<>), typeof(ReadOnlySetFormatter<>) },
+#endif
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)

@@ -1419,6 +1419,28 @@ namespace MessagePack.Formatters
 
 #endif
 
+#if NET9_0_OR_GREATER
+
+    public sealed class ReadOnlySetFormatter<T> : CollectionFormatterBase<T, HashSet<T>, ReadOnlySet<T>>
+    {
+        protected override void Add(HashSet<T> collection, int index, T value, MessagePackSerializerOptions options)
+        {
+            collection.Add(value);
+        }
+
+        protected override ReadOnlySet<T> Complete(HashSet<T> intermediateCollection)
+        {
+            return new ReadOnlySet<T>(intermediateCollection);
+        }
+
+        protected override HashSet<T> Create(int count, MessagePackSerializerOptions options)
+        {
+            return new HashSet<T>(options.Security.GetEqualityComparer<T>());
+        }
+    }
+
+#endif
+
     public sealed class ConcurrentBagFormatter<T> : CollectionFormatterBase<T, System.Collections.Concurrent.ConcurrentBag<T>>
     {
         protected override int? GetCount(ConcurrentBag<T> sequence)
