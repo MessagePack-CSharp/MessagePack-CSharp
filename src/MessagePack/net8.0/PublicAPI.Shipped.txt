@@ -1374,3 +1374,15 @@ static readonly MessagePack.Formatters.Vector4Formatter.Instance -> MessagePack.
 static readonly MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver.Instance -> MessagePack.Resolvers.DynamicEnumAsStringIgnoreCaseResolver!
 static readonly MessagePack.Resolvers.SourceGeneratedFormatterResolver.Instance -> MessagePack.Resolvers.SourceGeneratedFormatterResolver!
 static MessagePack.MessagePackSerializer.Typeless.Deserialize(System.ReadOnlyMemory<byte> bytes, MessagePack.MessagePackSerializerOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> object?
+MessagePack.Formatters.Int128Formatter
+MessagePack.Formatters.Int128Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Int128
+MessagePack.Formatters.Int128Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Int128 value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.RuneFormatter
+MessagePack.Formatters.RuneFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.Text.Rune
+MessagePack.Formatters.RuneFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Text.Rune value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.Formatters.UInt128Formatter
+MessagePack.Formatters.UInt128Formatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.UInt128
+MessagePack.Formatters.UInt128Formatter.Serialize(ref MessagePack.MessagePackWriter writer, System.UInt128 value, MessagePack.MessagePackSerializerOptions! options) -> void
+static readonly MessagePack.Formatters.Int128Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Int128>!
+static readonly MessagePack.Formatters.RuneFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Text.Rune>!
+static readonly MessagePack.Formatters.UInt128Formatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.UInt128>!
