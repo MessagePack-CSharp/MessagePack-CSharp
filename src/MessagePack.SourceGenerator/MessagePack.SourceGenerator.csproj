@@ -8,6 +8,7 @@
     <AnalyzerLanguage>cs</AnalyzerLanguage>
     <DebugType>embedded</DebugType>
     <IsPackable>false</IsPackable>
+    <IsRoslynComponent>true</IsRoslynComponent>
   </PropertyGroup>
 
   <ItemGroup>
