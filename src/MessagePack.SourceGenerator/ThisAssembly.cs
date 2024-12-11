@@ -1,11 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace MessagePack.SourceGenerator
+﻿namespace MessagePack.SourceGenerator
 {
     public static class ThisAssembly
     {
-        public const string AssemblyFileVersion = "1.0.0";
+        public static string AssemblyFileVersion
+        {
+            get
+            {
+                return typeof(ThisAssembly).Assembly.GetName().Version.ToString();
+            }
+        }
     }
 }
