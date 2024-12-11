@@ -72,7 +72,6 @@
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
   <ItemGroup>
-    <GlobalPackageReference Include="Nerdbank.GitVersioning" Version="3.6.146" />
     <GlobalPackageReference Include="CSharpIsNullAnalyzer" Version="0.1.593" />
     <GlobalPackageReference Include="PolySharp" Version="1.15.0" />
     <GlobalPackageReference Include="StyleCop.Analyzers.Unstable" Version="1.2.0.556" />
