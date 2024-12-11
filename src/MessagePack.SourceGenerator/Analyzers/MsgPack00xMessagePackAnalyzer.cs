@@ -369,11 +369,12 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         if (options.KnownFormattersByName.TryGetValue(typeName, out FormatterDescriptor? formatter))
         {
             // Call out any formattable reference types that are not nullable.
-            INamedTypeSymbol[] missing = (
-                from iface in declaredSymbol.Interfaces
-                where SymbolEqualityComparer.Default.Equals(iface.ConstructUnboundGenericType(), typeReferences.MessagePackFormatterOfT) &&
-                    iface.TypeArguments is [INamedTypeSymbol { IsReferenceType: true, NullableAnnotation: NullableAnnotation.NotAnnotated } a]
-                select (INamedTypeSymbol)iface.TypeArguments[0]).ToArray();
+            INamedTypeSymbol[] missing = declaredSymbol.Interfaces
+                .Where(iface => iface.IsGenericType)
+                .Where(iface => SymbolEqualityComparer.Default.Equals(iface.ConstructUnboundGenericType(), typeReferences.MessagePackFormatterOfT)
+                             && iface.TypeArguments is [INamedTypeSymbol { IsReferenceType: true, NullableAnnotation: NullableAnnotation.NotAnnotated } a])
+                .Select(iface => (INamedTypeSymbol)iface.TypeArguments[0])
+                .ToArray();
 
             if (missing.Length > 0)
             {
