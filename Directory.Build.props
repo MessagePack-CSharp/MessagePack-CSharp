@@ -40,9 +40,4 @@
     <PackageReference GeneratePathProperty="true" />
   </ItemDefinitionGroup>
 
-  <Target Name="PrepareReleaseNotes" BeforeTargets="GenerateNuspec" DependsOnTargets="GetBuildVersion">
-    <PropertyGroup>
-      <PackageReleaseNotes Condition="'$(PackageProjectUrl)'!=''">$(PackageProjectUrl)/releases/tag/v$(Version)</PackageReleaseNotes>
-    </PropertyGroup>
-  </Target>
 </Project>

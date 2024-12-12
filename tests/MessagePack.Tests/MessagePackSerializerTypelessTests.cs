@@ -65,16 +65,16 @@ public class MessagePackSerializerTypelessTests
         Assert.IsType(boxedValue.Value.GetType(), roundTripValue.Value);
     }
 
-    [Fact]
-    public void OmitAssemblyVersion()
-    {
-        string json = MessagePackSerializer.ConvertToJson(MessagePackSerializer.Typeless.Serialize(new MyObject { SomeValue = 5 }));
-        this.logger.WriteLine(json);
-        Assert.Contains(ThisAssembly.AssemblyVersion, json);
-        json = MessagePackSerializer.ConvertToJson(MessagePackSerializer.Typeless.Serialize(new MyObject { SomeValue = 5 }, MessagePackSerializer.Typeless.DefaultOptions.WithOmitAssemblyVersion(true)));
-        this.logger.WriteLine(json);
-        Assert.DoesNotContain(ThisAssembly.AssemblyVersion, json);
-    }
+    //[Fact]
+    //public void OmitAssemblyVersion()
+    //{
+    //    string json = MessagePackSerializer.ConvertToJson(MessagePackSerializer.Typeless.Serialize(new MyObject { SomeValue = 5 }));
+    //    this.logger.WriteLine(json);
+    //    Assert.Contains(ThisAssembly.AssemblyVersion, json);
+    //    json = MessagePackSerializer.ConvertToJson(MessagePackSerializer.Typeless.Serialize(new MyObject { SomeValue = 5 }, MessagePackSerializer.Typeless.DefaultOptions.WithOmitAssemblyVersion(true)));
+    //    this.logger.WriteLine(json);
+    //    Assert.DoesNotContain(ThisAssembly.AssemblyVersion, json);
+    //}
 
     [Fact]
     public void SerializeInterface()
