@@ -71,7 +71,6 @@ namespace MessagePack.Internal
               { typeof(IReadOnlyList<>), typeof(InterfaceReadOnlyListFormatter<>) },
               { typeof(IReadOnlyCollection<>), typeof(InterfaceReadOnlyCollectionFormatter<>) },
               { typeof(ISet<>), typeof(InterfaceSetFormatter<>) },
-
               { typeof(System.Collections.Concurrent.ConcurrentBag<>), typeof(ConcurrentBagFormatter<>) },
               { typeof(System.Collections.Concurrent.ConcurrentQueue<>), typeof(ConcurrentQueueFormatter<>) },
               { typeof(System.Collections.Concurrent.ConcurrentStack<>), typeof(ConcurrentStackFormatter<>) },
