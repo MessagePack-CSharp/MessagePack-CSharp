@@ -610,7 +610,7 @@ public class TypeCollector
             return;
         }
 
-        if (type.AllInterfaces.FirstOrDefault(x => !x.IsUnboundGenericType && x.ConstructUnboundGenericType() is { Name: nameof(ICollection<int>) }) is INamedTypeSymbol collectionIface
+        if (type.AllInterfaces.FirstOrDefault(x => x.IsGenericType && !x.IsUnboundGenericType && x.ConstructUnboundGenericType() is { Name: nameof(ICollection<int>) }) is INamedTypeSymbol collectionIface
             && type.InstanceConstructors.Any(ctor => ctor.Parameters.Length == 0))
         {
             this.CollectCore(collectionIface.TypeArguments[0], callerSymbol);
