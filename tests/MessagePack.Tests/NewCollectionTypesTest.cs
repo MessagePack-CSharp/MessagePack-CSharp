@@ -1,4 +1,7 @@
-﻿#if NET9_0_OR_GREATER
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if NET9_0_OR_GREATER
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
