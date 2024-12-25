@@ -5,94 +5,108 @@
 
 using System;
 using System.Collections.Generic;
-using Issue2101;
+// using Issue2101;
 using MessagePack;
 using MessagePack.Resolvers;
 
-Dictionary<string, IPrimaryKeyItem> itemList = new Dictionary<string, IPrimaryKeyItem>();
+//Dictionary<string, IPrimaryKeyItem> itemList = new Dictionary<string, IPrimaryKeyItem>();
 
-itemList.Add("1", new PrimaryKeyItem<int>(1));
-itemList.Add("2", new PrimaryKeyItem<string>("2"));
+//itemList.Add("1", new PrimaryKeyItem<int>(1));
+//itemList.Add("2", new PrimaryKeyItem<string>("2"));
 
-var json = MessagePackSerializer.SerializeToJson(itemList, GetResolver());
+//var json = MessagePackSerializer.SerializeToJson(itemList, GetResolver());
 
-Console.WriteLine(json);
+//Console.WriteLine(json);
 
-MessagePackSerializerOptions GetResolver()
-{
-    var resolver = CompositeResolver.Create(
-        NativeDecimalResolver.Instance,
-        NativeGuidResolver.Instance,
-        NativeDateTimeResolver.Instance,
-        TypelessObjectResolver.Instance,
-        // StandardResolver.Instance
+//MessagePackSerializerOptions GetResolver()
+//{
+//    var resolver = CompositeResolver.Create(
+//        NativeDecimalResolver.Instance,
+//        NativeGuidResolver.Instance,
+//        NativeDateTimeResolver.Instance,
+//        TypelessObjectResolver.Instance,
+//        // StandardResolver.Instance
 
-        BuiltinResolver.Instance,
-        AttributeFormatterResolver.Instance
-    // SourceGeneratedFormatterResolver.Instance
-    );
+//        BuiltinResolver.Instance,
+//        AttributeFormatterResolver.Instance
+//    // SourceGeneratedFormatterResolver.Instance
+//    );
 
-    return MessagePackSerializerOptions.Standard.WithResolver(resolver).WithOmitAssemblyVersion(true);
-}
+//    return MessagePackSerializerOptions.Standard.WithResolver(resolver).WithOmitAssemblyVersion(true);
+//}
 
-namespace Issue2101
-{
-    [MessagePackObject(AllowPrivate = true, SuppressSourceGeneration = true)]
-    public class PrimaryKey
-    {
-        [Key(0)]
-        private Dictionary<string, IPrimaryKeyItem> itemList = new Dictionary<string, IPrimaryKeyItem>();
-    }
+Console.WriteLine("foo");
 
-    public interface IPrimaryKeyItem
-    {
-        object ObjectValue
-        {
-            get; // set;
-        }
-    }
+//[MessagePack.Union(0, typeof(Foo))]
+//public interface IUnionTest
+//{
+//}
 
-    [MessagePackObject(AllowPrivate = true, SuppressSourceGeneration = true)]
-    public abstract class PrimaryKeyItemBase
-    {
-        internal abstract void SetValue(object value);
-    }
+//// [MessagePackObject]
+//public class Foo
+//{
+//    // [Key(0)]
+//    public string MyProperty { get; set; }
+//}
 
-    [MessagePackObject(AllowPrivate = true, SuppressSourceGeneration = true)]
-    public class PrimaryKeyItem<TType> : PrimaryKeyItemBase, IPrimaryKeyItem
-    {
-        [Key(0)]
-        private TType value;
+//namespace Issue2101
+//{
+//    [MessagePackObject(AllowPrivate = true, SuppressSourceGeneration = true)]
+//    public class PrimaryKey
+//    {
+//        [Key(0)]
+//        private Dictionary<string, IPrimaryKeyItem> itemList = new Dictionary<string, IPrimaryKeyItem>();
+//    }
 
-        [SerializationConstructor]
-        private PrimaryKeyItem()
-        {
-        }
+//    public interface IPrimaryKeyItem
+//    {
+//        object ObjectValue
+//        {
+//            get; // set;
+//        }
+//    }
 
-        public PrimaryKeyItem(TType value)
-        {
-            if (value == null)
-                throw new ArgumentNullException("value");
+//    // [MessagePackObject(AllowPrivate = true, SuppressSourceGeneration = true)]
+//    public abstract class PrimaryKeyItemBase
+//    {
+//        internal abstract void SetValue(object value);
+//    }
 
-            this.value = value;
-        }
+//    [MessagePackObject(AllowPrivate = true, SuppressSourceGeneration = true)]
+//    public class PrimaryKeyItem<TType> : PrimaryKeyItemBase, IPrimaryKeyItem
+//    {
+//        [Key(0)]
+//        private TType value;
 
-        [IgnoreMember]
-        public object ObjectValue
-        {
-            get
-            {
-                return value;
-            }
-        }
+//        [SerializationConstructor]
+//        private PrimaryKeyItem()
+//        {
+//        }
 
-        internal override void SetValue(object value)
-        {
-            this.value = (TType)value;
-        }
-    }
+//        public PrimaryKeyItem(TType value)
+//        {
+//            if (value == null)
+//                throw new ArgumentNullException("value");
+
+//            this.value = value;
+//        }
+
+//        [IgnoreMember]
+//        public object ObjectValue
+//        {
+//            get
+//            {
+//                return value;
+//            }
+//        }
+
+//        internal override void SetValue(object value)
+//        {
+//            this.value = (TType)value;
+//        }
+//    }
 
 
 
 
-}
+//}

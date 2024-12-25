@@ -1087,4 +1087,26 @@ public class Bar : Foo
 
         await VerifyCS.VerifyAnalyzerAsync(test);
     }
+
+    [Fact]
+    public async Task Union()
+    {
+        string input = Preamble + @"
+[MessagePack.Union(0, typeof(Foo))]
+public interface IUnionTest
+{
+}
+
+public class {|MsgPack003:Foo|}
+{
+    public int MyProperty { get; set; }
+}
+";
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+        }.RunAsync();
+    }
 }

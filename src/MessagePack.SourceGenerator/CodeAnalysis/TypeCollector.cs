@@ -385,12 +385,6 @@ public class TypeCollector
 
     private void CollectUnion(INamedTypeSymbol type)
     {
-        if (!options.IsGeneratingSource)
-        {
-            // In analyzer-only mode, this method doesn't work.
-            return;
-        }
-
         ImmutableArray<TypedConstant>[] unionAttrs = type.GetAttributes().Where(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments).ToArray();
         if (unionAttrs.Length == 0)
         {
@@ -413,9 +407,16 @@ public class TypeCollector
             return new UnionSubTypeInfo(key, typeName);
         }
 
+        var subTypes = unionAttrs.Select(UnionSubTypeInfoSelector).Where(i => i is not null).OrderBy(x => x!.Key).ToImmutableArray();
+
+        if (!options.IsGeneratingSource)
+        {
+            return;
+        }
+
         var info = UnionSerializationInfo.Create(
             type,
-            unionAttrs.Select(UnionSubTypeInfoSelector).Where(i => i is not null).OrderBy(x => x!.Key).ToImmutableArray()!,
+            subTypes!,
             this.options.Generator.Resolver);
 
         this.collectedUnionInfo.Add(info);
@@ -713,7 +714,13 @@ public class TypeCollector
 
         if (contractAttr is null)
         {
-            ////this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject, ((BaseTypeDeclarationSyntax)type.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
+            if (this.reportDiagnostic != null)
+            {
+                var diagnostics = Diagnostic.Create(MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject, ((BaseTypeDeclarationSyntax)formattedType.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                this.reportDiagnostic.Invoke(diagnostics);
+            }
+
+            return null;
         }
 
         bool isIntKey = true;
