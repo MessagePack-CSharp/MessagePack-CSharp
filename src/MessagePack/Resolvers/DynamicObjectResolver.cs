@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.Serialization;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using MessagePack.Formatters;
@@ -1564,6 +1565,7 @@ namespace MessagePack.Internal
                 // All public members are serialize target except [Ignore] member.
                 isIntKey = !(forceStringKey || (contractAttr is not null && contractAttr.KeyAsPropertyName));
                 var hiddenIntKey = 0;
+                bool isKeyCamelCase = (contractAttr is not null && contractAttr.KeyNameCamelCase);
 
                 // Group the properties and fields by name to qualify members of the same name
                 // (declared with the 'new' keyword) with the declaring type.
@@ -1581,14 +1583,29 @@ namespace MessagePack.Internal
                         }
 
                         var memberInfo = (MemberInfo?)member.PropertyInfo ?? member.FieldInfo!;
+
                         if (first)
                         {
                             first = false;
-                            member.StringKey = memberInfo.Name;
+                            if (isKeyCamelCase)
+                            {
+                                member.StringKey = ToLowerCamel(memberInfo.Name);
+                            }
+                            else
+                            {
+                                member.StringKey = memberInfo.Name;
+                            }
                         }
                         else
                         {
-                            member.StringKey = $"{memberInfo.DeclaringType!.FullName}.{memberInfo.Name}";
+                            if (isKeyCamelCase)
+                            {
+                                member.StringKey = $"{ToLowerCamel(memberInfo.DeclaringType!.FullName)}.{ToLowerCamel(memberInfo.Name)}";
+                            }
+                            else
+                            {
+                                member.StringKey = $"{memberInfo.DeclaringType!.FullName}.{memberInfo.Name}";
+                            }
                         }
 
                         member.IntKey = hiddenIntKey++;
@@ -1854,6 +1871,33 @@ namespace MessagePack.Internal
             {
                 ShouldUseFormatterResolver = shouldUseFormatterResolver,
             };
+        }
+
+        /// <summary>
+        /// Convert key to LowerCamelCase
+        /// </summary>
+        /// <param name="keyBeUpperCamel"></param>
+        /// <returns></returns>
+        internal static string ToLowerCamel(string keyBeUpperCamel)
+        {
+            if (String.IsNullOrEmpty(keyBeUpperCamel))
+            {
+                return keyBeUpperCamel;
+            }
+
+            if (!Char.IsUpper(keyBeUpperCamel[0]))
+            {
+                return keyBeUpperCamel;
+            }
+
+            var buffer = new StringBuilder(keyBeUpperCamel.Length);
+            buffer.Append(Char.ToLowerInvariant(keyBeUpperCamel[0]));
+            if (keyBeUpperCamel.Length > 1)
+            {
+                buffer.Append(keyBeUpperCamel, 1, keyBeUpperCamel.Length - 1);
+            }
+
+            return buffer.ToString();
         }
 
         /// <devremarks>

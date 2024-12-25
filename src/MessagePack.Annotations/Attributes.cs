@@ -17,15 +17,22 @@ namespace MessagePack
         public bool KeyAsPropertyName { get; }
 
         /// <summary>
+        /// Gets a value indicating whether to automatically serialize all name as the Camel Case  key in a map.
+        /// </summary>
+        public bool KeyNameCamelCase { get; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackObjectAttribute"/> class.
         /// </summary>
         /// <param name="keyAsPropertyName">
+        /// <param name="keyNameCamelCase">
         /// <see langword="true" /> to automatically serialize all internal and public fields and properties using their property name as the key in a map;
         /// or <see langword="false" /> to use the <see cref="KeyAttribute"/> attribute to specify the key for each field or property.
         /// </param>
-        public MessagePackObjectAttribute(bool keyAsPropertyName = false)
+        public MessagePackObjectAttribute(bool keyAsPropertyName = false, bool keyNameCamelCase = false)
         {
             this.KeyAsPropertyName = keyAsPropertyName;
+            this.KeyNameCamelCase = keyNameCamelCase;
         }
 
         /// <summary>
