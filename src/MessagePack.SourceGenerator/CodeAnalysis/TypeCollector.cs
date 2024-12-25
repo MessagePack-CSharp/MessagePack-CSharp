@@ -395,6 +395,7 @@ public class TypeCollector
         if (unionAttrs.Length == 0)
         {
             this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.UnionAttributeRequired, type.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
+            return;
         }
 
         // 0, Int  1, SubType
