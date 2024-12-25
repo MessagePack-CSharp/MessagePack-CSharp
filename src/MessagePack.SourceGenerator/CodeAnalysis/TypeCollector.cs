@@ -710,6 +710,14 @@ public class TypeCollector
         // Examine properties set on the attribute such that we can discern whether they were explicitly set or not.
         // This is useful when we have assembly-level attributes or other environmentally-controlled defaults that the attribute may override either direction.
         bool? suppressSourceGeneration = (bool?)contractAttr?.NamedArguments.FirstOrDefault(kvp => kvp.Key == Constants.SuppressSourceGenerationPropertyName).Value.Value;
+
+        // Do not source generate the formatter for this type if the attribute opted out.
+        if (suppressSourceGeneration is true)
+        {
+            // Skip any source generation
+            return null;
+        }
+
         bool? allowPrivateAttribute = (bool?)contractAttr?.NamedArguments.FirstOrDefault(kvp => kvp.Key == Constants.AllowPrivatePropertyName).Value.Value;
 
         if (contractAttr is null)
@@ -1371,13 +1379,6 @@ public class TypeCollector
 
                 this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.MessagePackObjectAllowPrivateRequired, location));
             }
-        }
-
-        // Do not source generate the formatter for this type if the attribute opted out.
-        if (suppressSourceGeneration is true)
-        {
-            // Skip any source generation
-            return null;
         }
 
         // If any property had a private setter and does not appear in the deserializing constructor signature,
