@@ -160,6 +160,14 @@ public class TypeCollector
         { "System.Collections.ObjectModel.ReadOnlyDictionary<,>", "MsgPack::Formatters.ReadOnlyDictionaryFormatter" },
         { "System.Collections.Generic.IReadOnlyDictionary<,>", "MsgPack::Formatters.InterfaceReadOnlyDictionaryFormatter" },
         { "System.Collections.Concurrent.ConcurrentDictionary<,>", "MsgPack::Formatters.ConcurrentDictionaryFormatter" },
+        // NET5
+        { "System.Collections.Generic.IReadOnlySet<>", "MsgPack::Formatters.InterfaceReadOnlySetFormatter" },
+        // NET6
+        { "System.Collections.Generic.PriorityQueue<,>", "MsgPack::Formatters.PriorityQueueFormatter" },
+        // NET9
+        { "System.Collections.Generic.OrderedDictionary<,>", "MsgPack::Formatters.OrderedDictionaryFormatter" },
+        { "System.Collections.ObjectModel.ReadOnlySet<>", "MsgPack::Formatters.ReadOnlySetFormatter" },
+
         { "System.Lazy<>", "MsgPack::Formatters.LazyFormatter" },
         { "System.Threading.Tasks<>", "MsgPack::Formatters.TaskValueFormatter" },
 
