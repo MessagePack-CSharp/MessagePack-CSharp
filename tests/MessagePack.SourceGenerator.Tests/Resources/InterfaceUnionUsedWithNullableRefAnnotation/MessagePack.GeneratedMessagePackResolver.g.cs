@@ -4,62 +4,67 @@
 
 using MsgPack = global::MessagePack;
 
-[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(MessagePack.GeneratedMessagePackResolver), 3, 0)]
+[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(Sandbox.GeneratedMessagePackResolver), 1, 0)]
 
-namespace MessagePack {
-
-/// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
-partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
+namespace Sandbox
 {
-	/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
-	public static readonly MsgPack::IFormatterResolver Instance = new GeneratedMessagePackResolver();
 
-	private GeneratedMessagePackResolver()
-	{
-	}
+    /// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
+    partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
+    {
+        /// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
+        public static readonly MsgPack::IFormatterResolver Instance = new GeneratedMessagePackResolver();
 
-	public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-	{
-		return FormatterCache<T>.Formatter;
-	}
+        private GeneratedMessagePackResolver()
+        {
+        }
 
-	private static class FormatterCache<T>
-	{
-		internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
+        public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+        {
+            return FormatterCache<T>.Formatter;
+        }
 
-		static FormatterCache()
-		{
-			var f = GeneratedMessagePackResolverGetFormatterHelper.GetFormatter(typeof(T));
-			if (f != null)
-			{
-				Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
-			}
-		}
-	}
+        private static class FormatterCache<T>
+        {
+            internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
 
-	private static class GeneratedMessagePackResolverGetFormatterHelper
-	{
-		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(2)
-		{
-			{ typeof(global::IMyType), 0 },
-			{ typeof(global::UnionContainer), 1 },
-		};
+            static FormatterCache()
+            {
+                var f = GeneratedMessagePackResolverGetFormatterHelper.GetFormatter(typeof(T));
+                if (f != null)
+                {
+                    Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
+                }
+            }
+        }
 
-		internal static object GetFormatter(global::System.Type t)
-		{
-			if (closedTypeLookup.TryGetValue(t, out int closedKey))
-			{
-				switch (closedKey)
-				{
-					case 0: return new global::MessagePack.GeneratedMessagePackResolver.IMyTypeFormatter();
-					case 1: return new global::MessagePack.GeneratedMessagePackResolver.UnionContainerFormatter();
-					default: return null; // unreachable
-				};
-			}
+        private static class GeneratedMessagePackResolverGetFormatterHelper
+        {
+            private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> closedTypeLookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(4)
+        {
+            { typeof(global::IMyType), 0 },
+            { typeof(global::Derived1), 1 },
+            { typeof(global::Derived2), 2 },
+            { typeof(global::UnionContainer), 3 },
+        };
 
-			return null;
-		}
-	}
-}
+            internal static object GetFormatter(global::System.Type t)
+            {
+                if (closedTypeLookup.TryGetValue(t, out int closedKey))
+                {
+                    switch (closedKey)
+                    {
+                        case 0: return new global::Sandbox.GeneratedMessagePackResolver.IMyTypeFormatter();
+                        case 1: return new global::Sandbox.GeneratedMessagePackResolver.Derived1Formatter();
+                        case 2: return new global::Sandbox.GeneratedMessagePackResolver.Derived2Formatter();
+                        case 3: return new global::Sandbox.GeneratedMessagePackResolver.UnionContainerFormatter();
+                        default: return null; // unreachable
+                    };
+                }
+
+                return null;
+            }
+        }
+    }
 
 }

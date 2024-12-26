@@ -160,6 +160,14 @@ public class TypeCollector
         { "System.Collections.ObjectModel.ReadOnlyDictionary<,>", "MsgPack::Formatters.ReadOnlyDictionaryFormatter" },
         { "System.Collections.Generic.IReadOnlyDictionary<,>", "MsgPack::Formatters.InterfaceReadOnlyDictionaryFormatter" },
         { "System.Collections.Concurrent.ConcurrentDictionary<,>", "MsgPack::Formatters.ConcurrentDictionaryFormatter" },
+        // NET5
+        { "System.Collections.Generic.IReadOnlySet<>", "MsgPack::Formatters.InterfaceReadOnlySetFormatter" },
+        // NET6
+        { "System.Collections.Generic.PriorityQueue<,>", "MsgPack::Formatters.PriorityQueueFormatter" },
+        // NET9
+        { "System.Collections.Generic.OrderedDictionary<,>", "MsgPack::Formatters.OrderedDictionaryFormatter" },
+        { "System.Collections.ObjectModel.ReadOnlySet<>", "MsgPack::Formatters.ReadOnlySetFormatter" },
+
         { "System.Lazy<>", "MsgPack::Formatters.LazyFormatter" },
         { "System.Threading.Tasks<>", "MsgPack::Formatters.TaskValueFormatter" },
 
@@ -385,12 +393,6 @@ public class TypeCollector
 
     private void CollectUnion(INamedTypeSymbol type)
     {
-        if (!options.IsGeneratingSource)
-        {
-            // In analyzer-only mode, this method doesn't work.
-            return;
-        }
-
         ImmutableArray<TypedConstant>[] unionAttrs = type.GetAttributes().Where(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments).ToArray();
         if (unionAttrs.Length == 0)
         {
@@ -413,9 +415,16 @@ public class TypeCollector
             return new UnionSubTypeInfo(key, typeName);
         }
 
+        var subTypes = unionAttrs.Select(UnionSubTypeInfoSelector).Where(i => i is not null).OrderBy(x => x!.Key).ToImmutableArray();
+
+        if (!options.IsGeneratingSource)
+        {
+            return;
+        }
+
         var info = UnionSerializationInfo.Create(
             type,
-            unionAttrs.Select(UnionSubTypeInfoSelector).Where(i => i is not null).OrderBy(x => x!.Key).ToImmutableArray()!,
+            subTypes!,
             this.options.Generator.Resolver);
 
         this.collectedUnionInfo.Add(info);
@@ -709,11 +718,25 @@ public class TypeCollector
         // Examine properties set on the attribute such that we can discern whether they were explicitly set or not.
         // This is useful when we have assembly-level attributes or other environmentally-controlled defaults that the attribute may override either direction.
         bool? suppressSourceGeneration = (bool?)contractAttr?.NamedArguments.FirstOrDefault(kvp => kvp.Key == Constants.SuppressSourceGenerationPropertyName).Value.Value;
+
+        // Do not source generate the formatter for this type if the attribute opted out.
+        if (suppressSourceGeneration is true)
+        {
+            // Skip any source generation
+            return null;
+        }
+
         bool? allowPrivateAttribute = (bool?)contractAttr?.NamedArguments.FirstOrDefault(kvp => kvp.Key == Constants.AllowPrivatePropertyName).Value.Value;
 
         if (contractAttr is null)
         {
-            ////this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject, ((BaseTypeDeclarationSyntax)type.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
+            if (this.reportDiagnostic != null)
+            {
+                var diagnostics = Diagnostic.Create(MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject, ((BaseTypeDeclarationSyntax)formattedType.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), formattedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                this.reportDiagnostic.Invoke(diagnostics);
+            }
+
+            return null;
         }
 
         bool isIntKey = true;
@@ -1364,13 +1387,6 @@ public class TypeCollector
 
                 this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.MessagePackObjectAllowPrivateRequired, location));
             }
-        }
-
-        // Do not source generate the formatter for this type if the attribute opted out.
-        if (suppressSourceGeneration is true)
-        {
-            // Skip any source generation
-            return null;
         }
 
         // If any property had a private setter and does not appear in the deserializing constructor signature,
