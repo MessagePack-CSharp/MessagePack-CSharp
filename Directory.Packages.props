@@ -7,7 +7,7 @@
     <BenchmarkDotNetVersion>0.14.0</BenchmarkDotNetVersion>
     <!-- https://learn.microsoft.com/en-us/visualstudio/extensibility/roslyn-version-support?view=vs-2022 -->
     <MicrosoftCodeAnalysisVersion>4.12.0</MicrosoftCodeAnalysisVersion>
-    <MicrosoftCodeAnalysisVersion Condition="'$(IsAnalyzerProject)'=='true'">4.3.0</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisVersion Condition="'$(IsAnalyzerProject)'=='true'">4.12.0</MicrosoftCodeAnalysisVersion>
     <MicrosoftCodeAnalysisTestingVersion>1.1.2</MicrosoftCodeAnalysisTestingVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -15,7 +15,7 @@
     <PackageVersion Include="BenchmarkDotNet" Version="$(BenchmarkDotNetVersion)" />
     <PackageVersion Include="Ceras" Version="4.1.7" />
     <PackageVersion Include="ConsoleAppFramework" Version="4.2.4" />
-    <PackageVersion Include="FluentAssertions" Version="6.12.0" />
+    <PackageVersion Include="FluentAssertions" Version="7.0.0" />
     <PackageVersion Include="FsPickler" Version="5.3.2" />
     <PackageVersion Include="Hyperion" Version="0.12.2" />
     <PackageVersion Include="IsExternalInit" Version="1.0.3" />
