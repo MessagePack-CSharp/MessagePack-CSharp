@@ -33,12 +33,10 @@ namespace MessagePack.Internal
         /// <param name="skipVisibilityChecksTo">The names of assemblies that should be fully accessible to this dynamic one, bypassing visibility checks.</param>
         public DynamicAssembly(string moduleName, ImmutableHashSet<AssemblyName> skipVisibilityChecksTo)
         {
-#if NETFRAMEWORK // We don't ship a net472 target, but we might add one for debugging purposes
-            AssemblyBuilderAccess builderAccess = AssemblyBuilderAccess.RunAndSave;
+#if NETFRAMEWORK
             this.moduleName = moduleName;
-#else
-            AssemblyBuilderAccess builderAccess = AssemblyBuilderAccess.RunAndCollect;
 #endif
+            AssemblyBuilderAccess builderAccess = AssemblyBuilderAccess.RunAndCollect;
             this.assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(moduleName), builderAccess);
             this.moduleBuilder = this.assemblyBuilder.DefineDynamicModule(moduleName + ".dll");
 
