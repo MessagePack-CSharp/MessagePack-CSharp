@@ -38,12 +38,12 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Xunit.SkippableFact" />
-    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Shouldly" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="Xunit.Abstractions" />
-    <Using Include="FluentAssertions" />
+    <Using Include="Shouldly" />
     <Using Include="MessagePack" />
   </ItemGroup>
   <ItemGroup>

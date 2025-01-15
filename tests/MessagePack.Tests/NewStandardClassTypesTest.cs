@@ -20,7 +20,7 @@ public class NewStandardClassTypesTest
         Rune v = Rune.GetRuneAt("あ", 0);
         var bin = MessagePackSerializer.Serialize(v);
         var v2 = MessagePackSerializer.Deserialize<Rune>(bin);
-        v2.Should().Be(v);
+        v2.ShouldBe(v);
     }
 
     // NET7
@@ -36,7 +36,7 @@ public class NewStandardClassTypesTest
         var i = new Int128(upper, lower);
         var bin = MessagePackSerializer.Serialize(i);
         var i2 = MessagePackSerializer.Deserialize<Int128>(bin);
-        i.Should().Be(i2);
+        i.ShouldBe(i2);
     }
 
     [Theory]
@@ -50,7 +50,7 @@ public class NewStandardClassTypesTest
         var i = new UInt128(upper, lower);
         var bin = MessagePackSerializer.Serialize(i);
         var i2 = MessagePackSerializer.Deserialize<UInt128>(bin);
-        i.Should().Be(i2);
+        i.ShouldBe(i2);
     }
 }
 #endif

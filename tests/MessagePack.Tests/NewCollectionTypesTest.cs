@@ -31,7 +31,7 @@ public class NewCollectionTypesTest
 
         var v2 = Convert(v);
 
-        v.AsEnumerable().Should().Equal(v2.AsEnumerable());
+        v.AsEnumerable().ShouldBe(v2.AsEnumerable());
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public class NewCollectionTypesTest
     {
         var v = new ReadOnlySet<int>(new HashSet<int>() { 1, 2, 5, 3, 9, 7 });
         var v2 = Convert(v);
-        v2.Should().Equal(v);
+        v2.ShouldBe(v);
     }
 }
 
