@@ -16,6 +16,7 @@ env:
 
 jobs:
   unity:
+    if: ${{ ((github.event_name == 'push' && github.repository_owner == 'MessagePack-CSharp') || startsWith(github.event.pull_request.head.label, 'MessagePack-CSharp:')) && github.triggering_actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
