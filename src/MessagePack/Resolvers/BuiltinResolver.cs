@@ -143,7 +143,6 @@ namespace MessagePack.Internal
             { typeof(List<Single>), new ListFormatter<Single>() },
             { typeof(List<Double>), new ListFormatter<Double>() },
             { typeof(List<Boolean>), new ListFormatter<Boolean>() },
-            { typeof(List<byte>), new ListFormatter<byte>() },
             { typeof(List<SByte>), new ListFormatter<SByte>() },
             { typeof(List<Char>), new ListFormatter<Char>() },
 #endif
