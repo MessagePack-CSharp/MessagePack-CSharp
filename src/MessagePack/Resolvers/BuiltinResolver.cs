@@ -131,7 +131,6 @@ namespace MessagePack.Internal
             { typeof(List<Single>), SingleListFormatter.Instance },
             { typeof(List<Double>), DoubleListFormatter.Instance },
             { typeof(List<Boolean>), BooleanListFormatter.Instance },
-            { typeof(List<byte>), ByteListFormatter.Instance },
             { typeof(List<SByte>), SByteListFormatter.Instance },
             { typeof(List<Char>), CharListFormatter.Instance },
 #else
