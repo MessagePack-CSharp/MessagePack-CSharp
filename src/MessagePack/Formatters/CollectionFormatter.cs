@@ -158,6 +158,46 @@ namespace MessagePack.Formatters
         }
     }
 
+    // special formatter to maintain compatibility due to bugs, https://github.com/MessagePack-CSharp/MessagePack-CSharp/issues/2134
+    public sealed class ByteListFormatter : IMessagePackFormatter<List<byte>?>
+    {
+        public static readonly ByteListFormatter Instance = new ByteListFormatter();
+
+        private static readonly ListFormatter<byte> InnerFormatter = new ListFormatter<byte>();
+
+        public void Serialize(ref MessagePackWriter writer, List<byte>? value, MessagePackSerializerOptions options)
+        {
+            InnerFormatter.Serialize(ref writer, value, options);
+        }
+
+        public List<byte>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.NextMessagePackType == MessagePackType.Array)
+            {
+                return InnerFormatter.Deserialize(ref reader, options);
+            }
+            else
+            {
+                var sequence = reader.ReadBytes();
+                if (sequence == null)
+                {
+                    return null;
+                }
+
+#if NET8_0_OR_GREATER
+                int len = checked((int)sequence.Value.Length);
+                var list = new List<byte>(len);
+                CollectionsMarshal.SetCount(list, len);
+                var span = CollectionsMarshal.AsSpan(list);
+                sequence.Value.CopyTo(span);
+                return list;
+#else
+                return new List<byte>(sequence.Value.ToArray());
+#endif
+            }
+        }
+    }
+
     public sealed class MemoryFormatter<T> : IMessagePackFormatter<Memory<T>>
     {
         public void Serialize(ref MessagePackWriter writer, Memory<T> value, MessagePackSerializerOptions options)

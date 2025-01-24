@@ -149,6 +149,7 @@ namespace MessagePack.Internal
 #endif
             { typeof(List<DateTime>), new ListFormatter<DateTime>() },
             { typeof(List<string>), new ListFormatter<string>() },
+            { typeof(List<Byte>), ByteListFormatter.Instance }, // special formatter to maintain compatibility due to bugs
 
             { typeof(object[]), new ArrayFormatter<object>() },
             { typeof(List<object>), new ListFormatter<object>() },
