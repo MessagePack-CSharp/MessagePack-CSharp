@@ -375,6 +375,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class KeyValuePairFormatter<TKey, TValue> : IMessagePackFormatter<KeyValuePair<TKey, TValue>>
     {
         public void Serialize(ref MessagePackWriter writer, KeyValuePair<TKey, TValue> value, MessagePackSerializerOptions options)
@@ -765,6 +766,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class LazyFormatter<T> : IMessagePackFormatter<Lazy<T>?>
     {
         public void Serialize(ref MessagePackWriter writer, Lazy<T>? value, MessagePackSerializerOptions options)
@@ -808,6 +810,7 @@ namespace MessagePack.Formatters
     /// Serializes any instance of <see cref="Type"/> by its <see cref="Type.AssemblyQualifiedName"/> value.
     /// </summary>
     /// <typeparam name="T">The <see cref="Type"/> class itself or a derived type.</typeparam>
+    [Preserve]
     public sealed class TypeFormatter<T> : IMessagePackFormatter<T?>
         where T : Type
     {

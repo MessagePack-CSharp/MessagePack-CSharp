@@ -70,7 +70,12 @@ namespace MessagePack.ImmutableCollection
                     reader.Depth--;
                 }
 
+                // Unity IL2CPP sometimes failes on ImmutableCollectionsMarshal.AsImmutableArray(array) so netstandard version degrade it.
+#if NETSTANDARD2_0 || NETSTANDARD2_1
+                return ImmutableArray.Create(array);
+#else
                 return ImmutableCollectionsMarshal.AsImmutableArray(array);
+#endif
             }
         }
     }

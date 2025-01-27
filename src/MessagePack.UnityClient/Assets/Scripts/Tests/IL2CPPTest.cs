@@ -4,6 +4,8 @@
 #nullable enable
 
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using MessagePack;
 using NUnit.Framework;
@@ -72,6 +74,33 @@ namespace Assets.Scripts.Tests
 
             var ys = MessagePackSerializer.Deserialize<MyClass[]>(bin, lz4Option);
             CollectionAssert.AreEqual(xs, ys);
+        }
+
+        [Test]
+        public void EnumSerialize()
+        {
+            var bin = MessagePackSerializer.Serialize(MessagePackCompression.Lz4BlockArray);
+            var v2 = MessagePackSerializer.Deserialize<MessagePackCompression>(bin);
+
+            Assert.AreEqual(MessagePackCompression.Lz4BlockArray, v2);
+        }
+
+        [Test]
+        public void ListSerialize()
+        {
+            var bin = MessagePackSerializer.Serialize(new List<ulong> { 10UL });
+            var v2 = MessagePackSerializer.Deserialize<List<ulong>>(bin);
+
+            CollectionAssert.AreEqual(new List<ulong> { 10UL }, v2);
+        }
+
+        [Test]
+        public void ConcurrentBagSerialize()
+        {
+            var bin = MessagePackSerializer.Serialize(new ConcurrentBag<ulong> { 10UL });
+            var v2 = MessagePackSerializer.Deserialize<ConcurrentBag<ulong>>(bin);
+
+            CollectionAssert.AreEqual(new ConcurrentBag<ulong> { 10UL }, v2);
         }
     }
 
