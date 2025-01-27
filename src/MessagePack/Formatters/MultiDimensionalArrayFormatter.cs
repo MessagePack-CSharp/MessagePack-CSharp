@@ -5,6 +5,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Text;
+using MessagePack.Internal;
 
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
@@ -13,6 +14,7 @@ namespace MessagePack.Formatters
 {
     /* multi dimensional array serialize to [i, j, [seq]] */
 
+    [Preserve]
     public sealed class TwoDimensionalArrayFormatter<T> : IMessagePackFormatter<T[,]?>
     {
         private const int ArrayLength = 3;
@@ -96,6 +98,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class ThreeDimensionalArrayFormatter<T> : IMessagePackFormatter<T[,,]?>
     {
         private const int ArrayLength = 4;
@@ -189,6 +192,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class FourDimensionalArrayFormatter<T> : IMessagePackFormatter<T[,,,]?>
     {
         private const int ArrayLength = 5;
