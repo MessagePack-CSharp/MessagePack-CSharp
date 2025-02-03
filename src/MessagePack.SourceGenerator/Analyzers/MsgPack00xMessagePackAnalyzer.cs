@@ -363,7 +363,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     private static void SymbolStartAction(SymbolStartAnalysisContext context, ReferenceSymbols typeReferences, AnalyzerOptions options)
     {
         INamedTypeSymbol declaredSymbol = (INamedTypeSymbol)context.Symbol;
-        QualifiedNamedTypeName typeName = new(declaredSymbol);
+        QualifiedNamedTypeName typeName = new(declaredSymbol, ImmutableStack<GenericTypeParameterInfo>.Empty);
 
         // If this is a formatter, confirm that it meets requirements.
         if (options.KnownFormattersByName.TryGetValue(typeName, out FormatterDescriptor? formatter))
@@ -407,7 +407,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     private void AnalyzeSymbol(SymbolAnalysisContext context, ReferenceSymbols typeReferences, AnalyzerOptions options)
     {
         INamedTypeSymbol declaredSymbol = (INamedTypeSymbol)context.Symbol;
-        QualifiedNamedTypeName typeName = new(declaredSymbol);
+        QualifiedNamedTypeName typeName = new(declaredSymbol, ImmutableStack<GenericTypeParameterInfo>.Empty);
 
         // If this is a formatter, confirm that it meets requirements.
         if (options.KnownFormattersByName.TryGetValue(typeName, out FormatterDescriptor? formatter))

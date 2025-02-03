@@ -26,14 +26,9 @@ Console.WriteLine("foo");
 //}
 
 
-[MessagePackObject(true)]
-public class Tako
+public class ClassA<T> where T : ClassA<T>.ClassB
 {
-    public IReadOnlySet<int> MyProperty1 { get; set; }
-
-    public PriorityQueue<int, int> MyProperty2 { get; set; }
-
-    public OrderedDictionary<int, int> MyProperty3 { get; set; }
-
-    public ReadOnlySet<int> MyProperty4 { get; set; }
+    public class ClassB
+    {
+    }
 }
