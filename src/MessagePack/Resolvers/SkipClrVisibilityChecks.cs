@@ -92,38 +92,48 @@ internal class SkipClrVisibilityChecks
             AddTypeIfNonPublic(arg);
         }
 
-        foreach (MemberInfo member in typeInfo.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+        // We must walk each base type individually to ensure we don't miss any private members,
+        // since even with BindingFlags.NonPublic, GetMembers will not return from base types.
+        for (TypeInfo? target = typeInfo; target is not null; target = target.BaseType?.GetTypeInfo())
         {
-            switch (member)
+            ScanDirectType(target);
+        }
+
+        void ScanDirectType(TypeInfo typeInfo)
+        {
+            foreach (MemberInfo member in typeInfo.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
             {
-                case FieldInfo field:
-                    if (!field.IsPublic)
-                    {
-                        referencedAssemblies.Add(typeInfo.Assembly.GetName());
-                    }
+                switch (member)
+                {
+                    case FieldInfo field:
+                        if (!field.IsPublic)
+                        {
+                            referencedAssemblies.Add(typeInfo.Assembly.GetName());
+                        }
 
-                    AddTypeIfNonPublic(field.FieldType);
-                    break;
-                case PropertyInfo property:
-                    if (property.SetMethod?.IsPublic is false || property.GetMethod?.IsPublic is false)
-                    {
-                        referencedAssemblies.Add(typeInfo.Assembly.GetName());
-                    }
+                        AddTypeIfNonPublic(field.FieldType);
+                        break;
+                    case PropertyInfo property:
+                        if (property.SetMethod?.IsPublic is false || property.GetMethod?.IsPublic is false)
+                        {
+                            referencedAssemblies.Add(typeInfo.Assembly.GetName());
+                        }
 
-                    AddTypeIfNonPublic(property.PropertyType);
-                    break;
-                case ConstructorInfo constructorInfo:
-                    if (!constructorInfo.IsPublic)
-                    {
-                        referencedAssemblies.Add(typeInfo.Assembly.GetName());
-                    }
+                        AddTypeIfNonPublic(property.PropertyType);
+                        break;
+                    case ConstructorInfo constructorInfo:
+                        if (!constructorInfo.IsPublic)
+                        {
+                            referencedAssemblies.Add(typeInfo.Assembly.GetName());
+                        }
 
-                    foreach (ParameterInfo parameter in constructorInfo.GetParameters())
-                    {
-                        AddTypeIfNonPublic(parameter.ParameterType);
-                    }
+                        foreach (ParameterInfo parameter in constructorInfo.GetParameters())
+                        {
+                            AddTypeIfNonPublic(parameter.ParameterType);
+                        }
 
-                    break;
+                        break;
+                }
             }
         }
 
