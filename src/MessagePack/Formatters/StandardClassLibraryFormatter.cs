@@ -298,6 +298,15 @@ namespace MessagePack.Formatters
         public Guid Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             ReadOnlySequence<byte> segment = reader.ReadStringSequence() ?? throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<Guid>();
+
+            var bytes = reader.ReadBytes()?.ToArray()
+            ?? throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<Guid>();
+
+            if (bytes.Length == 16) // Its binary
+            {
+                return new Guid(bytes);
+            }
+
             if (segment.Length != 36)
             {
                 throw new MessagePackSerializationException("Unexpected length of string.");
