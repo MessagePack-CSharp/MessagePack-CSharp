@@ -289,15 +289,39 @@ namespace MessagePack.Formatters
 
         public unsafe void Serialize(ref MessagePackWriter writer, Guid value, MessagePackSerializerOptions options)
         {
-            byte* pBytes = stackalloc byte[36];
-            Span<byte> bytes = new Span<byte>(pBytes, 36);
-            new GuidBits(ref value).Write(bytes);
-            writer.WriteString(bytes);
+            if (options.BigEndianUuid) // TODO: This doesn't exist yet
+            {
+                byte* pBytes = stackalloc byte[16];
+                Span<byte> bytes = new Span<byte>(pBytes, 16);
+                value.TryWriteBytes(bytes, bigEndian: true, out _);
+            }
+            else
+            {
+                byte* pBytes = stackalloc byte[36];
+                Span<byte> bytes = new Span<byte>(pBytes, 36);
+                new GuidBits(ref value).Write(bytes);
+                writer.WriteString(bytes);
+            }
         }
 
         public Guid Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             ReadOnlySequence<byte> segment = reader.ReadStringSequence() ?? throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<Guid>();
+
+            if (segment.Length == 16) // Its binary GUID that must be stored big-endian, network order
+            {
+                if (segment.IsSingleSegment)
+                {
+                    return new Guid(segment.First.Span, bigEndian: true)
+                }
+                else
+                {
+                    Span<byte> stackBuffer = stackalloc byte[16];
+                    segment.CopyTo(stackBuffer);
+                    return new Guid(segment, bigEndian: true);
+                }
+            }
+
             if (segment.Length != 36)
             {
                 throw new MessagePackSerializationException("Unexpected length of string.");
