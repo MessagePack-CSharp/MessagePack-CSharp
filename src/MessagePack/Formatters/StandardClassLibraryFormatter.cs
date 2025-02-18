@@ -289,10 +289,19 @@ namespace MessagePack.Formatters
 
         public unsafe void Serialize(ref MessagePackWriter writer, Guid value, MessagePackSerializerOptions options)
         {
-            byte* pBytes = stackalloc byte[36];
-            Span<byte> bytes = new Span<byte>(pBytes, 36);
-            new GuidBits(ref value).Write(bytes);
-            writer.WriteString(bytes);
+            if (options.BigEndianUuid) // TODO: This doesn't exist yet
+            {
+                byte* pBytes = stackalloc byte[16];
+                Span<byte> bytes = new Span<byte>(pBytes, 16);
+                value.TryWriteBytes(bytes, bigEndian: true, out _);
+            }
+            else
+            {
+                byte* pBytes = stackalloc byte[36];
+                Span<byte> bytes = new Span<byte>(pBytes, 36);
+                new GuidBits(ref value).Write(bytes);
+                writer.WriteString(bytes);
+            }
         }
 
         public Guid Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
