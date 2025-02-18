@@ -299,12 +299,18 @@ namespace MessagePack.Formatters
         {
             ReadOnlySequence<byte> segment = reader.ReadStringSequence() ?? throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<Guid>();
 
-            var bytes = reader.ReadBytes()?.ToArray()
-            ?? throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<Guid>();
-
-            if (bytes.Length == 16) // Its binary
+            if (segment.Length == 16) // Its binary GUID that must be stored big-endian, network order
             {
-                return new Guid(bytes, bigEndian: true); // GUID must always be stored big-endian
+                if (segment.IsSingleSegment)
+                {
+                    return new Guid(segment.First.Span, bigEndian: true)
+                }
+                else
+                {
+                    Span<byte> stackBuffer = stackalloc byte[16];
+                    segment.CopyTo(stackBuffer);
+                    return new Guid(segment, bigEndian: true);
+                }
             }
 
             if (segment.Length != 36)
