@@ -304,7 +304,7 @@ namespace MessagePack.Formatters
 
             if (bytes.Length == 16) // Its binary
             {
-                return new Guid(bytes);
+                return new Guid(bytes, bigEndian: true); // GUID must always be stored big-endian
             }
 
             if (segment.Length != 36)
