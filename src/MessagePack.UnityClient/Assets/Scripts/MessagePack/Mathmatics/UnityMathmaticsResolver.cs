@@ -1,7 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-#if UNITY_MATHEMATICS_SUPPORT
-#pragma warning disable SA1402 // File may only contain a single type
+#nullable enable
+#pragma warning disable SA1312 // variable naming
+#pragma warning disable SA1402 // one type per file
+#pragma warning disable SA1513 // ClosingBraceMustBeFollowedByBlankLine
+#pragma warning disable SA1516 // ElementsMustBeSeparatedByBlankLine
+#pragma warning disable SA1649 // file name matches type name
 
 using System;
 using System.Collections.Generic;
@@ -60,4 +64,3 @@ namespace MessagePack.Unity
         }
     }
 }
-#endif
