@@ -11,7 +11,7 @@
 #pragma warning disable SA1516 // ElementsMustBeSeparatedByBlankLine
 #pragma warning disable SA1649 // file name matches type name
 
-namespace MessagePack.Unity
+namespace MessagePack.Unity.Mathematics
 {
     public sealed class QuaternionFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Unity.Mathematics.quaternion>
     {

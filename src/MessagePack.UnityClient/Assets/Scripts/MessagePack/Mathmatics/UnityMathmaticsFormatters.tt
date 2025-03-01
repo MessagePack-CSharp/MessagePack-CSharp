@@ -16,7 +16,7 @@
 
 using System;
 
-namespace MessagePack.Unity
+namespace MessagePack.Unity.Mathematics
 {
 <#
 // see https://docs.unity3d.com/Packages/com.unity.mathematics@1.0/api/Unity.Mathematics.html#structs

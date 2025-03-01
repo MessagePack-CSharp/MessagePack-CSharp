@@ -13,7 +13,7 @@
 
 using System;
 
-namespace MessagePack.Unity
+namespace MessagePack.Unity.Mathematics
 {
     public sealed class Bool2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Unity.Mathematics.bool2>
     {

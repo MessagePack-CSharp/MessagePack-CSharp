@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using MessagePack.Formatters;
 using Unity.Mathematics;
 
-namespace MessagePack.Unity
+namespace MessagePack.Unity.Mathematics
 {
     public class UnityMathematicsResolver : IFormatterResolver
     {
@@ -42,14 +42,14 @@ namespace MessagePack.Unity
     {
         private static readonly Dictionary<Type, object> FormatterMap = new Dictionary<Type, object>()
         {
-            { typeof(bool2), new Bool2Formatter() },
-            { typeof(bool3), new Bool3Formatter() },
-            { typeof(double2), new Double2Formatter() },
-            { typeof(double3), new Double3Formatter() },
-            { typeof(float2), new Float2Formatter() },
-            { typeof(float3), new Float3Formatter() },
-            { typeof(int2), new Int2Formatter() },
-            { typeof(int3), new Int3Formatter() },
+            { typeof(bool2), new global::MessagePack.Unity.Mathematics.Bool2Formatter() },
+            { typeof(bool3), new global::MessagePack.Unity.Mathematics.Bool3Formatter() },
+            { typeof(double2), new global::MessagePack.Unity.Mathematics.Double2Formatter() },
+            { typeof(double3), new global::MessagePack.Unity.Mathematics.Double3Formatter() },
+            { typeof(float2), new global::MessagePack.Unity.Mathematics.Float2Formatter() },
+            { typeof(float3), new global::MessagePack.Unity.Mathematics.Float3Formatter() },
+            { typeof(int2), new global::MessagePack.Unity.Mathematics.Int2Formatter() },
+            { typeof(int3), new global::MessagePack.Unity.Mathematics.Int3Formatter() },
         };
 
         internal static object? GetFormatter(Type t)
