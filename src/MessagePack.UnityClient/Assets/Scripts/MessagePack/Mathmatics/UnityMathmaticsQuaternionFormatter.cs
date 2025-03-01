@@ -15,16 +15,16 @@ namespace MessagePack.Unity.Mathematics
 {
     public sealed class QuaternionFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Unity.Mathematics.quaternion>
     {
+        private readonly global::MessagePack.Formatters.IMessagePackFormatter<global::Unity.Mathematics.float4> underlyingFormatter = new MessagePack.Unity.Mathematics.Float4Formatter();
+
         public void Serialize(ref MessagePackWriter writer, global::Unity.Mathematics.quaternion value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            var formatter = options.Resolver.GetFormatterWithVerify<global::Unity.Mathematics.float4>();
-            formatter.Serialize(ref writer, value.value, options);
+            underlyingFormatter.Serialize(ref writer, value.value, options);
         }
 
         public global::Unity.Mathematics.quaternion Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
-            var formatter = options.Resolver.GetFormatterWithVerify<global::Unity.Mathematics.float4>();
-            return formatter.Deserialize(ref reader, options);
+            return underlyingFormatter.Deserialize(ref reader, options);
         }
     }
 }
