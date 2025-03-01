@@ -42,14 +42,35 @@ namespace MessagePack.Unity.Mathematics
     {
         private static readonly Dictionary<Type, object> FormatterMap = new Dictionary<Type, object>()
         {
+            // standard
             { typeof(bool2), new global::MessagePack.Unity.Mathematics.Bool2Formatter() },
             { typeof(bool3), new global::MessagePack.Unity.Mathematics.Bool3Formatter() },
+            { typeof(bool4), new global::MessagePack.Unity.Mathematics.Bool4Formatter() },
             { typeof(double2), new global::MessagePack.Unity.Mathematics.Double2Formatter() },
             { typeof(double3), new global::MessagePack.Unity.Mathematics.Double3Formatter() },
+            { typeof(double4), new global::MessagePack.Unity.Mathematics.Double4Formatter() },
             { typeof(float2), new global::MessagePack.Unity.Mathematics.Float2Formatter() },
             { typeof(float3), new global::MessagePack.Unity.Mathematics.Float3Formatter() },
+            { typeof(float4), new global::MessagePack.Unity.Mathematics.Float4Formatter() },
             { typeof(int2), new global::MessagePack.Unity.Mathematics.Int2Formatter() },
             { typeof(int3), new global::MessagePack.Unity.Mathematics.Int3Formatter() },
+            { typeof(int4), new global::MessagePack.Unity.Mathematics.Int4Formatter() },
+            { typeof(quaternion), new global::MessagePack.Unity.Mathematics.QuaternionFormatter() },
+
+            // nullable
+            { typeof(bool2?), new StaticNullableFormatter<bool2>(new global::MessagePack.Unity.Mathematics.Bool2Formatter()) },
+            { typeof(bool3?), new StaticNullableFormatter<bool3>(new global::MessagePack.Unity.Mathematics.Bool3Formatter()) },
+            { typeof(bool4?), new StaticNullableFormatter<bool4>(new global::MessagePack.Unity.Mathematics.Bool4Formatter()) },
+            { typeof(double2?), new StaticNullableFormatter<double2>(new global::MessagePack.Unity.Mathematics.Double2Formatter()) },
+            { typeof(double3?), new StaticNullableFormatter<double3>(new global::MessagePack.Unity.Mathematics.Double3Formatter()) },
+            { typeof(double4?), new StaticNullableFormatter<double4>(new global::MessagePack.Unity.Mathematics.Double4Formatter()) },
+            { typeof(float2?), new StaticNullableFormatter<float2>(new global::MessagePack.Unity.Mathematics.Float2Formatter()) },
+            { typeof(float3?), new StaticNullableFormatter<float3>(new global::MessagePack.Unity.Mathematics.Float3Formatter()) },
+            { typeof(float4?), new StaticNullableFormatter<float4>(new global::MessagePack.Unity.Mathematics.Float4Formatter()) },
+            { typeof(int2?), new StaticNullableFormatter<int2>(new global::MessagePack.Unity.Mathematics.Int2Formatter()) },
+            { typeof(int3?), new StaticNullableFormatter<int3>(new global::MessagePack.Unity.Mathematics.Int3Formatter()) },
+            { typeof(int4?), new StaticNullableFormatter<int4>(new global::MessagePack.Unity.Mathematics.Int4Formatter()) },
+            { typeof(quaternion?), new StaticNullableFormatter<quaternion>(new global::MessagePack.Unity.Mathematics.QuaternionFormatter()) },
         };
 
         internal static object? GetFormatter(Type t)
