@@ -735,6 +735,28 @@ namespace Unity.Mathematics
     }
 
     [MessagePackObject]
+    public struct bool4
+    {
+        [Key(0)]
+        public bool x;
+        [Key(1)]
+        public bool y;
+        [Key(2)]
+        public bool z;
+        [Key(3)]
+        public bool w;
+
+        [SerializationConstructor]
+        public bool4(bool x, bool y, bool z, bool w)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.w = w;
+        }
+    }
+
+    [MessagePackObject]
     public struct double2
     {
         [Key(0)]
@@ -766,6 +788,28 @@ namespace Unity.Mathematics
             this.x = x;
             this.y = y;
             this.z = z;
+        }
+    }
+
+    [MessagePackObject]
+    public struct double4
+    {
+        [Key(0)]
+        public double x;
+        [Key(1)]
+        public double y;
+        [Key(2)]
+        public double z;
+        [Key(3)]
+        public double w;
+
+        [SerializationConstructor]
+        public double4(double x, double y, double z, double w)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.w = w;
         }
     }
 
@@ -805,6 +849,28 @@ namespace Unity.Mathematics
     }
 
     [MessagePackObject]
+    public struct float4
+    {
+        [Key(0)]
+        public float x;
+        [Key(1)]
+        public float y;
+        [Key(2)]
+        public float z;
+        [Key(3)]
+        public float w;
+
+        [SerializationConstructor]
+        public float4(float x, float y, float z, float w)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.w = w;
+        }
+    }
+
+    [MessagePackObject]
     public struct int2
     {
         [Key(0)]
@@ -837,5 +903,54 @@ namespace Unity.Mathematics
             this.y = y;
             this.z = z;
         }
+    }
+
+    [MessagePackObject]
+    public struct int4
+    {
+        [Key(0)]
+        public int x;
+        [Key(1)]
+        public int y;
+        [Key(2)]
+        public int z;
+        [Key(3)]
+        public int w;
+
+        [SerializationConstructor]
+        public int4(int x, int y, int z, int w)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.w = w;
+        }
+    }
+
+    [MessagePackObject]
+    public struct quaternion
+    {
+        [Key(0)]
+        public float x;
+        [Key(1)]
+        public float y;
+        [Key(2)]
+        public float z;
+        [Key(3)]
+        public float w;
+
+        [SerializationConstructor]
+        public quaternion(float x, float y, float z, float w)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.w = w;
+        }
+
+        public static quaternion identity => new quaternion(0, 0, 0, 1);
+
+        [IgnoreMember]
+        public float4 value => new float4(x, y, z, w);
     }
 }
