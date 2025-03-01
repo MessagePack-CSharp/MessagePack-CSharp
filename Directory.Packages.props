@@ -43,7 +43,7 @@
     <PackageVersion Include="NuGet.Protocol" Version="6.8.0" />
     <PackageVersion Include="nunit" Version="4.3.2" />
     <PackageVersion Include="NUnit3TestAdapter" Version="4.5.0" />
-    <PackageVersion Include="protobuf-net" Version="3.2.30" />
+    <PackageVersion Include="protobuf-net" Version="3.2.46" />
     <PackageVersion Include="RandomFixtureKit" Version="1.0.1" />
     <PackageVersion Include="ReactiveProperty" Version="9.6.0" />
     <PackageVersion Include="Required" Version="1.0.0" />
