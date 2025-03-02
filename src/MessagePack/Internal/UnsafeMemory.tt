@@ -30,6 +30,9 @@ namespace MessagePack.Internal
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
+#if NET7_0_OR_GREATER
+            src.Slice(0, <#= i #>).CopyTo(dst);
+#else
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
             {
@@ -40,7 +43,7 @@ namespace MessagePack.Internal
                 *(int*)(pDst + <#= i - 4 #>) = *(int*)(pSrc + <#= (i - 4) #>);
 <# } #>
             }
-
+#endif
             writer.Advance(src.Length);
         }
 <# } #>
@@ -54,6 +57,9 @@ namespace MessagePack.Internal
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
+#if NET7_0_OR_GREATER
+            src.Slice(0, <#= i #>).CopyTo(dst);
+#else
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
             {
@@ -64,7 +70,7 @@ namespace MessagePack.Internal
                 *(long*)(pDst + <#= i - 8 #>) = *(long*)(pSrc + <#= (i - 8) #>);
 <# } #>
             }
-
+#endif
             writer.Advance(src.Length);
         }
 <# } #>
