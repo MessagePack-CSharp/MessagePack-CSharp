@@ -10,6 +10,7 @@ using MessagePack.Internal;
 namespace MessagePack.Formatters
 {
     // Note:This implementation is 'not' fastest, should more improve.
+    [Preserve]
     public sealed class EnumAsStringFormatter<T> : IMessagePackFormatter<T>
         where T : struct, Enum
     {

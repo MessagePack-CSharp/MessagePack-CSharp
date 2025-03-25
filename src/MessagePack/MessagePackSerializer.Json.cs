@@ -291,11 +291,11 @@ namespace MessagePack
                 case MessagePackType.Float:
                     if (reader.NextCode == MessagePackCode.Float32)
                     {
-                        writer.Write(reader.ReadSingle().ToString(CultureInfo.InvariantCulture));
+                        writer.Write(reader.ReadSingle().ToString("R", CultureInfo.InvariantCulture));
                     }
                     else
                     {
-                        writer.Write(reader.ReadDouble().ToString(CultureInfo.InvariantCulture));
+                        writer.Write(reader.ReadDouble().ToString("R", CultureInfo.InvariantCulture));
                     }
 
                     break;

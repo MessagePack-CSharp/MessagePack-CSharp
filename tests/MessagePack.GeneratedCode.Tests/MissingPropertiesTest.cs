@@ -16,7 +16,6 @@ namespace MessagePack.GeneratedCode.Tests
         {
             options = MessagePackSerializerOptions.Standard.WithResolver(
                 CompositeResolver.Create(
-                    Sandbox.GeneratedMessagePackResolver.Instance,
                     SharedData.GeneratedMessagePackResolver.Instance,
                     StandardResolver.Instance));
         }

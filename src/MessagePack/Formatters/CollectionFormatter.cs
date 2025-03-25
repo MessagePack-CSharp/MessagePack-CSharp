@@ -10,12 +10,14 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using MessagePack.Internal;
 
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
+    [Preserve]
     public sealed class ArrayFormatter<T> : IMessagePackFormatter<T[]?>
     {
         public void Serialize(ref MessagePackWriter writer, T[]? value, MessagePackSerializerOptions options)
@@ -158,6 +160,47 @@ namespace MessagePack.Formatters
         }
     }
 
+    // special formatter to maintain compatibility due to bugs, https://github.com/MessagePack-CSharp/MessagePack-CSharp/issues/2134
+    public sealed class ByteListFormatter : IMessagePackFormatter<List<byte>?>
+    {
+        public static readonly ByteListFormatter Instance = new ByteListFormatter();
+
+        private static readonly ListFormatter<byte> InnerFormatter = new ListFormatter<byte>();
+
+        public void Serialize(ref MessagePackWriter writer, List<byte>? value, MessagePackSerializerOptions options)
+        {
+            InnerFormatter.Serialize(ref writer, value, options);
+        }
+
+        public List<byte>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.NextMessagePackType == MessagePackType.Array)
+            {
+                return InnerFormatter.Deserialize(ref reader, options);
+            }
+            else
+            {
+                var sequence = reader.ReadBytes();
+                if (sequence == null)
+                {
+                    return null;
+                }
+
+#if NET8_0_OR_GREATER
+                int len = checked((int)sequence.Value.Length);
+                var list = new List<byte>(len);
+                CollectionsMarshal.SetCount(list, len);
+                var span = CollectionsMarshal.AsSpan(list);
+                sequence.Value.CopyTo(span);
+                return list;
+#else
+                return new List<byte>(sequence.Value.ToArray());
+#endif
+            }
+        }
+    }
+
+    [Preserve]
     public sealed class MemoryFormatter<T> : IMessagePackFormatter<Memory<T>>
     {
         public void Serialize(ref MessagePackWriter writer, Memory<T> value, MessagePackSerializerOptions options)
@@ -172,6 +215,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class ReadOnlyMemoryFormatter<T> : IMessagePackFormatter<ReadOnlyMemory<T>>
     {
         public void Serialize(ref MessagePackWriter writer, ReadOnlyMemory<T> value, MessagePackSerializerOptions options)
@@ -194,6 +238,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class ReadOnlySequenceFormatter<T> : IMessagePackFormatter<ReadOnlySequence<T>>
     {
         public void Serialize(ref MessagePackWriter writer, ReadOnlySequence<T> value, MessagePackSerializerOptions options)
@@ -218,6 +263,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class ArraySegmentFormatter<T> : IMessagePackFormatter<ArraySegment<T>>
     {
         public void Serialize(ref MessagePackWriter writer, ArraySegment<T> value, MessagePackSerializerOptions options)
@@ -248,6 +294,7 @@ namespace MessagePack.Formatters
     }
 
     // List<T> is popular format, should avoid abstraction.
+    [Preserve]
     public sealed class ListFormatter<T> : IMessagePackFormatter<List<T>?>
     {
         public void Serialize(ref MessagePackWriter writer, List<T>? value, MessagePackSerializerOptions options)
@@ -464,6 +511,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class GenericCollectionFormatter<TElement, TCollection> : CollectionFormatterBase<TElement, TCollection>
          where TCollection : ICollection<TElement>, new()
     {
@@ -478,6 +526,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class GenericEnumerableFormatter<TElement, TCollection> : CollectionFormatterBase<TElement, TElement[], TCollection>
         where TCollection : IEnumerable<TElement>
     {
@@ -497,6 +546,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class LinkedListFormatter<T> : CollectionFormatterBase<T, LinkedList<T>, LinkedList<T>.Enumerator, LinkedList<T>>
     {
         protected override void Add(LinkedList<T> collection, int index, T value, MessagePackSerializerOptions options)
@@ -520,6 +570,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class QueueFormatter<T> : CollectionFormatterBase<T, Queue<T>, Queue<T>.Enumerator, Queue<T>>
     {
         protected override int? GetCount(Queue<T> sequence)
@@ -640,6 +691,7 @@ namespace MessagePack.Formatters
 #endif
 
     // should deserialize reverse order.
+    [Preserve]
     public sealed class StackFormatter<T> : CollectionFormatterBase<T, T[], Stack<T>.Enumerator, Stack<T>>
     {
         protected override int? GetCount(Stack<T> sequence)
@@ -669,6 +721,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class HashSetFormatter<T> : CollectionFormatterBase<T, HashSet<T>, HashSet<T>.Enumerator, HashSet<T>>
     {
         protected override int? GetCount(HashSet<T> sequence)
@@ -697,6 +750,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class ReadOnlyCollectionFormatter<T> : CollectionFormatterBase<T, T[], ReadOnlyCollection<T>>
     {
         protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
@@ -753,6 +807,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class InterfaceListFormatter2<T> : CollectionFormatterBase<T, List<T>, IList<T>>
     {
         protected override void Add(List<T> collection, int index, T value, MessagePackSerializerOptions options)
@@ -771,6 +826,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class InterfaceCollectionFormatter2<T> : CollectionFormatterBase<T, List<T>, ICollection<T>>
     {
         protected override void Add(List<T> collection, int index, T value, MessagePackSerializerOptions options)
@@ -789,6 +845,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class InterfaceEnumerableFormatter<T> : CollectionFormatterBase<T, T[], IEnumerable<T>>
     {
         protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
@@ -808,6 +865,7 @@ namespace MessagePack.Formatters
     }
 
     // [Key, [Array]]
+    [Preserve]
     public sealed class InterfaceGroupingFormatter<TKey, TElement> : IMessagePackFormatter<IGrouping<TKey, TElement>?>
     {
         public void Serialize(ref MessagePackWriter writer, IGrouping<TKey, TElement>? value, MessagePackSerializerOptions options)
@@ -854,6 +912,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class InterfaceLookupFormatter<TKey, TElement> : CollectionFormatterBase<IGrouping<TKey, TElement>, Dictionary<TKey, IGrouping<TKey, TElement>>, ILookup<TKey, TElement>>
         where TKey : notnull
     {
@@ -947,6 +1006,7 @@ namespace MessagePack.Formatters
 
     /* NonGenerics */
 
+    [Preserve]
     public sealed class NonGenericListFormatter<T> : IMessagePackFormatter<T?>
         where T : class, IList, new()
     {
@@ -998,6 +1058,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class NonGenericInterfaceCollectionFormatter : IMessagePackFormatter<ICollection?>
     {
         public static readonly IMessagePackFormatter<ICollection?> Instance = new NonGenericInterfaceCollectionFormatter();
@@ -1058,6 +1119,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class NonGenericInterfaceEnumerableFormatter : IMessagePackFormatter<IEnumerable?>
     {
         public static readonly IMessagePackFormatter<IEnumerable?> Instance = new NonGenericInterfaceEnumerableFormatter();
@@ -1199,6 +1261,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class NonGenericDictionaryFormatter<T> : IMessagePackFormatter<T?>
         where T : class, IDictionary, new()
     {
@@ -1312,6 +1375,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class ObservableCollectionFormatter<T> : CollectionFormatterBase<T, ObservableCollection<T>>
     {
         protected override void Add(ObservableCollection<T> collection, int index, T value, MessagePackSerializerOptions options)
@@ -1325,6 +1389,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class ReadOnlyObservableCollectionFormatter<T> : CollectionFormatterBase<T, ObservableCollection<T>, ReadOnlyObservableCollection<T>>
     {
         protected override void Add(ObservableCollection<T> collection, int index, T value, MessagePackSerializerOptions options)
@@ -1343,6 +1408,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class InterfaceReadOnlyListFormatter<T> : CollectionFormatterBase<T, T[], IReadOnlyList<T>>
     {
         protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
@@ -1361,6 +1427,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class InterfaceReadOnlyCollectionFormatter<T> : CollectionFormatterBase<T, T[], IReadOnlyCollection<T>>
     {
         protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
@@ -1379,6 +1446,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class InterfaceSetFormatter<T> : CollectionFormatterBase<T, HashSet<T>, ISet<T>>
     {
         protected override void Add(HashSet<T> collection, int index, T value, MessagePackSerializerOptions options)
@@ -1441,6 +1509,7 @@ namespace MessagePack.Formatters
 
 #endif
 
+    [Preserve]
     public sealed class ConcurrentBagFormatter<T> : CollectionFormatterBase<T, System.Collections.Concurrent.ConcurrentBag<T>>
     {
         protected override int? GetCount(ConcurrentBag<T> sequence)
@@ -1459,6 +1528,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class ConcurrentQueueFormatter<T> : CollectionFormatterBase<T, System.Collections.Concurrent.ConcurrentQueue<T>>
     {
         protected override int? GetCount(ConcurrentQueue<T> sequence)
@@ -1477,6 +1547,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class ConcurrentStackFormatter<T> : CollectionFormatterBase<T, T[], ConcurrentStack<T>>
     {
         protected override int? GetCount(ConcurrentStack<T> sequence)

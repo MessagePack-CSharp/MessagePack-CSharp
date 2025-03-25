@@ -2,12 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Buffers;
+using MessagePack.Internal;
 
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
+    [Preserve]
     public sealed class NullableFormatter<T> : IMessagePackFormatter<T?>
         where T : struct
     {
@@ -37,6 +39,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class StaticNullableFormatter<T> : IMessagePackFormatter<T?>
         where T : struct
     {

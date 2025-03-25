@@ -131,7 +131,6 @@ namespace MessagePack.Internal
             { typeof(List<Single>), SingleListFormatter.Instance },
             { typeof(List<Double>), DoubleListFormatter.Instance },
             { typeof(List<Boolean>), BooleanListFormatter.Instance },
-            { typeof(List<byte>), ByteListFormatter.Instance },
             { typeof(List<SByte>), SByteListFormatter.Instance },
             { typeof(List<Char>), CharListFormatter.Instance },
 #else
@@ -144,12 +143,12 @@ namespace MessagePack.Internal
             { typeof(List<Single>), new ListFormatter<Single>() },
             { typeof(List<Double>), new ListFormatter<Double>() },
             { typeof(List<Boolean>), new ListFormatter<Boolean>() },
-            { typeof(List<byte>), new ListFormatter<byte>() },
             { typeof(List<SByte>), new ListFormatter<SByte>() },
             { typeof(List<Char>), new ListFormatter<Char>() },
 #endif
             { typeof(List<DateTime>), new ListFormatter<DateTime>() },
             { typeof(List<string>), new ListFormatter<string>() },
+            { typeof(List<Byte>), ByteListFormatter.Instance }, // special formatter to maintain compatibility due to bugs
 
             { typeof(object[]), new ArrayFormatter<object>() },
             { typeof(List<object>), new ListFormatter<object>() },
