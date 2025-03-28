@@ -36,17 +36,27 @@ namespace MessagePack
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackObjectAttribute"/> class.
         /// </summary>
-        /// <param name="keyAsPropertyName">
-        /// <see langword="true" /> to automatically serialize all internal and public fields and properties using their property name as the key in a map;
+        /// <param name="keyPolicy">
+        /// KeyPolicy.PropertyNames <see langword="true" /> to automatically serialize all internal and public fields and properties using their property name as the key in a map;
         /// or <see langword="false" /> to use the <see cref="KeyAttribute"/> attribute to specify the key for each field or property.
+        /// KeyPolicy.CamelCaseNames  Convert string type Key to CamelCase rule.
+        /// KeyPolicy.CamelCasePropertyNames the above two.
         /// </param>
-        /// <param name="keyNameCamelCase">
-        /// set keyNameCamelCase=true Convert string type Key to CamelCase rule.
-        /// </param>
-        public MessagePackObjectAttribute(bool keyAsPropertyName, bool keyNameCamelCase)
+        public MessagePackObjectAttribute(KeyPolicy keyPolicy)
         {
-            this.KeyAsPropertyName = keyAsPropertyName;
-            this.KeyNameCamelCase = keyNameCamelCase;
+            switch (keyPolicy)
+            {
+                case KeyPolicy.PropertyNames:
+                    this.KeyAsPropertyName = true;
+                    break;
+                case KeyPolicy.CamelCaseNames:
+                    this.KeyNameCamelCase = true;
+                    break;
+                case KeyPolicy.CamelCasePropertyNames:
+                    this.KeyAsPropertyName = true;
+                    this.KeyNameCamelCase = true;
+                    break;
+            }
         }
 
         /// <summary>
