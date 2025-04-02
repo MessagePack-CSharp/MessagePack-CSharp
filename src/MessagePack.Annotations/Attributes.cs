@@ -12,16 +12,6 @@ namespace MessagePack
     public class MessagePackObjectAttribute : Attribute
     {
         /// <summary>
-        /// Gets a value indicating whether to automatically serialize all internal and public fields and properties using their property name as the key in a map.
-        /// </summary>
-        public bool KeyAsPropertyName { get; }
-
-        /// <summary>
-        /// Gets a value indicating whether to automatically serialize all name as the Camel Case  key in a map.
-        /// </summary>
-        public bool KeyNameCamelCase { get; }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackObjectAttribute"/> class.
         /// </summary>
         /// <param name="keyAsPropertyName">
@@ -30,34 +20,36 @@ namespace MessagePack
         /// </param>
         public MessagePackObjectAttribute(bool keyAsPropertyName = false)
         {
+            this.KeyPolicy = keyAsPropertyName ? KeyPolicy.ImplicitPropertyNames : KeyPolicy.Explicit;
+
+#pragma warning disable CS0618 // Type or member is obsolete
             this.KeyAsPropertyName = keyAsPropertyName;
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackObjectAttribute"/> class.
         /// </summary>
-        /// <param name="keyPolicy">
-        /// KeyPolicy.PropertyNames <see langword="true" /> to automatically serialize all internal and public fields and properties using their property name as the key in a map;
-        /// or <see langword="false" /> to use the <see cref="KeyAttribute"/> attribute to specify the key for each field or property.
-        /// KeyPolicy.CamelCaseNames  Convert string type Key to CamelCase rule.
-        /// KeyPolicy.CamelCasePropertyNames the above two.
-        /// </param>
+        /// <param name="keyPolicy">The policy to apply for members to be serialized.</param>
         public MessagePackObjectAttribute(KeyPolicy keyPolicy)
         {
-            switch (keyPolicy)
-            {
-                case KeyPolicy.PropertyNames:
-                    this.KeyAsPropertyName = true;
-                    break;
-                case KeyPolicy.CamelCaseNames:
-                    this.KeyNameCamelCase = true;
-                    break;
-                case KeyPolicy.CamelCasePropertyNames:
-                    this.KeyAsPropertyName = true;
-                    this.KeyNameCamelCase = true;
-                    break;
-            }
+            this.KeyPolicy = keyPolicy;
+
+#pragma warning disable CS0618 // Type or member is obsolete
+            this.KeyAsPropertyName = keyPolicy is KeyPolicy.ImplicitPropertyNames or KeyPolicy.ImplicitCamelCasePropertyNames;
+#pragma warning restore CS0618 // Type or member is obsolete
         }
+
+        /// <summary>
+        /// Gets a value indicating whether to automatically serialize all internal and public fields and properties using their property name as the key in a map.
+        /// </summary>
+        [Obsolete($"Use {nameof(KeyPolicy)} instead.")]
+        public bool KeyAsPropertyName { get; }
+
+        /// <summary>
+        /// Gets the policy to apply for which properties and fields are serialized and how they are named in a map or indexed into an array.
+        /// </summary>
+        public KeyPolicy KeyPolicy { get; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the source generator should <em>not</em>

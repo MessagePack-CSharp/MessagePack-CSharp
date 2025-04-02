@@ -1560,12 +1560,12 @@ namespace MessagePack.Internal
             }
 
             // Determine whether to ignore MessagePackObjectAttribute or DataContract.
-            if (forceStringKey || contractless || (contractAttr?.KeyAsPropertyName == true))
+            if (forceStringKey || contractless || contractAttr?.KeyPolicy is KeyPolicy.ImplicitCamelCasePropertyNames or KeyPolicy.ImplicitPropertyNames)
             {
                 // All public members are serialize target except [Ignore] member.
-                isIntKey = !(forceStringKey || (contractAttr is not null && contractAttr.KeyAsPropertyName));
+                isIntKey = !forceStringKey && contractAttr?.KeyPolicy is not (KeyPolicy.ImplicitCamelCasePropertyNames or KeyPolicy.ImplicitPropertyNames);
                 var hiddenIntKey = 0;
-                bool isKeyCamelCase = (contractAttr is not null && contractAttr.KeyNameCamelCase);
+                bool isKeyCamelCase = contractAttr?.KeyPolicy is KeyPolicy.ImplicitCamelCasePropertyNames;
 
                 // Group the properties and fields by name to qualify members of the same name
                 // (declared with the 'new' keyword) with the declaring type.
@@ -1587,25 +1587,13 @@ namespace MessagePack.Internal
                         if (first)
                         {
                             first = false;
-                            if (isKeyCamelCase)
-                            {
-                                member.StringKey = ToLowerCamel(memberInfo.Name);
-                            }
-                            else
-                            {
-                                member.StringKey = memberInfo.Name;
-                            }
+                            member.StringKey = isKeyCamelCase ? ToCamelCase(memberInfo.Name) : memberInfo.Name;
                         }
                         else
                         {
-                            if (isKeyCamelCase)
-                            {
-                                member.StringKey = $"{ToLowerCamel(memberInfo.DeclaringType!.FullName)}.{ToLowerCamel(memberInfo.Name)}";
-                            }
-                            else
-                            {
-                                member.StringKey = $"{memberInfo.DeclaringType!.FullName}.{memberInfo.Name}";
-                            }
+                            member.StringKey = isKeyCamelCase
+                                ? $"{ToCamelCase(memberInfo.DeclaringType!.FullName)}.{ToCamelCase(memberInfo.Name)}"
+                                : $"{memberInfo.DeclaringType!.FullName}.{memberInfo.Name}";
                         }
 
                         member.IntKey = hiddenIntKey++;
@@ -1874,30 +1862,34 @@ namespace MessagePack.Internal
         }
 
         /// <summary>
-        /// Convert key to LowerCamelCase
+        /// Apply camelCase transformation to an identifier.
         /// </summary>
-        /// <param name="keyBeUpperCamel"></param>
-        /// <returns></returns>
-        internal static string ToLowerCamel(string keyBeUpperCamel)
+        /// <param name="name">The name of the field or property.</param>
+        /// <returns>The camelCase equivalent of the <paramref name="name"/>.</returns>
+        [return: NotNullIfNotNull(nameof(name))]
+        internal static string? ToCamelCase(string? name)
         {
-            if (String.IsNullOrEmpty(keyBeUpperCamel))
+            if (name is null or { Length: 0 } || !char.IsUpper(name[0]))
             {
-                return keyBeUpperCamel;
+                return name;
             }
 
-            if (!Char.IsUpper(keyBeUpperCamel[0]))
+#if NET
+            return string.Create(name.Length, name, static (span, state) =>
             {
-                return keyBeUpperCamel;
-            }
-
-            var buffer = new StringBuilder(keyBeUpperCamel.Length);
-            buffer.Append(Char.ToLowerInvariant(keyBeUpperCamel[0]));
-            if (keyBeUpperCamel.Length > 1)
+                span[0] = char.ToLowerInvariant(state[0]);
+                state[1..].CopyTo(span[1..]);
+            });
+#else
+            var buffer = new StringBuilder(name.Length);
+            buffer.Append(char.ToLowerInvariant(name[0]));
+            if (name.Length > 1)
             {
-                buffer.Append(keyBeUpperCamel, 1, keyBeUpperCamel.Length - 1);
+                buffer.Append(name, 1, name.Length - 1);
             }
 
             return buffer.ToString();
+#endif
         }
 
         /// <devremarks>

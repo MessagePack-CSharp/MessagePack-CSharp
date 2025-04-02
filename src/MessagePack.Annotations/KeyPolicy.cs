@@ -8,8 +8,19 @@ namespace MessagePack
     /// </summary>
     public enum KeyPolicy
     {
-        PropertyNames,
-        CamelCaseNames,
-        CamelCasePropertyNames,
+        /// <summary>
+        /// Each property and field must be attributed with <see cref="KeyAttribute"/> or <see cref="IgnoreMemberAttribute"/>.
+        /// </summary>
+        Explicit,
+
+        /// <summary>
+        /// <see langword="public" /> and <see langword="internal" /> properties and fields are serialized using their name as the key in a map.
+        /// </summary>
+        ImplicitPropertyNames,
+
+        /// <summary>
+        /// <see langword="public" /> and <see langword="internal" /> properties and fields are serialized using a camelCase transformation of their name as the key in a map.
+        /// </summary>
+        ImplicitCamelCasePropertyNames,
     }
 }
