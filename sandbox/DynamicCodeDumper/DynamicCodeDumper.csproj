@@ -46,7 +46,7 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\DynamicAssembly.cs">
       <Link>Code\DynamicAssembly.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\DynamicAssemblyFactory.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\DynamicAssemblyFactory.cs">
       <Link>Code\DynamicAssemblyFactory.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ExpressionUtility.cs">

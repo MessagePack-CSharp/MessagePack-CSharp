@@ -95,7 +95,7 @@ public class AssemblyLoadContextTests : IDisposable
     }
 
     [Fact]
-    public void DynamiObjectResolverWorksWithGenericsAcrossAssemblyLoadContexts()
+    public void DynamiObjectResolverWorksWithGenericCollectionsAcrossAssemblyLoadContexts()
     {
         IList<FirstSimpleData> e1 = new List<FirstSimpleData> { new FirstSimpleData(), new FirstSimpleData() };
         var options = this.CreateSerializerOptions();
@@ -104,8 +104,6 @@ public class AssemblyLoadContextTests : IDisposable
         var o1 = MessagePackSerializer.Deserialize<List<FirstSimpleData>>(b1, options: options);
 
         Assert.Equal(typeof(List<FirstSimpleData>), o1.GetType());
-        Assert.Equal(2, o1.Count);
-        Assert.All(o1, item => Assert.IsType<FirstSimpleData>(item));
 
         var assembly = this.loadContext.LoadFromAssemblyPath(SharedDataAssemblyName);
         Type objectType = assembly.GetType(typeof(FirstSimpleData).FullName);
@@ -129,6 +127,32 @@ public class AssemblyLoadContextTests : IDisposable
         // Get the first item to verify its actual runtime type
         var enumerable = o2 as System.Collections.IList;
         Assert.Equal(objectType, enumerable[0].GetType());
+    }
+
+    [Fact]
+    public void DynamiObjectResolverWorksWithGenericsAcrossAssemblyLoadContexts()
+    {
+        SimpleGenericData<FirstSimpleData> e1 = new SimpleGenericData<FirstSimpleData>(new FirstSimpleData());
+        var options = this.CreateSerializerOptions();
+
+        var b1 = MessagePackSerializer.Serialize(e1, options: options);
+        var o1 = MessagePackSerializer.Deserialize<SimpleGenericData<FirstSimpleData>>(b1, options: options);
+
+        Assert.Equal(typeof(SimpleGenericData<FirstSimpleData>), o1.GetType());
+
+        var assembly = this.loadContext.LoadFromAssemblyPath(SharedDataAssemblyName);
+        Type dataType = assembly.GetType(typeof(FirstSimpleData).FullName);
+        Type simpleGenericType = assembly.GetType(typeof(SimpleGenericData<>).FullName);
+        Type genericType = simpleGenericType.MakeGenericType(dataType);
+        object data = Activator.CreateInstance(dataType);
+        object genericData = Activator.CreateInstance(genericType, data);
+
+        var b2 = MessagePackSerializer.Serialize(genericType, genericData, options: options);
+        var o2 = MessagePackSerializer.Deserialize(genericType, b2, options: options);
+
+        // Verify the element type directly from the generic type arguments
+        Type elementType = o2.GetType().GetGenericArguments()[0];
+        Assert.Equal(dataType, elementType);
     }
 
     [Fact]

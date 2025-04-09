@@ -3093,6 +3093,53 @@ namespace MessagePack.Formatters.SharedData
         }
     }
 
+    public sealed class SimpleGenericDataFormatter<T> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.SimpleGenericData<T>>
+    {
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.SimpleGenericData<T> value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteArrayHeader(1);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T>(formatterResolver).Serialize(ref writer, value.Value, options);
+        }
+
+        public global::SharedData.SimpleGenericData<T> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadArrayHeader();
+            var __Value__ = default(T);
+
+            for (int i = 0; i < length; i++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        __Value__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T>(formatterResolver).Deserialize(ref reader, options);
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::SharedData.SimpleGenericData<T>(__Value__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
     public sealed class SimpleIntKeyDataFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.SimpleIntKeyData>
     {
 

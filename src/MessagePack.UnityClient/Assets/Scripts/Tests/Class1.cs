@@ -87,6 +87,18 @@ namespace SharedData
         ////public int Prop7 { get; set; }
     }
 
+    [MessagePackObject]
+    public class SimpleGenericData<T>
+    {
+        [Key(0)]
+        public T Value { get; set; }
+
+        public SimpleGenericData(T value)
+        {
+            this.Value = value;
+        }
+    }
+
     public class OreOreFormatter : IMessagePackFormatter<int>
     {
         public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
