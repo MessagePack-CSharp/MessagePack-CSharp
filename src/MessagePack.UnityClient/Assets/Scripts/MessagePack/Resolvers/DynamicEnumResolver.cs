@@ -25,7 +25,7 @@ namespace MessagePack.Resolvers
 
         private const string ModuleName = "MessagePack.Resolvers.DynamicEnumResolver";
 
-        private static readonly Lazy<DynamicAssembly> DynamicAssembly;
+        private static readonly DynamicAssemblyFactory DynamicAssemblyFactory;
 
         private static int nameSequence = 0;
 
@@ -35,13 +35,13 @@ namespace MessagePack.Resolvers
 
         static DynamicEnumResolver()
         {
-            DynamicAssembly = new Lazy<DynamicAssembly>(() => new DynamicAssembly(ModuleName));
+            DynamicAssemblyFactory = new DynamicAssemblyFactory(ModuleName);
         }
 
 #if NETFRAMEWORK
         internal AssemblyBuilder Save()
         {
-            return DynamicAssembly.Value.Save();
+            return DynamicAssemblyFactory.GetDynamicAssembly(type: null).Save();
         }
 #endif
 
@@ -95,7 +95,7 @@ namespace MessagePack.Resolvers
             {
                 using (MonoProtection.EnterRefEmitLock())
                 {
-                    TypeBuilder typeBuilder = DynamicAssembly.Value.DefineType("MessagePack.Formatters." + enumType.FullName!.Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
+                    TypeBuilder typeBuilder = DynamicAssemblyFactory.GetDynamicAssembly(enumType).DefineType("MessagePack.Formatters." + enumType.FullName!.Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
                     // void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options);
                     {

@@ -1,0 +1,198 @@
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if NET
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
+using System.Text;
+using System.Threading.Tasks;
+using ComplexdUnion;
+using MessagePack;
+using MessagePack.Formatters;
+using MessagePack.Resolvers;
+using SharedData;
+using Xunit;
+
+#pragma warning disable SA1302 // Interface names should begin with I
+#pragma warning disable SA1403 // File may only contain a single namespace
+
+public class AssemblyLoadContextTests : IDisposable
+{
+    private static readonly string SharedDataAssemblyName = typeof(RootUnionType).Assembly.Location;
+    private readonly AssemblyLoadContext loadContext = new AssemblyLoadContext("TestContext", isCollectible: true);
+
+    public void Dispose()
+    {
+        this.loadContext.Unload();
+    }
+
+    [Fact]
+    public void DynamicUnionResolverWorksAcrossAssemblyLoadContexts()
+    {
+        RootUnionType unionTypeInMainLoadContext = new SubUnionType1();
+        var options = this.CreateSerializerOptions();
+
+        var buffer1 = MessagePackSerializer.Serialize(unionTypeInMainLoadContext, options: options);
+        var o1 = MessagePackSerializer.Deserialize<RootUnionType>(buffer1, options: options);
+
+        Assert.True(o1 is SubUnionType1);
+
+        var assembly = this.loadContext.LoadFromAssemblyPath(SharedDataAssemblyName);
+        object unionTypeInOtherContext = assembly.CreateInstance(typeof(SubUnionType1).FullName);
+        Type rootUnionType = assembly.GetType(typeof(RootUnionType).FullName);
+
+        var buffer2 = MessagePackSerializer.Serialize(rootUnionType, unionTypeInOtherContext, options: options);
+        var o2 = MessagePackSerializer.Deserialize(rootUnionType, buffer2, options: options);
+
+        Assert.True(o2.GetType().IsAssignableTo(rootUnionType));
+    }
+
+    [Fact]
+    public void DynamicEnumResolverWorksAcrossAssemblyLoadContexts()
+    {
+        ByteEnum e1 = ByteEnum.A;
+        var options = this.CreateSerializerOptions();
+
+        var b1 = MessagePackSerializer.Serialize(e1, options: options);
+        var o1 = MessagePackSerializer.Deserialize<ByteEnum>(b1, options: options);
+
+        Assert.Equal(typeof(ByteEnum), o1.GetType());
+
+        var assembly = this.loadContext.LoadFromAssemblyPath(SharedDataAssemblyName);
+        Type enumType = assembly.GetType(typeof(ByteEnum).FullName);
+        object e2 = Enum.GetValues(enumType).GetValue(1);
+
+        var b2 = MessagePackSerializer.Serialize(enumType, e2, options: options);
+        var o2 = MessagePackSerializer.Deserialize(enumType, b2, options: options);
+
+        Assert.Equal(o2.GetType(), e2.GetType());
+    }
+
+    [Fact]
+    public void DynamicObjectResolverWorksAcrossAssemblyLoadContexts()
+    {
+        FirstSimpleData e1 = new FirstSimpleData();
+        var options = this.CreateSerializerOptions();
+
+        var b1 = MessagePackSerializer.Serialize(e1, options: options);
+        var o1 = MessagePackSerializer.Deserialize<FirstSimpleData>(b1, options: options);
+
+        Assert.Equal(typeof(FirstSimpleData), o1.GetType());
+
+        var assembly = this.loadContext.LoadFromAssemblyPath(SharedDataAssemblyName);
+        Type objectType = assembly.GetType(typeof(FirstSimpleData).FullName);
+        object e2 = assembly.CreateInstance(typeof(FirstSimpleData).FullName);
+
+        var b2 = MessagePackSerializer.Serialize(objectType, e2, options: options);
+        var o2 = MessagePackSerializer.Deserialize(objectType, b2, options: options);
+
+        Assert.Equal(o2.GetType(), e2.GetType());
+    }
+
+    [Fact]
+    public void DynamiObjectResolverWorksWithGenericCollectionsAcrossAssemblyLoadContexts()
+    {
+        IList<FirstSimpleData> e1 = new List<FirstSimpleData> { new FirstSimpleData(), new FirstSimpleData() };
+        var options = this.CreateSerializerOptions();
+
+        var b1 = MessagePackSerializer.Serialize(e1, options: options);
+        var o1 = MessagePackSerializer.Deserialize<List<FirstSimpleData>>(b1, options: options);
+
+        Assert.Equal(typeof(List<FirstSimpleData>), o1.GetType());
+
+        var assembly = this.loadContext.LoadFromAssemblyPath(SharedDataAssemblyName);
+        Type objectType = assembly.GetType(typeof(FirstSimpleData).FullName);
+        Type listType = typeof(List<>).MakeGenericType(objectType);
+        object list = Activator.CreateInstance(listType);
+
+        // Add two instances to the list
+        var addMethod = listType.GetMethod("Add");
+        addMethod.Invoke(list, new[] { assembly.CreateInstance(typeof(FirstSimpleData).FullName) });
+        addMethod.Invoke(list, new[] { assembly.CreateInstance(typeof(FirstSimpleData).FullName) });
+
+        Assert.Equal(objectType, (list as System.Collections.IList)[0].GetType());
+
+        var b2 = MessagePackSerializer.Serialize(listType, list, options: options);
+        var o2 = MessagePackSerializer.Deserialize(listType, b2, options: options);
+
+        // Verify the element type directly from the generic type arguments
+        Type elementType = o2.GetType().GetGenericArguments()[0];
+        Assert.Equal(objectType, elementType);
+
+        // Get the first item to verify its actual runtime type
+        var enumerable = o2 as System.Collections.IList;
+        Assert.Equal(objectType, enumerable[0].GetType());
+    }
+
+    [Fact]
+    public void DynamiObjectResolverWorksWithGenericsAcrossAssemblyLoadContexts()
+    {
+        SimpleGenericData<FirstSimpleData> e1 = new SimpleGenericData<FirstSimpleData>(new FirstSimpleData());
+        var options = this.CreateSerializerOptions();
+
+        var b1 = MessagePackSerializer.Serialize(e1, options: options);
+        var o1 = MessagePackSerializer.Deserialize<SimpleGenericData<FirstSimpleData>>(b1, options: options);
+
+        Assert.Equal(typeof(SimpleGenericData<FirstSimpleData>), o1.GetType());
+
+        var assembly = this.loadContext.LoadFromAssemblyPath(SharedDataAssemblyName);
+        Type dataType = assembly.GetType(typeof(FirstSimpleData).FullName);
+        Type simpleGenericType = assembly.GetType(typeof(SimpleGenericData<>).FullName);
+        Type genericType = simpleGenericType.MakeGenericType(dataType);
+        object data = Activator.CreateInstance(dataType);
+        object genericData = Activator.CreateInstance(genericType, data);
+
+        var b2 = MessagePackSerializer.Serialize(genericType, genericData, options: options);
+        var o2 = MessagePackSerializer.Deserialize(genericType, b2, options: options);
+
+        // Verify the element type directly from the generic type arguments
+        Type elementType = o2.GetType().GetGenericArguments()[0];
+        Assert.Equal(dataType, elementType);
+    }
+
+    [Fact]
+    public void DynamicContractlessObjectResolverWorksAcrossAssemblyLoadContexts()
+    {
+        FirstSimpleData e1 = new FirstSimpleData();
+        var options = new MessagePackSerializerOptions(
+            CompositeResolver.Create(
+                BuiltinResolver.Instance,
+                PrimitiveObjectResolver.Instance,
+                DynamicContractlessObjectResolver.Instance));
+
+        var b1 = MessagePackSerializer.Serialize(e1, options: options);
+        var o1 = MessagePackSerializer.Deserialize<FirstSimpleData>(b1, options: options);
+
+        Assert.Equal(typeof(FirstSimpleData), o1.GetType());
+
+        var assembly = this.loadContext.LoadFromAssemblyPath(SharedDataAssemblyName);
+        Type objectType = assembly.GetType(typeof(FirstSimpleData).FullName);
+        object e2 = assembly.CreateInstance(typeof(FirstSimpleData).FullName);
+
+        var b2 = MessagePackSerializer.Serialize(objectType, e2, options: options);
+        var o2 = MessagePackSerializer.Deserialize(objectType, b2, options: options);
+
+        Assert.Equal(o2.GetType(), e2.GetType());
+    }
+
+    private MessagePackSerializerOptions CreateSerializerOptions()
+    {
+        // Avoid default options as it will use source generated formatter which works in this scenario.
+        return new MessagePackSerializerOptions(
+            CompositeResolver.Create(
+                BuiltinResolver.Instance,
+                AttributeFormatterResolver.Instance,
+                DynamicEnumResolver.Instance,
+                DynamicGenericResolver.Instance,
+                DynamicUnionResolver.Instance,
+                DynamicObjectResolver.Instance,
+                PrimitiveObjectResolver.Instance));
+    }
+}
+
+#endif
