@@ -21,10 +21,6 @@ namespace MessagePack
         public MessagePackObjectAttribute(bool keyAsPropertyName = false)
         {
             this.KeyPolicy = keyAsPropertyName ? KeyPolicy.ImplicitPropertyNames : KeyPolicy.Explicit;
-
-#pragma warning disable CS0618 // Type or member is obsolete
-            this.KeyAsPropertyName = keyAsPropertyName;
-#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         /// <summary>
@@ -34,17 +30,7 @@ namespace MessagePack
         public MessagePackObjectAttribute(KeyPolicy keyPolicy)
         {
             this.KeyPolicy = keyPolicy;
-
-#pragma warning disable CS0618 // Type or member is obsolete
-            this.KeyAsPropertyName = keyPolicy is KeyPolicy.ImplicitPropertyNames or KeyPolicy.ImplicitCamelCasePropertyNames;
-#pragma warning restore CS0618 // Type or member is obsolete
         }
-
-        /// <summary>
-        /// Gets a value indicating whether to automatically serialize all internal and public fields and properties using their property name as the key in a map.
-        /// </summary>
-        [Obsolete($"Use {nameof(KeyPolicy)} instead.")]
-        public bool KeyAsPropertyName { get; }
 
         /// <summary>
         /// Gets the policy to apply for which properties and fields are serialized and how they are named in a map or indexed into an array.
