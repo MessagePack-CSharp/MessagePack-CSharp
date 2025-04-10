@@ -6,7 +6,7 @@
 
 using MsgPack = global::MessagePack;
 
-partial record MyObject {
+internal partial record MyObject {
 
 	internal sealed class MyObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyObject>
 	{
