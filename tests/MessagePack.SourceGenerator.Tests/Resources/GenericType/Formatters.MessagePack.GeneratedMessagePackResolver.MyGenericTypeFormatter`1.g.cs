@@ -7,7 +7,7 @@
 using MsgPack = global::MessagePack;
 
 namespace MessagePack {
-partial class GeneratedMessagePackResolver {
+internal partial class GeneratedMessagePackResolver {
 
 	internal sealed class MyGenericTypeFormatter<T> : MsgPack::Formatters.IMessagePackFormatter<global::MyGenericType<T>>
 	{

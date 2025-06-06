@@ -6,7 +6,7 @@
 
 using MsgPack = global::MessagePack;
 
-partial record struct MyObject {
+internal partial record struct MyObject {
 
 	internal sealed class MyObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyObject>
 	{

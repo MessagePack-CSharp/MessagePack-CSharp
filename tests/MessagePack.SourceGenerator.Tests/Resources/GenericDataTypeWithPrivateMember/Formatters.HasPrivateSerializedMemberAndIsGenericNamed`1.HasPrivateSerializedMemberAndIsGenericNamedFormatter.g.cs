@@ -4,7 +4,7 @@
 
 using MsgPack = global::MessagePack;
 
-partial class HasPrivateSerializedMemberAndIsGenericNamed<T>
+internal partial class HasPrivateSerializedMemberAndIsGenericNamed<T>
 		where T : struct
 {	internal sealed class HasPrivateSerializedMemberAndIsGenericNamedFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::HasPrivateSerializedMemberAndIsGenericNamed<T>>
 	{

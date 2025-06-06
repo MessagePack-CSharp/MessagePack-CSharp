@@ -48,6 +48,7 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
         this.TypeParameters = CodeAnalysisUtilities.GetTypeParameters(symbol, recursionGuard);
         this.TypeArguments = CodeAnalysisUtilities.GetTypeArguments(symbol, recursionGuard);
         this.ReferenceTypeNullableAnnotation = symbol.NullableAnnotation;
+        this.AccessModifier = symbol.DeclaredAccessibility;
     }
 
     [SetsRequiredMembers]
