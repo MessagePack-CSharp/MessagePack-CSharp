@@ -78,7 +78,7 @@ namespace MessagePack.Resolvers
                 // but *not* look at non-public members to avoid double-serialization of the properties
                 // as well as their backing fields.
                 allowPrivate = false;
-                dynamicAssembly = DynamicAssemblyFactory.GetDynamicAssembly(typeof(T), true);
+                dynamicAssembly = DynamicAssemblyFactory.GetDynamicAssembly(type, true);
             }
             else if (type.IsNullable())
             {
@@ -93,9 +93,9 @@ namespace MessagePack.Resolvers
                 return (IMessagePackFormatter<T>?)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(type), [innerFormatter]);
             }
 
-            allowPrivate |= !contractless && typeof(T).GetCustomAttributes<MessagePackObjectAttribute>().Any(a => a.AllowPrivate);
-            dynamicAssembly ??= DynamicAssemblyFactory.GetDynamicAssembly(typeof(T), allowPrivate);
-            TypeInfo? formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(dynamicAssembly, typeof(T), forceStringKey, contractless, allowPrivate);
+            allowPrivate |= !contractless && type.GetCustomAttributes<MessagePackObjectAttribute>().Any(a => a.AllowPrivate);
+            dynamicAssembly ??= DynamicAssemblyFactory.GetDynamicAssembly(type, allowPrivate);
+            TypeInfo? formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(dynamicAssembly, type, forceStringKey, contractless, allowPrivate);
             return formatterTypeInfo is null ? null : (IMessagePackFormatter<T>)ResolverUtilities.ActivateFormatter(formatterTypeInfo.AsType());
         }
 

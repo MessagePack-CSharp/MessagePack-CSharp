@@ -78,7 +78,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                TypeInfo formatterTypeInfo = BuildType(typeof(T), allowPrivate: false);
+                TypeInfo formatterTypeInfo = BuildType(type, allowPrivate: false);
                 Formatter = (IMessagePackFormatter<T>?)Activator.CreateInstance(formatterTypeInfo.AsType());
             }
         }

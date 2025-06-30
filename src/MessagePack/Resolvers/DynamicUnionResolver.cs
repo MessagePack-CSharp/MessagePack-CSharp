@@ -83,7 +83,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                TypeInfo? formatterTypeInfo = BuildType(typeof(T));
+                TypeInfo? formatterTypeInfo = BuildType(type);
                 if (formatterTypeInfo == null)
                 {
                     return;
