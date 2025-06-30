@@ -15,12 +15,27 @@ namespace MessagePack.Internal
             return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Nullable<>);
         }
 
+        public static bool IsNullable(this Type type)
+        {
+            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Nullable<>);
+        }
+
         public static bool IsPublic(this System.Reflection.TypeInfo type)
         {
             return type.IsPublic;
         }
 
         public static bool IsAnonymous(this System.Reflection.TypeInfo type)
+        {
+            return type.Namespace == null
+                   && type.IsSealed
+                   && (type.Name.StartsWith("<>f__AnonymousType", StringComparison.Ordinal)
+                       || type.Name.StartsWith("<>__AnonType", StringComparison.Ordinal)
+                       || type.Name.StartsWith("VB$AnonymousType_", StringComparison.Ordinal))
+                   && type.IsDefined(typeof(CompilerGeneratedAttribute), false);
+        }
+
+        public static bool IsAnonymous(this Type type)
         {
             return type.Namespace == null
                    && type.IsSealed

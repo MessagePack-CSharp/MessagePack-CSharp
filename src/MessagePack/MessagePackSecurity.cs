@@ -176,7 +176,7 @@ namespace MessagePack
                     typeof(T) == typeof(DateTimeOffset) ? (IEqualityComparer<T>)DateTimeOffsetEqualityComparer.Instance :
 
                     // Call out each primitive behind an enum explicitly to avoid dynamically generating code.
-                    typeof(T).GetTypeInfo().IsEnum && typeof(T).GetTypeInfo().GetEnumUnderlyingType() is Type underlying ? (
+                    typeof(T).IsEnum && typeof(T).GetEnumUnderlyingType() is Type underlying ? (
                         underlying == typeof(byte) ? CollisionResistantEnumHasher<T, byte>.Instance :
                         underlying == typeof(sbyte) ? CollisionResistantEnumHasher<T, sbyte>.Instance :
                         underlying == typeof(ushort) ? CollisionResistantEnumHasher<T, ushort>.Instance :

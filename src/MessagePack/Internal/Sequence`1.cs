@@ -361,7 +361,7 @@ namespace Nerdbank.Streams // NOTE: invalid namespace, should modify
             /// <summary>
             /// A value indicating whether the element may contain references (and thus must be cleared).
             /// </summary>
-            private static readonly bool MayContainReferences = !typeof(T).GetTypeInfo().IsPrimitive;
+            private static readonly bool MayContainReferences = !typeof(T).IsPrimitive;
 
 #pragma warning disable SA1011 // Closing square brackets should be spaced correctly
             /// <summary>
