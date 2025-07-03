@@ -33,7 +33,7 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
-                MessagePackFormatterAttribute? attr = typeof(T).GetTypeInfo().GetCustomAttribute<MessagePackFormatterAttribute>();
+                MessagePackFormatterAttribute? attr = typeof(T).GetCustomAttribute<MessagePackFormatterAttribute>();
                 if (attr == null)
                 {
                     return;

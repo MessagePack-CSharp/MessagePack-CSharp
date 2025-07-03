@@ -76,39 +76,39 @@ internal class SkipClrVisibilityChecks
     /// Scans a given type for references to non-public types and adds any assemblies that declare those types
     /// to a given set.
     /// </summary>
-    /// <param name="typeInfo">The type which may be internal.</param>
+    /// <param name="type">The type which may be internal.</param>
     /// <param name="referencedAssemblies">The set of assemblies to add to where non-public types are found.</param>
-    internal static void GetSkipVisibilityChecksRequirements(TypeInfo typeInfo, ImmutableHashSet<AssemblyName>.Builder referencedAssemblies)
+    internal static void GetSkipVisibilityChecksRequirements(Type type, ImmutableHashSet<AssemblyName>.Builder referencedAssemblies)
     {
-        if (typeInfo.IsArray)
+        if (type.IsArray)
         {
-            GetSkipVisibilityChecksRequirements(typeInfo.GetElementType()!.GetTypeInfo(), referencedAssemblies);
+            GetSkipVisibilityChecksRequirements(type.GetElementType()!, referencedAssemblies);
         }
 
-        AddTypeIfNonPublic(typeInfo);
+        AddTypeIfNonPublic(type);
 
-        foreach (Type arg in typeInfo.GenericTypeArguments)
+        foreach (Type arg in type.GenericTypeArguments)
         {
             AddTypeIfNonPublic(arg);
         }
 
         // We must walk each base type individually to ensure we don't miss any private members,
         // since even with BindingFlags.NonPublic, GetMembers will not return from base types.
-        for (TypeInfo? target = typeInfo; target is not null; target = target.BaseType?.GetTypeInfo())
+        for (Type? target = type; target is not null; target = target.BaseType)
         {
             ScanDirectType(target);
         }
 
-        void ScanDirectType(TypeInfo typeInfo)
+        void ScanDirectType(Type type)
         {
-            foreach (MemberInfo member in typeInfo.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+            foreach (MemberInfo member in type.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
             {
                 switch (member)
                 {
                     case FieldInfo field:
                         if (!field.IsPublic)
                         {
-                            referencedAssemblies.Add(typeInfo.Assembly.GetName());
+                            referencedAssemblies.Add(type.Assembly.GetName());
                         }
 
                         AddTypeIfNonPublic(field.FieldType);
@@ -116,7 +116,7 @@ internal class SkipClrVisibilityChecks
                     case PropertyInfo property:
                         if (property.SetMethod?.IsPublic is false || property.GetMethod?.IsPublic is false)
                         {
-                            referencedAssemblies.Add(typeInfo.Assembly.GetName());
+                            referencedAssemblies.Add(type.Assembly.GetName());
                         }
 
                         AddTypeIfNonPublic(property.PropertyType);
@@ -124,7 +124,7 @@ internal class SkipClrVisibilityChecks
                     case ConstructorInfo constructorInfo:
                         if (!constructorInfo.IsPublic)
                         {
-                            referencedAssemblies.Add(typeInfo.Assembly.GetName());
+                            referencedAssemblies.Add(type.Assembly.GetName());
                         }
 
                         foreach (ParameterInfo parameter in constructorInfo.GetParameters())

@@ -39,8 +39,10 @@ namespace MessagePack.Formatters
             this.ignoreCase = ignoreCase;
             StringComparer stringComparer = ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 
-            this.isFlags = typeof(T).GetCustomAttribute<FlagsAttribute>() is object;
-            var fields = typeof(T).GetFields(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Static);
+            var type = typeof(T);
+
+            this.isFlags = type.GetCustomAttribute<FlagsAttribute>() is object;
+            var fields = type.GetFields(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Static);
             var nameValueMapping = new Dictionary<string, T>(fields.Length, ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
             var valueNameMapping = new Dictionary<T, string>();
             Dictionary<string, string>? clrToSerializationName = null;
