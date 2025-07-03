@@ -52,7 +52,7 @@ namespace MessagePack.Internal
 
         public static bool IsConstructedGenericType(this System.Reflection.TypeInfo type)
         {
-            return type.AsType().IsConstructedGenericType;
+            return type.IsConstructedGenericType;
         }
 
         public static MethodInfo? GetGetMethod(this PropertyInfo propInfo)

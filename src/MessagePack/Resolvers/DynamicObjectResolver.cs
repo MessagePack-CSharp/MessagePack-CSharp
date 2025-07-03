@@ -96,7 +96,7 @@ namespace MessagePack.Resolvers
             allowPrivate |= !contractless && type.GetCustomAttributes<MessagePackObjectAttribute>().Any(a => a.AllowPrivate);
             dynamicAssembly ??= DynamicAssemblyFactory.GetDynamicAssembly(type, allowPrivate);
             TypeInfo? formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(dynamicAssembly, type, forceStringKey, contractless, allowPrivate);
-            return formatterTypeInfo is null ? null : (IMessagePackFormatter<T>)ResolverUtilities.ActivateFormatter(formatterTypeInfo.AsType());
+            return formatterTypeInfo is null ? null : (IMessagePackFormatter<T>)ResolverUtilities.ActivateFormatter(formatterTypeInfo);
         }
 
         private static class FormatterCache<T>

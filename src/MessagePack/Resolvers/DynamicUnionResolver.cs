@@ -89,7 +89,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                Formatter = (IMessagePackFormatter<T>?)Activator.CreateInstance(formatterTypeInfo.AsType());
+                Formatter = (IMessagePackFormatter<T>?)Activator.CreateInstance(formatterTypeInfo);
             }
         }
 
