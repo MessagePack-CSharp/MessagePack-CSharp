@@ -32,7 +32,7 @@ internal partial class MyTestNamespace {
 			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
 			{
 				writer.WriteArrayHeader(2);
-				writer.WriteInt32(keyValuePair.Key);
+				writer.Write(keyValuePair.Key);
 				switch (keyValuePair.Value)
 				{
 					case 0:

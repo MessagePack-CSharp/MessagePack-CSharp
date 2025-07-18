@@ -34,7 +34,7 @@ using MsgPack = global::MessagePack;
 			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
 			{
 				writer.WriteArrayHeader(2);
-				writer.WriteInt32(keyValuePair.Key);
+				writer.Write(keyValuePair.Key);
 				switch (keyValuePair.Value)
 				{
 <# for(var i = 0; i < Info.SubTypes.Length; i++) { var item = Info.SubTypes[i]; #>
