@@ -1463,6 +1463,11 @@ namespace MessagePack.Internal
                 return null;
             }
 
+            if (dataContractAttr != null && MessagePackSerializerOptions.ForceStringKeyForDataContract)
+            {
+                forceStringKey = true;
+            }
+
             var isIntKey = true;
             var intMembers = new Dictionary<int, EmittableMember>();
             var stringMembers = new Dictionary<string, EmittableMember>();

@@ -130,6 +130,15 @@ namespace MessagePack
         public bool AllowAssemblyVersionMismatch { get; private set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether serialization of DataContract Attributes should
+        /// foce the use of string keys instead of numeric keys.
+        /// </summary>
+        /// <value>The default value is <see langword="false"/>.</value>
+        /// <remarks>This is a static for testing purposes because
+        /// where we use this we dont have an Instance of the options.</remarks>
+        public static bool ForceStringKeyForDataContract { get; set; }
+
+        /// <summary>
         /// Gets the security-related options for deserializing messagepack sequences.
         /// </summary>
         /// <value>
