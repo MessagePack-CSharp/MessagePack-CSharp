@@ -37,6 +37,36 @@ namespace MessagePack.Formatters
         {
         }
 
+        public static bool IsSupportedType(Type type, TypeInfo typeInfo, object value)
+        {
+            if (value == null)
+            {
+                return true;
+            }
+
+            if (TypeToJumpCode.ContainsKey(type))
+            {
+                return true;
+            }
+
+            if (typeInfo.IsEnum)
+            {
+                return true;
+            }
+
+            if (value is System.Collections.IDictionary)
+            {
+                return true;
+            }
+
+            if (value is System.Collections.ICollection)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public static bool IsSupportedType(Type type, object value)
         {
             if (value == null)
