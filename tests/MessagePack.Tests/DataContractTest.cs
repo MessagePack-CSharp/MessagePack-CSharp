@@ -345,7 +345,8 @@ namespace MessagePack.Tests
         {
             var model = MixAttrDataContractUser.GetModelWithTestData();
 
-            DynamicObjectResolver.BuildFormatterHelperHook += DynamicObjectResolver_BuildFormatterHelperHook;
+            DynamicObjectResolver.Instance.BuildFormatterHelperHook -= DynamicObjectResolver_BuildFormatterHelperHook;
+            DynamicObjectResolver.Instance.BuildFormatterHelperHook += DynamicObjectResolver_BuildFormatterHelperHook;
 
             var opts = MessagePackSerializerOptions.Standard.WithResolver(CompositeResolver.Create(
                 DynamicObjectResolver.Instance,
@@ -359,11 +360,11 @@ namespace MessagePack.Tests
 
         private void DynamicObjectResolver_BuildFormatterHelperHook(object sender, DynamicObjectResolver.BuildFormatterHelperHookEventArgs e)
         {
-            if (!e.FormatterHeplerConfiguration.ForceStringKey
+            if (!e.DynamicObjectTypeBuilderConfiguration.ForceStringKey
                 && e.Ti.GetCustomAttribute<DataContractAttribute>() is not null
                 && e.Ti.GetCustomAttribute<MessagePackObjectAttribute>() is null)
             {
-                e.FormatterHeplerConfiguration.ForceStringKey = true;
+                e.DynamicObjectTypeBuilderConfiguration.ForceStringKey = true;
             }
         }
 

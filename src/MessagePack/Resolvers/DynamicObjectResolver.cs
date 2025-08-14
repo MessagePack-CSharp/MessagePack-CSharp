@@ -38,7 +38,10 @@ namespace MessagePack.Resolvers
 
         internal static readonly DynamicAssemblyFactory DynamicAssemblyFactory = new(ModuleName);
 
-        public static event EventHandler<BuildFormatterHelperHookEventArgs>? BuildFormatterHelperHook;
+        /// <summary>
+        /// This hook provides a way to modify the behavior of the formatter generation process from outside
+        /// </summary>
+        public event EventHandler<BuildFormatterHelperHookEventArgs>? BuildFormatterHelperHook;
 
         static DynamicObjectResolver()
         {
@@ -61,25 +64,6 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
-        public class BuildFormatterHelperHookEventArgs : EventArgs
-        {
-            public required IFormatterResolver Self { get; set; }
-
-            public required TypeInfo Ti { get; set; }
-
-            public required DynamicObjectTypeBuilderConfiguration FormatterHeplerConfiguration { get; set; }
-        }
-
-        public class DynamicObjectTypeBuilderConfiguration
-        {
-            public bool ForceStringKey { get; set; }
-
-            public bool Contractless { get; set; }
-
-            public bool AllowPrivate { get; set; }
-        }
-
-
         internal static IMessagePackFormatter<T>? BuildFormatterHelper<T>(IFormatterResolver self, DynamicAssemblyFactory dynamicAssemblyFactory, DynamicObjectTypeBuilderConfiguration dynamicObjectTypeBuilderConfig)
         {
             TypeInfo ti = typeof(T).GetTypeInfo();
@@ -89,16 +73,16 @@ namespace MessagePack.Resolvers
                 return null;
             }
 
-            if (BuildFormatterHelperHook is not null)
+            if (Instance.BuildFormatterHelperHook is not null)
             {
                 var hookEventArgs = new BuildFormatterHelperHookEventArgs()
                 {
                     Self = self,
                     Ti = ti,
-                    FormatterHeplerConfiguration = dynamicObjectTypeBuilderConfig,
+                    DynamicObjectTypeBuilderConfiguration = dynamicObjectTypeBuilderConfig,
                 };
 
-                BuildFormatterHelperHook?.Invoke(self, hookEventArgs);
+                Instance.BuildFormatterHelperHook?.Invoke(self, hookEventArgs);
             }
 
             DynamicAssembly? dynamicAssembly = null;
@@ -135,6 +119,30 @@ namespace MessagePack.Resolvers
         private static class FormatterCache<T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter = BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, new DynamicObjectTypeBuilderConfiguration());
+        }
+
+        /// <summary>
+        /// Event arguments for the <see cref="BuildFormatterHelperHook"/> event used to modify the behavior of the formatter generation process.
+        /// </summary>
+        public class BuildFormatterHelperHookEventArgs : EventArgs
+        {
+            public required IFormatterResolver Self { get; set; }
+
+            public required TypeInfo Ti { get; set; }
+
+            public required DynamicObjectTypeBuilderConfiguration DynamicObjectTypeBuilderConfiguration { get; set; }
+        }
+
+        /// <summary>
+        /// Configuration for building object types dynamically.
+        /// </summary>
+        public class DynamicObjectTypeBuilderConfiguration
+        {
+            public bool ForceStringKey { get; set; }
+
+            public bool Contractless { get; set; }
+
+            public bool AllowPrivate { get; set; }
         }
     }
 
