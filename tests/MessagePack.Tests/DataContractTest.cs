@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
@@ -288,6 +289,111 @@ namespace MessagePack.Tests
             var after = (ClassWithPrivateReadonlyDictionary)dcs.ReadObject(ms);
             Assert.Equal("my name", after.GetBody()["name"]);
         }
+
+        #region DataContractBehavior
+
+        // This is a test for the behavior of DataContract serialization with mixing
+        // attributes [DataMember] and [DataMember(int Order)]
+        // and also setting Order to the same value for multiple properties.
+        // wich usually is valid and commonly used
+
+        [DataContract]
+        public class MixAttrDataContractBase
+        {
+            [DataMember(Order = 5)]
+            public string ID { get; set; }
+
+            [DataMember]
+            public int ZZNumber2 { get; set; }
+
+            [DataMember]
+            public int ANumber { get; set; }
+
+            [DataMember(Order = 5)]
+            public int HNumber { get; set; }
+
+            [DataMember(Order = 0)]
+            public DateTime ZDate { get; set; }
+        }
+
+        [DataContract]
+        public class MixAttrDataContractUser : MixAttrDataContractBase
+        {
+            [DataMember]
+            public string Name { get; set; }
+
+            [DataMember]
+            public int Age { get; set; }
+
+            public static MixAttrDataContractUser GetModelWithTestData()
+            {
+                return new MixAttrDataContractUser()
+                {
+                    ID = "12345",
+                    Age = 30,
+                    Name = "Test User",
+                    ZDate = DateTime.Now.ToUniversalTime(),
+                    ANumber = 1000,
+                    HNumber = 50,
+                    ZZNumber2 = 99,
+                };
+            }
+        }
+
+        [Fact]
+        public void SerializeDeserialize_DataContractWithMixedKeys()
+        {
+            var model = MixAttrDataContractUser.GetModelWithTestData();
+
+            DynamicObjectResolver.Instance.BuildFormatterHelperHook += DynamicObjectResolver_BuildFormatterHelperHook;
+
+            var opts = MessagePackSerializerOptions.Standard.WithResolver(CompositeResolver.Create(
+                DynamicObjectResolver.Instance,
+                StandardResolver.Instance));
+
+            var serialized = MessagePackSerializer.Serialize(model, opts);
+            var modelRoundtrip = MessagePackSerializer.Deserialize<MixAttrDataContractUser>(serialized, opts);
+
+            Assert.Equivalent(model, modelRoundtrip);
+        }
+
+        private void DynamicObjectResolver_BuildFormatterHelperHook(object sender, DynamicObjectResolver.BuildFormatterHelperHookEventArgs e)
+        {
+            if (!e.DynamicObjectTypeBuilderConfiguration.ForceStringKey
+                && e.Ti.GetCustomAttribute<DataContractAttribute>() is not null
+                && e.Ti.GetCustomAttribute<MessagePackObjectAttribute>() is null)
+            {
+                e.DynamicObjectTypeBuilderConfiguration.ForceStringKey = true;
+            }
+        }
+
+        [Fact]
+        public void ShowcaseDataContractSerializerMixedAttributes()
+        {
+            var model = MixAttrDataContractUser.GetModelWithTestData();
+
+            MixAttrDataContractUser modelRoundtrip;
+            string serializedSE = null;
+
+            var ser = new DataContractSerializer(typeof(MixAttrDataContractUser));
+
+            using (var tw = new StringWriter())
+            using (var xw = new System.Xml.XmlTextWriter(tw))
+            {
+                ser.WriteObject(xw, model);
+                serializedSE = tw.ToString();
+            }
+
+            using (TextReader tr = new StringReader(serializedSE))
+            using (var xmlreader = System.Xml.XmlReader.Create(tr))
+            {
+                modelRoundtrip = ser.ReadObject(xmlreader) as MixAttrDataContractUser;
+            }
+
+            Assert.Equivalent(model, modelRoundtrip);
+        }
+
+        #endregion
     }
 
 #endif
