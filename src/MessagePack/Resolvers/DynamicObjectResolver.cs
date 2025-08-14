@@ -38,6 +38,11 @@ namespace MessagePack.Resolvers
 
         internal static readonly DynamicAssemblyFactory DynamicAssemblyFactory = new(ModuleName);
 
+        /// <summary>
+        /// This hook provides a way to modify the behavior of the formatter generation process from outside
+        /// </summary>
+        public event EventHandler<BuildFormatterHelperHookEventArgs>? BuildFormatterHelperHook;
+
         static DynamicObjectResolver()
         {
             Options = new MessagePackSerializerOptions(Instance);
@@ -59,7 +64,7 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
-        internal static IMessagePackFormatter<T>? BuildFormatterHelper<T>(IFormatterResolver self, DynamicAssemblyFactory dynamicAssemblyFactory, bool forceStringKey, bool contractless, bool allowPrivate)
+        internal static IMessagePackFormatter<T>? BuildFormatterHelper<T>(IFormatterResolver self, DynamicAssemblyFactory dynamicAssemblyFactory, DynamicObjectTypeBuilderConfiguration dynamicObjectTypeBuilderConfig)
         {
             TypeInfo ti = typeof(T).GetTypeInfo();
 
@@ -68,16 +73,28 @@ namespace MessagePack.Resolvers
                 return null;
             }
 
+            if (Instance.BuildFormatterHelperHook is not null)
+            {
+                var hookEventArgs = new BuildFormatterHelperHookEventArgs()
+                {
+                    Self = self,
+                    Ti = ti,
+                    DynamicObjectTypeBuilderConfiguration = dynamicObjectTypeBuilderConfig,
+                };
+
+                Instance.BuildFormatterHelperHook?.Invoke(self, hookEventArgs);
+            }
+
             DynamicAssembly? dynamicAssembly = null;
             if (ti.IsAnonymous())
             {
-                forceStringKey = true;
-                contractless = true;
+                dynamicObjectTypeBuilderConfig.ForceStringKey = true;
+                dynamicObjectTypeBuilderConfig.Contractless = true;
 
                 // For anonymous types, it's important to be able to access the internal type itself,
                 // but *not* look at non-public members to avoid double-serialization of the properties
                 // as well as their backing fields.
-                allowPrivate = false;
+                dynamicObjectTypeBuilderConfig.AllowPrivate = false;
                 dynamicAssembly = DynamicAssemblyFactory.GetDynamicAssembly(typeof(T), true);
             }
             else if (ti.IsNullable())
@@ -93,15 +110,39 @@ namespace MessagePack.Resolvers
                 return (IMessagePackFormatter<T>?)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), [innerFormatter]);
             }
 
-            allowPrivate |= !contractless && typeof(T).GetCustomAttributes<MessagePackObjectAttribute>().Any(a => a.AllowPrivate);
-            dynamicAssembly ??= DynamicAssemblyFactory.GetDynamicAssembly(typeof(T), allowPrivate);
-            TypeInfo? formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(dynamicAssembly, typeof(T), forceStringKey, contractless, allowPrivate);
+            dynamicObjectTypeBuilderConfig.AllowPrivate |= !dynamicObjectTypeBuilderConfig.Contractless && typeof(T).GetCustomAttributes<MessagePackObjectAttribute>().Any(a => a.AllowPrivate);
+            dynamicAssembly ??= DynamicAssemblyFactory.GetDynamicAssembly(typeof(T), dynamicObjectTypeBuilderConfig.AllowPrivate);
+            TypeInfo? formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(dynamicAssembly, typeof(T), dynamicObjectTypeBuilderConfig.ForceStringKey, dynamicObjectTypeBuilderConfig.Contractless, dynamicObjectTypeBuilderConfig.AllowPrivate);
             return formatterTypeInfo is null ? null : (IMessagePackFormatter<T>)ResolverUtilities.ActivateFormatter(formatterTypeInfo.AsType());
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T>? Formatter = BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, false, false, false);
+            public static readonly IMessagePackFormatter<T>? Formatter = BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, new DynamicObjectTypeBuilderConfiguration());
+        }
+
+        /// <summary>
+        /// Event arguments for the <see cref="BuildFormatterHelperHook"/> event used to modify the behavior of the formatter generation process.
+        /// </summary>
+        public class BuildFormatterHelperHookEventArgs : EventArgs
+        {
+            public required IFormatterResolver Self { get; set; }
+
+            public required TypeInfo Ti { get; set; }
+
+            public required DynamicObjectTypeBuilderConfiguration DynamicObjectTypeBuilderConfiguration { get; set; }
+        }
+
+        /// <summary>
+        /// Configuration for building object types dynamically.
+        /// </summary>
+        public class DynamicObjectTypeBuilderConfiguration
+        {
+            public bool ForceStringKey { get; set; }
+
+            public bool Contractless { get; set; }
+
+            public bool AllowPrivate { get; set; }
         }
     }
 
@@ -127,7 +168,12 @@ namespace MessagePack.Resolvers
 
         private static class FormatterCache<T>
         {
-            internal static readonly IMessagePackFormatter<T>? Formatter = DynamicObjectResolver.BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, false, false, true);
+            internal static readonly IMessagePackFormatter<T>? Formatter = DynamicObjectResolver.BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, new DynamicObjectResolver.DynamicObjectTypeBuilderConfiguration()
+            {
+                ForceStringKey = false,
+                Contractless = false,
+                AllowPrivate = true,
+            });
         }
     }
 
@@ -166,7 +212,12 @@ namespace MessagePack.Resolvers
         private static class FormatterCache<T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter = typeof(T) == typeof(object) ? null :
-                DynamicObjectResolver.BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, true, true, false);
+                DynamicObjectResolver.BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, new DynamicObjectResolver.DynamicObjectTypeBuilderConfiguration()
+                {
+                    ForceStringKey = true,
+                    Contractless = true,
+                    AllowPrivate = false,
+                });
         }
     }
 
@@ -189,7 +240,12 @@ namespace MessagePack.Resolvers
         private static class FormatterCache<T>
         {
             public static readonly IMessagePackFormatter<T>? Formatter = typeof(T) == typeof(object) ? null :
-                DynamicObjectResolver.BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, true, true, true);
+                DynamicObjectResolver.BuildFormatterHelper<T>(Instance, DynamicAssemblyFactory, new DynamicObjectResolver.DynamicObjectTypeBuilderConfiguration()
+                {
+                    ForceStringKey = true,
+                    Contractless = true,
+                    AllowPrivate = true,
+                });
         }
     }
 }
