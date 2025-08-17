@@ -1671,7 +1671,7 @@ namespace MessagePack.Internal
 
             // GetConstructor
             IEnumerator<ConstructorInfo>? ctorEnumerator = null;
-            ConstructorInfo? ctor = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly | BindingFlags.Static)
+            ConstructorInfo? ctor = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
                 .SingleOrDefault(x => x.GetCustomAttribute<SerializationConstructorAttribute>(false) is not null);
             if (ctor == null)
             {

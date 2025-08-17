@@ -299,12 +299,12 @@ namespace MessagePack.Internal
                     return NonGenericInterfaceDictionaryFormatter.Instance;
                 }
 
-                if (typeof(IList).IsAssignableFrom(t) && t.GetConstructors(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Static | BindingFlags.NonPublic)
+                if (typeof(IList).IsAssignableFrom(t) && t.GetConstructors(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
                     .Any(x => x.GetParameters().Length == 0))
                 {
                     return Activator.CreateInstance(typeof(NonGenericListFormatter<>).MakeGenericType(t));
                 }
-                else if (typeof(IDictionary).IsAssignableFrom(t) && t.GetConstructors(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Static | BindingFlags.NonPublic)
+                else if (typeof(IDictionary).IsAssignableFrom(t) && t.GetConstructors(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
                     .Any(x => x.GetParameters().Length == 0))
                 {
                     return Activator.CreateInstance(typeof(NonGenericDictionaryFormatter<>).MakeGenericType(t));
@@ -336,7 +336,7 @@ namespace MessagePack.Internal
                         typeof(IReadOnlyDictionary<,>).MakeGenericType(keyType, valueType),
                         typeof(IEnumerable<>).MakeGenericType(typeof(KeyValuePair<,>).MakeGenericType(keyType, valueType)),
                     };
-                    foreach (var constructor in t.GetConstructors(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Static | BindingFlags.NonPublic))
+                    foreach (var constructor in t.GetConstructors(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.NonPublic))
                     {
                         ParameterInfo[] parameters = constructor.GetParameters();
                         if (parameters.Length == 1 &&
@@ -363,7 +363,7 @@ namespace MessagePack.Internal
                 {
                     Type elemType = enumerableCollectionDef.GenericTypeArguments[0];
                     Type paramInterface = typeof(IEnumerable<>).MakeGenericType(elemType);
-                    foreach (var constructor in t.GetConstructors(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Static | BindingFlags.NonPublic))
+                    foreach (var constructor in t.GetConstructors(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.NonPublic))
                     {
                         var parameters = constructor.GetParameters();
                         if (parameters.Length == 1 && parameters[0].ParameterType.IsAssignableFrom(paramInterface))
