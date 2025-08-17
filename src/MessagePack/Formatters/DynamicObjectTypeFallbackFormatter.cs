@@ -33,7 +33,6 @@ namespace MessagePack.Formatters
             }
 
             Type type = value.GetType();
-            TypeInfo ti = type.GetTypeInfo();
 
             if (type == typeof(object))
             {
@@ -42,7 +41,7 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            if (PrimitiveObjectFormatter.IsSupportedType(type, ti, value))
+            if (PrimitiveObjectFormatter.IsSupportedType(type, value))
             {
                 if (!(value is System.Collections.IDictionary || value is System.Collections.ICollection))
                 {
@@ -70,7 +69,7 @@ namespace MessagePack.Formatters
                             Expression.Convert(param0, formatterType),
                             serializeMethodInfo,
                             param1,
-                            ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
+                            type.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
                             param3);
 
                         serializerDelegate = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3).Compile();

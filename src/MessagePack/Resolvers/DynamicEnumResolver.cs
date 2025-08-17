@@ -54,32 +54,32 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
-                TypeInfo ti = typeof(T).GetTypeInfo();
-                if (ti.IsNullable())
+                Type type = typeof(T);
+                if (type.IsNullable())
                 {
                     // build underlying type and use wrapped formatter.
-                    ti = ti.GenericTypeArguments[0].GetTypeInfo();
-                    if (!ti.IsEnum)
+                    type = type.GenericTypeArguments[0];
+                    if (!type.IsEnum)
                     {
                         return;
                     }
 
-                    var innerFormatter = DynamicEnumResolver.Instance.GetFormatterDynamic(ti.AsType());
+                    var innerFormatter = DynamicEnumResolver.Instance.GetFormatterDynamic(type);
                     if (innerFormatter == null)
                     {
                         return;
                     }
 
-                    Formatter = (IMessagePackFormatter<T>?)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
+                    Formatter = (IMessagePackFormatter<T>?)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(type), new object[] { innerFormatter });
                     return;
                 }
-                else if (!ti.IsEnum)
+                else if (!type.IsEnum)
                 {
                     return;
                 }
 
-                TypeInfo formatterTypeInfo = BuildType(typeof(T), allowPrivate: false);
-                Formatter = (IMessagePackFormatter<T>?)Activator.CreateInstance(formatterTypeInfo.AsType());
+                TypeInfo formatterTypeInfo = BuildType(type, allowPrivate: false);
+                Formatter = (IMessagePackFormatter<T>?)Activator.CreateInstance(formatterTypeInfo);
             }
         }
 

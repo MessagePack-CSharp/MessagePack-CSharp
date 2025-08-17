@@ -63,18 +63,15 @@ namespace MessagePack.ImmutableCollection
 
         internal static object? GetFormatter(Type t)
         {
-            TypeInfo ti = t.GetTypeInfo();
-
-            if (ti.IsGenericType)
+            if (t.IsGenericType)
             {
-                Type genericType = ti.GetGenericTypeDefinition();
-                TypeInfo genericTypeInfo = genericType.GetTypeInfo();
-                var isNullable = genericTypeInfo.IsNullable();
-                Type? nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
+                Type genericType = t.GetGenericTypeDefinition();
+                var isNullable = genericType.IsNullable();
+                Type? nullableElementType = isNullable ? t.GenericTypeArguments[0] : null;
 
                 if (FormatterMap.TryGetValue(genericType, out Type? formatterType))
                 {
-                    return CreateInstance(formatterType, ti.GenericTypeArguments);
+                    return CreateInstance(formatterType, t.GenericTypeArguments);
                 }
                 else if (isNullable && nullableElementType?.IsConstructedGenericType is true && nullableElementType.GetGenericTypeDefinition() == typeof(ImmutableArray<>))
                 {
@@ -94,6 +91,11 @@ namespace MessagePack.ImmutableCollection
     internal static class ReflectionExtensions
     {
         public static bool IsNullable(this System.Reflection.TypeInfo type)
+        {
+            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Nullable<>);
+        }
+
+        public static bool IsNullable(this Type type)
         {
             return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Nullable<>);
         }
