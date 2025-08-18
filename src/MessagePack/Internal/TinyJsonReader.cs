@@ -58,7 +58,7 @@ namespace MessagePack
         }
     }
 
-    internal class TinyJsonReader : IDisposable
+    internal sealed class TinyJsonReader : IDisposable
     {
         private readonly TextReader reader;
         private readonly bool disposeInnerReader;
