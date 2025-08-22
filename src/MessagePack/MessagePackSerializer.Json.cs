@@ -44,9 +44,11 @@ namespace MessagePack
         /// <exception cref="MessagePackSerializationException">Thrown if an error occurs during serialization.</exception>
         public static string SerializeToJson<T>(T obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
-            var writer = new StringWriter();
-            SerializeToJson(writer, obj, options, cancellationToken);
-            return writer.ToString();
+            using (var writer = new StringWriter())
+            {
+                SerializeToJson(writer, obj, options, cancellationToken);
+                return writer.ToString();
+            }
         }
 
         /// <summary>
@@ -61,13 +63,15 @@ namespace MessagePack
         /// <exception cref="MessagePackSerializationException">Thrown if an error occurs while reading the messagepack data or writing out the JSON.</exception>
         public static string ConvertToJson(in ReadOnlySequence<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
-            var jsonWriter = new StringWriter();
-            var reader = new MessagePackReader(bytes)
+            using (var jsonWriter = new StringWriter())
             {
-                CancellationToken = cancellationToken,
-            };
-            ConvertToJson(ref reader, jsonWriter, options);
-            return jsonWriter.ToString();
+                var reader = new MessagePackReader(bytes)
+                {
+                    CancellationToken = cancellationToken,
+                };
+                ConvertToJson(ref reader, jsonWriter, options);
+                return jsonWriter.ToString();
+            }
         }
 
         /// <summary>

@@ -53,8 +53,7 @@ namespace MessagePack.Formatters
 
                 writer.WriteMapHeader(count);
 
-                TEnumerator e = this.GetSourceEnumerator(value);
-                try
+                using (TEnumerator e = this.GetSourceEnumerator(value))
                 {
                     while (e.MoveNext())
                     {
@@ -63,10 +62,6 @@ namespace MessagePack.Formatters
                         keyFormatter.Serialize(ref writer, item.Key, options);
                         valueFormatter.Serialize(ref writer, item.Value, options);
                     }
-                }
-                finally
-                {
-                    e.Dispose();
                 }
             }
         }
