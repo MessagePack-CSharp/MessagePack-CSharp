@@ -38,11 +38,7 @@ namespace MessagePack
             set => defaultOptions = value;
         }
 
-        /// <summary>
-        /// A thread-local, recyclable array that may be used for short bursts of code.
-        /// </summary>
-        [ThreadStatic]
-        private static byte[]? scratchArray;
+        private const int BufferMinimumSize = 65536;
 
         /// <summary>
         /// Serializes a given value with the specified buffer writer.
@@ -116,19 +112,19 @@ namespace MessagePack
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
         public static byte[] Serialize<T>(T value, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
-            byte[]? array = scratchArray;
-            if (array == null)
-            {
-                scratchArray = array = new byte[65536];
-            }
+            var array = ArrayPool<byte>.Shared.Rent(BufferMinimumSize);
 
-            options = options ?? DefaultOptions;
-            var msgpackWriter = new MessagePackWriter(options.SequencePool, array)
+            try
             {
-                CancellationToken = cancellationToken,
-            };
-            Serialize(ref msgpackWriter, value, options);
-            return msgpackWriter.FlushAndGetArray();
+                options = options ?? DefaultOptions;
+                var msgpackWriter = new MessagePackWriter(options.SequencePool, array) { CancellationToken = cancellationToken, };
+                Serialize(ref msgpackWriter, value, options);
+                return msgpackWriter.FlushAndGetArray();
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(array);
+            }
         }
 
         /// <summary>
@@ -207,10 +203,7 @@ namespace MessagePack
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
         public static T Deserialize<T>(in ReadOnlySequence<byte> byteSequence, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
-            var reader = new MessagePackReader(byteSequence)
-            {
-                CancellationToken = cancellationToken,
-            };
+            var reader = new MessagePackReader(byteSequence) { CancellationToken = cancellationToken, };
             return Deserialize<T>(ref reader, options);
         }
 
