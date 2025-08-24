@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
-public record GenericTypeParameterInfo(string Name) : IComparable<GenericTypeParameterInfo>
+public record GenericTypeParameterInfo(string Name) : IComparable<GenericTypeParameterInfo>, IEquatable<GenericTypeParameterInfo>
 {
     private string? constraints;
 
@@ -87,5 +87,15 @@ public record GenericTypeParameterInfo(string Name) : IComparable<GenericTypePar
         }
 
         return builder.ToString();
+    }
+
+    bool IEquatable<GenericTypeParameterInfo>.Equals(GenericTypeParameterInfo? other)
+    {
+        if (other is null)
+        {
+            return this == other;
+        }
+
+        return this.CompareTo(other) == 0;
     }
 }
