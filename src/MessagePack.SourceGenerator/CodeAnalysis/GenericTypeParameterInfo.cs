@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis;
 
 namespace MessagePack.SourceGenerator.CodeAnalysis;
 
-public record GenericTypeParameterInfo(string Name) : IComparable<GenericTypeParameterInfo>, IEquatable<GenericTypeParameterInfo>
+public record GenericTypeParameterInfo(string Name) : IComparable<GenericTypeParameterInfo>
 {
     private string? constraints;
 
@@ -89,13 +89,7 @@ public record GenericTypeParameterInfo(string Name) : IComparable<GenericTypePar
         return builder.ToString();
     }
 
-    bool IEquatable<GenericTypeParameterInfo>.Equals(GenericTypeParameterInfo? other)
-    {
-        if (other is null)
-        {
-            return this == other;
-        }
+    public virtual bool Equals(GenericTypeParameterInfo? other) => other is not null && this.Name == other.Name;
 
-        return this.CompareTo(other) == 0;
-    }
+    public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(this.Name);
 }
