@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
@@ -88,4 +88,8 @@ public record GenericTypeParameterInfo(string Name) : IComparable<GenericTypePar
 
         return builder.ToString();
     }
+
+    public virtual bool Equals(GenericTypeParameterInfo? other) => other is not null && this.Name == other.Name;
+
+    public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(this.Name);
 }
