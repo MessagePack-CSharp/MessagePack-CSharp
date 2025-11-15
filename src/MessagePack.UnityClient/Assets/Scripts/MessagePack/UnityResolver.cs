@@ -184,11 +184,13 @@ namespace MessagePack.Unity
             { typeof(RangeInt),           new RangeIntFormatter() },
             { typeof(RectInt),            new RectIntFormatter() },
             { typeof(BoundsInt),          new BoundsIntFormatter() },
+            { typeof(Pose),               new PoseFormatter() },
             { typeof(Vector2Int?),        new StaticNullableFormatter<Vector2Int>(new Vector2IntFormatter()) },
             { typeof(Vector3Int?),        new StaticNullableFormatter<Vector3Int>(new Vector3IntFormatter()) },
             { typeof(RangeInt?),          new StaticNullableFormatter<RangeInt>(new RangeIntFormatter()) },
             { typeof(RectInt?),           new StaticNullableFormatter<RectInt>(new RectIntFormatter()) },
             { typeof(BoundsInt?),         new StaticNullableFormatter<BoundsInt>(new BoundsIntFormatter()) },
+            { typeof(Pose?),              new StaticNullableFormatter<Pose>(new PoseFormatter()) },
 
             // unity 2017.2 + array
             { typeof(Vector2Int[]),       new ArrayFormatter<Vector2Int>() },
@@ -196,11 +198,13 @@ namespace MessagePack.Unity
             { typeof(RangeInt[]),         new ArrayFormatter<RangeInt>() },
             { typeof(RectInt[]),          new ArrayFormatter<RectInt>() },
             { typeof(BoundsInt[]),        new ArrayFormatter<BoundsInt>() },
+            { typeof(Pose[]),             new ArrayFormatter<Pose>() },
             { typeof(Vector2Int?[]),      new ArrayFormatter<Vector2Int?>() },
             { typeof(Vector3Int?[]),      new ArrayFormatter<Vector3Int?>() },
             { typeof(RangeInt?[]),        new ArrayFormatter<RangeInt?>() },
             { typeof(RectInt?[]),         new ArrayFormatter<RectInt?>() },
             { typeof(BoundsInt?[]),       new ArrayFormatter<BoundsInt?>() },
+            { typeof(Pose?[]),            new ArrayFormatter<Pose?>() },
 
             // unity 2017.2 + list
             { typeof(List<Vector2Int>),       new ListFormatter<Vector2Int>() },
@@ -208,11 +212,13 @@ namespace MessagePack.Unity
             { typeof(List<RangeInt>),         new ListFormatter<RangeInt>() },
             { typeof(List<RectInt>),          new ListFormatter<RectInt>() },
             { typeof(List<BoundsInt>),        new ListFormatter<BoundsInt>() },
+            { typeof(List<Pose>),             new ListFormatter<Pose>() },
             { typeof(List<Vector2Int?>),      new ListFormatter<Vector2Int?>() },
             { typeof(List<Vector3Int?>),      new ListFormatter<Vector3Int?>() },
             { typeof(List<RangeInt?>),        new ListFormatter<RangeInt?>() },
             { typeof(List<RectInt?>),         new ListFormatter<RectInt?>() },
             { typeof(List<BoundsInt?>),       new ListFormatter<BoundsInt?>() },
+            { typeof(List<Pose?>),            new ListFormatter<Pose?>() },
         };
 
         internal static object? GetFormatter(Type t)
