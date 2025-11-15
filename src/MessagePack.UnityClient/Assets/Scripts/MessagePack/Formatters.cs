@@ -1143,7 +1143,7 @@ namespace MessagePack.Unity
 
     public sealed class PoseFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::UnityEngine.Pose>
     {
-        public void Serialize(ref MessagePackWriter writer, Pose value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Pose value, MessagePackSerializerOptions options)
         {
             IFormatterResolver resolver = options.Resolver;
             writer.WriteArrayHeader(2);
@@ -1151,7 +1151,7 @@ namespace MessagePack.Unity
             resolver.GetFormatterWithVerify<global::UnityEngine.Quaternion>().Serialize(ref writer, value.rotation, options);
         }
 
-        public Pose Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public global::UnityEngine.Pose Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
             {
