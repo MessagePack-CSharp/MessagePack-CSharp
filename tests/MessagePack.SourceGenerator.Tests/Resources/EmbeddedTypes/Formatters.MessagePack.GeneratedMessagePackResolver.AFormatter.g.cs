@@ -20,48 +20,47 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(40);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Memory<byte>>(formatterResolver).Serialize(ref writer, value.Value1, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Memory<byte>?>(formatterResolver).Serialize(ref writer, value.Value2, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.ReadOnlyMemory<byte>>(formatterResolver).Serialize(ref writer, value.Value3, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.ReadOnlyMemory<byte>?>(formatterResolver).Serialize(ref writer, value.Value4, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Buffers.ReadOnlySequence<byte>>(formatterResolver).Serialize(ref writer, value.Value5, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Buffers.ReadOnlySequence<byte>?>(formatterResolver).Serialize(ref writer, value.Value6, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<short>>(formatterResolver).Serialize(ref writer, value.Value7, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<int>>(formatterResolver).Serialize(ref writer, value.Value8, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<long>>(formatterResolver).Serialize(ref writer, value.Value9, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<ushort>>(formatterResolver).Serialize(ref writer, value.Value10, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<uint>>(formatterResolver).Serialize(ref writer, value.Value11, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<ulong>>(formatterResolver).Serialize(ref writer, value.Value12, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<float>>(formatterResolver).Serialize(ref writer, value.Value13, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<double>>(formatterResolver).Serialize(ref writer, value.Value14, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<bool>>(formatterResolver).Serialize(ref writer, value.Value15, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<byte>>(formatterResolver).Serialize(ref writer, value.Value16, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<sbyte>>(formatterResolver).Serialize(ref writer, value.Value17, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<char>>(formatterResolver).Serialize(ref writer, value.Value18, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::System.DateTime>>(formatterResolver).Serialize(ref writer, value.Value19, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<string>>(formatterResolver).Serialize(ref writer, value.Value20, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<object>>(formatterResolver).Serialize(ref writer, value.Value21, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<object[]>(formatterResolver).Serialize(ref writer, value.Value22, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.BigInteger>(formatterResolver).Serialize(ref writer, value.Value23, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.BigInteger?>(formatterResolver).Serialize(ref writer, value.Value24, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Complex>(formatterResolver).Serialize(ref writer, value.Value25, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Complex?>(formatterResolver).Serialize(ref writer, value.Value26, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Vector2>(formatterResolver).Serialize(ref writer, value.Value27, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Vector2?>(formatterResolver).Serialize(ref writer, value.Value28, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Vector3>(formatterResolver).Serialize(ref writer, value.Value29, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Vector3?>(formatterResolver).Serialize(ref writer, value.Value30, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Vector4>(formatterResolver).Serialize(ref writer, value.Value31, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Vector4?>(formatterResolver).Serialize(ref writer, value.Value32, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Quaternion>(formatterResolver).Serialize(ref writer, value.Value33, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Quaternion?>(formatterResolver).Serialize(ref writer, value.Value34, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Matrix3x2>(formatterResolver).Serialize(ref writer, value.Value135, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Matrix3x2?>(formatterResolver).Serialize(ref writer, value.Value36, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Matrix4x4>(formatterResolver).Serialize(ref writer, value.Value137, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Matrix4x4?>(formatterResolver).Serialize(ref writer, value.Value38, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.ArraySegment<byte>>(formatterResolver).Serialize(ref writer, value.Value39, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.ArraySegment<byte>?>(formatterResolver).Serialize(ref writer, value.Value40, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.Memory<byte>>(ref writer, value.Value1, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Memory<byte>?>(ref writer, value.Value2, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.ReadOnlyMemory<byte>>(ref writer, value.Value3, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.ReadOnlyMemory<byte>?>(ref writer, value.Value4, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.Buffers.ReadOnlySequence<byte>>(ref writer, value.Value5, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Buffers.ReadOnlySequence<byte>?>(ref writer, value.Value6, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<short>>(ref writer, value.Value7, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<int>>(ref writer, value.Value8, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<long>>(ref writer, value.Value9, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<ushort>>(ref writer, value.Value10, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<uint>>(ref writer, value.Value11, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<ulong>>(ref writer, value.Value12, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<float>>(ref writer, value.Value13, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<double>>(ref writer, value.Value14, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<bool>>(ref writer, value.Value15, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<byte>>(ref writer, value.Value16, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<sbyte>>(ref writer, value.Value17, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<char>>(ref writer, value.Value18, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<global::System.DateTime>>(ref writer, value.Value19, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<string>>(ref writer, value.Value20, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<object>>(ref writer, value.Value21, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<object[]>(ref writer, value.Value22, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.Numerics.BigInteger>(ref writer, value.Value23, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Numerics.BigInteger?>(ref writer, value.Value24, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.Numerics.Complex>(ref writer, value.Value25, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Numerics.Complex?>(ref writer, value.Value26, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.Numerics.Vector2>(ref writer, value.Value27, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Numerics.Vector2?>(ref writer, value.Value28, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.Numerics.Vector3>(ref writer, value.Value29, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Numerics.Vector3?>(ref writer, value.Value30, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.Numerics.Vector4>(ref writer, value.Value31, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Numerics.Vector4?>(ref writer, value.Value32, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.Numerics.Quaternion>(ref writer, value.Value33, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Numerics.Quaternion?>(ref writer, value.Value34, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.Numerics.Matrix3x2>(ref writer, value.Value135, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Numerics.Matrix3x2?>(ref writer, value.Value36, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.Numerics.Matrix4x4>(ref writer, value.Value137, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Numerics.Matrix4x4?>(ref writer, value.Value38, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.ArraySegment<byte>>(ref writer, value.Value39, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.ArraySegment<byte>?>(ref writer, value.Value40, options);
 		}
 
 		public global::A Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -72,7 +71,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::A();
 
@@ -81,124 +79,124 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.Value1 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Memory<byte>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Memory<byte>>(ref reader, options);
 						break;
 					case 1:
-						____result.Value2 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Memory<byte>?>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value2 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Memory<byte>?>(ref reader, options);
 						break;
 					case 2:
-						____result.Value3 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.ReadOnlyMemory<byte>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value3 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.ReadOnlyMemory<byte>>(ref reader, options);
 						break;
 					case 3:
-						____result.Value4 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.ReadOnlyMemory<byte>?>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value4 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.ReadOnlyMemory<byte>?>(ref reader, options);
 						break;
 					case 4:
-						____result.Value5 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Buffers.ReadOnlySequence<byte>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value5 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Buffers.ReadOnlySequence<byte>>(ref reader, options);
 						break;
 					case 5:
-						____result.Value6 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Buffers.ReadOnlySequence<byte>?>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value6 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Buffers.ReadOnlySequence<byte>?>(ref reader, options);
 						break;
 					case 6:
-						____result.Value7 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<short>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value7 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<short>>(ref reader, options);
 						break;
 					case 7:
-						____result.Value8 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<int>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value8 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<int>>(ref reader, options);
 						break;
 					case 8:
-						____result.Value9 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<long>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value9 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<long>>(ref reader, options);
 						break;
 					case 9:
-						____result.Value10 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<ushort>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value10 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<ushort>>(ref reader, options);
 						break;
 					case 10:
-						____result.Value11 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<uint>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value11 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<uint>>(ref reader, options);
 						break;
 					case 11:
-						____result.Value12 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<ulong>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value12 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<ulong>>(ref reader, options);
 						break;
 					case 12:
-						____result.Value13 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<float>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value13 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<float>>(ref reader, options);
 						break;
 					case 13:
-						____result.Value14 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<double>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value14 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<double>>(ref reader, options);
 						break;
 					case 14:
-						____result.Value15 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<bool>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value15 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<bool>>(ref reader, options);
 						break;
 					case 15:
-						____result.Value16 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<byte>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value16 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<byte>>(ref reader, options);
 						break;
 					case 16:
-						____result.Value17 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<sbyte>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value17 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<sbyte>>(ref reader, options);
 						break;
 					case 17:
-						____result.Value18 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<char>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value18 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<char>>(ref reader, options);
 						break;
 					case 18:
-						____result.Value19 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::System.DateTime>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value19 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<global::System.DateTime>>(ref reader, options);
 						break;
 					case 19:
-						____result.Value20 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<string>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value20 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<string>>(ref reader, options);
 						break;
 					case 20:
-						____result.Value21 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<object>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value21 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<object>>(ref reader, options);
 						break;
 					case 21:
-						____result.Value22 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<object[]>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value22 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<object[]>(ref reader, options);
 						break;
 					case 22:
-						____result.Value23 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.BigInteger>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value23 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.BigInteger>(ref reader, options);
 						break;
 					case 23:
-						____result.Value24 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.BigInteger?>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value24 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.BigInteger?>(ref reader, options);
 						break;
 					case 24:
-						____result.Value25 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Complex>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value25 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Complex>(ref reader, options);
 						break;
 					case 25:
-						____result.Value26 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Complex?>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value26 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Complex?>(ref reader, options);
 						break;
 					case 26:
-						____result.Value27 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Vector2>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value27 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Vector2>(ref reader, options);
 						break;
 					case 27:
-						____result.Value28 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Vector2?>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value28 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Vector2?>(ref reader, options);
 						break;
 					case 28:
-						____result.Value29 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Vector3>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value29 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Vector3>(ref reader, options);
 						break;
 					case 29:
-						____result.Value30 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Vector3?>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value30 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Vector3?>(ref reader, options);
 						break;
 					case 30:
-						____result.Value31 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Vector4>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value31 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Vector4>(ref reader, options);
 						break;
 					case 31:
-						____result.Value32 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Vector4?>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value32 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Vector4?>(ref reader, options);
 						break;
 					case 32:
-						____result.Value33 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Quaternion>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value33 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Quaternion>(ref reader, options);
 						break;
 					case 33:
-						____result.Value34 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Quaternion?>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value34 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Quaternion?>(ref reader, options);
 						break;
 					case 34:
-						____result.Value135 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Matrix3x2>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value135 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Matrix3x2>(ref reader, options);
 						break;
 					case 35:
-						____result.Value36 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Matrix3x2?>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value36 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Matrix3x2?>(ref reader, options);
 						break;
 					case 36:
-						____result.Value137 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Matrix4x4>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value137 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Matrix4x4>(ref reader, options);
 						break;
 					case 37:
-						____result.Value38 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Numerics.Matrix4x4?>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value38 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Matrix4x4?>(ref reader, options);
 						break;
 					case 38:
-						____result.Value39 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.ArraySegment<byte>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value39 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.ArraySegment<byte>>(ref reader, options);
 						break;
 					case 39:
-						____result.Value40 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.ArraySegment<byte>?>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value40 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.ArraySegment<byte>?>(ref reader, options);
 						break;
 					default:
 						reader.Skip();

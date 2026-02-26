@@ -20,10 +20,9 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(2);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::SubObject[]>(formatterResolver).Serialize(ref writer, value.ArrayOfCustomObjects, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::SubObject>[]>(formatterResolver).Serialize(ref writer, value.ArrayOfCustomObjectList, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::SubObject[]>(ref writer, value.ArrayOfCustomObjects, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<global::SubObject>[]>(ref writer, value.ArrayOfCustomObjectList, options);
 		}
 
 		public global::ContainerObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -34,7 +33,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::ContainerObject();
 
@@ -43,10 +41,10 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.ArrayOfCustomObjects = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::SubObject[]>(formatterResolver).Deserialize(ref reader, options);
+						____result.ArrayOfCustomObjects = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::SubObject[]>(ref reader, options);
 						break;
 					case 1:
-						____result.ArrayOfCustomObjectList = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::SubObject>[]>(formatterResolver).Deserialize(ref reader, options);
+						____result.ArrayOfCustomObjectList = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<global::SubObject>[]>(ref reader, options);
 						break;
 					default:
 						reader.Skip();

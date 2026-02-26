@@ -22,12 +22,11 @@ internal partial class TempProject {
 				return;
 			}
 
-			var formatterResolver = options.Resolver;
 			writer.WriteMapHeader(2);
 			writer.WriteRaw(GetSpan_A());
 			writer.Write(value.A);
 			writer.WriteRaw(GetSpan_B());
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.B, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<string>(ref writer, value.B, options);
 		}
 
 		public global::TempProject.MyMessagePackObject Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -38,7 +37,6 @@ internal partial class TempProject {
 			}
 
 			options.Security.DepthStep(ref reader);
-			var formatterResolver = options.Resolver;
 			var length = reader.ReadMapHeader();
 			var ____result = new global::TempProject.MyMessagePackObject();
 
@@ -59,7 +57,7 @@ internal partial class TempProject {
         					    ____result.A = reader.ReadInt32();
         					    continue;
     					    case 66UL:
-        					    ____result.B = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+        					    ____result.B = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<string>(ref reader, options);
         					    continue;
 					    }
 

@@ -14,6 +14,7 @@ public record MemberSerializationInfo(
     string Name,
     string Type,
     string ShortTypeName,
+    bool IsValueType,
     FormatterDescriptor? CustomFormatter)
 {
     private static readonly IReadOnlyCollection<string> PrimitiveTypes = new HashSet<string>(AnalyzerUtilities.PrimitiveTypes);
@@ -43,7 +44,10 @@ public record MemberSerializationInfo(
         }
         else
         {
-            return $"MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Serialize(ref writer, {memberRead}, options)";
+            string byRefModifier = !this.IsProperty && this.DeclaringType is null ? "in " : string.Empty;
+            return this.IsValueType
+                ? $"MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<{this.Type}>(ref writer, {byRefModifier}{memberRead}, options)"
+                : $"MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<{this.Type}>(ref writer, {memberRead}, options)";
         }
     }
 
@@ -66,7 +70,9 @@ public record MemberSerializationInfo(
         }
         else
         {
-            return $"MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Deserialize(ref reader, options)";
+            return this.IsValueType
+                ? $"MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<{this.Type}>(ref reader, options)"
+                : $"MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<{this.Type}>(ref reader, options)";
         }
     }
 

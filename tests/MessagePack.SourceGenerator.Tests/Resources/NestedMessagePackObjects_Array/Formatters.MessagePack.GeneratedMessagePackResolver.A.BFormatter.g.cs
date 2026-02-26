@@ -21,9 +21,8 @@ internal partial class A {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::A.B.C[]>(formatterResolver).Serialize(ref writer, value.array, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::A.B.C[]>(ref writer, value.array, options);
 		}
 
 		public global::A.B Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -34,7 +33,6 @@ internal partial class A {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::A.B();
 
@@ -43,7 +41,7 @@ internal partial class A {
 				switch (i)
 				{
 					case 0:
-						____result.array = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::A.B.C[]>(formatterResolver).Deserialize(ref reader, options);
+						____result.array = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::A.B.C[]>(ref reader, options);
 						break;
 					default:
 						reader.Skip();

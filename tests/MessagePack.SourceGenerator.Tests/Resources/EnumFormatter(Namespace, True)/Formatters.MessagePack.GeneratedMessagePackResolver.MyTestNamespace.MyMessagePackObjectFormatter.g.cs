@@ -20,10 +20,9 @@ internal partial class MyTestNamespace {
 				return;
 			}
 
-			var formatterResolver = options.Resolver;
 			writer.WriteMapHeader(1);
 			writer.WriteRaw(GetSpan_EnumValue());
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyTestNamespace.MyEnum>(formatterResolver).Serialize(ref writer, value.EnumValue, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::MyTestNamespace.MyEnum>(ref writer, value.EnumValue, options);
 		}
 
 		public global::MyTestNamespace.MyMessagePackObject Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -34,7 +33,6 @@ internal partial class MyTestNamespace {
 			}
 
 			options.Security.DepthStep(ref reader);
-			var formatterResolver = options.Resolver;
 			var length = reader.ReadMapHeader();
 			var ____result = new global::MyTestNamespace.MyMessagePackObject();
 
@@ -50,7 +48,7 @@ internal partial class MyTestNamespace {
 					case 9:
 					    if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_EnumValue().Slice(1))) { goto FAIL; }
 
-					    ____result.EnumValue = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyTestNamespace.MyEnum>(formatterResolver).Deserialize(ref reader, options);
+					    ____result.EnumValue = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::MyTestNamespace.MyEnum>(ref reader, options);
 					    continue;
 
 				}

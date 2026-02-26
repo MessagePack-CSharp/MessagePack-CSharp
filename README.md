@@ -1124,6 +1124,22 @@ public interface IMessagePackFormatter<T>
 }
 ```
 
+For struct formatters, optional by-ref interfaces are also available to reduce large struct copies and allow deserialization into an existing value:
+
+```csharp
+public interface IMessagePackFormatterSerializeIn<T> where T : struct
+{
+    void Serialize(ref MessagePackWriter writer, in T value, MessagePackSerializerOptions options);
+}
+
+public interface IMessagePackFormatterDeserializeRef<T> where T : struct
+{
+    void Deserialize(ref MessagePackReader reader, ref T value, MessagePackSerializerOptions options);
+}
+```
+
+Use `MessagePackSerializer.Serialize(ref writer, in value, options)` and `MessagePackSerializer.Deserialize(ref reader, ref value, options)` to invoke these paths. If a formatter does not implement these optional interfaces, MessagePack falls back to `IMessagePackFormatter<T>` automatically.
+
 Many built-in formatters exists under `MessagePack.Formatters`. Your custom types are usually automatically supported with the built-in type resolvers that generate new `IMessagePackFormatter<T>` types on-the-fly using dynamic code generation. See our [AOT code generation](#aot) support for platforms that do not support this.
 
 However, some types - especially those provided by third party libraries or the runtime itself - cannot be appropriately annotated, and contractless serialization would produce inefficient or even wrong results.

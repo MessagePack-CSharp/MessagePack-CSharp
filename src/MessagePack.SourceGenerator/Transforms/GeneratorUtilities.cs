@@ -7,14 +7,7 @@ internal static class GeneratorUtilities
 {
     internal static bool ShouldUseFormatterResolver(MemberSerializationInfo[] infos)
     {
-        foreach (var memberSerializationInfo in infos)
-        {
-            if (memberSerializationInfo.CustomFormatter is null && Array.IndexOf(AnalyzerUtilities.PrimitiveTypes, memberSerializationInfo.Type) == -1)
-            {
-                return true;
-            }
-        }
-
+        _ = infos;
         return false;
     }
 }

@@ -82,7 +82,9 @@ internal static class FormatterDispatch<T>
 
     internal static T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
     {
-        return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
+        T value = default;
+        Deserialize(ref reader, ref value, options);
+        return value;
     }
 
     internal static void Deserialize(ref MessagePackReader reader, ref T value, MessagePackSerializerOptions options)

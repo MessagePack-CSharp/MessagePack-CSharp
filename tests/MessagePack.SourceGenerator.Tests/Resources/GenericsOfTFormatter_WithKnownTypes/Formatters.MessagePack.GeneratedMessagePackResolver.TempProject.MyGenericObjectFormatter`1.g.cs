@@ -21,10 +21,9 @@ internal partial class TempProject {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(2);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<T>>(formatterResolver).Serialize(ref writer, value.Content1, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T[]>(formatterResolver).Serialize(ref writer, value.Content2, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<T>>(ref writer, value.Content1, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<T[]>(ref writer, value.Content2, options);
 		}
 
 		public global::TempProject.MyGenericObject<T> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -35,7 +34,6 @@ internal partial class TempProject {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::TempProject.MyGenericObject<T>();
 
@@ -44,10 +42,10 @@ internal partial class TempProject {
 				switch (i)
 				{
 					case 0:
-						____result.Content1 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<T>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Content1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<T>>(ref reader, options);
 						break;
 					case 1:
-						____result.Content2 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T[]>(formatterResolver).Deserialize(ref reader, options);
+						____result.Content2 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<T[]>(ref reader, options);
 						break;
 					default:
 						reader.Skip();

@@ -20,9 +20,8 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.ObjectModel.Collection<int>>(formatterResolver).Serialize(ref writer, value.SampleCollection, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.ObjectModel.Collection<int>>(ref writer, value.SampleCollection, options);
 		}
 
 		public global::A Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -33,7 +32,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::A();
 
@@ -42,7 +40,7 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.SampleCollection = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.ObjectModel.Collection<int>>(formatterResolver).Deserialize(ref reader, options);
+						____result.SampleCollection = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.ObjectModel.Collection<int>>(ref reader, options);
 						break;
 					default:
 						reader.Skip();

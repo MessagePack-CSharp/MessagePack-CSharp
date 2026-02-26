@@ -25,12 +25,11 @@ internal partial class TempProject {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(4);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Serialize(ref writer, value.Content1, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Serialize(ref writer, value.Content2, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T3>(formatterResolver).Serialize(ref writer, value.Content3, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T4>(formatterResolver).Serialize(ref writer, value.Content4, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<T1>(ref writer, value.Content1, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<T2>(ref writer, value.Content2, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<T3>(ref writer, value.Content3, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<T4>(ref writer, value.Content4, options);
 		}
 
 		public global::TempProject.MyGenericObject<T1, T2, T3, T4> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -41,7 +40,6 @@ internal partial class TempProject {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::TempProject.MyGenericObject<T1, T2, T3, T4>();
 
@@ -50,16 +48,16 @@ internal partial class TempProject {
 				switch (i)
 				{
 					case 0:
-						____result.Content1 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Deserialize(ref reader, options);
+						____result.Content1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<T1>(ref reader, options);
 						break;
 					case 1:
-						____result.Content2 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Deserialize(ref reader, options);
+						____result.Content2 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<T2>(ref reader, options);
 						break;
 					case 2:
-						____result.Content3 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T3>(formatterResolver).Deserialize(ref reader, options);
+						____result.Content3 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<T3>(ref reader, options);
 						break;
 					case 3:
-						____result.Content4 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T4>(formatterResolver).Deserialize(ref reader, options);
+						____result.Content4 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<T4>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
