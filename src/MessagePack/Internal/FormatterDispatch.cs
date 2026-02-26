@@ -11,36 +11,10 @@ namespace MessagePack.Internal;
 #pragma warning disable SA1649 // File name should match first type name
 internal static class FormatterDispatchByValue<T>
 {
-    private delegate void SerializeDelegate(IMessagePackFormatter<T> formatter, ref MessagePackWriter writer, T value, MessagePackSerializerOptions options);
-
-    private static readonly SerializeDelegate SerializeByValue = static (IMessagePackFormatter<T> formatter, ref MessagePackWriter writer, T value, MessagePackSerializerOptions options) => formatter.Serialize(ref writer, value, options);
-    private static SerializeCache? serializeCache;
-
-    private sealed class SerializeCache
-    {
-        internal SerializeCache(Type formatterType, SerializeDelegate dispatch)
-        {
-            this.FormatterType = formatterType;
-            this.Dispatch = dispatch;
-        }
-
-        internal Type FormatterType { get; }
-
-        internal SerializeDelegate Dispatch { get; }
-    }
-
     internal static void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
     {
         IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
-        Type formatterType = formatter.GetType();
-        SerializeCache? cache = Volatile.Read(ref serializeCache);
-        if (cache is null || !ReferenceEquals(cache.FormatterType, formatterType))
-        {
-            cache = new SerializeCache(formatterType, SerializeByValue);
-            Volatile.Write(ref serializeCache, cache);
-        }
-
-        cache.Dispatch(formatter, ref writer, value, options);
+        formatter.Serialize(ref writer, value, options);
     }
 }
 
