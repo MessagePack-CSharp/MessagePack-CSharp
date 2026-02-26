@@ -86,14 +86,14 @@ namespace MessagePack
                     {
                         var scratch = scratchRental.Value;
                         MessagePackWriter scratchWriter = writer.Clone(scratch);
-                        options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options);
+                        Internal.FormatterDispatchByValue<T>.Serialize(ref scratchWriter, value, options);
                         scratchWriter.Flush();
                         ToLZ4BinaryCore(scratch, ref writer, options.Compression, options.CompressionMinLength);
                     }
                 }
                 else
                 {
-                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options);
+                    Internal.FormatterDispatchByValue<T>.Serialize(ref writer, value, options);
                 }
             }
             catch (Exception ex)

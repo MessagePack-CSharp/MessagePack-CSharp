@@ -67,6 +67,39 @@ namespace MessagePack.Tests
             Assert.Equal("new", value.PooledObject);
         }
 
+        [Fact]
+        public void SerializeIn_FallsBackToLegacyFormatter_WhenByRefInterfaceMissing()
+        {
+            var formatter = new LegacyOnlyFormatter();
+            var options = MessagePackSerializerOptions.Standard.WithResolver(
+                CompositeResolver.Create(new IMessagePackFormatter[] { formatter }, new IFormatterResolver[] { StandardResolver.Instance }));
+
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            var value = new TestStruct { Id = 7, PooledObject = "value" };
+
+            MessagePackSerializer.Serialize(ref writer, in value, options);
+
+            Assert.Equal(1, formatter.SerializeByValueCalls);
+        }
+
+        [Fact]
+        public void Serialize_WithoutExplicitIn_BindsToLegacyOverload_ForStructArguments()
+        {
+            var formatter = new CounterFormatter();
+            var options = MessagePackSerializerOptions.Standard.WithResolver(
+                CompositeResolver.Create(new IMessagePackFormatter[] { formatter }, new IFormatterResolver[] { StandardResolver.Instance }));
+
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            var value = new TestStruct { Id = 5, PooledObject = "bound-by-value" };
+
+            MessagePackSerializer.Serialize(ref writer, value, options);
+
+            Assert.Equal(1, formatter.SerializeByValueCalls);
+            Assert.Equal(0, formatter.SerializeInCalls); // C# binds to the by-value overload unless the call-site explicitly writes `in`.
+        }
+
         [MessagePackObject]
         public struct TestStruct
         {
@@ -124,10 +157,12 @@ namespace MessagePack.Tests
 
         private sealed class LegacyOnlyFormatter : IMessagePackFormatter<TestStruct>
         {
+            internal int SerializeByValueCalls;
             internal int DeserializeByValueCalls;
 
             public void Serialize(ref MessagePackWriter writer, TestStruct value, MessagePackSerializerOptions options)
             {
+                this.SerializeByValueCalls++;
                 writer.WriteArrayHeader(2);
                 writer.Write(value.Id);
                 MessagePackSerializer.Serialize(ref writer, value.PooledObject, options);
