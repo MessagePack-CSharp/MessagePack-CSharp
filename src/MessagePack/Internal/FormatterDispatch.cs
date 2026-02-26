@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Threading;
 using MessagePack.Formatters;
 
 namespace MessagePack.Internal;
@@ -19,24 +20,48 @@ internal static class FormatterDispatch<T>
     private static readonly DeserializeIntoDelegate DeserializeByValue = static (IMessagePackFormatter<T> formatter, ref MessagePackReader reader, ref T value, MessagePackSerializerOptions options) => value = formatter.Deserialize(ref reader, options);
     private static readonly DeserializeIntoDelegate DeserializeByRef = static (IMessagePackFormatter<T> formatter, ref MessagePackReader reader, ref T value, MessagePackSerializerOptions options) => ((IMessagePackFormatterDeserializeRef<T>)formatter).Deserialize(ref reader, ref value, options);
 
-    private static Type? serializeFormatterType;
-    private static SerializeDelegate? serializeDispatch;
-    private static Type? deserializeFormatterType;
-    private static DeserializeIntoDelegate? deserializeDispatch;
+    private static SerializeCache? serializeCache;
+    private static DeserializeCache? deserializeCache;
+
+    private sealed class SerializeCache
+    {
+        internal SerializeCache(Type formatterType, SerializeDelegate dispatch)
+        {
+            this.FormatterType = formatterType;
+            this.Dispatch = dispatch;
+        }
+
+        internal Type FormatterType { get; }
+
+        internal SerializeDelegate Dispatch { get; }
+    }
+
+    private sealed class DeserializeCache
+    {
+        internal DeserializeCache(Type formatterType, DeserializeIntoDelegate dispatch)
+        {
+            this.FormatterType = formatterType;
+            this.Dispatch = dispatch;
+        }
+
+        internal Type FormatterType { get; }
+
+        internal DeserializeIntoDelegate Dispatch { get; }
+    }
 
     internal static void Serialize(ref MessagePackWriter writer, in T value, MessagePackSerializerOptions options)
     {
         IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
         Type formatterType = formatter.GetType();
-        SerializeDelegate? dispatch = serializeDispatch;
-        if (dispatch is null || !ReferenceEquals(serializeFormatterType, formatterType))
+        SerializeCache? cache = Volatile.Read(ref serializeCache);
+        if (cache is null || !ReferenceEquals(cache.FormatterType, formatterType))
         {
-            dispatch = formatter is IMessagePackFormatterSerializeIn<T> ? SerializeByRef : SerializeByValue;
-            serializeFormatterType = formatterType;
-            serializeDispatch = dispatch;
+            SerializeDelegate dispatch = formatter is IMessagePackFormatterSerializeIn<T> ? SerializeByRef : SerializeByValue;
+            cache = new SerializeCache(formatterType, dispatch);
+            Volatile.Write(ref serializeCache, cache);
         }
 
-        dispatch(formatter, ref writer, in value, options);
+        cache.Dispatch(formatter, ref writer, in value, options);
     }
 
     internal static T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -48,15 +73,15 @@ internal static class FormatterDispatch<T>
     {
         IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
         Type formatterType = formatter.GetType();
-        DeserializeIntoDelegate? dispatch = deserializeDispatch;
-        if (dispatch is null || !ReferenceEquals(deserializeFormatterType, formatterType))
+        DeserializeCache? cache = Volatile.Read(ref deserializeCache);
+        if (cache is null || !ReferenceEquals(cache.FormatterType, formatterType))
         {
-            dispatch = formatter is IMessagePackFormatterDeserializeRef<T> ? DeserializeByRef : DeserializeByValue;
-            deserializeFormatterType = formatterType;
-            deserializeDispatch = dispatch;
+            DeserializeIntoDelegate dispatch = formatter is IMessagePackFormatterDeserializeRef<T> ? DeserializeByRef : DeserializeByValue;
+            cache = new DeserializeCache(formatterType, dispatch);
+            Volatile.Write(ref deserializeCache, cache);
         }
 
-        dispatch(formatter, ref reader, ref value, options);
+        cache.Dispatch(formatter, ref reader, ref value, options);
     }
 }
 #pragma warning restore SA1649 // File name should match first type name
