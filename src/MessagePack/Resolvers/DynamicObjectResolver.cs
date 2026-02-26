@@ -629,14 +629,24 @@ namespace MessagePack.Internal
             }
             else
             {
-                il.EmitLdloc(localResolver);
-                il.Emit(OpCodes.Call, getFormatterWithVerify.MakeGenericMethod(t));
-
                 argWriter.EmitLoad();
-                argValue.EmitLoad();
-                member.EmitLoadValue(il);
-                argOptions.EmitLoad();
-                il.EmitCall(getSerialize(t));
+                if (t.IsValueType)
+                {
+                    LocalBuilder localValue = il.DeclareLocal(t);
+                    argValue.EmitLoad();
+                    member.EmitLoadValue(il);
+                    il.EmitStloc(localValue);
+                    il.EmitLdloca(localValue);
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchSerializeByRef(t));
+                }
+                else
+                {
+                    argValue.EmitLoad();
+                    member.EmitLoadValue(il);
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchSerializeByValue(t));
+                }
             }
 
             il.MarkLabel(endLabel);
@@ -1227,11 +1237,23 @@ namespace MessagePack.Internal
             }
             else
             {
-                il.EmitLdloc(localResolver);
-                il.EmitCall(getFormatterWithVerify.MakeGenericMethod(t));
-                argReader.EmitLdarg();
-                argOptions.EmitLoad();
-                il.EmitCall(getDeserialize(t));
+                if (t.IsValueType)
+                {
+                    LocalBuilder localValue = il.DeclareLocal(t);
+                    il.Emit(OpCodes.Ldloca, localValue);
+                    il.Emit(OpCodes.Initobj, t);
+                    argReader.EmitLdarg();
+                    il.Emit(OpCodes.Ldloca, localValue);
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchDeserializeByRef(t));
+                    il.Emit(OpCodes.Ldloc, localValue);
+                }
+                else
+                {
+                    argReader.EmitLdarg();
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchDeserializeByValue(t));
+                }
             }
 
             il.MarkLabel(storeLabel);
@@ -1297,11 +1319,23 @@ namespace MessagePack.Internal
             }
             else
             {
-                il.EmitLdloc(localResolver);
-                il.EmitCall(getFormatterWithVerify.MakeGenericMethod(t));
-                argReader.EmitLdarg();
-                argOptions.EmitLoad();
-                il.EmitCall(getDeserialize(t));
+                if (t.IsValueType)
+                {
+                    LocalBuilder localValue = il.DeclareLocal(t);
+                    il.Emit(OpCodes.Ldloca, localValue);
+                    il.Emit(OpCodes.Initobj, t);
+                    argReader.EmitLdarg();
+                    il.Emit(OpCodes.Ldloca, localValue);
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchDeserializeByRef(t));
+                    il.Emit(OpCodes.Ldloc, localValue);
+                }
+                else
+                {
+                    argReader.EmitLdarg();
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchDeserializeByValue(t));
+                }
             }
 
             il.MarkLabel(storeLabel);
@@ -1317,7 +1351,6 @@ namespace MessagePack.Internal
         private static readonly MethodInfo ReadStringSpan = typeof(CodeGenHelpers).GetRuntimeMethod(nameof(CodeGenHelpers.ReadStringSpan), new[] { typeof(MessagePackReader).MakeByRefType() })!;
         private static readonly MethodInfo ArrayFromNullableReadOnlySequence = typeof(CodeGenHelpers).GetRuntimeMethod(nameof(CodeGenHelpers.GetArrayFromNullableSequence), new[] { typeof(ReadOnlySequence<byte>?).MakeByRefType() })!;
 
-        private static readonly MethodInfo getFormatterWithVerify = typeof(FormatterResolverExtensions).GetRuntimeMethods().First(x => x.Name == nameof(FormatterResolverExtensions.GetFormatterWithVerify));
         private static readonly MethodInfo getResolverFromOptions = typeof(MessagePackSerializerOptions).GetRuntimeProperty(nameof(MessagePackSerializerOptions.Resolver))!.GetMethod!;
         private static readonly MethodInfo getSecurityFromOptions = typeof(MessagePackSerializerOptions).GetRuntimeProperty(nameof(MessagePackSerializerOptions.Security))!.GetMethod!;
         private static readonly MethodInfo securityDepthStep = typeof(MessagePackSecurity).GetRuntimeMethod(nameof(MessagePackSecurity.DepthStep), new[] { typeof(MessagePackReader).MakeByRefType() })!;
@@ -1325,6 +1358,10 @@ namespace MessagePack.Internal
         private static readonly MethodInfo readerDepthSet = typeof(MessagePackReader).GetRuntimeProperty(nameof(MessagePackReader.Depth))!.SetMethod!;
         private static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod(nameof(IMessagePackFormatter<int>.Serialize), new[] { typeof(MessagePackWriter).MakeByRefType(), t, typeof(MessagePackSerializerOptions) })!;
         private static readonly Func<Type, MethodInfo> getDeserialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod(nameof(IMessagePackFormatter<int>.Deserialize), new[] { refMessagePackReader, typeof(MessagePackSerializerOptions) })!;
+        private static readonly Func<Type, MethodInfo> getDispatchSerializeByRef = t => typeof(FormatterDispatch<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatch<int>.Serialize) && m.GetParameters().Length == 3);
+        private static readonly Func<Type, MethodInfo> getDispatchSerializeByValue = t => typeof(FormatterDispatchByValue<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatchByValue<int>.Serialize) && m.GetParameters().Length == 3);
+        private static readonly Func<Type, MethodInfo> getDispatchDeserializeByRef = t => typeof(FormatterDispatch<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatch<int>.Deserialize) && m.GetParameters().Length == 3);
+        private static readonly Func<Type, MethodInfo> getDispatchDeserializeByValue = t => typeof(FormatterDispatchByValue<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatchByValue<int>.Deserialize) && m.GetParameters().Length == 2);
         //// static readonly ConstructorInfo dictionaryConstructor = typeof(ByteArrayStringHashTable).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(int); });
         //// static readonly MethodInfo dictionaryAdd = typeof(ByteArrayStringHashTable).GetRuntimeMethod("Add", new[] { typeof(string), typeof(int) });
         //// static readonly MethodInfo dictionaryTryGetValue = typeof(ByteArrayStringHashTable).GetRuntimeMethod("TryGetValue", new[] { typeof(ArraySegment<byte>), refInt });

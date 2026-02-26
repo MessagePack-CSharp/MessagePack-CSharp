@@ -16,6 +16,12 @@ internal static class FormatterDispatchByValue<T>
         IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
         formatter.Serialize(ref writer, value, options);
     }
+
+    internal static T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+    {
+        IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
+        return formatter.Deserialize(ref reader, options);
+    }
 }
 
 internal static class FormatterDispatch<T>
