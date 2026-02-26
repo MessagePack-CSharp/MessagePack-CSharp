@@ -39,10 +39,72 @@ namespace MessagePack.Tests
             Assert.Equal(0, formatter.DeserializeByValueCalls);
         }
 
+        [Fact]
+        public void DynamicObjectResolver_UsesByRefDispatch_ForConstructorDeserializePath()
+        {
+            var formatter = new ThrowingLegacyByRefFormatter();
+            var options = MessagePackSerializerOptions.Standard.WithResolver(
+                CompositeResolver.Create(
+                    new IMessagePackFormatter[] { formatter },
+                    new IFormatterResolver[] { DynamicObjectResolver.Instance, StandardResolver.Instance }));
+
+            var value = new ConstructorHolder(new PayloadStruct { Id = 456 });
+
+            byte[] payload = MessagePackSerializer.Serialize(value, options);
+            ConstructorHolder result = MessagePackSerializer.Deserialize<ConstructorHolder>(payload, options);
+
+            Assert.Equal(456, result.Value.Id);
+            Assert.Equal(1, formatter.SerializeInCalls);
+            Assert.Equal(1, formatter.DeserializeRefCalls);
+            Assert.Equal(0, formatter.SerializeByValueCalls);
+            Assert.Equal(0, formatter.DeserializeByValueCalls);
+        }
+
+        [Fact]
+        public void DynamicObjectResolver_UsesByRefDispatch_ForStringKeyDeserializeLoop()
+        {
+            var formatter = new ThrowingLegacyByRefFormatter();
+            var options = MessagePackSerializerOptions.Standard.WithResolver(
+                CompositeResolver.Create(
+                    new IMessagePackFormatter[] { formatter },
+                    new IFormatterResolver[] { DynamicObjectResolver.Instance, StandardResolver.Instance }));
+
+            var value = new StringKeyHolder { Value = new PayloadStruct { Id = 789 } };
+
+            byte[] payload = MessagePackSerializer.Serialize(value, options);
+            StringKeyHolder result = MessagePackSerializer.Deserialize<StringKeyHolder>(payload, options);
+
+            Assert.Equal(789, result.Value.Id);
+            Assert.Equal(1, formatter.SerializeInCalls);
+            Assert.Equal(1, formatter.DeserializeRefCalls);
+            Assert.Equal(0, formatter.SerializeByValueCalls);
+            Assert.Equal(0, formatter.DeserializeByValueCalls);
+        }
+
         [MessagePackObject]
         public class Holder
         {
             [Key(0)]
+            public PayloadStruct Value { get; set; }
+        }
+
+        [MessagePackObject]
+        public class ConstructorHolder
+        {
+            [SerializationConstructor]
+            public ConstructorHolder(PayloadStruct value)
+            {
+                this.Value = value;
+            }
+
+            [Key(0)]
+            public PayloadStruct Value { get; }
+        }
+
+        [MessagePackObject]
+        public class StringKeyHolder
+        {
+            [Key("value")]
             public PayloadStruct Value { get; set; }
         }
 
