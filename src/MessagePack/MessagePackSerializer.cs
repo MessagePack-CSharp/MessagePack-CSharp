@@ -107,6 +107,51 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Serializes a given struct value with the specified buffer writer.
+        /// </summary>
+        /// <param name="writer">The buffer writer to serialize with.</param>
+        /// <param name="value">The value to serialize.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
+        /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
+        public static void Serialize<T>(ref MessagePackWriter writer, in T value, MessagePackSerializerOptions? options = null)
+            where T : struct
+        {
+            options = options ?? DefaultOptions;
+            bool originalOldSpecValue = writer.OldSpec;
+            if (options.OldSpec.HasValue)
+            {
+                writer.OldSpec = options.OldSpec.Value;
+            }
+
+            try
+            {
+                if (options.Compression.IsCompression() && !PrimitiveChecker<T>.IsMessagePackFixedSizePrimitive)
+                {
+                    using (var scratchRental = options.SequencePool.Rent())
+                    {
+                        var scratch = scratchRental.Value;
+                        MessagePackWriter scratchWriter = writer.Clone(scratch);
+                        Internal.FormatterDispatch<T>.Serialize(ref scratchWriter, in value, options);
+                        scratchWriter.Flush();
+                        ToLZ4BinaryCore(scratch, ref writer, options.Compression, options.CompressionMinLength);
+                    }
+                }
+                else
+                {
+                    Internal.FormatterDispatch<T>.Serialize(ref writer, in value, options);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new MessagePackSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+            }
+            finally
+            {
+                writer.OldSpec = originalOldSpecValue;
+            }
+        }
+
+        /// <summary>
         /// Serializes a given value with the specified buffer writer.
         /// </summary>
         /// <param name="value">The value to serialize.</param>
@@ -247,6 +292,48 @@ namespace MessagePack
                 else
                 {
                     return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new MessagePackSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
+            }
+        }
+
+        /// <summary>
+        /// Deserializes a value of a given struct type from a sequence of bytes into an existing value.
+        /// </summary>
+        /// <typeparam name="T">The type of value to deserialize.</typeparam>
+        /// <param name="reader">The reader to deserialize from.</param>
+        /// <param name="value">The value that will receive the deserialized data.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
+        /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
+        public static void Deserialize<T>(ref MessagePackReader reader, ref T value, MessagePackSerializerOptions? options = null)
+            where T : struct
+        {
+            options = options ?? DefaultOptions;
+
+            try
+            {
+                if (options.Compression.IsCompression())
+                {
+                    using (var msgPackUncompressedRental = options.SequencePool.Rent())
+                    {
+                        var msgPackUncompressed = msgPackUncompressedRental.Value;
+                        if (TryDecompress(ref reader, msgPackUncompressed))
+                        {
+                            MessagePackReader uncompressedReader = reader.Clone(msgPackUncompressed.AsReadOnlySequence);
+                            Internal.FormatterDispatch<T>.Deserialize(ref uncompressedReader, ref value, options);
+                        }
+                        else
+                        {
+                            Internal.FormatterDispatch<T>.Deserialize(ref reader, ref value, options);
+                        }
+                    }
+                }
+                else
+                {
+                    Internal.FormatterDispatch<T>.Deserialize(ref reader, ref value, options);
                 }
             }
             catch (Exception ex)

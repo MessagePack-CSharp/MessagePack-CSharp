@@ -49,6 +49,24 @@ namespace MessagePack.Tests
             Assert.Equal(1, formatter.DeserializeRefCalls);
         }
 
+        [Fact]
+        public void DeserializeRef_FallsBackToLegacyFormatter_WhenByRefInterfaceMissing()
+        {
+            var formatter = new LegacyOnlyFormatter();
+            var options = MessagePackSerializerOptions.Standard.WithResolver(
+                CompositeResolver.Create(new IMessagePackFormatter[] { formatter }, new IFormatterResolver[] { StandardResolver.Instance }));
+
+            var payload = MessagePackSerializer.Serialize(new TestStruct { Id = 13, PooledObject = "new" }, options);
+            var reader = new MessagePackReader(payload);
+            var value = new TestStruct { Id = -1, PooledObject = "old-pooled" };
+
+            MessagePackSerializer.Deserialize(ref reader, ref value, options);
+
+            Assert.Equal(1, formatter.DeserializeByValueCalls);
+            Assert.Equal(13, value.Id);
+            Assert.Equal("new", value.PooledObject);
+        }
+
         [MessagePackObject]
         public struct TestStruct
         {
@@ -101,6 +119,29 @@ namespace MessagePack.Tests
                 _ = reader.ReadArrayHeader();
                 value.Id = reader.ReadInt32();
                 value.PooledObject = MessagePackSerializer.Deserialize<object?>(ref reader, options);
+            }
+        }
+
+        private sealed class LegacyOnlyFormatter : IMessagePackFormatter<TestStruct>
+        {
+            internal int DeserializeByValueCalls;
+
+            public void Serialize(ref MessagePackWriter writer, TestStruct value, MessagePackSerializerOptions options)
+            {
+                writer.WriteArrayHeader(2);
+                writer.Write(value.Id);
+                MessagePackSerializer.Serialize(ref writer, value.PooledObject, options);
+            }
+
+            public TestStruct Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+            {
+                this.DeserializeByValueCalls++;
+                _ = reader.ReadArrayHeader();
+                return new TestStruct
+                {
+                    Id = reader.ReadInt32(),
+                    PooledObject = MessagePackSerializer.Deserialize<object?>(ref reader, options),
+                };
             }
         }
     }
