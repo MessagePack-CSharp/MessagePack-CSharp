@@ -44,6 +44,7 @@ namespace MessagePack.Formatters
     /// </summary>
     /// <typeparam name="T">The type to be serialized.</typeparam>
     public interface IMessagePackFormatterSerializeIn<T>
+        where T : struct
     {
         /// <summary>
         /// Serializes a value passed by readonly reference.
@@ -59,6 +60,7 @@ namespace MessagePack.Formatters
     /// </summary>
     /// <typeparam name="T">The type to be deserialized.</typeparam>
     public interface IMessagePackFormatterDeserializeRef<T>
+        where T : struct
     {
         /// <summary>
         /// Deserializes into an existing value passed by reference.
