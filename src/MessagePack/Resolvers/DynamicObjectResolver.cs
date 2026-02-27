@@ -630,7 +630,7 @@ namespace MessagePack.Internal
             else
             {
                 argWriter.EmitLoad();
-                if (t.IsValueType)
+                if (CanUseByRefDispatch(t))
                 {
                     LocalBuilder localValue = il.DeclareLocal(t);
                     argValue.EmitLoad();
@@ -1219,7 +1219,7 @@ namespace MessagePack.Internal
             }
             else
             {
-                if (t.IsValueType)
+                if (CanUseByRefDispatch(t))
                 {
                     LocalBuilder localValue = il.DeclareLocal(t);
                     il.Emit(OpCodes.Ldloca, localValue);
@@ -1301,7 +1301,7 @@ namespace MessagePack.Internal
             }
             else
             {
-                if (t.IsValueType)
+                if (CanUseByRefDispatch(t))
                 {
                     LocalBuilder localValue = il.DeclareLocal(t);
                     il.Emit(OpCodes.Ldloca, localValue);
@@ -1363,6 +1363,8 @@ namespace MessagePack.Internal
         /// <summary>
         /// Helps match parameters when searching a method when the parameter is a generic type.
         /// </summary>
+        private static bool CanUseByRefDispatch(Type type) => type.IsValueType && Nullable.GetUnderlyingType(type) is null;
+
         private static bool Matches(MethodInfo m, int parameterIndex, Type desiredType)
         {
             ParameterInfo[] parameters = m.GetParameters();
