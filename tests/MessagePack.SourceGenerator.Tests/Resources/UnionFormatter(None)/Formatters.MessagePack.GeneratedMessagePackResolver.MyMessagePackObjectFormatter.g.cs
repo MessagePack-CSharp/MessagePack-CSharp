@@ -20,9 +20,8 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::IMyType>(formatterResolver).Serialize(ref writer, value.UnionValue, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::IMyType>(ref writer, value.UnionValue, options);
 		}
 
 		public global::MyMessagePackObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -33,7 +32,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::MyMessagePackObject();
 
@@ -42,7 +40,7 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.UnionValue = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::IMyType>(formatterResolver).Deserialize(ref reader, options);
+						____result.UnionValue = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::IMyType>(ref reader, options);
 						break;
 					default:
 						reader.Skip();

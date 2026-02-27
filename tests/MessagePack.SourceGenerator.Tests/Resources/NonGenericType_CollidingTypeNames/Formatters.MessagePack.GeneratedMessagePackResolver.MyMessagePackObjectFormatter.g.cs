@@ -20,10 +20,9 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(2);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::NS1.MyType>(formatterResolver).Serialize(ref writer, value.Value1, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::NS2.MyType>(formatterResolver).Serialize(ref writer, value.Value2, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::NS1.MyType>(ref writer, value.Value1, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::NS2.MyType>(ref writer, value.Value2, options);
 		}
 
 		public global::MyMessagePackObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -34,7 +33,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::MyMessagePackObject();
 
@@ -43,10 +41,10 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.Value1 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::NS1.MyType>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::NS1.MyType>(ref reader, options);
 						break;
 					case 1:
-						____result.Value2 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::NS2.MyType>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value2 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::NS2.MyType>(ref reader, options);
 						break;
 					default:
 						reader.Skip();

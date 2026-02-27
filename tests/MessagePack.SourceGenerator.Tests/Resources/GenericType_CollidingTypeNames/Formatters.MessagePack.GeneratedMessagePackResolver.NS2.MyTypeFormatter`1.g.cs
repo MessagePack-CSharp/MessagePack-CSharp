@@ -21,9 +21,8 @@ internal partial class NS2 {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Foo, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<string>(ref writer, value.Foo, options);
 		}
 
 		public global::NS2.MyType<T> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -34,7 +33,6 @@ internal partial class NS2 {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::NS2.MyType<T>();
 
@@ -43,7 +41,7 @@ internal partial class NS2 {
 				switch (i)
 				{
 					case 0:
-						____result.Foo = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+						____result.Foo = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<string>(ref reader, options);
 						break;
 					default:
 						reader.Skip();

@@ -20,13 +20,12 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(5);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<(bool, byte, sbyte)>(formatterResolver).Serialize(ref writer, value.Value1, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<(short, ushort, int, uint)>(formatterResolver).Serialize(ref writer, value.Value2, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<(long, ulong, float, double)>(formatterResolver).Serialize(ref writer, value.Value3, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<(decimal, char, string, object)>(formatterResolver).Serialize(ref writer, value.Value4, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.ValueTuple<int?>>(formatterResolver).Serialize(ref writer, value.Value5, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<(bool, byte, sbyte)>(ref writer, value.Value1, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<(short, ushort, int, uint)>(ref writer, value.Value2, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<(long, ulong, float, double)>(ref writer, value.Value3, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<(decimal, char, string, object)>(ref writer, value.Value4, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.ValueTuple<int?>>(ref writer, value.Value5, options);
 		}
 
 		public global::SampleObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -37,7 +36,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::SampleObject();
 
@@ -46,19 +44,19 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.Value1 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<(bool, byte, sbyte)>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<(bool, byte, sbyte)>(ref reader, options);
 						break;
 					case 1:
-						____result.Value2 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<(short, ushort, int, uint)>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value2 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<(short, ushort, int, uint)>(ref reader, options);
 						break;
 					case 2:
-						____result.Value3 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<(long, ulong, float, double)>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value3 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<(long, ulong, float, double)>(ref reader, options);
 						break;
 					case 3:
-						____result.Value4 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<(decimal, char, string, object)>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value4 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<(decimal, char, string, object)>(ref reader, options);
 						break;
 					case 4:
-						____result.Value5 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.ValueTuple<int?>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value5 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.ValueTuple<int?>>(ref reader, options);
 						break;
 					default:
 						reader.Skip();

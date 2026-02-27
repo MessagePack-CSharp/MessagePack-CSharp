@@ -38,4 +38,36 @@ namespace MessagePack.Formatters
         /// <returns>The deserialized value.</returns>
         T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options);
     }
+
+    /// <summary>
+    /// Provides an optional by-ref API for serializing <typeparamref name="T"/> values.
+    /// </summary>
+    /// <typeparam name="T">The type to be serialized.</typeparam>
+    public interface IMessagePackFormatterSerializeIn<T>
+        where T : struct
+    {
+        /// <summary>
+        /// Serializes a value passed by readonly reference.
+        /// </summary>
+        /// <param name="writer">The writer to use when serializing the value.</param>
+        /// <param name="value">The value to be serialized.</param>
+        /// <param name="options">The serialization settings to use.</param>
+        void Serialize(ref MessagePackWriter writer, in T value, MessagePackSerializerOptions options);
+    }
+
+    /// <summary>
+    /// Provides an optional by-ref API for deserializing into an existing <typeparamref name="T"/> value.
+    /// </summary>
+    /// <typeparam name="T">The type to be deserialized.</typeparam>
+    public interface IMessagePackFormatterDeserializeRef<T>
+        where T : struct
+    {
+        /// <summary>
+        /// Deserializes into an existing value passed by reference.
+        /// </summary>
+        /// <param name="reader">The reader to deserialize from.</param>
+        /// <param name="value">The existing value that will receive deserialized data.</param>
+        /// <param name="options">The serialization settings to use.</param>
+        void Deserialize(ref MessagePackReader reader, ref T value, MessagePackSerializerOptions options);
+    }
 }

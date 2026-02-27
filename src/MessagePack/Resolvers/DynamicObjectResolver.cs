@@ -629,14 +629,24 @@ namespace MessagePack.Internal
             }
             else
             {
-                il.EmitLdloc(localResolver);
-                il.Emit(OpCodes.Call, getFormatterWithVerify.MakeGenericMethod(t));
-
                 argWriter.EmitLoad();
-                argValue.EmitLoad();
-                member.EmitLoadValue(il);
-                argOptions.EmitLoad();
-                il.EmitCall(getSerialize(t));
+                if (CanUseByRefDispatch(t))
+                {
+                    LocalBuilder localValue = il.DeclareLocal(t);
+                    argValue.EmitLoad();
+                    member.EmitLoadValue(il);
+                    il.EmitStloc(localValue);
+                    il.EmitLdloca(localValue);
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchSerializeByRef(t));
+                }
+                else
+                {
+                    argValue.EmitLoad();
+                    member.EmitLoadValue(il);
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchSerializeByValue(t));
+                }
             }
 
             il.MarkLabel(endLabel);
@@ -668,18 +678,15 @@ namespace MessagePack.Internal
             // var length = reader.Read(Map|Array)Header();
             var localLength = BuildDeserializeInternalReadHeaderLength(info, il, ref argReader);
 
-            // var resolver = options.Resolver;
-            var localResolver = BuildDeserializeInternalResolver(info, il, ref argOptions)!;
-
             if (info.IsIntKey)
             {
                 // switch (key) { ... }
-                BuildDeserializeInternalDeserializeEachPropertyIntKey(info, typeBuilder, il, tryEmitLoadCustomFormatter, canOverwrite, ref argReader, ref argOptions, localResolver, localResult, localLength);
+                BuildDeserializeInternalDeserializeEachPropertyIntKey(info, typeBuilder, il, tryEmitLoadCustomFormatter, canOverwrite, ref argReader, ref argOptions, localResult, localLength);
             }
             else
             {
                 // var span = reader.ReadStringSpan();
-                BuildDeserializeInternalDeserializeEachPropertyStringKey(info, typeBuilder, il, tryEmitLoadCustomFormatter, canOverwrite, ref argReader, argOptions, localResolver, localResult, localLength);
+                BuildDeserializeInternalDeserializeEachPropertyStringKey(info, typeBuilder, il, tryEmitLoadCustomFormatter, canOverwrite, ref argReader, argOptions, localResult, localLength);
             }
 
             // ____result.OnAfterDeserialize()
@@ -693,13 +700,13 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Ret);
         }
 
-        private static void BuildDeserializeInternalDeserializeEachPropertyStringKey(ObjectSerializationInfo info, TypeBuilder typeBuilder, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, bool canOverwrite, ref ArgumentField argReader, ArgumentField argOptions, LocalBuilder localResolver, LocalBuilder localResult, LocalBuilder localLength)
+        private static void BuildDeserializeInternalDeserializeEachPropertyStringKey(ObjectSerializationInfo info, TypeBuilder typeBuilder, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, bool canOverwrite, ref ArgumentField argReader, ArgumentField argOptions, LocalBuilder localResult, LocalBuilder localLength)
         {
             // Prepare local variables or assignment fields/properties
             var infoList = BuildDeserializeInternalDeserializationInfoArrayStringKey(info, il, canOverwrite);
 
             // Read Loop(for var i = 0; i < length; i++)
-            BuildDeserializeInternalDeserializeLoopStringKey(typeBuilder, il, tryEmitLoadCustomFormatter, ref argReader, ref argOptions, infoList, localResolver, localResult, localLength, canOverwrite, info);
+            BuildDeserializeInternalDeserializeLoopStringKey(typeBuilder, il, tryEmitLoadCustomFormatter, ref argReader, ref argOptions, infoList, localResult, localLength, canOverwrite, info);
 
             if (canOverwrite)
             {
@@ -713,13 +720,13 @@ namespace MessagePack.Internal
             BuildDeserializeInternalAssignFieldFromLocalVariableStringKey(info, typeBuilder, il, infoList, localResult);
         }
 
-        private static void BuildDeserializeInternalDeserializeEachPropertyIntKey(ObjectSerializationInfo info, TypeBuilder typeBuilder, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, bool canOverwrite, ref ArgumentField argReader, ref ArgumentField argOptions, LocalBuilder localResolver, LocalBuilder localResult, LocalBuilder localLength)
+        private static void BuildDeserializeInternalDeserializeEachPropertyIntKey(ObjectSerializationInfo info, TypeBuilder typeBuilder, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, bool canOverwrite, ref ArgumentField argReader, ref ArgumentField argOptions, LocalBuilder localResult, LocalBuilder localLength)
         {
             // Prepare local variables or assignment fields/properties
             var infoList = BuildDeserializeInternalDeserializationInfoArrayIntKey(info, il, canOverwrite, out var gotoDefault, out var maxKey);
 
             // Read Loop(for var i = 0; i < length; i++)
-            BuildDeserializeInternalDeserializeLoopIntKey(typeBuilder, il, tryEmitLoadCustomFormatter, ref argReader, ref argOptions, infoList, localResolver, localResult, localLength, canOverwrite, gotoDefault);
+            BuildDeserializeInternalDeserializeLoopIntKey(typeBuilder, il, tryEmitLoadCustomFormatter, ref argReader, ref argOptions, infoList, localResult, localLength, canOverwrite, gotoDefault);
 
             if (canOverwrite)
             {
@@ -912,7 +919,7 @@ namespace MessagePack.Internal
             return infoList;
         }
 
-        private static void BuildDeserializeInternalDeserializeLoopIntKey(TypeBuilder typeBuilder, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, ref ArgumentField argReader, ref ArgumentField argOptions, DeserializeInfo[] infoList, LocalBuilder localResolver, LocalBuilder localResult, LocalBuilder localLength, bool canOverwrite, Label? gotoDefault)
+        private static void BuildDeserializeInternalDeserializeLoopIntKey(TypeBuilder typeBuilder, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, ref ArgumentField argReader, ref ArgumentField argOptions, DeserializeInfo[] infoList, LocalBuilder localResult, LocalBuilder localLength, bool canOverwrite, Label? gotoDefault)
         {
             var key = il.DeclareLocal(typeof(int));
             var switchDefault = il.DefineLabel();
@@ -955,11 +962,11 @@ namespace MessagePack.Internal
                     il.MarkLabel(item.SwitchLabel);
                     if (canOverwrite)
                     {
-                        BuildDeserializeInternalDeserializeValueAssignDirectly(typeBuilder, il, item, i++, tryEmitLoadCustomFormatter, ref reader, ref options, localResolver, localResult);
+                        BuildDeserializeInternalDeserializeValueAssignDirectly(typeBuilder, il, item, i++, tryEmitLoadCustomFormatter, ref reader, ref options, localResult);
                     }
                     else
                     {
-                        BuildDeserializeInternalDeserializeValueAssignLocalVariable(il, item, i++, tryEmitLoadCustomFormatter, ref reader, ref options, localResolver, localResult);
+                        BuildDeserializeInternalDeserializeValueAssignLocalVariable(il, item, i++, tryEmitLoadCustomFormatter, ref reader, ref options);
                     }
 
                     il.Emit(OpCodes.Br, loopEnd);
@@ -971,7 +978,7 @@ namespace MessagePack.Internal
             il.EmitIncrementFor(localLength, ForBody);
         }
 
-        private static void BuildDeserializeInternalDeserializeLoopStringKey(TypeBuilder typeBuilder, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, ref ArgumentField argReader, ref ArgumentField argOptions, DeserializeInfo[] infoList, LocalBuilder localResolver, LocalBuilder localResult, LocalBuilder localLength, bool canOverwrite, ObjectSerializationInfo info)
+        private static void BuildDeserializeInternalDeserializeLoopStringKey(TypeBuilder typeBuilder, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, ref ArgumentField argReader, ref ArgumentField argOptions, DeserializeInfo[] infoList, LocalBuilder localResult, LocalBuilder localLength, bool canOverwrite, ObjectSerializationInfo info)
         {
             var automata = new AutomataDictionary();
             for (var i = 0; i < info.Members.Length; i++)
@@ -1001,7 +1008,7 @@ namespace MessagePack.Internal
                     var item = infoList[i];
                     if (item.MemberInfo is not null)
                     {
-                        BuildDeserializeInternalDeserializeValueAssignDirectly(typeBuilder, il, item, i, tryEmitLoadCustomFormatter, ref reader, ref options, localResolver, localResult);
+                        BuildDeserializeInternalDeserializeValueAssignDirectly(typeBuilder, il, item, i, tryEmitLoadCustomFormatter, ref reader, ref options, localResult);
                         il.Emit(OpCodes.Br, loopEnd);
                     }
                     else
@@ -1016,7 +1023,7 @@ namespace MessagePack.Internal
                     var item = infoList[i];
                     if (item.MemberInfo is not null)
                     {
-                        BuildDeserializeInternalDeserializeValueAssignLocalVariable(il, item, i, tryEmitLoadCustomFormatter, ref reader, ref options, localResolver, localResult);
+                        BuildDeserializeInternalDeserializeValueAssignLocalVariable(il, item, i, tryEmitLoadCustomFormatter, ref reader, ref options);
                         il.Emit(OpCodes.Br, loopEnd);
                     }
                     else
@@ -1120,21 +1127,6 @@ namespace MessagePack.Internal
             }
         }
 
-        private static LocalBuilder? BuildDeserializeInternalResolver(ObjectSerializationInfo info, ILGenerator il, ref ArgumentField argOptions)
-        {
-            if (!info.ShouldUseFormatterResolver)
-            {
-                return default;
-            }
-
-            // IFormatterResolver resolver = options.Resolver;
-            var localResolver = il.DeclareLocal(typeof(IFormatterResolver));
-            argOptions.EmitLoad();
-            il.EmitCall(getResolverFromOptions);
-            il.EmitStloc(localResolver);
-            return localResolver;
-        }
-
         private static LocalBuilder BuildDeserializeInternalReadHeaderLength(ObjectSerializationInfo info, ILGenerator il, ref ArgumentField argReader)
         {
             // var length = ReadMapHeader(ref byteSequence);
@@ -1171,7 +1163,7 @@ namespace MessagePack.Internal
             }
         }
 
-        private static void BuildDeserializeInternalDeserializeValueAssignDirectly(TypeBuilder typeBuilder, ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, ref ArgumentField argReader, ref ArgumentField argOptions, LocalBuilder localResolver, LocalBuilder localResult)
+        private static void BuildDeserializeInternalDeserializeValueAssignDirectly(TypeBuilder typeBuilder, ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, ref ArgumentField argReader, ref ArgumentField argOptions, LocalBuilder localResult)
         {
             var storeLabel = il.DefineLabel();
             var member = info.MemberInfo!;
@@ -1227,11 +1219,23 @@ namespace MessagePack.Internal
             }
             else
             {
-                il.EmitLdloc(localResolver);
-                il.EmitCall(getFormatterWithVerify.MakeGenericMethod(t));
-                argReader.EmitLdarg();
-                argOptions.EmitLoad();
-                il.EmitCall(getDeserialize(t));
+                if (CanUseByRefDispatch(t))
+                {
+                    LocalBuilder localValue = il.DeclareLocal(t);
+                    il.Emit(OpCodes.Ldloca, localValue);
+                    il.Emit(OpCodes.Initobj, t);
+                    argReader.EmitLdarg();
+                    il.Emit(OpCodes.Ldloca, localValue);
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchDeserializeByRef(t));
+                    il.Emit(OpCodes.Ldloc, localValue);
+                }
+                else
+                {
+                    argReader.EmitLdarg();
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchDeserializeByValue(t));
+                }
             }
 
             il.MarkLabel(storeLabel);
@@ -1245,7 +1249,7 @@ namespace MessagePack.Internal
             }
         }
 
-        private static void BuildDeserializeInternalDeserializeValueAssignLocalVariable(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, ref ArgumentField argReader, ref ArgumentField argOptions, LocalBuilder localResolver, LocalBuilder localResult)
+        private static void BuildDeserializeInternalDeserializeValueAssignLocalVariable(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, ref ArgumentField argReader, ref ArgumentField argOptions)
         {
             var storeLabel = il.DefineLabel();
             var member = info.MemberInfo!;
@@ -1297,11 +1301,23 @@ namespace MessagePack.Internal
             }
             else
             {
-                il.EmitLdloc(localResolver);
-                il.EmitCall(getFormatterWithVerify.MakeGenericMethod(t));
-                argReader.EmitLdarg();
-                argOptions.EmitLoad();
-                il.EmitCall(getDeserialize(t));
+                if (CanUseByRefDispatch(t))
+                {
+                    LocalBuilder localValue = il.DeclareLocal(t);
+                    il.Emit(OpCodes.Ldloca, localValue);
+                    il.Emit(OpCodes.Initobj, t);
+                    argReader.EmitLdarg();
+                    il.Emit(OpCodes.Ldloca, localValue);
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchDeserializeByRef(t));
+                    il.Emit(OpCodes.Ldloc, localValue);
+                }
+                else
+                {
+                    argReader.EmitLdarg();
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchDeserializeByValue(t));
+                }
             }
 
             il.MarkLabel(storeLabel);
@@ -1317,7 +1333,6 @@ namespace MessagePack.Internal
         private static readonly MethodInfo ReadStringSpan = typeof(CodeGenHelpers).GetRuntimeMethod(nameof(CodeGenHelpers.ReadStringSpan), new[] { typeof(MessagePackReader).MakeByRefType() })!;
         private static readonly MethodInfo ArrayFromNullableReadOnlySequence = typeof(CodeGenHelpers).GetRuntimeMethod(nameof(CodeGenHelpers.GetArrayFromNullableSequence), new[] { typeof(ReadOnlySequence<byte>?).MakeByRefType() })!;
 
-        private static readonly MethodInfo getFormatterWithVerify = typeof(FormatterResolverExtensions).GetRuntimeMethods().First(x => x.Name == nameof(FormatterResolverExtensions.GetFormatterWithVerify));
         private static readonly MethodInfo getResolverFromOptions = typeof(MessagePackSerializerOptions).GetRuntimeProperty(nameof(MessagePackSerializerOptions.Resolver))!.GetMethod!;
         private static readonly MethodInfo getSecurityFromOptions = typeof(MessagePackSerializerOptions).GetRuntimeProperty(nameof(MessagePackSerializerOptions.Security))!.GetMethod!;
         private static readonly MethodInfo securityDepthStep = typeof(MessagePackSecurity).GetRuntimeMethod(nameof(MessagePackSecurity.DepthStep), new[] { typeof(MessagePackReader).MakeByRefType() })!;
@@ -1325,6 +1340,10 @@ namespace MessagePack.Internal
         private static readonly MethodInfo readerDepthSet = typeof(MessagePackReader).GetRuntimeProperty(nameof(MessagePackReader.Depth))!.SetMethod!;
         private static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod(nameof(IMessagePackFormatter<int>.Serialize), new[] { typeof(MessagePackWriter).MakeByRefType(), t, typeof(MessagePackSerializerOptions) })!;
         private static readonly Func<Type, MethodInfo> getDeserialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod(nameof(IMessagePackFormatter<int>.Deserialize), new[] { refMessagePackReader, typeof(MessagePackSerializerOptions) })!;
+        private static readonly Func<Type, MethodInfo> getDispatchSerializeByRef = t => typeof(FormatterDispatch<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatch<int>.Serialize) && m.GetParameters().Length == 3);
+        private static readonly Func<Type, MethodInfo> getDispatchSerializeByValue = t => typeof(FormatterDispatchByValue<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatchByValue<int>.Serialize) && m.GetParameters().Length == 3);
+        private static readonly Func<Type, MethodInfo> getDispatchDeserializeByRef = t => typeof(FormatterDispatch<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatch<int>.Deserialize) && m.GetParameters().Length == 3);
+        private static readonly Func<Type, MethodInfo> getDispatchDeserializeByValue = t => typeof(FormatterDispatchByValue<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatchByValue<int>.Deserialize) && m.GetParameters().Length == 2);
         //// static readonly ConstructorInfo dictionaryConstructor = typeof(ByteArrayStringHashTable).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(int); });
         //// static readonly MethodInfo dictionaryAdd = typeof(ByteArrayStringHashTable).GetRuntimeMethod("Add", new[] { typeof(string), typeof(int) });
         //// static readonly MethodInfo dictionaryTryGetValue = typeof(ByteArrayStringHashTable).GetRuntimeMethod("TryGetValue", new[] { typeof(ArraySegment<byte>), refInt });
@@ -1344,6 +1363,8 @@ namespace MessagePack.Internal
         /// <summary>
         /// Helps match parameters when searching a method when the parameter is a generic type.
         /// </summary>
+        private static bool CanUseByRefDispatch(Type type) => type.IsValueType && Nullable.GetUnderlyingType(type) is null;
+
         private static bool Matches(MethodInfo m, int parameterIndex, Type desiredType)
         {
             ParameterInfo[] parameters = m.GetParameters();
@@ -1418,8 +1439,6 @@ namespace MessagePack.Internal
         internal bool IsClass { get; }
 
         internal bool IsStruct => !this.IsClass;
-
-        internal bool ShouldUseFormatterResolver { get; private set; }
 
         internal ConstructorInfo? BestmatchConstructor { get; }
 
@@ -1824,8 +1843,6 @@ namespace MessagePack.Internal
                     .ToArray();
             }
 
-            var shouldUseFormatterResolver = false;
-
             // Mark each member that will be set by way of the constructor.
             foreach (var item in constructorParameters)
             {
@@ -1833,27 +1850,7 @@ namespace MessagePack.Internal
             }
 
             var membersArray = members.Where(m => m.IsExplicitContract || m.IsWrittenByConstructor || m.IsWritable).ToArray();
-            foreach (var member in membersArray)
-            {
-                if (IsOptimizeTargetType(member.Type))
-                {
-                    continue;
-                }
-
-                var attr = member.GetMessagePackFormatterAttribute();
-                if (!(attr is null))
-                {
-                    continue;
-                }
-
-                shouldUseFormatterResolver = true;
-                break;
-            }
-
-            return new ObjectSerializationInfo(type, constructorParameters.ToArray(), membersArray, isClass, ctor, isIntKey)
-            {
-                ShouldUseFormatterResolver = shouldUseFormatterResolver,
-            };
+            return new ObjectSerializationInfo(type, constructorParameters.ToArray(), membersArray, isClass, ctor, isIntKey);
         }
 
         /// <devremarks>

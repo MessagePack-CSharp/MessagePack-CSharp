@@ -20,9 +20,8 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<int[][]>(formatterResolver).Serialize(ref writer, value.TwoDimensionalJaggedIntArray, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<int[][]>(ref writer, value.TwoDimensionalJaggedIntArray, options);
 		}
 
 		public global::ContainerObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -33,7 +32,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::ContainerObject();
 
@@ -42,7 +40,7 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.TwoDimensionalJaggedIntArray = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<int[][]>(formatterResolver).Deserialize(ref reader, options);
+						____result.TwoDimensionalJaggedIntArray = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<int[][]>(ref reader, options);
 						break;
 					default:
 						reader.Skip();

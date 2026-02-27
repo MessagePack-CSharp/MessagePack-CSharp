@@ -21,11 +21,10 @@ internal partial class TempProject {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(3);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<int>>(formatterResolver).Serialize(ref writer, value.ValueList, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::System.Collections.Generic.List<int>>>(formatterResolver).Serialize(ref writer, value.ValueListNested, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<(int, string, long)>(formatterResolver).Serialize(ref writer, value.ValueValueTuple, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<int>>(ref writer, value.ValueList, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<global::System.Collections.Generic.List<int>>>(ref writer, value.ValueListNested, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<(int, string, long)>(ref writer, value.ValueValueTuple, options);
 		}
 
 		public global::TempProject.MyObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -36,7 +35,6 @@ internal partial class TempProject {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::TempProject.MyObject();
 
@@ -45,13 +43,13 @@ internal partial class TempProject {
 				switch (i)
 				{
 					case 0:
-						____result.ValueList = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<int>>(formatterResolver).Deserialize(ref reader, options);
+						____result.ValueList = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<int>>(ref reader, options);
 						break;
 					case 1:
-						____result.ValueListNested = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::System.Collections.Generic.List<int>>>(formatterResolver).Deserialize(ref reader, options);
+						____result.ValueListNested = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<global::System.Collections.Generic.List<int>>>(ref reader, options);
 						break;
 					case 2:
-						____result.ValueValueTuple = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<(int, string, long)>(formatterResolver).Deserialize(ref reader, options);
+						____result.ValueValueTuple = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<(int, string, long)>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
