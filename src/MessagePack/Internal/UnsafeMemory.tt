@@ -16,9 +16,7 @@
 #pragma warning disable SA1402 // File may only contain a single type
 
 using System;
-using System.Buffers;
 using System.Runtime.CompilerServices;
-using MessagePack.Formatters;
 
 namespace MessagePack.Internal
 {
@@ -29,18 +27,7 @@ namespace MessagePack.Internal
         public static unsafe void WriteRaw<#= i #>(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
-
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-<# for(var j = 0; j < (i / 4); j++) { #>
-                *(int*)(pDst + <#= (4 * j) #>) = *(int*)(pSrc + <#= (4 * j) #>);
-<# } #>
-<# if(i % 4 != 0) { #>
-                *(int*)(pDst + <#= i - 4 #>) = *(int*)(pSrc + <#= (i - 4) #>);
-<# } #>
-            }
-
+            src.Slice(0, <#= i #>).CopyTo(dst);
             writer.Advance(src.Length);
         }
 <# } #>
@@ -53,18 +40,7 @@ namespace MessagePack.Internal
         public static unsafe void WriteRaw<#= i #>(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
-
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-<# for(var j = 0; j < (i / 8); j++) { #>
-                *(long*)(pDst + <#= (8 * j) #>) = *(long*)(pSrc + <#= (8 * j) #>);
-<# } #>
-<# if(i % 8 != 0) { #>
-                *(long*)(pDst + <#= i - 8 #>) = *(long*)(pSrc + <#= (i - 8) #>);
-<# } #>
-            }
-
+            src.Slice(0, <#= i #>).CopyTo(dst);
             writer.Advance(src.Length);
         }
 <# } #>
