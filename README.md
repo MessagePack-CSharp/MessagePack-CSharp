@@ -210,7 +210,7 @@ Please see the [extensions section](#extensions).
 
 MessagePack for C# can serialize your own public `class` or `struct` types. By default, serializable types must be annotated with the `[MessagePackObject]` attribute and members with the `[Key]` attribute. Keys can be either indexes (`int`) or arbitrary strings. If all keys are indexes, arrays are used for serialization, which offers advantages in performance and binary size. Otherwise, MessagePack maps (dictionaries) will be used.
 
-If you use `[MessagePackObject(keyAsPropertyName: true)]`, then members do not require explicit `Key` attributes, but string keys will be used.
+If you use `[MessagePackObject(keyAsPropertyName: true)]` or `[MessagePackObject(KeyPolicy.ImplicitCamelCasePropertyNames)]`, then members do not require explicit `Key` attributes, but string keys will be used.
 
 ```csharp
 [MessagePackObject]
@@ -242,6 +242,14 @@ public class Sample3
     public int Bar { get; set; }
 }
 
+[MessagePackObject(KeyPolicy.ImplicitCamelCasePropertyNames)]
+public class Sample4
+{
+    public int Foo { get; set; }
+
+    public int Bar { get; set; }
+}
+
 // [10,20]
 Console.WriteLine(MessagePackSerializer.SerializeToJson(new Sample1 { Foo = 10, Bar = 20 }));
 
@@ -250,6 +258,9 @@ Console.WriteLine(MessagePackSerializer.SerializeToJson(new Sample2 { Foo = 10, 
 
 // {"Foo":10}
 Console.WriteLine(MessagePackSerializer.SerializeToJson(new Sample3 { Foo = 10, Bar = 20 }));
+
+// {"foo":10,"bar":20}
+Console.WriteLine(MessagePackSerializer.SerializeToJson(new Sample4 { Foo = 10, Bar = 20 }));
 ```
 
 All public instance members (fields as well as properties) will be serialized. If you want to ignore certain public members, annotate the member with a `[IgnoreMember]` attribute.

@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.Serialization;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using MessagePack.Formatters;
@@ -1558,11 +1559,12 @@ namespace MessagePack.Internal
             }
 
             // Determine whether to ignore MessagePackObjectAttribute or DataContract.
-            if (forceStringKey || contractless || (contractAttr?.KeyAsPropertyName == true))
+            if (forceStringKey || contractless || contractAttr?.KeyPolicy is KeyPolicy.ImplicitCamelCasePropertyNames or KeyPolicy.ImplicitPropertyNames)
             {
                 // All public members are serialize target except [Ignore] member.
-                isIntKey = !(forceStringKey || (contractAttr is not null && contractAttr.KeyAsPropertyName));
+                isIntKey = !forceStringKey && contractAttr?.KeyPolicy is not (KeyPolicy.ImplicitCamelCasePropertyNames or KeyPolicy.ImplicitPropertyNames);
                 var hiddenIntKey = 0;
+                bool isKeyCamelCase = contractAttr?.KeyPolicy is KeyPolicy.ImplicitCamelCasePropertyNames;
 
                 // Group the properties and fields by name to qualify members of the same name
                 // (declared with the 'new' keyword) with the declaring type.
@@ -1580,14 +1582,17 @@ namespace MessagePack.Internal
                         }
 
                         var memberInfo = (MemberInfo?)member.PropertyInfo ?? member.FieldInfo!;
+
                         if (first)
                         {
                             first = false;
-                            member.StringKey = memberInfo.Name;
+                            member.StringKey = isKeyCamelCase ? ToCamelCase(memberInfo.Name) : memberInfo.Name;
                         }
                         else
                         {
-                            member.StringKey = $"{memberInfo.DeclaringType!.FullName}.{memberInfo.Name}";
+                            member.StringKey = isKeyCamelCase
+                                ? $"{ToCamelCase(memberInfo.DeclaringType!.FullName)}.{ToCamelCase(memberInfo.Name)}"
+                                : $"{memberInfo.DeclaringType!.FullName}.{memberInfo.Name}";
                         }
 
                         member.IntKey = hiddenIntKey++;
@@ -1854,6 +1859,37 @@ namespace MessagePack.Internal
             {
                 ShouldUseFormatterResolver = shouldUseFormatterResolver,
             };
+        }
+
+        /// <summary>
+        /// Apply camelCase transformation to an identifier.
+        /// </summary>
+        /// <param name="name">The name of the field or property.</param>
+        /// <returns>The camelCase equivalent of the <paramref name="name"/>.</returns>
+        [return: NotNullIfNotNull(nameof(name))]
+        internal static string? ToCamelCase(string? name)
+        {
+            if (name is null or { Length: 0 } || !char.IsUpper(name[0]))
+            {
+                return name;
+            }
+
+#if NET
+            return string.Create(name.Length, name, static (span, state) =>
+            {
+                span[0] = char.ToLowerInvariant(state[0]);
+                state[1..].CopyTo(span[1..]);
+            });
+#else
+            var buffer = new StringBuilder(name.Length);
+            buffer.Append(char.ToLowerInvariant(name[0]));
+            if (name.Length > 1)
+            {
+                buffer.Append(name, 1, name.Length - 1);
+            }
+
+            return buffer.ToString();
+#endif
         }
 
         /// <devremarks>
