@@ -161,7 +161,7 @@ namespace MessagePack.Formatters
     }
 
     // special formatter to maintain compatibility due to bugs, https://github.com/MessagePack-CSharp/MessagePack-CSharp/issues/2134
-    public sealed class ByteListFormatter : IMessagePackFormatter<List<byte>?>
+    public sealed class ByteListFormatter : IMessagePackFormatter<List<byte>?>, IMessagePackFormatterDeserializeInto<List<byte>>
     {
         public static readonly ByteListFormatter Instance = new ByteListFormatter();
 
@@ -197,6 +197,42 @@ namespace MessagePack.Formatters
                 return new List<byte>(sequence.Value.ToArray());
 #endif
             }
+        }
+
+        public void Deserialize(ref MessagePackReader reader, List<byte> value, MessagePackSerializerOptions options)
+        {
+            if (reader.NextMessagePackType == MessagePackType.Array)
+            {
+                InnerFormatter.Deserialize(ref reader, value, options);
+                return;
+            }
+
+            ReadOnlySequence<byte>? sequence = reader.ReadBytes();
+            value.Clear();
+            if (sequence is null)
+            {
+                return;
+            }
+
+#if NET8_0_OR_GREATER
+            int len = checked((int)sequence.Value.Length);
+            if (value.Capacity < len)
+            {
+                value.Capacity = len;
+            }
+
+            CollectionsMarshal.SetCount(value, len);
+            sequence.Value.CopyTo(CollectionsMarshal.AsSpan(value));
+#else
+            foreach (ReadOnlyMemory<byte> segment in sequence.Value)
+            {
+                ReadOnlySpan<byte> span = segment.Span;
+                for (int i = 0; i < span.Length; i++)
+                {
+                    value.Add(span[i]);
+                }
+            }
+#endif
         }
     }
 
@@ -295,7 +331,7 @@ namespace MessagePack.Formatters
 
     // List<T> is popular format, should avoid abstraction.
     [Preserve]
-    public sealed class ListFormatter<T> : IMessagePackFormatter<List<T>?>
+    public sealed class ListFormatter<T> : IMessagePackFormatter<List<T>?>, IMessagePackFormatterDeserializeInto<List<T>>
     {
         public void Serialize(ref MessagePackWriter writer, List<T>? value, MessagePackSerializerOptions options)
         {
@@ -354,6 +390,68 @@ namespace MessagePack.Formatters
                 }
 
                 return list;
+            }
+        }
+
+        public void Deserialize(ref MessagePackReader reader, List<T> value, MessagePackSerializerOptions options)
+        {
+            int len = reader.ReadArrayHeader();
+            MutableCollectionHelpers.DeserializeListInto(ref reader, value, len, options);
+        }
+    }
+
+    internal static class MutableCollectionHelpers
+    {
+        internal static void DeserializeListInto<T>(ref MessagePackReader reader, IList<T> value, int len, MessagePackSerializerOptions options)
+        {
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                int sharedCount = Math.Min(len, value.Count);
+                for (int i = 0; i < sharedCount; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    value[i] = FormatterDispatchReuse<T>.Deserialize(ref reader, value[i], options);
+                }
+
+                for (int i = sharedCount; i < len; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    value.Add(FormatterDispatchReuse<T>.Deserialize(ref reader, default!, options));
+                }
+
+                for (int i = value.Count - 1; i >= len; i--)
+                {
+                    value.RemoveAt(i);
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+            }
+        }
+
+        internal static void DeserializeCollectionInto<T>(ref MessagePackReader reader, ICollection<T> value, int len, MessagePackSerializerOptions options)
+        {
+            if (value is IList<T> list)
+            {
+                DeserializeListInto(ref reader, list, len, options);
+                return;
+            }
+
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                value.Clear();
+                for (int i = 0; i < len; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    value.Add(FormatterDispatchReuse<T>.Deserialize(ref reader, default!, options));
+                }
+            }
+            finally
+            {
+                reader.Depth--;
             }
         }
     }
@@ -808,7 +906,7 @@ namespace MessagePack.Formatters
     }
 
     [Preserve]
-    public sealed class InterfaceListFormatter2<T> : CollectionFormatterBase<T, List<T>, IList<T>>
+    public sealed class InterfaceListFormatter2<T> : CollectionFormatterBase<T, List<T>, IList<T>>, IMessagePackFormatterDeserializeInto<IList<T>>
     {
         protected override void Add(List<T> collection, int index, T value, MessagePackSerializerOptions options)
         {
@@ -824,10 +922,16 @@ namespace MessagePack.Formatters
         {
             return intermediateCollection;
         }
+
+        public void Deserialize(ref MessagePackReader reader, IList<T> value, MessagePackSerializerOptions options)
+        {
+            int len = reader.ReadArrayHeader();
+            MutableCollectionHelpers.DeserializeListInto(ref reader, value, len, options);
+        }
     }
 
     [Preserve]
-    public sealed class InterfaceCollectionFormatter2<T> : CollectionFormatterBase<T, List<T>, ICollection<T>>
+    public sealed class InterfaceCollectionFormatter2<T> : CollectionFormatterBase<T, List<T>, ICollection<T>>, IMessagePackFormatterDeserializeInto<ICollection<T>>
     {
         protected override void Add(List<T> collection, int index, T value, MessagePackSerializerOptions options)
         {
@@ -842,6 +946,12 @@ namespace MessagePack.Formatters
         protected override ICollection<T> Complete(List<T> intermediateCollection)
         {
             return intermediateCollection;
+        }
+
+        public void Deserialize(ref MessagePackReader reader, ICollection<T> value, MessagePackSerializerOptions options)
+        {
+            int len = reader.ReadArrayHeader();
+            MutableCollectionHelpers.DeserializeCollectionInto(ref reader, value, len, options);
         }
     }
 

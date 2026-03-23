@@ -10,7 +10,7 @@ namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class TempProject {
 
-	internal sealed class MyObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyObject>
+	internal sealed class MyObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyObject>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::TempProject.MyObject>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::TempProject.MyObject value, MsgPack::MessagePackSerializerOptions options)
@@ -21,11 +21,10 @@ internal partial class TempProject {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(3);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<int?>(formatterResolver).Serialize(ref writer, value.ValueNullableInt, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::TempProject.MyEnum?>(formatterResolver).Serialize(ref writer, value.ValueNullableEnum, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<(int, long)?>(formatterResolver).Serialize(ref writer, value.ValueNullableStruct, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<int?>(ref writer, value.ValueNullableInt, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::TempProject.MyEnum?>(ref writer, value.ValueNullableEnum, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<(int, long)?>(ref writer, value.ValueNullableStruct, options);
 		}
 
 		public global::TempProject.MyObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -36,7 +35,6 @@ internal partial class TempProject {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::TempProject.MyObject();
 
@@ -45,13 +43,13 @@ internal partial class TempProject {
 				switch (i)
 				{
 					case 0:
-						____result.ValueNullableInt = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<int?>(formatterResolver).Deserialize(ref reader, options);
+						____result.ValueNullableInt = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<int?>(ref reader, options);
 						break;
 					case 1:
-						____result.ValueNullableEnum = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::TempProject.MyEnum?>(formatterResolver).Deserialize(ref reader, options);
+						____result.ValueNullableEnum = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::TempProject.MyEnum?>(ref reader, options);
 						break;
 					case 2:
-						____result.ValueNullableStruct = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<(int, long)?>(formatterResolver).Deserialize(ref reader, options);
+						____result.ValueNullableStruct = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<(int, long)?>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
@@ -61,6 +59,34 @@ internal partial class TempProject {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::TempProject.MyObject value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.ValueNullableInt = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<int?>(ref reader, options);
+						break;
+					case 1:
+						____result.ValueNullableEnum = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::TempProject.MyEnum?>(ref reader, options);
+						break;
+					case 2:
+						____result.ValueNullableStruct = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<(int, long)?>(ref reader, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

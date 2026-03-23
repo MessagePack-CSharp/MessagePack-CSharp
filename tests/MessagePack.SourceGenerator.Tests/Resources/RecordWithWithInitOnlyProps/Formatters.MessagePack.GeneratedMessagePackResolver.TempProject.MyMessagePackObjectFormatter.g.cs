@@ -22,10 +22,9 @@ internal partial class TempProject {
 				return;
 			}
 
-			var formatterResolver = options.Resolver;
 			writer.WriteMapHeader(2);
 			writer.WriteRaw(GetSpan_PhoneNumber());
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.PhoneNumber, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<string>(ref writer, value.PhoneNumber, options);
 			writer.WriteRaw(GetSpan_Count());
 			writer.Write(value.Count);
 		}
@@ -38,7 +37,6 @@ internal partial class TempProject {
 			}
 
 			options.Security.DepthStep(ref reader);
-			var formatterResolver = options.Resolver;
 			var length = reader.ReadMapHeader();
 			var __PhoneNumber__ = default(string);
 			var __Count__ = default(int);
@@ -57,7 +55,7 @@ internal partial class TempProject {
 					    {
     					    default: goto FAIL;
     					    case 112UL:
-        					    __PhoneNumber__ = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+        					    __PhoneNumber__ = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<string>(ref reader, options);
         					    continue;
     					    case 99UL:
         					    __Count__ = reader.ReadInt32();

@@ -10,7 +10,7 @@ namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class TempProject {
 
-	internal sealed class BarFormatter : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.Bar>
+	internal sealed class BarFormatter : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.Bar>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::TempProject.Bar>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::TempProject.Bar value, MsgPack::MessagePackSerializerOptions options)
@@ -21,9 +21,8 @@ internal partial class TempProject {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::TempProject.MyMessagePackObject>(formatterResolver).Serialize(ref writer, value.Baz, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::TempProject.MyMessagePackObject>(ref writer, value.Baz, options);
 		}
 
 		public global::TempProject.Bar Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -34,7 +33,6 @@ internal partial class TempProject {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::TempProject.Bar();
 
@@ -43,7 +41,7 @@ internal partial class TempProject {
 				switch (i)
 				{
 					case 0:
-						____result.Baz = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::TempProject.MyMessagePackObject>(formatterResolver).Deserialize(ref reader, options);
+						____result.Baz = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::TempProject.MyMessagePackObject>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
@@ -53,6 +51,28 @@ internal partial class TempProject {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::TempProject.Bar value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.Baz = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::TempProject.MyMessagePackObject>(ref reader, ____result.Baz, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

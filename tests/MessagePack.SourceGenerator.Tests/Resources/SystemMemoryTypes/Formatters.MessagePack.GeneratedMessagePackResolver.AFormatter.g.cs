@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class AFormatter : MsgPack::Formatters.IMessagePackFormatter<global::A>
+	internal sealed class AFormatter : MsgPack::Formatters.IMessagePackFormatter<global::A>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::A>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::A value, MsgPack::MessagePackSerializerOptions options)
@@ -20,11 +20,10 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(3);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Memory<int>>(formatterResolver).Serialize(ref writer, value.Value1, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.ReadOnlyMemory<int>>(formatterResolver).Serialize(ref writer, value.Value2, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Buffers.ReadOnlySequence<int>>(formatterResolver).Serialize(ref writer, value.Value3, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.Memory<int>>(ref writer, value.Value1, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.ReadOnlyMemory<int>>(ref writer, value.Value2, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::System.Buffers.ReadOnlySequence<int>>(ref writer, value.Value3, options);
 		}
 
 		public global::A Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -35,7 +34,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::A();
 
@@ -44,13 +42,13 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.Value1 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Memory<int>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Memory<int>>(ref reader, options);
 						break;
 					case 1:
-						____result.Value2 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.ReadOnlyMemory<int>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value2 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.ReadOnlyMemory<int>>(ref reader, options);
 						break;
 					case 2:
-						____result.Value3 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Buffers.ReadOnlySequence<int>>(formatterResolver).Deserialize(ref reader, options);
+						____result.Value3 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Buffers.ReadOnlySequence<int>>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
@@ -60,6 +58,34 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::A value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.Value1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Memory<int>>(ref reader, options);
+						break;
+					case 1:
+						____result.Value2 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.ReadOnlyMemory<int>>(ref reader, options);
+						break;
+					case 2:
+						____result.Value3 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Buffers.ReadOnlySequence<int>>(ref reader, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

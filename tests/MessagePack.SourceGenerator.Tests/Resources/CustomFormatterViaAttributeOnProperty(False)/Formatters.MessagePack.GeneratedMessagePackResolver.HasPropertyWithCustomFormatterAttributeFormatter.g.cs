@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class HasPropertyWithCustomFormatterAttributeFormatter : MsgPack::Formatters.IMessagePackFormatter<global::HasPropertyWithCustomFormatterAttribute>
+	internal sealed class HasPropertyWithCustomFormatterAttributeFormatter : MsgPack::Formatters.IMessagePackFormatter<global::HasPropertyWithCustomFormatterAttribute>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::HasPropertyWithCustomFormatterAttribute>
 	{
 		private readonly global::UnserializableRecordFormatter __CustomValueCustomFormatter__ = new global::UnserializableRecordFormatter();
 
@@ -51,6 +51,28 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::HasPropertyWithCustomFormatterAttribute value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.CustomValue = MsgPack::Formatters.MessagePackFormatterExtensions.DeserializeInto<global::UnserializableRecord>(this.__CustomValueCustomFormatter__, ref reader, ____result.CustomValue, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

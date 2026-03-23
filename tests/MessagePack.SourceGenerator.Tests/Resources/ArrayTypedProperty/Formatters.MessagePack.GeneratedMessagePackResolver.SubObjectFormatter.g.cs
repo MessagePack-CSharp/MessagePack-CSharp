@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class SubObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::SubObject>
+	internal sealed class SubObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::SubObject>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::SubObject>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::SubObject value, MsgPack::MessagePackSerializerOptions options)
@@ -32,6 +32,25 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Skip();
 			return new global::SubObject();
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::SubObject value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

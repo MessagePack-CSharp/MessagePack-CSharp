@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class ContainerObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::ContainerObject>
+	internal sealed class ContainerObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::ContainerObject>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::ContainerObject>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::ContainerObject value, MsgPack::MessagePackSerializerOptions options)
@@ -20,10 +20,9 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(2);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::SubObject[]>(formatterResolver).Serialize(ref writer, value.ArrayOfCustomObjects, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::SubObject>[]>(formatterResolver).Serialize(ref writer, value.ArrayOfCustomObjectList, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::SubObject[]>(ref writer, value.ArrayOfCustomObjects, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.Generic.List<global::SubObject>[]>(ref writer, value.ArrayOfCustomObjectList, options);
 		}
 
 		public global::ContainerObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -34,7 +33,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::ContainerObject();
 
@@ -43,10 +41,10 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.ArrayOfCustomObjects = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::SubObject[]>(formatterResolver).Deserialize(ref reader, options);
+						____result.ArrayOfCustomObjects = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::SubObject[]>(ref reader, options);
 						break;
 					case 1:
-						____result.ArrayOfCustomObjectList = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::SubObject>[]>(formatterResolver).Deserialize(ref reader, options);
+						____result.ArrayOfCustomObjectList = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.Generic.List<global::SubObject>[]>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
@@ -56,6 +54,31 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::ContainerObject value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.ArrayOfCustomObjects = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::SubObject[]>(ref reader, ____result.ArrayOfCustomObjects, options);
+						break;
+					case 1:
+						____result.ArrayOfCustomObjectList = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<global::SubObject>[]>(ref reader, ____result.ArrayOfCustomObjectList, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

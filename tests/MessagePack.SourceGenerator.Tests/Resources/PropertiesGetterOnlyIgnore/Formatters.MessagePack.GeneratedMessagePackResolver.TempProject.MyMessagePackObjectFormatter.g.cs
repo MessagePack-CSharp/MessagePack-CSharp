@@ -7,7 +7,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class TempProject {
-	internal sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TempProject.MyMessagePackObject>
+	internal sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TempProject.MyMessagePackObject>, global::MessagePack.Formatters.IMessagePackFormatterDeserializeInto<global::TempProject.MyMessagePackObject>
 	{
 		// A
 		private static global::System.ReadOnlySpan<byte> GetSpan_A() => new byte[1 + 1] { 161, 65 };
@@ -22,12 +22,11 @@ internal partial class TempProject {
 				return;
 			}
 
-			var formatterResolver = options.Resolver;
 			writer.WriteMapHeader(2);
 			writer.WriteRaw(GetSpan_A());
 			writer.Write(value.A);
 			writer.WriteRaw(GetSpan_B());
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.B, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<string>(ref writer, value.B, options);
 		}
 
 		public global::TempProject.MyMessagePackObject Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -38,7 +37,6 @@ internal partial class TempProject {
 			}
 
 			options.Security.DepthStep(ref reader);
-			var formatterResolver = options.Resolver;
 			var length = reader.ReadMapHeader();
 			var ____result = new global::TempProject.MyMessagePackObject();
 
@@ -68,6 +66,38 @@ internal partial class TempProject {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref global::MessagePack.MessagePackReader reader, global::TempProject.MyMessagePackObject value, global::MessagePack.MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadMapHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+				switch (stringKey.Length)
+				{
+					default:
+					FAIL:
+					  reader.Skip();
+					  continue;
+					case 1:
+					    switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
+					    {
+    					    default: goto FAIL;
+    					    case 65UL:
+        					    reader.Skip();
+        					    continue;
+    					    case 66UL:
+        					    reader.Skip();
+        					    continue;
+					    }
+
+				}
+			}
+			reader.Depth--;
 		}
 	}
 

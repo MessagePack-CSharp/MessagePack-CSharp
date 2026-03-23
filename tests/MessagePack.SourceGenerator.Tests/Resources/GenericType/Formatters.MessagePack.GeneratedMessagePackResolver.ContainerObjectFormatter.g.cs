@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class ContainerObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::ContainerObject>
+	internal sealed class ContainerObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::ContainerObject>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::ContainerObject>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::ContainerObject value, MsgPack::MessagePackSerializerOptions options)
@@ -20,9 +20,8 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyGenericType<int>>(formatterResolver).Serialize(ref writer, value.TupleProperty, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::MyGenericType<int>>(ref writer, value.TupleProperty, options);
 		}
 
 		public global::ContainerObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -33,7 +32,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::ContainerObject();
 
@@ -42,7 +40,7 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.TupleProperty = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyGenericType<int>>(formatterResolver).Deserialize(ref reader, options);
+						____result.TupleProperty = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::MyGenericType<int>>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
@@ -52,6 +50,28 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::ContainerObject value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.TupleProperty = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::MyGenericType<int>>(ref reader, ____result.TupleProperty, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class GenericClassFormatter<T1, T2> : MsgPack::Formatters.IMessagePackFormatter<global::GenericClass<T1, T2>>
+	internal sealed class GenericClassFormatter<T1, T2> : MsgPack::Formatters.IMessagePackFormatter<global::GenericClass<T1, T2>>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::GenericClass<T1, T2>>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::GenericClass<T1, T2> value, MsgPack::MessagePackSerializerOptions options)
@@ -20,10 +20,9 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(2);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Serialize(ref writer, value.MyProperty0, options);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Serialize(ref writer, value.MyProperty1, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<T1>(ref writer, value.MyProperty0, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<T2>(ref writer, value.MyProperty1, options);
 		}
 
 		public global::GenericClass<T1, T2> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -34,7 +33,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::GenericClass<T1, T2>();
 
@@ -43,10 +41,10 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.MyProperty0 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Deserialize(ref reader, options);
+						____result.MyProperty0 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<T1>(ref reader, options);
 						break;
 					case 1:
-						____result.MyProperty1 = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Deserialize(ref reader, options);
+						____result.MyProperty1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<T2>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
@@ -56,6 +54,31 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::GenericClass<T1, T2> value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.MyProperty0 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<T1>(ref reader, options);
+						break;
+					case 1:
+						____result.MyProperty1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<T2>(ref reader, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

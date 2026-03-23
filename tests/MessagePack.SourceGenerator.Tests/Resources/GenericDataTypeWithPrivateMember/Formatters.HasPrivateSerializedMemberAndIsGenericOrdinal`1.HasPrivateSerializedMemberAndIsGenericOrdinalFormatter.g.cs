@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 internal partial class HasPrivateSerializedMemberAndIsGenericOrdinal<T>
 		where T : struct
 {
-	internal sealed class HasPrivateSerializedMemberAndIsGenericOrdinalFormatter : MsgPack::Formatters.IMessagePackFormatter<global::HasPrivateSerializedMemberAndIsGenericOrdinal<T>>
+	internal sealed class HasPrivateSerializedMemberAndIsGenericOrdinalFormatter : MsgPack::Formatters.IMessagePackFormatter<global::HasPrivateSerializedMemberAndIsGenericOrdinal<T>>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::HasPrivateSerializedMemberAndIsGenericOrdinal<T>>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::HasPrivateSerializedMemberAndIsGenericOrdinal<T> value, MsgPack::MessagePackSerializerOptions options)
@@ -50,6 +50,28 @@ internal partial class HasPrivateSerializedMemberAndIsGenericOrdinal<T>
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::HasPrivateSerializedMemberAndIsGenericOrdinal<T> value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.value = reader.ReadInt32();
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

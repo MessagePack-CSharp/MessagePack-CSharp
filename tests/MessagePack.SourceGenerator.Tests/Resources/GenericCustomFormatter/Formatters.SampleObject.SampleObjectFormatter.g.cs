@@ -8,7 +8,7 @@ using MsgPack = global::MessagePack;
 
 public partial class SampleObject {
 
-	internal sealed class SampleObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::SampleObject>
+	internal sealed class SampleObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::SampleObject>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::SampleObject>
 	{
 		private readonly global::ValueTupleFormatter<string> __TupleTestCustomFormatter__ = new global::ValueTupleFormatter<string>();
 
@@ -50,6 +50,28 @@ public partial class SampleObject {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::SampleObject value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.TupleTest = this.__TupleTestCustomFormatter__.Deserialize(ref reader, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

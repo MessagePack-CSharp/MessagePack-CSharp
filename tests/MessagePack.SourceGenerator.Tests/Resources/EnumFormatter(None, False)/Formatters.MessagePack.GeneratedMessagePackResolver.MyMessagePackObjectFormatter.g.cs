@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class MyMessagePackObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyMessagePackObject>
+	internal sealed class MyMessagePackObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyMessagePackObject>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::MyMessagePackObject>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::MyMessagePackObject value, MsgPack::MessagePackSerializerOptions options)
@@ -20,9 +20,8 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyEnum>(formatterResolver).Serialize(ref writer, value.EnumValue, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<global::MyEnum>(ref writer, value.EnumValue, options);
 		}
 
 		public global::MyMessagePackObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -33,7 +32,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::MyMessagePackObject();
 
@@ -42,7 +40,7 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.EnumValue = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyEnum>(formatterResolver).Deserialize(ref reader, options);
+						____result.EnumValue = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::MyEnum>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
@@ -52,6 +50,28 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::MyMessagePackObject value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.EnumValue = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::MyEnum>(ref reader, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

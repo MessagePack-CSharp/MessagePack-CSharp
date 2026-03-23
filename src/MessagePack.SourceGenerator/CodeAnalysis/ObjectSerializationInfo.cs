@@ -31,6 +31,8 @@ public record ObjectSerializationInfo : ResolverRegisterInfo
 
     public required bool NeedsCastOnBefore { get; init; }
 
+    public bool CanDeserializeInto => this.IsClass && !this.MustDeserializeFieldsFirst;
+
     public bool IsStringKey => !this.IsIntKey;
 
     public int WriteCount

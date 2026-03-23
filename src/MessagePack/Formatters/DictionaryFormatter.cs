@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -138,7 +139,7 @@ namespace MessagePack.Formatters
     }
 
     [Preserve]
-    public sealed class DictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, Dictionary<TKey, TValue>.Enumerator, Dictionary<TKey, TValue>>
+    public sealed class DictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, Dictionary<TKey, TValue>.Enumerator, Dictionary<TKey, TValue>>, IMessagePackFormatterDeserializeInto<Dictionary<TKey, TValue>>
         where TKey : notnull
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
@@ -160,10 +161,16 @@ namespace MessagePack.Formatters
         {
             return source.GetEnumerator();
         }
+
+        public void Deserialize(ref MessagePackReader reader, Dictionary<TKey, TValue> value, MessagePackSerializerOptions options)
+        {
+            int len = reader.ReadMapHeader();
+            MutableDictionaryHelpers<TKey, TValue>.DeserializeInto(ref reader, value, len, options);
+        }
     }
 
     [Preserve]
-    public sealed class GenericDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary>
+    public sealed class GenericDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary>, IMessagePackFormatterDeserializeInto<TDictionary>
         where TDictionary : class?, IDictionary<TKey, TValue>, new()
         where TKey : notnull
     {
@@ -175,6 +182,12 @@ namespace MessagePack.Formatters
         protected override TDictionary Create(int count, MessagePackSerializerOptions options)
         {
             return CollectionHelpers<TDictionary, IEqualityComparer<TKey>>.CreateHashCollection(count, options.Security.GetEqualityComparer<TKey>());
+        }
+
+        public void Deserialize(ref MessagePackReader reader, TDictionary value, MessagePackSerializerOptions options)
+        {
+            int len = reader.ReadMapHeader();
+            MutableDictionaryHelpers<TKey, TValue>.DeserializeInto(ref reader, value, len, options);
         }
     }
 
@@ -200,7 +213,7 @@ namespace MessagePack.Formatters
     }
 
     [Preserve]
-    public sealed class InterfaceDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IDictionary<TKey, TValue>>
+    public sealed class InterfaceDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IDictionary<TKey, TValue>>, IMessagePackFormatterDeserializeInto<IDictionary<TKey, TValue>>
         where TKey : notnull
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
@@ -216,6 +229,12 @@ namespace MessagePack.Formatters
         protected override IDictionary<TKey, TValue> Complete(Dictionary<TKey, TValue> intermediateCollection)
         {
             return intermediateCollection;
+        }
+
+        public void Deserialize(ref MessagePackReader reader, IDictionary<TKey, TValue> value, MessagePackSerializerOptions options)
+        {
+            int len = reader.ReadMapHeader();
+            MutableDictionaryHelpers<TKey, TValue>.DeserializeInto(ref reader, value, len, options);
         }
     }
 
@@ -332,4 +351,48 @@ namespace MessagePack.Formatters
     }
 
 #endif
+
+    internal static class MutableDictionaryHelpers<TKey, TValue>
+        where TKey : notnull
+    {
+        internal static void DeserializeInto(ref MessagePackReader reader, IDictionary<TKey, TValue> value, int len, MessagePackSerializerOptions options)
+        {
+            TKey[] rentedKeys = len == 0 ? Array.Empty<TKey>() : ArrayPool<TKey>.Shared.Rent(len);
+            TValue[] rentedValues = len == 0 ? Array.Empty<TValue>() : ArrayPool<TValue>.Shared.Rent(len);
+            int readCount = 0;
+
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                IFormatterResolver resolver = options.Resolver;
+                IMessagePackFormatter<TKey> keyFormatter = resolver.GetFormatterWithVerify<TKey>();
+
+                for (int i = 0; i < len; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    TKey key = keyFormatter.Deserialize(ref reader, options);
+                    TValue existingValue = value.TryGetValue(key, out TValue? oldValue) ? oldValue : default!;
+                    TValue deserializedValue = FormatterDispatchReuse<TValue>.Deserialize(ref reader, existingValue, options);
+                    rentedKeys[i] = key;
+                    rentedValues[i] = deserializedValue;
+                    readCount++;
+                }
+
+                value.Clear();
+                for (int i = 0; i < readCount; i++)
+                {
+                    value.Add(rentedKeys[i], rentedValues[i]);
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+                if (len > 0)
+                {
+                    ArrayPool<TKey>.Shared.Return(rentedKeys, clearArray: true);
+                    ArrayPool<TValue>.Shared.Return(rentedValues, clearArray: true);
+                }
+            }
+        }
+    }
 }

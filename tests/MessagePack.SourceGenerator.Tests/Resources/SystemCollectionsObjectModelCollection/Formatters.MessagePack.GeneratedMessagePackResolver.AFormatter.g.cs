@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class AFormatter : MsgPack::Formatters.IMessagePackFormatter<global::A>
+	internal sealed class AFormatter : MsgPack::Formatters.IMessagePackFormatter<global::A>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::A>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::A value, MsgPack::MessagePackSerializerOptions options)
@@ -20,9 +20,8 @@ internal partial class GeneratedMessagePackResolver {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.ObjectModel.Collection<int>>(formatterResolver).Serialize(ref writer, value.SampleCollection, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::System.Collections.ObjectModel.Collection<int>>(ref writer, value.SampleCollection, options);
 		}
 
 		public global::A Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -33,7 +32,6 @@ internal partial class GeneratedMessagePackResolver {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::A();
 
@@ -42,7 +40,7 @@ internal partial class GeneratedMessagePackResolver {
 				switch (i)
 				{
 					case 0:
-						____result.SampleCollection = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.ObjectModel.Collection<int>>(formatterResolver).Deserialize(ref reader, options);
+						____result.SampleCollection = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Collections.ObjectModel.Collection<int>>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
@@ -52,6 +50,28 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::A value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.SampleCollection = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.ObjectModel.Collection<int>>(ref reader, ____result.SampleCollection, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

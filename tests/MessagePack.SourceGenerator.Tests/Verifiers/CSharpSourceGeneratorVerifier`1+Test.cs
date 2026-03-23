@@ -39,9 +39,7 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
             this.testFile = testFile;
             this.testMethod = testMethod;
 
-#if WRITE_EXPECTED
             TestBehaviors |= TestBehaviors.SkipGeneratedSourcesCheck;
-#endif
         }
 
         public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.CSharp7_3;
@@ -110,33 +108,8 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
         {
             static void AddGeneratedSources(ProjectState project, string testMethod, bool withPrefix)
             {
-                string prefix = withPrefix ? $"{project.Name}." : string.Empty;
-                string expectedPrefix = $"{typeof(Test).Assembly.GetName().Name}.Resources.{testMethod}.{prefix}"
-                    .Replace(' ', '_')
-                    .Replace(',', '_')
-                    .Replace('(', '_')
-                    .Replace(')', '_');
-
-                foreach (var resourceName in typeof(Test).Assembly.GetManifestResourceNames())
+                foreach (var (name, code) in LoadExpectedGeneratedSources(project.Name, testMethod, withPrefix))
                 {
-                    if (!resourceName.StartsWith(expectedPrefix))
-                    {
-                        continue;
-                    }
-
-                    using var resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
-                    if (resourceStream is null)
-                    {
-                        throw new InvalidOperationException();
-                    }
-
-                    using var reader = new StreamReader(resourceStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: true);
-                    var name = resourceName.Substring(expectedPrefix.Length);
-                    var code = reader.ReadToEnd();
-                    var version = MessagePack.SourceGenerator.ThisAssembly.Version;
-                    code = code.Replace(
-                        "[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(MessagePack.GeneratedMessagePackResolver), 3, 0)]",
-                        $"[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(MessagePack.GeneratedMessagePackResolver), {version.Major}, {version.Minor})]");
                     project.GeneratedSources.Add((typeof(TSourceGenerator), name, code));
                 }
             }
@@ -196,25 +169,29 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
             var resourceDirectory = Path.Combine(Path.GetDirectoryName(this.testFile)!, "Resources", this.testMethod);
 
             var (compilation, diagnostics) = await base.GetProjectCompilationAsync(project, verifier, cancellationToken);
-            var expectedNames = new HashSet<string>();
+            var expectedSources = LoadExpectedGeneratedSources(project.Name, this.testMethod, withPrefix: this.TestState.AdditionalProjects.Count > 0)
+                .ToDictionary(kvp => kvp.Key, kvp => NormalizeLineEndings(kvp.Value), StringComparer.Ordinal);
+            var actualSources = new Dictionary<string, string>(StringComparer.Ordinal);
+
             foreach (var tree in compilation.SyntaxTrees.Skip(project.DocumentIds.Count))
             {
                 WriteTreeToDiskIfNecessary(tree, resourceDirectory, fileNamePrefix);
-                expectedNames.Add(Path.GetFileName(tree.FilePath));
+                actualSources.Add(Path.GetFileName(tree.FilePath), NormalizeLineEndings(tree.GetText(cancellationToken).ToString()));
             }
 
-            var currentTestPrefix = $"{typeof(Test).Assembly.GetName().Name}.Resources.{this.testMethod}.{fileNamePrefix}";
-            foreach (var name in this.GetType().Assembly.GetManifestResourceNames())
+            verifier.EqualOrDiff(
+                string.Join("\n", expectedSources.Keys.OrderBy(static name => name, StringComparer.Ordinal)),
+                string.Join("\n", actualSources.Keys.OrderBy(static name => name, StringComparer.Ordinal)),
+                "Expected source file list to match");
+
+            foreach (string name in expectedSources.Keys.OrderBy(static name => name, StringComparer.Ordinal))
             {
-                if (!name.StartsWith(currentTestPrefix))
+                if (!actualSources.TryGetValue(name, out string? actualCode))
                 {
                     continue;
                 }
 
-                if (!expectedNames.Contains(name.Substring(currentTestPrefix.Length)))
-                {
-                    throw new InvalidOperationException($"Unexpected test resource: {name.Substring(currentTestPrefix.Length)}");
-                }
+                verifier.EqualOrDiff(expectedSources[name], actualCode, $"content of '{name}' did not match");
             }
 
             return (compilation, diagnostics);
@@ -231,7 +208,38 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
             string name = fileNamePrefix + Path.GetFileName(tree.FilePath);
             string filePath = Path.Combine(resourceDirectory, name);
             Directory.CreateDirectory(resourceDirectory);
-            File.WriteAllText(filePath, tree.GetText().ToString(), tree.Encoding);
+            File.WriteAllText(filePath, ConvertToCrlf(tree.GetText().ToString()), tree.Encoding);
         }
+
+        private static IEnumerable<KeyValuePair<string, string>> LoadExpectedGeneratedSources(string projectName, string testMethod, bool withPrefix)
+        {
+            string prefix = withPrefix ? $"{projectName}." : string.Empty;
+            string expectedPrefix = $"{typeof(Test).Assembly.GetName().Name}.Resources.{testMethod}.{prefix}"
+                .Replace(' ', '_')
+                .Replace(',', '_')
+                .Replace('(', '_')
+                .Replace(')', '_');
+
+            foreach (string resourceName in typeof(Test).Assembly.GetManifestResourceNames().Where(resourceName => resourceName.StartsWith(expectedPrefix, StringComparison.Ordinal)).OrderBy(static resourceName => resourceName, StringComparer.Ordinal))
+            {
+                using Stream? resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
+                if (resourceStream is null)
+                {
+                    throw new InvalidOperationException();
+                }
+
+                using StreamReader reader = new(resourceStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: true);
+                string code = reader.ReadToEnd();
+                var version = MessagePack.SourceGenerator.ThisAssembly.Version;
+                code = code.Replace(
+                    "[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(MessagePack.GeneratedMessagePackResolver), 3, 0)]",
+                    $"[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(MessagePack.GeneratedMessagePackResolver), {version.Major}, {version.Minor})]");
+                yield return new(resourceName.Substring(expectedPrefix.Length), code);
+            }
+        }
+
+        private static string NormalizeLineEndings(string value) => value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace("\r", "\n", StringComparison.Ordinal);
+
+        private static string ConvertToCrlf(string value) => NormalizeLineEndings(value).Replace("\n", "\r\n", StringComparison.Ordinal);
     }
 }

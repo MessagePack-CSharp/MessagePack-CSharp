@@ -4,7 +4,7 @@
 
 using MsgPack = global::MessagePack;
 
-[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(TempProject.MyResolver), 3, 0)]
+[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(TempProject.MyResolver), 1, 0)]
 
 namespace TempProject {
 

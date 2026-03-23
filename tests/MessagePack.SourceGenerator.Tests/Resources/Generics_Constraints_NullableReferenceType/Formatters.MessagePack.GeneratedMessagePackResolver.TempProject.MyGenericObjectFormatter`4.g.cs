@@ -10,7 +10,7 @@ namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class TempProject {
 
-	internal sealed class MyGenericObjectFormatter<T1, T2, T3, T4> : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyGenericObject<T1, T2, T3, T4>>
+	internal sealed class MyGenericObjectFormatter<T1, T2, T3, T4> : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyGenericObject<T1, T2, T3, T4>>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::TempProject.MyGenericObject<T1, T2, T3, T4>>
 		where T1 : global::TempProject.MyClass?
 		where T2 : global::TempProject.MyClass
 		where T3 : global::TempProject.MyGenericClass<global::TempProject.MyGenericClass<global::TempProject.MyClass?>?>?
@@ -25,9 +25,8 @@ internal partial class TempProject {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Serialize(ref writer, value.Content, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<T1>(ref writer, value.Content, options);
 		}
 
 		public global::TempProject.MyGenericObject<T1, T2, T3, T4> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -38,7 +37,6 @@ internal partial class TempProject {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::TempProject.MyGenericObject<T1, T2, T3, T4>();
 
@@ -47,7 +45,7 @@ internal partial class TempProject {
 				switch (i)
 				{
 					case 0:
-						____result.Content = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Deserialize(ref reader, options);
+						____result.Content = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<T1>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
@@ -57,6 +55,28 @@ internal partial class TempProject {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::TempProject.MyGenericObject<T1, T2, T3, T4> value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.Content = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<T1>(ref reader, ____result.Content, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

@@ -275,7 +275,7 @@ namespace MessagePack.Formatters
 
             var dtOffsetMinutes = reader.ReadInt16();
 
-            return new DateTimeOffset(utc.Ticks, TimeSpan.FromMinutes(dtOffsetMinutes));
+            return new DateTimeOffset(utc.Ticks, TimeSpan.Zero).ToOffset(TimeSpan.FromMinutes(dtOffsetMinutes));
         }
     }
 

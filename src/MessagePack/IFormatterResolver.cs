@@ -60,6 +60,41 @@ namespace MessagePack
             return formatter;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SerializeWithVerifyByValue<T>(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
+        {
+            FormatterDispatchByValue<T>.Serialize(ref writer, value, options);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T DeserializeWithVerifyByValue<T>(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return FormatterDispatchByValue<T>.Deserialize(ref reader, options);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SerializeWithVerifyByRef<T>(ref MessagePackWriter writer, in T value, MessagePackSerializerOptions options)
+            where T : struct
+        {
+            FormatterDispatch<T>.Serialize(ref writer, in value, options);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T DeserializeWithVerifyByRef<T>(ref MessagePackReader reader, MessagePackSerializerOptions options)
+            where T : struct
+        {
+            T value = default;
+            FormatterDispatch<T>.Deserialize(ref reader, ref value, options);
+            return value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T? DeserializeWithVerifyInto<T>(ref MessagePackReader reader, T? value, MessagePackSerializerOptions options)
+            where T : class
+        {
+            return FormatterDispatchInto<T>.Deserialize(ref reader, value, options);
+        }
+
         [DoesNotReturn]
         private static void Throw(TypeInitializationException ex)
         {
