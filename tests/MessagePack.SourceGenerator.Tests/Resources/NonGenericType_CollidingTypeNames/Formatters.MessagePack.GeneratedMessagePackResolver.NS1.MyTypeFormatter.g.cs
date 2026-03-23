@@ -10,7 +10,7 @@ namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class NS1 {
 
-	internal sealed class MyTypeFormatter : MsgPack::Formatters.IMessagePackFormatter<global::NS1.MyType>
+	internal sealed class MyTypeFormatter : MsgPack::Formatters.IMessagePackFormatter<global::NS1.MyType>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::NS1.MyType>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::NS1.MyType value, MsgPack::MessagePackSerializerOptions options)
@@ -51,6 +51,28 @@ internal partial class NS1 {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::NS1.MyType value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.Foo = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<string>(ref reader, ____result.Foo, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

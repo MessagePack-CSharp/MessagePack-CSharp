@@ -10,7 +10,7 @@ namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class TempProject {
 
-	internal sealed class MyInnerGenericObjectFormatter<T> : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyInnerGenericObject<T>>
+	internal sealed class MyInnerGenericObjectFormatter<T> : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyInnerGenericObject<T>>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::TempProject.MyInnerGenericObject<T>>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::TempProject.MyInnerGenericObject<T> value, MsgPack::MessagePackSerializerOptions options)
@@ -33,6 +33,25 @@ internal partial class TempProject {
 
 			reader.Skip();
 			return new global::TempProject.MyInnerGenericObject<T>();
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::TempProject.MyInnerGenericObject<T> value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

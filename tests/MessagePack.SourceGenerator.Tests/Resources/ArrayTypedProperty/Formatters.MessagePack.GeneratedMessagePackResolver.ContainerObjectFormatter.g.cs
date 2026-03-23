@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class ContainerObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::ContainerObject>
+	internal sealed class ContainerObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::ContainerObject>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::ContainerObject>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::ContainerObject value, MsgPack::MessagePackSerializerOptions options)
@@ -54,6 +54,31 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::ContainerObject value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.ArrayOfCustomObjects = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::SubObject[]>(ref reader, ____result.ArrayOfCustomObjects, options);
+						break;
+					case 1:
+						____result.ArrayOfCustomObjectList = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<global::SubObject>[]>(ref reader, ____result.ArrayOfCustomObjectList, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

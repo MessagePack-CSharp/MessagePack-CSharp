@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Reflection;
 using System.Threading;
 using MessagePack.Formatters;
 
@@ -100,6 +101,104 @@ internal static class FormatterDispatch<T>
         }
 
         cache.Dispatch(formatter, ref reader, ref value, options);
+    }
+}
+
+internal static class FormatterDispatchInto<T>
+    where T : class
+{
+    private delegate T? DeserializeDelegate(IMessagePackFormatter<T?> formatter, ref MessagePackReader reader, T? value, MessagePackSerializerOptions options);
+
+    private static readonly DeserializeDelegate DeserializeByValue = static (IMessagePackFormatter<T?> formatter, ref MessagePackReader reader, T? value, MessagePackSerializerOptions options) => formatter.Deserialize(ref reader, options);
+    private static readonly DeserializeDelegate DeserializeInto = static (IMessagePackFormatter<T?> formatter, ref MessagePackReader reader, T? value, MessagePackSerializerOptions options) =>
+    {
+        if (value is null)
+        {
+            return formatter.Deserialize(ref reader, options);
+        }
+
+        if (reader.TryReadNil())
+        {
+            return null;
+        }
+
+        ((IMessagePackFormatterDeserializeInto<T>)formatter).Deserialize(ref reader, value, options);
+        return value;
+    };
+
+    private static DeserializeCache? deserializeCache;
+
+    private sealed class DeserializeCache
+    {
+        internal DeserializeCache(Type formatterType, DeserializeDelegate dispatch)
+        {
+            this.FormatterType = formatterType;
+            this.Dispatch = dispatch;
+        }
+
+        internal Type FormatterType { get; }
+
+        internal DeserializeDelegate Dispatch { get; }
+    }
+
+    internal static T? Deserialize(ref MessagePackReader reader, T? value, MessagePackSerializerOptions options)
+    {
+        IMessagePackFormatter<T?> formatter = options.Resolver.GetFormatterWithVerify<T?>();
+        return Deserialize(formatter, ref reader, value, options);
+    }
+
+    internal static T? Deserialize(IMessagePackFormatter<T?> formatter, ref MessagePackReader reader, T? value, MessagePackSerializerOptions options)
+    {
+        Type formatterType = formatter.GetType();
+        DeserializeCache? cache = Volatile.Read(ref deserializeCache);
+        if (cache is null || !ReferenceEquals(cache.FormatterType, formatterType))
+        {
+            DeserializeDelegate dispatch = formatter is IMessagePackFormatterDeserializeInto<T> ? DeserializeInto : DeserializeByValue;
+            cache = new DeserializeCache(formatterType, dispatch);
+            Volatile.Write(ref deserializeCache, cache);
+        }
+
+        return cache.Dispatch(formatter, ref reader, value, options);
+    }
+}
+
+internal static class FormatterDispatchReuse<T>
+{
+    private delegate T DeserializeDelegate(ref MessagePackReader reader, T value, MessagePackSerializerOptions options);
+
+    private static readonly DeserializeDelegate DeserializeCore = CreateDeserialize();
+
+    internal static T Deserialize(ref MessagePackReader reader, T value, MessagePackSerializerOptions options) => DeserializeCore(ref reader, value, options);
+
+    private static DeserializeDelegate CreateDeserialize()
+    {
+        Type type = typeof(T);
+        if (type.IsValueType && Nullable.GetUnderlyingType(type) is null)
+        {
+            MethodInfo method = typeof(FormatterDispatchReuse<T>).GetMethod(nameof(DeserializeStructCore), BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(type);
+            return (DeserializeDelegate)method.CreateDelegate(typeof(DeserializeDelegate));
+        }
+
+        if (!type.IsValueType)
+        {
+            MethodInfo method = typeof(FormatterDispatchReuse<T>).GetMethod(nameof(DeserializeClassCore), BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(type);
+            return (DeserializeDelegate)method.CreateDelegate(typeof(DeserializeDelegate));
+        }
+
+        return static (ref MessagePackReader reader, T value, MessagePackSerializerOptions options) => FormatterDispatchByValue<T>.Deserialize(ref reader, options);
+    }
+
+    private static TStruct DeserializeStructCore<TStruct>(ref MessagePackReader reader, TStruct value, MessagePackSerializerOptions options)
+        where TStruct : struct
+    {
+        FormatterDispatch<TStruct>.Deserialize(ref reader, ref value, options);
+        return value;
+    }
+
+    private static TClass? DeserializeClassCore<TClass>(ref MessagePackReader reader, TClass? value, MessagePackSerializerOptions options)
+        where TClass : class
+    {
+        return FormatterDispatchInto<TClass>.Deserialize(ref reader, value, options);
     }
 }
 #pragma warning restore SA1649 // File name should match first type name

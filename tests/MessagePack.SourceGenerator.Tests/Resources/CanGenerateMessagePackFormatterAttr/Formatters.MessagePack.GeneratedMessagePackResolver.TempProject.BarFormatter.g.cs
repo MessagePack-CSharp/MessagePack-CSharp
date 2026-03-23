@@ -10,7 +10,7 @@ namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class TempProject {
 
-	internal sealed class BarFormatter : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.Bar>
+	internal sealed class BarFormatter : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.Bar>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::TempProject.Bar>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::TempProject.Bar value, MsgPack::MessagePackSerializerOptions options)
@@ -51,6 +51,28 @@ internal partial class TempProject {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::TempProject.Bar value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.Baz = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::TempProject.MyMessagePackObject>(ref reader, ____result.Baz, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

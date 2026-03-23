@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class AFormatter : MsgPack::Formatters.IMessagePackFormatter<global::A>
+	internal sealed class AFormatter : MsgPack::Formatters.IMessagePackFormatter<global::A>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::A>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::A value, MsgPack::MessagePackSerializerOptions options)
@@ -206,6 +206,145 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::A value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.Value1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Memory<byte>>(ref reader, options);
+						break;
+					case 1:
+						____result.Value2 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Memory<byte>?>(ref reader, options);
+						break;
+					case 2:
+						____result.Value3 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.ReadOnlyMemory<byte>>(ref reader, options);
+						break;
+					case 3:
+						____result.Value4 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.ReadOnlyMemory<byte>?>(ref reader, options);
+						break;
+					case 4:
+						____result.Value5 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Buffers.ReadOnlySequence<byte>>(ref reader, options);
+						break;
+					case 5:
+						____result.Value6 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Buffers.ReadOnlySequence<byte>?>(ref reader, options);
+						break;
+					case 6:
+						____result.Value7 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<short>>(ref reader, ____result.Value7, options);
+						break;
+					case 7:
+						____result.Value8 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<int>>(ref reader, ____result.Value8, options);
+						break;
+					case 8:
+						____result.Value9 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<long>>(ref reader, ____result.Value9, options);
+						break;
+					case 9:
+						____result.Value10 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<ushort>>(ref reader, ____result.Value10, options);
+						break;
+					case 10:
+						____result.Value11 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<uint>>(ref reader, ____result.Value11, options);
+						break;
+					case 11:
+						____result.Value12 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<ulong>>(ref reader, ____result.Value12, options);
+						break;
+					case 12:
+						____result.Value13 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<float>>(ref reader, ____result.Value13, options);
+						break;
+					case 13:
+						____result.Value14 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<double>>(ref reader, ____result.Value14, options);
+						break;
+					case 14:
+						____result.Value15 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<bool>>(ref reader, ____result.Value15, options);
+						break;
+					case 15:
+						____result.Value16 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<byte>>(ref reader, ____result.Value16, options);
+						break;
+					case 16:
+						____result.Value17 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<sbyte>>(ref reader, ____result.Value17, options);
+						break;
+					case 17:
+						____result.Value18 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<char>>(ref reader, ____result.Value18, options);
+						break;
+					case 18:
+						____result.Value19 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<global::System.DateTime>>(ref reader, ____result.Value19, options);
+						break;
+					case 19:
+						____result.Value20 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<string>>(ref reader, ____result.Value20, options);
+						break;
+					case 20:
+						____result.Value21 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<object>>(ref reader, ____result.Value21, options);
+						break;
+					case 21:
+						____result.Value22 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<object[]>(ref reader, ____result.Value22, options);
+						break;
+					case 22:
+						____result.Value23 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.BigInteger>(ref reader, options);
+						break;
+					case 23:
+						____result.Value24 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.BigInteger?>(ref reader, options);
+						break;
+					case 24:
+						____result.Value25 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Complex>(ref reader, options);
+						break;
+					case 25:
+						____result.Value26 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Complex?>(ref reader, options);
+						break;
+					case 26:
+						____result.Value27 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Vector2>(ref reader, options);
+						break;
+					case 27:
+						____result.Value28 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Vector2?>(ref reader, options);
+						break;
+					case 28:
+						____result.Value29 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Vector3>(ref reader, options);
+						break;
+					case 29:
+						____result.Value30 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Vector3?>(ref reader, options);
+						break;
+					case 30:
+						____result.Value31 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Vector4>(ref reader, options);
+						break;
+					case 31:
+						____result.Value32 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Vector4?>(ref reader, options);
+						break;
+					case 32:
+						____result.Value33 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Quaternion>(ref reader, options);
+						break;
+					case 33:
+						____result.Value34 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Quaternion?>(ref reader, options);
+						break;
+					case 34:
+						____result.Value135 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Matrix3x2>(ref reader, options);
+						break;
+					case 35:
+						____result.Value36 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Matrix3x2?>(ref reader, options);
+						break;
+					case 36:
+						____result.Value137 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Numerics.Matrix4x4>(ref reader, options);
+						break;
+					case 37:
+						____result.Value38 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.Numerics.Matrix4x4?>(ref reader, options);
+						break;
+					case 38:
+						____result.Value39 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.ArraySegment<byte>>(ref reader, options);
+						break;
+					case 39:
+						____result.Value40 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::System.ArraySegment<byte>?>(ref reader, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

@@ -7,7 +7,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class MyTestNamespace {
-	internal sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::MyTestNamespace.MyMessagePackObject>
+	internal sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::MyTestNamespace.MyMessagePackObject>, global::MessagePack.Formatters.IMessagePackFormatterDeserializeInto<global::MyTestNamespace.MyMessagePackObject>
 	{
 		// EnumValue
 		private static global::System.ReadOnlySpan<byte> GetSpan_EnumValue() => new byte[1 + 9] { 169, 69, 110, 117, 109, 86, 97, 108, 117, 101 };
@@ -56,6 +56,32 @@ internal partial class MyTestNamespace {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref global::MessagePack.MessagePackReader reader, global::MyTestNamespace.MyMessagePackObject value, global::MessagePack.MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadMapHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+				switch (stringKey.Length)
+				{
+					default:
+					FAIL:
+					  reader.Skip();
+					  continue;
+					case 9:
+					    if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_EnumValue().Slice(1))) { goto FAIL; }
+
+					    ____result.EnumValue = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::MyTestNamespace.MyEnum>(ref reader, options);
+					    continue;
+
+				}
+			}
+			reader.Depth--;
 		}
 	}
 

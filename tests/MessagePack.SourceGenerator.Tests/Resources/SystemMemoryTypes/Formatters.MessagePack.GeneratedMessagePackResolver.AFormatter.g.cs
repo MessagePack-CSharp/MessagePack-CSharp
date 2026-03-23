@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class AFormatter : MsgPack::Formatters.IMessagePackFormatter<global::A>
+	internal sealed class AFormatter : MsgPack::Formatters.IMessagePackFormatter<global::A>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::A>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::A value, MsgPack::MessagePackSerializerOptions options)
@@ -58,6 +58,34 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::A value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.Value1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Memory<int>>(ref reader, options);
+						break;
+					case 1:
+						____result.Value2 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.ReadOnlyMemory<int>>(ref reader, options);
+						break;
+					case 2:
+						____result.Value3 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.Buffers.ReadOnlySequence<int>>(ref reader, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

@@ -11,7 +11,7 @@ internal partial class GeneratedMessagePackResolver {
 internal partial class A {
 internal partial class B {
 
-	internal sealed class CFormatter : MsgPack::Formatters.IMessagePackFormatter<global::A.B.C>
+	internal sealed class CFormatter : MsgPack::Formatters.IMessagePackFormatter<global::A.B.C>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::A.B.C>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::A.B.C value, MsgPack::MessagePackSerializerOptions options)
@@ -34,6 +34,25 @@ internal partial class B {
 
 			reader.Skip();
 			return new global::A.B.C();
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::A.B.C value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

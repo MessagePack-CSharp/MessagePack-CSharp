@@ -8,7 +8,7 @@ using MsgPack = global::MessagePack;
 
 internal partial record MyObject {
 
-	internal sealed class MyObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyObject>
+	internal sealed class MyObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyObject>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::MyObject>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::MyObject value, MsgPack::MessagePackSerializerOptions options)
@@ -49,6 +49,28 @@ internal partial record MyObject {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::MyObject value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.value = reader.ReadInt32();
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

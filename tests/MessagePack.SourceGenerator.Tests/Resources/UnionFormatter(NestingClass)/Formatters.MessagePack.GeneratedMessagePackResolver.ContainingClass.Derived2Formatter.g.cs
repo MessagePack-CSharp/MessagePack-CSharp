@@ -10,7 +10,7 @@ namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class ContainingClass {
 
-	internal sealed class Derived2Formatter : MsgPack::Formatters.IMessagePackFormatter<global::ContainingClass.Derived2>
+	internal sealed class Derived2Formatter : MsgPack::Formatters.IMessagePackFormatter<global::ContainingClass.Derived2>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::ContainingClass.Derived2>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::ContainingClass.Derived2 value, MsgPack::MessagePackSerializerOptions options)
@@ -33,6 +33,25 @@ internal partial class ContainingClass {
 
 			reader.Skip();
 			return new global::ContainingClass.Derived2();
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::ContainingClass.Derived2 value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

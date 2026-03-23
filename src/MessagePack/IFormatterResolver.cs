@@ -88,6 +88,13 @@ namespace MessagePack
             return value;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T? DeserializeWithVerifyInto<T>(ref MessagePackReader reader, T? value, MessagePackSerializerOptions options)
+            where T : class
+        {
+            return FormatterDispatchInto<T>.Deserialize(ref reader, value, options);
+        }
+
         [DoesNotReturn]
         private static void Throw(TypeInitializationException ex)
         {

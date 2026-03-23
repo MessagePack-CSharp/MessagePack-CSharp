@@ -11,7 +11,7 @@ using MsgPack = global::MessagePack;
 <# using (this.EmitNestingTypesAndNamespaces(this.Write)) { #>
 
 <#  bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members);#>
-	internal sealed class <#= Info.Formatter.GetQualifiedName(Qualifiers.None) #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #>>
+	internal sealed class <#= Info.Formatter.GetQualifiedName(Qualifiers.None) #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #>><# if (Info.CanDeserializeInto) { #>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<<#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #>><# } #>
 <# TransformUtilities.EmitTypeConstraints(Info.Formatter, this.Write); #>
 	{
 <# foreach (var item in Info.Members) { #>
@@ -137,5 +137,47 @@ using MsgPack = global::MessagePack;
 			return ____result;
 <# } #>
 		}
+<# if (Info.CanDeserializeInto) { #>
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, <#= Info.DataType.GetQualifiedName(genericStyle: GenericParameterStyle.Identifiers) #> value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+<# if (isFormatterResolverNecessary) { #>
+			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
+<# } #>
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+<# for (var memberIndex = 0; memberIndex <= Info.MaxKey; memberIndex++) {
+  var member = Info.GetMember(memberIndex);
+  if (member == null) { continue; } #>
+					case <#= member.IntKey #>:
+<# if (member.IsWritable) { #>
+						<#= member.GetMemberAccess("____result") #> = <#= member.GetDeserializeMethodString(member.GetMemberAccess("____result")) #>;
+<# } else { #>
+						reader.Skip();
+<# } #>
+						break;
+<# } #>
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+<# if (Info.HasIMessagePackSerializationCallbackReceiver) {
+  if (Info.NeedsCastOnAfter) { #>
+			((MsgPack::IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+<# } else { #>
+			____result.OnAfterDeserialize();
+<# } #>
+<# } #>
+			reader.Depth--;
+		}
+<# } #>
 	}
 <# } #>

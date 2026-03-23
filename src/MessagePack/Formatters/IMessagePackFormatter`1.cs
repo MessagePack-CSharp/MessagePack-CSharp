@@ -70,4 +70,20 @@ namespace MessagePack.Formatters
         /// <param name="options">The serialization settings to use.</param>
         void Deserialize(ref MessagePackReader reader, ref T value, MessagePackSerializerOptions options);
     }
+
+    /// <summary>
+    /// Provides an optional API for deserializing into an existing reference type instance.
+    /// </summary>
+    /// <typeparam name="T">The reference type to be deserialized.</typeparam>
+    public interface IMessagePackFormatterDeserializeInto<T>
+        where T : class
+    {
+        /// <summary>
+        /// Deserializes into an existing instance.
+        /// </summary>
+        /// <param name="reader">The reader to deserialize from.</param>
+        /// <param name="value">The existing instance that will receive deserialized data.</param>
+        /// <param name="options">The serialization settings to use.</param>
+        void Deserialize(ref MessagePackReader reader, T value, MessagePackSerializerOptions options);
+    }
 }

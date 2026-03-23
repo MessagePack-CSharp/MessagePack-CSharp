@@ -250,7 +250,11 @@ namespace MessagePack.Internal
                 using (MonoProtection.EnterRefEmitLock())
                 {
                     Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
-                    TypeBuilder typeBuilder = assembly.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName!, string.Empty).Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
+                    bool canDeserializeInto = CanDeserializeInto(type, serializationInfo);
+                    Type[] interfaces = canDeserializeInto
+                        ? new[] { formatterType, typeof(IMessagePackFormatterDeserializeInto<>).MakeGenericType(type) }
+                        : new[] { formatterType };
+                    TypeBuilder typeBuilder = assembly.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName!, string.Empty).Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, interfaces);
 
                     FieldBuilder? stringByteKeysField = null;
                     Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo>? customFormatterLookup = null;
@@ -323,6 +327,39 @@ namespace MessagePack.Internal
 
                         ILGenerator il = method.GetILGenerator();
                         BuildDeserialize(
+                            type,
+                            serializationInfo,
+                            typeBuilder,
+                            il,
+                            (index, member) =>
+                            {
+                                if (!customFormatterLookup.TryGetValue(member, out FieldInfo? fi))
+                                {
+                                    return null;
+                                }
+
+                                return () =>
+                                {
+                                    il.EmitLoadThis();
+                                    il.EmitLdfld(fi);
+                                };
+                            },
+                            1); // firstArgIndex:0 is this.
+                    }
+
+                    if (canDeserializeInto)
+                    {
+                        MethodBuilder method = typeBuilder.DefineMethod(
+                            "Deserialize",
+                            MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
+                            returnType: null,
+                            parameterTypes: new Type[] { refMessagePackReader, type, typeof(MessagePackSerializerOptions) });
+                        method.DefineParameter(1, ParameterAttributes.None, "reader");
+                        method.DefineParameter(2, ParameterAttributes.None, "value");
+                        method.DefineParameter(3, ParameterAttributes.None, "options");
+
+                        ILGenerator il = method.GetILGenerator();
+                        BuildDeserializeInto(
                             type,
                             serializationInfo,
                             typeBuilder,
@@ -697,6 +734,34 @@ namespace MessagePack.Internal
 
             // return ____result;
             il.Emit(OpCodes.Ldloc, localResult);
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void BuildDeserializeInto(Type type, ObjectSerializationInfo info, TypeBuilder typeBuilder, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, int firstArgIndex)
+        {
+            var argReader = new ArgumentField(il, firstArgIndex, @ref: true);
+            var argValue = new ArgumentField(il, firstArgIndex + 1, type);
+            var argOptions = new ArgumentField(il, firstArgIndex + 2);
+
+            var localResult = il.DeclareLocal(type);
+            argValue.EmitLoad();
+            il.EmitStloc(localResult);
+
+            BuildDeserializeInternalDepthStep(il, ref argReader, ref argOptions);
+
+            var localLength = BuildDeserializeInternalReadHeaderLength(info, il, ref argReader);
+
+            if (info.IsIntKey)
+            {
+                BuildDeserializeInternalDeserializeEachPropertyIntKey(info, typeBuilder, il, tryEmitLoadCustomFormatter, canOverwrite: true, ref argReader, ref argOptions, localResult, localLength);
+            }
+            else
+            {
+                BuildDeserializeInternalDeserializeEachPropertyStringKey(info, typeBuilder, il, tryEmitLoadCustomFormatter, canOverwrite: true, ref argReader, argOptions, localResult, localLength);
+            }
+
+            BuildDeserializeInternalOnAfterDeserialize(type, info, il, localResult);
+            BuildDeserializeInternalDepthUnStep(il, ref argReader);
             il.Emit(OpCodes.Ret);
         }
 
@@ -1182,10 +1247,25 @@ namespace MessagePack.Internal
 
             if (emitter is not null)
             {
-                emitter();
-                argReader.EmitLdarg();
-                argOptions.EmitLoad();
-                il.EmitCall(getDeserialize(t));
+                if (CanUseDeserializeIntoDispatch(t) && member.IsWritable)
+                {
+                    LocalBuilder currentValue = il.DeclareLocal(t);
+                    il.Emit(OpCodes.Dup);
+                    member.EmitLoadValue(il);
+                    il.EmitStloc(currentValue);
+                    emitter();
+                    argReader.EmitLdarg();
+                    il.EmitLdloc(currentValue);
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchDeserializeIntoWithFormatter(t));
+                }
+                else
+                {
+                    emitter();
+                    argReader.EmitLdarg();
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDeserialize(t));
+                }
             }
             else if (ObjectSerializationInfo.IsOptimizeTargetType(t))
             {
@@ -1229,6 +1309,17 @@ namespace MessagePack.Internal
                     argOptions.EmitLoad();
                     il.EmitCall(getDispatchDeserializeByRef(t));
                     il.Emit(OpCodes.Ldloc, localValue);
+                }
+                else if (CanUseDeserializeIntoDispatch(t) && member.IsWritable)
+                {
+                    LocalBuilder currentValue = il.DeclareLocal(t);
+                    il.Emit(OpCodes.Dup);
+                    member.EmitLoadValue(il);
+                    il.EmitStloc(currentValue);
+                    argReader.EmitLdarg();
+                    il.EmitLdloc(currentValue);
+                    argOptions.EmitLoad();
+                    il.EmitCall(getDispatchDeserializeInto(t));
                 }
                 else
                 {
@@ -1344,6 +1435,8 @@ namespace MessagePack.Internal
         private static readonly Func<Type, MethodInfo> getDispatchSerializeByValue = t => typeof(FormatterDispatchByValue<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatchByValue<int>.Serialize) && m.GetParameters().Length == 3);
         private static readonly Func<Type, MethodInfo> getDispatchDeserializeByRef = t => typeof(FormatterDispatch<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatch<int>.Deserialize) && m.GetParameters().Length == 3);
         private static readonly Func<Type, MethodInfo> getDispatchDeserializeByValue = t => typeof(FormatterDispatchByValue<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatchByValue<int>.Deserialize) && m.GetParameters().Length == 2);
+        private static readonly Func<Type, MethodInfo> getDispatchDeserializeInto = t => typeof(FormatterDispatchInto<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatchInto<object>.Deserialize) && m.GetParameters().Length == 3);
+        private static readonly Func<Type, MethodInfo> getDispatchDeserializeIntoWithFormatter = t => typeof(FormatterDispatchInto<>).MakeGenericType(t).GetRuntimeMethods().Single(m => m.Name == nameof(FormatterDispatchInto<object>.Deserialize) && m.GetParameters().Length == 4);
         //// static readonly ConstructorInfo dictionaryConstructor = typeof(ByteArrayStringHashTable).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(int); });
         //// static readonly MethodInfo dictionaryAdd = typeof(ByteArrayStringHashTable).GetRuntimeMethod("Add", new[] { typeof(string), typeof(int) });
         //// static readonly MethodInfo dictionaryTryGetValue = typeof(ByteArrayStringHashTable).GetRuntimeMethod("TryGetValue", new[] { typeof(ArraySegment<byte>), refInt });
@@ -1364,6 +1457,10 @@ namespace MessagePack.Internal
         /// Helps match parameters when searching a method when the parameter is a generic type.
         /// </summary>
         private static bool CanUseByRefDispatch(Type type) => type.IsValueType && Nullable.GetUnderlyingType(type) is null;
+
+        private static bool CanUseDeserializeIntoDispatch(Type type) => !type.IsValueType;
+
+        private static bool CanDeserializeInto(Type type, ObjectSerializationInfo info) => type.IsClass && info.ConstructorParameters.Length == 0;
 
         private static bool Matches(MethodInfo m, int parameterIndex, Type desiredType)
         {
@@ -2052,7 +2149,8 @@ namespace MessagePack.Internal
                 if (this.setterHelperDelegate is not null && this.setterHelperField is not null)
                 {
                     // Set this delegate to a static field on the dynamic formatter so that we can invoke it here.
-                    formatterType.GetField(this.setterHelperField.Name, BindingFlags.Static | BindingFlags.NonPublic)!.SetValue(null, this.setterHelperDelegate);
+                    FieldInfo runtimeField = formatterType.DeclaredFields.Single(field => field.Name == this.setterHelperField.Name);
+                    runtimeField.SetValue(null, this.setterHelperDelegate);
                 }
             }
 #endif
@@ -2062,21 +2160,24 @@ namespace MessagePack.Internal
 #if !NET6_0_OR_GREATER
                 if (this.PropertyInfo is not null && this.IsProblematicInitProperty)
                 {
-                    // On all runtimes older than .NET 6 (i.e. .NET Framework), a bug prevents MethodBuilder from being able to generate code that calls
-                    // a property "init" setter that belongs to a generic type.
-                    // But DynamicMethod does not share that bug. So we'll use a DynamicMethod to workaround this and invoke that from our MethodBuilder code.
-                    Type[] parameterTypes = [localResult.LocalType.IsClass ? this.MemberInfo.DeclaringType : this.MemberInfo.DeclaringType.MakeByRefType(), this.Type];
-                    DynamicMethod dynamicMethod = new($"Set{this.Name}Helper", null, parameterTypes);
-                    ILGenerator dynamicMethodIL = dynamicMethod.GetILGenerator();
-                    dynamicMethodIL.Emit(OpCodes.Ldarg_0);
-                    dynamicMethodIL.Emit(OpCodes.Ldarg_1);
-                    dynamicMethodIL.EmitCall(this.PropertyInfo.GetSetMethod(true) ?? throw new Exception("No set accessor"));
-                    dynamicMethodIL.Emit(OpCodes.Ret);
-                    Type delegateType = (localResult.LocalType.IsClass ? typeof(Action<,>) : typeof(PropertySetterHelperForStructs<,>)).MakeGenericType([this.MemberInfo.DeclaringType, this.Type]);
-                    this.setterHelperDelegate = dynamicMethod.CreateDelegate(delegateType);
+                    if (this.setterHelperDelegate is null || this.setterHelperField is null)
+                    {
+                        // On all runtimes older than .NET 6 (i.e. .NET Framework), a bug prevents MethodBuilder from being able to generate code that calls
+                        // a property "init" setter that belongs to a generic type.
+                        // But DynamicMethod does not share that bug. So we'll use a DynamicMethod to workaround this and invoke that from our MethodBuilder code.
+                        Type[] parameterTypes = [localResult.LocalType.IsClass ? this.MemberInfo.DeclaringType : this.MemberInfo.DeclaringType.MakeByRefType(), this.Type];
+                        DynamicMethod dynamicMethod = new($"Set{this.Name}Helper", null, parameterTypes);
+                        ILGenerator dynamicMethodIL = dynamicMethod.GetILGenerator();
+                        dynamicMethodIL.Emit(OpCodes.Ldarg_0);
+                        dynamicMethodIL.Emit(OpCodes.Ldarg_1);
+                        dynamicMethodIL.EmitCall(this.PropertyInfo.GetSetMethod(true) ?? throw new Exception("No set accessor"));
+                        dynamicMethodIL.Emit(OpCodes.Ret);
+                        Type delegateType = (localResult.LocalType.IsClass ? typeof(Action<,>) : typeof(PropertySetterHelperForStructs<,>)).MakeGenericType([this.MemberInfo.DeclaringType, this.Type]);
+                        this.setterHelperDelegate = dynamicMethod.CreateDelegate(delegateType);
 
-                    // Define a static field on the formatter that will store the delegate once the formatter type is created.
-                    this.setterHelperField = typeBuilder.DefineField($"{this.Name}Setter", delegateType, FieldAttributes.Private | FieldAttributes.Static);
+                        // Define a static field on the formatter that will store the delegate once the formatter type is created.
+                        this.setterHelperField = typeBuilder.DefineField($"{this.Name}Setter", delegateType, FieldAttributes.Private | FieldAttributes.Static);
+                    }
 
                     // Now emit code which at runtime will read from that field to get the delegate onto the stack for invocation.
                     il.Emit(OpCodes.Ldsfld, this.setterHelperField);

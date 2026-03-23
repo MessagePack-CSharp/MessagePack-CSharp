@@ -10,7 +10,7 @@ namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class TempProject {
 
-	internal sealed class MyGenericObjectFormatter<T1, T2> : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyGenericObject<T1, T2>>
+	internal sealed class MyGenericObjectFormatter<T1, T2> : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyGenericObject<T1, T2>>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::TempProject.MyGenericObject<T1, T2>>
 		where T1 : class?
 		where T2 : class
 	{
@@ -57,6 +57,31 @@ internal partial class TempProject {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::TempProject.MyGenericObject<T1, T2> value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.Content1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<T1>(ref reader, ____result.Content1, options);
+						break;
+					case 1:
+						____result.Content2 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<T2>(ref reader, ____result.Content2, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

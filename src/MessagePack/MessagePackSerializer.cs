@@ -343,6 +343,49 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Deserializes a value of a given reference type from a sequence of bytes, reusing an existing instance when supported.
+        /// </summary>
+        /// <typeparam name="T">The type of value to deserialize.</typeparam>
+        /// <param name="reader">The reader to deserialize from.</param>
+        /// <param name="existing">The existing value to reuse when supported. May be <see langword="null"/>.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
+        /// <returns>The deserialized value, or <see langword="null"/> when the payload is nil.</returns>
+        /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
+        public static T? Deserialize<T>(ref MessagePackReader reader, T? existing, MessagePackSerializerOptions? options = null)
+            where T : class
+        {
+            options = options ?? DefaultOptions;
+
+            try
+            {
+                if (options.Compression.IsCompression())
+                {
+                    using (var msgPackUncompressedRental = options.SequencePool.Rent())
+                    {
+                        var msgPackUncompressed = msgPackUncompressedRental.Value;
+                        if (TryDecompress(ref reader, msgPackUncompressed))
+                        {
+                            MessagePackReader uncompressedReader = reader.Clone(msgPackUncompressed.AsReadOnlySequence);
+                            return Internal.FormatterDispatchInto<T>.Deserialize(ref uncompressedReader, existing, options);
+                        }
+                        else
+                        {
+                            return Internal.FormatterDispatchInto<T>.Deserialize(ref reader, existing, options);
+                        }
+                    }
+                }
+                else
+                {
+                    return Internal.FormatterDispatchInto<T>.Deserialize(ref reader, existing, options);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new MessagePackSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
+            }
+        }
+
+        /// <summary>
         /// Deserializes a value of a given type from a sequence of bytes.
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>

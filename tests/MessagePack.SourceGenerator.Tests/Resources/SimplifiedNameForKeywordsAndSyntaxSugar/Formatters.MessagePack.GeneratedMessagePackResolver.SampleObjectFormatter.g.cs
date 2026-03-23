@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class SampleObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::SampleObject>
+	internal sealed class SampleObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::SampleObject>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::SampleObject>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::SampleObject value, MsgPack::MessagePackSerializerOptions options)
@@ -66,6 +66,40 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::SampleObject value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.Value1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<(bool, byte, sbyte)>(ref reader, options);
+						break;
+					case 1:
+						____result.Value2 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<(short, ushort, int, uint)>(ref reader, options);
+						break;
+					case 2:
+						____result.Value3 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<(long, ulong, float, double)>(ref reader, options);
+						break;
+					case 3:
+						____result.Value4 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<(decimal, char, string, object)>(ref reader, options);
+						break;
+					case 4:
+						____result.Value5 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<global::System.ValueTuple<int?>>(ref reader, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

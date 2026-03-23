@@ -9,7 +9,7 @@ using MsgPack = global::MessagePack;
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 
-	internal sealed class SampleObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::SampleObject>
+	internal sealed class SampleObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::SampleObject>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::SampleObject>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::SampleObject value, MsgPack::MessagePackSerializerOptions options)
@@ -50,6 +50,28 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::SampleObject value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.Value = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::MyGenericObject<string>>(ref reader, ____result.Value, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

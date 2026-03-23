@@ -10,7 +10,7 @@ namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class TempProject {
 
-	internal sealed class WrapperFormatter<T> : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.Wrapper<T>>
+	internal sealed class WrapperFormatter<T> : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.Wrapper<T>>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::TempProject.Wrapper<T>>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::TempProject.Wrapper<T> value, MsgPack::MessagePackSerializerOptions options)
@@ -55,6 +55,31 @@ internal partial class TempProject {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::TempProject.Wrapper<T> value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.Content1 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::System.Collections.Generic.List<T>>(ref reader, ____result.Content1, options);
+						break;
+					case 1:
+						____result.Content2 = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::TempProject.MyGenericObject<T>>(ref reader, ____result.Content2, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }
