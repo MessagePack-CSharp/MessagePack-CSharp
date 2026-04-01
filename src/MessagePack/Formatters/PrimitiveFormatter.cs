@@ -271,9 +271,12 @@ namespace MessagePack.Formatters
             }
 
             var array = new Int32[len];
-            for (int i = 0; i < array.Length; i++)
+            if (!reader.TryReadFixIntArray(array))
             {
-                array[i] = reader.ReadInt32();
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.ReadInt32();
+                }
             }
 
             return array;
