@@ -128,15 +128,30 @@ namespace MessagePack
         public SequencePosition Position
             => this.Sequence.GetPosition(this.CurrentSpanIndex, this.currentPosition);
 
+        // Fields for direct access on hot paths (avoid property accessor overhead)
+        internal ReadOnlySpan<T> currentSpan;
+        internal int currentSpanIndex;
+        internal long consumed;
+
         /// <summary>
         /// Gets the current segment in the <see cref="Sequence"/> as a span.
         /// </summary>
-        public ReadOnlySpan<T> CurrentSpan { get; private set; }
+        public ReadOnlySpan<T> CurrentSpan
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            readonly get => this.currentSpan;
+            private set => this.currentSpan = value;
+        }
 
         /// <summary>
         /// Gets the index in the <see cref="CurrentSpan"/>.
         /// </summary>
-        public int CurrentSpanIndex { get; private set; }
+        public int CurrentSpanIndex
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            readonly get => this.currentSpanIndex;
+            private set => this.currentSpanIndex = value;
+        }
 
         /// <summary>
         /// Gets the unread portion of the <see cref="CurrentSpan"/>.
@@ -144,18 +159,23 @@ namespace MessagePack
         public readonly ReadOnlySpan<T> UnreadSpan
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => this.CurrentSpan.Slice(this.CurrentSpanIndex);
+            get => this.currentSpan.Slice(this.currentSpanIndex);
         }
 
         /// <summary>
         /// Gets the total number of <typeparamref name="T"/>'s processed by the reader.
         /// </summary>
-        public long Consumed { get; private set; }
+        public long Consumed
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            readonly get => this.consumed;
+            private set => this.consumed = value;
+        }
 
         /// <summary>
         /// Gets remaining <typeparamref name="T"/>'s in the reader's <see cref="Sequence"/>.
         /// </summary>
-        public long Remaining => this.Length - this.Consumed;
+        public long Remaining => this.Length - this.consumed;
 
         /// <summary>
         /// Gets count of <typeparamref name="T"/> in the reader's <see cref="Sequence"/>.
@@ -334,20 +354,21 @@ namespace MessagePack
         public void Advance(long count)
         {
             const long TooBigOrNegative = unchecked((long)0xFFFFFFFF80000000);
-            if ((count & TooBigOrNegative) == 0 && this.CurrentSpan.Length - this.CurrentSpanIndex > (int)count)
+            int remaining = this.currentSpan.Length - this.currentSpanIndex;
+            if ((count & TooBigOrNegative) == 0 && remaining > (int)count)
             {
-                this.CurrentSpanIndex += (int)count;
-                this.Consumed += count;
+                this.currentSpanIndex += (int)count;
+                this.consumed += count;
             }
             else if (this.usingSequence)
             {
                 // Can't satisfy from the current span
                 this.AdvanceToNextSpan(count);
             }
-            else if (this.CurrentSpan.Length - this.CurrentSpanIndex == (int)count)
+            else if (remaining == (int)count)
             {
-                this.CurrentSpanIndex += (int)count;
-                this.Consumed += count;
+                this.currentSpanIndex += (int)count;
+                this.consumed += count;
                 this.moreData = false;
             }
             else

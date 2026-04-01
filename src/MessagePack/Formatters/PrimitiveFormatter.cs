@@ -271,9 +271,15 @@ namespace MessagePack.Formatters
             }
 
             var array = new Int32[len];
-            for (int i = 0; i < array.Length; i++)
+
+            // Fast path: bulk read when all elements are positive fixint (0x00-0x7f)
+            if (!reader.TryReadFixIntArray(array))
             {
-                array[i] = reader.ReadInt32();
+                // Fallback: element-by-element
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.ReadInt32();
+                }
             }
 
             return array;

@@ -263,6 +263,17 @@ foreach (var intType in allTypes) {
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
     public static DecodeResult TryRead<#=intType.Name#>(ReadOnlySpan<byte> source, out <#=intType.Name#> value, out int tokenSize)
     {
+<# if (intType.Name == "Int32") { #>
+        // Specialized fast path for Int32 — the most frequently called integer reader.
+        if (source.Length == 0) { tokenSize = 1; value = 0; return DecodeResult.EmptyBuffer; }
+        byte code = source[0];
+        if (code <= MessagePackCode.MaxFixInt) { value = (<#=intType.Name#>)code; tokenSize = 1; return DecodeResult.Success; }
+        if (code >= MessagePackCode.MinNegativeFixInt) { value = unchecked((sbyte)code); tokenSize = 1; return DecodeResult.Success; }
+        if (code == MessagePackCode.Int32 && source.Length >= 5) { value = (source[1] << 24) | (source[2] << 16) | (source[3] << 8) | source[4]; tokenSize = 5; return DecodeResult.Success; }
+        DecodeResult result = Decoders.<#=jumpTable#>[code].Read(source, out <#=bigValueType#> longValue, out tokenSize);
+        value = checked((<#=intType.Name#>)longValue);
+        return result;
+<# } else { #>
         if (source.Length > 0)
         {
             DecodeResult result = Decoders.<#=jumpTable#>[source[0]].Read(source, out <#=bigValueType#> longValue, out tokenSize);
@@ -275,6 +286,7 @@ foreach (var intType in allTypes) {
             value = 0;
             return DecodeResult.EmptyBuffer;
         }
+<# } #>
     }
 <# }
 var floatingPointTypes = new Type[] { typeof(float), typeof(double) }.Select(t => t.Name);

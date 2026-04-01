@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -230,14 +231,22 @@ namespace MessagePack
         /// this should wrap *calls* to these methods. They need not appear in pure "thunk" methods that simply delegate the deserialization to another formatter.
         /// In this way, we can avoid repeatedly incrementing and decrementing the counter when deserializing each element of a collection.
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DepthStep(ref MessagePackReader reader)
         {
             if (reader.Depth >= this.MaximumObjectGraphDepth)
             {
-                throw new InsufficientExecutionStackException($"This msgpack sequence has an object graph that exceeds the maximum depth allowed of {MaximumObjectGraphDepth}.");
+                ThrowDepthExceeded();
             }
 
             reader.Depth++;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        [DoesNotReturn]
+        private void ThrowDepthExceeded()
+        {
+            throw new InsufficientExecutionStackException($"This msgpack sequence has an object graph that exceeds the maximum depth allowed of {MaximumObjectGraphDepth}.");
         }
 
         /// <summary>

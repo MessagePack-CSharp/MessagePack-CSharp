@@ -274,8 +274,10 @@ namespace MessagePack.Formatters
             DateTime utc = reader.ReadDateTime();
 
             var dtOffsetMinutes = reader.ReadInt16();
+            var offset = TimeSpan.FromMinutes(dtOffsetMinutes);
 
-            return new DateTimeOffset(utc.Ticks, TimeSpan.FromMinutes(dtOffsetMinutes));
+            // Constructor expects local ticks, not UTC ticks. Add offset to convert.
+            return new DateTimeOffset(utc.Ticks + offset.Ticks, offset);
         }
     }
 

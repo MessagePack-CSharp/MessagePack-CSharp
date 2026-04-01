@@ -33,7 +33,7 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
         public Test(ReferencesSet references = ReferencesSet.MessagePack, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
             this.CompilerDiagnostics = CompilerDiagnostics.Warnings;
-            this.ReferenceAssemblies = ReferenceAssemblies.Net.Net80;
+            this.ReferenceAssemblies = ReferenceAssemblies.Net.Net90;
             this.TestState.AdditionalReferences.AddRange(ReferencesHelper.GetReferences(references));
 
             this.testFile = testFile;

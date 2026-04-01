@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- If changes TargetFramework version, need to modify ReferenceAssemblies.Net.Net80 reference in code. -->
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <!-- If changes TargetFramework version, need to modify ReferenceAssemblies.Net.Net90 reference in code. -->
+    <TargetFrameworks>net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>

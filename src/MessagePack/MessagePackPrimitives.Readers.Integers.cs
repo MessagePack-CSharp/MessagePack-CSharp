@@ -6,6 +6,7 @@
 
 using System;
 using System.Buffers;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable SA1205 // Partial elements should declare access
 
@@ -616,20 +617,46 @@ partial class MessagePackPrimitives
     /// </summary>
     /// <returns>The value.</returns>
     /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DecodeResult TryReadInt32(ReadOnlySpan<byte> source, out Int32 value, out int tokenSize)
     {
-        if (source.Length > 0)
-        {
-            DecodeResult result = Decoders.Int64JumpTable[source[0]].Read(source, out long longValue, out tokenSize);
-            value = checked((Int32)longValue);
-            return result;
-        }
-        else
+        if (source.Length == 0)
         {
             tokenSize = 1;
             value = 0;
             return DecodeResult.EmptyBuffer;
         }
+
+        byte code = source[0];
+
+        // Fast path: positive fixint (0x00-0x7f) — most common for small integers
+        if (code <= MessagePackCode.MaxFixInt)
+        {
+            value = code;
+            tokenSize = 1;
+            return DecodeResult.Success;
+        }
+
+        // Fast path: negative fixint (0xe0-0xff)
+        if (code >= MessagePackCode.MinNegativeFixInt)
+        {
+            value = unchecked((sbyte)code);
+            tokenSize = 1;
+            return DecodeResult.Success;
+        }
+
+        // Fast path: Int32 (0xd2) — 4 bytes big-endian
+        if (code == MessagePackCode.Int32 && source.Length >= 5)
+        {
+            value = (source[1] << 24) | (source[2] << 16) | (source[3] << 8) | source[4];
+            tokenSize = 5;
+            return DecodeResult.Success;
+        }
+
+        // Fallback: all other integer formats via JumpTable
+        DecodeResult result = Decoders.Int64JumpTable[code].Read(source, out long longValue, out tokenSize);
+        value = checked((Int32)longValue);
+        return result;
     }
 
     /// <summary>

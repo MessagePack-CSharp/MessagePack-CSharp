@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.Testing;
 
 internal static class ReferencesHelper
 {
-    internal static ReferenceAssemblies DefaultTargetFrameworkReferences = ReferenceAssemblies.Net.Net80;
+    internal static ReferenceAssemblies DefaultTargetFrameworkReferences = ReferenceAssemblies.Net.Net90;
 
     internal static IEnumerable<MetadataReference> GetReferences(ReferencesSet references)
     {

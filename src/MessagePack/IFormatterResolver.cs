@@ -33,11 +33,6 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IMessagePackFormatter<T> GetFormatterWithVerify<T>(this IFormatterResolver resolver)
         {
-            if (resolver is null)
-            {
-                throw new ArgumentNullException(nameof(resolver));
-            }
-
             IMessagePackFormatter<T>? formatter;
             try
             {
@@ -52,12 +47,19 @@ namespace MessagePack
                 return default; // not reachable
             }
 
-            if (formatter == null)
+            if (formatter != null)
             {
-                Throw(typeof(T), resolver);
+                return formatter;
             }
 
-            return formatter;
+            return ThrowFormatterNotRegistered<T>(typeof(T), resolver);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static IMessagePackFormatter<T> ThrowFormatterNotRegistered<T>(Type t, IFormatterResolver resolver)
+        {
+            Throw(t, resolver);
+            return default; // not reachable
         }
 
         [DoesNotReturn]

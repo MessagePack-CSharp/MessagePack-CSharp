@@ -225,10 +225,15 @@ namespace MessagePack.Tests
         [Fact]
         public void DateTimeOffsetTest()
         {
-            string id = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Tokyo Standard Time" : "Cuba";
-            DateTimeOffset now = new DateTime(DateTime.UtcNow.Ticks + TimeZoneInfo.FindSystemTimeZoneById(id).BaseUtcOffset.Ticks, DateTimeKind.Local);
+            // Use an explicit offset to avoid locale/DST ambiguity.
+            var now = new DateTimeOffset(2024, 6, 15, 14, 30, 0, TimeSpan.FromHours(9));
             var binary = MessagePackSerializer.Serialize(now);
             MessagePackSerializer.Deserialize<DateTimeOffset>(binary).Is(now);
+
+            // Also test with current UTC time round-tripped through a fixed offset.
+            var utcNow = new DateTimeOffset(DateTime.UtcNow, TimeSpan.Zero);
+            binary = MessagePackSerializer.Serialize(utcNow);
+            MessagePackSerializer.Deserialize<DateTimeOffset>(binary).Is(utcNow);
         }
 
         [Fact]
