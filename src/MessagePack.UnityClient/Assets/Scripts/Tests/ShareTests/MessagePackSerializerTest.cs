@@ -275,6 +275,18 @@ namespace MessagePack.Tests
             Assert.IsType<InsufficientExecutionStackException>(ex.InnerException);
         }
 
+        [Fact]
+        [Trait("CWE", "674")]
+        public void StackDepthCheck_DynamicUnionResolver()
+        {
+            byte[] msgpack = MessagePackSerializer.Serialize<IDepthCheckedUnionNode>(new DepthCheckedUnionBranch());
+            var options = MessagePackSerializerOptions.Standard
+                .WithSecurity(MessagePackSecurity.UntrustedData.WithMaximumObjectGraphDepth(1));
+
+            var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<IDepthCheckedUnionNode>(msgpack, options));
+            Assert.IsType<InsufficientExecutionStackException>(ex.InnerException);
+        }
+
 #endif
 
         private delegate void WriterHelper(ref MessagePackWriter writer);
@@ -413,5 +425,31 @@ namespace MessagePack.Tests
 
             base.Dispose(disposing);
         }
+    }
+
+    [MessagePackObject(keyAsPropertyName: true)]
+    public class SkipUnknownMemberTarget
+    {
+        public int Known { get; set; }
+    }
+
+    [Union(0, typeof(DepthCheckedUnionLeaf))]
+    [Union(999, typeof(DepthCheckedUnionBranch))]
+    public interface IDepthCheckedUnionNode
+    {
+    }
+
+    [MessagePackObject]
+    public class DepthCheckedUnionLeaf : IDepthCheckedUnionNode
+    {
+        [Key(0)]
+        public int Value { get; set; }
+    }
+
+    [MessagePackObject]
+    public class DepthCheckedUnionBranch : IDepthCheckedUnionNode
+    {
+        [Key(0)]
+        public IDepthCheckedUnionNode Child { get; set; }
     }
 }
