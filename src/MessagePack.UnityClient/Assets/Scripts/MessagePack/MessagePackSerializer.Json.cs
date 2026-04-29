@@ -393,46 +393,54 @@ namespace MessagePack
 #if !UNITY_2018_3_OR_NEWER
                     else if (extHeader.TypeCode == ThisLibraryExtensionTypeCodes.TypelessFormatter)
                     {
-                        // prepare type name token
-                        var privateBuilder = new StringBuilder();
-                        var typeNameTokenBuilder = new StringBuilder();
-                        SequencePosition positionBeforeTypeNameRead = reader.Position;
-                        ToJsonCore(ref reader, new StringWriter(typeNameTokenBuilder), options);
-                        int typeNameReadSize = (int)reader.Sequence.Slice(positionBeforeTypeNameRead, reader.Position).Length;
-                        if (extHeader.Length > typeNameReadSize)
+                        options.Security.DepthStep(ref reader);
+                        try
                         {
-                            // object map or array
-                            MessagePackType typeInside = reader.NextMessagePackType;
-                            if (typeInside != MessagePackType.Array && typeInside != MessagePackType.Map)
+                            // prepare type name token
+                            var privateBuilder = new StringBuilder();
+                            var typeNameTokenBuilder = new StringBuilder();
+                            SequencePosition positionBeforeTypeNameRead = reader.Position;
+                            ToJsonCore(ref reader, new StringWriter(typeNameTokenBuilder), options);
+                            int typeNameReadSize = (int)reader.Sequence.Slice(positionBeforeTypeNameRead, reader.Position).Length;
+                            if (extHeader.Length > typeNameReadSize)
                             {
-                                privateBuilder.Append("{");
+                                // object map or array
+                                MessagePackType typeInside = reader.NextMessagePackType;
+                                if (typeInside != MessagePackType.Array && typeInside != MessagePackType.Map)
+                                {
+                                    privateBuilder.Append("{");
+                                }
+
+                                ToJsonCore(ref reader, new StringWriter(privateBuilder), options);
+
+                                // insert type name token to start of object map or array
+                                if (typeInside != MessagePackType.Array)
+                                {
+                                    typeNameTokenBuilder.Insert(0, "\"$type\":");
+                                }
+
+                                if (typeInside != MessagePackType.Array && typeInside != MessagePackType.Map)
+                                {
+                                    privateBuilder.Append("}");
+                                }
+
+                                if (privateBuilder.Length > 2)
+                                {
+                                    typeNameTokenBuilder.Append(",");
+                                }
+
+                                privateBuilder.Insert(1, typeNameTokenBuilder.ToString());
+
+                                writer.Write(privateBuilder.ToString());
                             }
-
-                            ToJsonCore(ref reader, new StringWriter(privateBuilder), options);
-
-                            // insert type name token to start of object map or array
-                            if (typeInside != MessagePackType.Array)
+                            else
                             {
-                                typeNameTokenBuilder.Insert(0, "\"$type\":");
+                                writer.Write("{\"$type\":" + typeNameTokenBuilder.ToString() + "}");
                             }
-
-                            if (typeInside != MessagePackType.Array && typeInside != MessagePackType.Map)
-                            {
-                                privateBuilder.Append("}");
-                            }
-
-                            if (privateBuilder.Length > 2)
-                            {
-                                typeNameTokenBuilder.Append(",");
-                            }
-
-                            privateBuilder.Insert(1, typeNameTokenBuilder.ToString());
-
-                            writer.Write(privateBuilder.ToString());
                         }
-                        else
+                        finally
                         {
-                            writer.Write("{\"$type\":" + typeNameTokenBuilder.ToString() + "}");
+                            reader.Depth--;
                         }
                     }
 #endif
