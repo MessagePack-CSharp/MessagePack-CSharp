@@ -185,6 +185,11 @@ namespace MessagePack
 
         private static uint FromJsonCore(TinyJsonReader jr, ref MessagePackWriter writer, MessagePackSerializerOptions options)
         {
+            return FromJsonCore(jr, ref writer, options, 0);
+        }
+
+        private static uint FromJsonCore(TinyJsonReader jr, ref MessagePackWriter writer, MessagePackSerializerOptions options, int depth)
+        {
             uint count = 0;
             while (jr.Read())
             {
@@ -193,11 +198,13 @@ namespace MessagePack
                     case TinyJsonToken.None:
                         break;
                     case TinyJsonToken.StartObject:
+                        VerifyJsonObjectGraphDepth(options, depth);
+
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
                         using (var scratchRental = options.SequencePool.Rent())
                         {
                             MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
-                            var mapCount = FromJsonCore(jr, ref scratchWriter, options);
+                            var mapCount = FromJsonCore(jr, ref scratchWriter, options, depth + 1);
                             scratchWriter.Flush();
 
                             mapCount = mapCount / 2; // remove propertyname string count.
@@ -210,11 +217,13 @@ namespace MessagePack
                     case TinyJsonToken.EndObject:
                         return count; // break
                     case TinyJsonToken.StartArray:
+                        VerifyJsonObjectGraphDepth(options, depth);
+
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
                         using (var scratchRental = options.SequencePool.Rent())
                         {
                             MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
-                            var arrayCount = FromJsonCore(jr, ref scratchWriter, options);
+                            var arrayCount = FromJsonCore(jr, ref scratchWriter, options, depth + 1);
                             scratchWriter.Flush();
 
                             writer.WriteArrayHeader(arrayCount);
@@ -268,6 +277,14 @@ namespace MessagePack
             }
 
             return count;
+        }
+
+        private static void VerifyJsonObjectGraphDepth(MessagePackSerializerOptions options, int depth)
+        {
+            if (depth >= options.Security.MaximumObjectGraphDepth)
+            {
+                throw new InsufficientExecutionStackException($"This JSON sequence has an object graph that exceeds the maximum depth allowed of {options.Security.MaximumObjectGraphDepth}.");
+            }
         }
 
         private static void ToJsonCore(ref MessagePackReader reader, TextWriter writer, MessagePackSerializerOptions options)
