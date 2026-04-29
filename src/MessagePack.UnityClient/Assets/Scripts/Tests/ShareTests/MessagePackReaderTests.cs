@@ -102,6 +102,33 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        [Trait("CWE", "190")]
+        public void ReadMapHeader_MitigatesLargeAllocations_WhenMinimumPayloadLengthOverflowsInt32()
+        {
+            byte[] msgpack = { MessagePackCode.Map32, 0x40, 0, 0, 0 };
+
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(msgpack);
+                reader.ReadMapHeader();
+            });
+        }
+
+        [Fact]
+        [Trait("CWE", "190")]
+        public void SkipMap_MitigatesLargeAllocations_WhenMinimumPayloadLengthOverflowsInt32()
+        {
+            byte[] msgpack = { MessagePackCode.Map32, 0x40, 0, 0, 0 };
+
+            var ex = Assert.ThrowsAny<Exception>(() =>
+            {
+                var reader = new MessagePackReader(msgpack);
+                reader.Skip();
+            });
+            Assert.True(ex is EndOfStreamException or MessagePackSerializationException or OverflowException);
+        }
+
+        [Fact]
         public void TryReadMapHeader()
         {
             var sequence = new Sequence<byte>();
