@@ -94,6 +94,18 @@ namespace MessagePack.Tests.ExtensionTests
             EnsureSpecCompatibility(data.Array);
         }
 
+        [Fact]
+        [Trait("CWE", "789")]
+        public void BlitRejectsByteLengthThatExceedsExtensionBody()
+        {
+            MessagePackSerializerOptions options = MessagePackSerializerOptions.Standard.WithResolver(new WithUnityBlitResolver());
+            byte[] payload = { 0xC7, 0x06, unchecked((byte)ThisLibraryExtensionTypeCodes.UnityInt), 0xCE, 0x00, 0x00, 0x00, 0x08, 0xC3 };
+
+            var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<int[]>(payload, options));
+            var inner = Assert.IsType<MessagePackSerializationException>(ex.InnerException);
+            Assert.Contains("Invalid Unity blit extension length", inner.Message);
+        }
+
         public class WithUnityBlitResolver : IFormatterResolver
         {
             public IMessagePackFormatter<T> GetFormatter<T>()

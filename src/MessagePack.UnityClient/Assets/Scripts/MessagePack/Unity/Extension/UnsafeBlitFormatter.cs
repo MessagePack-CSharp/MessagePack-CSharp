@@ -48,19 +48,26 @@ namespace MessagePack.Unity.Extension
                 return null;
             }
 
-            ExtensionHeader header = reader.ReadExtensionFormatHeader();
-            if (header.TypeCode != this.TypeCode)
+            ExtensionResult extension = reader.ReadExtensionFormat();
+            if (extension.TypeCode != this.TypeCode)
             {
                 throw new InvalidOperationException("Invalid typeCode.");
             }
 
-            var byteLength = reader.ReadInt32();
-            var isLittleEndian = reader.ReadBoolean();
+            MessagePackReader extensionReader = reader.Clone(extension.Data);
+            var byteLength = extensionReader.ReadInt32();
+            var isLittleEndian = extensionReader.ReadBoolean();
+            int elementSize = Marshal.SizeOf<T>();
+            long remainingBytes = extensionReader.Sequence.Length - extensionReader.Consumed;
+            if (byteLength < 0 || byteLength % elementSize != 0 || byteLength != remainingBytes)
+            {
+                throw new MessagePackSerializationException("Invalid Unity blit extension length.");
+            }
 
             // Allocate a T[] that we will return. We'll then cast the T[] as byte[] so we can copy the byte sequence directly into it.
-            var result = new T[byteLength / Marshal.SizeOf<T>()];
+            var result = new T[byteLength / elementSize];
             Span<byte> resultAsBytes = MemoryMarshal.Cast<T, byte>(result);
-            reader.ReadRaw(byteLength).CopyTo(resultAsBytes);
+            extensionReader.ReadRaw(byteLength).CopyTo(resultAsBytes);
 
             // Reverse the byte order if necessary.
             if (isLittleEndian != BitConverter.IsLittleEndian)
