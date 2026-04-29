@@ -32,6 +32,47 @@ namespace MessagePack.Tests
             Execute(10000);
         }
 
+        [Fact]
+        [Trait("CWE", "125")]
+        public void Lz4BlockRejectsTruncatedLiteralRun()
+        {
+            const int extensionByteCount = 1024;
+            int uncompressedLength = 15 + (255 * extensionByteCount) + 16;
+
+            byte[] sizeHeader =
+            {
+                0xCE,
+                (byte)(uncompressedLength >> 24),
+                (byte)(uncompressedLength >> 16),
+                (byte)(uncompressedLength >> 8),
+                (byte)uncompressedLength,
+            };
+
+            byte[] lz4 = new byte[1 + extensionByteCount];
+            lz4[0] = 0xF0;
+            for (int i = 1; i < lz4.Length; i++)
+            {
+                lz4[i] = 0xFF;
+            }
+
+            int bodyLength = sizeHeader.Length + lz4.Length;
+            byte[] payload = new byte[6 + bodyLength];
+            int offset = 0;
+            payload[offset++] = 0xC9;
+            payload[offset++] = (byte)(bodyLength >> 24);
+            payload[offset++] = (byte)(bodyLength >> 16);
+            payload[offset++] = (byte)(bodyLength >> 8);
+            payload[offset++] = (byte)bodyLength;
+            payload[offset++] = 99;
+            System.Array.Copy(sizeHeader, 0, payload, offset, sizeHeader.Length);
+            offset += sizeHeader.Length;
+            System.Array.Copy(lz4, 0, payload, offset, lz4.Length);
+
+            var options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
+
+            Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<object>(payload, options));
+        }
+
         private void Execute(int count)
         {
             // Large
