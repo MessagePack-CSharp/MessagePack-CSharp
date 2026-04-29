@@ -401,6 +401,15 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        [Trait("CWE", "789")]
+        public void ReadDateTime_RejectsInvalidExtensionLengthBeforeBuffering()
+        {
+            byte[] payload = [MessagePackCode.Ext32, 0x00, 0x10, 0x00, 0x00, 0xff];
+
+            Assert.Throws<MessagePackSerializationException>(() => new MessagePackReader(new ReadOnlySequence<byte>(payload)).ReadDateTime());
+        }
+
+        [Fact]
         public void CreatePeekReader()
         {
             var cts = new CancellationTokenSource();
