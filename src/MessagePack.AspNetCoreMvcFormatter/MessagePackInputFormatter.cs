@@ -9,16 +9,17 @@ namespace MessagePack.AspNetCoreMvcFormatter
     public class MessagePackInputFormatter : InputFormatter
     {
         private const string ContentType = "application/x-msgpack";
-        private readonly MessagePackSerializerOptions? options;
+        private static readonly MessagePackSerializerOptions DefaultOptions = MessagePackSerializerOptions.Standard.WithSecurity(MessagePackSecurity.UntrustedData);
+        private readonly MessagePackSerializerOptions options;
 
         public MessagePackInputFormatter()
-            : this(null)
+            : this(DefaultOptions)
         {
         }
 
         public MessagePackInputFormatter(MessagePackSerializerOptions? options)
         {
-            this.options = options;
+            this.options = options ?? DefaultOptions;
 
             SupportedMediaTypes.Add(ContentType);
         }
