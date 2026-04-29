@@ -928,7 +928,7 @@ namespace MessagePack.Formatters
 
         protected override Dictionary<TKey, IGrouping<TKey, TElement>> Create(int count, MessagePackSerializerOptions options)
         {
-            return new Dictionary<TKey, IGrouping<TKey, TElement>>(count);
+            return new Dictionary<TKey, IGrouping<TKey, TElement>>(count, options.Security.GetEqualityComparer<TKey>());
         }
     }
 
