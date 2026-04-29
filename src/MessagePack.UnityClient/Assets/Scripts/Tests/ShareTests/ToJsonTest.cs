@@ -48,6 +48,16 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        [Trait("CWE", "674")]
+        public void ConvertFromJsonSkipsLongSeparatorRunIteratively()
+        {
+            var json = new string(',', 200_000) + "null";
+            var msgpack = MessagePackSerializer.ConvertFromJson(json);
+
+            MessagePackSerializer.ConvertToJson(msgpack).Is("null");
+        }
+
+        [Fact]
         public void FloatJson()
         {
             var f = 3.33f;
