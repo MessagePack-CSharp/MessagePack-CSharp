@@ -1189,6 +1189,8 @@ MessagePack.Formatters.StringInterningFormatter.StringInterningFormatter() -> vo
 MessagePack.Formatters.TimeOnlyFormatter
 MessagePack.Formatters.TimeOnlyFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.TimeOnly
 MessagePack.Formatters.TimeOnlyFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.TimeOnly value, MessagePack.MessagePackSerializerOptions! options) -> void
+MessagePack.MessagePackSecurity.MaximumDecompressedSize.get -> int
+MessagePack.MessagePackSecurity.WithMaximumDecompressedSize(int maximumDecompressedSize) -> MessagePack.MessagePackSecurity!
 MessagePack.MessagePackSerializerOptions.CompressionMinLength.get -> int
 MessagePack.MessagePackSerializerOptions.SuggestedContiguousMemorySize.get -> int
 MessagePack.MessagePackSerializerOptions.WithCompressionMinLength(int compressionMinLength) -> MessagePack.MessagePackSerializerOptions!

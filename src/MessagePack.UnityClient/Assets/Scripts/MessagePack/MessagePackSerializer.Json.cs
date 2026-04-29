@@ -89,7 +89,7 @@ namespace MessagePack
                 {
                     using (var scratchRental = options.SequencePool.Rent())
                     {
-                        if (TryDecompress(ref reader, scratchRental.Value))
+                        if (TryDecompress(ref reader, scratchRental.Value, options))
                         {
                             var scratchReader = new MessagePackReader(scratchRental.Value)
                             {

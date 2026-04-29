@@ -31,12 +31,14 @@ public class MessagePackSecurityTests
     public void Untrusted()
     {
         Assert.True(MessagePackSecurity.UntrustedData.HashCollisionResistant);
+        Assert.Equal(64 * 1024 * 1024, MessagePackSecurity.UntrustedData.MaximumDecompressedSize);
     }
 
     [Fact]
     public void Trusted()
     {
         Assert.False(MessagePackSecurity.TrustedData.HashCollisionResistant);
+        Assert.Equal(int.MaxValue, MessagePackSecurity.TrustedData.MaximumDecompressedSize);
     }
 
     [Fact]
@@ -44,6 +46,15 @@ public class MessagePackSecurityTests
     {
         Assert.Same(MessagePackSecurity.TrustedData, MessagePackSecurity.TrustedData.WithHashCollisionResistant(false));
         Assert.True(MessagePackSecurity.TrustedData.WithHashCollisionResistant(true).HashCollisionResistant);
+    }
+
+    [Fact]
+    [Trait("CWE", "409")]
+    public void WithMaximumDecompressedSize()
+    {
+        Assert.Same(MessagePackSecurity.UntrustedData, MessagePackSecurity.UntrustedData.WithMaximumDecompressedSize(64 * 1024 * 1024));
+        Assert.Throws<ArgumentOutOfRangeException>(() => MessagePackSecurity.UntrustedData.WithMaximumDecompressedSize(-1));
+        Assert.Equal(1024, MessagePackSecurity.UntrustedData.WithMaximumDecompressedSize(1024).MaximumDecompressedSize);
     }
 
     [Fact]
