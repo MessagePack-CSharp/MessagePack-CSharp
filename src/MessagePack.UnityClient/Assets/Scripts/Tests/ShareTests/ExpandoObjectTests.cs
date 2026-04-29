@@ -3,6 +3,7 @@
 
 #if !UNITY_2018_3_OR_NEWER
 
+using System.Collections.Generic;
 using System.Dynamic;
 using System.Runtime.Serialization;
 using MessagePack.Resolvers;
@@ -85,6 +86,24 @@ namespace MessagePack.Tests
             Assert.Equal(expando.Other.OtherProperty, expando2.Other.OtherProperty);
         }
 
+        [Fact]
+        [Trait("CWE", "407")]
+        public void ExpandoObject_UntrustedDataRejectsLargeMaps()
+        {
+            byte[] msgpack = CreateMapWithNilValues(1025);
+
+            Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<ExpandoObject>(msgpack, ExpandoObjectResolver.Options));
+        }
+
+        [Fact]
+        [Trait("CWE", "407")]
+        public void ExpandoObjectNestedMap_UntrustedDataRejectsLargeMaps()
+        {
+            byte[] msgpack = CreateMapWithNilValues(1025);
+
+            Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<object>(msgpack, ExpandoObjectResolver.Options));
+        }
+
 #if !UNITY_2018_3_OR_NEWER
 
         [Fact]
@@ -114,6 +133,17 @@ namespace MessagePack.Tests
         {
             [DataMember]
             public string OtherProperty { get; set; }
+        }
+
+        private static byte[] CreateMapWithNilValues(int count)
+        {
+            var dictionary = new Dictionary<string, object>();
+            for (int index = 0; index < count; index++)
+            {
+                dictionary.Add("k" + index.ToString(System.Globalization.CultureInfo.InvariantCulture), null);
+            }
+
+            return MessagePackSerializer.Serialize(dictionary, MessagePackSerializerOptions.Standard);
         }
     }
 }

@@ -8,6 +8,8 @@ namespace MessagePack.Formatters
 {
     public class ExpandoObjectFormatter : IMessagePackFormatter<ExpandoObject?>
     {
+        internal const int MaximumUntrustedDataMemberCount = 1024;
+
         public static readonly IMessagePackFormatter<ExpandoObject?> Instance = new ExpandoObjectFormatter();
 
         private ExpandoObjectFormatter()
@@ -23,6 +25,7 @@ namespace MessagePack.Formatters
 
             var result = new ExpandoObject();
             int count = reader.ReadMapHeader();
+            ThrowIfMapTooLargeForUntrustedData(count, options);
             if (count > 0)
             {
                 IFormatterResolver resolver = options.Resolver;
@@ -47,6 +50,14 @@ namespace MessagePack.Formatters
             }
 
             return result;
+        }
+
+        internal static void ThrowIfMapTooLargeForUntrustedData(int count, MessagePackSerializerOptions options)
+        {
+            if (options.Security.HashCollisionResistant && count > MaximumUntrustedDataMemberCount)
+            {
+                throw new MessagePackSerializationException($"ExpandoObject map size exceeds the limit of {MaximumUntrustedDataMemberCount} entries allowed under untrusted data security mode.");
+            }
         }
 
         public void Serialize(ref MessagePackWriter writer, ExpandoObject? value, MessagePackSerializerOptions options)
