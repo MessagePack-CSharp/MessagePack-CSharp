@@ -209,6 +209,18 @@ namespace MessagePack.Tests
             Assert.Equal(3, await MessagePackSerializer.DeserializeAsync<int>(stream));
         }
 
+        [Fact]
+        [Trait("CWE", "674")]
+        public void StackDepthCheck_ConvertToJsonTypelessExtension()
+        {
+            const int maxDepth = 3;
+            byte[] msgpack = BuildNestedTypelessExtension(maxDepth + 1);
+            var options = MessagePackSerializerOptions.Standard
+                .WithSecurity(MessagePackSecurity.UntrustedData.WithMaximumObjectGraphDepth(maxDepth));
+
+            AssertConvertToJsonRecursionCheckThrows(new ReadOnlySequence<byte>(msgpack), options);
+        }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -316,6 +328,28 @@ namespace MessagePack.Tests
                 MessagePackSerializer.ConvertToJson(ref reader, new StringWriter(), options);
             });
             Assert.IsType<InsufficientExecutionStackException>(ex.InnerException);
+        }
+
+        private static byte[] BuildNestedTypelessExtension(int levels)
+        {
+            byte[] msgpack = new byte[(levels * 6) + 2];
+            int offset = msgpack.Length;
+            msgpack[--offset] = (byte)'x';
+            msgpack[--offset] = 0xa1;
+            int innerLength = 2;
+
+            for (int level = 0; level < levels; level++)
+            {
+                msgpack[--offset] = unchecked((byte)ReservedExtensionTypeCodes.TypelessFormatter);
+                msgpack[--offset] = (byte)innerLength;
+                msgpack[--offset] = (byte)(innerLength >> 8);
+                msgpack[--offset] = (byte)(innerLength >> 16);
+                msgpack[--offset] = (byte)(innerLength >> 24);
+                msgpack[--offset] = 0xc9;
+                innerLength += 6;
+            }
+
+            return msgpack;
         }
 
         [DataContract]
