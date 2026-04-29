@@ -4,6 +4,7 @@
 #if !UNITY_2018_3_OR_NEWER
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 using MessagePack;
 using MessagePack.Formatters;
@@ -45,6 +46,24 @@ public class MessagePackSerializerTypelessTests
         this.logger.WriteLine(MessagePackSerializer.ConvertToJson(msgpack, myOptions));
         var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Typeless.Deserialize(msgpack, myOptions));
         Assert.IsType<TypeAccessException>(ex.InnerException);
+    }
+
+    [Theory]
+    [MemberData(nameof(DisallowedNestedTypeData))]
+    [Trait("CWE", "502")]
+    public void SerializationOfDisallowedNestedType(object value)
+    {
+        var myOptions = new MyTypelessOptions();
+        byte[] msgpack = MessagePackSerializer.Typeless.Serialize(value, myOptions);
+        this.logger.WriteLine(MessagePackSerializer.ConvertToJson(msgpack, myOptions));
+        var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Typeless.Deserialize(msgpack, myOptions));
+        Assert.IsType<TypeAccessException>(ex.InnerException);
+    }
+
+    public static IEnumerable<object[]> DisallowedNestedTypeData()
+    {
+        yield return new object[] { new MyObject[] { new() { SomeValue = 5 } } };
+        yield return new object[] { new List<MyObject> { new() { SomeValue = 5 } } };
     }
 
     [Fact(Skip = "Known bug https://github.com/neuecc/MessagePack-CSharp/issues/651")]
@@ -137,7 +156,7 @@ public class MessagePackSerializerTypelessTests
         {
         }
 
-        public override void ThrowIfDeserializingTypeIsDisallowed(Type type)
+        protected override void ThrowIfDeserializingTypeIsDisallowedCore(Type type)
         {
             if (type == typeof(MyObject))
             {

@@ -1183,3 +1183,4 @@ MessagePack.MessagePackSerializerOptions.WithCompressionMinLength(int compressio
 MessagePack.MessagePackSerializerOptions.WithSuggestedContiguousMemorySize(int suggestedContiguousMemorySize) -> MessagePack.MessagePackSerializerOptions!
 static MessagePack.MessagePackWriter.GetEncodedLength(long value) -> int
 static MessagePack.MessagePackWriter.GetEncodedLength(ulong value) -> int
+virtual MessagePack.MessagePackSerializerOptions.ThrowIfDeserializingTypeIsDisallowedCore(System.Type! type) -> void

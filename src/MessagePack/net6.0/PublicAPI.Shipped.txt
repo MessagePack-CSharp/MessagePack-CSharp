@@ -1197,3 +1197,4 @@ static MessagePack.MessagePackWriter.GetEncodedLength(long value) -> int
 static MessagePack.MessagePackWriter.GetEncodedLength(ulong value) -> int
 static readonly MessagePack.Formatters.DateOnlyFormatter.Instance -> MessagePack.Formatters.DateOnlyFormatter!
 static readonly MessagePack.Formatters.TimeOnlyFormatter.Instance -> MessagePack.Formatters.TimeOnlyFormatter!
+virtual MessagePack.MessagePackSerializerOptions.ThrowIfDeserializingTypeIsDisallowedCore(System.Type! type) -> void
