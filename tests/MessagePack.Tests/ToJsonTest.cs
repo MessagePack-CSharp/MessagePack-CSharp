@@ -47,6 +47,19 @@ namespace MessagePack.Tests
             this.JsonConvert(json, LZ4Standard).Is(json);
         }
 
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        [Trait("CWE", "674")]
+        public void ConvertFromJsonRejectsExcessiveNesting(bool compression)
+        {
+            var options = MessagePackSerializerOptions.Standard
+                .WithCompression(compression ? MessagePackCompression.Lz4Block : MessagePackCompression.None)
+                .WithSecurity(MessagePackSecurity.UntrustedData.WithMaximumObjectGraphDepth(3));
+
+            Assert.Throws<InsufficientExecutionStackException>(() => MessagePackSerializer.ConvertFromJson("[[[[1]]]]", options));
+        }
+
         [Fact]
         public void FloatJson()
         {
