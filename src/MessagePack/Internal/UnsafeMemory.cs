@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 /* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
@@ -9,6 +9,7 @@
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using MessagePack.Formatters;
 
 namespace MessagePack.Internal
@@ -16,498 +17,470 @@ namespace MessagePack.Internal
     public static partial class UnsafeMemory32
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw4(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw4(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw5(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw5(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 1) = *(int*)(pSrc + 1);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 1), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 1)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw6(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw6(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 2) = *(int*)(pSrc + 2);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 2), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 2)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw7(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw7(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 3) = *(int*)(pSrc + 3);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 3), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 3)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw8(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw8(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw9(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw9(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 5) = *(int*)(pSrc + 5);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 5), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 5)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw10(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw10(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 6) = *(int*)(pSrc + 6);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 6), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 6)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw11(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw11(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 7) = *(int*)(pSrc + 7);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 7), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 7)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw12(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw12(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw13(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw13(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 9) = *(int*)(pSrc + 9);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 9), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 9)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw14(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw14(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 10) = *(int*)(pSrc + 10);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 10), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 10)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw15(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw15(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 11) = *(int*)(pSrc + 11);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 11), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 11)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw16(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw16(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw17(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw17(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 13) = *(int*)(pSrc + 13);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 13), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 13)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw18(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw18(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 14) = *(int*)(pSrc + 14);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 14), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 14)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw19(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw19(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 15) = *(int*)(pSrc + 15);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 15), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 15)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw20(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw20(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 16) = *(int*)(pSrc + 16);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 16)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw21(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw21(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 16) = *(int*)(pSrc + 16);
-                *(int*)(pDst + 17) = *(int*)(pSrc + 17);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 17), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 17)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw22(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw22(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 16) = *(int*)(pSrc + 16);
-                *(int*)(pDst + 18) = *(int*)(pSrc + 18);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 18), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 18)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw23(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw23(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 16) = *(int*)(pSrc + 16);
-                *(int*)(pDst + 19) = *(int*)(pSrc + 19);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 19), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 19)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw24(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw24(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 16) = *(int*)(pSrc + 16);
-                *(int*)(pDst + 20) = *(int*)(pSrc + 20);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 20), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 20)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw25(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw25(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 16) = *(int*)(pSrc + 16);
-                *(int*)(pDst + 20) = *(int*)(pSrc + 20);
-                *(int*)(pDst + 21) = *(int*)(pSrc + 21);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 20), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 20)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 21), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 21)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw26(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw26(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 16) = *(int*)(pSrc + 16);
-                *(int*)(pDst + 20) = *(int*)(pSrc + 20);
-                *(int*)(pDst + 22) = *(int*)(pSrc + 22);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 20), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 20)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 22), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 22)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw27(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw27(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 16) = *(int*)(pSrc + 16);
-                *(int*)(pDst + 20) = *(int*)(pSrc + 20);
-                *(int*)(pDst + 23) = *(int*)(pSrc + 23);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 20), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 20)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 23), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 23)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw28(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw28(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 16) = *(int*)(pSrc + 16);
-                *(int*)(pDst + 20) = *(int*)(pSrc + 20);
-                *(int*)(pDst + 24) = *(int*)(pSrc + 24);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 20), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 20)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 24), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 24)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw29(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw29(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 16) = *(int*)(pSrc + 16);
-                *(int*)(pDst + 20) = *(int*)(pSrc + 20);
-                *(int*)(pDst + 24) = *(int*)(pSrc + 24);
-                *(int*)(pDst + 25) = *(int*)(pSrc + 25);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 20), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 20)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 24), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 24)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 25), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 25)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw30(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw30(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 16) = *(int*)(pSrc + 16);
-                *(int*)(pDst + 20) = *(int*)(pSrc + 20);
-                *(int*)(pDst + 24) = *(int*)(pSrc + 24);
-                *(int*)(pDst + 26) = *(int*)(pSrc + 26);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 20), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 20)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 24), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 24)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 26), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 26)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw31(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw31(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(int*)(pDst + 0) = *(int*)(pSrc + 0);
-                *(int*)(pDst + 4) = *(int*)(pSrc + 4);
-                *(int*)(pDst + 8) = *(int*)(pSrc + 8);
-                *(int*)(pDst + 12) = *(int*)(pSrc + 12);
-                *(int*)(pDst + 16) = *(int*)(pSrc + 16);
-                *(int*)(pDst + 20) = *(int*)(pSrc + 20);
-                *(int*)(pDst + 24) = *(int*)(pSrc + 24);
-                *(int*)(pDst + 27) = *(int*)(pSrc + 27);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 4)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 12)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 20), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 20)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 24), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 24)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 27), Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref pSrc, 27)));
 
             writer.Advance(src.Length);
         }
@@ -516,382 +489,358 @@ namespace MessagePack.Internal
     public static partial class UnsafeMemory64
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw8(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw8(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw9(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw9(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 1) = *(long*)(pSrc + 1);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 1), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 1)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw10(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw10(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 2) = *(long*)(pSrc + 2);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 2), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 2)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw11(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw11(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 3) = *(long*)(pSrc + 3);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 3), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 3)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw12(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw12(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 4) = *(long*)(pSrc + 4);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 4), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 4)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw13(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw13(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 5) = *(long*)(pSrc + 5);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 5), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 5)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw14(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw14(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 6) = *(long*)(pSrc + 6);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 6), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 6)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw15(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw15(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 7) = *(long*)(pSrc + 7);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 7), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 7)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw16(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw16(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw17(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw17(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 9) = *(long*)(pSrc + 9);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 9), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 9)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw18(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw18(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 10) = *(long*)(pSrc + 10);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 10), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 10)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw19(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw19(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 11) = *(long*)(pSrc + 11);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 11), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 11)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw20(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw20(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 12) = *(long*)(pSrc + 12);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 12), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 12)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw21(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw21(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 13) = *(long*)(pSrc + 13);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 13), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 13)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw22(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw22(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 14) = *(long*)(pSrc + 14);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 14), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 14)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw23(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw23(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 15) = *(long*)(pSrc + 15);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 15), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 15)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw24(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw24(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 16) = *(long*)(pSrc + 16);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 16)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw25(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw25(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 16) = *(long*)(pSrc + 16);
-                *(long*)(pDst + 17) = *(long*)(pSrc + 17);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 17), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 17)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw26(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw26(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 16) = *(long*)(pSrc + 16);
-                *(long*)(pDst + 18) = *(long*)(pSrc + 18);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 18), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 18)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw27(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw27(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 16) = *(long*)(pSrc + 16);
-                *(long*)(pDst + 19) = *(long*)(pSrc + 19);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 19), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 19)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw28(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw28(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 16) = *(long*)(pSrc + 16);
-                *(long*)(pDst + 20) = *(long*)(pSrc + 20);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 20), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 20)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw29(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw29(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 16) = *(long*)(pSrc + 16);
-                *(long*)(pDst + 21) = *(long*)(pSrc + 21);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 21), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 21)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw30(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw30(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 16) = *(long*)(pSrc + 16);
-                *(long*)(pDst + 22) = *(long*)(pSrc + 22);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 22), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 22)));
 
             writer.Advance(src.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void WriteRaw31(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
+        public static void WriteRaw31(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
             Span<byte> dst = writer.GetSpan(src.Length);
 
-            fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[0])
-            {
-                *(long*)(pDst + 0) = *(long*)(pSrc + 0);
-                *(long*)(pDst + 8) = *(long*)(pSrc + 8);
-                *(long*)(pDst + 16) = *(long*)(pSrc + 16);
-                *(long*)(pDst + 23) = *(long*)(pSrc + 23);
-            }
+            ref byte pSrc = ref MemoryMarshal.GetReference(src);
+            ref byte pDst = ref MemoryMarshal.GetReference(dst);
+
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 0), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 0)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 8), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 16), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 16)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref pDst, 23), Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref pSrc, 23)));
 
             writer.Advance(src.Length);
         }
