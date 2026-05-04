@@ -591,10 +591,17 @@ namespace MessagePack
             }
 
             ref byte buffer = ref this.WriteString_PrepareSpan(value.Length, out int bufferSize, out int useOffset);
-            fixed (char* pValue = value)
             fixed (byte* pBuffer = &buffer)
             {
-                int byteCount = StringEncoding.UTF8.GetBytes(pValue, value.Length, pBuffer + useOffset, bufferSize);
+                int byteCount;
+#if SPAN_BUILTIN
+                byteCount = StringEncoding.UTF8.GetBytes(value.AsSpan(), new Span<byte>(pBuffer + useOffset, bufferSize - useOffset));
+#else
+                fixed (char* pValue = value)
+                {
+                    byteCount = StringEncoding.UTF8.GetBytes(pValue, value.Length, pBuffer + useOffset, bufferSize);
+                }
+#endif
                 this.WriteString_PostEncoding(pBuffer, useOffset, byteCount);
             }
         }
@@ -610,10 +617,17 @@ namespace MessagePack
         public unsafe void Write(ReadOnlySpan<char> value)
         {
             ref byte buffer = ref this.WriteString_PrepareSpan(value.Length, out int bufferSize, out int useOffset);
-            fixed (char* pValue = value)
             fixed (byte* pBuffer = &buffer)
             {
-                int byteCount = StringEncoding.UTF8.GetBytes(pValue, value.Length, pBuffer + useOffset, bufferSize);
+                int byteCount;
+#if SPAN_BUILTIN
+                byteCount = StringEncoding.UTF8.GetBytes(value, new Span<byte>(pBuffer + useOffset, bufferSize - useOffset));
+#else
+                fixed (char* pValue = value)
+                {
+                    byteCount = StringEncoding.UTF8.GetBytes(pValue, value.Length, pBuffer + useOffset, bufferSize);
+                }
+#endif
                 this.WriteString_PostEncoding(pBuffer, useOffset, byteCount);
             }
         }
