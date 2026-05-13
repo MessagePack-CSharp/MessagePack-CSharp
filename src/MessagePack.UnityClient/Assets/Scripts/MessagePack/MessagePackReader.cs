@@ -154,81 +154,123 @@ namespace MessagePack
         /// </remarks>
         internal bool TrySkip()
         {
-            if (this.reader.Remaining == 0)
+            long remainingStructures = 1;
+            while (remainingStructures > 0)
             {
-                return false;
+                if (this.reader.Remaining == 0)
+                {
+                    return false;
+                }
+
+                remainingStructures--;
+                byte code = this.NextCode;
+                switch (code)
+                {
+                    case byte x when (x >= MessagePackCode.MinNegativeFixInt && x <= MessagePackCode.MaxNegativeFixInt) || (x >= MessagePackCode.MinFixInt && x <= MessagePackCode.MaxFixInt):
+                    case MessagePackCode.Nil:
+                    case MessagePackCode.True:
+                    case MessagePackCode.False:
+                        if (!this.reader.TryAdvance(1))
+                        {
+                            return false;
+                        }
+
+                        break;
+                    case MessagePackCode.Int8:
+                    case MessagePackCode.UInt8:
+                        if (!this.reader.TryAdvance(2))
+                        {
+                            return false;
+                        }
+
+                        break;
+                    case MessagePackCode.Int16:
+                    case MessagePackCode.UInt16:
+                        if (!this.reader.TryAdvance(3))
+                        {
+                            return false;
+                        }
+
+                        break;
+                    case MessagePackCode.Int32:
+                    case MessagePackCode.UInt32:
+                    case MessagePackCode.Float32:
+                        if (!this.reader.TryAdvance(5))
+                        {
+                            return false;
+                        }
+
+                        break;
+                    case MessagePackCode.Int64:
+                    case MessagePackCode.UInt64:
+                    case MessagePackCode.Float64:
+                        if (!this.reader.TryAdvance(9))
+                        {
+                            return false;
+                        }
+
+                        break;
+                    case byte x when x >= MessagePackCode.MinFixMap && x <= MessagePackCode.MaxFixMap:
+                    case MessagePackCode.Map16:
+                    case MessagePackCode.Map32:
+                        if (!this.TryReadMapHeader(out int count))
+                        {
+                            return false;
+                        }
+
+                        remainingStructures = checked(remainingStructures + ((long)count * 2));
+                        break;
+                    case byte x when x >= MessagePackCode.MinFixArray && x <= MessagePackCode.MaxFixArray:
+                    case MessagePackCode.Array16:
+                    case MessagePackCode.Array32:
+                        if (!this.TryReadArrayHeader(out count))
+                        {
+                            return false;
+                        }
+
+                        remainingStructures = checked(remainingStructures + count);
+                        break;
+                    case byte x when x >= MessagePackCode.MinFixStr && x <= MessagePackCode.MaxFixStr:
+                    case MessagePackCode.Str8:
+                    case MessagePackCode.Str16:
+                    case MessagePackCode.Str32:
+                        if (!this.TryGetStringLengthInBytes(out int length) || !this.reader.TryAdvance(length))
+                        {
+                            return false;
+                        }
+
+                        break;
+                    case MessagePackCode.Bin8:
+                    case MessagePackCode.Bin16:
+                    case MessagePackCode.Bin32:
+                        if (!this.TryGetBytesLength(out length) || !this.reader.TryAdvance(length))
+                        {
+                            return false;
+                        }
+
+                        break;
+                    case MessagePackCode.FixExt1:
+                    case MessagePackCode.FixExt2:
+                    case MessagePackCode.FixExt4:
+                    case MessagePackCode.FixExt8:
+                    case MessagePackCode.FixExt16:
+                    case MessagePackCode.Ext8:
+                    case MessagePackCode.Ext16:
+                    case MessagePackCode.Ext32:
+                        if (!this.TryReadExtensionFormatHeader(out ExtensionHeader header) || !this.reader.TryAdvance(header.Length))
+                        {
+                            return false;
+                        }
+
+                        break;
+                    default:
+                        // We don't actually expect to ever hit this point, since every code is supported.
+                        Debug.Fail("Missing handler for code: " + code);
+                        throw ThrowInvalidCode(code);
+                }
             }
 
-            byte code = this.NextCode;
-            switch (code)
-            {
-                case MessagePackCode.Nil:
-                case MessagePackCode.True:
-                case MessagePackCode.False:
-                    return this.reader.TryAdvance(1);
-                case MessagePackCode.Int8:
-                case MessagePackCode.UInt8:
-                    return this.reader.TryAdvance(2);
-                case MessagePackCode.Int16:
-                case MessagePackCode.UInt16:
-                    return this.reader.TryAdvance(3);
-                case MessagePackCode.Int32:
-                case MessagePackCode.UInt32:
-                case MessagePackCode.Float32:
-                    return this.reader.TryAdvance(5);
-                case MessagePackCode.Int64:
-                case MessagePackCode.UInt64:
-                case MessagePackCode.Float64:
-                    return this.reader.TryAdvance(9);
-                case MessagePackCode.Map16:
-                case MessagePackCode.Map32:
-                    return this.TrySkipNextMap();
-                case MessagePackCode.Array16:
-                case MessagePackCode.Array32:
-                    return this.TrySkipNextArray();
-                case MessagePackCode.Str8:
-                case MessagePackCode.Str16:
-                case MessagePackCode.Str32:
-                    return this.TryGetStringLengthInBytes(out int length) && this.reader.TryAdvance(length);
-                case MessagePackCode.Bin8:
-                case MessagePackCode.Bin16:
-                case MessagePackCode.Bin32:
-                    return this.TryGetBytesLength(out length) && this.reader.TryAdvance(length);
-                case MessagePackCode.FixExt1:
-                case MessagePackCode.FixExt2:
-                case MessagePackCode.FixExt4:
-                case MessagePackCode.FixExt8:
-                case MessagePackCode.FixExt16:
-                case MessagePackCode.Ext8:
-                case MessagePackCode.Ext16:
-                case MessagePackCode.Ext32:
-                    return this.TryReadExtensionFormatHeader(out ExtensionHeader header) && this.reader.TryAdvance(header.Length);
-                default:
-                    if ((code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt) ||
-                        (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt))
-                    {
-                        return this.reader.TryAdvance(1);
-                    }
-
-                    if (code >= MessagePackCode.MinFixMap && code <= MessagePackCode.MaxFixMap)
-                    {
-                        return this.TrySkipNextMap();
-                    }
-
-                    if (code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MaxFixArray)
-                    {
-                        return this.TrySkipNextArray();
-                    }
-
-                    if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
-                    {
-                        return this.TryGetStringLengthInBytes(out length) && this.reader.TryAdvance(length);
-                    }
-
-                    // We don't actually expect to ever hit this point, since every code is supported.
-                    Debug.Fail("Missing handler for code: " + code);
-                    throw ThrowInvalidCode(code);
-            }
+            return true;
         }
 
         /// <summary>
@@ -1129,23 +1171,6 @@ namespace MessagePack
             string value = new string(charArray, 0, initializedChars);
             ArrayPool<char>.Shared.Return(charArray);
             return value;
-        }
-
-        private bool TrySkipNextArray() => this.TryReadArrayHeader(out int count) && this.TrySkip(count);
-
-        private bool TrySkipNextMap() => this.TryReadMapHeader(out int count) && this.TrySkip(count * 2);
-
-        private bool TrySkip(int count)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                if (!this.TrySkip())
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
     }
 }

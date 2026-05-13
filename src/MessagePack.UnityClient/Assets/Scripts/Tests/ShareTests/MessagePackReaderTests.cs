@@ -253,6 +253,49 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        [Trait("CWE", "674")]
+        public void Skip_DeeplyNestedArrays_DoesNotOverflowStack()
+        {
+            const int depth = 100_000;
+            byte[] msgpack = new byte[depth + 1];
+
+            for (int i = 0; i < depth; i++)
+            {
+                msgpack[i] = MessagePackCode.MinFixArray + 1;
+            }
+
+            msgpack[msgpack.Length - 1] = MessagePackCode.Nil;
+
+            MessagePackReader reader = new(msgpack);
+
+            reader.Skip();
+
+            Assert.True(reader.End);
+        }
+
+        [Fact]
+        [Trait("CWE", "674")]
+        public void Skip_DeeplyNestedMaps_DoesNotOverflowStack()
+        {
+            const int depth = 100_000;
+            byte[] msgpack = new byte[(depth * 2) + 1];
+
+            for (int i = 0; i < depth; i++)
+            {
+                msgpack[i * 2] = MessagePackCode.MinFixMap + 1;
+                msgpack[(i * 2) + 1] = MessagePackCode.Nil;
+            }
+
+            msgpack[msgpack.Length - 1] = MessagePackCode.Nil;
+
+            MessagePackReader reader = new(msgpack);
+
+            reader.Skip();
+
+            Assert.True(reader.End);
+        }
+
+        [Fact]
         public void Depth()
         {
             var reader = new MessagePackReader(Encode((ref MessagePackWriter w) => w.Write(1.23)));
