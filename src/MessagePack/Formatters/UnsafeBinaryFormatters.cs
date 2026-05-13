@@ -66,7 +66,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        /* decimal underlying "flags, hi, lo, mid" fields are sequential and same layuout with .NET Framework and Mono(Unity)
+        /* decimal underlying "flags, hi, lo, mid" fields are sequential and same layout with .NET Framework and Mono(Unity)
          * But target machines must be same endian so restrict only for little endian. */
 
         public unsafe void Serialize(ref MessagePackWriter writer, Decimal value, MessagePackSerializerOptions options)
