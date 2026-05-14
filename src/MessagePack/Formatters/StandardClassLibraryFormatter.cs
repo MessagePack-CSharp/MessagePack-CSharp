@@ -257,7 +257,10 @@ namespace MessagePack.Formatters
         public void Serialize(ref MessagePackWriter writer, DateTimeOffset value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(2);
-            writer.Write(new DateTime(value.UtcTicks, DateTimeKind.Utc)); // current ticks as is
+
+            // We're writing a *local* DateTime value in msgpack encoding as if it were UTC time.
+            // That's incorrect msgpack encoding, but fixing it now would compromise backward compatibility.
+            writer.Write(new DateTime(value.Ticks, DateTimeKind.Utc)); // current ticks as is
             writer.Write((short)value.Offset.TotalMinutes); // offset is normalized in minutes
             return;
         }
