@@ -26,7 +26,8 @@ Console.WriteLine("foo");
 //}
 
 
-public class ClassA<T> where T : ClassA<T>.ClassB
+public class ClassA<T>
+    where T : ClassA<T>.ClassB
 {
     public class ClassB
     {
