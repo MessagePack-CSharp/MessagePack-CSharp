@@ -99,11 +99,11 @@ namespace MessagePack.LZ4
                 int length;
                 if (IntPtr.Size == 4)
                 {
-                    length = LZ4_uncompress_32(inputPtr, outputPtr, output.Length);
+                    length = LZ4_uncompress_32(inputPtr, input.Length, outputPtr, output.Length);
                 }
                 else
                 {
-                    length = LZ4_uncompress_64(inputPtr, outputPtr, output.Length);
+                    length = LZ4_uncompress_64(inputPtr, input.Length, outputPtr, output.Length);
                 }
 
                 if (length != input.Length)
