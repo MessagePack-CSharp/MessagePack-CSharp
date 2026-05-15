@@ -25,7 +25,13 @@ namespace MessagePack
         private static readonly HashSet<string> DisallowedTypes = new HashSet<string>
         {
             "System.CodeDom.Compiler.TempFileCollection",
+            "System.IdentityModel.Tokens.SessionSecurityToken",
             "System.Management.IWbemClassObjectFreeThreaded",
+            "System.Security.Claims.ClaimsIdentity",
+            "System.Security.Principal.WindowsIdentity",
+            "System.Web.Security.RolePrincipal",
+            "System.Windows.Data.ObjectDataProvider",
+            "System.Windows.ResourceDictionary",
         };
 
 #if !DYNAMICCODEDUMPER
