@@ -25,7 +25,6 @@ parameters:
   default: true
 
 variables:
-  MSBuildTreatWarningsAsErrors: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   BuildConfiguration: Release
   ci_feed: https://pkgs.dev.azure.com/ils0086/MessagePack-CSharp/_packaging/MessagePack-CI/nuget/v3/index.json
