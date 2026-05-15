@@ -233,7 +233,7 @@ namespace MessagePack
                     using (var msgPackUncompressedRental = options.SequencePool.Rent())
                     {
                         var msgPackUncompressed = msgPackUncompressedRental.Value;
-                        if (TryDecompress(ref reader, msgPackUncompressed))
+                        if (TryDecompress(ref reader, msgPackUncompressed, options))
                         {
                             MessagePackReader uncompressedReader = reader.Clone(msgPackUncompressed.AsReadOnlySequence);
                             return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref uncompressedReader, options);
@@ -481,7 +481,7 @@ namespace MessagePack
             }
         }
 
-        private static bool TryDecompress(ref MessagePackReader reader, IBufferWriter<byte> writer)
+        private static bool TryDecompress(ref MessagePackReader reader, IBufferWriter<byte> writer, MessagePackSerializerOptions options)
         {
             if (!reader.End)
             {
@@ -503,6 +503,7 @@ namespace MessagePack
                         // The rest of the payload is the compressed data itself.
                         ReadOnlySequence<byte> compressedData = extReader.Sequence.Slice(extReader.Position);
 
+                        ThrowIfInvalidLz4BlockLength(uncompressedLength, options.Security.MaximumDecompressedSize);
                         Span<byte> uncompressedSpan = writer.GetSpan(uncompressedLength).Slice(0, uncompressedLength);
                         int actualUncompressedLength = LZ4Operation(compressedData, uncompressedSpan, LZ4CodecDecode);
                         Debug.Assert(actualUncompressedLength == uncompressedLength, "Unexpected length of uncompressed data.");
@@ -529,6 +530,7 @@ namespace MessagePack
                             var uncompressedLengths = ArrayPool<int>.Shared.Rent(sequenceCount);
                             try
                             {
+                                long remainingMaxDecompressedSize = options.Security.MaximumDecompressedSize;
                                 for (int i = 0; i < sequenceCount; i++)
                                 {
                                     uncompressedLengths[i] = reader.ReadInt32();
@@ -538,6 +540,8 @@ namespace MessagePack
                                 {
                                     var uncompressedLength = uncompressedLengths[i];
                                     ReadOnlySequence<byte> lz4Block = reader.ReadBytes() ?? throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<ReadOnlySequence<byte>>();
+                                    ThrowIfInvalidLz4BlockLength(uncompressedLength, remainingMaxDecompressedSize);
+                                    remainingMaxDecompressedSize -= uncompressedLength;
                                     Span<byte> uncompressedSpan = writer.GetSpan(uncompressedLength).Slice(0, uncompressedLength);
                                     var actualUncompressedLength = LZ4Operation(lz4Block, uncompressedSpan, LZ4CodecDecode);
                                     Debug.Assert(actualUncompressedLength == uncompressedLength, "Unexpected length of uncompressed data.");
@@ -556,6 +560,14 @@ namespace MessagePack
             }
 
             return false;
+        }
+
+        private static void ThrowIfInvalidLz4BlockLength(int uncompressedLength, long remainingMaxDecompressedSize)
+        {
+            if (uncompressedLength < 0 || uncompressedLength > remainingMaxDecompressedSize)
+            {
+                throw new MessagePackSerializationException("LZ4 block declares a decompressed length that exceeds the configured maximum.");
+            }
         }
 
         private static void ToLZ4BinaryCore(in ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer, MessagePackCompression compression, int minCompressionSize)
