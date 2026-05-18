@@ -36,6 +36,27 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void SystemType_DeserializeUsesLoadType()
+        {
+            byte[] msgpack = MessagePackSerializer.Serialize(new TypeHolder { Type = typeof(Uri) }, MessagePackSerializerOptions.Standard);
+            var options = new RejectingTypeLoadOptions(typeof(Uri));
+
+            var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<TypeHolder>(msgpack, options));
+            Assert.IsType<TypeLoadException>(ex.InnerException);
+            Assert.Equal(1, options.LoadTypeCalls);
+        }
+
+        [Fact]
+        public void SystemType_DeserializeRejectsDisallowedType()
+        {
+            byte[] msgpack = MessagePackSerializer.Serialize(new TypeHolder { Type = typeof(Uri) }, MessagePackSerializerOptions.Standard);
+            var options = new DisallowingTypeOptions(typeof(Uri));
+
+            var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<TypeHolder>(msgpack, options));
+            Assert.IsType<TypeAccessException>(ex.InnerException);
+        }
+
+        [Fact]
         public void DeserializeByteArrayFromFixArray()
         {
             var input = new byte[] { 0x93, 0x01, 0x02, 0x03 };
@@ -131,6 +152,69 @@ namespace MessagePack.Tests
             {
                 return MessagePackSerializer.Deserialize<T>(msgpack, MessagePackSerializerOptions.Standard);
             }
+        }
+
+        [MessagePackObject]
+        public class TypeHolder
+        {
+            [Key(0)]
+            public Type Type { get; set; }
+        }
+
+        private class RejectingTypeLoadOptions : MessagePackSerializerOptions
+        {
+            private readonly Type rejectedType;
+
+            internal RejectingTypeLoadOptions(Type rejectedType)
+                : base(MessagePackSerializerOptions.Standard)
+            {
+                this.rejectedType = rejectedType;
+            }
+
+            private RejectingTypeLoadOptions(RejectingTypeLoadOptions copyFrom)
+                : base(copyFrom)
+            {
+                this.rejectedType = copyFrom.rejectedType;
+                this.LoadTypeCalls = copyFrom.LoadTypeCalls;
+            }
+
+            public int LoadTypeCalls { get; private set; }
+
+            public override Type LoadType(string typeName)
+            {
+                Type type = base.LoadType(typeName);
+                this.LoadTypeCalls++;
+                return type == this.rejectedType ? null : type;
+            }
+
+            protected override MessagePackSerializerOptions Clone() => new RejectingTypeLoadOptions(this);
+        }
+
+        private class DisallowingTypeOptions : MessagePackSerializerOptions
+        {
+            private readonly Type rejectedType;
+
+            internal DisallowingTypeOptions(Type rejectedType)
+                : base(MessagePackSerializerOptions.Standard)
+            {
+                this.rejectedType = rejectedType;
+            }
+
+            private DisallowingTypeOptions(DisallowingTypeOptions copyFrom)
+                : base(copyFrom)
+            {
+                this.rejectedType = copyFrom.rejectedType;
+            }
+
+            public override void ThrowIfDeserializingTypeIsDisallowed(Type type)
+            {
+                if (type == this.rejectedType)
+                {
+                    throw new TypeAccessException();
+                }
+            }
+
+            protected override MessagePackSerializerOptions Clone() => new DisallowingTypeOptions(this);
         }
     }
 }
