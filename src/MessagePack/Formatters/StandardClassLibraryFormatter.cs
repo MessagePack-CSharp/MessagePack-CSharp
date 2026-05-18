@@ -837,9 +837,14 @@ namespace MessagePack.Formatters
 
         public T? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            return reader.ReadString() is string value
-                ? (T?)Type.GetType(value, throwOnError: true)
-                : null;
+            if (reader.ReadString() is not string value)
+            {
+                return null;
+            }
+
+            Type type = options.LoadType(value) ?? throw new TypeLoadException(value);
+            options.ThrowIfDeserializingTypeIsDisallowed(type);
+            return (T?)type;
         }
     }
 
