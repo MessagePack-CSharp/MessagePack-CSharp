@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - run: echo ${{ needs.update-packagejson.outputs.sha }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.update-packagejson.outputs.sha }}
           fetch-depth: 0
@@ -44,7 +44,7 @@ jobs:
       - run: dotnet test -c Release --no-build
       - run: dotnet pack -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish
       - name: upload artifacts
-        uses: actions/upload-artifact@v4 # must sync with actions/download-artifact@v4 in create-release
+        uses: actions/upload-artifact@v7 # must sync with actions/download-artifact@v8 in create-release
         with:
           name: nuget
           path: ./publish/
