@@ -84,7 +84,7 @@ public static class CodeAnalysisUtilities
         => dataType switch
         {
             INamedTypeSymbol namedType => namedType.TypeParameters.Select(t => GenericTypeParameterInfo.Create(t, recursionGuard)).ToImmutableArray(),
-            IArrayTypeSymbol arrayType => GetTypeParameters(arrayType.ElementType),
+            IArrayTypeSymbol arrayType => GetTypeParameters(arrayType.ElementType, recursionGuard),
             ITypeParameterSymbol => ImmutableArray<GenericTypeParameterInfo>.Empty,
             _ => throw new NotSupportedException(),
         };

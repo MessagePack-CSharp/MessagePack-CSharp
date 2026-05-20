@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using MessagePack.Internal;
 
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
@@ -52,8 +53,7 @@ namespace MessagePack.Formatters
 
                 writer.WriteMapHeader(count);
 
-                TEnumerator e = this.GetSourceEnumerator(value);
-                try
+                using (TEnumerator e = this.GetSourceEnumerator(value))
                 {
                     while (e.MoveNext())
                     {
@@ -62,10 +62,6 @@ namespace MessagePack.Formatters
                         keyFormatter.Serialize(ref writer, item.Key, options);
                         valueFormatter.Serialize(ref writer, item.Value, options);
                     }
-                }
-                finally
-                {
-                    e.Dispose();
                 }
             }
         }
@@ -141,6 +137,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class DictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, Dictionary<TKey, TValue>.Enumerator, Dictionary<TKey, TValue>>
         where TKey : notnull
     {
@@ -165,6 +162,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class GenericDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary>
         where TDictionary : class?, IDictionary<TKey, TValue>, new()
         where TKey : notnull
@@ -180,6 +178,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class GenericReadOnlyDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, TDictionary>
         where TDictionary : class?, IReadOnlyDictionary<TKey, TValue>
         where TKey : notnull
@@ -200,6 +199,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class InterfaceDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IDictionary<TKey, TValue>>
         where TKey : notnull
     {
@@ -219,6 +219,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class SortedListFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedList<TKey, TValue>>
         where TKey : notnull
     {
@@ -233,6 +234,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class SortedDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedDictionary<TKey, TValue>, SortedDictionary<TKey, TValue>.Enumerator, SortedDictionary<TKey, TValue>>
         where TKey : notnull
     {
@@ -257,6 +259,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class ReadOnlyDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, ReadOnlyDictionary<TKey, TValue>>
         where TKey : notnull
     {
@@ -276,6 +279,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class InterfaceReadOnlyDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>>
         where TKey : notnull
     {
@@ -295,6 +299,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class ConcurrentDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, System.Collections.Concurrent.ConcurrentDictionary<TKey, TValue>>
         where TKey : notnull
     {
@@ -309,4 +314,22 @@ namespace MessagePack.Formatters
             return new ConcurrentDictionary<TKey, TValue>(options.Security.GetEqualityComparer<TKey>());
         }
     }
+
+#if NET9_0_OR_GREATER
+
+    public sealed class OrderedDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, System.Collections.Generic.OrderedDictionary<TKey, TValue>>
+        where TKey : notnull
+    {
+        protected override void Add(OrderedDictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
+        {
+            collection.TryAdd(key, value);
+        }
+
+        protected override OrderedDictionary<TKey, TValue> Create(int count, MessagePackSerializerOptions options)
+        {
+            return new OrderedDictionary<TKey, TValue>(options.Security.GetEqualityComparer<TKey>());
+        }
+    }
+
+#endif
 }

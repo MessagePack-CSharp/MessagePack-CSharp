@@ -7,7 +7,7 @@
 using MsgPack = global::MessagePack;
 
 namespace MessagePack {
-partial class GeneratedMessagePackResolver {
+internal partial class GeneratedMessagePackResolver {
 
 	internal sealed class HasFieldWithCustomFormatterAttributeFormatter : MsgPack::Formatters.IMessagePackFormatter<global::HasFieldWithCustomFormatterAttribute>
 	{

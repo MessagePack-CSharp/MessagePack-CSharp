@@ -7,7 +7,7 @@
 using MsgPack = global::MessagePack;
 
 namespace MessagePack {
-partial class GeneratedMessagePackResolver {
+internal partial class GeneratedMessagePackResolver {
 internal partial class NS3 {
 
 	internal sealed class MyTypeFormatter<T> : MsgPack::Formatters.IMessagePackFormatter<global::NS3.MyType<T>>

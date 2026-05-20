@@ -3,6 +3,7 @@
 
 using System;
 using System.Buffers;
+using System.Buffers.Binary;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -10,6 +11,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Formatters;
+using MessagePack.Resolvers;
 using Xunit;
 
 namespace MessagePack.Tests
@@ -312,6 +315,35 @@ namespace MessagePack.Tests
             var d2 = this.Convert(d);
             d2["foo"].Is(10);
             d2["bar"].Is(20);
+        }
+
+        [Fact]
+        public void ByteListFormatterSerializeTest()
+        {
+            // ByteListFormatter and ListFormatter<byte> result must be same
+            var option1 = MessagePackSerializerOptions.Standard.WithResolver(CompositeResolver.Create([ByteListFormatter.Instance, ByteFormatter.Instance, new ListFormatter<byte>()]));
+            var option2 = MessagePackSerializerOptions.Standard.WithResolver(CompositeResolver.Create([ByteFormatter.Instance, new ListFormatter<byte>()]));
+
+            var bin1 = MessagePackSerializer.Serialize(new List<byte> { 1, 2, 3 }, option1);
+            var bin2 = MessagePackSerializer.Serialize(new List<byte> { 1, 2, 3 }, option2);
+
+            bin1.ShouldBe(bin2);
+        }
+
+        [Fact]
+        public void ByteListFormatterDeserializeTest()
+        {
+            var binary = MessagePackSerializer.Serialize(new byte[] { 1, 2, 3 });
+            var array = MessagePackSerializer.Serialize(new List<byte> { 1, 2, 3 });
+
+            MessagePackPrimitives.TryReadBinHeader(binary, out _, out _).ShouldBe(MessagePackPrimitives.DecodeResult.Success);
+            MessagePackPrimitives.TryReadArrayHeader(array, out _, out _).ShouldBe(MessagePackPrimitives.DecodeResult.Success);
+
+            var v1 = MessagePackSerializer.Deserialize<List<byte>>(binary);
+            var v2 = MessagePackSerializer.Deserialize<List<byte>>(array);
+
+            v1.ShouldBe([1, 2, 3]);
+            v2.ShouldBe([1, 2, 3]);
         }
     }
 

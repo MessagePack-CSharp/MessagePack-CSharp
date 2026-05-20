@@ -173,6 +173,7 @@ namespace MessagePack.Formatters
             return list;
         }
     }
+
 #endif
 
     public sealed class Int32Formatter : IMessagePackFormatter<Int32>
@@ -329,6 +330,7 @@ namespace MessagePack.Formatters
             return list;
         }
     }
+
 #endif
 
     public sealed class Int64Formatter : IMessagePackFormatter<Int64>
@@ -485,6 +487,7 @@ namespace MessagePack.Formatters
             return list;
         }
     }
+
 #endif
 
     public sealed class UInt16Formatter : IMessagePackFormatter<UInt16>
@@ -641,6 +644,7 @@ namespace MessagePack.Formatters
             return list;
         }
     }
+
 #endif
 
     public sealed class UInt32Formatter : IMessagePackFormatter<UInt32>
@@ -797,6 +801,7 @@ namespace MessagePack.Formatters
             return list;
         }
     }
+
 #endif
 
     public sealed class UInt64Formatter : IMessagePackFormatter<UInt64>
@@ -953,6 +958,7 @@ namespace MessagePack.Formatters
             return list;
         }
     }
+
 #endif
 
     public sealed class SingleFormatter : IMessagePackFormatter<Single>
@@ -1109,6 +1115,7 @@ namespace MessagePack.Formatters
             return list;
         }
     }
+
 #endif
 
     public sealed class DoubleFormatter : IMessagePackFormatter<Double>
@@ -1265,6 +1272,7 @@ namespace MessagePack.Formatters
             return list;
         }
     }
+
 #endif
 
     public sealed class BooleanFormatter : IMessagePackFormatter<Boolean>
@@ -1513,76 +1521,6 @@ namespace MessagePack.Formatters
         }
     }
 
-#if NET8_0_OR_GREATER
-    public sealed class ByteListFormatter : IMessagePackFormatter<List<Byte>?>
-    {
-        public static readonly ByteListFormatter Instance = new ByteListFormatter();
-
-        private ByteListFormatter()
-        {
-        }
-
-        public void Serialize(ref MessagePackWriter writer, List<Byte>? value, MessagePackSerializerOptions options)
-        {
-            if (value == null)
-            {
-                writer.WriteNil();
-            }
-            else
-            {
-                writer.Write(CollectionsMarshal.AsSpan(value));
-            }
-        }
-
-        public List<Byte>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
-        {
-            if (reader.NextMessagePackType == MessagePackType.Array)
-            {
-                int len = reader.ReadArrayHeader();
-                if (len == 0)
-                {
-                    return [];
-                }
-
-                var list = new List<byte>(len);
-                options.Security.DepthStep(ref reader);
-                try
-                {
-                    CollectionsMarshal.SetCount(list, len);
-                    var span = CollectionsMarshal.AsSpan(list);
-                    for (int i = 0; i < len; i++)
-                    {
-                        reader.CancellationToken.ThrowIfCancellationRequested();
-                        span[i] = reader.ReadByte();
-                    }
-                }
-                finally
-                {
-                    reader.Depth--;
-                }
-
-                return list;
-            }
-            else
-            {
-                var sequence = reader.ReadBytes();
-                if (sequence == null)
-                {
-                    return null;
-                }
-
-                int len = checked((int)sequence.Value.Length);
-                var list = new List<byte>(len);
-                CollectionsMarshal.SetCount(list, len);
-                var span = CollectionsMarshal.AsSpan(list);
-                sequence.Value.CopyTo(span);
-                return list;
-            }
-        }
-    }
-
-#endif
-
     public sealed class SByteFormatter : IMessagePackFormatter<SByte>
     {
         public static readonly SByteFormatter Instance = new SByteFormatter();
@@ -1737,6 +1675,7 @@ namespace MessagePack.Formatters
             return list;
         }
     }
+
 #endif
 
     public sealed class CharFormatter : IMessagePackFormatter<Char>
@@ -1893,6 +1832,7 @@ namespace MessagePack.Formatters
             return list;
         }
     }
+
 #endif
 
     public sealed class DateTimeFormatter : IMessagePackFormatter<DateTime>

@@ -12,6 +12,10 @@ on:
         default: false
         type: boolean
 
+permissions:
+  actions: write
+  contents: write
+
 jobs:
   # for unity. need update package.json from tag
   update-packagejson:
@@ -33,16 +37,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.update-packagejson.outputs.sha }}
+          fetch-depth: 0
       - uses: ./.github/actions/setup-dotnet
       # pack nuget
       - run: dotnet build -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }}
       - run: dotnet test -c Release --no-build
-      - run: dotnet pack -c Release --no-build -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish
+      - run: dotnet pack -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish
       - name: upload artifacts
         uses: actions/upload-artifact@v4 # must sync with actions/download-artifact@v4 in create-release
         with:
           name: nuget
-          path: ./nuget/
+          path: ./publish/
           if-no-files-found: 'error' # default 'warn'
           retention-days: 1 # expire in 1 day
 

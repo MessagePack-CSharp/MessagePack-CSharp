@@ -18,7 +18,7 @@ using System.Runtime.InteropServices;
 
 #pragma warning disable SA1402 // File may only contain a single type
 
-namespace Nerdbank.Streams
+namespace Nerdbank.Streams // NOTE: invalid namespace, should modify
 {
     /// <summary>
     /// Manages a sequence of elements, readily castable as a <see cref="ReadOnlySequence{T}"/>.
@@ -28,7 +28,7 @@ namespace Nerdbank.Streams
     /// Instance members are not thread-safe.
     /// </remarks>
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-    internal class Sequence<T> : IBufferWriter<T>, IDisposable
+    internal sealed class Sequence<T> : IBufferWriter<T>, IDisposable
     {
         private const int MaximumAutoGrowSize = 32 * 1024;
 
@@ -361,7 +361,7 @@ namespace Nerdbank.Streams
             /// <summary>
             /// A value indicating whether the element may contain references (and thus must be cleared).
             /// </summary>
-            private static readonly bool MayContainReferences = !typeof(T).GetTypeInfo().IsPrimitive;
+            private static readonly bool MayContainReferences = !typeof(T).IsPrimitive;
 
 #pragma warning disable SA1011 // Closing square brackets should be spaced correctly
             /// <summary>

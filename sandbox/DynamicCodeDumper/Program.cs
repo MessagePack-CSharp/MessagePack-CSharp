@@ -467,3 +467,13 @@ namespace DynamicCodeDumper
     ////    }
     ////}
 }
+
+
+#pragma warning disable
+
+namespace MessagePack.Internal
+{
+    internal sealed class PreserveAttribute : System.Attribute
+    {
+    }
+}

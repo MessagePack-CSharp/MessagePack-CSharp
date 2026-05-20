@@ -42,12 +42,13 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
         this.Name = symbol.Name;
         this.Kind = symbol.TypeKind;
         this.isRecord |= symbol.IsRecord;
-        this.Container = symbol.ContainingType is { } nesting ? new NestingTypeContainer(new(nesting)) :
+        this.Container = symbol.ContainingType is { } nesting ? new NestingTypeContainer(new(nesting, recursionGuard)) :
             symbol.ContainingNamespace?.GetFullNamespaceName() is string ns ? new NamespaceTypeContainer(ns) :
             null;
         this.TypeParameters = CodeAnalysisUtilities.GetTypeParameters(symbol, recursionGuard);
         this.TypeArguments = CodeAnalysisUtilities.GetTypeArguments(symbol, recursionGuard);
         this.ReferenceTypeNullableAnnotation = symbol.NullableAnnotation;
+        this.AccessModifier = symbol.DeclaredAccessibility;
     }
 
     [SetsRequiredMembers]

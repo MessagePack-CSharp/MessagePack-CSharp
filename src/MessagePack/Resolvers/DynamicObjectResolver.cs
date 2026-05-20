@@ -61,15 +61,15 @@ namespace MessagePack.Resolvers
 
         internal static IMessagePackFormatter<T>? BuildFormatterHelper<T>(IFormatterResolver self, DynamicAssemblyFactory dynamicAssemblyFactory, bool forceStringKey, bool contractless, bool allowPrivate)
         {
-            TypeInfo ti = typeof(T).GetTypeInfo();
+            Type type = typeof(T);
 
-            if (ti.IsInterface || ti.IsAbstract)
+            if (type.IsInterface || type.IsAbstract)
             {
                 return null;
             }
 
             DynamicAssembly? dynamicAssembly = null;
-            if (ti.IsAnonymous())
+            if (type.IsAnonymous())
             {
                 forceStringKey = true;
                 contractless = true;
@@ -78,25 +78,25 @@ namespace MessagePack.Resolvers
                 // but *not* look at non-public members to avoid double-serialization of the properties
                 // as well as their backing fields.
                 allowPrivate = false;
-                dynamicAssembly = DynamicAssemblyFactory.GetDynamicAssembly(typeof(T), true);
+                dynamicAssembly = DynamicAssemblyFactory.GetDynamicAssembly(type, true);
             }
-            else if (ti.IsNullable())
+            else if (type.IsNullable())
             {
-                ti = ti.GenericTypeArguments[0].GetTypeInfo();
+                type = type.GenericTypeArguments[0];
 
-                var innerFormatter = self.GetFormatterDynamic(ti.AsType());
+                var innerFormatter = self.GetFormatterDynamic(type);
                 if (innerFormatter == null)
                 {
                     return null;
                 }
 
-                return (IMessagePackFormatter<T>?)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), [innerFormatter]);
+                return (IMessagePackFormatter<T>?)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(type), [innerFormatter]);
             }
 
-            allowPrivate |= !contractless && typeof(T).GetCustomAttributes<MessagePackObjectAttribute>().Any(a => a.AllowPrivate);
-            dynamicAssembly ??= DynamicAssemblyFactory.GetDynamicAssembly(typeof(T), allowPrivate);
-            TypeInfo? formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(dynamicAssembly, typeof(T), forceStringKey, contractless, allowPrivate);
-            return formatterTypeInfo is null ? null : (IMessagePackFormatter<T>)ResolverUtilities.ActivateFormatter(formatterTypeInfo.AsType());
+            allowPrivate |= !contractless && type.GetCustomAttributes<MessagePackObjectAttribute>().Any(a => a.AllowPrivate);
+            dynamicAssembly ??= DynamicAssemblyFactory.GetDynamicAssembly(type, allowPrivate);
+            TypeInfo? formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(dynamicAssembly, type, forceStringKey, contractless, allowPrivate);
+            return formatterTypeInfo is null ? null : (IMessagePackFormatter<T>)ResolverUtilities.ActivateFormatter(formatterTypeInfo);
         }
 
         private static class FormatterCache<T>
@@ -239,7 +239,7 @@ namespace MessagePack.Internal
                 return null;
             }
 
-            if (!allowPrivate && !(type.IsPublic || type.IsNestedPublic) && !type.GetTypeInfo().IsAnonymous())
+            if (!allowPrivate && !(type.IsPublic || type.IsNestedPublic) && !type.IsAnonymous())
             {
                 throw new MessagePackSerializationException("Building dynamic formatter only allows public type. Type: " + type.FullName);
             }
@@ -462,7 +462,7 @@ namespace MessagePack.Internal
             var argOptions = new ArgumentField(il, firstArgIndex + 2);
 
             // if(value == null) return WriteNil
-            if (type.GetTypeInfo().IsClass)
+            if (type.IsClass)
             {
                 Label elseBody = il.DefineLabel();
 
@@ -476,7 +476,7 @@ namespace MessagePack.Internal
             }
 
             // IMessagePackSerializationCallbackReceiver.OnBeforeSerialize()
-            if (type.GetTypeInfo().ImplementedInterfaces.Any(x => x == typeof(IMessagePackSerializationCallbackReceiver)))
+            if (type.GetInterfaces().Any(x => x == typeof(IMessagePackSerializationCallbackReceiver)))
             {
                 // call directly
                 MethodInfo[] runtimeMethods = type.GetRuntimeMethods().Where(x => x.Name == "OnBeforeSerialize").ToArray();
@@ -515,7 +515,7 @@ namespace MessagePack.Internal
                 {
                     if (intKeyMap.TryGetValue(i, out ObjectSerializationInfo.EmittableMember? member))
                     {
-                        EmitSerializeValue(il, type.GetTypeInfo(), member, index++, tryEmitLoadCustomFormatter, argWriter, argValue, argOptions, localResolver);
+                        EmitSerializeValue(il, member, index++, tryEmitLoadCustomFormatter, argWriter, argValue, argOptions, localResolver);
                     }
                     else
                     {
@@ -568,7 +568,7 @@ namespace MessagePack.Internal
                         il.EmitCall(MessagePackWriterTypeInfo.WriteRaw);
                     }
 
-                    EmitSerializeValue(il, type.GetTypeInfo(), item, index, tryEmitLoadCustomFormatter, argWriter, argValue, argOptions, localResolver);
+                    EmitSerializeValue(il, item, index, tryEmitLoadCustomFormatter, argWriter, argValue, argOptions, localResolver);
                     index++;
                 }
             }
@@ -576,7 +576,7 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Ret);
         }
 
-        private static void EmitSerializeValue(ILGenerator il, TypeInfo type, ObjectSerializationInfo.EmittableMember member, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, ArgumentField argWriter, ArgumentField argValue, ArgumentField argOptions, LocalBuilder localResolver)
+        private static void EmitSerializeValue(ILGenerator il, ObjectSerializationInfo.EmittableMember member, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action?> tryEmitLoadCustomFormatter, ArgumentField argWriter, ArgumentField argValue, ArgumentField argOptions, LocalBuilder localResolver)
         {
             Label endLabel = il.DefineLabel();
             Type t = member.Type;
@@ -592,7 +592,7 @@ namespace MessagePack.Internal
             }
             else if (ObjectSerializationInfo.IsOptimizeTargetType(t))
             {
-                if (!t.GetTypeInfo().IsValueType)
+                if (!t.IsValueType)
                 {
                     // As a nullable type (e.g. byte[] and string) we need to call WriteNil for null values.
                     Label writeNonNilValueLabel = il.DefineLabel();
@@ -1060,7 +1060,7 @@ namespace MessagePack.Internal
             argReader.EmitLdarg();
             il.EmitCall(MessagePackReaderTypeInfo.TryReadNil);
             il.Emit(OpCodes.Brfalse_S, falseLabel);
-            if (type.GetTypeInfo().IsClass)
+            if (type.IsClass)
             {
                 il.Emit(OpCodes.Ldnull);
                 il.Emit(OpCodes.Ret);
@@ -1087,7 +1087,7 @@ namespace MessagePack.Internal
 
         private static void BuildDeserializeInternalOnAfterDeserialize(Type type, ObjectSerializationInfo info, ILGenerator il, LocalBuilder localResult)
         {
-            if (type.GetTypeInfo().ImplementedInterfaces.All(x => x != typeof(IMessagePackSerializationCallbackReceiver)))
+            if (type.GetInterfaces().All(x => x != typeof(IMessagePackSerializationCallbackReceiver)))
             {
                 return;
             }
@@ -1197,7 +1197,7 @@ namespace MessagePack.Internal
             }
             else if (ObjectSerializationInfo.IsOptimizeTargetType(t))
             {
-                if (!t.GetTypeInfo().IsValueType)
+                if (!t.IsValueType)
                 {
                     // As a nullable type (e.g. byte[] and string) we need to first call TryReadNil
                     // if (reader.TryReadNil())
@@ -1267,7 +1267,7 @@ namespace MessagePack.Internal
             }
             else if (ObjectSerializationInfo.IsOptimizeTargetType(t))
             {
-                if (!t.GetTypeInfo().IsValueType)
+                if (!t.IsValueType)
                 {
                     // As a nullable type (e.g. byte[] and string) we need to first call TryReadNil
                     // if (reader.TryReadNil())
@@ -1383,8 +1383,8 @@ namespace MessagePack.Internal
         internal static class EmitInfo
         {
             internal static readonly MethodInfo GetTypeFromHandle = ExpressionUtility.GetMethodInfo(() => Type.GetTypeFromHandle(default(RuntimeTypeHandle)));
-            internal static readonly MethodInfo TypeGetProperty = ExpressionUtility.GetMethodInfo((Type t) => t.GetTypeInfo().GetProperty(default(string)!, default(BindingFlags)));
-            internal static readonly MethodInfo TypeGetField = ExpressionUtility.GetMethodInfo((Type t) => t.GetTypeInfo().GetField(default(string)!, default(BindingFlags)));
+            internal static readonly MethodInfo TypeGetProperty = ExpressionUtility.GetMethodInfo((Type t) => t.GetProperty(default(string)!, default(BindingFlags)));
+            internal static readonly MethodInfo TypeGetField = ExpressionUtility.GetMethodInfo((Type t) => t.GetField(default(string)!, default(BindingFlags)));
             internal static readonly MethodInfo GetCustomAttributeMessagePackFormatterAttribute = ExpressionUtility.GetMethodInfo(() => CustomAttributeExtensions.GetCustomAttribute<MessagePackFormatterAttribute>(default(MemberInfo)!, default(bool)));
             internal static readonly MethodInfo ActivatorCreateInstance = ExpressionUtility.GetMethodInfo(() => Activator.CreateInstance(default(Type)!, default(object[])));
 
@@ -1451,13 +1451,12 @@ namespace MessagePack.Internal
 
         internal static ObjectSerializationInfo? CreateOrNull(Type type, bool forceStringKey, bool contractless, bool allowPrivate)
         {
-            TypeInfo ti = type.GetTypeInfo();
-            var isClass = ti.IsClass || ti.IsInterface || ti.IsAbstract;
-            var isClassRecord = isClass && IsClassRecord(ti);
-            var isStruct = ti.IsValueType;
+            var isClass = type.IsClass || type.IsInterface || type.IsAbstract;
+            var isClassRecord = isClass && IsClassRecord(type);
+            var isStruct = type.IsValueType;
 
-            MessagePackObjectAttribute? contractAttr = ti.GetCustomAttributes<MessagePackObjectAttribute>().FirstOrDefault();
-            DataContractAttribute? dataContractAttr = ti.GetCustomAttribute<DataContractAttribute>();
+            MessagePackObjectAttribute? contractAttr = type.GetCustomAttributes<MessagePackObjectAttribute>().FirstOrDefault();
+            DataContractAttribute? dataContractAttr = type.GetCustomAttribute<DataContractAttribute>();
             if (contractAttr == null && dataContractAttr == null && !forceStringKey && !contractless)
             {
                 return null;
@@ -1672,11 +1671,12 @@ namespace MessagePack.Internal
 
             // GetConstructor
             IEnumerator<ConstructorInfo>? ctorEnumerator = null;
-            ConstructorInfo? ctor = ti.DeclaredConstructors.SingleOrDefault(x => x.GetCustomAttribute<SerializationConstructorAttribute>(false) is not null);
+            ConstructorInfo? ctor = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+                .SingleOrDefault(x => x.GetCustomAttribute<SerializationConstructorAttribute>(false) is not null);
             if (ctor == null)
             {
-                ctorEnumerator =
-                    ti.DeclaredConstructors.Where(x => !x.IsStatic && (allowPrivate || x.IsPublic)).OrderByDescending(x => x.GetParameters().Length)
+                ctorEnumerator = (allowPrivate ? type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly) :
+                    type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)).OrderByDescending(x => x.GetParameters().Length)
                     .GetEnumerator();
 
                 if (ctorEnumerator.MoveNext())
@@ -1709,7 +1709,7 @@ namespace MessagePack.Internal
                             if (ctorParamIndexIntMembersDictionary.TryGetValue(ctorParamIndex, out paramMember))
                             {
                                 if ((item.ParameterType == paramMember.Type ||
-                                    item.ParameterType.GetTypeInfo().IsAssignableFrom(paramMember.Type))
+                                    item.ParameterType.IsAssignableFrom(paramMember.Type))
                                     && paramMember.IsReadable)
                                 {
                                     constructorParameters.Add(new EmittableMemberAndConstructorParameter(paramMember, item));
@@ -1915,7 +1915,7 @@ namespace MessagePack.Internal
             }
         }
 
-        private static bool IsClassRecord(TypeInfo type)
+        private static bool IsClassRecord(Type type)
         {
             // The only truly unique thing about a C# 9 record class is the presence of a <Clone>$ method,
             // which cannot be declared in C# because of the reserved characters in its name.

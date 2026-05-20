@@ -80,12 +80,6 @@ To install with NuGet, just install the `MessagePack` package:
 Install-Package MessagePack
 ```
 
-Install the optional C# [analyzers](doc/analyzers/index.md) package to get warnings about coding mistakes and automatic fix suggestions to save you time:
-
-```ps1
-Install-Package MessagePackAnalyzer
-```
-
 There are also a range of official and third party Extension Packages available (learn more in our [extensions section](#extensions)):
 
 ```ps1
@@ -163,7 +157,7 @@ By default, a `MessagePackObject` annotation is required. This can be made optio
 
 ## Analyzer
 
-The MessagePackAnalyzer package aids with:
+The MessagePackAnalyzer package(includes in default) aids with:
 
 1. Produces compiler warnings upon incorrect attribute use, member accessibility, and more.
 1. Automating attributing of your serializable classes and members.
@@ -727,7 +721,7 @@ Performance varies depending on the options used. This is a micro benchmark with
  |           JilString |   553.65 ns |    NA |   7.62 | 0.0362 |     152 B |
  |     JilStreamReader | 1,408.46 ns |    NA |  19.38 | 0.8450 |    3552 B |
 
-`ÌntKey`, `StringKey`, `Typeless_IntKey`, `Typeless_StringKey` are MessagePack for C# options. All MessagePack for C# options achieve zero memory allocations in the deserialization process. `JsonNetString`/`JilString` is deserialized from strings. `JsonNetStreamReader`/`JilStreamReader` is deserialized from UTF-8 byte arrays using `StreamReader`. Deserialization is normally read from Stream. Thus, it will be restored from byte arrays (or Stream) instead of strings.
+`IntKey`, `StringKey`, `Typeless_IntKey`, `Typeless_StringKey` are MessagePack for C# options. All MessagePack for C# options achieve zero memory allocations in the deserialization process. `JsonNetString`/`JilString` is deserialized from strings. `JsonNetStreamReader`/`JilStreamReader` is deserialized from UTF-8 byte arrays using `StreamReader`. Deserialization is normally read from Stream. Thus, it will be restored from byte arrays (or Stream) instead of strings.
 
 MessagePack for C# `IntKey` is the fastest. `StringKey` is slower than `IntKey` because matching the character string of property names is required. `IntKey` works by reading the array length, then `for (array length) { binary decode }`. `StringKey` works by reading map length, `for (map length) { decode key, lookup key, binary decode }`, so it requires an additional two steps (decoding of keys and lookups of keys).
 

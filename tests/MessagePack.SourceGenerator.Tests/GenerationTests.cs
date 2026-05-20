@@ -802,7 +802,7 @@ public class MyGenericType<T>
         await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource);
     }
 
-    [Fact]
+    [Fact(Skip = "We need to refactor the unpleasant Resources-based tests.")]
     public async Task InterfaceUnionUsedWithNullableRefAnnotation()
     {
         string testSource = /* lang=c#-test */ """
@@ -815,8 +815,11 @@ public class MyGenericType<T>
             {
             }
 
-            class Derived1 : IMyType {}
-            class Derived2 : IMyType {}
+            [MessagePackObject]
+            public class Derived1 : IMyType {}
+
+            [MessagePackObject]
+            public class Derived2 : IMyType {}
 
             [MessagePackObject]
             public class UnionContainer

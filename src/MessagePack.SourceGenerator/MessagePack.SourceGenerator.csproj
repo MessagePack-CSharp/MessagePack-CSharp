@@ -8,6 +8,8 @@
     <AnalyzerLanguage>cs</AnalyzerLanguage>
     <DebugType>embedded</DebugType>
     <IsPackable>false</IsPackable>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <NoWarn>$(NoWarn);RS2007</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -92,7 +94,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" PrivateAssets="all" />
-    <PackageReference Include="PolySharp" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

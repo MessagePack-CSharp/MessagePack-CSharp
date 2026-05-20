@@ -259,7 +259,7 @@ namespace MessagePack.Internal
     internal static class StandardResolverHelper
     {
         public static readonly IFormatterResolver[] DefaultResolvers = DynamicAssembly.AvoidDynamicCode
-            ? [BuiltinResolver.Instance, AttributeFormatterResolver.Instance, SourceGeneratedFormatterResolver.Instance, ImmutableCollection.ImmutableCollectionResolver.Instance, CompositeResolver.Create(ExpandoObjectFormatter.Instance)]
+            ? [BuiltinResolver.Instance, AttributeFormatterResolver.Instance, SourceGeneratedFormatterResolver.Instance, ImmutableCollection.ImmutableCollectionResolver.Instance, CompositeResolver.Create(ExpandoObjectFormatter.Instance), DynamicGenericResolver.Instance]
             : [BuiltinResolver.Instance, AttributeFormatterResolver.Instance, SourceGeneratedFormatterResolver.Instance, ImmutableCollection.ImmutableCollectionResolver.Instance, CompositeResolver.Create(ExpandoObjectFormatter.Instance), DynamicGenericResolver.Instance, DynamicUnionResolver.Instance];
     }
 }

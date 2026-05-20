@@ -371,3 +371,5 @@ src/MessagePack.UnityClient/Assets/Packages/
 BenchmarkDotNet.Artifacts/
 
 src/MessagePack.UnityClient/.vsconfig
+
+*.lscache

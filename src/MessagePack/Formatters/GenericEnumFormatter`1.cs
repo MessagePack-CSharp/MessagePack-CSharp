@@ -3,9 +3,11 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using MessagePack.Internal;
 
 namespace MessagePack.Formatters
 {
+    [Preserve]
     public sealed class GenericEnumFormatter<T> : IMessagePackFormatter<T>
         where T : struct, Enum
     {

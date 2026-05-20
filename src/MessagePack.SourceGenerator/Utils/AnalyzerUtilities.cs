@@ -66,7 +66,7 @@ public static class AnalyzerUtilities
 
         ResolverOptions resolverOptions = new()
         {
-            Name = new QualifiedNamedTypeName((INamedTypeSymbol)targetSymbol),
+            Name = new QualifiedNamedTypeName((INamedTypeSymbol)targetSymbol, ImmutableStack<GenericTypeParameterInfo>.Empty),
         };
 
         GeneratorOptions generatorOptions = new()

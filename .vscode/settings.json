@@ -9,11 +9,6 @@
   "[xml]": {
     "editor.wordWrap": "off"
   },
-  // Treat these files as Azure Pipelines files
-  "files.associations": {
-    "**/azure-pipelines/**/*.yml": "azure-pipelines",
-    "azure-pipelines.yml": "azure-pipelines"
-  },
   // Use Prettier as the default formatter for Azure Pipelines files.
   // Needs to be explicitly configured: https://github.com/Microsoft/azure-pipelines-vscode#document-formatting
   "[azure-pipelines]": {

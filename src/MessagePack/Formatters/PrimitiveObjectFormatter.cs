@@ -37,7 +37,13 @@ namespace MessagePack.Formatters
         {
         }
 
+        [Obsolete("Please, use the method overload without TypeInfo")]
         public static bool IsSupportedType(Type type, TypeInfo typeInfo, object value)
+        {
+            return IsSupportedType(type, value);
+        }
+
+        public static bool IsSupportedType(Type type, object value)
         {
             if (value == null)
             {
@@ -49,7 +55,7 @@ namespace MessagePack.Formatters
                 return true;
             }
 
-            if (typeInfo.IsEnum)
+            if (type.IsEnum)
             {
                 return true;
             }
@@ -133,7 +139,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                if (t.GetTypeInfo().IsEnum)
+                if (t.IsEnum)
                 {
                     Type underlyingType = Enum.GetUnderlyingType(t);
                     var code2 = TypeToJumpCode[underlyingType];
