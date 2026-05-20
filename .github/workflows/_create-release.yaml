@@ -153,7 +153,7 @@ jobs:
             fi
 
             if [[ "${{ inputs.dry-run }}" == "true" ]]; then
-              echo "(dry run) dotnet nuget push \"${nuget_path}\" --skip-duplicate -s https://api.nuget.org/v3/index.json -k \"${{ env.NUGET_KEY }}\""
+              echo "(dry run) dotnet nuget push \"${nuget_path}\" --skip-duplicate -s https://api.nuget.org/v3/index.json -k \"***\""
             else
               dotnet nuget push "${nuget_path}" --skip-duplicate -s https://api.nuget.org/v3/index.json -k "${{ env.NUGET_KEY }}"
             fi

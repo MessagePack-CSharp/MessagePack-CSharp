@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MessagePack.Internal
 {
@@ -23,7 +24,7 @@ namespace MessagePack.Internal
         /// The <see cref="Version.Minor"/> component of the version of the generator that produced the resolver and formatters.
         /// This may be used to determine whether the resolver and formatters are compatible with the current version of MessagePack.
         /// </param>
-        public GeneratedAssemblyMessagePackResolverAttribute(Type resolverType, int majorVersion, int minorVersion)
+        public GeneratedAssemblyMessagePackResolverAttribute([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] Type resolverType, int majorVersion, int minorVersion)
         {
             ResolverType = resolverType;
             MajorVersion = majorVersion;

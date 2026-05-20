@@ -147,8 +147,7 @@ namespace MessagePack.Formatters
             var typeNameCache = options.OmitAssemblyVersion ? ShortenedTypeNameCache : FullTypeNameCache;
             if (!typeNameCache.TryGetValue(type, out byte[]? typeName))
             {
-                TypeInfo ti = type.GetTypeInfo();
-                if (ti.IsAnonymous() || UseBuiltinTypes.Contains(type))
+                if (type.IsAnonymous() || UseBuiltinTypes.Contains(type))
                 {
                     typeName = null;
                 }
@@ -176,8 +175,6 @@ namespace MessagePack.Formatters
                 {
                     if (!Serializers.TryGetValue(type, out serializeMethod))
                     {
-                        TypeInfo ti = type.GetTypeInfo();
-
                         Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
                         ParameterExpression param0 = Expression.Parameter(typeof(object), "formatter");
                         ParameterExpression param1 = Expression.Parameter(typeof(MessagePackWriter).MakeByRefType(), "writer");
@@ -190,7 +187,7 @@ namespace MessagePack.Formatters
                             Expression.Convert(param0, formatterType),
                             serializeMethodInfo,
                             param1,
-                            ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
+                            type.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
                             param3);
 
                         serializeMethod = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3).Compile();
@@ -305,8 +302,6 @@ namespace MessagePack.Formatters
                 {
                     if (!Deserializers.TryGetValue(type, out deserializeMethod))
                     {
-                        TypeInfo ti = type.GetTypeInfo();
-
                         Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
                         ParameterExpression param0 = Expression.Parameter(typeof(object), "formatter");
                         ParameterExpression param1 = Expression.Parameter(typeof(MessagePackReader).MakeByRefType(), "reader");
@@ -321,7 +316,7 @@ namespace MessagePack.Formatters
                             param2);
 
                         Expression body = deserialize;
-                        if (ti.IsValueType)
+                        if (type.IsValueType)
                         {
                             body = Expression.Convert(deserialize, typeof(object));
                         }

@@ -7,7 +7,7 @@
 using MsgPack = global::MessagePack;
 
 namespace MessagePack {
-partial class GeneratedMessagePackResolver {
+internal partial class GeneratedMessagePackResolver {
 internal partial class TempProject {
 
 	internal sealed class MyObject2Formatter : MsgPack::Formatters.IMessagePackFormatter<global::TempProject.MyObject2>

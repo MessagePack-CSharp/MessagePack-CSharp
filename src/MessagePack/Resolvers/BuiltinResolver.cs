@@ -65,10 +65,6 @@ namespace MessagePack.Internal
             { typeof(byte), ByteFormatter.Instance },
             { typeof(sbyte), SByteFormatter.Instance },
             { typeof(DateTime), DateTimeFormatter.Instance },
-#if NET6_0_OR_GREATER
-            { typeof(DateOnly), DateOnlyFormatter.Instance },
-            { typeof(TimeOnly), TimeOnlyFormatter.Instance },
-#endif
             { typeof(char), CharFormatter.Instance },
 
             // Nullable Primitive
@@ -135,7 +131,6 @@ namespace MessagePack.Internal
             { typeof(List<Single>), SingleListFormatter.Instance },
             { typeof(List<Double>), DoubleListFormatter.Instance },
             { typeof(List<Boolean>), BooleanListFormatter.Instance },
-            { typeof(List<byte>), ByteListFormatter.Instance },
             { typeof(List<SByte>), SByteListFormatter.Instance },
             { typeof(List<Char>), CharListFormatter.Instance },
 #else
@@ -148,12 +143,12 @@ namespace MessagePack.Internal
             { typeof(List<Single>), new ListFormatter<Single>() },
             { typeof(List<Double>), new ListFormatter<Double>() },
             { typeof(List<Boolean>), new ListFormatter<Boolean>() },
-            { typeof(List<byte>), new ListFormatter<byte>() },
             { typeof(List<SByte>), new ListFormatter<SByte>() },
             { typeof(List<Char>), new ListFormatter<Char>() },
 #endif
             { typeof(List<DateTime>), new ListFormatter<DateTime>() },
             { typeof(List<string>), new ListFormatter<string>() },
+            { typeof(List<Byte>), ByteListFormatter.Instance }, // special formatter to maintain compatibility due to bugs
 
             { typeof(object[]), new ArrayFormatter<object>() },
             { typeof(List<object>), new ListFormatter<object>() },
@@ -186,6 +181,15 @@ namespace MessagePack.Internal
 
 #if NET5_0_OR_GREATER
             { typeof(System.Half), HalfFormatter.Instance },
+            { typeof(System.Text.Rune), RuneFormatter.Instance },
+#endif
+#if NET6_0_OR_GREATER
+            { typeof(DateOnly), DateOnlyFormatter.Instance },
+            { typeof(TimeOnly), TimeOnlyFormatter.Instance },
+#endif
+#if NET7_0_OR_GREATER
+            { typeof(Int128), Int128Formatter.Instance },
+            { typeof(UInt128), UInt128Formatter.Instance },
 #endif
         };
 

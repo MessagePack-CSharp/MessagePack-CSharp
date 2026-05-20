@@ -227,8 +227,12 @@ namespace MessagePack.Tests
         {
             string id = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Tokyo Standard Time" : "Cuba";
             DateTimeOffset now = new DateTime(DateTime.UtcNow.Ticks + TimeZoneInfo.FindSystemTimeZoneById(id).BaseUtcOffset.Ticks, DateTimeKind.Local);
-            var binary = MessagePackSerializer.Serialize(now);
-            MessagePackSerializer.Deserialize<DateTimeOffset>(binary).Is(now);
+            AssertRoundtrip(now);
+
+            AssertRoundtrip(DateTimeOffset.Now);
+
+            // Try specific offset values because CI/PR builds run on agents that run on the UTC time zone.
+            AssertRoundtrip(DateTimeOffset.Now.ToOffset(TimeSpan.FromHours(4)));
         }
 
         [Fact]
@@ -323,5 +327,21 @@ namespace MessagePack.Tests
         }
 
 #endif
+
+        private static DateTimeOffset AssertRoundtrip(DateTimeOffset value)
+        {
+            var result = MessagePackSerializer.Deserialize<DateTimeOffset>(MessagePackSerializer.Serialize(value));
+            result.Is(value, DateTimeOffsetEqualityComparer.Instance);
+            return result;
+        }
+
+        private class DateTimeOffsetEqualityComparer : IEqualityComparer<DateTimeOffset>
+        {
+            internal static readonly DateTimeOffsetEqualityComparer Instance = new();
+
+            public bool Equals(DateTimeOffset x, DateTimeOffset y) => x.EqualsExact(y);
+
+            public int GetHashCode(DateTimeOffset obj) => obj.UtcDateTime.GetHashCode();
+        }
     }
 }

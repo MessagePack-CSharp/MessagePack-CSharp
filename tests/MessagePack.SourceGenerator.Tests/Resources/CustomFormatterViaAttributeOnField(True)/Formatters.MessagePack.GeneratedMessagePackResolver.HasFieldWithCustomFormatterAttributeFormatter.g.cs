@@ -5,7 +5,7 @@
 using MsgPack = global::MessagePack;
 
 namespace MessagePack {
-partial class GeneratedMessagePackResolver {
+internal partial class GeneratedMessagePackResolver {
 	internal sealed class HasFieldWithCustomFormatterAttributeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::HasFieldWithCustomFormatterAttribute>
 	{
 		private readonly global::UnserializableRecordFormatter __CustomValueCustomFormatter__ = new global::UnserializableRecordFormatter();

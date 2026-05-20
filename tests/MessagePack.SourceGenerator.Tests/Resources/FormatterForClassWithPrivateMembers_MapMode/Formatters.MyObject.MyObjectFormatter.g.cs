@@ -4,7 +4,7 @@
 
 using MsgPack = global::MessagePack;
 
-partial class MyObject {
+internal partial class MyObject {
 	internal sealed class MyObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::MyObject>
 	{
 		// value

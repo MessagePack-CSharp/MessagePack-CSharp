@@ -458,6 +458,20 @@ namespace MessagePack.Tests
             Assert.Equal(person.Name, deserialized.Name);
         }
 
+        /// <summary>
+        /// Verifies that SkipClrVisibilityChecks discovers the private members of a base class.
+        /// </summary>
+        /// <remarks>
+        /// This test is only particularly effective when run in isolation, since other tests may have already
+        /// triggered the skip checks attribute for the test assembly itself, which nullifies the goal of this test.
+        /// </remarks>
+        [Fact]
+        public void SkipClrVisibilityTracing()
+        {
+            InternalTestWithoutMembersClass result = Roundtrip(new InternalTestWithoutMembersClass { BaseValue = 1 }, MessagePackSerializerOptions.Standard);
+            Assert.Equal(1, result.BaseValue);
+        }
+
         private T Roundtrip<T>(T value, MessagePackSerializerOptions options)
         {
             byte[] msgpack = MessagePackSerializer.Serialize(value, options);
@@ -802,6 +816,21 @@ namespace MessagePack.Tests
             {
                 // This constructor intentionally left blank.
             }
+        }
+
+        [MessagePackObject(AllowPrivate = true, SuppressSourceGeneration = true)]
+        public class InternalTestWithoutMembersClass : InternalBaseTestClass
+        {
+        }
+
+        [MessagePackObject(AllowPrivate = true, SuppressSourceGeneration = true)]
+        public class InternalBaseTestClass
+        {
+            [Key(0)]
+            private int baseValue;
+
+            [IgnoreMember]
+            public int BaseValue { get => baseValue; set => baseValue = value; }
         }
     }
 }

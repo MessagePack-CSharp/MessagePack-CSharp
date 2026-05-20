@@ -5,6 +5,7 @@ using System;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MessagePack
 {
@@ -28,13 +29,22 @@ namespace MessagePack
 
         internal static Memory<byte> GetMemoryCheckResult(this IBufferWriter<byte> bufferWriter, int size = 0)
         {
-            var memory = bufferWriter.GetMemory(size);
+            Memory<byte> memory = bufferWriter.GetMemory(size);
             if (memory.IsEmpty)
             {
-                throw new InvalidOperationException("The underlying IBufferWriter<byte>.GetMemory(int) method returned an empty memory block, which is not allowed. This is a bug in " + bufferWriter.GetType().FullName);
+                ThrowInvalidOperationException("The underlying IBufferWriter<byte>.GetMemory(int) method returned an empty memory block, which is not allowed. This is a bug in " + bufferWriter.GetType().FullName);
+            }
+
+            if (memory.Length < size)
+            {
+                ThrowInvalidOperationException("The underlying IBufferWriter<byte>.GetMemory(int) returned a buffer that is smaller than the requested size. This is a bug in " + bufferWriter.GetType().FullName);
             }
 
             return memory;
+
+            // Keep the throw statement in another method to encourage JIT inlining of the outer CheckResult method.
+            [DoesNotReturn]
+            static void ThrowInvalidOperationException(string message) => throw new InvalidOperationException(message);
         }
 
         /// <summary>

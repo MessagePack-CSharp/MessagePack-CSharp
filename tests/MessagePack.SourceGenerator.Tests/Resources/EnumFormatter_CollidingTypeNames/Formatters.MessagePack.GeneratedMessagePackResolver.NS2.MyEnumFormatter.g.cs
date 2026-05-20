@@ -5,7 +5,7 @@
 using MsgPack = global::MessagePack;
 
 namespace MessagePack {
-partial class GeneratedMessagePackResolver {
+internal partial class GeneratedMessagePackResolver {
 internal partial class NS2 {
 
 	internal sealed class MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<global::NS2.MyEnum>

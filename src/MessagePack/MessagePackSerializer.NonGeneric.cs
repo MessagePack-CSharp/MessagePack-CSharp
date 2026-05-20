@@ -134,7 +134,6 @@ namespace MessagePack
 
             internal CompiledMethods(Type type)
             {
-                TypeInfo ti = type.GetTypeInfo();
                 {
                     // public static byte[] Serialize<T>(T obj, MessagePackSerializerOptions options, CancellationToken cancellationToken)
                     MethodInfo serialize = GetMethod(nameof(Serialize), type, new Type?[] { null, typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
@@ -151,7 +150,7 @@ namespace MessagePack
                         MethodCallExpression body = Expression.Call(
                             null,
                             serialize,
-                            ti.IsValueType ? Expression.Unbox(param1, type) : Expression.Convert(param1, type),
+                            type.IsValueType ? Expression.Unbox(param1, type) : Expression.Convert(param1, type),
                             param2,
                             param3);
                         Func<object?, MessagePackSerializerOptions?, CancellationToken, byte[]> lambda = Expression.Lambda<Func<object?, MessagePackSerializerOptions?, CancellationToken, byte[]>>(body, param1, param2, param3).Compile(PreferInterpretation);
@@ -178,7 +177,7 @@ namespace MessagePack
                             null,
                             serialize,
                             param1,
-                            ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
+                            type.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
                             param3,
                             param4);
                         Action<Stream, object?, MessagePackSerializerOptions?, CancellationToken> lambda = Expression.Lambda<Action<Stream, object?, MessagePackSerializerOptions?, CancellationToken>>(body, param1, param2, param3, param4).Compile(PreferInterpretation);
@@ -205,7 +204,7 @@ namespace MessagePack
                             null,
                             serialize,
                             param1,
-                            ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
+                            type.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
                             param3,
                             param4);
                         Func<Stream, object?, MessagePackSerializerOptions?, CancellationToken, Task> lambda = Expression.Lambda<Func<Stream, object?, MessagePackSerializerOptions?, CancellationToken, Task>>(body, param1, param2, param3, param4).Compile(PreferInterpretation);
@@ -232,7 +231,7 @@ namespace MessagePack
                             null,
                             serialize,
                             param1,
-                            ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
+                            type.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
                             param3,
                             param4);
                         Action<IBufferWriter<byte>, object?, MessagePackSerializerOptions?, CancellationToken> lambda = Expression.Lambda<Action<IBufferWriter<byte>, object?, MessagePackSerializerOptions?, CancellationToken>>(body, param1, param2, param3, param4).Compile(PreferInterpretation);

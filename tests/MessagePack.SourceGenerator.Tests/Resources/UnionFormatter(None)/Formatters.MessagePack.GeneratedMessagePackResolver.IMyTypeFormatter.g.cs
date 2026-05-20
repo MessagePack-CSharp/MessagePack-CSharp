@@ -5,7 +5,7 @@
 using MsgPack = global::MessagePack;
 
 namespace MessagePack {
-partial class GeneratedMessagePackResolver {
+internal partial class GeneratedMessagePackResolver {
 	internal sealed class IMyTypeFormatter: MsgPack::Formatters.IMessagePackFormatter<global::IMyType>
 	{
 		private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
@@ -31,7 +31,7 @@ partial class GeneratedMessagePackResolver {
 			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
 			{
 				writer.WriteArrayHeader(2);
-				writer.WriteInt32(keyValuePair.Key);
+				writer.Write(keyValuePair.Key);
 				switch (keyValuePair.Value)
 				{
 					case 0:

@@ -17,6 +17,11 @@ namespace MessagePack.Tests
         internal static bool IsRunningOnMono => Type.GetType("Mono.RuntimeStructs") != null;
 
         internal static string ToHex(byte[] buffer) => BitConverter.ToString(buffer).Replace("-", string.Empty).ToLowerInvariant();
+
+        internal static T Convert<T>(T value)
+        {
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+        }
     }
 
     public class NullTestOutputHelper : ITestOutputHelper

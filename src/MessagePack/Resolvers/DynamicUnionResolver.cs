@@ -68,44 +68,42 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
-                TypeInfo ti = typeof(T).GetTypeInfo();
-                if (ti.IsNullable())
+                Type type = typeof(T);
+                if (type.IsNullable())
                 {
-                    ti = ti.GenericTypeArguments[0].GetTypeInfo();
+                    type = type.GenericTypeArguments[0];
 
-                    var innerFormatter = DynamicUnionResolver.Instance.GetFormatterDynamic(ti.AsType());
+                    var innerFormatter = DynamicUnionResolver.Instance.GetFormatterDynamic(type);
                     if (innerFormatter == null)
                     {
                         return;
                     }
 
-                    Formatter = (IMessagePackFormatter<T>?)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
+                    Formatter = (IMessagePackFormatter<T>?)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(type), new object[] { innerFormatter });
                     return;
                 }
 
-                TypeInfo? formatterTypeInfo = BuildType(typeof(T));
+                TypeInfo? formatterTypeInfo = BuildType(type);
                 if (formatterTypeInfo == null)
                 {
                     return;
                 }
 
-                Formatter = (IMessagePackFormatter<T>?)Activator.CreateInstance(formatterTypeInfo.AsType());
+                Formatter = (IMessagePackFormatter<T>?)Activator.CreateInstance(formatterTypeInfo);
             }
         }
 
         private static TypeInfo? BuildType(Type type)
         {
-            TypeInfo ti = type.GetTypeInfo();
-
             // order by key(important for use jump-table of switch)
-            UnionAttribute[] unionAttrs = ti.GetCustomAttributes<UnionAttribute>().OrderBy(x => x.Key).ToArray();
+            UnionAttribute[] unionAttrs = type.GetCustomAttributes<UnionAttribute>().OrderBy(x => x.Key).ToArray();
 
             if (unionAttrs.Length == 0)
             {
                 return null;
             }
 
-            if (!ti.IsInterface && !ti.IsAbstract)
+            if (!type.IsInterface && !type.IsAbstract)
             {
                 throw new MessagePackDynamicUnionResolverException("Union can only be interface or abstract class. Type:" + type.Name);
             }
@@ -283,7 +281,7 @@ namespace MessagePack.Resolvers
 
                 il.EmitLdarg(1);
                 il.EmitLdarg(2);
-                if (item.Attr.SubType.GetTypeInfo().IsValueType)
+                if (item.Attr.SubType.IsValueType)
                 {
                     il.Emit(OpCodes.Unbox_Any, item.Attr.SubType);
                 }
@@ -387,7 +385,7 @@ namespace MessagePack.Resolvers
                 il.EmitLdarg(1);
                 il.EmitLdarg(2);
                 il.EmitCall(getDeserialize(item.Attr.SubType));
-                if (item.Attr.SubType.GetTypeInfo().IsValueType)
+                if (item.Attr.SubType.IsValueType)
                 {
                     il.Emit(OpCodes.Box, item.Attr.SubType);
                 }

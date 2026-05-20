@@ -54,7 +54,7 @@ namespace MessagePack.Internal
             {
                 ImmutableHashSet<AssemblyName>.Builder skipVisibilityAssemblies = this.lastCreatedDynamicAssemblySkipVisibilityChecks.ToBuilder();
                 int originalCount = skipVisibilityAssemblies.Count;
-                SkipClrVisibilityChecks.GetSkipVisibilityChecksRequirements(type.GetTypeInfo(), skipVisibilityAssemblies);
+                SkipClrVisibilityChecks.GetSkipVisibilityChecksRequirements(type, skipVisibilityAssemblies);
 
                 lock (this)
                 {

@@ -7,6 +7,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using MessagePack.Internal;
 
@@ -255,6 +257,9 @@ namespace MessagePack.Formatters
         public void Serialize(ref MessagePackWriter writer, DateTimeOffset value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(2);
+
+            // We're writing a *local* DateTime value in msgpack encoding as if it were UTC time.
+            // That's incorrect msgpack encoding, but fixing it now would compromise backward compatibility.
             writer.Write(new DateTime(value.Ticks, DateTimeKind.Utc)); // current ticks as is
             writer.Write((short)value.Offset.TotalMinutes); // offset is normalized in minutes
             return;
@@ -373,6 +378,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class KeyValuePairFormatter<TKey, TValue> : IMessagePackFormatter<KeyValuePair<TKey, TValue>>
     {
         public void Serialize(ref MessagePackWriter writer, KeyValuePair<TKey, TValue> value, MessagePackSerializerOptions options)
@@ -763,6 +769,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Preserve]
     public sealed class LazyFormatter<T> : IMessagePackFormatter<Lazy<T>?>
     {
         public void Serialize(ref MessagePackWriter writer, Lazy<T>? value, MessagePackSerializerOptions options)
@@ -806,6 +813,7 @@ namespace MessagePack.Formatters
     /// Serializes any instance of <see cref="Type"/> by its <see cref="Type.AssemblyQualifiedName"/> value.
     /// </summary>
     /// <typeparam name="T">The <see cref="Type"/> class itself or a derived type.</typeparam>
+    [Preserve]
     public sealed class TypeFormatter<T> : IMessagePackFormatter<T?>
         where T : Type
     {
@@ -856,6 +864,121 @@ namespace MessagePack.Formatters
         }
     }
 
+    public sealed class RuneFormatter : IMessagePackFormatter<Rune>
+    {
+        public static readonly IMessagePackFormatter<Rune> Instance = new RuneFormatter();
+
+        private RuneFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Rune value, MessagePackSerializerOptions options)
+        {
+            writer.Write(value.Value);
+        }
+
+        public Rune Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return new Rune(reader.ReadInt32());
+        }
+    }
+
+#endif
+
+#if NET7_0_OR_GREATER
+
+    public sealed class Int128Formatter : IMessagePackFormatter<Int128>
+    {
+        public static readonly IMessagePackFormatter<Int128> Instance = new Int128Formatter();
+
+        private const int Size = 16; // always bytes-written is 16
+
+        private Int128Formatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Int128 value, MessagePackSerializerOptions options)
+        {
+            // When it comes to serialization methods, one could consider a pattern where numbers within the long range are serialized as Integers, while anything beyond that is serialized as binary.
+            // However, since having the result format itself change is not desirable, we opted to always serialize as binary.
+
+            writer.WriteBinHeader(Size);
+            var span = writer.GetSpan(Size);
+            ((IBinaryInteger<Int128>)value).TryWriteLittleEndian(span, out _);
+            writer.Advance(Size);
+        }
+
+        public Int128 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            var sequence = reader.ReadBytes().GetValueOrDefault();
+            if (sequence.Length != Size)
+            {
+                throw new MessagePackSerializationException("Invalid Int128 data.");
+            }
+
+            if (sequence.IsSingleSegment)
+            {
+                TryReadLittleEndian<Int128>(sequence.FirstSpan, out var value);
+                return value;
+            }
+            else
+            {
+                Span<byte> bytes = stackalloc byte[Size];
+                sequence.CopyTo(bytes);
+                TryReadLittleEndian<Int128>(bytes, out var value);
+                return value;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool TryReadLittleEndian<T>(ReadOnlySpan<byte> source, out T value)
+            where T : IBinaryInteger<T> => T.TryReadLittleEndian(source, isUnsigned: false, out value);
+    }
+
+    public sealed class UInt128Formatter : IMessagePackFormatter<UInt128>
+    {
+        public static readonly IMessagePackFormatter<UInt128> Instance = new UInt128Formatter();
+
+        private const int Size = 16; // always bytes-written is 16
+
+        private UInt128Formatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, UInt128 value, MessagePackSerializerOptions options)
+        {
+            writer.WriteBinHeader(Size);
+            var span = writer.GetSpan(Size);
+            ((IBinaryInteger<UInt128>)value).TryWriteLittleEndian(span, out _);
+            writer.Advance(Size);
+        }
+
+        public UInt128 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            var sequence = reader.ReadBytes().GetValueOrDefault();
+            if (sequence.Length != Size)
+            {
+                throw new MessagePackSerializationException("Invalid UInt128 data.");
+            }
+
+            if (sequence.IsSingleSegment)
+            {
+                TryReadLittleEndian<UInt128>(sequence.FirstSpan, out var value);
+                return value;
+            }
+            else
+            {
+                Span<byte> bytes = stackalloc byte[Size];
+                sequence.CopyTo(bytes);
+                TryReadLittleEndian<UInt128>(bytes, out var value);
+                return value;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool TryReadLittleEndian<T>(ReadOnlySpan<byte> source, out T value)
+            where T : IBinaryInteger<T> => T.TryReadLittleEndian(source, isUnsigned: true, out value);
+    }
 #endif
 
 }

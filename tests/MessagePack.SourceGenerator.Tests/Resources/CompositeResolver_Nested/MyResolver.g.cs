@@ -1,7 +1,7 @@
 ﻿
 using MsgPack = global::MessagePack;
 
-partial class Test {
+internal partial class Test {
 
 partial class MyResolver : MsgPack::IFormatterResolver
 {
