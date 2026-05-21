@@ -15,6 +15,7 @@ on:
 permissions:
   actions: write
   contents: write
+  id-token: write
 
 jobs:
   # for unity. need update package.json from tag

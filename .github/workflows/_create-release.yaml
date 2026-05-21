@@ -42,10 +42,12 @@ on:
 jobs:
   create-release:
     name: Create Release
+    permissions:
+      id-token: write
+      contents: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # auto generated token
       GH_REPO: ${{ github.repository }}
-      NUGET_KEY: ${{ secrets.NUGET_KEY }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -143,6 +145,13 @@ jobs:
           done <<< "${{ inputs.release-asset-path }}"
         if: ${{ inputs.release-upload }}
 
+      - name: NuGet login (OIDC)
+        id: nuget-login
+        if: ${{ inputs.nuget-push }}
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       # Upload to NuGet
       - name: Upload to NuGet (DryRun=${{ inputs.dry-run }})
         if: ${{ inputs.nuget-push }}
@@ -158,7 +167,7 @@ jobs:
             if [[ "${{ inputs.dry-run }}" == "true" ]]; then
               echo "(dry run) dotnet nuget push \"${nuget_path}\" --skip-duplicate -s https://api.nuget.org/v3/index.json -k \"***\""
             else
-              dotnet nuget push "${nuget_path}" --skip-duplicate -s https://api.nuget.org/v3/index.json -k "${{ env.NUGET_KEY }}"
+              dotnet nuget push "${nuget_path}" --skip-duplicate -s https://api.nuget.org/v3/index.json -k "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
             fi
           done <<< "${{ inputs.nuget-path }}"
 
