@@ -1115,5 +1115,34 @@ namespace MessagePack
 
             return true;
         }
+
+        /// <summary>
+        /// Attempts to bulk-read an array of Int32 values when all elements are encoded as positive fixint (0x00-0x7f).
+        /// On failure, <paramref name="array"/> may be partially written.
+        /// </summary>
+        /// <param name="array">The pre-allocated array to fill.</param>
+        /// <returns><see langword="true"/> if the bulk read succeeded; <see langword="false"/> if the data is not all positive fixint.</returns>
+        internal bool TryReadFixIntArray(Int32[] array)
+        {
+            ReadOnlySpan<byte> unread = this.reader.UnreadSpan;
+            if (unread.Length < array.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < array.Length; i++)
+            {
+                byte b = unread[i];
+                if (b > MessagePackCode.MaxFixInt)
+                {
+                    return false;
+                }
+
+                array[i] = b;
+            }
+
+            this.reader.Advance(array.Length);
+            return true;
+        }
     }
 }
