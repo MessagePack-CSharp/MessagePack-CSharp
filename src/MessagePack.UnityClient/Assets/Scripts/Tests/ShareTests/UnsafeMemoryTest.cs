@@ -3,12 +3,7 @@
 
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using MessagePack.Formatters;
 using MessagePack.Internal;
 using Nerdbank.Streams;
 using Xunit;
@@ -67,6 +62,35 @@ namespace MessagePack.Tests
                 dstWriter.Flush();
                 dst.Length.Is(i);
                 src.AsSpan().SequenceEqual(CodeGenHelpers.GetSpanFromSequence(dst.AsReadOnlySequence)).IsTrue();
+            }
+        }
+
+        [Fact]
+        public void WriteRaw_LargerSpan()
+        {
+            ReadOnlySpan<byte> src = new byte[MessagePackRange.MaxFixStringLength + 15];
+            Sequence<byte> dst = new();
+
+            // x86
+            for (int i = 1; i <= MessagePackRange.MaxFixStringLength; i++)
+            {
+                dst.Reset();
+                MessagePackWriter dstWriter = new(dst);
+                (typeof(UnsafeMemory32).GetMethod("WriteRaw" + i).CreateDelegate(typeof(WriteDelegate)) as WriteDelegate).Invoke(ref dstWriter, src);
+                dstWriter.Flush();
+                dst.Length.Is(i);
+                src.Slice(0, i).SequenceEqual(CodeGenHelpers.GetSpanFromSequence(dst.AsReadOnlySequence)).IsTrue();
+            }
+
+            // x64
+            for (int i = 1; i <= MessagePackRange.MaxFixStringLength; i++)
+            {
+                dst.Reset();
+                var dstWriter = new MessagePackWriter(dst);
+                (typeof(UnsafeMemory64).GetMethod("WriteRaw" + i).CreateDelegate(typeof(WriteDelegate)) as WriteDelegate).Invoke(ref dstWriter, src);
+                dstWriter.Flush();
+                dst.Length.Is(i);
+                src.Slice(0, i).SequenceEqual(CodeGenHelpers.GetSpanFromSequence(dst.AsReadOnlySequence)).IsTrue();
             }
         }
 

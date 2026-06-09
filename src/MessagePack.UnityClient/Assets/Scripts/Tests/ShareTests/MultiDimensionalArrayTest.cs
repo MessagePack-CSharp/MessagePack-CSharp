@@ -67,5 +67,60 @@ namespace MessagePack.Tests
                 }
             }
         }
+
+        [Fact]
+        [Trait("CWE", "789")]
+        public void RejectsTwoDimensionalArrayWithMismatchedElementCount()
+        {
+            byte[] payload =
+            {
+                0x93,
+                0xCE, 0x00, 0x00, 0x07, 0xD0,
+                0xCE, 0x00, 0x00, 0x07, 0xD0,
+                0x90,
+            };
+
+            AssertRejects<byte[,]>(payload);
+        }
+
+        [Fact]
+        [Trait("CWE", "789")]
+        public void RejectsThreeDimensionalArrayWithMismatchedElementCount()
+        {
+            byte[] payload =
+            {
+                0x94,
+                0xCC, 0x80,
+                0xCC, 0x80,
+                0xCC, 0x80,
+                0x90,
+            };
+
+            AssertRejects<byte[,,]>(payload);
+        }
+
+        [Fact]
+        [Trait("CWE", "789")]
+        public void RejectsFourDimensionalArrayWithMismatchedElementCount()
+        {
+            byte[] payload =
+            {
+                0x95,
+                0x20,
+                0x20,
+                0x20,
+                0x20,
+                0x90,
+            };
+
+            AssertRejects<byte[,,,]>(payload);
+        }
+
+        private void AssertRejects<T>(byte[] payload)
+        {
+            var options = MessagePackSerializerOptions.Standard.WithSecurity(MessagePackSecurity.UntrustedData);
+
+            Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<T>(payload, options));
+        }
     }
 }
