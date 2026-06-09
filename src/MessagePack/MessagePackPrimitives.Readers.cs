@@ -342,6 +342,12 @@ partial class MessagePackPrimitives
             return DecodeResult.TokenMismatch;
         }
 
+        if (header.Length is not (4 or 8 or 12))
+        {
+            value = default;
+            return DecodeResult.TokenMismatch;
+        }
+
         if (source.Length < tokenSize)
         {
             value = default;

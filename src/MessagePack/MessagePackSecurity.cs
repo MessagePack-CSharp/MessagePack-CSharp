@@ -19,6 +19,8 @@ namespace MessagePack
     /// </summary>
     public class MessagePackSecurity
     {
+        private const int DefaultUntrustedDataMaximumDecompressedSize = 64 * 1024 * 1024;
+
         /// <summary>
         /// Gets an instance preconfigured with settings that omit hash collision resistance protections.
         /// Useful for deserializing fully-trusted and valid msgpack sequences.
@@ -27,6 +29,7 @@ namespace MessagePack
         {
             HashCollisionResistant = false,
             MaximumObjectGraphDepth = 500,
+            MaximumDecompressedSize = int.MaxValue,
         };
 
         /// <summary>
@@ -36,6 +39,7 @@ namespace MessagePack
         {
             HashCollisionResistant = true,
             MaximumObjectGraphDepth = 500,
+            MaximumDecompressedSize = DefaultUntrustedDataMaximumDecompressedSize,
         };
 
         private static readonly SipHash Hash = new();
@@ -62,6 +66,7 @@ namespace MessagePack
 
             this.HashCollisionResistant = copyFrom.HashCollisionResistant;
             this.MaximumObjectGraphDepth = copyFrom.MaximumObjectGraphDepth;
+            this.MaximumDecompressedSize = copyFrom.MaximumDecompressedSize;
         }
 
         /// <summary>
@@ -87,6 +92,12 @@ namespace MessagePack
         public int MaximumObjectGraphDepth { get; private set; } = 500;
 
         /// <summary>
+        /// Gets the maximum decompressed size in bytes allowed when deserializing compressed payloads.
+        /// </summary>
+        /// <value>The default value is <see cref="int.MaxValue"/> for <see cref="TrustedData"/> and 64MB for <see cref="UntrustedData"/>.</value>
+        public int MaximumDecompressedSize { get; private set; } = int.MaxValue;
+
+        /// <summary>
         /// Gets a copy of these options with the <see cref="MaximumObjectGraphDepth"/> property set to a new value.
         /// </summary>
         /// <param name="maximumObjectGraphDepth">The new value for the <see cref="MaximumObjectGraphDepth"/> property.</param>
@@ -100,6 +111,28 @@ namespace MessagePack
 
             var clone = this.Clone();
             clone.MaximumObjectGraphDepth = maximumObjectGraphDepth;
+            return clone;
+        }
+
+        /// <summary>
+        /// Gets a copy of these options with the <see cref="MaximumDecompressedSize"/> property set to a new value.
+        /// </summary>
+        /// <param name="maximumDecompressedSize">The new value for the <see cref="MaximumDecompressedSize"/> property. Must not be negative.</param>
+        /// <returns>The new instance; or the original if the value is unchanged.</returns>
+        public MessagePackSecurity WithMaximumDecompressedSize(int maximumDecompressedSize)
+        {
+            if (this.MaximumDecompressedSize == maximumDecompressedSize)
+            {
+                return this;
+            }
+
+            if (maximumDecompressedSize < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maximumDecompressedSize));
+            }
+
+            var clone = this.Clone();
+            clone.MaximumDecompressedSize = maximumDecompressedSize;
             return clone;
         }
 

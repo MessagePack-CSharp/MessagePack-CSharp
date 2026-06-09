@@ -102,6 +102,32 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        [Trait("CWE", "190")]
+        public void ReadMapHeader_MitigatesLargeAllocations_WhenMinimumPayloadLengthOverflowsInt32()
+        {
+            byte[] msgpack = { MessagePackCode.Map32, 0x40, 0, 0, 0 };
+
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(msgpack);
+                reader.ReadMapHeader();
+            });
+        }
+
+        [Fact]
+        [Trait("CWE", "190")]
+        public void SkipMap_MitigatesLargeAllocations_WhenMinimumPayloadLengthOverflowsInt32()
+        {
+            byte[] msgpack = { MessagePackCode.Map32, 0x40, 0, 0, 0 };
+
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(msgpack);
+                reader.Skip();
+            });
+        }
+
+        [Fact]
         public void TryReadMapHeader()
         {
             var sequence = new Sequence<byte>();
@@ -331,6 +357,49 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        [Trait("CWE", "674")]
+        public void Skip_DeeplyNestedArrays_DoesNotOverflowStack()
+        {
+            const int depth = 100_000;
+            byte[] msgpack = new byte[depth + 1];
+
+            for (int i = 0; i < depth; i++)
+            {
+                msgpack[i] = MessagePackCode.MinFixArray + 1;
+            }
+
+            msgpack[^1] = MessagePackCode.Nil;
+
+            MessagePackReader reader = new(msgpack);
+
+            reader.Skip();
+
+            Assert.True(reader.End);
+        }
+
+        [Fact]
+        [Trait("CWE", "674")]
+        public void Skip_DeeplyNestedMaps_DoesNotOverflowStack()
+        {
+            const int depth = 100_000;
+            byte[] msgpack = new byte[(depth * 2) + 1];
+
+            for (int i = 0; i < depth; i++)
+            {
+                msgpack[i * 2] = MessagePackCode.MinFixMap + 1;
+                msgpack[(i * 2) + 1] = MessagePackCode.Nil;
+            }
+
+            msgpack[^1] = MessagePackCode.Nil;
+
+            MessagePackReader reader = new(msgpack);
+
+            reader.Skip();
+
+            Assert.True(reader.End);
+        }
+
+        [Fact]
         public void Depth()
         {
             var reader = new MessagePackReader(Encode((ref MessagePackWriter w) => w.Write(1.23)));
@@ -398,6 +467,15 @@ namespace MessagePack.Tests
             AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadUInt16());
             AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadUInt32());
             AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadUInt64());
+        }
+
+        [Fact]
+        [Trait("CWE", "789")]
+        public void ReadDateTime_RejectsInvalidExtensionLengthBeforeBuffering()
+        {
+            byte[] payload = [MessagePackCode.Ext32, 0x00, 0x10, 0x00, 0x00, 0xff];
+
+            Assert.Throws<MessagePackSerializationException>(() => new MessagePackReader(new ReadOnlySequence<byte>(payload)).ReadDateTime());
         }
 
         [Fact]

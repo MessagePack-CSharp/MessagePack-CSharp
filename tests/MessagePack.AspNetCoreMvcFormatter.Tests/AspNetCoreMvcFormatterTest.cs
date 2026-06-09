@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -193,6 +194,34 @@ namespace MessagePack.Tests.ExtensionTests
         {
             var inputFormatter = new MessagePackInputFormatter();
             inputFormatter.SupportedMediaTypes.Is(MsgPackContentType);
+        }
+
+        [Fact]
+        public async Task MessagePackInputFormatterDefaultsToUntrustedData()
+        {
+            const long value1 = 0x100000001;
+            const long value2 = 0x200000002;
+
+            var messagePackBinary = MessagePackSerializer.Serialize(new Dictionary<long, int>
+            {
+                [value1] = 1,
+                [value2] = 2,
+            });
+
+            var httpContext = new DefaultHttpContext();
+            httpContext.Features.Set<IHttpResponseFeature>(new TestResponseFeature());
+            httpContext.Request.Body = new NonSeekableReadStream(messagePackBinary);
+            httpContext.Request.ContentType = MsgPackContentType;
+
+            InputFormatterContext inputFormatterContext = this.CreateInputFormatterContext(typeof(Dictionary<long, int>), httpContext);
+            var inputFormatter = new MessagePackInputFormatter();
+
+            InputFormatterResult result = await inputFormatter.ReadAsync(inputFormatterContext);
+
+            Assert.False(result.HasError);
+            var dictionary = Assert.IsType<Dictionary<long, int>>(result.Model);
+            Assert.Equal(EqualityComparer<long>.Default.GetHashCode(value1), EqualityComparer<long>.Default.GetHashCode(value2));
+            Assert.NotEqual(dictionary.Comparer.GetHashCode(value1), dictionary.Comparer.GetHashCode(value2));
         }
 
         /// <summary>

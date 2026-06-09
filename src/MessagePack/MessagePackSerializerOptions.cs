@@ -186,16 +186,32 @@ namespace MessagePack
         /// <param name="type">The type to be instantiated.</param>
         /// <exception cref="TypeAccessException">Thrown if the <paramref name="type"/> is not allowed to be deserialized.</exception>
         /// <remarks>
+        /// <para>
         /// This method provides a means for an important security mitigation when using the Typeless formatter to prevent untrusted messagepack from
         /// deserializing objects that may be harmful if instantiated, disposed or finalized.
-        /// The default implementation throws for only a few known dangerous types.
+        /// The default implementation throws for only a few known dangerous types, or types that nest those dangerous types as generic type arguments or array element types.
         /// Applications that deserialize from untrusted sources should override this method and throw if the type is not among the expected set.
+        /// </para>
+        /// <para>
+        /// This method is <see langword="virtual" /> for backward compatibility reasons.
+        /// For better security, the preferred method to override is <see cref="ThrowIfDeserializingTypeIsDisallowedCore(Type)"/>.
+        /// </para>
         /// </remarks>
         public virtual void ThrowIfDeserializingTypeIsDisallowed(Type type)
         {
-            if (type.FullName is string fullName && DisallowedTypes.Contains(fullName))
+            this.ThrowIfDeserializingTypeIsDisallowedCore(type);
+
+            if (type.HasElementType && type.GetElementType() is Type elementType)
             {
-                throw new MessagePackSerializationException($"Deserialization attempted to create the type {fullName} which is not allowed.");
+                this.ThrowIfDeserializingTypeIsDisallowed(elementType);
+            }
+
+            if (type.IsConstructedGenericType)
+            {
+                foreach (Type genericTypeArgument in type.GenericTypeArguments)
+                {
+                    this.ThrowIfDeserializingTypeIsDisallowed(genericTypeArgument);
+                }
             }
         }
 
@@ -370,6 +386,31 @@ namespace MessagePack
             var result = this.Clone();
             result.SequencePool = pool;
             return result;
+        }
+
+        /// <summary>
+        /// Checks whether a specific given type may be deserialized, disregarding generic type arguments or array element types.
+        /// </summary>
+        /// <param name="type">The type to be instantiated.</param>
+        /// <exception cref="TypeAccessException">Thrown if the <paramref name="type"/> is not allowed to be deserialized.</exception>
+        /// <remarks>
+        /// <para>
+        /// This method provides a means for an important security mitigation when using the Typeless formatter to prevent untrusted messagepack from
+        /// deserializing objects that may be harmful if instantiated, disposed or finalized.
+        /// The default implementation throws for only a few known dangerous types.
+        /// Applications that deserialize from untrusted sources should override this method and throw if the type is not among the expected set.
+        /// </para>
+        /// <para>
+        /// This method is called from the default implementation of <see cref="ThrowIfDeserializingTypeIsDisallowed(Type)"/>
+        /// for the top-level type and again for each generic type argument or array element type.
+        /// </para>
+        /// </remarks>
+        protected virtual void ThrowIfDeserializingTypeIsDisallowedCore(Type type)
+        {
+            if (type.FullName is string fullName && DisallowedTypes.Contains(fullName))
+            {
+                throw new MessagePackSerializationException($"Deserialization attempted to create the type {fullName} which is not allowed.");
+            }
         }
 
         /// <summary>
