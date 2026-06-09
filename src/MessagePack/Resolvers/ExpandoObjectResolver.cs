@@ -40,6 +40,7 @@ namespace MessagePack.Resolvers
         {
             protected override object DeserializeMap(ref MessagePackReader reader, int length, MessagePackSerializerOptions options)
             {
+                ExpandoObjectFormatter.ThrowIfMapTooLargeForUntrustedData(length, options);
                 IMessagePackFormatter<string> keyFormatter = options.Resolver.GetFormatterWithVerify<string>();
                 IMessagePackFormatter<object>? objectFormatter = options.Resolver.GetFormatterWithVerify<object>();
                 IDictionary<string, object?> dictionary = new ExpandoObject();

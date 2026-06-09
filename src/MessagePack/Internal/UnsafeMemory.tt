@@ -28,7 +28,7 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteRaw<#= i #>(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            Span<byte> dst = writer.GetSpan(src.Length);
+            Span<byte> dst = writer.GetSpan(<#= i #>);
 
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
@@ -41,7 +41,7 @@ namespace MessagePack.Internal
 <# } #>
             }
 
-            writer.Advance(src.Length);
+            writer.Advance(<#= i #>);
         }
 <# } #>
     }
@@ -52,7 +52,7 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteRaw<#= i #>(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            Span<byte> dst = writer.GetSpan(src.Length);
+            Span<byte> dst = writer.GetSpan(<#= i #>);
 
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
@@ -65,7 +65,7 @@ namespace MessagePack.Internal
 <# } #>
             }
 
-            writer.Advance(src.Length);
+            writer.Advance(<#= i #>);
         }
 <# } #>
     }

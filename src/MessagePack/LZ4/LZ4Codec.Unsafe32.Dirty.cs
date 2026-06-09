@@ -600,6 +600,7 @@ _last_literals:
 
         private static unsafe int LZ4_uncompress_32(
             byte* src,
+            int src_len,
             byte* dst,
             int dst_len)
         {
@@ -609,6 +610,7 @@ _last_literals:
                 {
                     // r93
                     var src_p = src;
+                    var src_end = src + src_len;
                     byte* xxx_ref;
 
                     var dst_p = dst;
@@ -627,16 +629,26 @@ _last_literals:
                         int length;
 
                         // get runlength
+                        if (src_p >= src_end)
+                        {
+                            goto _output_error;
+                        }
+
                         xxx_token = *src_p++;
                         if ((length = (int)(xxx_token >> ML_BITS)) == RUN_MASK)
                         {
                             int len;
-                            for (; (len = *src_p++) == 255; length += 255)
+                            do
                             {
-                                /* do nothing */
-                            }
+                                if (src_p >= src_end)
+                                {
+                                    goto _output_error;
+                                }
 
-                            length += len;
+                                len = *src_p++;
+                                length += len;
+                            }
+                            while (len == 255);
                         }
 
                         // copy literals
@@ -649,9 +661,19 @@ _last_literals:
                                 goto _output_error; // Error : not enough place for another match (min 4) + 5 literals
                             }
 
+                            if (length > src_end - src_p)
+                            {
+                                goto _output_error;
+                            }
+
                             BlockCopy32(src_p, dst_p, length);
                             src_p += length;
                             break; // EOF
+                        }
+
+                        if (length > src_end - src_p)
+                        {
+                            goto _output_error;
                         }
 
                         do
@@ -668,6 +690,11 @@ _last_literals:
                         dst_p = dst_cpy;
 
                         // get offset
+                        if (src_end - src_p < 2)
+                        {
+                            goto _output_error;
+                        }
+
                         xxx_ref = dst_cpy - (*(ushort*)src_p);
                         src_p += 2;
                         if (xxx_ref < dst)
@@ -678,12 +705,18 @@ _last_literals:
                         // get matchlength
                         if ((length = (int)(xxx_token & ML_MASK)) == ML_MASK)
                         {
-                            for (; *src_p == 255; length += 255)
+                            int len;
+                            do
                             {
-                                src_p++;
-                            }
+                                if (src_p >= src_end)
+                                {
+                                    goto _output_error;
+                                }
 
-                            length += *src_p++;
+                                len = *src_p++;
+                                length += len;
+                            }
+                            while (len == 255);
                         }
 
                         // copy repeated sequence
