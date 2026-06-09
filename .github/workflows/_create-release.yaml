@@ -42,10 +42,12 @@ on:
 jobs:
   create-release:
     name: Create Release
+    permissions:
+      id-token: write
+      contents: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # auto generated token
       GH_REPO: ${{ github.repository }}
-      NUGET_KEY: ${{ secrets.NUGET_KEY }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -56,14 +58,17 @@ jobs:
           echo "Validation error! 'inputs.release-asset-path' cannot be blank when 'inputs.release-upload' is true."
           exit 1
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.commit-id }}
       - uses: ./.github/actions/setup-dotnet
 
       # Download(All) Artifacts to $GITHUB_WORKSPACE
-      - name: donload artifacts
-        uses: actions/download-artifact@v4 # must sync with actions/upload-artifact@v4 in build-release
+      - name: download artifacts
+        uses: actions/download-artifact@v8 # must sync with actions/upload-artifact@v7 in build-release
+        with:
+          name: nuget
+          path: ./nuget
       - name: Show download aritifacts
         run: ls -lR
       - name: Validate package exists in artifact - release assets
@@ -140,6 +145,13 @@ jobs:
           done <<< "${{ inputs.release-asset-path }}"
         if: ${{ inputs.release-upload }}
 
+      - name: NuGet login (OIDC)
+        id: nuget-login
+        if: ${{ inputs.nuget-push }}
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       # Upload to NuGet
       - name: Upload to NuGet (DryRun=${{ inputs.dry-run }})
         if: ${{ inputs.nuget-push }}
@@ -155,7 +167,7 @@ jobs:
             if [[ "${{ inputs.dry-run }}" == "true" ]]; then
               echo "(dry run) dotnet nuget push \"${nuget_path}\" --skip-duplicate -s https://api.nuget.org/v3/index.json -k \"***\""
             else
-              dotnet nuget push "${nuget_path}" --skip-duplicate -s https://api.nuget.org/v3/index.json -k "${{ env.NUGET_KEY }}"
+              dotnet nuget push "${nuget_path}" --skip-duplicate -s https://api.nuget.org/v3/index.json -k "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
             fi
           done <<< "${{ inputs.nuget-path }}"
 

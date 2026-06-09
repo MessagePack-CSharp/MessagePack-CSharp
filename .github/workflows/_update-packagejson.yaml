@@ -71,7 +71,7 @@ jobs:
         run: |
           echo "branch-name=test-release/${{ inputs.tag }}" | tee -a "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # package.json
       # "version": 1.2.3 -> "version": 2.0.0

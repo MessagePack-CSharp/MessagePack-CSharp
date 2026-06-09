@@ -24,14 +24,25 @@ namespace MessagePack
         /// </summary>
         private static readonly HashSet<string> DisallowedTypes = new HashSet<string>
         {
+            "Microsoft.VisualStudio.Text.Formatting.TextFormattingRunProperties",
+            "System.CodeDom.Compiler.CompilerResults",
             "System.CodeDom.Compiler.TempFileCollection",
+            "System.Configuration.SettingsPropertyValue",
+            "System.Data.DataSet",
+            "System.Data.DataTable",
+            "System.Diagnostics.Process",
+            "System.Diagnostics.ProcessStartInfo",
+            "System.Drawing.Design.ToolboxItemContainer",
             "System.IdentityModel.Tokens.SessionSecurityToken",
             "System.Management.IWbemClassObjectFreeThreaded",
             "System.Security.Claims.ClaimsIdentity",
+            "System.Security.Claims.ClaimsPrincipal",
             "System.Security.Principal.WindowsIdentity",
+            "System.Security.Principal.WindowsPrincipal",
             "System.Web.Security.RolePrincipal",
             "System.Windows.Data.ObjectDataProvider",
             "System.Windows.ResourceDictionary",
+            "System.Workflow.ComponentModel.Serialization.ActivitySurrogateSelector",
         };
 
 #if !DYNAMICCODEDUMPER
