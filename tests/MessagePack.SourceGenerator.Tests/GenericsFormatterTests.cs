@@ -44,6 +44,27 @@ namespace TempProject
     }
 
     [Fact]
+    public async Task NullableReferenceTypeInListFormatter()
+    {
+        string testSource = /* lang=c#-test */ """
+#nullable enable
+using System.Collections.Generic;
+using MessagePack;
+
+namespace TempProject
+{
+    [MessagePackObject]
+    public class SomeClass
+    {
+        [Key(0)]
+        public required List<SomeClass?> Values { get; set; }
+    }
+}
+""";
+        await VerifyCS.Test.RunDefaultAsync(this.testOutputHelper, testSource, languageVersion: LanguageVersion.CSharp11);
+    }
+
+    [Fact]
     public async Task WellKnownGenericsFormatter()
     {
         string testSource = """

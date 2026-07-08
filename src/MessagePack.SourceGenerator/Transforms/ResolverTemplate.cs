@@ -25,7 +25,8 @@ namespace MessagePack.SourceGenerator.Transforms
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write("\r\nusing MsgPack = global::MessagePack;\r\n\r\n[assembly: MsgPack::Internal.GeneratedA" +
+            this.Write("\r\n#pragma warning disable CS8669 // We may leak nullable annotations into generat" +
+                    "ed code.\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\n[assembly: MsgPack::Internal.GeneratedA" +
                     "ssemblyMessagePackResolverAttribute(typeof(");
             this.Write(this.ToStringHelper.ToStringWithCulture(this.ResolverName.GetQualifiedName(Qualifiers.Namespace)));
             this.Write("), ");
