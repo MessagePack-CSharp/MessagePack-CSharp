@@ -625,7 +625,7 @@ namespace MessagePack
 #else
                 fixed (char* pValue = value)
                 {
-                    byteCount = StringEncoding.UTF8.GetBytes(pValue, value.Length, pBuffer + useOffset, bufferSize);
+                    byteCount = StringEncoding.UTF8.GetBytes(pValue, value.Length, pBuffer + useOffset, bufferSize - useOffset);
                 }
 #endif
                 this.WriteString_PostEncoding(pBuffer, useOffset, byteCount);
