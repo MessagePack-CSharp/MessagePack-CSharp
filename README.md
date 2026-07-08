@@ -180,9 +180,11 @@ This attribute will suppress the analyzer warning from using that type although 
 These types can serialize by default:
 
 * Primitives (`int`, `string`, etc...), `Enum`s, `Nullable<>`, `Lazy<>`
-* `TimeSpan`,  `DateTime`, `DateTimeOffset`
-* `Guid`, `Uri`, `Version`, `StringBuilder`
-* `BigInteger`, `Complex`, `Half`
+* `TimeSpan`, `DateTime`, `DateTimeOffset`, `DateOnly` (.NET 6+), `TimeOnly` (.NET 6+)
+* `Guid`, `Uri`, `Version`, `StringBuilder`, `decimal`, `Type`
+* `BigInteger`, `Complex`, `Half` (.NET 5+), `Rune` (.NET 5+), `Int128` (.NET 7+), `UInt128` (.NET 7+)
+* `Memory<byte>`, `ReadOnlyMemory<byte>`, `ReadOnlySequence<byte>`
+* `System.Numerics.Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Matrix3x2`, `Matrix4x4`
 * `Array[]`, `Array[,]`, `Array[,,]`, `Array[,,,]`, `ArraySegment<>`, `BitArray`
 * `KeyValuePair<,>`, `Tuple<,...>`, `ValueTuple<,...>`
 * `ArrayList`, `Hashtable`
