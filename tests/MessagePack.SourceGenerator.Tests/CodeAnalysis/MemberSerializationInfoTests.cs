@@ -19,6 +19,7 @@ public class MemberSerializationInfoTests
             "name",
             "SomeType",
             "shortName",
+            false,
             null)
         {
             DeclaringType = null,
@@ -34,6 +35,7 @@ public class MemberSerializationInfoTests
            "name",
            "SomeType",
            "shortName",
+           false,
            null)
         {
             DeclaringType = null,
@@ -50,6 +52,7 @@ public class MemberSerializationInfoTests
            "name",
            "SomeType",
            "shortName",
+           false,
            null)
         {
             DeclaringType = null,

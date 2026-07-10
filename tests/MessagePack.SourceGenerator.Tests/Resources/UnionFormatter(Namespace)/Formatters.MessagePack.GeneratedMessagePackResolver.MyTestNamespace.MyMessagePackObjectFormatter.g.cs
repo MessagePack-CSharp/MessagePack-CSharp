@@ -8,7 +8,7 @@ namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class MyTestNamespace {
 
-	internal sealed class MyMessagePackObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.MyMessagePackObject>
+	internal sealed class MyMessagePackObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.MyMessagePackObject>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::MyTestNamespace.MyMessagePackObject>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::MyTestNamespace.MyMessagePackObject value, MsgPack::MessagePackSerializerOptions options)
@@ -19,9 +19,8 @@ internal partial class MyTestNamespace {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyTestNamespace.IMyType>(formatterResolver).Serialize(ref writer, value.UnionValue, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<global::MyTestNamespace.IMyType>(ref writer, value.UnionValue, options);
 		}
 
 		public global::MyTestNamespace.MyMessagePackObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -32,7 +31,6 @@ internal partial class MyTestNamespace {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::MyTestNamespace.MyMessagePackObject();
 
@@ -41,7 +39,7 @@ internal partial class MyTestNamespace {
 				switch (i)
 				{
 					case 0:
-						____result.UnionValue = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyTestNamespace.IMyType>(formatterResolver).Deserialize(ref reader, options);
+						____result.UnionValue = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<global::MyTestNamespace.IMyType>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
@@ -51,6 +49,28 @@ internal partial class MyTestNamespace {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::MyTestNamespace.MyMessagePackObject value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.UnionValue = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<global::MyTestNamespace.IMyType>(ref reader, ____result.UnionValue, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

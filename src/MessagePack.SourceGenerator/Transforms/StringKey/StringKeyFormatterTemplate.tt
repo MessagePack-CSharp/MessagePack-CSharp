@@ -15,7 +15,7 @@ using MsgPack = global::MessagePack;
 
 	bool isFormatterResolverNecessary = GeneratorUtilities.ShouldUseFormatterResolver(Info.Members); #>
 <# using (this.EmitNestingTypesAndNamespaces(this.Write)) { #>
-	internal sealed class <#= Info.Formatter.GetQualifiedName(Qualifiers.None) #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName() #>>
+	internal sealed class <#= Info.Formatter.GetQualifiedName(Qualifiers.None) #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= Info.DataType.GetQualifiedName() #>><# if (Info.CanDeserializeInto) { #>, global::MessagePack.Formatters.IMessagePackFormatterDeserializeInto<<#= Info.DataType.GetQualifiedName() #>><# } #>
 <# TransformUtilities.EmitTypeConstraints(Info.Formatter, this.Write); #>
 	{
 <# foreach (var item in Info.Members) { #>
@@ -131,6 +131,44 @@ using MsgPack = global::MessagePack;
 <# } #>
 			return ____result;
 		}
+
+<# if (Info.CanDeserializeInto) { #>
+		public void Deserialize(ref global::MessagePack.MessagePackReader reader, <#= Info.DataType.GetQualifiedName() #> value, global::MessagePack.MessagePackSerializerOptions options)
+		{
+<# if (Info.Members.Length == 0) { #>
+			reader.Skip();
+			var ____result = value;
+<# } else { #>
+			options.Security.DepthStep(ref reader);
+<# if (isFormatterResolverNecessary) { #>
+			var formatterResolver = options.Resolver;
+<# } #>
+			var ____result = value;
+			var length = reader.ReadMapHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+				switch (stringKey.Length)
+				{
+					default:
+					FAIL:
+					  reader.Skip();
+					  continue;
+<#= StringKeyFormatterDeserializeHelper.Classify(Info, "					", true, "____result") #>
+				}
+			}
+			reader.Depth--;
+<# } #>
+<# if (Info.HasIMessagePackSerializationCallbackReceiver) {
+		if (Info.NeedsCastOnAfter) { #>
+			((global::MessagePack.IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+<# } else { #>
+			____result.OnAfterDeserialize();
+<# } #>
+<# } #>
+		}
+<# } #>
 	}
 
 <# } #>

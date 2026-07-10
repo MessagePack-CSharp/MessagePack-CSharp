@@ -259,6 +259,9 @@ ServiceFabricBackup/
 *.ldf
 *.ndf
 
+# Local git worktrees
+.worktrees/
+
 # Business Intelligence projects
 *.rdl.data
 *.bim.layout

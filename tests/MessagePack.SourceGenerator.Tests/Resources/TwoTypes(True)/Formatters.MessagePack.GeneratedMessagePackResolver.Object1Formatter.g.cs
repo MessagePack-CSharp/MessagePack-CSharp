@@ -6,7 +6,7 @@ using MsgPack = global::MessagePack;
 
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
-	internal sealed class Object1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Object1>
+	internal sealed class Object1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Object1>, global::MessagePack.Formatters.IMessagePackFormatterDeserializeInto<global::Object1>
 	{
 		public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Object1 value, global::MessagePack.MessagePackSerializerOptions options)
 		{
@@ -29,6 +29,12 @@ internal partial class GeneratedMessagePackResolver {
 			reader.Skip();
 			var ____result = new global::Object1();
 			return ____result;
+		}
+
+		public void Deserialize(ref global::MessagePack.MessagePackReader reader, global::Object1 value, global::MessagePack.MessagePackSerializerOptions options)
+		{
+			reader.Skip();
+			var ____result = value;
 		}
 	}
 
