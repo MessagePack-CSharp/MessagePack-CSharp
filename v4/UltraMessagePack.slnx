@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="DisassembleBenchmark/DisassembleBenchmark.csproj" />
+  <Project Path="UltraMessagePack/UltraMessagePack.csproj" />
+  <Project Path="UltraMessagePack.SourceGenerator/UltraMessagePack.SourceGenerator.csproj" />
+  <Project Path="UltraMessagePack.Tests/UltraMessagePack.Tests.csproj" />
+</Solution>
