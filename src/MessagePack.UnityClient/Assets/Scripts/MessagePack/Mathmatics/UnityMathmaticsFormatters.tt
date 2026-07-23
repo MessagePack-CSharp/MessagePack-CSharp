@@ -1,0 +1,89 @@
+<#@ assembly name="System.Core" #>
+<#@ Import Namespace="System.Collections.Generic" #>
+<#@ Import Namespace="System.Linq" #>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
+ * CHANGE THE .tt FILE INSTEAD. */
+
+#nullable enable
+#pragma warning disable SA1312 // variable naming
+#pragma warning disable SA1402 // one type per file
+#pragma warning disable SA1513 // ClosingBraceMustBeFollowedByBlankLine
+#pragma warning disable SA1516 // ElementsMustBeSeparatedByBlankLine
+#pragma warning disable SA1649 // file name matches type name
+
+using System;
+
+namespace MessagePack.Unity.Mathematics
+{
+<#
+// see https://docs.unity3d.com/Packages/com.unity.mathematics@1.0/api/Unity.Mathematics.html#structs
+IEnumerable<(string Type, string Method)> mathematicsTypes = new[]
+{
+    ("bool", "ReadBoolean"),
+    ("double", "ReadDouble"),
+    ("float", "ReadSingle"),
+    ("int", "ReadInt32"),
+    ("uint", "ReadUInt32"),
+};
+
+IEnumerable<(string Type, string UnderlyingType, int Length, string Method)> allTypes = mathematicsTypes
+    .SelectMany(n => Enumerable.Range(2, 3)
+        .Select(i => ($"global::Unity.Mathematics.{n.Type}{i}", n.Type, i, n.Method)));
+
+string[] vectorElementName = new[] { "x", "y", "z", "w" };
+
+foreach (var (type, underlyingType, length, method) in allTypes) {
+#>
+    public sealed class <#= char.ToUpper(underlyingType[0]) + underlyingType.Substring(1) #><#= length #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= type #>>
+    {
+        public void Serialize(ref MessagePackWriter writer, <#= type #> value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            writer.WriteArrayHeader(<#= length #>);
+<#
+    foreach (var element in vectorElementName.Take(length)) {
+#>
+            writer.Write(value.<#= element #>);
+<# } #>
+        }
+
+        public <#= type #> Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.IsNil)
+            {
+                throw new InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            var length = reader.ReadArrayHeader();
+<#
+    foreach (var element in vectorElementName.Take(length)) {
+#>
+            var <#= element #> = default(<#= underlyingType #>);
+<# } #>
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+                switch (key)
+                {
+<#
+    for (var i = 0; i < length; i++) {
+#>
+                    case <#= i #>:
+                        <#= vectorElementName[i] #> = reader.<#= method #>();
+                        break;
+<# } #>
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var result = new <#= type #>(<#= string.Join(", ", vectorElementName.Take(length)) #>);
+            return result;
+        }
+    }
+
+<# } #>
+}
