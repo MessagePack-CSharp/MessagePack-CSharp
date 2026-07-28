@@ -35,8 +35,8 @@ public class StringFormatterDispatchBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        DynamicFormatterFactory.Instance.RegisterFactory<SPersonDirect>(new SPersonDirectFormatterFactory());
-        DynamicFormatterFactory.Instance.RegisterFactory<SPersonVia>(new SPersonViaFormatterFactory());
+        FormatterRegistry.Instance.RegisterFactory<SPersonDirect>(new SPersonDirectFormatterFactory());
+        FormatterRegistry.Instance.RegisterFactory<SPersonVia>(new SPersonViaFormatterFactory());
 
         var rand = new Random(42);
         string NextName()
@@ -62,11 +62,11 @@ public class StringFormatterDispatchBenchmark
             vias[i] = new SPersonVia { Id = directs[i].Id, Name = name, Score = directs[i].Score };
 
             // both shapes must produce identical bytes and roundtrip identically
-            var d = MessagePackSerializer.Default.Serialize(directs[i]);
-            var v = MessagePackSerializer.Default.Serialize(vias[i]);
+            var d = MessagePackSerializer.Serialize(directs[i]);
+            var v = MessagePackSerializer.Serialize(vias[i]);
             if (!d.AsSpan().SequenceEqual(v)) throw new InvalidOperationException($"bytes mismatch at {i}");
-            var db = MessagePackSerializer.Default.Deserialize<SPersonDirect>(d);
-            var vb = MessagePackSerializer.Default.Deserialize<SPersonVia>(v);
+            var db = MessagePackSerializer.Deserialize<SPersonDirect>(d);
+            var vb = MessagePackSerializer.Deserialize<SPersonVia>(v);
             if (db.Id != vias[i].Id || db.Name != name || vb.Name != name || vb.Score != directs[i].Score)
             {
                 throw new InvalidOperationException($"roundtrip mismatch at {i}");
@@ -82,7 +82,7 @@ public class StringFormatterDispatchBenchmark
         var items = directs;
         for (int i = 0; i < items.Length; i++)
         {
-            total += MessagePackSerializer.Default.Serialize(items[i]).Length;
+            total += MessagePackSerializer.Serialize(items[i]).Length;
         }
         return total;
     }
@@ -94,7 +94,7 @@ public class StringFormatterDispatchBenchmark
         var items = vias;
         for (int i = 0; i < items.Length; i++)
         {
-            total += MessagePackSerializer.Default.Serialize(items[i]).Length;
+            total += MessagePackSerializer.Serialize(items[i]).Length;
         }
         return total;
     }
@@ -106,7 +106,7 @@ public class StringFormatterDispatchBenchmark
         var data = payloads;
         for (int i = 0; i < data.Length; i++)
         {
-            total += MessagePackSerializer.Default.Deserialize<SPersonDirect>(data[i]).Name!.Length;
+            total += MessagePackSerializer.Deserialize<SPersonDirect>(data[i]).Name!.Length;
         }
         return total;
     }
@@ -118,7 +118,7 @@ public class StringFormatterDispatchBenchmark
         var data = payloads;
         for (int i = 0; i < data.Length; i++)
         {
-            total += MessagePackSerializer.Default.Deserialize<SPersonVia>(data[i]).Name!.Length;
+            total += MessagePackSerializer.Deserialize<SPersonVia>(data[i]).Name!.Length;
         }
         return total;
     }
@@ -147,7 +147,7 @@ public sealed class SPersonDirectFormatter<TWriteBuffer, TReadBuffer> : IMessage
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref SPersonDirect value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, SPersonDirect value)
     {
         buffer.WriteFixArrayHeader(3);
         buffer.WriteInt32(value.Id);
@@ -188,11 +188,11 @@ public sealed class SPersonViaFormatter<TWriteBuffer, TReadBuffer> : IMessagePac
         stringFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, string?>();
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref SPersonVia value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, SPersonVia value)
     {
         buffer.WriteFixArrayHeader(3);
         buffer.WriteInt32(value.Id);
-        stringFormatter.Serialize(ref buffer, ref state, ref value.Name);
+        stringFormatter.Serialize(ref buffer, ref state, value.Name);
         buffer.WriteDouble(value.Score);
     }
 

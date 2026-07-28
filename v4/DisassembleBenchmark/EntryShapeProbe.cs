@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 
 
-// Probe for a runtime-cost question (distinct from the DisasmProbe 1-5 diagnoser-NA
+// Probe for a runtime-cost question (distinct from the DiagnoserDrop* rounds 1-5 diagnoser-NA
 // question): does the try/finally in MessagePackSerializer.Serialize<T> suppress JIT
 // optimization enough to matter? Lives in this assembly so the variants stay byte-for-byte
 // identical to the real entry shape. Moved out of the library (probe code does not
@@ -24,7 +24,7 @@ public static class EntryShapeProbe
         try
         {
             var state = new SerializeState();
-            MessagePackSerializer.Default.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, ref value);
+            MessagePackSerializerOptions.Default.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
             return buffer.ToArray();
         }
         finally
@@ -40,7 +40,7 @@ public static class EntryShapeProbe
         Span<byte> scratch = stackalloc byte[ScratchSize];
         var buffer = new ArrayPoolListWriteBuffer(scratch);
         var state = new SerializeState();
-        MessagePackSerializer.Default.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, ref value);
+        MessagePackSerializerOptions.Default.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
         var result = buffer.ToArray();
         buffer.Dispose();
         return result;
@@ -53,21 +53,21 @@ public static class EntryShapeProbe
         Span<byte> scratch = stackalloc byte[ScratchSize];
         var buffer = new ArrayPoolListWriteBuffer(scratch);
         var state = new SerializeState();
-        MessagePackSerializer.Default.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, ref value);
+        MessagePackSerializerOptions.Default.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
         return buffer.ToArray();
     }
 
-    // entry taking an explicit serializer (used by DisasmProbe8 to swap formatters);
+    // entry taking explicit options (used by WriteBufferBatchBenchmark to swap formatters);
     // once the "UniformTable" candidate, now simply the standard entry shape
     [SkipLocalsInit]
-    public static byte[] SerializeUniformTable<T>(MessagePackSerializer serializer, T value)
+    public static byte[] SerializeUniformTable<T>(MessagePackSerializerOptions options, T value)
     {
         Span<byte> scratch = stackalloc byte[ScratchSize];
         var buffer = new ArrayPoolListWriteBuffer(scratch);
         try
         {
             var state = new SerializeState();
-            serializer.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, ref value);
+            options.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
             return buffer.ToArray();
         }
         finally

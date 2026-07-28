@@ -10,7 +10,7 @@ using UltraMessagePack;
 //   RefStructFinally  - ref struct local (Span fields) alive across the EH region
 //   GvmFinally        - generic virtual method call inside try
 //   FormatterFinally  - interface call on a ByRefLike-instantiated interface inside try
-public class DisasmProbe4Benchmark
+public class DiagnoserDropTryBodyBenchmark
 {
     BenchPerson person = default!;
     static IMessagePackFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, BenchPerson> formatter = default!;
@@ -18,9 +18,9 @@ public class DisasmProbe4Benchmark
     [GlobalSetup]
     public void Setup()
     {
-        DynamicFormatterFactory.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
+        FormatterRegistry.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
         person = new BenchPerson { Id = 12345, Name = "abc", Score = 98.5 };
-        formatter = UltraMessagePack.MessagePackSerializer.Default.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, BenchPerson>();
+        formatter = UltraMessagePack.MessagePackSerializerOptions.Default.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, BenchPerson>();
     }
 
     [Benchmark(Baseline = true)]
@@ -58,7 +58,7 @@ public class DisasmProbe4Benchmark
         var state = new SerializeState();
         try
         {
-            formatter.Serialize(ref buffer, ref state, ref person);
+            formatter.Serialize(ref buffer, ref state, person);
             return buffer.BytesWritten;
         }
         finally

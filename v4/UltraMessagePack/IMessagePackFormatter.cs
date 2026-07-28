@@ -7,7 +7,7 @@ public interface IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
     where TReadBuffer : struct, IReadBuffer, allows ref struct
 {
     void Initialize(MessagePackFormatterResolver resolver);
-    void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref T value);
+    void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value);
     void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref T value);
 }
 
@@ -20,7 +20,7 @@ public interface IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
 //
 // Chain discipline: a factory placed DIRECTLY into a chain must check `type` and return
 // null for types it does not serve; a factory registered under a Type key (e.g. via
-// DynamicFormatterFactory.RegisterFactory&lt;T&gt;) is only ever asked for that type and
+// FormatterRegistry.RegisterFactory&lt;T&gt;) is only ever asked for that type and
 // may ignore the parameter.
 public interface IMessagePackFormatterFactory
 {

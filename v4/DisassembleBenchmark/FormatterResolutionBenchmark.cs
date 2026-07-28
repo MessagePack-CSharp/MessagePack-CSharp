@@ -11,23 +11,23 @@ using BenchmarkDotNet.Attributes;
 // DefaultCache and its ReferenceEquals branch were all deleted once "UniformTable"
 // measured within noise (1.04) of the frozen-cache path. This benchmark guards the
 // surviving structure:
-//   DefaultSerialize      - Default instance through the resolver table
-//   CustomSerialize       - non-Default instance, same path (must be ~equal)
-//   NewSerializerEachCall - the misuse pattern (new serializer per call, shared resolver);
-//                           stateless serializer must make this ~= CustomSerialize + alloc
-public class DisasmProbe7Benchmark
+//   DefaultSerialize      - options=null path through the resolver table
+//   CustomSerialize       - explicit options, same path (must be ~equal)
+//   NewSerializerEachCall - the misuse pattern (new options per call, shared resolver);
+//                           stateless options must make this ~= CustomSerialize + alloc
+public class FormatterResolutionBenchmark
 {
     BenchPerson person = default!;
     UltraMessagePack.MessagePackFormatterResolver sharedResolver = default!;
-    UltraMessagePack.MessagePackSerializer custom = default!;
+    UltraMessagePack.MessagePackSerializerOptions custom = default!;
 
     [GlobalSetup]
     public void Setup()
     {
-        UltraMessagePack.DynamicFormatterFactory.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
+        UltraMessagePack.FormatterRegistry.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
         person = new BenchPerson { Id = 12345, Name = "山岡士郎", Score = 98.5 };
         sharedResolver = new UltraMessagePack.MessagePackFormatterResolver(UltraMessagePack.DefaultFormatterFactory.Instance);
-        custom = new UltraMessagePack.MessagePackSerializer(sharedResolver);
+        custom = new UltraMessagePack.MessagePackSerializerOptions(sharedResolver);
 
         var expected = MessagePack.MessagePackSerializer.Serialize(person);
         foreach (var (name, actual) in new (string, byte[])[]
@@ -42,11 +42,11 @@ public class DisasmProbe7Benchmark
     }
 
     [Benchmark(Baseline = true)]
-    public byte[] DefaultSerialize() => UltraMessagePack.MessagePackSerializer.Default.Serialize(person);
+    public byte[] DefaultSerialize() => UltraMessagePack.MessagePackSerializer.Serialize(person);
 
     [Benchmark]
-    public byte[] CustomSerialize() => custom.Serialize(person);
+    public byte[] CustomSerialize() => UltraMessagePack.MessagePackSerializer.Serialize(person, custom);
 
     [Benchmark]
-    public byte[] NewSerializerEachCall() => new UltraMessagePack.MessagePackSerializer(sharedResolver).Serialize(person);
+    public byte[] NewSerializerEachCall() => UltraMessagePack.MessagePackSerializer.Serialize(person, new UltraMessagePack.MessagePackSerializerOptions(sharedResolver));
 }

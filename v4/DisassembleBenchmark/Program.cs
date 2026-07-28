@@ -51,12 +51,12 @@ if (args.Contains("--jit-nb"))
     return 0;
 }
 
-// hot-loops the DisasmProbe6 entry-shape variants for DOTNET_JitDisasm capture — the
+// hot-loops the EntryTryFinallyCostBenchmark entry-shape variants for DOTNET_JitDisasm capture — the
 // try/finally ones are silently dropped by DisassemblyDiagnoser (round 2 finding). Usage:
-//   $env:DOTNET_JitDisasm = "*EntryShapeProbe*"; dotnet run -c Release -- --jit-probe6
-if (args.Contains("--jit-probe6"))
+//   $env:DOTNET_JitDisasm = "*EntryShapeProbe*"; dotnet run -c Release -- --jit-entryshape
+if (args.Contains("--jit-entryshape"))
 {
-    var b = new DisasmProbe6Benchmark();
+    var b = new EntryTryFinallyCostBenchmark();
     b.Setup();
     for (int i = 0; i < 3_000_000; i++)
     {
@@ -67,10 +67,10 @@ if (args.Contains("--jit-probe6"))
     return 0;
 }
 
-// same JitDisasm hot-loop for the DisasmProbe7 entry variants
-if (args.Contains("--jit-probe7"))
+// same JitDisasm hot-loop for the FormatterResolutionBenchmark entry variants
+if (args.Contains("--jit-resolution"))
 {
-    var b = new DisasmProbe7Benchmark();
+    var b = new FormatterResolutionBenchmark();
     b.Setup();
     for (int i = 0; i < 3_000_000; i++)
     {
@@ -81,10 +81,10 @@ if (args.Contains("--jit-probe7"))
     return 0;
 }
 
-// same JitDisasm hot-loop for the DisasmProbe8 buffer/formatter variants
-if (args.Contains("--jit-probe8"))
+// same JitDisasm hot-loop for the WriteBufferBatchBenchmark buffer/formatter variants
+if (args.Contains("--jit-writebuffer"))
 {
-    var b = new DisasmProbe8Benchmark();
+    var b = new WriteBufferBatchBenchmark();
     b.Setup();
     for (int i = 0; i < 3_000_000; i++)
     {
@@ -94,10 +94,10 @@ if (args.Contains("--jit-probe8"))
     return 0;
 }
 
-// same JitDisasm hot-loop for the DisasmProbe9 per-value/batch formatter shapes
-if (args.Contains("--jit-probe9"))
+// same JitDisasm hot-loop for the PocoPerValueVsBatchBenchmark per-value/batch formatter shapes
+if (args.Contains("--jit-pocoshape"))
 {
-    var b = new DisasmProbe9Benchmark();
+    var b = new PocoPerValueVsBatchBenchmark();
     b.Setup();
     for (int i = 0; i < 3_000_000; i++)
     {
@@ -109,10 +109,10 @@ if (args.Contains("--jit-probe9"))
     return 0;
 }
 
-// same JitDisasm hot-loop for the DisasmProbe11 nested-dispatch variants
-if (args.Contains("--jit-probe11"))
+// same JitDisasm hot-loop for the NestedFormatterDispatchBenchmark nested-dispatch variants
+if (args.Contains("--jit-nesteddispatch"))
 {
-    var b = new DisasmProbe11Benchmark();
+    var b = new NestedFormatterDispatchBenchmark();
     b.Setup();
     for (int i = 0; i < 3_000_000; i++)
     {
@@ -231,14 +231,14 @@ static bool VerifyNbOfficial()
     {
         ("map",
             MessagePack.MessagePackSerializer.Serialize(NbData.PocoMapSingle, MessagePack.MessagePackSerializerOptions.Standard),
-            () => UltraMessagePack.MessagePackSerializer.Default.Serialize(NbData.PocoMapSingle),
-            w => UltraMessagePack.MessagePackSerializer.Default.Serialize(w, NbData.PocoMapSingle),
-            seq => { var v = UltraMessagePack.MessagePackSerializer.Default.Deserialize<NbPocoMap>(seq); return (v.SomeInt, v.SomeString); }),
+            () => UltraMessagePack.MessagePackSerializer.Serialize(NbData.PocoMapSingle),
+            w => UltraMessagePack.MessagePackSerializer.Serialize(w, NbData.PocoMapSingle),
+            seq => { var v = UltraMessagePack.MessagePackSerializer.Deserialize<NbPocoMap>(seq); return (v.SomeInt, v.SomeString); }),
         ("array",
             MessagePack.MessagePackSerializer.Serialize(NbData.PocoAsArraySingle, MessagePack.MessagePackSerializerOptions.Standard),
-            () => UltraMessagePack.MessagePackSerializer.Default.Serialize(NbData.PocoAsArraySingle),
-            w => UltraMessagePack.MessagePackSerializer.Default.Serialize(w, NbData.PocoAsArraySingle),
-            seq => { var v = UltraMessagePack.MessagePackSerializer.Default.Deserialize<NbPocoAsArray>(seq); return (v.SomeInt, v.SomeString); }),
+            () => UltraMessagePack.MessagePackSerializer.Serialize(NbData.PocoAsArraySingle),
+            w => UltraMessagePack.MessagePackSerializer.Serialize(w, NbData.PocoAsArraySingle),
+            seq => { var v = UltraMessagePack.MessagePackSerializer.Deserialize<NbPocoAsArray>(seq); return (v.SomeInt, v.SomeString); }),
     };
 
     foreach (var (name, expected, serialize, serializeWriter, deserialize) in cases)

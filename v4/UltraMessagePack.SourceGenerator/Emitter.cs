@@ -9,15 +9,20 @@ namespace UltraMessagePack.SourceGenerator;
 /// initializer. Output shape follows the measured house style:
 ///   Serialize   - direct-writable members (and headers/keys) are batched into shared
 ///                 reservations: one GetReference over the summed worst-case sizes, a
-///                 register-resident offset, one Advance per run (DisasmProbe9: -11..16%
+///                 register-resident offset, one Advance per run (PocoPerValueVsBatchBenchmark: -11..16%
 ///                 vs per-value calls). A member without a direct writer flushes the run
-///                 and dispatches through its formatter field.
+///                 and dispatches through its formatter field. STRING members also flush
+///                 and go through buffer.WriteString (single-read parameter): fusing them
+///                 evaluated value.X twice — sizing and write — which a property returning
+///                 different strings per call turns into a reservation overflow. String
+///                 KEYS stay fused as pre-encoded header+utf8 blobs via UnsafeWriteRaw
+///                 (compile-time constants; measured no defusion penalty on BenchPerson).
 ///   Deserialize - per-value loop+switch (int keys) or utf8 in-place key match (string
 ///                 keys); unknown keys/extra array slots are skipped for version
 ///                 tolerance. Measured equal to straight-line reads (the decode chain
 ///                 dominates), and it handles count mismatches naturally.
 ///   Nested      - formatters resolved once in Initialize into interface fields
-///                 (DisasmProbe11: per-call resolution is strictly worse).
+///                 (NestedFormatterDispatchBenchmark: per-call resolution is strictly worse).
 /// </summary>
 static class Emitter
 {
@@ -75,7 +80,7 @@ static class Emitter
 
     static void EmitSerialize(StringBuilder builder, ObjectModel model, string valueType)
     {
-        builder.Append($"        public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref {valueType} value)\n        {{\n");
+        builder.Append($"        public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, {valueType} value)\n        {{\n");
         if (!model.IsValueType)
         {
             builder.Append("""
@@ -153,10 +158,14 @@ static class Emitter
 
             foreach (var member in model.Members)
             {
-                var keyLiteral = Escape(member.StringKey);
+                // key = compile-time constant: header + utf8 pre-encoded into one blob,
+                // written as a raw copy (the byte[]-to-ReadOnlySpan argument conversion
+                // compiles to RVA static data, no allocation). Both the blob and its size
+                // are constants, so the reservation can never diverge from the write.
+                var keyBlob = EncodeStringKeyBlob(member.StringKey);
                 Direct(
-                    (Encoding.UTF8.GetByteCount(member.StringKey) + 5).ToString(),
-                    $"UnsafeWriteString({{DEST}}, \"{keyLiteral}\"u8)");
+                    keyBlob.Length.ToString(),
+                    $"UnsafeWriteRaw({{DEST}}, new byte[] {{ {string.Join(", ", keyBlob.Select(static b => $"0x{b:x2}"))} }})");
                 EmitValueWrite(builder, member, Direct, Flush);
             }
         }
@@ -170,8 +179,19 @@ static class Emitter
         if (member.Direct == DirectKind.None)
         {
             flush();
-            builder.Append($"            var v{member.Name} = value.{member.Name};\n");
-            builder.Append($"            f{member.Name}.Serialize(ref buffer, ref state, ref v{member.Name});\n");
+            builder.Append($"            f{member.Name}.Serialize(ref buffer, ref state, value.{member.Name});\n");
+            return;
+        }
+
+        if (member.Direct == DirectKind.String)
+        {
+            // strings leave the fused batch: buffer.WriteString reads the member exactly
+            // once (as its parameter), so sizing and writing cannot diverge. The fused form
+            // evaluated value.X twice — once in the shared reservation, once in the write —
+            // which a property returning a longer string on the second call would turn
+            // into a reservation overflow (heap corruption, no race required).
+            flush();
+            builder.Append($"            buffer.WriteString(value.{member.Name});\n");
             return;
         }
 
@@ -190,7 +210,6 @@ static class Emitter
             DirectKind.Char => ("UnsafeWriteChar", "MaxUInt16Length"),
             DirectKind.Single => ("UnsafeWriteSingle", "MaxFloat32Length"),
             DirectKind.Double => ("UnsafeWriteDouble", "MaxFloat64Length"),
-            DirectKind.String => ("UnsafeWriteString", $"GetMaxStringByteCount({access})"),
             DirectKind.DateTime => ("UnsafeWriteTimestamp", "MaxTimestampLength"),
             _ => throw new InvalidOperationException(),
         };
@@ -364,7 +383,7 @@ static class Emitter
 
                 internal static class GeneratedMessagePackRegistration
                 {
-                    // MessagePackSerializer.Default resolves through DynamicFormatterFactory, so
+                    // The default options resolve through FormatterRegistry, so
                     // generated types work without manual registration; an explicit chain can
                     // still place GeneratedMessagePackFormatterFactory.Instance directly.
                     [global::System.Runtime.CompilerServices.ModuleInitializer]
@@ -374,7 +393,7 @@ static class Emitter
             """);
         foreach (var model in ordered)
         {
-            builder.Append($"            DynamicFormatterFactory.Instance.Register(typeof({model.FullTypeName}), GeneratedMessagePackFormatterFactory.Instance);\n");
+            builder.Append($"            FormatterRegistry.Instance.Register(typeof({model.FullTypeName}), GeneratedMessagePackFormatterFactory.Instance);\n");
         }
         builder.Append("""
                     }
@@ -383,6 +402,24 @@ static class Emitter
 
             """);
         return builder.ToString();
+    }
+
+    // msgpack str token (smallest header + utf8 payload) pre-encoded at generator time
+    static byte[] EncodeStringKeyBlob(string key)
+    {
+        var utf8 = Encoding.UTF8.GetBytes(key);
+        var n = utf8.Length;
+        byte[] header = n switch
+        {
+            <= 31 => [(byte)(0xa0 | n)],
+            <= byte.MaxValue => [0xd9, (byte)n],
+            <= ushort.MaxValue => [0xda, (byte)(n >> 8), (byte)n],
+            _ => [0xdb, (byte)(n >> 24), (byte)(n >> 16), (byte)(n >> 8), (byte)n],
+        };
+        var blob = new byte[header.Length + n];
+        header.CopyTo(blob, 0);
+        utf8.CopyTo(blob, header.Length);
+        return blob;
     }
 
     static string Escape(string value)

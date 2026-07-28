@@ -14,11 +14,11 @@ public sealed class NullableFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePa
         formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref T? value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T? value)
     {
         if (value is T inner)
         {
-            formatter.Serialize(ref buffer, ref state, ref inner);
+            formatter.Serialize(ref buffer, ref state, inner);
         }
         else
         {

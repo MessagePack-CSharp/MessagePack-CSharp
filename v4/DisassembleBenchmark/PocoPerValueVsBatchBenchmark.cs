@@ -32,13 +32,13 @@ using static UltraMessagePack.MessagePackPrimitives;
 // is a style choice (per-value is simpler and handles count-mismatch versioning naturally).
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [CategoriesColumn]
-public class DisasmProbe9Benchmark
+public class PocoPerValueVsBatchBenchmark
 {
     Int4Poco int4 = default!;
     byte[] payload = default!;
-    UltraMessagePack.MessagePackSerializer perValue = default!;
-    UltraMessagePack.MessagePackSerializer batch = default!;
-    UltraMessagePack.MessagePackSerializer loopSwitch = default!;
+    UltraMessagePack.MessagePackSerializerOptions perValue = default!;
+    UltraMessagePack.MessagePackSerializerOptions batch = default!;
+    UltraMessagePack.MessagePackSerializerOptions loopSwitch = default!;
     Int4Poco reusable = default!;
 
     [GlobalSetup]
@@ -46,9 +46,9 @@ public class DisasmProbe9Benchmark
     {
         // one value per encoding class: fixint(1B), uint16(3B), int32(5B), int8(2B)
         int4 = new Int4Poco { A = 1, B = 300, C = -70000, D = -50 };
-        perValue = new UltraMessagePack.MessagePackSerializer(new UltraMessagePack.MessagePackFormatterResolver(new Int4PerValueFormatterFactory()));
-        batch = new UltraMessagePack.MessagePackSerializer(new UltraMessagePack.MessagePackFormatterResolver(new Int4BatchFormatterFactory()));
-        loopSwitch = new UltraMessagePack.MessagePackSerializer(new UltraMessagePack.MessagePackFormatterResolver(new Int4LoopSwitchFormatterFactory()));
+        perValue = new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(new Int4PerValueFormatterFactory()));
+        batch = new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(new Int4BatchFormatterFactory()));
+        loopSwitch = new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(new Int4LoopSwitchFormatterFactory()));
         payload = MessagePack.MessagePackSerializer.Serialize(int4);
 
         // byte identity against MessagePack-CSharp for both write shapes
@@ -75,7 +75,7 @@ public class DisasmProbe9Benchmark
         // populate overload: same instance must be reused (no allocation) with fields updated
         reusable = new Int4Poco();
         var before = reusable;
-        perValue.Deserialize(ref reusable, payload);
+        UltraMessagePack.MessagePackSerializer.Deserialize(ref reusable, payload, perValue);
         if (!ReferenceEquals(before, reusable) || !reusable.Equals4(int4)) throw new InvalidOperationException("verify failed: populate");
 
         // the batch read's fallback must survive a value straddling a sequence segment
@@ -85,30 +85,30 @@ public class DisasmProbe9Benchmark
             var sequence = splitAt == payload.Length
                 ? new ReadOnlySequence<byte>(payload)
                 : NbSequenceSegment.CreateSplit(payload, splitAt);
-            var v = batch.Deserialize<Int4Poco>(sequence);
+            var v = UltraMessagePack.MessagePackSerializer.Deserialize<Int4Poco>(sequence, batch);
             if (!v.Equals4(int4)) throw new InvalidOperationException($"verify failed: batch sequence splitAt={splitAt}");
         }
     }
 
     [BenchmarkCategory("Serialize"), Benchmark(Baseline = true)]
-    public byte[] SerializePerValue() => perValue.Serialize(int4);
+    public byte[] SerializePerValue() => UltraMessagePack.MessagePackSerializer.Serialize(int4, perValue);
 
     [BenchmarkCategory("Serialize"), Benchmark]
-    public byte[] SerializeBatch() => batch.Serialize(int4);
+    public byte[] SerializeBatch() => UltraMessagePack.MessagePackSerializer.Serialize(int4, batch);
 
     [BenchmarkCategory("Deserialize"), Benchmark(Baseline = true)]
-    public Int4Poco DeserializePerValue() => perValue.Deserialize<Int4Poco>(payload)!;
+    public Int4Poco DeserializePerValue() => UltraMessagePack.MessagePackSerializer.Deserialize<Int4Poco>(payload, perValue)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
-    public Int4Poco DeserializeBatch() => batch.Deserialize<Int4Poco>(payload)!;
+    public Int4Poco DeserializeBatch() => UltraMessagePack.MessagePackSerializer.Deserialize<Int4Poco>(payload, batch)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
-    public Int4Poco DeserializeLoopSwitch() => loopSwitch.Deserialize<Int4Poco>(payload)!;
+    public Int4Poco DeserializeLoopSwitch() => UltraMessagePack.MessagePackSerializer.Deserialize<Int4Poco>(payload, loopSwitch)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
     public Int4Poco DeserializePopulate()
     {
-        perValue.Deserialize(ref reusable, payload);
+        UltraMessagePack.MessagePackSerializer.Deserialize(ref reusable, payload, perValue);
         return reusable;
     }
 }
@@ -143,7 +143,7 @@ public sealed class Int4PerValueFormatter<TWriteBuffer, TReadBuffer> : UltraMess
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref UltraMessagePack.SerializeState state, ref Int4Poco value)
+    public void Serialize(ref TWriteBuffer buffer, ref UltraMessagePack.SerializeState state, Int4Poco value)
     {
         buffer.WriteArrayHeader(4);
         buffer.WriteInt32(value.A);
@@ -191,7 +191,7 @@ public sealed class Int4LoopSwitchFormatter<TWriteBuffer, TReadBuffer> : UltraMe
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref UltraMessagePack.SerializeState state, ref Int4Poco value)
+    public void Serialize(ref TWriteBuffer buffer, ref UltraMessagePack.SerializeState state, Int4Poco value)
     {
         buffer.WriteArrayHeader(4);
         buffer.WriteInt32(value.A);
@@ -251,7 +251,7 @@ public sealed class Int4BatchFormatter<TWriteBuffer, TReadBuffer> : UltraMessage
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref UltraMessagePack.SerializeState state, ref Int4Poco value)
+    public void Serialize(ref TWriteBuffer buffer, ref UltraMessagePack.SerializeState state, Int4Poco value)
     {
         // one worst-case reservation, register-resident offset, one Advance
         ref byte d = ref buffer.GetReference(MaxArrayHeaderLength + 4 * MaxInt32Length);

@@ -7,7 +7,7 @@ using SerializerFoundation;
 // all Ultra benchmarks and MessagePack-CSharp Deserialize fail; MessagePack-CSharp
 // Serialize and all Nerdbank benchmarks succeed. Each probe below adds exactly one
 // suspect construct to an otherwise trivial NoInlining call chain.
-public class DisasmProbeBenchmark
+public class DiagnoserDropSuspectsBenchmark
 {
     [Benchmark(Baseline = true)]
     public int Plain() => Probe.Plain(1);

@@ -18,15 +18,15 @@ using static UltraMessagePack.MessagePackPrimitives;
 //                                   sizeHint >= 1 breaks "give me everything" callers.
 // Entry bookkeeping is at its measured ceiling; the remaining real axis is per-byte work
 // (nested-formatter dispatch removal / SIMD leaf formatters).
-// Both entries resolve through serializer.Resolver.GetFormatter (the table path) so
+// Both entries resolve through options.Resolver.GetFormatter (the table path) so
 // formatter resolution cost is identical; the serializers differ only in which BenchPerson
 // formatter their resolver hands out.
-public class DisasmProbe8Benchmark
+public class WriteBufferBatchBenchmark
 {
     BenchPerson person = default!;
     BenchPerson bigPerson = default!;
-    UltraMessagePack.MessagePackSerializer normal = default!;
-    UltraMessagePack.MessagePackSerializer batch = default!;
+    UltraMessagePack.MessagePackSerializerOptions normal = default!;
+    UltraMessagePack.MessagePackSerializerOptions batch = default!;
 
     [GlobalSetup]
     public void Setup()
@@ -34,8 +34,8 @@ public class DisasmProbe8Benchmark
         person = new BenchPerson { Id = 12345, Name = "山岡士郎", Score = 98.5 };
         // 5000 chars > 1KB scratch: exercises the slim buffers' spill path
         bigPerson = new BenchPerson { Id = -98765, Name = new string('あ', 5000), Score = -1.5 };
-        normal = new UltraMessagePack.MessagePackSerializer(new UltraMessagePack.MessagePackFormatterResolver(new BenchPersonFormatterFactory()));
-        batch = new UltraMessagePack.MessagePackSerializer(new UltraMessagePack.MessagePackFormatterResolver(new BenchPersonBatchFormatterFactory()));
+        normal = new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(new BenchPersonFormatterFactory()));
+        batch = new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(new BenchPersonBatchFormatterFactory()));
 
         foreach (var p in new[] { person, bigPerson })
         {
@@ -70,7 +70,7 @@ public sealed class BenchPersonBatchFormatter<TWriteBuffer, TReadBuffer> : Ultra
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref UltraMessagePack.SerializeState state, ref BenchPerson value)
+    public void Serialize(ref TWriteBuffer buffer, ref UltraMessagePack.SerializeState state, BenchPerson value)
     {
         var name = value.Name;
         var max = MaxArrayHeaderLength + MaxInt32Length + GetMaxStringByteCount(name) + MaxFloat64Length;

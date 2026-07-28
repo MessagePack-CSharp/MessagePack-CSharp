@@ -478,14 +478,27 @@ public static partial class MessagePackPrimitives
 
     /// <summary>
     /// Writes a string in the smallest msgpack str format (nil when null). Requires only
-    /// the encoded size (exact UTF-8 byte count + header); unlike UnsafeWriteString this
-    /// walks the string once upfront (GetByteCount) instead of speculating.
+    /// the encoded size (exact UTF-8 byte count + header). When destination has worst-case
+    /// room (GetMaxStringByteCount) the single-pass speculative writer runs — size your
+    /// span with GetMaxStringByteCount to stay on that path; tighter spans fall back to a
+    /// two-pass exact count (GetByteCount, then transcode).
     /// </summary>
     public static bool TryWriteString(Span<byte> destination, string? value, out int bytesWritten)
     {
         if (value == null)
         {
             return TryWriteNil(destination, out bytesWritten);
+        }
+        // fast path: with worst-case room the single-pass speculative writer (the same code
+        // behind buffer.WriteString) runs instead of the two-pass exact-count fallback.
+        // The bound is checked against the ACTUAL span, and value is read once as a
+        // parameter, so a caller-side stale size can only send us down the slow path,
+        // never past the end of destination.
+        int length = value.Length;
+        if (length <= MaxWorstCaseStringLength && destination.Length >= length * 3 + 5)
+        {
+            bytesWritten = UnsafeWriteString(ref MemoryMarshal.GetReference(destination), value);
+            return true;
         }
         int byteCount = Encoding.UTF8.GetByteCount(value);
         int headerSize = byteCount <= MessagePackCode.MaxFixStringLength ? 1 : byteCount <= byte.MaxValue ? 2 : byteCount <= ushort.MaxValue ? 3 : 5;

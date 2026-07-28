@@ -134,7 +134,7 @@ public sealed class Int32ArrayFormatter<TWriteBuffer, TReadBuffer> : IMessagePac
     // itself. The cap bounds the reservation for huge arrays (4096 * 5 = 20KB).
     const int SerializeRegionElements = 4096;
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref int[]? value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, int[]? value)
     {
         if (value == null)
         {

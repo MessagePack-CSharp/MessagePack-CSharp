@@ -49,13 +49,13 @@ public class SerializerBenchmark
     public byte[] SerializeMessagePackCSharp() => MessagePack.MessagePackSerializer.Serialize(values);
 
     [BenchmarkCategory("Serialize"), Benchmark]
-    public byte[] SerializeUltra() => UltraMessagePack.MessagePackSerializer.Default.Serialize(values);
+    public byte[] SerializeUltra() => UltraMessagePack.MessagePackSerializer.Serialize(values);
 
     [BenchmarkCategory("Deserialize"), Benchmark(Baseline = true)]
     public int[] DeserializeMessagePackCSharp() => MessagePack.MessagePackSerializer.Deserialize<int[]>(serialized)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
-    public int[] DeserializeUltra() => UltraMessagePack.MessagePackSerializer.Default.Deserialize<int[]>(serialized)!;
+    public int[] DeserializeUltra() => UltraMessagePack.MessagePackSerializer.Deserialize<int[]>(serialized)!;
 }
 
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
@@ -72,8 +72,8 @@ public class SerializerPocoBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        // UltraMessagePack.MessagePackSerializer.Default.Register(new BenchPersonFormatter());
-        UltraMessagePack.DynamicFormatterFactory.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
+        // UltraMessagePack.MessagePackSerializer.Register(new BenchPersonFormatter());
+        UltraMessagePack.FormatterRegistry.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
 
         person = new BenchPerson { Id = 12345, Name = "山岡士郎", Score = 98.5 };
         serialized = MessagePack.MessagePackSerializer.Serialize(person);
@@ -83,7 +83,7 @@ public class SerializerPocoBenchmark
     public byte[] SerializeMessagePackCSharp() => MessagePack.MessagePackSerializer.Serialize(person);
 
     [BenchmarkCategory("Serialize"), Benchmark]
-    public byte[] SerializeUltra() => UltraMessagePack.MessagePackSerializer.Default.Serialize(person);
+    public byte[] SerializeUltra() => UltraMessagePack.MessagePackSerializer.Serialize(person);
 
     [BenchmarkCategory("Serialize"), Benchmark]
     public byte[] SerializeNerdbank() => NerdbankSerializer.Serialize(person);
@@ -92,7 +92,7 @@ public class SerializerPocoBenchmark
     public BenchPerson DeserializeMessagePackCSharp() => MessagePack.MessagePackSerializer.Deserialize<BenchPerson>(serialized)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
-    public BenchPerson DeserializeUltra() => UltraMessagePack.MessagePackSerializer.Default.Deserialize<BenchPerson>(serialized)!;
+    public BenchPerson DeserializeUltra() => UltraMessagePack.MessagePackSerializer.Deserialize<BenchPerson>(serialized)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
     public BenchPerson DeserializeNerdbank() => NerdbankSerializer.Deserialize<BenchPerson>(serialized)!;
@@ -120,7 +120,7 @@ public sealed class BenchPersonFormatter<TWriteBuffer, TReadBuffer> : UltraMessa
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref UltraMessagePack.SerializeState state, ref BenchPerson value)
+    public void Serialize(ref TWriteBuffer buffer, ref UltraMessagePack.SerializeState state, BenchPerson value)
     {
 
         buffer.Advance(UnsafeWriteArrayHeader(ref buffer.GetReference(MaxArrayHeaderLength), 3));

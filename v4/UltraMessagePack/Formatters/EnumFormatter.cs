@@ -17,7 +17,7 @@ public sealed class EnumByteFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePa
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref T value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
     {
         buffer.WriteByte(Unsafe.As<T, byte>(ref value));
     }
@@ -38,7 +38,7 @@ public sealed class EnumSByteFormatter<TWriteBuffer, TReadBuffer, T> : IMessageP
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref T value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
     {
         buffer.WriteSByte(Unsafe.As<T, sbyte>(ref value));
     }
@@ -59,7 +59,7 @@ public sealed class EnumInt16Formatter<TWriteBuffer, TReadBuffer, T> : IMessageP
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref T value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
     {
         buffer.WriteInt16(Unsafe.As<T, short>(ref value));
     }
@@ -80,7 +80,7 @@ public sealed class EnumUInt16Formatter<TWriteBuffer, TReadBuffer, T> : IMessage
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref T value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
     {
         buffer.WriteUInt16(Unsafe.As<T, ushort>(ref value));
     }
@@ -101,7 +101,7 @@ public sealed class EnumInt32Formatter<TWriteBuffer, TReadBuffer, T> : IMessageP
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref T value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
     {
         buffer.WriteInt32(Unsafe.As<T, int>(ref value));
     }
@@ -122,7 +122,7 @@ public sealed class EnumUInt32Formatter<TWriteBuffer, TReadBuffer, T> : IMessage
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref T value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
     {
         buffer.WriteUInt32(Unsafe.As<T, uint>(ref value));
     }
@@ -143,7 +143,7 @@ public sealed class EnumInt64Formatter<TWriteBuffer, TReadBuffer, T> : IMessageP
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref T value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
     {
         buffer.WriteInt64(Unsafe.As<T, long>(ref value));
     }
@@ -164,7 +164,7 @@ public sealed class EnumUInt64Formatter<TWriteBuffer, TReadBuffer, T> : IMessage
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref T value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
     {
         buffer.WriteUInt64(Unsafe.As<T, ulong>(ref value));
     }

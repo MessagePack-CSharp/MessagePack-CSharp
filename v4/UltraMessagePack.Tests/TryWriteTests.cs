@@ -140,6 +140,37 @@ public class TryWriteTests
         AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteString(d, "name"u8, out w),
             (ref byte d) => MessagePackPrimitives.UnsafeWriteString(ref d, "name"u8));
 
+        // TryWriteString has two internal paths: destination >= GetMaxStringByteCount runs
+        // the single-pass speculative writer, [exact, worstCase) runs the two-pass exact
+        // count. Sweep every destination size across the crossover: below exact must fail
+        // untouched, everything else must produce identical bytes on either path.
+        foreach (var s in (string[])["", "a", new string('x', 31), new string('x', 32),
+            "あいう", new string('あ', 11), "mix\ud800ed", new string('あ', 100)])
+        {
+            var worst = MessagePackPrimitives.GetMaxStringByteCount(s);
+            var expected = new byte[worst];
+            int exact = MessagePackPrimitives.UnsafeWriteString(ref MemoryMarshal.GetArrayDataReference(expected), s);
+
+            for (int size = Math.Max(0, exact - 1); size <= worst + 1; size++)
+            {
+                var buf = new byte[size];
+                buf.AsSpan().Fill(0xEE);
+                var ok = MessagePackPrimitives.TryWriteString(buf, s, out var written);
+                if (size < exact)
+                {
+                    Assert.False(ok);
+                    Assert.Equal(0, written);
+                    Assert.True(buf.AsSpan().IndexOfAnyExcept((byte)0xEE) < 0, $"failed TryWriteString touched the destination (len={s.Length}, size={size})");
+                }
+                else
+                {
+                    Assert.True(ok, $"TryWriteString failed with room (len={s.Length}, size={size}, exact={exact})");
+                    Assert.Equal(exact, written);
+                    Assert.True(expected.AsSpan(0, exact).SequenceEqual(buf.AsSpan(0, exact)), $"path mismatch (len={s.Length}, size={size})");
+                }
+            }
+        }
+
         // ts32 (whole seconds in u32 range), ts64 (sub-second precision), ts96 (post-2514)
         var ts32 = new DateTime(2026, 7, 16, 1, 2, 3, DateTimeKind.Utc);
         var ts64 = new DateTime(2026, 7, 16, 1, 2, 3, 456, DateTimeKind.Utc);

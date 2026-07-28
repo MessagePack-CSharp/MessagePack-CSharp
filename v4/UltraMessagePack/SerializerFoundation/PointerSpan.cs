@@ -10,7 +10,7 @@ namespace SerializerFoundation;
 // CONTRACT: the memory behind `pointer` must be native or pinned (MemoryHandle.Pin) for
 // this struct's entire lifetime — a GC move silently invalidates the pointer. That pinning
 // contract is the ONLY unsafe part: Slice/AsSpan range-check and throw exactly like Span
-// (a predicted throw-branch is free — DisasmProbe8 — and a bad slice over a raw pointer
+// (a predicted throw-branch is free — WriteBufferBatchBenchmark — and a bad slice over a raw pointer
 // would corrupt memory, not just throw). GetReference is unchecked, mirroring
 // MemoryMarshal.GetReference; on an empty/default instance it returns a null reference.
 internal readonly unsafe struct PointerSpan

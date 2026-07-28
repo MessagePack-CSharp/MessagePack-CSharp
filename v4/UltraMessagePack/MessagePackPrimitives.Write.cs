@@ -587,9 +587,15 @@ public static partial class MessagePackPrimitives
         return 5;
     }
 
-    /// <summary>Writes a bin payload. Destination must have value.Length + 5 bytes.</summary>
+    /// <summary>
+    /// Writes a bin payload. Destination must have value.Length + 5 bytes.
+    /// INTERNAL ONLY: data-length-dependent Unsafe writers are not public API — a caller
+    /// sizing the destination from a second read of a mutable field (TOCTOU) turns into a
+    /// heap overflow. The safe entrances are buffer.WriteBinary (size and data derive from
+    /// the single span parameter) and TryWriteBinary (bounds-checked).
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteBinary(ref byte destination, ReadOnlySpan<byte> value)
+    internal static int UnsafeWriteBinary(ref byte destination, ReadOnlySpan<byte> value)
     {
         // bin header class is exact upfront (the length IS the byte count); the fast header's
         // scratch bytes land in [1..5) and are overwritten by the payload copy right after
@@ -765,8 +771,12 @@ public static partial class MessagePackPrimitives
     /// <summary>
     /// Writes a string in the smallest msgpack str format (nil when null).
     /// Destination must have GetMaxStringByteCount(value) bytes (utf8 worst case + largest header).
+    /// INTERNAL ONLY: sizing and writing from two separate reads of a mutable field (TOCTOU)
+    /// would overflow the reservation. The safe entrances — buffer.WriteString and
+    /// TryWriteString's worst-case fast path — reach this exact code with size and data
+    /// derived from one read of one parameter, so the speed is fully retained.
     /// </summary>
-    public static int UnsafeWriteString(ref byte destination, string? value) // no inlining
+    internal static int UnsafeWriteString(ref byte destination, string? value) // no inlining
     {
         if (value == null)
         {
@@ -852,9 +862,11 @@ public static partial class MessagePackPrimitives
     /// Writes a str from already-encoded UTF-8 bytes (the fast path for cached property
     /// names / u8 literals; the caller guarantees the bytes are valid UTF-8, they are
     /// copied as-is). Destination must have utf8Value.Length + 5 bytes.
+    /// INTERNAL ONLY: see UnsafeWriteString(string?). Generated code writes constant keys
+    /// via UnsafeWriteRaw with the header pre-encoded into the blob instead.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteString(ref byte destination, ReadOnlySpan<byte> utf8Value)
+    internal static int UnsafeWriteString(ref byte destination, ReadOnlySpan<byte> utf8Value)
     {
         // unlike the string overload no speculation is needed: the length IS the byte
         // count, so the header class is exact upfront (same shape as UnsafeWriteBinary);
@@ -863,6 +875,20 @@ public static partial class MessagePackPrimitives
         int headerSize = UnsafeWriteStringHeader(ref destination, utf8Value.Length);
         utf8Value.CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref destination, headerSize), utf8Value.Length));
         return headerSize + utf8Value.Length;
+    }
+
+    /// <summary>
+    /// Copies pre-encoded msgpack bytes as-is (a raw memcpy; returns value.Length).
+    /// Destination must have value.Length bytes. Intended for compile-time-constant blobs
+    /// (e.g. generated string keys with the header pre-encoded): unlike the removed
+    /// data-length-dependent Unsafe writers there is no second object the size could be
+    /// computed from — the span IS both the data and the length.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int UnsafeWriteRaw(ref byte destination, ReadOnlySpan<byte> value)
+    {
+        value.CopyTo(MemoryMarshal.CreateSpan(ref destination, value.Length));
+        return value.Length;
     }
 
     #endregion

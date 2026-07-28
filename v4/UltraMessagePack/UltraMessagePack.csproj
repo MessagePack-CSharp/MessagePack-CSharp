@@ -5,13 +5,22 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<DefaultItemExcludes>$(DefaultItemExcludes);obj\**;bin\**</DefaultItemExcludes>
+		<Description>Experimental maximum-speed MessagePack serializer core, built from disassembly/branch-counter-driven optimization of the primitive layer.</Description>
+
+		<IsAotCompatible>true</IsAotCompatible>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<Using Include="System.Buffers" />
 		<Using Include="System.Runtime.CompilerServices" />
 		<Using Include="System.Runtime.InteropServices" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- the internalized Unsafe variable-length writers stay reachable for tests and the
+		     benchmark/verify harness (they are the oracle for the huge-string paths) -->
+		<InternalsVisibleTo Include="UltraMessagePack.Tests" />
+		<InternalsVisibleTo Include="DisassembleBenchmark" />
 	</ItemGroup>
 
 </Project>

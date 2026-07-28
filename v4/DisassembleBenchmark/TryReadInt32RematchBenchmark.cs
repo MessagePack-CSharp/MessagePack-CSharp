@@ -18,14 +18,14 @@ using BenchmarkDotNet.Attributes;
 //
 // MEASURED, micro loop: CascadeDr crushed it — FieldCycle 0.27, FixPos 0.23, Int32 0.31,
 // Mixed 2.34 (vs Ultra 1.00 flat; it even beat Mpcs everywhere). BUT the end-to-end
-// check (DisasmProbe10 PerValueCascade, real 100k-distinct-payload POCO streams) REVERSED
+// check (OptimisticFixintDecodeBenchmark PerValueCascade, real 100k-distinct-payload POCO streams) REVERSED
 // it: cascade 1.22x/1.38x/1.55x SLOWER than the table on AllFix/Half/Mixed. In the real
 // formatter regime the decode chain overlaps with memory traffic and entry work across
 // independent payloads, the table's latency hides, and cascade's extra branches/code only
 // cost. The micro win is real but belongs to CONTIGUOUS single-callsite streams — i.e.
 // array element decoding, whose true answer is SIMD batch decode anyway (deferred).
 // VERDICT (final): full cascade rejected, but HybridDr survived BOTH regimes — e2e
-// (DisasmProbe10 PerValueHybrid) 0.43x AllFix / 0.81x Half / 1.03x Mixed. The survival
+// (OptimisticFixintDecodeBenchmark PerValueHybrid) 0.43x AllFix / 0.81x Half / 1.03x Mixed. The survival
 // condition turned out to be "exactly one branch, with a branchless fallback": the fixint
 // path's consumed is a CONSTANT (no chain link), and misses land on the chain-immune
 // table. ADOPTED into the library TryReadInt32 (fixint-first + table, mirroring

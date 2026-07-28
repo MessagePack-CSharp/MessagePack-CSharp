@@ -1,5 +1,6 @@
 using SerializerFoundation;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using UltraMessagePack.Formatters;
 
 namespace UltraMessagePack;
@@ -8,10 +9,28 @@ namespace UltraMessagePack;
 // then the generic collection shapes, then user registrations.
 public static class DefaultFormatterFactory
 {
-    public static readonly IMessagePackFormatterFactory Instance = new CompositeFormatterFactory(
-        PrimitiveFormatterFactory.Instance,
-        GenericFormatterFactory.Instance,
-        DynamicFormatterFactory.Instance);
+    internal const string RequiresDynamicCodeMessage =
+        "The default chain contains GenericFormatterFactory, which closes collection/Nullable/enum formatters " +
+        "over runtime element types via MakeGenericType. For Native AOT, compose an explicit chain instead " +
+        "(e.g. the source-generated factory + PrimitiveFormatterFactory).";
+
+    static IMessagePackFormatterFactory? instance;
+
+    /// <summary>
+    /// The default chain (Primitive → Generic → Registry). Acquisition requires dynamic
+    /// code because of the Generic link; the property is lazy so that merely loading this
+    /// type stays AOT-clean (a static readonly field would run the annotated construction
+    /// in the type initializer, where no annotation can gate it). The ??= race is benign:
+    /// both composites are equivalent and stateless.
+    /// </summary>
+    public static IMessagePackFormatterFactory Instance
+    {
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        get => instance ??= new CompositeFormatterFactory(
+            PrimitiveFormatterFactory.Instance,
+            GenericFormatterFactory.Instance,
+            FormatterRegistry.Instance);
+    }
 }
 
 /// <summary>A factory over factories: asks each in order, first non-null wins.</summary>
@@ -72,14 +91,34 @@ public sealed class PrimitiveFormatterFactory : IMessagePackFormatterFactory
     }
 }
 
+// AOT annotation pattern (same as System.Text.Json's DefaultJsonTypeInfoResolver): the
+// interface stays UNANNOTATED — annotating IMessagePackFormatterFactory.CreateFormatter
+// would poison every implementation including the AOT-safe generated one, and annotating
+// only the implementation would be an IL3051 interface/implementation mismatch. Instead
+// the requirement sits on the ACQUISITION points (constructor / Instance): you can only
+// hold a GenericFormatterFactory after opting into dynamic code, so the interface calls
+// on it need no annotation and the internal warnings are suppressed against that gate.
 public sealed class GenericFormatterFactory : IMessagePackFormatterFactory
 {
-    public static readonly GenericFormatterFactory Instance = new GenericFormatterFactory();
+    static GenericFormatterFactory? instance;
 
+    public static GenericFormatterFactory Instance
+    {
+        [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
+        get => instance ??= new GenericFormatterFactory(); // benign race: stateless singleton
+    }
+
+    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
     GenericFormatterFactory()
     {
     }
 
+    [UnconditionalSuppressMessage("AOT", "IL3050",
+        Justification = "instances only exist behind the RequiresDynamicCode constructor/Instance; the caller has already opted into dynamic code")]
+    [UnconditionalSuppressMessage("Trimming", "IL2055",
+        Justification = "the closed factory types are ArrayFormatterFactory<>/ListFormatterFactory<>/DictionaryFormatterFactory<,>/NullableFormatterFactory<>/EnumFormatterFactory<> only; all are rooted by the typeof references below")]
+    [UnconditionalSuppressMessage("Trimming", "IL2071",
+        Justification = "EnumFormatterFactory<T>'s T is always an enum (guarded by type.IsEnum); value types always satisfy PublicParameterlessConstructor")]
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
         where TReadBuffer : struct, IReadBuffer, allows ref struct
@@ -123,13 +162,13 @@ public sealed class GenericFormatterFactory : IMessagePackFormatterFactory
     }
 }
 
-public sealed class DynamicFormatterFactory : IMessagePackFormatterFactory
+public sealed class FormatterRegistry : IMessagePackFormatterFactory
 {
-    public static readonly DynamicFormatterFactory Instance = new DynamicFormatterFactory();
+    public static readonly FormatterRegistry Instance = new FormatterRegistry();
 
     ConcurrentDictionary<Type, IMessagePackFormatterFactory> factories = new ConcurrentDictionary<Type, IMessagePackFormatterFactory>();
 
-    DynamicFormatterFactory()
+    FormatterRegistry()
     {
     }
 

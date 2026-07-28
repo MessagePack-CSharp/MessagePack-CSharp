@@ -5,6 +5,7 @@ using SerializerFoundation;
 using System.Runtime.CompilerServices;
 using UltraMessagePack;
 using UltraSerializer = UltraMessagePack.MessagePackSerializer;
+using UltraOptions = UltraMessagePack.MessagePackSerializerOptions;
 
 // Round 11: what does nested formatter dispatch really cost, and does the resolver design
 // hold up for POCO-as-array graphs? NestOuter{Id, M:NestMiddle{X, I:NestInner{A,B}}} —
@@ -34,14 +35,14 @@ using UltraSerializer = UltraMessagePack.MessagePackSerializer;
 // Flat gains nothing over Direct — full flattening is unnecessary codegen bloat.
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [CategoriesColumn]
-public class DisasmProbe11Benchmark
+public class NestedFormatterDispatchBenchmark
 {
     NestOuter outer = default!;
     byte[] payload = default!;
-    UltraSerializer ifaceField = default!;
-    UltraSerializer perCall = default!;
-    UltraSerializer direct = default!;
-    UltraSerializer flat = default!;
+    UltraOptions ifaceField = default!;
+    UltraOptions perCall = default!;
+    UltraOptions direct = default!;
+    UltraOptions flat = default!;
 
     [GlobalSetup]
     public void Setup()
@@ -49,55 +50,55 @@ public class DisasmProbe11Benchmark
         outer = new NestOuter { Id = 42, M = new NestMiddle { X = -1000, I = new NestInner { A = 1, B = 123456 } } };
         payload = MessagePack.MessagePackSerializer.Serialize(outer);
 
-        ifaceField = new UltraSerializer(new UltraMessagePack.MessagePackFormatterResolver(new MapFactoryResolver(
+        ifaceField = new UltraOptions(new UltraMessagePack.MessagePackFormatterResolver(new MapFactoryResolver(
             (typeof(NestOuter), new OuterIfaceFieldFormatterFactory()),
             (typeof(NestMiddle), new MiddleIfaceFieldFormatterFactory()),
             (typeof(NestInner), new InnerFormatterFactory()))));
-        perCall = new UltraSerializer(new UltraMessagePack.MessagePackFormatterResolver(new MapFactoryResolver(
+        perCall = new UltraOptions(new UltraMessagePack.MessagePackFormatterResolver(new MapFactoryResolver(
             (typeof(NestOuter), new OuterPerCallFormatterFactory()),
             (typeof(NestMiddle), new MiddlePerCallFormatterFactory()),
             (typeof(NestInner), new InnerFormatterFactory()))));
-        direct = new UltraSerializer(new UltraMessagePack.MessagePackFormatterResolver(new MapFactoryResolver(
+        direct = new UltraOptions(new UltraMessagePack.MessagePackFormatterResolver(new MapFactoryResolver(
             (typeof(NestOuter), new OuterDirectFormatterFactory()))));
-        flat = new UltraSerializer(new UltraMessagePack.MessagePackFormatterResolver(new MapFactoryResolver(
+        flat = new UltraOptions(new UltraMessagePack.MessagePackFormatterResolver(new MapFactoryResolver(
             (typeof(NestOuter), new OuterFlatFormatterFactory()))));
 
-        foreach (var (name, s) in new (string, UltraSerializer)[]
+        foreach (var (name, s) in new (string, UltraOptions)[]
         {
             (nameof(ifaceField), ifaceField), (nameof(perCall), perCall), (nameof(direct), direct), (nameof(flat), flat),
         })
         {
-            var bytes = s.Serialize(outer);
+            var bytes = UltraSerializer.Serialize(outer, s);
             if (!bytes.AsSpan().SequenceEqual(payload)) throw new InvalidOperationException($"verify failed: serialize {name}");
-            var back = s.Deserialize<NestOuter>(payload)!;
+            var back = UltraSerializer.Deserialize<NestOuter>(payload, s)!;
             if (back.Id != outer.Id || back.M!.X != outer.M!.X || back.M.I!.A != outer.M.I!.A || back.M.I.B != outer.M.I.B)
                 throw new InvalidOperationException($"verify failed: deserialize {name}");
         }
     }
 
     [BenchmarkCategory("Serialize"), Benchmark(Baseline = true)]
-    public byte[] SerializeIfaceField() => ifaceField.Serialize(outer);
+    public byte[] SerializeIfaceField() => UltraSerializer.Serialize(outer, ifaceField);
 
     [BenchmarkCategory("Serialize"), Benchmark]
-    public byte[] SerializePerCall() => perCall.Serialize(outer);
+    public byte[] SerializePerCall() => UltraSerializer.Serialize(outer, perCall);
 
     [BenchmarkCategory("Serialize"), Benchmark]
-    public byte[] SerializeDirect() => direct.Serialize(outer);
+    public byte[] SerializeDirect() => UltraSerializer.Serialize(outer, direct);
 
     [BenchmarkCategory("Serialize"), Benchmark]
-    public byte[] SerializeFlat() => flat.Serialize(outer);
+    public byte[] SerializeFlat() => UltraSerializer.Serialize(outer, flat);
 
     [BenchmarkCategory("Deserialize"), Benchmark(Baseline = true)]
-    public NestOuter DeserializeIfaceField() => ifaceField.Deserialize<NestOuter>(payload)!;
+    public NestOuter DeserializeIfaceField() => UltraSerializer.Deserialize<NestOuter>(payload, ifaceField)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
-    public NestOuter DeserializePerCall() => perCall.Deserialize<NestOuter>(payload)!;
+    public NestOuter DeserializePerCall() => UltraSerializer.Deserialize<NestOuter>(payload, perCall)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
-    public NestOuter DeserializeDirect() => direct.Deserialize<NestOuter>(payload)!;
+    public NestOuter DeserializeDirect() => UltraSerializer.Deserialize<NestOuter>(payload, direct)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
-    public NestOuter DeserializeFlat() => flat.Deserialize<NestOuter>(payload)!;
+    public NestOuter DeserializeFlat() => UltraSerializer.Deserialize<NestOuter>(payload, flat)!;
 }
 
 [MessagePackObject]
@@ -158,7 +159,7 @@ public sealed class InnerFormatter<TWriteBuffer, TReadBuffer> : IMessagePackForm
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref NestInner value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, NestInner value)
     {
         buffer.WriteArrayHeader(2);
         buffer.WriteInt32(value.A);
@@ -197,12 +198,11 @@ public sealed class MiddleIfaceFieldFormatter<TWriteBuffer, TReadBuffer> : IMess
         inner = resolver.GetFormatter<TWriteBuffer, TReadBuffer, NestInner>();
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref NestMiddle value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, NestMiddle value)
     {
         buffer.WriteArrayHeader(2);
         buffer.WriteInt32(value.X);
-        var i = value.I!;
-        inner.Serialize(ref buffer, ref state, ref i);
+        inner.Serialize(ref buffer, ref state, value.I!);
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref NestMiddle value)
@@ -236,12 +236,11 @@ public sealed class OuterIfaceFieldFormatter<TWriteBuffer, TReadBuffer> : IMessa
         middle = resolver.GetFormatter<TWriteBuffer, TReadBuffer, NestMiddle>();
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref NestOuter value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, NestOuter value)
     {
         buffer.WriteArrayHeader(2);
         buffer.WriteInt32(value.Id);
-        var m = value.M!;
-        middle.Serialize(ref buffer, ref state, ref m);
+        middle.Serialize(ref buffer, ref state, value.M!);
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref NestOuter value)
@@ -277,12 +276,11 @@ public sealed class MiddlePerCallFormatter<TWriteBuffer, TReadBuffer> : IMessage
         this.resolver = resolver;
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref NestMiddle value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, NestMiddle value)
     {
         buffer.WriteArrayHeader(2);
         buffer.WriteInt32(value.X);
-        var i = value.I!;
-        resolver.GetFormatter<TWriteBuffer, TReadBuffer, NestInner>().Serialize(ref buffer, ref state, ref i);
+        resolver.GetFormatter<TWriteBuffer, TReadBuffer, NestInner>().Serialize(ref buffer, ref state, value.I!);
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref NestMiddle value)
@@ -316,12 +314,11 @@ public sealed class OuterPerCallFormatter<TWriteBuffer, TReadBuffer> : IMessageP
         this.resolver = resolver;
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref NestOuter value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, NestOuter value)
     {
         buffer.WriteArrayHeader(2);
         buffer.WriteInt32(value.Id);
-        var m = value.M!;
-        resolver.GetFormatter<TWriteBuffer, TReadBuffer, NestMiddle>().Serialize(ref buffer, ref state, ref m);
+        resolver.GetFormatter<TWriteBuffer, TReadBuffer, NestMiddle>().Serialize(ref buffer, ref state, value.M!);
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref NestOuter value)
@@ -357,12 +354,11 @@ public sealed class MiddleDirectFormatter<TWriteBuffer, TReadBuffer> : IMessageP
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref NestMiddle value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, NestMiddle value)
     {
         buffer.WriteArrayHeader(2);
         buffer.WriteInt32(value.X);
-        var i = value.I!;
-        inner.Serialize(ref buffer, ref state, ref i);
+        inner.Serialize(ref buffer, ref state, value.I!);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -388,12 +384,11 @@ public sealed class OuterDirectFormatter<TWriteBuffer, TReadBuffer> : IMessagePa
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref NestOuter value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, NestOuter value)
     {
         buffer.WriteArrayHeader(2);
         buffer.WriteInt32(value.Id);
-        var m = value.M!;
-        middle.Serialize(ref buffer, ref state, ref m);
+        middle.Serialize(ref buffer, ref state, value.M!);
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref NestOuter value)
@@ -426,7 +421,7 @@ public sealed class OuterFlatFormatter<TWriteBuffer, TReadBuffer> : IMessagePack
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref NestOuter value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, NestOuter value)
     {
         var m = value.M!;
         var i = m.I!;

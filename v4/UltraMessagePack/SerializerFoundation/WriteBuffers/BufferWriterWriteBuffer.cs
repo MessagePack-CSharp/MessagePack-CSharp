@@ -15,7 +15,7 @@ namespace SerializerFoundation;
 //
 // Buffer representation matches ArrayPoolListWriteBuffer: the full span handed out by the
 // writer plus a written index. The previous window-slicing Advance carried a Slice range
-// check the JIT provably cannot eliminate (DisasmProbe8 notes) plus a per-write long
+// check the JIT provably cannot eliminate (WriteBufferBatchBenchmark notes) plus a per-write long
 // total; Advance is now a single add and the total accumulates only at Flush.
 public ref struct BufferWriterWriteBuffer : IWriteBuffer
 {

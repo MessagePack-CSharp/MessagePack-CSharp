@@ -38,7 +38,7 @@ public sealed class MissingMessagePackFormatter<TWriteBuffer, TReadBuffer, T> : 
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref T value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
     {
         throw new InvalidOperationException($"Type '{typeof(T).FullName}' is not found in {resolverType}.");
     }

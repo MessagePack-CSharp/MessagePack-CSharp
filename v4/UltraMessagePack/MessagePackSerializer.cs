@@ -1,22 +1,26 @@
 using SerializerFoundation;
+using System.Diagnostics.CodeAnalysis;
 
 namespace UltraMessagePack;
 
-// Formatter resolution history (DisasmProbe7, ~18ns Poco entry): per-call dictionary 1.7x;
-// GVM virtual GetFormatter +3ns (1.15x); frozen static generic cache == resolver table
-// read (±1ns, "UniformTable" measurement). The ReferenceEquals(this, Default) fast path
-// and its DefaultCache were therefore deleted: every entry resolves through
-// resolver.GetFormatter's table read — one uniform path for every instance.
-// The factory chain is the sole extension point; the resolver holds all cached state and
-// this class is a stateless facade (resolver + future options). Creating serializer
-// instances per call over a SHARED resolver wastes only the allocation, never the
-// formatter caches — the params-factories constructor, by contrast, builds a fresh
-// resolver (a fresh cache) each time, so hold on to that serializer. Formatters are
-// fixed at first resolution: register factories before first use.
-public sealed class MessagePackSerializer
+// Formatter resolution history (FormatterResolutionBenchmark, ~18ns Poco entry): per-call
+// dictionary 1.7x; GVM virtual GetFormatter +3ns (1.15x); frozen static generic cache ==
+// resolver table read (±1ns, "UniformTable" measurement). Every entry resolves through
+// resolver.GetFormatter's table read — one uniform path for every options instance.
+//
+// The serializer is a STATIC facade: it owns no state at all. Configuration lives in
+// MessagePackSerializerOptions (today just the resolver — the formatter cache).
+//
+// AOT shape (System.Text.Json precedent): each entry is an overload PAIR. The options-less
+// overload uses MessagePackSerializerOptions.Default — a chain that closes formatters via
+// MakeGenericType — and therefore carries [RequiresDynamicCode]; the options-taking
+// overload is unannotated, so Native AOT apps that pass explicit options (source-generated
+// factory chain) compile with zero IL warnings. Do not merge the pairs back into an
+// optional parameter: that would force the annotation onto the AOT-safe path too.
+// The factory chain remains the sole extension point; the resolver holds all cached
+// state. Formatters are fixed at first resolution: register factories before first use.
+public static class MessagePackSerializer
 {
-    public static readonly MessagePackSerializer Default = new MessagePackSerializer(new MessagePackFormatterResolver(DefaultFormatterFactory.Instance));
-
     const int ScratchSize = 1024;
 
     // stitch scratch for tokens straddling sequence segment boundaries: fixed-size
@@ -25,40 +29,19 @@ public sealed class MessagePackSerializer
     // beyond the fixed-token floor (the retained temp amortizes larger stitches).
     const int StitchScratchSize = 64;
 
-    readonly MessagePackFormatterResolver resolver;
-
-    public MessagePackFormatterResolver Resolver => resolver;
-
-    public MessagePackSerializer(MessagePackFormatterResolver resolver)
-    {
-        this.resolver = resolver;
-    }
-
-    /// <summary>
-    /// Convenience: builds a private resolver over the given factory chain (first
-    /// non-null wins, so put overrides BEFORE defaults). The chain is exactly what you
-    /// pass — append <see cref="DefaultFormatterFactory.Instance"/> to keep the standard
-    /// primitive/collection support. No factories at all means the default chain.
-    /// Each call creates a fresh resolver and therefore a fresh formatter cache: hold on
-    /// to the serializer (or share a resolver) instead of constructing per call.
-    /// </summary>
-    public MessagePackSerializer(params IMessagePackFormatterFactory[] factories)
-        : this(new MessagePackFormatterResolver(
-            factories.Length == 0 ? DefaultFormatterFactory.Instance
-            : factories.Length == 1 ? factories[0]
-            : new CompositeFormatterFactory(factories)))
-    {
-    }
+    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
+    public static byte[] Serialize<T>(T value)
+        => Serialize(value, MessagePackSerializerOptions.Default);
 
     [SkipLocalsInit]
-    public byte[] Serialize<T>(T value)
+    public static byte[] Serialize<T>(T value, MessagePackSerializerOptions options)
     {
         Span<byte> scratch = stackalloc byte[ScratchSize];
         var buffer = new ArrayPoolListWriteBuffer(scratch);
         try
         {
-            var state = new SerializeState(); // TODO: Pass actual options if needed
-            resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, ref value);
+            var state = new SerializeState();
+            options.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
             return buffer.ToArray();
         }
         finally
@@ -66,6 +49,10 @@ public sealed class MessagePackSerializer
             buffer.Dispose();
         }
     }
+
+    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
+    public static void Serialize<T>(IBufferWriter<byte> output, T value)
+        => Serialize(output, value, MessagePackSerializerOptions.Default);
 
     // Takes the interface directly, not a `ref TBufferWriter` generic: real writers
     // (PipeWriter, ArrayBufferWriter) are classes, for which a generic TBufferWriter is
@@ -75,13 +62,13 @@ public sealed class MessagePackSerializer
     // cold path. Anyone wrapping custom state in a struct for performance should
     // implement IWriteBuffer instead — that puts them on the fully-specialized
     // formatter path, strictly better than a wrapped struct writer.
-    public void Serialize<T>(IBufferWriter<byte> output, T value)
+    public static void Serialize<T>(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options)
     {
         var buffer = new BufferWriterWriteBuffer(output);
         try
         {
-            var state = new SerializeState(); // TODO: Pass actual options if needed
-            resolver.GetFormatter<BufferWriterWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, ref value);
+            var state = new SerializeState();
+            options.Resolver.GetFormatter<BufferWriterWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
             buffer.Flush();
         }
         finally
@@ -90,10 +77,14 @@ public sealed class MessagePackSerializer
         }
     }
 
-    public T Deserialize<T>(ReadOnlySpan<byte> source)
+    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
+    public static T Deserialize<T>(ReadOnlySpan<byte> source)
+        => Deserialize<T>(source, MessagePackSerializerOptions.Default);
+
+    public static T Deserialize<T>(ReadOnlySpan<byte> source, MessagePackSerializerOptions options)
     {
         T result = default!;
-        Deserialize(ref result, source);
+        Deserialize(ref result, source, options);
         return result;
     }
 
@@ -101,13 +92,18 @@ public sealed class MessagePackSerializer
     /// Populate overload: deserializes into an existing instance (formatters treat a
     /// non-null ref as reuse), eliminating the result allocation for pooled objects.
     /// </summary>
-    public void Deserialize<T>(ref T value, ReadOnlySpan<byte> source)
+    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
+    public static void Deserialize<T>(ref T value, ReadOnlySpan<byte> source)
+        => Deserialize(ref value, source, MessagePackSerializerOptions.Default);
+
+    /// <inheritdoc cref="Deserialize{T}(ref T, ReadOnlySpan{byte})"/>
+    public static void Deserialize<T>(ref T value, ReadOnlySpan<byte> source, MessagePackSerializerOptions options)
     {
         var buffer = new ReadOnlySpanReadBuffer(source);
         try
         {
             var state = new DeserializeState();
-            resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
+            options.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
         }
         finally
         {
@@ -115,10 +111,14 @@ public sealed class MessagePackSerializer
         }
     }
 
-    public T Deserialize<T>(in ReadOnlySequence<byte> source)
+    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
+    public static T Deserialize<T>(in ReadOnlySequence<byte> source)
+        => Deserialize<T>(source, MessagePackSerializerOptions.Default);
+
+    public static T Deserialize<T>(in ReadOnlySequence<byte> source, MessagePackSerializerOptions options)
     {
         T result = default!;
-        Deserialize(ref result, source);
+        Deserialize(ref result, source, options);
         return result;
     }
 
@@ -126,15 +126,20 @@ public sealed class MessagePackSerializer
     /// Populate overload: deserializes into an existing instance (formatters treat a
     /// non-null ref as reuse), eliminating the result allocation for pooled objects.
     /// </summary>
+    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
+    public static void Deserialize<T>(ref T value, in ReadOnlySequence<byte> source)
+        => Deserialize(ref value, source, MessagePackSerializerOptions.Default);
+
+    /// <inheritdoc cref="Deserialize{T}(ref T, in ReadOnlySequence{byte})"/>
     [SkipLocalsInit]
-    public void Deserialize<T>(ref T value, in ReadOnlySequence<byte> source)
+    public static void Deserialize<T>(ref T value, in ReadOnlySequence<byte> source, MessagePackSerializerOptions options)
     {
         Span<byte> scratch = stackalloc byte[StitchScratchSize];
         var buffer = new ReadOnlySequenceReadBuffer(source, scratch);
         try
         {
             var state = new DeserializeState();
-            resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySequenceReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
+            options.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySequenceReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
         }
         finally
         {

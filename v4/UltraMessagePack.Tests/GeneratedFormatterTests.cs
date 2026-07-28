@@ -7,8 +7,8 @@ using Ultra = UltraMessagePack.MessagePackSerializer;
 namespace UltraMessagePack.Tests;
 
 // Source-generator end-to-end: every type here gets its formatter generated at compile
-// time and auto-registered via the emitted module initializer, so Ultra.Default just
-// works. The verification anchor is byte-exact equality against MessagePack-CSharp
+// time and auto-registered via the emitted module initializer, so the default
+// (options-less) Ultra.Serialize just works. The verification anchor is byte-exact equality against MessagePack-CSharp
 // serializing the SAME attributed types with its own resolvers.
 public class GeneratedFormatterTests
 {
@@ -16,14 +16,14 @@ public class GeneratedFormatterTests
 
     static void AssertBytesAndRoundtrip<T>(T value)
     {
-        var ours = Ultra.Default.Serialize(value);
+        var ours = Ultra.Serialize(value);
         var oracle = Oracle.Serialize(value);
         Assert.Equal(oracle, ours);
 
         // both directions decode each other's bytes
-        var back = Ultra.Default.Deserialize<T>(ours);
+        var back = Ultra.Deserialize<T>(ours);
         Assert.Equal(Oracle.Serialize(back), oracle);
-        var fromOracle = Ultra.Default.Deserialize<T>(oracle);
+        var fromOracle = Ultra.Deserialize<T>(oracle);
         Assert.Equal(Oracle.Serialize(fromOracle), oracle);
     }
 
@@ -42,7 +42,7 @@ public class GeneratedFormatterTests
         AssertBytesAndRoundtrip(value);
 
         // key holes are nil slots: 8 array entries for max key 7
-        var bytes = Ultra.Default.Serialize(value);
+        var bytes = Ultra.Serialize(value);
         Assert.Equal(0x98, bytes[0]); // fixarray(8)
         Assert.Equal(0xc0, bytes[1]); // hole at key 0
     }
@@ -76,7 +76,7 @@ public class GeneratedFormatterTests
         AssertBytesAndRoundtrip(new GenStructPoco { A = 42, B = -1.5 });
 
         // nil cannot populate a non-nullable struct
-        Assert.Throws<MessagePackSerializationException>(() => Ultra.Default.Deserialize<GenStructPoco>([0xc0]));
+        Assert.Throws<MessagePackSerializationException>(() => Ultra.Deserialize<GenStructPoco>([0xc0]));
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class GeneratedFormatterTests
         };
         var bytes = Oracle.Serialize(newer);
 
-        var older = Ultra.Default.Deserialize<GenIntKeyPoco>(bytes)!;
+        var older = Ultra.Deserialize<GenIntKeyPoco>(bytes)!;
         Assert.Equal(42, older.Id);
         Assert.Equal("n", older.Name);
         Assert.Equal(1.5, older.Score);
@@ -115,7 +115,7 @@ public class GeneratedFormatterTests
         };
         var bytes = Oracle.Serialize(newer);
 
-        var older = Ultra.Default.Deserialize<GenStringKeyPoco>(bytes)!;
+        var older = Ultra.Deserialize<GenStringKeyPoco>(bytes)!;
         Assert.Equal(7, older.Id);
         Assert.Equal("name", older.Name);
         Assert.Equal(2.5f, older.F);
@@ -126,7 +126,7 @@ public class GeneratedFormatterTests
     {
         // an "older" writer without keys 3/4: deserializing leaves those at defaults
         var bytes = Oracle.Serialize(new GenIntKeyPocoV0 { Id = 5, Name = "old" });
-        var value = Ultra.Default.Deserialize<GenIntKeyPoco>(bytes)!;
+        var value = Ultra.Deserialize<GenIntKeyPoco>(bytes)!;
         Assert.Equal(5, value.Id);
         Assert.Equal("old", value.Name);
         Assert.False(value.Flag);
@@ -136,14 +136,14 @@ public class GeneratedFormatterTests
     [Fact]
     public void ExplicitFactoryChain_WorksWithoutModuleInitializerRegistration()
     {
-        var serializer = new Ultra(
+        var options = new MessagePackSerializerOptions(
             UltraMessagePack.Generated.GeneratedMessagePackFormatterFactory.Instance,
             PrimitiveFormatterFactory.Instance,
             GenericFormatterFactory.Instance);
         var value = new GenNestedPoco { Numbers = [1, 2, 3], Stamp = Stamp };
-        var bytes = serializer.Serialize(value);
+        var bytes = Ultra.Serialize(value, options);
         Assert.Equal(Oracle.Serialize(value), bytes);
-        Assert.Equal(bytes, serializer.Serialize(serializer.Deserialize<GenNestedPoco>(bytes)));
+        Assert.Equal(bytes, Ultra.Serialize(Ultra.Deserialize<GenNestedPoco>(bytes, options), options));
     }
 
     [Theory]
@@ -165,15 +165,15 @@ public class GeneratedFormatterTests
         };
 
         {
-            var bytes = Ultra.Default.Serialize(stringKey);
-            var back = Ultra.Default.Deserialize<GenStringKeyPoco>(SkipTestsChunk(bytes, chunkSize))!;
+            var bytes = Ultra.Serialize(stringKey);
+            var back = Ultra.Deserialize<GenStringKeyPoco>(SkipTestsChunk(bytes, chunkSize))!;
             Assert.Equal(7, back.Id);
             Assert.Equal("こんにちは世界", back.Name);
             Assert.Equal(1.25f, back.F);
         }
         {
-            var bytes = Ultra.Default.Serialize(nested);
-            var back = Ultra.Default.Deserialize<GenNestedPoco>(SkipTestsChunk(bytes, chunkSize))!;
+            var bytes = Ultra.Serialize(nested);
+            var back = Ultra.Deserialize<GenNestedPoco>(SkipTestsChunk(bytes, chunkSize))!;
             Assert.Equal(Oracle.Serialize(nested), Oracle.Serialize(back));
         }
     }
@@ -203,10 +203,10 @@ public class GeneratedFormatterTests
     [Fact]
     public void Populate_ReusesExistingInstance()
     {
-        var bytes = Ultra.Default.Serialize(new GenIntKeyPoco { Id = 1, Name = "x", Score = 2, Flag = true, Ticks = 3 });
+        var bytes = Ultra.Serialize(new GenIntKeyPoco { Id = 1, Name = "x", Score = 2, Flag = true, Ticks = 3 });
         var target = new GenIntKeyPoco { Id = 999 };
         var result = target;
-        Ultra.Default.Deserialize(ref result, bytes);
+        Ultra.Deserialize(ref result, bytes);
         Assert.Same(target, result);
         Assert.Equal(1, result.Id);
         Assert.Equal("x", result.Name);

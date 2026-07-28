@@ -9,10 +9,10 @@ using BenchmarkDotNet.Configs;
 // case (entry overhead dominates a ~20-byte payload); Array10k shows the amortized case.
 // Note (round 2 finding): the try/finally variants come out as Code Size = NA in asm.md —
 // capture their asm via: $env:DOTNET_JitDisasm = "*Serialize*Finally* *SerializeNoDispose*";
-// dotnet run -c Release -- --jit-probe6
+// dotnet run -c Release -- --jit-entryshape
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [CategoriesColumn]
-public class DisasmProbe6Benchmark
+public class EntryTryFinallyCostBenchmark
 {
     BenchPerson person = default!;
     int[] values = default!;
@@ -20,7 +20,7 @@ public class DisasmProbe6Benchmark
     [GlobalSetup]
     public void Setup()
     {
-        UltraMessagePack.DynamicFormatterFactory.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
+        UltraMessagePack.FormatterRegistry.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
         person = new BenchPerson { Id = 12345, Name = "山岡士郎", Score = 98.5 };
 
         var rand = new Random(42);

@@ -45,12 +45,12 @@ public class AnswerBenchmark
         answer = CreateAnswer();
 
         mpcsPayload = MessagePack.MessagePackSerializer.Serialize(answer);
-        ultraPayload = UltraMessagePack.MessagePackSerializer.Default.Serialize(answer);
+        ultraPayload = UltraMessagePack.MessagePackSerializer.Serialize(answer);
         nbPayload = nb.Serialize(answer);
 
         if (!ultraPayload.AsSpan().SequenceEqual(mpcsPayload)) throw new InvalidOperationException($"verify failed: Ultra bytes ({ultraPayload.Length}) != MessagePack-CSharp oracle ({mpcsPayload.Length})");
 
-        VerifyRoundtrip(UltraMessagePack.MessagePackSerializer.Default.Deserialize<Answer>(ultraPayload)!, "Ultra");
+        VerifyRoundtrip(UltraMessagePack.MessagePackSerializer.Deserialize<Answer>(ultraPayload)!, "Ultra");
         VerifyRoundtrip(MessagePack.MessagePackSerializer.Deserialize<Answer>(mpcsPayload), "MessagePack-CSharp");
         VerifyRoundtrip(nb.Deserialize<Answer>(new ReadOnlySequence<byte>(nbPayload))!, "Nerdbank");
     }
@@ -64,7 +64,7 @@ public class AnswerBenchmark
     }
 
     [BenchmarkCategory("Serialize"), Benchmark(Baseline = true)]
-    public byte[] SerializeUltra() => UltraMessagePack.MessagePackSerializer.Default.Serialize(answer);
+    public byte[] SerializeUltra() => UltraMessagePack.MessagePackSerializer.Serialize(answer);
 
     [BenchmarkCategory("Serialize"), Benchmark]
     public byte[] SerializeMpcs() => MessagePack.MessagePackSerializer.Serialize(answer);
@@ -73,7 +73,7 @@ public class AnswerBenchmark
     public byte[] SerializeNerdbank() => nb.Serialize(answer);
 
     [BenchmarkCategory("Deserialize"), Benchmark(Baseline = true)]
-    public Answer DeserializeUltra() => UltraMessagePack.MessagePackSerializer.Default.Deserialize<Answer>(ultraPayload)!;
+    public Answer DeserializeUltra() => UltraMessagePack.MessagePackSerializer.Deserialize<Answer>(ultraPayload)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
     public Answer DeserializeMpcs() => MessagePack.MessagePackSerializer.Deserialize<Answer>(mpcsPayload);

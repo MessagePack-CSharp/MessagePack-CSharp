@@ -24,5 +24,5 @@ public class StringWriteBenchmark
     public byte[] MessagePackCSharp() => MessagePackSerializer.Serialize(value);
 
     [Benchmark]
-    public byte[] Ultra() => UltraMessagePack.MessagePackSerializer.Default.Serialize(value);
+    public byte[] Ultra() => UltraMessagePack.MessagePackSerializer.Serialize(value);
 }

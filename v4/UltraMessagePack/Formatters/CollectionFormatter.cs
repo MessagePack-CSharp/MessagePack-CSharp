@@ -13,7 +13,7 @@ public sealed class ArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackF
         formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref T[]? value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T[]? value)
     {
         if (value == null)
         {
@@ -28,7 +28,7 @@ public sealed class ArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackF
         ref var head = ref MemoryMarshal.GetArrayDataReference(value);
         for (int i = 0; i < value.Length; i++)
         {
-            f.Serialize(ref buffer, ref state, ref Unsafe.Add(ref head, i));
+            f.Serialize(ref buffer, ref state, Unsafe.Add(ref head, i));
         }
     }
 
@@ -79,7 +79,7 @@ public sealed class ListFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFo
         formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref List<T>? value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, List<T>? value)
     {
         if (value == null)
         {
@@ -93,7 +93,7 @@ public sealed class ListFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFo
         var span = CollectionsMarshal.AsSpan(value);
         for (int i = 0; i < span.Length; i++)
         {
-            f.Serialize(ref buffer, ref state, ref span[i]);
+            f.Serialize(ref buffer, ref state, span[i]);
         }
     }
 
@@ -143,7 +143,7 @@ public sealed class DictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
         valueFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TValue>();
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref Dictionary<TKey, TValue>? value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Dictionary<TKey, TValue>? value)
     {
         if (value == null)
         {
@@ -157,10 +157,8 @@ public sealed class DictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
         var vf = valueFormatter;
         foreach (var kv in value)
         {
-            var k = kv.Key;
-            var v = kv.Value;
-            kf.Serialize(ref buffer, ref state, ref k);
-            vf.Serialize(ref buffer, ref state, ref v);
+            kf.Serialize(ref buffer, ref state, kv.Key);
+            vf.Serialize(ref buffer, ref state, kv.Value);
         }
     }
 

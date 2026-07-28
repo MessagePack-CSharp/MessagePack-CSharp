@@ -46,10 +46,10 @@ public class PrimitiveTests
     {
         foreach (var v in Int32TestValues())
         {
-            var ours = MessagePackSerializer.Default.Serialize(v);
+            var ours = MessagePackSerializer.Serialize(v);
             var oracle = Oracle.Serialize(v);
             Assert.True(ours.AsSpan().SequenceEqual(oracle), $"bytes mismatch for {v}: ours=[{Convert.ToHexString(ours)}] oracle=[{Convert.ToHexString(oracle)}]");
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<int>(ours));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<int>(ours));
             Assert.Equal(v, Oracle.Deserialize<int>(ours)); // oracle can read ours
         }
     }
@@ -59,10 +59,10 @@ public class PrimitiveTests
     {
         foreach (var v in Int64TestValues())
         {
-            var ours = MessagePackSerializer.Default.Serialize(v);
+            var ours = MessagePackSerializer.Serialize(v);
             var oracle = Oracle.Serialize(v);
             Assert.True(ours.AsSpan().SequenceEqual(oracle), $"bytes mismatch for {v}: ours=[{Convert.ToHexString(ours)}] oracle=[{Convert.ToHexString(oracle)}]");
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<long>(ours));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<long>(ours));
             Assert.Equal(v, Oracle.Deserialize<long>(ours));
         }
     }
@@ -73,10 +73,10 @@ public class PrimitiveTests
         ulong[] values = [0, 1, 127, 128, 255, 256, 65535, 65536, uint.MaxValue, (ulong)uint.MaxValue + 1, long.MaxValue, (ulong)long.MaxValue + 1, ulong.MaxValue];
         foreach (var v in values)
         {
-            var ours = MessagePackSerializer.Default.Serialize(v);
+            var ours = MessagePackSerializer.Serialize(v);
             var oracle = Oracle.Serialize(v);
             Assert.True(ours.AsSpan().SequenceEqual(oracle), $"bytes mismatch for {v}");
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<ulong>(ours));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<ulong>(ours));
         }
     }
 
@@ -85,15 +85,15 @@ public class PrimitiveTests
     {
         foreach (short v in (short[])[0, 1, -1, short.MaxValue, short.MinValue, 127, -32, 128, -33])
         {
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<short>(MessagePackSerializer.Default.Serialize(v)));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<short>(MessagePackSerializer.Serialize(v)));
         }
         foreach (byte v in (byte[])[0, 1, 127, 128, 255])
         {
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<byte>(MessagePackSerializer.Default.Serialize(v)));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<byte>(MessagePackSerializer.Serialize(v)));
         }
         foreach (sbyte v in (sbyte[])[0, 1, -1, -32, -33, sbyte.MaxValue, sbyte.MinValue])
         {
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<sbyte>(MessagePackSerializer.Default.Serialize(v)));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<sbyte>(MessagePackSerializer.Serialize(v)));
         }
     }
 
@@ -102,17 +102,17 @@ public class PrimitiveTests
     {
         foreach (var v in (bool[])[true, false])
         {
-            Assert.Equal(Oracle.Serialize(v), MessagePackSerializer.Default.Serialize(v));
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<bool>(MessagePackSerializer.Default.Serialize(v)));
+            Assert.Equal(Oracle.Serialize(v), MessagePackSerializer.Serialize(v));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<bool>(MessagePackSerializer.Serialize(v)));
         }
         foreach (var v in (double[])[0, 1.5, -1.5, double.MaxValue, double.MinValue, double.Epsilon, double.NaN, double.PositiveInfinity, Math.PI])
         {
-            Assert.Equal(Oracle.Serialize(v), MessagePackSerializer.Default.Serialize(v));
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<double>(MessagePackSerializer.Default.Serialize(v)));
+            Assert.Equal(Oracle.Serialize(v), MessagePackSerializer.Serialize(v));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<double>(MessagePackSerializer.Serialize(v)));
         }
         foreach (var v in (float[])[0f, 1.5f, -1.5f, float.MaxValue, float.NaN, MathF.PI])
         {
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<float>(MessagePackSerializer.Default.Serialize(v)));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<float>(MessagePackSerializer.Serialize(v)));
         }
     }
 
@@ -128,10 +128,10 @@ public class PrimitiveTests
         ];
         foreach (var v in values)
         {
-            var ours = MessagePackSerializer.Default.Serialize(v);
+            var ours = MessagePackSerializer.Serialize(v);
             var oracle = Oracle.Serialize(v);
             Assert.True(ours.AsSpan().SequenceEqual(oracle), $"bytes mismatch for '{v?[..Math.Min(v.Length, 20)]}'");
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<string?>(ours));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<string?>(ours));
         }
     }
 
@@ -152,10 +152,10 @@ public class PrimitiveTests
             ])
             {
                 var s = content(len);
-                var ours = MessagePackSerializer.Default.Serialize(s);
+                var ours = MessagePackSerializer.Serialize(s);
                 var oracle = Oracle.Serialize(s);
                 Assert.True(ours.AsSpan().SequenceEqual(oracle), $"len={len} bytes mismatch (first char '{s[0]}')");
-                Assert.Equal(s, MessagePackSerializer.Default.Deserialize<string>(ours));
+                Assert.Equal(s, MessagePackSerializer.Deserialize<string>(ours));
             }
         }
     }
@@ -169,26 +169,26 @@ public class PrimitiveTests
         {
             buf[0] = 0xd3;
             System.Buffers.Binary.BinaryPrimitives.WriteInt64BigEndian(buf[1..], v);
-            Assert.Equal((int)v, MessagePackSerializer.Default.Deserialize<int>(buf));
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<long>(buf));
+            Assert.Equal((int)v, MessagePackSerializer.Deserialize<int>(buf));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<long>(buf));
         }
         buf[0] = 0xcf;
         System.Buffers.Binary.BinaryPrimitives.WriteUInt64BigEndian(buf[1..], 42);
-        Assert.Equal(42, MessagePackSerializer.Default.Deserialize<int>(buf));
+        Assert.Equal(42, MessagePackSerializer.Deserialize<int>(buf));
 
         // uint64 above long.MaxValue: the sign-alias trap (0xFF.. reinterprets as -1)
         buf[0] = 0xcf;
         System.Buffers.Binary.BinaryPrimitives.WriteUInt64BigEndian(buf[1..], ulong.MaxValue);
         var trap = buf.ToArray();
-        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Default.Deserialize<int>(trap));
-        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Default.Deserialize<long>(trap));
-        Assert.Equal(ulong.MaxValue, MessagePackSerializer.Default.Deserialize<ulong>(trap));
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<int>(trap));
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<long>(trap));
+        Assert.Equal(ulong.MaxValue, MessagePackSerializer.Deserialize<ulong>(trap));
 
         // int64 out of int32 range must fail as int
         buf[0] = 0xd3;
         System.Buffers.Binary.BinaryPrimitives.WriteInt64BigEndian(buf[1..], 2147483648L);
         var over = buf.ToArray();
-        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Default.Deserialize<int>(over));
-        Assert.Equal(2147483648L, MessagePackSerializer.Default.Deserialize<long>(over));
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<int>(over));
+        Assert.Equal(2147483648L, MessagePackSerializer.Deserialize<long>(over));
     }
 }

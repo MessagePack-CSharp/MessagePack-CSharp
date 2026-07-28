@@ -42,7 +42,7 @@ public class NerdbankOfficialBenchmark
     [BenchmarkCategory("map", "Serialize"), Benchmark]
     public void SerializeMap_Ultra()
     {
-        UltraMessagePack.MessagePackSerializer.Default.Serialize(this.buffer, NbData.PocoMapSingle);
+        UltraMessagePack.MessagePackSerializer.Serialize(this.buffer, NbData.PocoMapSingle);
         this.buffer.Clear();
     }
 
@@ -61,7 +61,7 @@ public class NerdbankOfficialBenchmark
     [BenchmarkCategory("map", "Deserialize"), Benchmark]
     public void DeserializeMap_Ultra()
     {
-        UltraMessagePack.MessagePackSerializer.Default.Deserialize<NbPocoMap>(NbData.PocoMapMsgpack);
+        UltraMessagePack.MessagePackSerializer.Deserialize<NbPocoMap>(NbData.PocoMapMsgpack);
     }
 
     [BenchmarkCategory("array", "Serialize"), Benchmark]
@@ -81,7 +81,7 @@ public class NerdbankOfficialBenchmark
     [BenchmarkCategory("array", "Serialize"), Benchmark]
     public void SerializeAsArray_Ultra()
     {
-        UltraMessagePack.MessagePackSerializer.Default.Serialize(this.buffer, NbData.PocoAsArraySingle);
+        UltraMessagePack.MessagePackSerializer.Serialize(this.buffer, NbData.PocoAsArraySingle);
         this.buffer.Clear();
     }
 
@@ -100,7 +100,7 @@ public class NerdbankOfficialBenchmark
     [BenchmarkCategory("array", "Deserialize"), Benchmark]
     public void DeserializeAsArray_Ultra()
     {
-        UltraMessagePack.MessagePackSerializer.Default.Deserialize<NbPocoAsArray>(NbData.PocoAsArrayMsgpack);
+        UltraMessagePack.MessagePackSerializer.Deserialize<NbPocoAsArray>(NbData.PocoAsArrayMsgpack);
     }
 }
 
@@ -144,7 +144,7 @@ public sealed class NbPocoMapFormatter<TWriteBuffer, TReadBuffer> : UltraMessage
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref UltraMessagePack.SerializeState state, ref NbPocoMap value)
+    public void Serialize(ref TWriteBuffer buffer, ref UltraMessagePack.SerializeState state, NbPocoMap value)
     {
         buffer.Advance(UnsafeWriteFixMapHeader(ref buffer.GetReference(1), 2));
         buffer.Advance(UnsafeWriteString(ref buffer.GetReference("SomeInt"u8.Length + 5), "SomeInt"u8));

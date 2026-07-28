@@ -5,7 +5,7 @@ using BenchmarkDotNet.Attributes;
 // into a silently dropped one (EntryTry, NA) — but both contained stackalloc. This round
 // separates the two ingredients: EH alone, localloc alone (already cleared in round 1,
 // repeated as in-class control), and each EH flavor combined with localloc.
-public class DisasmProbe3Benchmark
+public class DiagnoserDropEhLocallocBenchmark
 {
     [Benchmark(Baseline = true)]
     public int EhOnly() => Probe3.EhOnly(1);

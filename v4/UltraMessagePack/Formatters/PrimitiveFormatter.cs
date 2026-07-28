@@ -12,7 +12,7 @@ public sealed class Int32Formatter<TWriteBuffer, TReadBuffer> : IMessagePackForm
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref int value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, int value)
     {
         buffer.WriteInt32(value);
     }
@@ -31,7 +31,7 @@ public sealed class Int64Formatter<TWriteBuffer, TReadBuffer> : IMessagePackForm
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref long value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, long value)
     {
         buffer.WriteInt64(value);
     }
@@ -50,7 +50,7 @@ public sealed class UInt32Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref uint value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, uint value)
     {
         buffer.WriteUInt32(value);
     }
@@ -69,7 +69,7 @@ public sealed class UInt64Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref ulong value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ulong value)
     {
         buffer.WriteUInt64(value);
     }
@@ -88,7 +88,7 @@ public sealed class Int16Formatter<TWriteBuffer, TReadBuffer> : IMessagePackForm
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref short value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, short value)
     {
         buffer.WriteInt16(value);
     }
@@ -107,7 +107,7 @@ public sealed class UInt16Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref ushort value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ushort value)
     {
         buffer.WriteUInt16(value);
     }
@@ -126,7 +126,7 @@ public sealed class ByteFormatter<TWriteBuffer, TReadBuffer> : IMessagePackForma
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref byte value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, byte value)
     {
         buffer.WriteByte(value);
     }
@@ -145,7 +145,7 @@ public sealed class SByteFormatter<TWriteBuffer, TReadBuffer> : IMessagePackForm
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref sbyte value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, sbyte value)
     {
         buffer.WriteSByte(value);
     }
@@ -164,7 +164,7 @@ public sealed class CharFormatter<TWriteBuffer, TReadBuffer> : IMessagePackForma
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref char value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, char value)
     {
         buffer.WriteChar(value);
     }
@@ -183,7 +183,7 @@ public sealed class BooleanFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFo
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref bool value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, bool value)
     {
         buffer.WriteBoolean(value);
     }
@@ -202,7 +202,7 @@ public sealed class SingleFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref float value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, float value)
     {
         buffer.WriteSingle(value);
     }
@@ -221,7 +221,7 @@ public sealed class DoubleFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref double value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, double value)
     {
         buffer.WriteDouble(value);
     }
@@ -240,7 +240,7 @@ public sealed class StringFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref string? value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, string? value)
     {
         buffer.WriteString(value);
     }
@@ -259,7 +259,7 @@ public sealed class DateTimeFormatter<TWriteBuffer, TReadBuffer> : IMessagePackF
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref DateTime value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, DateTime value)
     {
         buffer.WriteTimestamp(value);
     }
@@ -278,7 +278,7 @@ public sealed class ByteArrayFormatter<TWriteBuffer, TReadBuffer> : IMessagePack
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref byte[]? value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, byte[]? value)
     {
         if (value == null)
         {

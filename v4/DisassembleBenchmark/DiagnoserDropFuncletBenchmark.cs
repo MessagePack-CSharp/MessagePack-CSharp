@@ -6,7 +6,7 @@ using SerializerFoundation;
 // with try/finally (RefStructFinally = NA, GvmFinally = OK). This round asks whether the
 // ref struct must be USED INSIDE the funclet (finally/catch body) or merely be live
 // across the EH region.
-public class DisasmProbe5Benchmark
+public class DiagnoserDropFuncletBenchmark
 {
     // ref struct created before try, used only INSIDE try, finally touches nothing of it
     [Benchmark(Baseline = true)]

@@ -8,7 +8,7 @@ namespace UltraMessagePack.SourceGenerator;
 /// Members that have a dedicated buffer read/write pair are emitted as direct calls (and
 /// batched into shared reservations on the write side); everything else goes through an
 /// Initialize-resolved formatter field — the shape the dispatch measurements picked
-/// (DisasmProbe9/11: batch fixed-size writes, loop+switch reads, interface fields over
+/// (PocoPerValueVsBatch/NestedFormatterDispatch benchmarks: batch fixed-size writes, loop+switch reads, interface fields over
 /// per-call resolution).
 /// </summary>
 public enum DirectKind

@@ -1,4 +1,10 @@
-﻿namespace SerializerFoundation;
+﻿// Uses a pooling strategy close to dotnet/runtime's SegmentedArrayBuilder.
+// Unlike that internal type, however, this is exposed as public API with a long code path,
+// which raises the risk of a double-Return caused by copying the struct.
+// We are considering some form of defense eventually ([NonCopyable] + an analyzer, or something else).
+// If only the language itself supported NonCopyable, this would be a non-issue :)
+
+namespace SerializerFoundation;
 
 public ref struct ArrayPoolListWriteBuffer : IWriteBuffer, IDisposable
 {

@@ -47,12 +47,12 @@ public class CollectionAndObjectTests
         foreach (var count in (int[])[0, 1, 15, 16, 17, 31, 32, 33, 63, 64, 65, 100, 1000, 100_000])
         {
             var value = MakeInts(count, distribution);
-            var ours = MessagePackSerializer.Default.Serialize(value);
+            var ours = MessagePackSerializer.Serialize(value);
             var oracle = Oracle.Serialize(value);
             Assert.True(ours.AsSpan().SequenceEqual(oracle), $"bytes mismatch count={count} dist={distribution}");
-            Assert.Equal(value, MessagePackSerializer.Default.Deserialize<int[]>(ours));
+            Assert.Equal(value, MessagePackSerializer.Deserialize<int[]>(ours));
             Assert.Equal(value, Oracle.Deserialize<int[]>(ours));
-            Assert.Equal(value, MessagePackSerializer.Default.Deserialize<int[]>(oracle));
+            Assert.Equal(value, MessagePackSerializer.Deserialize<int[]>(oracle));
         }
     }
 
@@ -65,9 +65,9 @@ public class CollectionAndObjectTests
             var value = new int[48];
             for (int i = 0; i < value.Length; i++) value[i] = i % 100; // fixint range
             value[breakAt] = 100_000; // force a non-fixint lane
-            var ours = MessagePackSerializer.Default.Serialize(value);
+            var ours = MessagePackSerializer.Serialize(value);
             Assert.Equal(Oracle.Serialize(value), ours);
-            Assert.Equal(value, MessagePackSerializer.Default.Deserialize<int[]>(ours));
+            Assert.Equal(value, MessagePackSerializer.Deserialize<int[]>(ours));
         }
     }
 
@@ -82,9 +82,9 @@ public class CollectionAndObjectTests
             var value = new int[48];
             for (int i = 0; i < value.Length; i++) value[i] = (i % 2 == 0) ? 100_000 + i : -100_000 - i;
             value[breakAt] = 7; // force a narrow lane
-            var ours = MessagePackSerializer.Default.Serialize(value);
+            var ours = MessagePackSerializer.Serialize(value);
             Assert.Equal(Oracle.Serialize(value), ours);
-            Assert.Equal(value, MessagePackSerializer.Default.Deserialize<int[]>(ours));
+            Assert.Equal(value, MessagePackSerializer.Deserialize<int[]>(ours));
         }
 
         // deserialize wide-superlane gates: a uint32 token above int.MaxValue inside an
@@ -98,18 +98,18 @@ public class CollectionAndObjectTests
                 bytes[3 + t * 5] = 0xce; // uint32
                 BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(3 + t * 5 + 1), 100_000);
             }
-            var wide = MessagePackSerializer.Default.Deserialize<int[]>(bytes)!;
+            var wide = MessagePackSerializer.Deserialize<int[]>(bytes)!;
             Assert.All(wide, v => Assert.Equal(100_000, v));
 
             BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(3 + 7 * 5 + 1), 0x8000_0000); // > int.MaxValue
-            Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Default.Deserialize<int[]>(bytes));
+            Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<int[]>(bytes));
 
             for (int t = 0; t < 16; t++)
             {
                 bytes[3 + t * 5] = 0xd2; // non-minimal int32 holding a small value
                 BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(3 + t * 5 + 1), t - 8);
             }
-            Assert.Equal(Oracle.Deserialize<int[]>(bytes), MessagePackSerializer.Default.Deserialize<int[]>(bytes));
+            Assert.Equal(Oracle.Deserialize<int[]>(bytes), MessagePackSerializer.Deserialize<int[]>(bytes));
         }
 
         // threshold values: wide starts strictly outside [-32768, 65535]
@@ -120,10 +120,10 @@ public class CollectionAndObjectTests
             int.MinValue, int.MaxValue, -32769, 65536,
             -100, 65535, -32768, 0, // last quad narrow: kills the wide superlane
         };
-        Assert.Equal(Oracle.Serialize(edges), MessagePackSerializer.Default.Serialize(edges));
+        Assert.Equal(Oracle.Serialize(edges), MessagePackSerializer.Serialize(edges));
         for (int j = 0; j < 12; j++) edges[12 + j % 4] = -32769; // now all wide
-        Assert.Equal(Oracle.Serialize(edges), MessagePackSerializer.Default.Serialize(edges));
-        Assert.Equal(edges, MessagePackSerializer.Default.Deserialize<int[]>(MessagePackSerializer.Default.Serialize(edges)));
+        Assert.Equal(Oracle.Serialize(edges), MessagePackSerializer.Serialize(edges));
+        Assert.Equal(edges, MessagePackSerializer.Deserialize<int[]>(MessagePackSerializer.Serialize(edges)));
     }
 
     sealed class Chunk : System.Buffers.ReadOnlySequenceSegment<byte>
@@ -149,7 +149,7 @@ public class CollectionAndObjectTests
         foreach (var distribution in (string[])["small", "mixed", "large"])
         {
             var expected = MakeInts(1000, distribution);
-            var bytes = MessagePackSerializer.Default.Serialize(expected);
+            var bytes = MessagePackSerializer.Serialize(expected);
 
             var first = new Chunk(bytes.AsMemory(0, Math.Min(chunkSize, bytes.Length)));
             var last = first;
@@ -159,42 +159,42 @@ public class CollectionAndObjectTests
             }
             var seq = new System.Buffers.ReadOnlySequence<byte>(first, 0, last, last.Memory.Length);
 
-            Assert.Equal(expected, MessagePackSerializer.Default.Deserialize<int[]>(seq));
+            Assert.Equal(expected, MessagePackSerializer.Deserialize<int[]>(seq));
         }
     }
 
     [Fact]
     public void NullArraysAndLists()
     {
-        Assert.Equal(Oracle.Serialize<int[]?>(null), MessagePackSerializer.Default.Serialize<int[]?>(null));
-        Assert.Null(MessagePackSerializer.Default.Deserialize<int[]?>(MessagePackSerializer.Default.Serialize<int[]?>(null)));
+        Assert.Equal(Oracle.Serialize<int[]?>(null), MessagePackSerializer.Serialize<int[]?>(null));
+        Assert.Null(MessagePackSerializer.Deserialize<int[]?>(MessagePackSerializer.Serialize<int[]?>(null)));
     }
 
     [Fact]
     public void GenericCollections_MatchOracleAndRoundtrip()
     {
         var list = new List<int> { 1, -1, 128, -129, 70000, int.MaxValue };
-        Assert.Equal(Oracle.Serialize(list), MessagePackSerializer.Default.Serialize(list));
-        Assert.Equal(list, MessagePackSerializer.Default.Deserialize<List<int>>(MessagePackSerializer.Default.Serialize(list)));
+        Assert.Equal(Oracle.Serialize(list), MessagePackSerializer.Serialize(list));
+        Assert.Equal(list, MessagePackSerializer.Deserialize<List<int>>(MessagePackSerializer.Serialize(list)));
 
         var strings = new[] { "a", "こんにちは", "", "longer string value here" };
-        Assert.Equal(Oracle.Serialize(strings), MessagePackSerializer.Default.Serialize(strings));
-        Assert.Equal(strings, MessagePackSerializer.Default.Deserialize<string[]>(MessagePackSerializer.Default.Serialize(strings)));
+        Assert.Equal(Oracle.Serialize(strings), MessagePackSerializer.Serialize(strings));
+        Assert.Equal(strings, MessagePackSerializer.Deserialize<string[]>(MessagePackSerializer.Serialize(strings)));
 
         var dict = new Dictionary<string, int> { ["one"] = 1, ["two"] = 2, ["big"] = 100000, ["neg"] = -50 };
-        Assert.Equal(Oracle.Serialize(dict), MessagePackSerializer.Default.Serialize(dict));
-        Assert.Equal(dict, MessagePackSerializer.Default.Deserialize<Dictionary<string, int>>(MessagePackSerializer.Default.Serialize(dict)));
+        Assert.Equal(Oracle.Serialize(dict), MessagePackSerializer.Serialize(dict));
+        Assert.Equal(dict, MessagePackSerializer.Deserialize<Dictionary<string, int>>(MessagePackSerializer.Serialize(dict)));
 
         var longs = new long[] { 0, -1, long.MaxValue, long.MinValue, 5_000_000_000L };
-        Assert.Equal(Oracle.Serialize(longs), MessagePackSerializer.Default.Serialize(longs));
-        Assert.Equal(longs, MessagePackSerializer.Default.Deserialize<long[]>(MessagePackSerializer.Default.Serialize(longs)));
+        Assert.Equal(Oracle.Serialize(longs), MessagePackSerializer.Serialize(longs));
+        Assert.Equal(longs, MessagePackSerializer.Deserialize<long[]>(MessagePackSerializer.Serialize(longs)));
 
         int? nullable = 42;
         int? nothing = null;
-        Assert.Equal(Oracle.Serialize(nullable), MessagePackSerializer.Default.Serialize(nullable));
-        Assert.Equal(Oracle.Serialize(nothing), MessagePackSerializer.Default.Serialize(nothing));
-        Assert.Equal(nullable, MessagePackSerializer.Default.Deserialize<int?>(MessagePackSerializer.Default.Serialize(nullable)));
-        Assert.Null(MessagePackSerializer.Default.Deserialize<int?>(MessagePackSerializer.Default.Serialize(nothing)));
+        Assert.Equal(Oracle.Serialize(nullable), MessagePackSerializer.Serialize(nullable));
+        Assert.Equal(Oracle.Serialize(nothing), MessagePackSerializer.Serialize(nothing));
+        Assert.Equal(nullable, MessagePackSerializer.Deserialize<int?>(MessagePackSerializer.Serialize(nullable)));
+        Assert.Null(MessagePackSerializer.Deserialize<int?>(MessagePackSerializer.Serialize(nothing)));
     }
 
     [Fact]
@@ -203,32 +203,32 @@ public class CollectionAndObjectTests
         // byte-backed: 255 crosses the fixint→uint8 format edge
         foreach (var v in new[] { ByteEnum.Small, ByteEnum.Edge, ByteEnum.Max })
         {
-            Assert.Equal(Oracle.Serialize(v), MessagePackSerializer.Default.Serialize(v));
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<ByteEnum>(MessagePackSerializer.Default.Serialize(v)));
+            Assert.Equal(Oracle.Serialize(v), MessagePackSerializer.Serialize(v));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<ByteEnum>(MessagePackSerializer.Serialize(v)));
         }
 
         // int-backed: negative values take the signed writer's int8/int16/int32 ladder
         foreach (var v in new[] { IntEnum.Negative, IntEnum.Zero, IntEnum.Big })
         {
-            Assert.Equal(Oracle.Serialize(v), MessagePackSerializer.Default.Serialize(v));
-            Assert.Equal(v, MessagePackSerializer.Default.Deserialize<IntEnum>(MessagePackSerializer.Default.Serialize(v)));
+            Assert.Equal(Oracle.Serialize(v), MessagePackSerializer.Serialize(v));
+            Assert.Equal(v, MessagePackSerializer.Deserialize<IntEnum>(MessagePackSerializer.Serialize(v)));
         }
 
         // long-backed: value beyond int range
-        Assert.Equal(Oracle.Serialize(LongEnum.Huge), MessagePackSerializer.Default.Serialize(LongEnum.Huge));
-        Assert.Equal(LongEnum.Huge, MessagePackSerializer.Default.Deserialize<LongEnum>(MessagePackSerializer.Default.Serialize(LongEnum.Huge)));
+        Assert.Equal(Oracle.Serialize(LongEnum.Huge), MessagePackSerializer.Serialize(LongEnum.Huge));
+        Assert.Equal(LongEnum.Huge, MessagePackSerializer.Deserialize<LongEnum>(MessagePackSerializer.Serialize(LongEnum.Huge)));
 
         // nullable and collection composition resolve through the same factory chain
         ByteEnum? some = ByteEnum.Edge;
         ByteEnum? none = null;
-        Assert.Equal(Oracle.Serialize(some), MessagePackSerializer.Default.Serialize(some));
-        Assert.Equal(Oracle.Serialize(none), MessagePackSerializer.Default.Serialize(none));
-        Assert.Equal(some, MessagePackSerializer.Default.Deserialize<ByteEnum?>(MessagePackSerializer.Default.Serialize(some)));
-        Assert.Null(MessagePackSerializer.Default.Deserialize<ByteEnum?>(MessagePackSerializer.Default.Serialize(none)));
+        Assert.Equal(Oracle.Serialize(some), MessagePackSerializer.Serialize(some));
+        Assert.Equal(Oracle.Serialize(none), MessagePackSerializer.Serialize(none));
+        Assert.Equal(some, MessagePackSerializer.Deserialize<ByteEnum?>(MessagePackSerializer.Serialize(some)));
+        Assert.Null(MessagePackSerializer.Deserialize<ByteEnum?>(MessagePackSerializer.Serialize(none)));
 
         var list = new List<IntEnum> { IntEnum.Negative, IntEnum.Zero, IntEnum.Big };
-        Assert.Equal(Oracle.Serialize(list), MessagePackSerializer.Default.Serialize(list));
-        Assert.Equal(list, MessagePackSerializer.Default.Deserialize<List<IntEnum>>(MessagePackSerializer.Default.Serialize(list)));
+        Assert.Equal(Oracle.Serialize(list), MessagePackSerializer.Serialize(list));
+        Assert.Equal(list, MessagePackSerializer.Deserialize<List<IntEnum>>(MessagePackSerializer.Serialize(list)));
     }
 
     public enum ByteEnum : byte { Small = 3, Edge = 128, Max = 255 }
@@ -239,30 +239,30 @@ public class CollectionAndObjectTests
     public void FactoryChainConstructor_ExactChainSemantics()
     {
         // no factories = the default chain
-        var byDefault = new MessagePackSerializer();
-        Assert.Equal(42, byDefault.Deserialize<int>(byDefault.Serialize(42)));
+        var byDefault = new MessagePackSerializerOptions();
+        Assert.Equal(42, MessagePackSerializer.Deserialize<int>(MessagePackSerializer.Serialize(42, byDefault), byDefault));
 
         // explicit chain including defaults works end to end
-        var explicitChain = new MessagePackSerializer(PrimitiveFormatterFactory.Instance, GenericFormatterFactory.Instance);
+        var explicitChain = new MessagePackSerializerOptions(PrimitiveFormatterFactory.Instance, GenericFormatterFactory.Instance);
         var list = new List<int> { 1, 2, 3 };
-        Assert.Equal(list, explicitChain.Deserialize<List<int>>(explicitChain.Serialize(list)));
+        Assert.Equal(list, MessagePackSerializer.Deserialize<List<int>>(MessagePackSerializer.Serialize(list, explicitChain), explicitChain));
 
         // the chain is EXACT: primitives only, so List<int> resolves to Missing
-        var primitivesOnly = new MessagePackSerializer(PrimitiveFormatterFactory.Instance);
-        Assert.Equal(7, primitivesOnly.Deserialize<int>(primitivesOnly.Serialize(7)));
-        Assert.Throws<InvalidOperationException>(() => primitivesOnly.Serialize(new List<int> { 1 }));
+        var primitivesOnly = new MessagePackSerializerOptions(PrimitiveFormatterFactory.Instance);
+        Assert.Equal(7, MessagePackSerializer.Deserialize<int>(MessagePackSerializer.Serialize(7, primitivesOnly), primitivesOnly));
+        Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(new List<int> { 1 }, primitivesOnly));
     }
 
     [Fact]
     public void Poco_MatchOracleAndRoundtrip()
     {
-        DynamicFormatterFactory.Instance.RegisterFactory<Person>(new PersonFormatterFactory());
+        FormatterRegistry.Instance.RegisterFactory<Person>(new PersonFormatterFactory());
 
         var person = new Person { Id = 12345, Name = "山岡士郎", Score = 98.5 };
-        var ours = MessagePackSerializer.Default.Serialize(person);
+        var ours = MessagePackSerializer.Serialize(person);
         var oracle = Oracle.Serialize(person);
         Assert.Equal(oracle, ours);
-        var back = MessagePackSerializer.Default.Deserialize<Person>(ours);
+        var back = MessagePackSerializer.Deserialize<Person>(ours);
         Assert.Equal(person.Id, back.Id);
         Assert.Equal(person.Name, back.Name);
         Assert.Equal(person.Score, back.Score);
@@ -288,7 +288,7 @@ public sealed class PersonFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref Person value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Person value)
     {
         buffer.WriteFixArrayHeader(3);
         buffer.WriteInt32(value.Id);

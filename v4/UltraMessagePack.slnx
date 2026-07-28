@@ -8,4 +8,5 @@
   <Project Path="UltraMessagePack/UltraMessagePack.csproj" />
   <Project Path="UltraMessagePack.SourceGenerator/UltraMessagePack.SourceGenerator.csproj" />
   <Project Path="UltraMessagePack.Tests/UltraMessagePack.Tests.csproj" />
+  <Project Path="UltraMessagePack.AotSmokeTest/UltraMessagePack.AotSmokeTest.csproj" />
 </Solution>

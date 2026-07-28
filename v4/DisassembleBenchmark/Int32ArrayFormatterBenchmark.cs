@@ -168,8 +168,8 @@ public class Int32ArrayFormatterBenchmark
 
     int[] data = default!;
     byte[] payload = default!;
-    MessagePackSerializer scalar = default!;
-    MessagePackSerializer hybrid = default!;
+    MessagePackSerializerOptions scalar = default!;
+    MessagePackSerializerOptions hybrid = default!;
     readonly Nerdbank.MessagePack.MessagePackSerializer nb = new();
 
     [GlobalSetup]
@@ -198,44 +198,44 @@ public class Int32ArrayFormatterBenchmark
         }
 
         // generic per-element path: GenericFormatterFactory first claims int[]
-        scalar = new MessagePackSerializer(GenericFormatterFactory.Instance, PrimitiveFormatterFactory.Instance);
+        scalar = new MessagePackSerializerOptions(GenericFormatterFactory.Instance, PrimitiveFormatterFactory.Instance);
         // A/B variant: region + fixint superlane, but mixed 16s emit via the scalar classify chain
-        hybrid = new MessagePackSerializer(new RegionScalarInt32ArrayFormatterFactory(), PrimitiveFormatterFactory.Instance, GenericFormatterFactory.Instance);
+        hybrid = new MessagePackSerializerOptions(new RegionScalarInt32ArrayFormatterFactory(), PrimitiveFormatterFactory.Instance, GenericFormatterFactory.Instance);
 
-        payload = MessagePackSerializer.Default.Serialize(data);
+        payload = MessagePackSerializer.Serialize(data);
         var oracle = MessagePack.MessagePackSerializer.Serialize(data);
         if (!payload.AsSpan().SequenceEqual(oracle)) throw new InvalidOperationException("verify failed: simd bytes vs oracle");
-        if (!scalar.Serialize(data).AsSpan().SequenceEqual(oracle)) throw new InvalidOperationException("verify failed: scalar bytes vs oracle");
-        if (!hybrid.Serialize(data).AsSpan().SequenceEqual(oracle)) throw new InvalidOperationException("verify failed: hybrid bytes vs oracle");
-        if (!hybrid.Deserialize<int[]>(payload)!.AsSpan().SequenceEqual(data)) throw new InvalidOperationException("verify failed: hybrid roundtrip");
-        if (!MessagePackSerializer.Default.Deserialize<int[]>(payload)!.AsSpan().SequenceEqual(data)) throw new InvalidOperationException("verify failed: simd roundtrip");
-        if (!scalar.Deserialize<int[]>(payload)!.AsSpan().SequenceEqual(data)) throw new InvalidOperationException("verify failed: scalar roundtrip");
+        if (!MessagePackSerializer.Serialize(data, scalar).AsSpan().SequenceEqual(oracle)) throw new InvalidOperationException("verify failed: scalar bytes vs oracle");
+        if (!MessagePackSerializer.Serialize(data, hybrid).AsSpan().SequenceEqual(oracle)) throw new InvalidOperationException("verify failed: hybrid bytes vs oracle");
+        if (!MessagePackSerializer.Deserialize<int[]>(payload, hybrid)!.AsSpan().SequenceEqual(data)) throw new InvalidOperationException("verify failed: hybrid roundtrip");
+        if (!MessagePackSerializer.Deserialize<int[]>(payload)!.AsSpan().SequenceEqual(data)) throw new InvalidOperationException("verify failed: simd roundtrip");
+        if (!MessagePackSerializer.Deserialize<int[]>(payload, scalar)!.AsSpan().SequenceEqual(data)) throw new InvalidOperationException("verify failed: scalar roundtrip");
         if (!nb.Deserialize<int[], NbInt32ArrayWitness>(nb.Serialize<int[], NbInt32ArrayWitness>(data))!.AsSpan().SequenceEqual(data)) throw new InvalidOperationException("verify failed: nerdbank roundtrip");
     }
 
     [BenchmarkCategory("Serialize"), Benchmark(Baseline = true)]
-    public byte[] SerializeSimd() => MessagePackSerializer.Default.Serialize(data);
+    public byte[] SerializeSimd() => MessagePackSerializer.Serialize(data);
 
     [BenchmarkCategory("Serialize"), Benchmark]
-    public byte[] SerializeScalar() => scalar.Serialize(data);
+    public byte[] SerializeScalar() => MessagePackSerializer.Serialize(data, scalar);
 
     [BenchmarkCategory("Serialize"), Benchmark]
     public byte[] SerializeMpcs() => MessagePack.MessagePackSerializer.Serialize(data);
 
     [BenchmarkCategory("Serialize"), Benchmark]
-    public byte[] SerializeHybridScalarRegion() => hybrid.Serialize(data);
+    public byte[] SerializeHybridScalarRegion() => MessagePackSerializer.Serialize(data, hybrid);
 
     [BenchmarkCategory("Serialize"), Benchmark]
     public byte[] SerializeNerdbank() => nb.Serialize<int[], NbInt32ArrayWitness>(data);
 
     [BenchmarkCategory("Deserialize"), Benchmark(Baseline = true)]
-    public int[] DeserializeSimd() => MessagePackSerializer.Default.Deserialize<int[]>(payload)!;
+    public int[] DeserializeSimd() => MessagePackSerializer.Deserialize<int[]>(payload)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
-    public int[] DeserializeScalar() => scalar.Deserialize<int[]>(payload)!;
+    public int[] DeserializeScalar() => MessagePackSerializer.Deserialize<int[]>(payload, scalar)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
-    public int[] DeserializeHybridScalarRegion() => hybrid.Deserialize<int[]>(payload)!;
+    public int[] DeserializeHybridScalarRegion() => MessagePackSerializer.Deserialize<int[]>(payload, hybrid)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
     public int[] DeserializeMpcs() => MessagePack.MessagePackSerializer.Deserialize<int[]>(payload)!;
@@ -261,7 +261,7 @@ public sealed class RegionScalarInt32ArrayFormatter<TWriteBuffer, TReadBuffer> :
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref int[]? value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, int[]? value)
     {
         if (value == null)
         {

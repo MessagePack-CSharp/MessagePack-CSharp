@@ -27,7 +27,7 @@ using UltraMessagePack;
 // per-value table baseline. Across independent payloads the table's chain latency hides
 // under memory/entry overlap while cascade's branches and code size only add cost. The
 // SWAR optimistic path remains the only shape that beats the table on real POCO streams.
-public class DisasmProbe10Benchmark
+public class OptimisticFixintDecodeBenchmark
 {
     const int Count = 100_000;
 
@@ -36,18 +36,18 @@ public class DisasmProbe10Benchmark
 
     byte[][] payloads = default!;
     Int4Poco reusable = default!;
-    MessagePackSerializer perValue = default!;
-    MessagePackSerializer optimistic = default!;
-    MessagePackSerializer cascade = default!;
-    MessagePackSerializer hybrid = default!;
+    MessagePackSerializerOptions perValue = default!;
+    MessagePackSerializerOptions optimistic = default!;
+    MessagePackSerializerOptions cascade = default!;
+    MessagePackSerializerOptions hybrid = default!;
 
     [GlobalSetup]
     public void Setup()
     {
-        perValue = new MessagePackSerializer(new UltraMessagePack.MessagePackFormatterResolver(new Int4PerValueFormatterFactory()));
-        optimistic = new MessagePackSerializer(new UltraMessagePack.MessagePackFormatterResolver(new Int4OptimisticFormatterFactory()));
-        cascade = new MessagePackSerializer(new UltraMessagePack.MessagePackFormatterResolver(new Int4CascadeReadFormatterFactory()));
-        hybrid = new MessagePackSerializer(new UltraMessagePack.MessagePackFormatterResolver(new Int4HybridReadFormatterFactory()));
+        perValue = new MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(new Int4PerValueFormatterFactory()));
+        optimistic = new MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(new Int4OptimisticFormatterFactory()));
+        cascade = new MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(new Int4CascadeReadFormatterFactory()));
+        hybrid = new MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(new Int4HybridReadFormatterFactory()));
         reusable = new Int4Poco();
 
         var rand = new Random(42);
@@ -85,12 +85,12 @@ public class DisasmProbe10Benchmark
         var c = new Int4Poco();
         for (int i = 0; i < Count; i++)
         {
-            perValue.Deserialize(ref a, payloads[i]);
-            optimistic.Deserialize(ref b, payloads[i]);
-            cascade.Deserialize(ref c, payloads[i]);
+            MessagePackSerializer.Deserialize(ref a, payloads[i], perValue);
+            MessagePackSerializer.Deserialize(ref b, payloads[i], optimistic);
+            MessagePackSerializer.Deserialize(ref c, payloads[i], cascade);
             if (!a.Equals4(b)) throw new InvalidOperationException($"verify failed: optimistic payload {i}");
             if (!a.Equals4(c)) throw new InvalidOperationException($"verify failed: cascade payload {i}");
-            hybrid.Deserialize(ref c, payloads[i]);
+            MessagePackSerializer.Deserialize(ref c, payloads[i], hybrid);
             if (!a.Equals4(c)) throw new InvalidOperationException($"verify failed: hybrid payload {i}");
         }
     }
@@ -101,7 +101,7 @@ public class DisasmProbe10Benchmark
         int sum = 0;
         for (int i = 0; i < Count; i++)
         {
-            perValue.Deserialize(ref reusable, payloads[i]);
+            MessagePackSerializer.Deserialize(ref reusable, payloads[i], perValue);
             sum += reusable.A;
         }
         return sum;
@@ -113,7 +113,7 @@ public class DisasmProbe10Benchmark
         int sum = 0;
         for (int i = 0; i < Count; i++)
         {
-            optimistic.Deserialize(ref reusable, payloads[i]);
+            MessagePackSerializer.Deserialize(ref reusable, payloads[i], optimistic);
             sum += reusable.A;
         }
         return sum;
@@ -125,7 +125,7 @@ public class DisasmProbe10Benchmark
         int sum = 0;
         for (int i = 0; i < Count; i++)
         {
-            cascade.Deserialize(ref reusable, payloads[i]);
+            MessagePackSerializer.Deserialize(ref reusable, payloads[i], cascade);
             sum += reusable.A;
         }
         return sum;
@@ -137,7 +137,7 @@ public class DisasmProbe10Benchmark
         int sum = 0;
         for (int i = 0; i < Count; i++)
         {
-            hybrid.Deserialize(ref reusable, payloads[i]);
+            MessagePackSerializer.Deserialize(ref reusable, payloads[i], hybrid);
             sum += reusable.A;
         }
         return sum;
@@ -154,7 +154,7 @@ public sealed class Int4HybridReadFormatter<TWriteBuffer, TReadBuffer> : IMessag
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref Int4Poco value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Int4Poco value)
     {
         buffer.WriteArrayHeader(4);
         buffer.WriteInt32(value.A);
@@ -212,7 +212,7 @@ public sealed class Int4CascadeReadFormatter<TWriteBuffer, TReadBuffer> : IMessa
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref Int4Poco value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Int4Poco value)
     {
         buffer.WriteArrayHeader(4);
         buffer.WriteInt32(value.A);
@@ -267,7 +267,7 @@ public sealed class Int4OptimisticFormatter<TWriteBuffer, TReadBuffer> : IMessag
     {
     }
 
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ref Int4Poco value)
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Int4Poco value)
     {
         buffer.WriteArrayHeader(4);
         buffer.WriteInt32(value.A);
