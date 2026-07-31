@@ -580,11 +580,8 @@ namespace MessagePack
             if (this.OldSpec && byteCount > MessagePackRange.MaxFixStringLength && byteCount <= byte.MaxValue)
             {
                 span[0] = MessagePackCode.Str16;
-                unchecked
-                {
-                    span[1] = (byte)(byteCount >> 8);
-                    span[2] = (byte)byteCount;
-                }
+                span[1] = 0;
+                span[2] = unchecked((byte)byteCount);
 
                 this.writer.Advance(3);
                 return;
