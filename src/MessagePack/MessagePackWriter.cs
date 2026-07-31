@@ -454,7 +454,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
         /// <remarks>
-        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
+        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is fixstr, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead (never <see cref="MessagePackCode.Str8"/>, which is not defined in the old spec).
         /// </remarks>
         public void Write(scoped ReadOnlySpan<byte> src)
         {
