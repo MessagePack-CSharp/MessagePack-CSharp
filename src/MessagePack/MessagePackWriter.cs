@@ -473,7 +473,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
         /// <remarks>
-        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
+        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is fixstr, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead (never <see cref="MessagePackCode.Str8"/>, which is not defined in the old spec).
         /// </remarks>
         public void Write(in ReadOnlySequence<byte> src)
         {
@@ -498,7 +498,7 @@ namespace MessagePack
         /// Alternatively a single call to <see cref="Write(ReadOnlySpan{byte})"/> or <see cref="Write(in ReadOnlySequence{byte})"/> will take care of the header and content in one call.
         /// </para>
         /// <para>
-        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
+        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is fixstr, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead (never <see cref="MessagePackCode.Str8"/>, which is not defined in the old spec).
         /// </para>
         /// </remarks>
         public void WriteBinHeader(int length)
@@ -559,15 +559,37 @@ namespace MessagePack
         /// </summary>
         /// <param name="byteCount">The number of bytes in the string that will follow this header.</param>
         /// <remarks>
+        /// <para>
         /// The caller should use <see cref="WriteRaw(in ReadOnlySequence{byte})"/> or <see cref="WriteRaw(ReadOnlySpan{byte})"/>
         /// after calling this method to actually write the content.
         /// Alternatively a single call to <see cref="WriteString(ReadOnlySpan{byte})"/> or <see cref="WriteString(in ReadOnlySequence{byte})"/> will take care of the header and content in one call.
+        /// </para>
+        /// <para>
+        /// When <see cref="OldSpec"/> is <see langword="true"/>, <see cref="MessagePackCode.Str8"/> is never used because it is not defined in the old spec;
+        /// lengths that would otherwise use str8 are encoded with <see cref="MessagePackCode.Str16"/> instead.
+        /// </para>
         /// </remarks>
         public void WriteStringHeader(int byteCount)
         {
             // When we write the header, we'll ask for all the space we need for the payload as well
             // as that may help ensure we only allocate a buffer once.
             Span<byte> span = this.writer.GetSpan(byteCount + 5);
+
+            // The old msgpack spec does not define str8 (0xd9). Use str16 for lengths 32-255 when OldSpec is set.
+            // This matches WriteString_PostEncoding and keeps binary-as-string (WriteBinHeader) legacy-compatible.
+            if (this.OldSpec && byteCount > MessagePackRange.MaxFixStringLength && byteCount <= byte.MaxValue)
+            {
+                span[0] = MessagePackCode.Str16;
+                unchecked
+                {
+                    span[1] = (byte)(byteCount >> 8);
+                    span[2] = (byte)byteCount;
+                }
+
+                this.writer.Advance(3);
+                return;
+            }
+
             AssumesTrue(MessagePackPrimitives.TryWriteStringHeader(span, (uint)byteCount, out int written));
             this.writer.Advance(written);
         }

@@ -143,6 +143,70 @@ namespace MessagePack.Tests
             Assert.Equal(new byte[] { 1, 2, 3, 4, 5 }, reader.ReadBytes().Value.ToArray());
         }
 
+        /// <summary>
+        /// Regression for https://github.com/MessagePack-CSharp/MessagePack-CSharp/issues/2286:
+        /// OldSpec must not emit str8 (0xD9) for lengths 32-255.
+        /// </summary>
+        [Theory]
+        [InlineData(31)] // fixstr
+        [InlineData(32)] // str16 under OldSpec (would be str8 otherwise)
+        [InlineData(255)] // str16 under OldSpec (would be str8 otherwise)
+        [InlineData(256)] // str16
+        public void Write_ByteArray_OldSpec_AvoidsStr8(int length)
+        {
+            byte[] value = new byte[length];
+            Array.Fill(value, (byte)'A');
+
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence) { OldSpec = true };
+            writer.Write(value);
+            writer.Flush();
+
+            ReadOnlySpan<byte> written = sequence.AsReadOnlySequence.ToArray();
+            Assert.NotEqual(MessagePackCode.Str8, written[0]);
+
+            if (length <= MessagePackRange.MaxFixStringLength)
+            {
+                Assert.Equal((byte)(MessagePackCode.MinFixStr | length), written[0]);
+                Assert.Equal(value, written.Slice(1).ToArray());
+            }
+            else if (length <= ushort.MaxValue)
+            {
+                Assert.Equal(MessagePackCode.Str16, written[0]);
+                Assert.Equal((byte)(length >> 8), written[1]);
+                Assert.Equal((byte)length, written[2]);
+                Assert.Equal(value, written.Slice(3).ToArray());
+            }
+        }
+
+        [Theory]
+        [InlineData(32)]
+        [InlineData(255)]
+        public void WriteStringHeader_OldSpec_AvoidsStr8(int length)
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence) { OldSpec = true };
+            writer.WriteStringHeader(length);
+            writer.Flush();
+
+            ReadOnlySpan<byte> written = sequence.AsReadOnlySequence.ToArray();
+            Assert.Equal(new byte[] { MessagePackCode.Str16, (byte)(length >> 8), (byte)length }, written.ToArray());
+        }
+
+        [Theory]
+        [InlineData(32)]
+        [InlineData(255)]
+        public void WriteBinHeader_OldSpec_AvoidsStr8(int length)
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence) { OldSpec = true };
+            writer.WriteBinHeader(length);
+            writer.Flush();
+
+            ReadOnlySpan<byte> written = sequence.AsReadOnlySequence.ToArray();
+            Assert.Equal(new byte[] { MessagePackCode.Str16, (byte)(length >> 8), (byte)length }, written.ToArray());
+        }
+
         [Fact]
         public void WriteExtensionFormatHeader_NegativeExtension()
         {

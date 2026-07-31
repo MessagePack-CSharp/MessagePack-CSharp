@@ -23,6 +23,8 @@ namespace MessagePack.Tests
     {
         [Theory]
         [InlineData(10)] // fixstr
+        [InlineData(32)] // str 16 (must not use str8 under OldSpec)
+        [InlineData(255)] // str 16 (must not use str8 under OldSpec)
         [InlineData(1000)] // str 16
         [InlineData(100000)] // str 32
         public void SerializeSimpleByteArray(int arrayLength)
@@ -57,6 +59,8 @@ namespace MessagePack.Tests
 
         [Theory]
         [InlineData(10)] // fixstr
+        [InlineData(32)] // str 16 (must not use str8 under OldSpec)
+        [InlineData(255)] // str 16 (must not use str8 under OldSpec)
         [InlineData(1000)] // str 16
         [InlineData(100000)] // str 32
         public void SerializeObject(int arrayLength)
@@ -78,6 +82,8 @@ namespace MessagePack.Tests
 
         [Theory]
         [InlineData(10)] // fixstr
+        [InlineData(32)] // str 16 (must not use str8 under OldSpec)
+        [InlineData(255)] // str 16 (must not use str8 under OldSpec)
         [InlineData(1000)] // str 16
         [InlineData(100000)] // str 32
         public void DeserializeSimpleByteArray(int arrayLength)
@@ -103,6 +109,8 @@ namespace MessagePack.Tests
 
         [Theory]
         [InlineData(10)] // fixstr
+        [InlineData(32)] // str 16 (must not use str8 under OldSpec)
+        [InlineData(255)] // str 16 (must not use str8 under OldSpec)
         [InlineData(1000)] // str 16
         [InlineData(100000)] // str 32
         public void DeserializeObject(int arrayLength)
