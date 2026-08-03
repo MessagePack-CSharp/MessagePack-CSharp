@@ -359,7 +359,7 @@ public sealed class RegionScalarInt32ArrayFormatter<TWriteBuffer, TReadBuffer> :
         {
             while (i + 16 <= count)
             {
-                var window = buffer.GetSpan();
+                var window = buffer.GetCurrentSpan();
                 if (window.Length >= 16)
                 {
                     var codes = Vector128.LoadUnsafe(ref MemoryMarshal.GetReference(window));
@@ -409,7 +409,7 @@ public sealed class RegionScalarInt32ArrayFormatter<TWriteBuffer, TReadBuffer> :
     }
 }
 
-public sealed class RegionScalarInt32ArrayFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class RegionScalarInt32ArrayFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct

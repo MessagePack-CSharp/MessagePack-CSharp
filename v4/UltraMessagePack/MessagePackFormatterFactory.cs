@@ -43,6 +43,7 @@ public sealed class CompositeFormatterFactory : IMessagePackFormatterFactory
         this.factories = factories;
     }
 
+#if NET9_0_OR_GREATER
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
         where TReadBuffer : struct, IReadBuffer, allows ref struct
@@ -57,9 +58,23 @@ public sealed class CompositeFormatterFactory : IMessagePackFormatterFactory
         }
         return null;
     }
+#endif
+
+    public object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
+    {
+        foreach (var factory in factories)
+        {
+            var created = factory.CreateFormatter(writeBufferType, readBufferType, valueType);
+            if (created != null)
+            {
+                return created;
+            }
+        }
+        return null;
+    }
 }
 
-public sealed class PrimitiveFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class PrimitiveFormatterFactory : IMessagePackFormatterFactory
 {
     public static readonly PrimitiveFormatterFactory Instance = new PrimitiveFormatterFactory();
 
@@ -68,8 +83,14 @@ public sealed class PrimitiveFormatterFactory : IMessagePackFormatterFactory
     }
 
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
         if (type == typeof(int)) return new Int32Formatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(long)) return new Int64Formatter<TWriteBuffer, TReadBuffer>();
@@ -113,22 +134,20 @@ public sealed class GenericFormatterFactory : IMessagePackFormatterFactory
     {
     }
 
+    // Closes an element-generic factory over the runtime ELEMENT types — reflection only
+    // ever touches the element types; the buffer types travel through the CreateFormatter
+    // call on the returned factory (as generic parameters on modern TFMs — they may be
+    // ref structs, which MakeGenericType must not see — and as Types downlevel).
+    // byte[]/int[] never reach here: PrimitiveFormatterFactory claims them first (bin
+    // format, not an element array).
     [UnconditionalSuppressMessage("AOT", "IL3050",
         Justification = "instances only exist behind the RequiresDynamicCode constructor/Instance; the caller has already opted into dynamic code")]
     [UnconditionalSuppressMessage("Trimming", "IL2055",
         Justification = "the closed factory types are ArrayFormatterFactory<>/ListFormatterFactory<>/DictionaryFormatterFactory<,>/NullableFormatterFactory<>/EnumFormatterFactory<> only; all are rooted by the typeof references below")]
     [UnconditionalSuppressMessage("Trimming", "IL2071",
         Justification = "EnumFormatterFactory<T>'s T is always an enum (guarded by type.IsEnum); value types always satisfy PublicParameterlessConstructor")]
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    static IMessagePackFormatterFactory? CreateElementFactory(Type type)
     {
-        // Closes an element-generic factory over the runtime ELEMENT types, then asks it
-        // for the (TWriteBuffer, TReadBuffer) formatter — reflection only ever touches
-        // the element types; the buffer type parameters travel through the generic
-        // method call (they may be ref structs, which MakeGenericType must not see).
-        // byte[]/int[] never reach here: PrimitiveFormatterFactory claims them first (bin
-        // format, not an element array).
         Type? factoryType = null;
         if (type.IsArray)
         {
@@ -158,7 +177,21 @@ public sealed class GenericFormatterFactory : IMessagePackFormatterFactory
         {
             return null;
         }
-        return ((IMessagePackFormatterFactory)Activator.CreateInstance(factoryType)!).CreateFormatter<TWriteBuffer, TReadBuffer>(type);
+        return (IMessagePackFormatterFactory)Activator.CreateInstance(factoryType)!;
+    }
+
+#if NET9_0_OR_GREATER
+    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    {
+        return CreateElementFactory(type)?.CreateFormatter<TWriteBuffer, TReadBuffer>(type);
+    }
+#endif
+
+    public object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
+    {
+        return CreateElementFactory(valueType)?.CreateFormatter(writeBufferType, readBufferType, valueType);
     }
 }
 
@@ -184,12 +217,21 @@ public sealed class FormatterRegistry : IMessagePackFormatterFactory
         factories[typeof(T)] = factory;
     }
 
+#if NET9_0_OR_GREATER
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
         where TReadBuffer : struct, IReadBuffer, allows ref struct
     {
         return factories.TryGetValue(type, out var factory)
             ? factory.CreateFormatter<TWriteBuffer, TReadBuffer>(type)
+            : null;
+    }
+#endif
+
+    public object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
+    {
+        return factories.TryGetValue(valueType, out var factory)
+            ? factory.CreateFormatter(writeBufferType, readBufferType, valueType)
             : null;
     }
 }

@@ -1,8 +1,10 @@
 using SerializerFoundation;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+#if NET
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+#endif
 
 namespace UltraMessagePack.Formatters;
 
@@ -27,6 +29,7 @@ namespace UltraMessagePack.Formatters;
 // Entry j says where OUTPUT byte j comes from: values 0..63 pick byte p of the FIRST
 // source register, values 64..127 pick byte (value - 64) of the SECOND source
 // (bit 6 of a vpermi2b index selects the register).
+#if NET
 file static class WideLaneTables
 {
     // Per-dword byte reversal: turns each little-endian int32 into big-endian byte
@@ -117,10 +120,9 @@ file static class WideLaneTables
         118, 118, 118, 118,      // t14 <- window 70
         123, 123, 123, 123);     // t15 <- window 75
 }
+#endif
 
-public sealed class Int32ArrayFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, int[]?>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class Int32ArrayFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, int[]?>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -150,6 +152,7 @@ public sealed class Int32ArrayFormatter<TWriteBuffer, TReadBuffer> : IMessagePac
             int regionEnd = i + Math.Min(length - i, SerializeRegionElements);
             ref byte d = ref buffer.GetReference((regionEnd - i) * MessagePackPrimitives.MaxInt32Length);
             int written = 0;
+#if NET
             if (Vector512.IsHardwareAccelerated && Avx512F.IsSupported)
             {
                 while (i + 16 <= regionEnd)
@@ -281,6 +284,7 @@ public sealed class Int32ArrayFormatter<TWriteBuffer, TReadBuffer> : IMessagePac
                     }
                 }
             }
+#endif
             // non-SIMD hardware bulk, and the sub-16 tail everywhere
             for (; i < regionEnd; i++)
             {
@@ -356,6 +360,7 @@ public sealed class Int32ArrayFormatter<TWriteBuffer, TReadBuffer> : IMessagePac
         var result = (value != null && value.Length == count) ? value : GC.AllocateUninitializedArray<int>(count);
         ref int dst = ref MemoryMarshal.GetArrayDataReference(result);
         int i = 0;
+#if NET
         if (Vector128.IsHardwareAccelerated)
         {
             while (i + 16 <= count)
@@ -364,7 +369,7 @@ public sealed class Int32ArrayFormatter<TWriteBuffer, TReadBuffer> : IMessagePac
                 // of the window. A window shorter than 16 (buffer tail or sequence
                 // segment boundary) takes the scalar chunk, whose per-element reader
                 // stitches across the boundary; SIMD resumes on the next window.
-                var window = buffer.GetSpan();
+                var window = buffer.GetCurrentSpan();
                 if (window.Length >= 16)
                 {
                     var codes = Vector128.LoadUnsafe(ref MemoryMarshal.GetReference(window));
@@ -443,6 +448,7 @@ public sealed class Int32ArrayFormatter<TWriteBuffer, TReadBuffer> : IMessagePac
                 }
             }
         }
+#endif
         for (; i < count; i++)
         {
             Unsafe.Add(ref dst, i) = buffer.ReadInt32();

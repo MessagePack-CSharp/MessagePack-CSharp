@@ -6,7 +6,10 @@ namespace UltraMessagePack;
 public static class WriteBufferExtensions
 {
     extension<TWriteBuffer>(ref TWriteBuffer buffer)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WriteInt32(int value)

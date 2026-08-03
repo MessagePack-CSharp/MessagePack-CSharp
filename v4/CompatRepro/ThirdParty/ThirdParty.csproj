@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- 3rd party ライブラリは netstandard2.1 のみでビルドされている、という想定 -->
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>ThirdPartyLib</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\UltraMessagePack\UltraMessagePack.csproj" />
+  </ItemGroup>
+
+</Project>

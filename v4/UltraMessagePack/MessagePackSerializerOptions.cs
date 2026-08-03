@@ -12,7 +12,7 @@ namespace UltraMessagePack;
 /// static default (the v2 DefaultOptions footgun). Customization is always an explicit
 /// argument at the call site.
 /// </summary>
-public sealed class MessagePackSerializerOptions
+public sealed record class MessagePackSerializerOptions
 {
     static MessagePackSerializerOptions? defaultOptions;
 
@@ -32,6 +32,13 @@ public sealed class MessagePackSerializerOptions
     readonly MessagePackFormatterResolver resolver;
 
     public MessagePackFormatterResolver Resolver => resolver;
+
+    /// <summary>
+    /// Optional whole-payload transform (compression etc.), applied at the end of
+    /// serialization and transparently undone at the start of deserialization.
+    /// Null (the default) costs one predicted branch per entry call.
+    /// </summary>
+    public MessagePackPayloadProcessor? PayloadProcessor { get; init; }
 
     /// <summary>Options over the default factory chain (see <see cref="Default"/> for the AOT caveat).</summary>
     [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]

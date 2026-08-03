@@ -1,3 +1,4 @@
+using SerializerFoundation;
 using System.Buffers.Binary;
 using System.Numerics;
 using System.Runtime.CompilerServices;

@@ -1,3 +1,4 @@
+using SerializerFoundation;
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Numerics;
@@ -600,7 +601,15 @@ public static partial class MessagePackPrimitives
         // bin header class is exact upfront (the length IS the byte count); the fast header's
         // scratch bytes land in [1..5) and are overwritten by the payload copy right after
         int headerSize = UnsafeWriteBinHeader(ref destination, value.Length);
+
+#if NETSTANDARD2_0
+        if (value.Length > 0)
+        {
+            Unsafe.CopyBlockUnaligned(ref Unsafe.Add(ref destination, headerSize), ref MemoryMarshal.GetReference(value), (uint)value.Length);
+        }
+#else
         value.CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref destination, headerSize), value.Length));
+#endif
         return headerSize + value.Length;
     }
 
@@ -805,7 +814,19 @@ public static partial class MessagePackPrimitives
         // pointer-diff/2 chain to recompute charsConsumed; FromUtf16's OperationStatus check
         // is 2 instructions and charsRead is discarded (-0.3ns/op on short strings).
         // Invalid surrogates replace with U+FFFD in both, so output is identical.
+#if NETSTANDARD2_0
+        int byteCount;
+        unsafe
+        {
+            fixed (char* chars = value)
+            fixed (byte* bytes = &Unsafe.Add(ref destination, headerSize))
+            {
+                byteCount = Encoding.UTF8.GetBytes(chars, length, bytes, 3 * length);
+            }
+        }
+#else
         Utf8.FromUtf16(value, MemoryMarshal.CreateSpan(ref Unsafe.Add(ref destination, headerSize), 3 * length), out _, out int byteCount);
+#endif
 
         int actualHeaderSize = byteCount <= 31 ? 1
                              : byteCount <= 255 ? 2
@@ -814,8 +835,19 @@ public static partial class MessagePackPrimitives
         if (actualHeaderSize != headerSize)
         {
             // byteCount >= length implies the guess can only be too small: move forward
+#if NETSTANDARD2_0
+            // overlapping regions: Buffer.MemoryCopy has memmove semantics
+            unsafe
+            {
+                fixed (byte* p = &destination)
+                {
+                    Buffer.MemoryCopy(p + headerSize, p + actualHeaderSize, byteCount, byteCount);
+                }
+            }
+#else
             MemoryMarshal.CreateSpan(ref Unsafe.Add(ref destination, headerSize), byteCount)
                 .CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref destination, actualHeaderSize), byteCount));
+#endif
         }
 
         // header written after the payload, so no scratch bytes allowed (unlike
@@ -853,7 +885,18 @@ public static partial class MessagePackPrimitives
             int byteCount = Encoding.UTF8.GetByteCount(value);
             destination = MessagePackCode.Str32;
             Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)byteCount));
+#if NETSTANDARD2_0
+            unsafe
+            {
+                fixed (char* chars = value)
+                fixed (byte* bytes = &Unsafe.Add(ref destination, 5))
+                {
+                    Encoding.UTF8.GetBytes(chars, value.Length, bytes, byteCount);
+                }
+            }
+#else
             Utf8.FromUtf16(value, MemoryMarshal.CreateSpan(ref Unsafe.Add(ref destination, 5), byteCount), out _, out _);
+#endif
             return checked(5 + byteCount);
         }
     }
@@ -873,7 +916,14 @@ public static partial class MessagePackPrimitives
         // the fast header's scratch bytes land in [1..5) and are overwritten by the
         // payload copy right after
         int headerSize = UnsafeWriteStringHeader(ref destination, utf8Value.Length);
+#if NETSTANDARD2_0
+        if (utf8Value.Length > 0)
+        {
+            Unsafe.CopyBlockUnaligned(ref Unsafe.Add(ref destination, headerSize), ref MemoryMarshal.GetReference(utf8Value), (uint)utf8Value.Length);
+        }
+#else
         utf8Value.CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref destination, headerSize), utf8Value.Length));
+#endif
         return headerSize + utf8Value.Length;
     }
 
@@ -887,7 +937,14 @@ public static partial class MessagePackPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteRaw(ref byte destination, ReadOnlySpan<byte> value)
     {
+#if NETSTANDARD2_0
+        if (value.Length > 0)
+        {
+            Unsafe.CopyBlockUnaligned(ref destination, ref MemoryMarshal.GetReference(value), (uint)value.Length);
+        }
+#else
         value.CopyTo(MemoryMarshal.CreateSpan(ref destination, value.Length));
+#endif
         return value.Length;
     }
 

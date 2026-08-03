@@ -4,9 +4,7 @@ namespace UltraMessagePack.Formatters;
 
 // PrimitiveFormatters will be created by PrimitiveFormatterFactory
 
-public sealed class Int32Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, int>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class Int32Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, int>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -23,9 +21,7 @@ public sealed class Int32Formatter<TWriteBuffer, TReadBuffer> : IMessagePackForm
     }
 }
 
-public sealed class Int64Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, long>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class Int64Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, long>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -42,9 +38,7 @@ public sealed class Int64Formatter<TWriteBuffer, TReadBuffer> : IMessagePackForm
     }
 }
 
-public sealed class UInt32Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, uint>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class UInt32Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, uint>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -61,9 +55,7 @@ public sealed class UInt32Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     }
 }
 
-public sealed class UInt64Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ulong>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class UInt64Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ulong>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -80,9 +72,7 @@ public sealed class UInt64Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     }
 }
 
-public sealed class Int16Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, short>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class Int16Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, short>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -99,9 +89,7 @@ public sealed class Int16Formatter<TWriteBuffer, TReadBuffer> : IMessagePackForm
     }
 }
 
-public sealed class UInt16Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ushort>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class UInt16Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ushort>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -118,9 +106,7 @@ public sealed class UInt16Formatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     }
 }
 
-public sealed class ByteFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, byte>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class ByteFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, byte>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -137,9 +123,7 @@ public sealed class ByteFormatter<TWriteBuffer, TReadBuffer> : IMessagePackForma
     }
 }
 
-public sealed class SByteFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, sbyte>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class SByteFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, sbyte>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -156,9 +140,7 @@ public sealed class SByteFormatter<TWriteBuffer, TReadBuffer> : IMessagePackForm
     }
 }
 
-public sealed class CharFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, char>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class CharFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, char>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -175,9 +157,7 @@ public sealed class CharFormatter<TWriteBuffer, TReadBuffer> : IMessagePackForma
     }
 }
 
-public sealed class BooleanFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, bool>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class BooleanFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, bool>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -194,9 +174,7 @@ public sealed class BooleanFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFo
     }
 }
 
-public sealed class SingleFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, float>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class SingleFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, float>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -213,9 +191,7 @@ public sealed class SingleFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     }
 }
 
-public sealed class DoubleFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, double>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class DoubleFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, double>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -232,9 +208,7 @@ public sealed class DoubleFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     }
 }
 
-public sealed class StringFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, string?>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class StringFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, string?>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -251,9 +225,7 @@ public sealed class StringFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     }
 }
 
-public sealed class DateTimeFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, DateTime>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class DateTimeFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, DateTime>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -270,9 +242,7 @@ public sealed class DateTimeFormatter<TWriteBuffer, TReadBuffer> : IMessagePackF
     }
 }
 
-public sealed class ByteArrayFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, byte[]?>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class ByteArrayFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, byte[]?>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
     {

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- The 3rd-party custom-formatter library scenario from the Round doc: a package
+         shipping downlevel TFMs must also ship net10.0 (UMP101). Default is the
+         compliant shape, so this builds warning-free. To watch UMP101 fire, drop the
+         net10.0 target:
+
+           dotnet build UltraMessagePack.Sandbox -p:SandboxDropNet10=true
+
+         (or edit the first TargetFrameworks line). Expect one UMP101 ERROR per
+         buffer-generic symbol per downlevel TFM — the build fails by design. -->
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net10.0</TargetFrameworks>
+		<TargetFrameworks Condition="'$(SandboxDropNet10)' == 'true'">netstandard2.0;netstandard2.1</TargetFrameworks>
+		<LangVersion>latest</LangVersion>
+		<Nullable>enable</Nullable>
+		<!-- demo project with a duplicated core-surface stub in the downlevel assets:
+         never let this become a package -->
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- the analyzer under test, wired the same way a NuGet consumer would get it -->
+		<ProjectReference Include="..\UltraMessagePack.SourceGenerator\UltraMessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<!-- the core multi-targets the same TFM set, so every pass compiles against the
+         real surface (the former Stubs/ tier is gone) -->
+		<ProjectReference Include="..\UltraMessagePack\UltraMessagePack.csproj" />
+	</ItemGroup>
+
+</Project>

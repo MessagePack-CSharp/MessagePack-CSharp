@@ -165,7 +165,7 @@ public sealed class SPersonDirectFormatter<TWriteBuffer, TReadBuffer> : IMessage
     }
 }
 
-public sealed class SPersonDirectFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class SPersonDirectFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -206,7 +206,7 @@ public sealed class SPersonViaFormatter<TWriteBuffer, TReadBuffer> : IMessagePac
     }
 }
 
-public sealed class SPersonViaFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class SPersonViaFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct

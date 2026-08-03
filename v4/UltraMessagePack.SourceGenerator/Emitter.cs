@@ -42,8 +42,14 @@ static class Emitter
             namespace UltraMessagePack.Generated
             {
                 internal sealed class {{model.FormatterName}}<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, {{valueType}}>
-                    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-                    where TReadBuffer : struct, IReadBuffer, allows ref struct
+                    where TWriteBuffer : struct, IWriteBuffer
+            #if NET9_0_OR_GREATER
+                    , allows ref struct
+            #endif
+                    where TReadBuffer : struct, IReadBuffer
+            #if NET9_0_OR_GREATER
+                    , allows ref struct
+            #endif
                 {
 
             """);
@@ -275,10 +281,11 @@ static class Emitter
                             for (int i = 0; i < count; i++)
                             {
                                 // compare the key as utf8 in place, BEFORE Advance: the span may
-                                // alias a pooled stitch buffer
+                                // alias a pooled stitch buffer. TryGetSpan false = truncated key
+                                // payload: the domain exception is thrown HERE, the foundation
+                                // never throws for truncation.
                                 var byteCount = buffer.ReadStringHeader();
-                                var key = buffer.GetSpan(byteCount);
-                                if (key.Length < byteCount)
+                                if (!buffer.TryGetSpan(byteCount, out var key))
                                 {
                                     throw new MessagePackSerializationException("Unexpected end of data while reading a map key.");
                                 }
@@ -367,8 +374,14 @@ static class Emitter
                     }
 
                     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(global::System.Type type)
-                        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-                        where TReadBuffer : struct, IReadBuffer, allows ref struct
+                        where TWriteBuffer : struct, IWriteBuffer
+            #if NET9_0_OR_GREATER
+                        , allows ref struct
+            #endif
+                        where TReadBuffer : struct, IReadBuffer
+            #if NET9_0_OR_GREATER
+                        , allows ref struct
+            #endif
                     {
 
             """);
@@ -379,6 +392,12 @@ static class Emitter
         builder.Append("""
                         return null;
                     }
+
+            """);
+        // the Type-based interface member (the only abstract one): dispatch the built-in
+        // buffer pairs into the generic method above
+        BufferPairs.AppendCreateFormatterDispatch(builder, "        ");
+        builder.Append("""
                 }
 
                 internal static class GeneratedMessagePackRegistration

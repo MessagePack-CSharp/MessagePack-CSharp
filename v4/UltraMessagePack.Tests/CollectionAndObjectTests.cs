@@ -325,7 +325,7 @@ public sealed class PersonFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     }
 }
 
-public sealed class PersonFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class PersonFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct

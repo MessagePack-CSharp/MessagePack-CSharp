@@ -2,9 +2,7 @@
 
 namespace UltraMessagePack.Formatters;
 
-public sealed class ArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T[]?>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class ArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T[]?>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
 
@@ -24,6 +22,9 @@ public sealed class ArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackF
         buffer.WriteArrayHeader(value.Length);
 
         var f = formatter;
+
+        // TODO: remove unneeds ref T accesss.
+
         // remove covariance check
         ref var head = ref MemoryMarshal.GetArrayDataReference(value);
         for (int i = 0; i < value.Length; i++)
@@ -40,7 +41,9 @@ public sealed class ArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackF
             return;
         }
 
+        // TODO: check "count" validation.
         var count = buffer.ReadArrayHeader();
+
         // Populate contract: reuse the incoming array only when the length matches exactly
         // (its elements then act as populate targets); otherwise allocate fresh
         var result = (value != null && value.Length == count) ? value : new T[count];
@@ -55,11 +58,17 @@ public sealed class ArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackF
     }
 }
 
-public sealed class ArrayFormatterFactory<T> : IMessagePackFormatterFactory
+public sealed partial class ArrayFormatterFactory<T> : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
         return new ArrayFormatter<TWriteBuffer, TReadBuffer, T>();
     }
@@ -68,9 +77,7 @@ public sealed class ArrayFormatterFactory<T> : IMessagePackFormatterFactory
 
 
 
-public sealed class ListFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, List<T>?>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+public sealed partial class ListFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, List<T>?>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
 
@@ -90,11 +97,20 @@ public sealed class ListFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFo
         buffer.WriteArrayHeader(value.Count);
 
         var f = formatter;
+#if NET
         var span = CollectionsMarshal.AsSpan(value);
         for (int i = 0; i < span.Length; i++)
         {
             f.Serialize(ref buffer, ref state, span[i]);
         }
+#else
+        // no CollectionsMarshal downlevel: the indexer bounds check per element is the
+        // accepted correctness-tier cost
+        for (int i = 0; i < value.Count; i++)
+        {
+            f.Serialize(ref buffer, ref state, value[i]);
+        }
+#endif
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref List<T>? value)
@@ -107,31 +123,64 @@ public sealed class ListFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFo
 
         var count = buffer.ReadArrayHeader();
         var result = value ?? new List<T>(count);
-        CollectionsMarshal.SetCount(result, count);
-
         var f = formatter;
+#if NET
+        CollectionsMarshal.SetCount(result, count);
         var span = CollectionsMarshal.AsSpan(result);
         for (int i = 0; i < span.Length; i++)
         {
             f.Deserialize(ref buffer, ref state, ref span[i]);
         }
+#else
+        // populate semantics without SetCount/AsSpan: overwrite the reused prefix via the
+        // indexer, Add the growth, truncate the excess
+        if (result.Count > count)
+        {
+            result.RemoveRange(count, result.Count - count);
+        }
+        for (int i = 0; i < count; i++)
+        {
+            var item = i < result.Count ? result[i] : default(T)!;
+            f.Deserialize(ref buffer, ref state, ref item);
+            if (i < result.Count)
+            {
+                result[i] = item;
+            }
+            else
+            {
+                result.Add(item);
+            }
+        }
+#endif
         value = result;
     }
 }
 
-public sealed class ListFormatterFactory<T> : IMessagePackFormatterFactory
+public sealed partial class ListFormatterFactory<T> : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
         return new ListFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 }
 
 public sealed class DictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Dictionary<TKey, TValue>?>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+    where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+    , allows ref struct
+#endif
+    where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+    , allows ref struct
+#endif
     where TKey : notnull
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, TKey> keyFormatter = null!;
@@ -196,12 +245,18 @@ public sealed class DictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
     }
 }
 
-public sealed class DictionaryFormatterFactory<TKey, TValue> : IMessagePackFormatterFactory
+public sealed partial class DictionaryFormatterFactory<TKey, TValue> : IMessagePackFormatterFactory
     where TKey : notnull
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
         return new DictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>();
     }

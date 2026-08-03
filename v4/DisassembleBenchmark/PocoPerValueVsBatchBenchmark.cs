@@ -168,7 +168,7 @@ public sealed class Int4PerValueFormatter<TWriteBuffer, TReadBuffer> : UltraMess
     }
 }
 
-public sealed class Int4PerValueFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
+public sealed partial class Int4PerValueFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -231,7 +231,7 @@ public sealed class Int4LoopSwitchFormatter<TWriteBuffer, TReadBuffer> : UltraMe
     }
 }
 
-public sealed class Int4LoopSwitchFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
+public sealed partial class Int4LoopSwitchFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -273,7 +273,7 @@ public sealed class Int4BatchFormatter<TWriteBuffer, TReadBuffer> : UltraMessage
         // one window, local offset, one Advance; no reservation possible on the read side
         // (valid data may end short), so any short/straddling window falls back wholesale —
         // nothing was consumed yet, the fallback re-reads from the start
-        var span = buffer.GetSpan();
+        var span = buffer.GetCurrentSpan();
         if (TryReadArrayHeader(span, out var count, out var offset) != DecodeResult.Success || count != 4) { DeserializeSlow(ref buffer, value); return; }
         if (TryReadInt32(span.Slice(offset), out var a, out var c) != DecodeResult.Success) { DeserializeSlow(ref buffer, value); return; }
         offset += c;
@@ -303,7 +303,7 @@ public sealed class Int4BatchFormatter<TWriteBuffer, TReadBuffer> : UltraMessage
     }
 }
 
-public sealed class Int4BatchFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
+public sealed partial class Int4BatchFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct

@@ -4,9 +4,16 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/Compat/">
+    <Project Path="CompatRepro/App/App.csproj" />
+    <Project Path="CompatRepro/ThirdParty/ThirdParty.csproj" />
+  </Folder>
+  <Project Path="../../DisassembleBenchmark/UltraMessagePack.LZ4/UltraMessagePack.LZ4.csproj" />
   <Project Path="DisassembleBenchmark/DisassembleBenchmark.csproj" />
   <Project Path="UltraMessagePack/UltraMessagePack.csproj" />
+  <Project Path="UltraMessagePack.Sandbox/UltraMessagePack.Sandbox.csproj" />
   <Project Path="UltraMessagePack.SourceGenerator/UltraMessagePack.SourceGenerator.csproj" />
   <Project Path="UltraMessagePack.Tests/UltraMessagePack.Tests.csproj" />
+  <Project Path="SerializerFoundation/SerializerFoundation.csproj" />
   <Project Path="UltraMessagePack.AotSmokeTest/UltraMessagePack.AotSmokeTest.csproj" />
 </Solution>

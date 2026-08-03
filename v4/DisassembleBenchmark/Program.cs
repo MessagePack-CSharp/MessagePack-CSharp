@@ -19,6 +19,7 @@ if (args.Contains("--verify"))
     ok &= VerifyPocoSerializers();
     ok &= VerifyNbOfficial();
     ok &= VerifyAnswer();
+    ok &= VerifyGetRefVsGetSpan();
     Console.WriteLine(ok ? "all OK" : "FAILED");
     return ok ? 0 : 1;
 }
@@ -30,6 +31,31 @@ if (args.Contains("--verify-huge"))
     var ok = VerifyHugeString();
     Console.WriteLine(ok ? "all OK" : "FAILED");
     return ok ? 0 : 1;
+}
+
+// prints the wire size of each serializer's AnswerBenchmark payload (for reports)
+if (args.Contains("--answer-sizes"))
+{
+    var b = new AnswerBenchmark();
+    b.Setup();
+    Console.WriteLine($"msgpack (Ultra == MessagePack-CSharp): {b.SerializeUltra().Length} B");
+    Console.WriteLine($"msgpack (Nerdbank):                    {b.SerializeNerdbank().Length} B");
+    Console.WriteLine($"protobuf (protobuf-net):               {b.SerializeProtobufNet().Length} B");
+    Console.WriteLine($"Orleans (Microsoft.Orleans):           {b.SerializeOrleans().Length} B");
+    Console.WriteLine($"protobuf (Google.Protobuf):            {b.SerializeGoogleProtobuf().Length} B");
+    Console.WriteLine($"JSON (System.Text.Json):               {b.SerializeSystemTextJson().Length} B");
+    Console.WriteLine($"JSON (Newtonsoft.Json):                {b.SerializeNewtonsoftJson().Length} B");
+    // fairness guard: the source graph must not share instances — Orleans' wire protocol
+    // writes duplicate references as back-references (verified: rehydrates as shared
+    // instances too), which would shrink its wire/allocations against copy-semantics
+    // formats on data the others never get to dedupe
+    var src = AnswerBenchmark.CreateAnswer();
+    if (ReferenceEquals(src.last_editor, src.comments![1].owner)
+        || ReferenceEquals(src.comments[0].owner, src.comments[2].owner))
+    {
+        Console.WriteLine("WARNING: CreateAnswer() shares instances — reference-tracking serializers would be measured on different logical data");
+    }
+    return 0;
 }
 
 // hot-loops the Ultra candidates of NerdbankOfficialBenchmark so DOTNET_JitDisasm can capture
@@ -217,6 +243,22 @@ static bool VerifyAnswer()
     catch (Exception ex)
     {
         Console.WriteLine($"NG Answer: {ex.Message}");
+        return false;
+    }
+}
+
+// GetReferenceVsGetSpanBenchmark.Setup() is self-verifying: all four write paths
+// (2 buffers x 2 access styles) must be byte-identical to the MessagePack-CSharp oracle
+static bool VerifyGetRefVsGetSpan()
+{
+    try
+    {
+        new GetReferenceVsGetSpanBenchmark().Setup();
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"NG GetRefVsGetSpan: {ex.Message}");
         return false;
     }
 }

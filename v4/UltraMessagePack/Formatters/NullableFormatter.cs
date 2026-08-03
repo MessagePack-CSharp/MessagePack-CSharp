@@ -3,8 +3,14 @@
 namespace UltraMessagePack.Formatters;
 
 public sealed class NullableFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T?>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+    where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+    , allows ref struct
+#endif
+    where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+    , allows ref struct
+#endif
     where T : struct
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
@@ -39,12 +45,18 @@ public sealed class NullableFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePa
     }
 }
 
-public sealed class NullableFormatterFactory<T> : IMessagePackFormatterFactory
+public sealed partial class NullableFormatterFactory<T> : IMessagePackFormatterFactory
     where T : struct
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
         return new NullableFormatter<TWriteBuffer, TReadBuffer, T>();
     }

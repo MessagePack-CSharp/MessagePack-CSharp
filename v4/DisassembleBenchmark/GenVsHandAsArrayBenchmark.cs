@@ -116,7 +116,7 @@ public sealed class HandAsArrayFormatter<TWriteBuffer, TReadBuffer> : UltraMessa
     }
 }
 
-public sealed class HandAsArrayFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
+public sealed partial class HandAsArrayFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct

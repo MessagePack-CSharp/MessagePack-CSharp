@@ -89,6 +89,9 @@ public sealed record DiagnosticInfo(string Id, string Message, LocationInfo? Loc
 
 public static class Diagnostics
 {
+    // UMP0xx = generator pipeline diagnostics (this class); UMP1xx = standalone
+    // DiagnosticAnalyzers under Analyzers/ (same dll, MessagePack-CSharp v3 layout)
+
     // {0} carries the whole pre-formatted message: keeps DiagnosticInfo equatable without
     // dragging object[] args through the pipeline
     static DiagnosticDescriptor Make(string id, string title, DiagnosticSeverity severity) =>

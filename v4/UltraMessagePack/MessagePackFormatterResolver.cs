@@ -17,36 +17,16 @@ static class FormatterTypeIdCounter
 // stay few and singleton-like; if mass-produced resolvers ever become a supported pattern,
 // chunk the table (object?[][]) instead
 static class FormatterTypeId<TWriteBuffer, TReadBuffer, T>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+    where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+    , allows ref struct
+#endif
+    where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+    , allows ref struct
+#endif
 {
     public static readonly int Value = Interlocked.Increment(ref FormatterTypeIdCounter.Next) - 1;
-}
-
-public sealed class MissingMessagePackFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
-{
-    string resolverType;
-
-    public MissingMessagePackFormatter(Type resolverType)
-    {
-        this.resolverType = resolverType.FullName ?? "";
-    }
-
-    public void Initialize(MessagePackFormatterResolver resolver)
-    {
-    }
-
-    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
-    {
-        throw new InvalidOperationException($"Type '{typeof(T).FullName}' is not found in {resolverType}.");
-    }
-
-    public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref T value)
-    {
-        throw new InvalidOperationException($"Type '{typeof(T).FullName}' is not found in {resolverType}.");
-    }
 }
 
 // One cache: formatterTable, indexed by the global per-instantiation id, is both the hot
@@ -60,7 +40,13 @@ public sealed class MessagePackFormatterResolver
 {
     object?[] formatterTable = [];
 
-    readonly Lock gate = new Lock(); // reentrant: nested Initialize resolution re-enters GetFormatterSlow
+    // reentrant: nested Initialize resolution re-enters GetFormatterSlow (Lock and
+    // Monitor are both reentrant, so the downlevel object flavor keeps the semantics)
+#if NET9_0_OR_GREATER
+    readonly Lock gate = new Lock();
+#else
+    readonly object gate = new object();
+#endif
     readonly Dictionary<int, object> constructing = new();
     readonly IMessagePackFormatterFactory factory;
 
@@ -71,8 +57,14 @@ public sealed class MessagePackFormatterResolver
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> GetFormatter<TWriteBuffer, TReadBuffer, T>()
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
         var id = FormatterTypeId<TWriteBuffer, TReadBuffer, T>.Value;
         var table = formatterTable;
@@ -91,8 +83,14 @@ public sealed class MessagePackFormatterResolver
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> GetFormatterSlow<TWriteBuffer, TReadBuffer, T>(int id)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
         lock (gate)
         {
@@ -112,7 +110,12 @@ public sealed class MessagePackFormatterResolver
             var isRoot = constructing.Count == 0;
 
             object result;
+#if NET9_0_OR_GREATER
             var created = factory.CreateFormatter<TWriteBuffer, TReadBuffer>(typeof(T));
+#else
+            // downlevel interface surface is Type-based only (see IMessagePackFormatterFactory)
+            var created = factory.CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), typeof(T));
+#endif
             if (created != null)
             {
                 // the factory interface is non-generic, so the T link is enforced HERE:
@@ -136,7 +139,29 @@ public sealed class MessagePackFormatterResolver
             }
             else
             {
-                result = new MissingMessagePackFormatter<TWriteBuffer, TReadBuffer, T>(factory.GetType());
+                var servableByFallbackPair = false;
+#if NET9_0_OR_GREATER
+                // the whole chain declined this pair; if it CAN serve the type over a
+                // fallback pair, the cause is a downlevel-compiled factory that cannot
+                // close over ref struct buffers — recorded for the Missing message.
+                // the probe instance is discarded without Initialize (fresh-per-call contract)
+                if (typeof(TWriteBuffer).IsByRefLike || typeof(TReadBuffer).IsByRefLike)
+                {
+                    try
+                    {
+                        servableByFallbackPair = factory.CreateFormatter(
+                            typeof(CompatibleArrayPoolListWriteBuffer),
+                            typeof(UnsafeReadOnlySpanReadBuffer),
+                            typeof(T)) != null;
+                    }
+                    catch
+                    {
+                        // generated factories return null here, but hand-written ones may
+                        // throw on unknown pairs — treat that as "no"
+                    }
+                }
+#endif
+                result = new MissingMessagePackFormatter<TWriteBuffer, TReadBuffer, T>(factory.GetType(), servableByFallbackPair);
                 constructing[id] = result;
             }
 
@@ -172,5 +197,41 @@ public sealed class MessagePackFormatterResolver
         }
         Volatile.Write(ref formatterTable, table);
         constructing.Clear();
+    }
+}
+
+internal sealed partial class MissingMessagePackFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
+{
+    string resolverType;
+    bool servableByFallbackPair;
+
+    public MissingMessagePackFormatter(Type resolverType, bool servableByFallbackPair)
+    {
+        this.resolverType = resolverType.FullName ?? "";
+        this.servableByFallbackPair = servableByFallbackPair;
+    }
+
+    public void Initialize(MessagePackFormatterResolver resolver)
+    {
+    }
+
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
+    {
+        throw new InvalidOperationException(BuildMessage());
+    }
+
+    public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref T value)
+    {
+        throw new InvalidOperationException(BuildMessage());
+    }
+
+    string BuildMessage()
+    {
+        var message = $"Type '{typeof(T).FullName}' is not found in {resolverType} (TWriteBuffer: {typeof(TWriteBuffer).FullName}, TReadBuffer: {typeof(TReadBuffer).FullName}).";
+        if (servableByFallbackPair)
+        {
+            message += " The factory can create this formatter for fallback (non-ref-struct) buffer pairs: it is likely provided by a library compiled against a netstandard build of MessagePack, which cannot serve ref struct buffer pairs. That library must also target net10.0.";
+        }
+        return message;
     }
 }

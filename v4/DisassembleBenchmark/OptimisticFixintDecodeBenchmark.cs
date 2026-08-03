@@ -181,7 +181,7 @@ public sealed class Int4HybridReadFormatter<TWriteBuffer, TReadBuffer> : IMessag
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static int ReadInt32Hybrid(ref TReadBuffer buffer)
     {
-        if (global::MessagePackPrimitives.TryReadInt32HybridDr(buffer.GetSpan(), out var v, out var consumed) == DecodeResult.Success)
+        if (global::MessagePackPrimitives.TryReadInt32HybridDr(buffer.GetCurrentSpan(), out var v, out var consumed) == DecodeResult.Success)
         {
             buffer.Advance(consumed);
             return v;
@@ -191,7 +191,7 @@ public sealed class Int4HybridReadFormatter<TWriteBuffer, TReadBuffer> : IMessag
     }
 }
 
-public sealed class Int4HybridReadFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class Int4HybridReadFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -239,7 +239,7 @@ public sealed class Int4CascadeReadFormatter<TWriteBuffer, TReadBuffer> : IMessa
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static int ReadInt32Cascade(ref TReadBuffer buffer)
     {
-        if (global::MessagePackPrimitives.TryReadInt32CascadeDr(buffer.GetSpan(), out var v, out var consumed) == DecodeResult.Success)
+        if (global::MessagePackPrimitives.TryReadInt32CascadeDr(buffer.GetCurrentSpan(), out var v, out var consumed) == DecodeResult.Success)
         {
             buffer.Advance(consumed);
             return v;
@@ -249,7 +249,7 @@ public sealed class Int4CascadeReadFormatter<TWriteBuffer, TReadBuffer> : IMessa
     }
 }
 
-public sealed class Int4CascadeReadFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class Int4CascadeReadFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -283,7 +283,7 @@ public sealed class Int4OptimisticFormatter<TWriteBuffer, TReadBuffer> : IMessag
             value = new Int4Poco();
         }
 
-        var span = buffer.GetSpan();
+        var span = buffer.GetCurrentSpan();
         if (span.Length >= 5)
         {
             ref byte s = ref MemoryMarshal.GetReference(span);
@@ -319,7 +319,7 @@ public sealed class Int4OptimisticFormatter<TWriteBuffer, TReadBuffer> : IMessag
     }
 }
 
-public sealed class Int4OptimisticFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class Int4OptimisticFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct

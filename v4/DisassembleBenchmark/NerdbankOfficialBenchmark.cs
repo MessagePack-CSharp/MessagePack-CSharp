@@ -166,7 +166,11 @@ public sealed class NbPocoMapFormatter<TWriteBuffer, TReadBuffer> : UltraMessage
         {
             // compare BEFORE Advance: the span may alias a pooled stitch buffer
             var byteCount = buffer.ReadStringHeader();
-            var key = buffer.GetSpan(byteCount).Slice(0, byteCount);
+            if (!buffer.TryGetSpan(byteCount, out var key))
+            {
+                throw new UltraMessagePack.MessagePackSerializationException("Unexpected end of data while reading a map key.");
+            }
+            key = key.Slice(0, byteCount);
             if (key.SequenceEqual("SomeInt"u8))
             {
                 buffer.Advance(byteCount);

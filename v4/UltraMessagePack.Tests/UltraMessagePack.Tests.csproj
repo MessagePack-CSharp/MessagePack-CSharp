@@ -5,11 +5,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- the pointer-tier buffer tests pass stackalloc scratch via byte* -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="MessagePack" Version="3.1.8" />
+    <!-- pinned to the generator project's Roslyn floor so analyzer tests exercise the
+         same API surface that ships -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
@@ -21,7 +26,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\UltraMessagePack\UltraMessagePack.csproj" />
-    <ProjectReference Include="..\UltraMessagePack.SourceGenerator\UltraMessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\UltraMessagePack.LZ4\UltraMessagePack.LZ4.csproj" />
+    <!-- ReferenceOutputAssembly=true: analyzer unit tests instantiate the analyzer types
+         directly; the project still runs as an analyzer on this project via OutputItemType -->
+    <ProjectReference Include="..\UltraMessagePack.SourceGenerator\UltraMessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
 
 </Project>

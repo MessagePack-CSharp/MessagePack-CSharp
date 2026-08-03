@@ -7,26 +7,30 @@ namespace UltraMessagePack;
 // Read-side mirror of WriteBufferExtensions: throwing readers layered over the span-based
 // TryRead primitives. Fast path decodes straight from the buffer's current span (for
 // contiguous buffers that is everything remaining). The NoInlining slow path is driven by
-// the DecodeResult category: on InsufficientBuffer it requests EXACTLY the tokenSize the
-// primitive reported (GetSpan(tokenSize) — the ReadOnlySequenceReadBuffer straddle case
-// stitches precisely that much) and retries; tokenSize strictly exceeds the window it was
-// reported for and is bounded by BytesRemaining checks, so the loop terminates (str/bin
-// take two hops: header requirement first, then header + payload). TokenMismatch throws
-// immediately.
+// the DecodeResult category: on InsufficientBuffer it demands EXACTLY the tokenSize the
+// primitive reported via TryGetSpan (the ReadOnlySequenceReadBuffer straddle case
+// stitches precisely that much) and retries; TryGetSpan returning false means genuine
+// truncation and exits the loop into the domain exception — the foundation never throws
+// for it. tokenSize strictly exceeds the window it was reported for, so the loop
+// terminates (str/bin take two hops: header requirement first, then header + payload).
+// TokenMismatch throws immediately.
 //
 // Materialization order matters: extract the value (ToArray/GetString) BEFORE Advance,
 // because Advance may return a stitched temp buffer to the pool and invalidate the span.
 public static class ReadBufferExtensions
 {
     extension<TReadBuffer>(ref TReadBuffer buffer)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
         #region Int32, 64 / UInt32, 64
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadInt32()
         {
-            var r = TryReadInt32(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadInt32(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -38,7 +42,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long ReadInt64()
         {
-            var r = TryReadInt64(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadInt64(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -50,7 +54,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint ReadUInt32()
         {
-            var r = TryReadUInt32(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadUInt32(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -62,7 +66,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ulong ReadUInt64()
         {
-            var r = TryReadUInt64(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadUInt64(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -78,7 +82,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public byte ReadByte()
         {
-            var r = TryReadByte(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadByte(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -90,7 +94,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public sbyte ReadSByte()
         {
-            var r = TryReadSByte(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadSByte(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -102,7 +106,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short ReadInt16()
         {
-            var r = TryReadInt16(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadInt16(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -114,7 +118,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ushort ReadUInt16()
         {
-            var r = TryReadUInt16(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadUInt16(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -134,7 +138,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryReadNil()
         {
-            if (MessagePackPrimitives.TryReadNil(buffer.GetSpan()))
+            if (MessagePackPrimitives.TryReadNil(buffer.GetCurrentSpan()))
             {
                 buffer.Advance(1); // nil is always exactly 1 byte
                 return true;
@@ -146,19 +150,19 @@ public static class ReadBufferExtensions
         public bool ReadBoolean()
         {
             // single-byte format: never straddles a segment, no stitched retry needed
-            var r = TryReadBoolean(buffer.GetSpan(), out var value, out _);
+            var r = TryReadBoolean(buffer.GetCurrentSpan(), out var value, out _);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(1);
                 return value;
             }
-            throw Unreadable("boolean", buffer.GetSpan(), r);
+            throw Unreadable("boolean", buffer.GetCurrentSpan(), r);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float ReadSingle()
         {
-            var r = TryReadSingle(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadSingle(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -170,7 +174,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double ReadDouble()
         {
-            var r = TryReadDouble(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadDouble(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -186,7 +190,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadArrayHeader()
         {
-            var r = TryReadArrayHeader(buffer.GetSpan(), out var count, out var tokenSize);
+            var r = TryReadArrayHeader(buffer.GetCurrentSpan(), out var count, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -198,7 +202,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadMapHeader()
         {
-            var r = TryReadMapHeader(buffer.GetSpan(), out var count, out var tokenSize);
+            var r = TryReadMapHeader(buffer.GetCurrentSpan(), out var count, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -210,7 +214,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadStringHeader()
         {
-            var r = TryReadStringHeader(buffer.GetSpan(), out var byteCount, out var tokenSize);
+            var r = TryReadStringHeader(buffer.GetCurrentSpan(), out var byteCount, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -222,7 +226,7 @@ public static class ReadBufferExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadBinHeader()
         {
-            var r = TryReadBinHeader(buffer.GetSpan(), out var byteCount, out var tokenSize);
+            var r = TryReadBinHeader(buffer.GetCurrentSpan(), out var byteCount, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -234,7 +238,7 @@ public static class ReadBufferExtensions
         /// <summary>Reads a bin (header + payload) as a new array.</summary>
         public byte[] ReadBinary()
         {
-            var r = TryReadBinary(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadBinary(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 var result = value.ToArray(); // before Advance: the span may alias a pooled stitch buffer
@@ -250,7 +254,7 @@ public static class ReadBufferExtensions
 
         public (sbyte TypeCode, int DataLength) ReadExtHeader()
         {
-            var r = TryReadExtHeader(buffer.GetSpan(), out var typeCode, out var dataLength, out var tokenSize);
+            var r = TryReadExtHeader(buffer.GetCurrentSpan(), out var typeCode, out var dataLength, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -261,7 +265,7 @@ public static class ReadBufferExtensions
 
         public DateTime ReadTimestamp()
         {
-            var r = TryReadTimestamp(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadTimestamp(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -277,7 +281,7 @@ public static class ReadBufferExtensions
         /// <summary>Reads a str as a string; nil reads as null (mirror of WriteString(string?)).</summary>
         public string? ReadString()
         {
-            var r = TryReadString(buffer.GetSpan(), out var value, out var tokenSize);
+            var r = TryReadString(buffer.GetCurrentSpan(), out var value, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize); // value is already a materialized string
@@ -305,7 +309,7 @@ public static class ReadBufferExtensions
             do
             {
                 remaining--;
-                var span = buffer.GetSpan();
+                var span = buffer.GetCurrentSpan();
                 if (span.IsEmpty)
                 {
                     throw Unreadable("skip", span, DecodeResult.InsufficientBuffer);
@@ -396,22 +400,28 @@ public static class ReadBufferExtensions
 
     // fixed-size token: the whole token must exist even though we don't decode it
     static void SkipPayload<TReadBuffer>(ref TReadBuffer buffer, int tokenSize)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
         if (tokenSize > buffer.BytesRemaining)
         {
-            throw Unreadable("skip", buffer.GetSpan(), DecodeResult.InsufficientBuffer);
+            throw Unreadable("skip", buffer.GetCurrentSpan(), DecodeResult.InsufficientBuffer);
         }
         buffer.Advance(tokenSize);
     }
 
     // header already consumed by a stitch-aware reader; validate and skip the payload
     static void SkipPayloadChecked<TReadBuffer>(ref TReadBuffer buffer, int byteCount)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
         if (byteCount > buffer.BytesRemaining)
         {
-            throw Unreadable("skip", buffer.GetSpan(), DecodeResult.InsufficientBuffer);
+            throw Unreadable("skip", buffer.GetCurrentSpan(), DecodeResult.InsufficientBuffer);
         }
         buffer.Advance(byteCount);
     }
@@ -422,11 +432,14 @@ public static class ReadBufferExtensions
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static uint ReadUInt32Slow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadUInt32(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadUInt32(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -434,16 +447,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("uint32", buffer.GetSpan(), first);
+        throw Unreadable("uint32", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static ulong ReadUInt64Slow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadUInt64(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadUInt64(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -451,16 +467,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("uint64", buffer.GetSpan(), first);
+        throw Unreadable("uint64", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static byte ReadByteSlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadByte(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadByte(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -468,16 +487,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("byte", buffer.GetSpan(), first);
+        throw Unreadable("byte", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static sbyte ReadSByteSlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadSByte(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadSByte(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -485,16 +507,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("sbyte", buffer.GetSpan(), first);
+        throw Unreadable("sbyte", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static short ReadInt16Slow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadInt16(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadInt16(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -502,16 +527,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("int16", buffer.GetSpan(), first);
+        throw Unreadable("int16", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static ushort ReadUInt16Slow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadUInt16(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadUInt16(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -519,16 +547,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("uint16", buffer.GetSpan(), first);
+        throw Unreadable("uint16", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static int ReadInt32Slow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadInt32(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadInt32(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -536,16 +567,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("int32", buffer.GetSpan(), first);
+        throw Unreadable("int32", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static long ReadInt64Slow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadInt64(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadInt64(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -553,16 +587,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("int64", buffer.GetSpan(), first);
+        throw Unreadable("int64", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static float ReadSingleSlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadSingle(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadSingle(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -570,16 +607,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("float32", buffer.GetSpan(), first);
+        throw Unreadable("float32", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static double ReadDoubleSlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadDouble(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadDouble(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -587,16 +627,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("float64", buffer.GetSpan(), first);
+        throw Unreadable("float64", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static int ReadArrayHeaderSlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadArrayHeader(buffer.GetSpan(required), out var count, out required);
+            var r = TryReadArrayHeader(window, out var count, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -604,16 +647,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("array header", buffer.GetSpan(), first);
+        throw Unreadable("array header", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static int ReadMapHeaderSlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadMapHeader(buffer.GetSpan(required), out var count, out required);
+            var r = TryReadMapHeader(window, out var count, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -621,16 +667,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("map header", buffer.GetSpan(), first);
+        throw Unreadable("map header", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static int ReadStringHeaderSlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadStringHeader(buffer.GetSpan(required), out var byteCount, out required);
+            var r = TryReadStringHeader(window, out var byteCount, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -638,16 +687,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("str header", buffer.GetSpan(), first);
+        throw Unreadable("str header", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static int ReadBinHeaderSlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadBinHeader(buffer.GetSpan(required), out var byteCount, out required);
+            var r = TryReadBinHeader(window, out var byteCount, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -655,16 +707,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("bin header", buffer.GetSpan(), first);
+        throw Unreadable("bin header", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static (sbyte TypeCode, int DataLength) ReadExtHeaderSlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadExtHeader(buffer.GetSpan(required), out var typeCode, out var dataLength, out required);
+            var r = TryReadExtHeader(window, out var typeCode, out var dataLength, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -672,16 +727,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("ext header", buffer.GetSpan(), first);
+        throw Unreadable("ext header", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static DateTime ReadTimestampSlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadTimestamp(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadTimestamp(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -689,16 +747,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("timestamp", buffer.GetSpan(), first);
+        throw Unreadable("timestamp", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static string? ReadStringSlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadString(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadString(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required); // value is already a materialized string
@@ -706,16 +767,19 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("string", buffer.GetSpan(), first);
+        throw Unreadable("string", buffer.GetCurrentSpan(), first);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static byte[] ReadBinarySlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
     {
-        while (first == DecodeResult.InsufficientBuffer && required <= buffer.BytesRemaining)
+        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadBinary(buffer.GetSpan(required), out var value, out required);
+            var r = TryReadBinary(window, out var value, out required);
             if (r == DecodeResult.Success)
             {
                 var result = value.ToArray(); // before Advance: the span may alias a pooled stitch buffer
@@ -724,7 +788,7 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
-        throw Unreadable("binary", buffer.GetSpan(), first);
+        throw Unreadable("binary", buffer.GetCurrentSpan(), first);
     }
 
     // exception factory so the throw statement stays in the (cold) caller and the JIT sees

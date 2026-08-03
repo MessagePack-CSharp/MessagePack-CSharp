@@ -124,7 +124,7 @@ public class NestInner
 
 // factory mapping several types to their per-type factories (probe-local; array scan is
 // fine, resolution happens once per instantiation)
-public sealed class MapFactoryResolver : UltraMessagePack.IMessagePackFormatterFactory
+public sealed partial class MapFactoryResolver : UltraMessagePack.IMessagePackFormatterFactory
 {
     readonly (Type type, UltraMessagePack.IMessagePackFormatterFactory factory)[] factories;
 
@@ -177,7 +177,7 @@ public sealed class InnerFormatter<TWriteBuffer, TReadBuffer> : IMessagePackForm
     }
 }
 
-public sealed class InnerFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class InnerFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -217,7 +217,7 @@ public sealed class MiddleIfaceFieldFormatter<TWriteBuffer, TReadBuffer> : IMess
     }
 }
 
-public sealed class MiddleIfaceFieldFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class MiddleIfaceFieldFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -255,7 +255,7 @@ public sealed class OuterIfaceFieldFormatter<TWriteBuffer, TReadBuffer> : IMessa
     }
 }
 
-public sealed class OuterIfaceFieldFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class OuterIfaceFieldFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -295,7 +295,7 @@ public sealed class MiddlePerCallFormatter<TWriteBuffer, TReadBuffer> : IMessage
     }
 }
 
-public sealed class MiddlePerCallFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class MiddlePerCallFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -333,7 +333,7 @@ public sealed class OuterPerCallFormatter<TWriteBuffer, TReadBuffer> : IMessageP
     }
 }
 
-public sealed class OuterPerCallFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class OuterPerCallFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -403,7 +403,7 @@ public sealed class OuterDirectFormatter<TWriteBuffer, TReadBuffer> : IMessagePa
     }
 }
 
-public sealed class OuterDirectFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class OuterDirectFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -452,7 +452,7 @@ public sealed class OuterFlatFormatter<TWriteBuffer, TReadBuffer> : IMessagePack
     }
 }
 
-public sealed class OuterFlatFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class OuterFlatFormatterFactory : IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct

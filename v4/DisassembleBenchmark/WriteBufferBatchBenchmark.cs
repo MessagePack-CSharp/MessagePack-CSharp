@@ -88,7 +88,7 @@ public sealed class BenchPersonBatchFormatter<TWriteBuffer, TReadBuffer> : Ultra
     }
 }
 
-public sealed class BenchPersonBatchFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
+public sealed partial class BenchPersonBatchFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
 {
     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
