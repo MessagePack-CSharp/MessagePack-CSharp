@@ -8,7 +8,7 @@
     <Project Path="CompatRepro/App/App.csproj" />
     <Project Path="CompatRepro/ThirdParty/ThirdParty.csproj" />
   </Folder>
-  <Project Path="../../DisassembleBenchmark/UltraMessagePack.LZ4/UltraMessagePack.LZ4.csproj" />
+  <Project Path="UltraMessagePack.LZ4/UltraMessagePack.LZ4.csproj" />
   <Project Path="DisassembleBenchmark/DisassembleBenchmark.csproj" />
   <Project Path="UltraMessagePack/UltraMessagePack.csproj" />
   <Project Path="UltraMessagePack.Sandbox/UltraMessagePack.Sandbox.csproj" />
