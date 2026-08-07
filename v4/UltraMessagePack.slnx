@@ -8,12 +8,15 @@
     <Project Path="CompatRepro/App/App.csproj" />
     <Project Path="CompatRepro/ThirdParty/ThirdParty.csproj" />
   </Folder>
-  <Project Path="../../DisassembleBenchmark/UltraMessagePack.LZ4/UltraMessagePack.LZ4.csproj" />
   <Project Path="DisassembleBenchmark/DisassembleBenchmark.csproj" />
-  <Project Path="UltraMessagePack/UltraMessagePack.csproj" />
+  <Project Path="SerializerFoundation.Analyzers/SerializerFoundation.Analyzers.csproj" />
+  <Project Path="SerializerFoundation/SerializerFoundation.csproj" />
+  <Project Path="UltraMessagePack.AotCompatibilityTest/UltraMessagePack.AotCompatibilityTest.csproj" />
+  <Project Path="UltraMessagePack.AotSmokeTest/UltraMessagePack.AotSmokeTest.csproj" />
+  <Project Path="UltraMessagePack.LZ4/UltraMessagePack.LZ4.csproj" />
   <Project Path="UltraMessagePack.Sandbox/UltraMessagePack.Sandbox.csproj" />
   <Project Path="UltraMessagePack.SourceGenerator/UltraMessagePack.SourceGenerator.csproj" />
+  <Project Path="UltraMessagePack.Tests.NetFx/UltraMessagePack.Tests.NetFx.csproj" />
   <Project Path="UltraMessagePack.Tests/UltraMessagePack.Tests.csproj" />
-  <Project Path="SerializerFoundation/SerializerFoundation.csproj" />
-  <Project Path="UltraMessagePack.AotSmokeTest/UltraMessagePack.AotSmokeTest.csproj" />
+  <Project Path="UltraMessagePack/UltraMessagePack.csproj" />
 </Solution>

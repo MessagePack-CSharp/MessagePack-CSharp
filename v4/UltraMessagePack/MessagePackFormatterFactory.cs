@@ -1,52 +1,151 @@
-using SerializerFoundation;
-using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using UltraMessagePack.Formatters;
 
 namespace UltraMessagePack;
 
-// The default factory chain. Order matters: Primitive first (also claims byte[] as bin),
-// then the generic collection shapes, then user registrations.
-public static class DefaultFormatterFactory
+/// <summary>
+/// Base for the factory that produces IMessagePackFormatter&lt;TWriteBuffer, TReadBuffer, T&gt; instances.
+/// </summary>
+public abstract class MessagePackFormatterFactory
 {
     internal const string RequiresDynamicCodeMessage =
         "The default chain contains GenericFormatterFactory, which closes collection/Nullable/enum formatters " +
-        "over runtime element types via MakeGenericType. For Native AOT, compose an explicit chain instead " +
-        "(e.g. the source-generated factory + PrimitiveFormatterFactory).";
+        "over runtime element types via MakeGenericType. For Native AOT, use MessagePackFormatterFactory.DefaultAot " +
+        "(builtin + source-generated formatters) or compose an explicit chain.";
 
-    static IMessagePackFormatterFactory? instance;
+    // lazy-load for AOT-clean
+    static MessagePackFormatterFactory? defaultInstance;
+    static MessagePackFormatterFactory? defaultAotInstance;
+    static MessagePackFormatterFactory? dotNetOptimizedInstance;
+    static MessagePackFormatterFactory? dotNetOptimizedAotInstance;
 
     /// <summary>
-    /// The default chain (Primitive → Generic → Registry). Acquisition requires dynamic
-    /// code because of the Generic link; the property is lazy so that merely loading this
-    /// type stays AOT-clean (a static readonly field would run the annotated construction
-    /// in the type initializer, where no annotation can gate it). The ??= race is benign:
-    /// both composites are equivalent and stateless.
+    /// The default chain (SourceGenerated -> BuiltIn -> Generic) for JIT Environment.
     /// </summary>
-    public static IMessagePackFormatterFactory Instance
+    public static MessagePackFormatterFactory Default
     {
         [RequiresDynamicCode(RequiresDynamicCodeMessage)]
-        get => instance ??= new CompositeFormatterFactory(
-            PrimitiveFormatterFactory.Instance,
-            GenericFormatterFactory.Instance,
-            FormatterRegistry.Instance);
+        get => defaultInstance ??= Combine(
+            SourceGeneratedFormatterFactory.Instance,
+            BuiltInFormatterFactory.Instance,
+            GenericFormatterFactory.Instance);
     }
+
+    /// <summary>
+    /// The default chain (SourceGenerated -> BuiltIn) for AOT Environment. This does not include generic formatters so Native AOT / trimming safe.
+    /// </summary>
+    public static MessagePackFormatterFactory DefaultAot
+    {
+        get => defaultAotInstance ??= Combine(
+            SourceGeneratedFormatterFactory.Instance,
+            BuiltInFormatterFactory.Instance);
+    }
+
+    /// <summary>
+    /// The .NET optimized chain (SourceGenerated -> DotNetOptimized -> BuiltIn -> Generic) for JIT Environment.
+    /// <see cref="Default"/> plus alternate wire formats where the default pays for
+    /// cross-language readability — Guid and decimal as 16-byte little-endian binary
+    /// images, DateTime as ToBinary (preserving <see cref="DateTimeKind"/>),
+    /// DateTimeOffset as Ticks + Offset, BitArray bit-packed.
+    /// All reads are validated, so this is as safe for untrusted input as the default chain.
+    /// </summary>
+    public static MessagePackFormatterFactory DotNetOptimized
+    {
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        get => dotNetOptimizedInstance ??= Combine(
+            SourceGeneratedFormatterFactory.Instance,
+            DotNetOptimizedFormatterFactory.Instance, // insert .NET Optimized before BuiltIn
+            BuiltInFormatterFactory.Instance,
+            GenericFormatterFactory.Instance);
+    }
+
+    /// <summary>
+    /// The .NET optimized chain (SourceGenerated -> DotNetOptimized -> BuiltIn) for AOT Environment.
+    /// This does not include generic formatters so Native AOT / trimming safe.
+    /// <see cref="DefaultAot"/> plus alternate wire formats where the default pays for
+    /// cross-language readability — Guid and decimal as 16-byte little-endian binary
+    /// images, DateTime as ToBinary (preserving <see cref="DateTimeKind"/>),
+    /// DateTimeOffset as Ticks + Offset, BitArray bit-packed.
+    /// All reads are validated, so this is as safe for untrusted input as the default chain.
+    /// </summary>
+    public static MessagePackFormatterFactory DotNetOptimizedAot
+    {
+        get => dotNetOptimizedAotInstance ??= Combine(
+            SourceGeneratedFormatterFactory.Instance,
+            DotNetOptimizedFormatterFactory.Instance, // insert .NET Optimized before BuiltIn
+            BuiltInFormatterFactory.Instance);
+    }
+
+    /// <summary>
+    /// Composes factories into one chain. First non-null wins, so put overrides before defaults.
+    /// </summary>
+    public static MessagePackFormatterFactory Combine(params MessagePackFormatterFactory[] factories)
+    {
+        if (factories.Length == 0)
+        {
+            throw new ArgumentException("pass at least one factory (e.g. MessagePackFormatterFactory.Default)", nameof(factories));
+        }
+        if (factories.Length == 1)
+        {
+            return factories[0];
+        }
+
+        var flattened = new List<MessagePackFormatterFactory>(factories.Length);
+        foreach (var factory in factories)
+        {
+            // composites are only ever built here, so their children are already flat
+            if (factory is CompositeFormatterFactory composite)
+            {
+                flattened.AddRange(composite.Factories);
+            }
+            else
+            {
+                flattened.Add(factory);
+            }
+        }
+        return new CompositeFormatterFactory([.. flattened]);
+    }
+
+#if NET9_0_OR_GREATER
+
+    // This is virtual, not abstract: a downlevel-compiled override cannot emit the `allows ref struct` flag and would fail to load (TypeLoadException).
+    // However implementer "must" override this method to support the new ref struct buffers and AOT safety.
+
+    /// <summary>
+    /// Creates an IMessagePackFormatter&lt;TWriteBuffer, TReadBuffer, T&gt; for the
+    /// requested type or null when this factory does not serve the type.
+    /// Implementations must return a fresh instance per call, only fully stateless formatters may return a cached singleton.
+    /// </summary>
+    public virtual object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    {
+        return CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), type);
+    }
+
+#endif
+
+    /// <summary>
+    /// Creates an IMessagePackFormatter&lt;TWriteBuffer, TReadBuffer, T&gt; for the
+    /// requested type or null when this factory does not serve the type.
+    /// Implementations must return a fresh instance per call, only fully stateless formatters may return a cached singleton.
+    /// This is the compatibility tier for target-framework that can't use "allows ref struct".
+    /// </summary>
+    public abstract object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType);
 }
 
-/// <summary>A factory over factories: asks each in order, first non-null wins.</summary>
-public sealed class CompositeFormatterFactory : IMessagePackFormatterFactory
+internal sealed class CompositeFormatterFactory : MessagePackFormatterFactory
 {
-    readonly IMessagePackFormatterFactory[] factories;
+    readonly MessagePackFormatterFactory[] factories;
 
-    public CompositeFormatterFactory(params IMessagePackFormatterFactory[] factories)
+    internal MessagePackFormatterFactory[] Factories => factories;
+
+    internal CompositeFormatterFactory(MessagePackFormatterFactory[] factories)
     {
         this.factories = factories;
     }
 
 #if NET9_0_OR_GREATER
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         foreach (var factory in factories)
         {
@@ -60,7 +159,7 @@ public sealed class CompositeFormatterFactory : IMessagePackFormatterFactory
     }
 #endif
 
-    public object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
+    public override object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
     {
         foreach (var factory in factories)
         {
@@ -74,164 +173,52 @@ public sealed class CompositeFormatterFactory : IMessagePackFormatterFactory
     }
 }
 
-public sealed partial class PrimitiveFormatterFactory : IMessagePackFormatterFactory
+/// <summary>
+/// Base for the runtime-closing factory tier: an override only pattern-matches the value
+/// type to an OPEN generic factory definition plus the arguments to close it with. All
+/// reflection (MakeGenericType, Activator, the AOT suppressions) lives here once. Derived
+/// constructors must carry [RequiresDynamicCode].
+/// </summary>
+public abstract class GenericFormatterFactoryBase : MessagePackFormatterFactory
 {
-    public static readonly PrimitiveFormatterFactory Instance = new PrimitiveFormatterFactory();
-
-    PrimitiveFormatterFactory()
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    protected GenericFormatterFactoryBase()
     {
     }
 
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer
-#if NET9_0_OR_GREATER
-        , allows ref struct
-#endif
-        where TReadBuffer : struct, IReadBuffer
-#if NET9_0_OR_GREATER
-        , allows ref struct
-#endif
-    {
-        if (type == typeof(int)) return new Int32Formatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(long)) return new Int64Formatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(short)) return new Int16Formatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(byte)) return new ByteFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(sbyte)) return new SByteFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(uint)) return new UInt32Formatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(ulong)) return new UInt64Formatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(ushort)) return new UInt16Formatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(char)) return new CharFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(bool)) return new BooleanFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(float)) return new SingleFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(double)) return new DoubleFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(string)) return new StringFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(DateTime)) return new DateTimeFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(byte[])) return new ByteArrayFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(int[])) return new Int32ArrayFormatter<TWriteBuffer, TReadBuffer>(); // SIMD fixint-run formatter
-        return null;
-    }
-}
+    /// <summary>
+    /// Maps a type to the open generic factory definition that serves it (e.g.
+    /// <c>typeof(ListFormatterFactory&lt;&gt;)</c>), the type arguments to close it over,
+    /// and the constructor arguments (null = parameterless). Return null to decline.
+    /// </summary>
+    protected abstract Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments);
 
-// AOT annotation pattern (same as System.Text.Json's DefaultJsonTypeInfoResolver): the
-// interface stays UNANNOTATED — annotating IMessagePackFormatterFactory.CreateFormatter
-// would poison every implementation including the AOT-safe generated one, and annotating
-// only the implementation would be an IL3051 interface/implementation mismatch. Instead
-// the requirement sits on the ACQUISITION points (constructor / Instance): you can only
-// hold a GenericFormatterFactory after opting into dynamic code, so the interface calls
-// on it need no annotation and the internal warnings are suppressed against that gate.
-public sealed class GenericFormatterFactory : IMessagePackFormatterFactory
-{
-    static GenericFormatterFactory? instance;
-
-    public static GenericFormatterFactory Instance
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "instances only exist behind the RequiresDynamicCode protected constructor; the caller has already opted into dynamic code")]
+    [UnconditionalSuppressMessage("Trimming", "IL2055", Justification = "open factory definitions reach here as typeof references from overrides, which roots them; the type arguments derive from the value type being resolved, which the caller roots")]
+    [UnconditionalSuppressMessage("Trimming", "IL2071", Justification = "the override's pattern match guarantees the type arguments satisfy the open definition's constraints; factory constructors are bound by the explicit argument array")]
+    MessagePackFormatterFactory? CreateElementFactory(Type type)
     {
-        [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
-        get => instance ??= new GenericFormatterFactory(); // benign race: stateless singleton
-    }
-
-    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
-    GenericFormatterFactory()
-    {
-    }
-
-    // Closes an element-generic factory over the runtime ELEMENT types — reflection only
-    // ever touches the element types; the buffer types travel through the CreateFormatter
-    // call on the returned factory (as generic parameters on modern TFMs — they may be
-    // ref structs, which MakeGenericType must not see — and as Types downlevel).
-    // byte[]/int[] never reach here: PrimitiveFormatterFactory claims them first (bin
-    // format, not an element array).
-    [UnconditionalSuppressMessage("AOT", "IL3050",
-        Justification = "instances only exist behind the RequiresDynamicCode constructor/Instance; the caller has already opted into dynamic code")]
-    [UnconditionalSuppressMessage("Trimming", "IL2055",
-        Justification = "the closed factory types are ArrayFormatterFactory<>/ListFormatterFactory<>/DictionaryFormatterFactory<,>/NullableFormatterFactory<>/EnumFormatterFactory<> only; all are rooted by the typeof references below")]
-    [UnconditionalSuppressMessage("Trimming", "IL2071",
-        Justification = "EnumFormatterFactory<T>'s T is always an enum (guarded by type.IsEnum); value types always satisfy PublicParameterlessConstructor")]
-    static IMessagePackFormatterFactory? CreateElementFactory(Type type)
-    {
-        Type? factoryType = null;
-        if (type.IsArray)
-        {
-            factoryType = typeof(ArrayFormatterFactory<>).MakeGenericType(type.GetElementType()!);
-        }
-        else if (type.IsGenericType)
-        {
-            var definition = type.GetGenericTypeDefinition();
-            if (definition == typeof(List<>))
-            {
-                factoryType = typeof(ListFormatterFactory<>).MakeGenericType(type.GetGenericArguments());
-            }
-            else if (definition == typeof(Dictionary<,>))
-            {
-                factoryType = typeof(DictionaryFormatterFactory<,>).MakeGenericType(type.GetGenericArguments());
-            }
-            else if (definition == typeof(Nullable<>))
-            {
-                factoryType = typeof(NullableFormatterFactory<>).MakeGenericType(type.GetGenericArguments());
-            }
-        }
-        else if (type.IsEnum)
-        {
-            factoryType = typeof(EnumFormatterFactory<>).MakeGenericType(type);
-        }
-        if (factoryType == null)
+        var openFactoryType = GetOpenFactoryType(type, out var typeArguments, out var constructorArguments);
+        if (openFactoryType == null)
         {
             return null;
         }
-        return (IMessagePackFormatterFactory)Activator.CreateInstance(factoryType)!;
+
+        var factoryType = openFactoryType.MakeGenericType(typeArguments);
+
+        // args: must be the object[] overload, a lone bool would bind (Type, bool nonPublic)
+        return (MessagePackFormatterFactory)Activator.CreateInstance(factoryType, args: constructorArguments)!;
     }
 
 #if NET9_0_OR_GREATER
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return CreateElementFactory(type)?.CreateFormatter<TWriteBuffer, TReadBuffer>(type);
     }
 #endif
 
-    public object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
+    public override object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
     {
         return CreateElementFactory(valueType)?.CreateFormatter(writeBufferType, readBufferType, valueType);
-    }
-}
-
-public sealed class FormatterRegistry : IMessagePackFormatterFactory
-{
-    public static readonly FormatterRegistry Instance = new FormatterRegistry();
-
-    ConcurrentDictionary<Type, IMessagePackFormatterFactory> factories = new ConcurrentDictionary<Type, IMessagePackFormatterFactory>();
-
-    FormatterRegistry()
-    {
-    }
-
-    public void Register(Type type, IMessagePackFormatterFactory factory)
-    {
-        factories[type] = factory;
-    }
-
-    /// <summary>Typed sugar for <see cref="Register"/>. A factory registered under a
-    /// type key is only ever asked for that type and may ignore the parameter.</summary>
-    public void RegisterFactory<T>(IMessagePackFormatterFactory factory)
-    {
-        factories[typeof(T)] = factory;
-    }
-
-#if NET9_0_OR_GREATER
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
-    {
-        return factories.TryGetValue(type, out var factory)
-            ? factory.CreateFormatter<TWriteBuffer, TReadBuffer>(type)
-            : null;
-    }
-#endif
-
-    public object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
-    {
-        return factories.TryGetValue(valueType, out var factory)
-            ? factory.CreateFormatter(writeBufferType, readBufferType, valueType)
-            : null;
     }
 }

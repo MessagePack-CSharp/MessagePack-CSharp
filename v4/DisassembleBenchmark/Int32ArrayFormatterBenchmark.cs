@@ -198,9 +198,9 @@ public class Int32ArrayFormatterBenchmark
         }
 
         // generic per-element path: GenericFormatterFactory first claims int[]
-        scalar = new MessagePackSerializerOptions(GenericFormatterFactory.Instance, PrimitiveFormatterFactory.Instance);
+        scalar = new MessagePackSerializerOptions([GenericFormatterFactory.Instance, BuiltInFormatterFactory.Instance]);
         // A/B variant: region + fixint superlane, but mixed 16s emit via the scalar classify chain
-        hybrid = new MessagePackSerializerOptions(new RegionScalarInt32ArrayFormatterFactory(), PrimitiveFormatterFactory.Instance, GenericFormatterFactory.Instance);
+        hybrid = new MessagePackSerializerOptions([new RegionScalarInt32ArrayFormatterFactory(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
 
         payload = MessagePackSerializer.Serialize(data);
         var oracle = MessagePack.MessagePackSerializer.Serialize(data);
@@ -409,11 +409,9 @@ public sealed class RegionScalarInt32ArrayFormatter<TWriteBuffer, TReadBuffer> :
     }
 }
 
-public sealed partial class RegionScalarInt32ArrayFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class RegionScalarInt32ArrayFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return type == typeof(int[]) ? new RegionScalarInt32ArrayFormatter<TWriteBuffer, TReadBuffer>() : null;
     }

@@ -1,17 +1,6 @@
-using SerializerFoundation;
-using System.Diagnostics.CodeAnalysis;
+// TODO: high-level API is not fully implemented yet.
 
-#if NET9_0_OR_GREATER
-using DefaultWriteBuffer = SerializerFoundation.ArrayPoolListWriteBuffer;
-using SpanReadBuffer = SerializerFoundation.ReadOnlySpanReadBuffer;
-using SequenceReadBuffer = SerializerFoundation.ReadOnlySequenceReadBuffer;
-using WriterWriteBuffer = SerializerFoundation.BufferWriterWriteBuffer;
-#else
-using DefaultWriteBuffer = SerializerFoundation.CompatibleArrayPoolListWriteBuffer;
-using SpanReadBuffer = SerializerFoundation.UnsafeReadOnlySpanReadBuffer;
-using SequenceReadBuffer = SerializerFoundation.CompatibleReadOnlySequenceReadBuffer;
-using WriterWriteBuffer = SerializerFoundation.CompatibleBufferWriterWriteBuffer;
-#endif
+using System.Diagnostics.CodeAnalysis;
 
 namespace UltraMessagePack;
 
@@ -20,7 +9,7 @@ public static class MessagePackSerializer
     const int SerializeScratchSize = 1024;
     const int DeserializeScratchSize = 64;
 
-    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     public static byte[] Serialize<T>(T value)
     {
         return Serialize(value, MessagePackSerializerOptions.Default);
@@ -30,15 +19,17 @@ public static class MessagePackSerializer
     public static byte[] Serialize<T>(T value, MessagePackSerializerOptions options)
     {
 #if NET9_0_OR_GREATER
+        if (!options.Resolver.TryGetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>(out var formatter))
+        {
+            return SerializeCompatible(value, options);
+        }
+
         Span<byte> scratch = stackalloc byte[SerializeScratchSize];
         var buffer = new ArrayPoolListWriteBuffer(scratch);
-#else
-        var buffer = new CompatibleArrayPoolListWriteBuffer();
-#endif
         try
         {
-            var state = new SerializeState();
-            options.Resolver.GetFormatter<DefaultWriteBuffer, SpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
+            var state = new SerializeState(options.MaxDepth);
+            formatter.Serialize(ref buffer, ref state, value);
             var processor = options.PayloadProcessor;
             return processor == null
                 ? buffer.ToArray()
@@ -48,20 +39,83 @@ public static class MessagePackSerializer
         {
             buffer.Dispose();
         }
+
+        static byte[] SerializeCompatible(T value, MessagePackSerializerOptions options)
+#endif
+        {
+            var buffer = new CompatibleArrayPoolListWriteBuffer();
+            try
+            {
+                var state = new SerializeState(options.MaxDepth);
+                options.Resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
+                var processor = options.PayloadProcessor;
+                if (processor == null)
+                {
+                    return buffer.ToArray();
+                }
+#if NET9_0_OR_GREATER
+                return WrapCompatible(ref buffer, processor); // TODO: avoid compatible
+#else
+                return processor.Wrap(buffer.GetWrittenSegments(), buffer.BytesWritten);
+#endif
+            }
+            finally
+            {
+                buffer.Dispose();
+            }
+        }
     }
 
-    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
-    public static void Serialize<T>(IBufferWriter<byte> output, T value)
-        => Serialize(output, value, MessagePackSerializerOptions.Default);
+#if NET9_0_OR_GREATER
+    // The processor's Wrap surface takes the FAST buffer's segment iterator (a per-TFM
+    // alias, see MessagePackPayloadProcessor), so on the modern TFM the compatibility
+    // path bridges by copying the payload into a fast buffer once. Cold by construction
+    // (routed graph + processor set): correctness over zero-copy.
+    static byte[] WrapCompatible(ref CompatibleArrayPoolListWriteBuffer source, MessagePackPayloadProcessor processor)
+    {
+        var bridge = new ArrayPoolListWriteBuffer(default);
+        try
+        {
+            CopyToBridge(ref source, ref bridge);
+            return processor.Wrap(bridge.GetWrittenSegments(), bridge.BytesWritten);
+        }
+        finally
+        {
+            bridge.Dispose();
+        }
+    }
 
-    // Takes the interface directly, not a `ref TBufferWriter` generic: real writers
-    // (PipeWriter, ArrayBufferWriter) are classes, for which a generic TBufferWriter is
-    // __Canon-shared anyway (zero specialization benefit) while forcing awkward ref
-    // passing (no readonly fields/properties at call sites). The buffer touches the
-    // writer only on segment refill/Flush, so interface dispatch is confined to that
-    // cold path. Anyone wrapping custom state in a struct for performance should
-    // implement IWriteBuffer instead — that puts them on the fully-specialized
-    // formatter path, strictly better than a wrapped struct writer.
+    static void WrapCompatible(ref CompatibleArrayPoolListWriteBuffer source, MessagePackPayloadProcessor processor, IBufferWriter<byte> output)
+    {
+        var bridge = new ArrayPoolListWriteBuffer(default);
+        try
+        {
+            CopyToBridge(ref source, ref bridge);
+            processor.Wrap(bridge.GetWrittenSegments(), bridge.BytesWritten, output);
+        }
+        finally
+        {
+            bridge.Dispose();
+        }
+    }
+
+    static void CopyToBridge(ref CompatibleArrayPoolListWriteBuffer source, ref ArrayPoolListWriteBuffer bridge)
+    {
+        var segments = source.GetWrittenSegments();
+        while (segments.TryGetNext(out var segment))
+        {
+            segment.CopyTo(bridge.GetSpan(segment.Length));
+            bridge.Advance(segment.Length);
+        }
+    }
+#endif
+
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    public static void Serialize<T>(IBufferWriter<byte> output, T value)
+    {
+        Serialize(output, value, MessagePackSerializerOptions.Default);
+    }
+
     public static void Serialize<T>(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options)
     {
         var processor = options.PayloadProcessor;
@@ -73,16 +127,39 @@ public static class MessagePackSerializer
             return;
         }
 
-        var buffer = new WriterWriteBuffer(output);
+#if NET9_0_OR_GREATER
+        if (!options.Resolver.TryGetFormatter<BufferWriterWriteBuffer, ReadOnlySpanReadBuffer, T>(out var formatter))
+        {
+            SerializeCompatible(output, value, options);
+            return;
+        }
+
+        var buffer = new BufferWriterWriteBuffer(output);
         try
         {
-            var state = new SerializeState();
-            options.Resolver.GetFormatter<WriterWriteBuffer, SpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
+            var state = new SerializeState(options.MaxDepth);
+            formatter.Serialize(ref buffer, ref state, value);
             buffer.Flush();
         }
         finally
         {
             buffer.Dispose();
+        }
+
+        static void SerializeCompatible(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options)
+#endif
+        {
+            var buffer = new CompatibleBufferWriterWriteBuffer(output);
+            try
+            {
+                var state = new SerializeState(options.MaxDepth);
+                options.Resolver.GetFormatter<CompatibleBufferWriterWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
+                buffer.Flush();
+            }
+            finally
+            {
+                buffer.Dispose();
+            }
         }
     }
 
@@ -90,24 +167,47 @@ public static class MessagePackSerializer
     static void SerializeWrapped<T>(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options, MessagePackPayloadProcessor processor)
     {
 #if NET9_0_OR_GREATER
+        if (!options.Resolver.TryGetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>(out var formatter))
+        {
+            SerializeWrappedCompatible(output, value, options, processor);
+            return;
+        }
+
         Span<byte> scratch = stackalloc byte[SerializeScratchSize];
         var buffer = new ArrayPoolListWriteBuffer(scratch);
-#else
-        var buffer = new CompatibleArrayPoolListWriteBuffer();
-#endif
         try
         {
-            var state = new SerializeState();
-            options.Resolver.GetFormatter<DefaultWriteBuffer, SpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
+            var state = new SerializeState(options.MaxDepth);
+            formatter.Serialize(ref buffer, ref state, value);
             processor.Wrap(buffer.GetWrittenSegments(), buffer.BytesWritten, output);
         }
         finally
         {
             buffer.Dispose();
         }
+
+        static void SerializeWrappedCompatible(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options, MessagePackPayloadProcessor processor)
+#endif
+        {
+            var buffer = new CompatibleArrayPoolListWriteBuffer();
+            try
+            {
+                var state = new SerializeState(options.MaxDepth);
+                options.Resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
+#if NET9_0_OR_GREATER
+                WrapCompatible(ref buffer, processor, output);
+#else
+                processor.Wrap(buffer.GetWrittenSegments(), buffer.BytesWritten, output);
+#endif
+            }
+            finally
+            {
+                buffer.Dispose();
+            }
+        }
     }
 
-    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     public static T Deserialize<T>(ReadOnlySpan<byte> source)
         => Deserialize<T>(source, MessagePackSerializerOptions.Default);
 
@@ -122,7 +222,7 @@ public static class MessagePackSerializer
     /// Populate overload: deserializes into an existing instance (formatters treat a
     /// non-null ref as reuse), eliminating the result allocation for pooled objects.
     /// </summary>
-    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     public static void Deserialize<T>(ref T value, ReadOnlySpan<byte> source)
         => Deserialize(ref value, source, MessagePackSerializerOptions.Default);
 
@@ -151,37 +251,46 @@ public static class MessagePackSerializer
     static unsafe void DeserializeSpanCore<T>(ref T value, ReadOnlySpan<byte> source, MessagePackSerializerOptions options)
     {
 #if NET9_0_OR_GREATER
+        if (!options.Resolver.TryGetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>(out var formatter))
+        {
+            DeserializeSpanCompatible(ref value, source, options);
+            return;
+        }
+
         var buffer = new ReadOnlySpanReadBuffer(source);
         try
         {
-            var state = new DeserializeState();
-            options.Resolver.GetFormatter<DefaultWriteBuffer, SpanReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
+            var state = new DeserializeState(options.MaxDepth);
+            formatter.Deserialize(ref buffer, ref state, ref value);
         }
         finally
         {
             buffer.Dispose();
         }
-#else
-        // UnsafeReadBuffer reads through a fixed view of the caller's span; the whole
-        // deserialization runs inside the fixed scope (empty source pins to null, which
-        // PointerSpan represents as an empty window)
-        fixed (byte* pointer = source)
+
+        static void DeserializeSpanCompatible(ref T value, ReadOnlySpan<byte> source, MessagePackSerializerOptions options)
+#endif
         {
-            var buffer = new UnsafeReadOnlySpanReadBuffer(pointer, source.Length);
-            try
+            // the Compatible read buffer reads through a fixed view of the caller's span;
+            // the whole deserialization runs inside the fixed scope (empty source pins to
+            // null, which PointerSpan represents as an empty window)
+            fixed (byte* pointer = source)
             {
-                var state = new DeserializeState();
-                options.Resolver.GetFormatter<DefaultWriteBuffer, SpanReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
-            }
-            finally
-            {
-                buffer.Dispose();
+                var buffer = new CompatibleReadOnlySpanReadBuffer(pointer, source.Length);
+                try
+                {
+                    var state = new DeserializeState(options.MaxDepth);
+                    options.Resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
+                }
+                finally
+                {
+                    buffer.Dispose();
+                }
             }
         }
-#endif
     }
 
-    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     public static T Deserialize<T>(in ReadOnlySequence<byte> source)
         => Deserialize<T>(source, MessagePackSerializerOptions.Default);
 
@@ -196,7 +305,7 @@ public static class MessagePackSerializer
     /// Populate overload: deserializes into an existing instance (formatters treat a
     /// non-null ref as reuse), eliminating the result allocation for pooled objects.
     /// </summary>
-    [RequiresDynamicCode(DefaultFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     public static void Deserialize<T>(ref T value, in ReadOnlySequence<byte> source)
         => Deserialize(ref value, source, MessagePackSerializerOptions.Default);
 
@@ -224,21 +333,39 @@ public static class MessagePackSerializer
     static void DeserializeSequenceCore<T>(ref T value, in ReadOnlySequence<byte> source, MessagePackSerializerOptions options)
     {
 #if NET9_0_OR_GREATER
+        if (!options.Resolver.TryGetFormatter<ArrayPoolListWriteBuffer, ReadOnlySequenceReadBuffer, T>(out var formatter))
+        {
+            DeserializeSequenceCompatible(ref value, in source, options);
+            return;
+        }
+
         Span<byte> scratch = stackalloc byte[DeserializeScratchSize];
         var buffer = new ReadOnlySequenceReadBuffer(source, scratch);
-#else
-        // the fallback tier windows each segment as ReadOnlyMemory (pin-free) and
-        // stitches through its rented temp; no caller scratch involved
-        var buffer = new CompatibleReadOnlySequenceReadBuffer(in source);
-#endif
         try
         {
-            var state = new DeserializeState();
-            options.Resolver.GetFormatter<DefaultWriteBuffer, SequenceReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
+            var state = new DeserializeState(options.MaxDepth);
+            formatter.Deserialize(ref buffer, ref state, ref value);
         }
         finally
         {
             buffer.Dispose();
+        }
+
+        static void DeserializeSequenceCompatible(ref T value, in ReadOnlySequence<byte> source, MessagePackSerializerOptions options)
+#endif
+        {
+            // the Compatible tier windows each segment as ReadOnlyMemory (pin-free) and
+            // stitches through its rented temp; no caller scratch involved
+            var buffer = new CompatibleReadOnlySequenceReadBuffer(in source);
+            try
+            {
+                var state = new DeserializeState(options.MaxDepth);
+                options.Resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySequenceReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
+            }
+            finally
+            {
+                buffer.Dispose();
+            }
         }
     }
 

@@ -55,14 +55,14 @@ public class WriteBufferAdvanceValidationTest
         {
             try
             {
-                var buffer = new UnsafeSpanWriteBuffer(p, data.Length);
+                var buffer = new CompatibleSpanWriteBuffer(p, data.Length);
                 buffer.Advance(-1);
             }
             catch (InvalidOperationException) { negative = true; }
 
             try
             {
-                var buffer = new UnsafeSpanWriteBuffer(p, data.Length);
+                var buffer = new CompatibleSpanWriteBuffer(p, data.Length);
                 buffer.Advance(16);
                 buffer.Advance(1);
             }
@@ -192,7 +192,7 @@ public class WriteBufferAdvanceValidationTest
         {
             try
             {
-                var buffer = new UnsafeSpanWriteBuffer(p, -1);
+                var buffer = new CompatibleSpanWriteBuffer(p, -1);
             }
             catch (ArgumentOutOfRangeException) { thrown = true; }
         }
@@ -301,7 +301,7 @@ public class WriteBufferAdvanceValidationTest
             {
                 try
                 {
-                    var buffer = new UnsafeSpanWriteBuffer(p, data.Length);
+                    var buffer = new CompatibleSpanWriteBuffer(p, data.Length);
                     buffer.GetSpan(sizeHint);
                     results.Add(("UnsafeFixed", false));
                 }

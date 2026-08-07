@@ -28,7 +28,8 @@
     <ProjectReference Include="..\UltraMessagePack\UltraMessagePack.csproj" />
     <ProjectReference Include="..\UltraMessagePack.LZ4\UltraMessagePack.LZ4.csproj" />
     <!-- ReferenceOutputAssembly=true: analyzer unit tests instantiate the analyzer types
-         directly; the project still runs as an analyzer on this project via OutputItemType -->
+         directly; the projects still run as analyzers on this project via OutputItemType -->
+    <ProjectReference Include="..\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
     <ProjectReference Include="..\UltraMessagePack.SourceGenerator\UltraMessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
 

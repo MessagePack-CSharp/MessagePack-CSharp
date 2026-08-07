@@ -18,7 +18,7 @@ public class DiagnoserDropTryBodyBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        FormatterRegistry.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
+        SourceGeneratedFormatterFactory.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
         person = new BenchPerson { Id = 12345, Name = "abc", Score = 98.5 };
         formatter = UltraMessagePack.MessagePackSerializerOptions.Default.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, BenchPerson>();
     }

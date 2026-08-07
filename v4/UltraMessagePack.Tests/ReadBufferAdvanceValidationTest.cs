@@ -54,7 +54,7 @@ public class ReadBufferAdvanceValidationTest
             {
                 try
                 {
-                    var buffer = new UnsafeReadOnlySpanReadBuffer(p, data.Length);
+                    var buffer = new CompatibleReadOnlySpanReadBuffer(p, data.Length);
                     buffer.Advance(bytesConsumed);
                 }
                 catch (InvalidOperationException) { unsafeThrown = true; }

@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
-using UltraMessagePack.SourceGenerator.Analyzers;
+using SerializerFoundation.Analyzers;
 
 namespace UltraMessagePack.Tests;
 

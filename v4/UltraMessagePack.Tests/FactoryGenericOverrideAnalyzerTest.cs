@@ -6,9 +6,8 @@ using UltraMessagePack.SourceGenerator.Analyzers;
 
 namespace UltraMessagePack.Tests;
 
-// Same corlib-stub approach as the UMP101 tests, extended with the pieces a default
-// interface implementation needs: the DefaultImplementationsOfInterfaces capability
-// const (the compiler checks corelib for it) and typeof machinery.
+// Corlib-stub approach (originally built for the retired SF001 tests), extended with the
+// typeof machinery the base class's bridge body needs.
 public class FactoryGenericOverrideAnalyzerTest
 {
     const string CorlibStub = """
@@ -36,13 +35,6 @@ public class FactoryGenericOverrideAnalyzerTest
                 public static Type GetTypeFromHandle(RuntimeTypeHandle handle) { return null; }
             }
         }
-        namespace System.Runtime.CompilerServices
-        {
-            public static class RuntimeFeature
-            {
-                public const string DefaultImplementationsOfInterfaces = "DefaultImplementationsOfInterfaces";
-            }
-        }
         """;
 
     const string ModernCoreStub = """
@@ -53,14 +45,14 @@ public class FactoryGenericOverrideAnalyzerTest
         }
         namespace UltraMessagePack
         {
-            public interface IMessagePackFormatterFactory
+            public abstract class MessagePackFormatterFactory
             {
-                object CreateFormatter<TWriteBuffer, TReadBuffer>(System.Type type)
+                public virtual object CreateFormatter<TWriteBuffer, TReadBuffer>(System.Type type)
                     where TWriteBuffer : struct, SerializerFoundation.IWriteBuffer
                     where TReadBuffer : struct, SerializerFoundation.IReadBuffer
                     => CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), type);
 
-                object CreateFormatter(System.Type writeBufferType, System.Type readBufferType, System.Type valueType);
+                public abstract object CreateFormatter(System.Type writeBufferType, System.Type readBufferType, System.Type valueType);
             }
         }
         """;
@@ -73,17 +65,17 @@ public class FactoryGenericOverrideAnalyzerTest
         }
         namespace UltraMessagePack
         {
-            public interface IMessagePackFormatterFactory
+            public abstract class MessagePackFormatterFactory
             {
-                object CreateFormatter(System.Type writeBufferType, System.Type readBufferType, System.Type valueType);
+                public abstract object CreateFormatter(System.Type writeBufferType, System.Type readBufferType, System.Type valueType);
             }
         }
         """;
 
     const string TypeBasedOnlySource = """
-        public sealed class OnlyTypeBasedFactory : UltraMessagePack.IMessagePackFormatterFactory
+        public sealed class OnlyTypeBasedFactory : UltraMessagePack.MessagePackFormatterFactory
         {
-            public object CreateFormatter(System.Type writeBufferType, System.Type readBufferType, System.Type valueType)
+            public override object CreateFormatter(System.Type writeBufferType, System.Type readBufferType, System.Type valueType)
             {
                 return null;
             }
@@ -134,18 +126,14 @@ public class FactoryGenericOverrideAnalyzerTest
     public async Task ImplementsBoth_Silent()
     {
         const string source = """
-            using SerializerFoundation;
-
-            public sealed class FullFactory : UltraMessagePack.IMessagePackFormatterFactory
+            public sealed class FullFactory : UltraMessagePack.MessagePackFormatterFactory
             {
-                public object CreateFormatter<TWriteBuffer, TReadBuffer>(System.Type type)
-                    where TWriteBuffer : struct, IWriteBuffer
-                    where TReadBuffer : struct, IReadBuffer
+                public override object CreateFormatter<TWriteBuffer, TReadBuffer>(System.Type type)
                 {
                     return null;
                 }
 
-                public object CreateFormatter(System.Type writeBufferType, System.Type readBufferType, System.Type valueType)
+                public override object CreateFormatter(System.Type writeBufferType, System.Type readBufferType, System.Type valueType)
                 {
                     return null;
                 }

@@ -18,6 +18,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\UltraMessagePack\UltraMessagePack.csproj" />
+		<ProjectReference Include="..\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\UltraMessagePack.SourceGenerator\UltraMessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 

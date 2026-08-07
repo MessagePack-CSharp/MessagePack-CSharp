@@ -168,11 +168,9 @@ public sealed class Int4PerValueFormatter<TWriteBuffer, TReadBuffer> : UltraMess
     }
 }
 
-public sealed partial class Int4PerValueFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
+public sealed partial class Int4PerValueFormatterFactory : UltraMessagePack.MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return new Int4PerValueFormatter<TWriteBuffer, TReadBuffer>();
     }
@@ -231,11 +229,9 @@ public sealed class Int4LoopSwitchFormatter<TWriteBuffer, TReadBuffer> : UltraMe
     }
 }
 
-public sealed partial class Int4LoopSwitchFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
+public sealed partial class Int4LoopSwitchFormatterFactory : UltraMessagePack.MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return new Int4LoopSwitchFormatter<TWriteBuffer, TReadBuffer>();
     }
@@ -303,11 +299,9 @@ public sealed class Int4BatchFormatter<TWriteBuffer, TReadBuffer> : UltraMessage
     }
 }
 
-public sealed partial class Int4BatchFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
+public sealed partial class Int4BatchFormatterFactory : UltraMessagePack.MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return new Int4BatchFormatter<TWriteBuffer, TReadBuffer>();
     }

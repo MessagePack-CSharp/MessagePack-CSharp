@@ -536,42 +536,42 @@ public static partial class MessagePackPrimitives
 
     #endregion
 
-    #region forced-width (TryWriteAs*)
+    #region forced-width (TryWriteForced*)
 
     /// <summary>Writes value in the int8 format (0xd0). Requires 2 bytes.</summary>
-    public static bool TryWriteAsInt8(Span<byte> destination, sbyte value, out int bytesWritten)
+    public static bool TryWriteForcedInt8(Span<byte> destination, sbyte value, out int bytesWritten)
         => TryWrite2(destination, MessagePackCode.Int8, unchecked((byte)value), out bytesWritten);
 
     /// <summary>Writes value in the uint8 format (0xcc). Requires 2 bytes.</summary>
-    public static bool TryWriteAsUInt8(Span<byte> destination, byte value, out int bytesWritten)
+    public static bool TryWriteForcedUInt8(Span<byte> destination, byte value, out int bytesWritten)
         => TryWrite2(destination, MessagePackCode.UInt8, value, out bytesWritten);
 
     /// <summary>Writes value in the int16 format (0xd1). Requires 3 bytes.</summary>
-    public static bool TryWriteAsInt16(Span<byte> destination, short value, out int bytesWritten)
+    public static bool TryWriteForcedInt16(Span<byte> destination, short value, out int bytesWritten)
         => TryWrite3(destination, MessagePackCode.Int16, unchecked((ushort)value), out bytesWritten);
 
     /// <summary>Writes value in the uint16 format (0xcd). Requires 3 bytes.</summary>
-    public static bool TryWriteAsUInt16(Span<byte> destination, ushort value, out int bytesWritten)
+    public static bool TryWriteForcedUInt16(Span<byte> destination, ushort value, out int bytesWritten)
         => TryWrite3(destination, MessagePackCode.UInt16, value, out bytesWritten);
 
     /// <summary>Writes value in the int32 format (0xd2). Requires 5 bytes.</summary>
-    public static bool TryWriteAsInt32(Span<byte> destination, int value, out int bytesWritten)
+    public static bool TryWriteForcedInt32(Span<byte> destination, int value, out int bytesWritten)
         => TryWrite5(destination, MessagePackCode.Int32, unchecked((uint)value), out bytesWritten);
 
     /// <summary>Writes value in the uint32 format (0xce). Requires 5 bytes.</summary>
-    public static bool TryWriteAsUInt32(Span<byte> destination, uint value, out int bytesWritten)
+    public static bool TryWriteForcedUInt32(Span<byte> destination, uint value, out int bytesWritten)
         => TryWrite5(destination, MessagePackCode.UInt32, value, out bytesWritten);
 
     /// <summary>Writes value in the int64 format (0xd3). Requires 9 bytes.</summary>
-    public static bool TryWriteAsInt64(Span<byte> destination, long value, out int bytesWritten)
+    public static bool TryWriteForcedInt64(Span<byte> destination, long value, out int bytesWritten)
         => TryWrite9(destination, MessagePackCode.Int64, unchecked((ulong)value), out bytesWritten);
 
     /// <summary>Writes value in the uint64 format (0xcf). Requires 9 bytes.</summary>
-    public static bool TryWriteAsUInt64(Span<byte> destination, ulong value, out int bytesWritten)
+    public static bool TryWriteForcedUInt64(Span<byte> destination, ulong value, out int bytesWritten)
         => TryWrite9(destination, MessagePackCode.UInt64, value, out bytesWritten);
 
     /// <summary>Writes an array32 header (0xdd). Requires 5 bytes. False when count is negative.</summary>
-    public static bool TryWriteAsArray32Header(Span<byte> destination, int count, out int bytesWritten)
+    public static bool TryWriteForcedArray32Header(Span<byte> destination, int count, out int bytesWritten)
     {
         if (count >= 0)
         {
@@ -582,7 +582,7 @@ public static partial class MessagePackPrimitives
     }
 
     /// <summary>Writes a map32 header (0xdf). Requires 5 bytes. False when count is negative.</summary>
-    public static bool TryWriteAsMap32Header(Span<byte> destination, int count, out int bytesWritten)
+    public static bool TryWriteForcedMap32Header(Span<byte> destination, int count, out int bytesWritten)
     {
         if (count >= 0)
         {
@@ -593,7 +593,7 @@ public static partial class MessagePackPrimitives
     }
 
     /// <summary>Writes a str32 header (0xdb). Requires 5 bytes. False when byteCount is negative.</summary>
-    public static bool TryWriteAsStr32Header(Span<byte> destination, int byteCount, out int bytesWritten)
+    public static bool TryWriteForcedStr32Header(Span<byte> destination, int byteCount, out int bytesWritten)
     {
         if (byteCount >= 0)
         {
@@ -604,7 +604,7 @@ public static partial class MessagePackPrimitives
     }
 
     /// <summary>Writes a bin32 header (0xc6). Requires 5 bytes. False when byteCount is negative.</summary>
-    public static bool TryWriteAsBin32Header(Span<byte> destination, int byteCount, out int bytesWritten)
+    public static bool TryWriteForcedBin32Header(Span<byte> destination, int byteCount, out int bytesWritten)
     {
         if (byteCount >= 0)
         {

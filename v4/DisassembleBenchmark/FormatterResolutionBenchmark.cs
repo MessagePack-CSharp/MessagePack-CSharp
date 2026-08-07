@@ -24,9 +24,9 @@ public class FormatterResolutionBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        UltraMessagePack.FormatterRegistry.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
+        UltraMessagePack.SourceGeneratedFormatterFactory.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
         person = new BenchPerson { Id = 12345, Name = "山岡士郎", Score = 98.5 };
-        sharedResolver = new UltraMessagePack.MessagePackFormatterResolver(UltraMessagePack.DefaultFormatterFactory.Instance);
+        sharedResolver = new UltraMessagePack.MessagePackFormatterResolver(UltraMessagePack.MessagePackFormatterFactory.Default);
         custom = new UltraMessagePack.MessagePackSerializerOptions(sharedResolver);
 
         var expected = MessagePack.MessagePackSerializer.Serialize(person);

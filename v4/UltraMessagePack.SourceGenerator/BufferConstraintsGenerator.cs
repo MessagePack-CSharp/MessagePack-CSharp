@@ -56,8 +56,8 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
 
     static bool SupportsAllowsRefStruct(Compilation compilation)
     {
-        // same semantic signal as UMP101: corelib advertising ByRefLikeGenerics means the
-        // runtime executes ref-struct generic instantiations. The language gate is numeric
+        // corelib advertising ByRefLikeGenerics means the runtime executes ref-struct
+        // generic instantiations. The language gate is numeric
         // because this project pins Microsoft.CodeAnalysis 4.8, whose LanguageVersion enum
         // predates C# 13 (values are major * 100; the compiler actually hosting the
         // generator is newer and resolves Latest/Default to its own real version).

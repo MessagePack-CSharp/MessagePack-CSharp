@@ -5,13 +5,12 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace UltraMessagePack.SourceGenerator.Analyzers;
 
 /// <summary>
-/// The generic CreateFormatter&lt;TWriteBuffer, TReadBuffer&gt; carries a default
-/// implementation that bridges to the Type-based overload — that keeps
-/// downlevel-compiled factories loading, but a factory COMPILED against the modern
-/// surface has no reason to ride the bridge: Visual Studio's implement-interface fix
-/// skips defaulted members, so forgetting the override is silent and costs direct
-/// construction (the Type-based path typically means reflection, which Native AOT
-/// cannot follow). UMP102 makes the omission visible.
+/// The generic CreateFormatter&lt;TWriteBuffer, TReadBuffer&gt; is a base-class virtual
+/// whose body bridges to the Type-based overload — that keeps downlevel-compiled
+/// factories loading, but a factory COMPILED against the modern surface has no reason
+/// to ride the bridge: forgetting the override is silent and costs direct construction
+/// (the Type-based path typically means reflection, which Native AOT cannot follow).
+/// UMP102 makes the omission visible.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class FactoryGenericOverrideAnalyzer : DiagnosticAnalyzer
@@ -25,7 +24,7 @@ public sealed class FactoryGenericOverrideAnalyzer : DiagnosticAnalyzer
         "UltraMessagePack.Compatibility",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "On TFMs with 'allows ref struct', IMessagePackFormatterFactory's generic CreateFormatter has a default implementation bridging to the Type-based overload so that factories compiled against downlevel builds keep working. A factory compiled against the modern surface should override the generic member for direct construction; the bridge exists for assemblies that cannot see it, not for new code.");
+        description: "On TFMs with 'allows ref struct', MessagePackFormatterFactory's generic CreateFormatter is a virtual whose body bridges to the Type-based overload so that factories compiled against downlevel builds keep working. A factory compiled against the modern surface should override the generic member for direct construction; the bridge exists for assemblies that cannot see it, not for new code.");
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
@@ -36,7 +35,7 @@ public sealed class FactoryGenericOverrideAnalyzer : DiagnosticAnalyzer
 
         context.RegisterCompilationStartAction(static startContext =>
         {
-            var factoryInterface = startContext.Compilation.GetTypeByMetadataName("UltraMessagePack.IMessagePackFormatterFactory");
+            var factoryInterface = startContext.Compilation.GetTypeByMetadataName("UltraMessagePack.MessagePackFormatterFactory");
             if (factoryInterface is null)
             {
                 return;
@@ -65,24 +64,41 @@ public sealed class FactoryGenericOverrideAnalyzer : DiagnosticAnalyzer
         });
     }
 
-    static void AnalyzeType(SymbolAnalysisContext context, INamedTypeSymbol factoryInterface, IMethodSymbol genericMember)
+    static void AnalyzeType(SymbolAnalysisContext context, INamedTypeSymbol factoryBase, IMethodSymbol genericMember)
     {
-        if (context.Symbol is not INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct, IsAbstract: false } type)
-        {
-            return;
-        }
-        if (!type.AllInterfaces.Contains(factoryInterface, SymbolEqualityComparer.Default))
+        if (context.Symbol is not INamedTypeSymbol { TypeKind: TypeKind.Class, IsAbstract: false } type)
         {
             return;
         }
 
-        // resolves to the interface's own default implementation only when nothing in
-        // the type (or its bases / other partials / generated parts) overrides it
-        var implementation = type.FindImplementationForInterfaceMember(genericMember);
-        if (implementation is null || SymbolEqualityComparer.Default.Equals(implementation.ContainingType, factoryInterface))
+        var derivesFromFactory = false;
+        for (var baseType = type.BaseType; baseType is not null; baseType = baseType.BaseType)
         {
-            context.ReportDiagnostic(Diagnostic.Create(Rule, PickLocation(type), type.Name));
+            if (SymbolEqualityComparer.Default.Equals(baseType, factoryBase))
+            {
+                derivesFromFactory = true;
+                break;
+            }
         }
+        if (!derivesFromFactory)
+        {
+            return;
+        }
+
+        // only the base's bridge body runs when nothing between the type and the factory
+        // base (other partials and generated parts included) overrides the virtual
+        for (var current = type; current is not null && !SymbolEqualityComparer.Default.Equals(current, factoryBase); current = current.BaseType)
+        {
+            foreach (var member in current.GetMembers("CreateFormatter"))
+            {
+                if (member is IMethodSymbol { Arity: 2, Parameters.Length: 1, IsOverride: true })
+                {
+                    return; // rides its own override, not the bridge
+                }
+            }
+        }
+
+        context.ReportDiagnostic(Diagnostic.Create(Rule, PickLocation(type), type.Name));
     }
 
     static Location PickLocation(ISymbol symbol)

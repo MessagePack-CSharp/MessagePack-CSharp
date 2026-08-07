@@ -65,8 +65,12 @@ public class ReadBufferExtensionsTests
         W(MessagePackPrimitives.TryWriteChar(buf.AsSpan(pos), 'あ', out w), w);
         W(MessagePackPrimitives.TryWriteSingle(buf.AsSpan(pos), 1.5f, out w), w);
         W(MessagePackPrimitives.TryWriteDouble(buf.AsSpan(pos), Math.PI, out w), w);
+        // ReadArrayHeader/ReadMapHeader validate the claimed count against BytesRemaining
+        // (allocation-bomb guard), so these bare headers must stay plausible for the
+        // ~380 bytes of tokens that follow; the encoding-width matrix lives in the
+        // primitives-level tests
         W(MessagePackPrimitives.TryWriteArrayHeader(buf.AsSpan(pos), 20, out w), w);
-        W(MessagePackPrimitives.TryWriteMapHeader(buf.AsSpan(pos), 70000, out w), w);
+        W(MessagePackPrimitives.TryWriteMapHeader(buf.AsSpan(pos), 100, out w), w);
         W(MessagePackPrimitives.TryWriteString(buf.AsSpan(pos), (string?)null, out w), w);
         W(MessagePackPrimitives.TryWriteString(buf.AsSpan(pos), "hello", out w), w);
         W(MessagePackPrimitives.TryWriteString(buf.AsSpan(pos), "こんにちは世界🌍", out w), w);
@@ -102,7 +106,7 @@ public class ReadBufferExtensionsTests
         Assert.Equal(1.5f, buffer.ReadSingle());
         Assert.Equal(Math.PI, buffer.ReadDouble());
         Assert.Equal(20, buffer.ReadArrayHeader());
-        Assert.Equal(70000, buffer.ReadMapHeader());
+        Assert.Equal(100, buffer.ReadMapHeader());
         Assert.Null(buffer.ReadString());
         Assert.Equal("hello", buffer.ReadString());
         Assert.Equal("こんにちは世界🌍", buffer.ReadString());

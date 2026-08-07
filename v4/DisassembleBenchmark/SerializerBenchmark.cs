@@ -73,7 +73,7 @@ public class SerializerPocoBenchmark
     public void Setup()
     {
         // UltraMessagePack.MessagePackSerializer.Register(new BenchPersonFormatter());
-        UltraMessagePack.FormatterRegistry.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
+        UltraMessagePack.SourceGeneratedFormatterFactory.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
 
         person = new BenchPerson { Id = 12345, Name = "山岡士郎", Score = 98.5 };
         serialized = MessagePack.MessagePackSerializer.Serialize(person);
@@ -158,11 +158,9 @@ public sealed class BenchPersonFormatter<TWriteBuffer, TReadBuffer> : UltraMessa
     }
 }
 
-public sealed partial class BenchPersonFormatterFactory : UltraMessagePack.IMessagePackFormatterFactory
+public sealed partial class BenchPersonFormatterFactory : UltraMessagePack.MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return new BenchPersonFormatter<TWriteBuffer, TReadBuffer>();
     }

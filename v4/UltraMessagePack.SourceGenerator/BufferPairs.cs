@@ -24,9 +24,9 @@ internal static class BufferPairs
     // evaluated per consuming TFM (generated trees share the compilation's parse options)
     static readonly (string Write, string Read)[] FallbackTier =
     [
-        ("global::SerializerFoundation.CompatibleArrayPoolListWriteBuffer", "global::SerializerFoundation.UnsafeReadOnlySpanReadBuffer"),
+        ("global::SerializerFoundation.CompatibleArrayPoolListWriteBuffer", "global::SerializerFoundation.CompatibleReadOnlySpanReadBuffer"),
         ("global::SerializerFoundation.CompatibleArrayPoolListWriteBuffer", "global::SerializerFoundation.CompatibleReadOnlySequenceReadBuffer"),
-        ("global::SerializerFoundation.CompatibleBufferWriterWriteBuffer", "global::SerializerFoundation.UnsafeReadOnlySpanReadBuffer"),
+        ("global::SerializerFoundation.CompatibleBufferWriterWriteBuffer", "global::SerializerFoundation.CompatibleReadOnlySpanReadBuffer"),
         ("global::SerializerFoundation.CompatibleBufferWriterWriteBuffer", "global::SerializerFoundation.CompatibleReadOnlySequenceReadBuffer"),
     ];
 
@@ -38,7 +38,7 @@ internal static class BufferPairs
     /// </summary>
     public static void AppendCreateFormatterDispatch(StringBuilder builder, string indent)
     {
-        builder.Append(indent).Append("public object? CreateFormatter(global::System.Type writeBufferType, global::System.Type readBufferType, global::System.Type valueType)\n");
+        builder.Append(indent).Append("public override object? CreateFormatter(global::System.Type writeBufferType, global::System.Type readBufferType, global::System.Type valueType)\n");
         builder.Append(indent).Append("{\n");
         builder.Append("#if NET9_0_OR_GREATER\n");
         builder.Append(indent).Append("    // the resolver takes the generic member on this TFM; only probes and composite\n");

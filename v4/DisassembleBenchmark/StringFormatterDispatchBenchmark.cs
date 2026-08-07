@@ -35,8 +35,8 @@ public class StringFormatterDispatchBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        FormatterRegistry.Instance.RegisterFactory<SPersonDirect>(new SPersonDirectFormatterFactory());
-        FormatterRegistry.Instance.RegisterFactory<SPersonVia>(new SPersonViaFormatterFactory());
+        SourceGeneratedFormatterFactory.Instance.RegisterFactory<SPersonDirect>(new SPersonDirectFormatterFactory());
+        SourceGeneratedFormatterFactory.Instance.RegisterFactory<SPersonVia>(new SPersonViaFormatterFactory());
 
         var rand = new Random(42);
         string NextName()
@@ -165,11 +165,9 @@ public sealed class SPersonDirectFormatter<TWriteBuffer, TReadBuffer> : IMessage
     }
 }
 
-public sealed partial class SPersonDirectFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class SPersonDirectFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return new SPersonDirectFormatter<TWriteBuffer, TReadBuffer>();
     }
@@ -206,11 +204,9 @@ public sealed class SPersonViaFormatter<TWriteBuffer, TReadBuffer> : IMessagePac
     }
 }
 
-public sealed partial class SPersonViaFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class SPersonViaFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return new SPersonViaFormatter<TWriteBuffer, TReadBuffer>();
     }

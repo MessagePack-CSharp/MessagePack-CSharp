@@ -65,7 +65,7 @@ public ref struct ReadOnlySpanReadBuffer : IReadBuffer
 }
 
 // compatibility fallback for Target Framework without `allows ref struct`
-public unsafe struct UnsafeReadOnlySpanReadBuffer : IReadBuffer
+public unsafe struct CompatibleReadOnlySpanReadBuffer : IReadBuffer
 {
     readonly PointerSpan buffer;
     int consumed;
@@ -74,7 +74,7 @@ public unsafe struct UnsafeReadOnlySpanReadBuffer : IReadBuffer
     public long BytesRemaining => buffer.Length - consumed;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public UnsafeReadOnlySpanReadBuffer(byte* buffer, int length)
+    public CompatibleReadOnlySpanReadBuffer(byte* buffer, int length)
     {
         this.buffer = new(buffer, length);
     }

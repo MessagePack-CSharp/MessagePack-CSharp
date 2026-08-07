@@ -57,7 +57,7 @@ public ref struct SpanWriteBuffer : IWriteBuffer
 }
 
 // compatibility fallback for Target Framework without `allows ref struct`
-public unsafe struct UnsafeSpanWriteBuffer : IWriteBuffer
+public unsafe struct CompatibleSpanWriteBuffer : IWriteBuffer
 {
     readonly PointerSpan buffer;
     int written;
@@ -65,7 +65,7 @@ public unsafe struct UnsafeSpanWriteBuffer : IWriteBuffer
     public long BytesWritten => written;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public UnsafeSpanWriteBuffer(byte* buffer, int length)
+    public CompatibleSpanWriteBuffer(byte* buffer, int length)
     {
         this.buffer = new PointerSpan(buffer, length);
     }

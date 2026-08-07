@@ -98,6 +98,7 @@ static class Emitter
 
                 """);
         }
+        builder.Append("            state.Enter();\n\n");
 
         // batched write runs: consecutive direct-writable items share one reservation
         var sizes = new List<string>();
@@ -177,7 +178,7 @@ static class Emitter
         }
 
         Flush();
-        builder.Append("        }\n");
+        builder.Append("            state.Exit();\n        }\n");
     }
 
     static void EmitValueWrite(StringBuilder builder, MemberModel member, Action<string, string> direct, Action flush)
@@ -248,6 +249,7 @@ static class Emitter
 
                 """);
         }
+        builder.Append("            state.Enter();\n\n");
 
         if (!model.IsStringKey)
         {
@@ -312,7 +314,7 @@ static class Emitter
                 """);
         }
 
-        builder.Append("            value = result;\n        }\n");
+        builder.Append("            state.Exit();\n            value = result;\n        }\n");
     }
 
     static void EmitValueRead(StringBuilder builder, MemberModel member, string indent)
@@ -365,7 +367,7 @@ static class Emitter
 
             namespace UltraMessagePack.Generated
             {
-                internal sealed class GeneratedMessagePackFormatterFactory : IMessagePackFormatterFactory
+                internal sealed class GeneratedMessagePackFormatterFactory : MessagePackFormatterFactory
                 {
                     public static readonly GeneratedMessagePackFormatterFactory Instance = new GeneratedMessagePackFormatterFactory();
 
@@ -373,14 +375,14 @@ static class Emitter
                     {
                     }
 
+                    // one method, two signatures: net9+ overrides the base virtual (constraints
+                    // inherited); downlevel has no base member, so the constraints are spelled out
+            #if NET9_0_OR_GREATER
+                    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(global::System.Type type)
+            #else
                     public object? CreateFormatter<TWriteBuffer, TReadBuffer>(global::System.Type type)
                         where TWriteBuffer : struct, IWriteBuffer
-            #if NET9_0_OR_GREATER
-                        , allows ref struct
-            #endif
                         where TReadBuffer : struct, IReadBuffer
-            #if NET9_0_OR_GREATER
-                        , allows ref struct
             #endif
                     {
 
@@ -394,15 +396,15 @@ static class Emitter
                     }
 
             """);
-        // the Type-based interface member (the only abstract one): dispatch the built-in
-        // buffer pairs into the generic method above
+        // the Type-based member (the base class's only abstract one): dispatch the
+        // built-in buffer pairs into the generic method above
         BufferPairs.AppendCreateFormatterDispatch(builder, "        ");
         builder.Append("""
                 }
 
                 internal static class GeneratedMessagePackRegistration
                 {
-                    // The default options resolve through FormatterRegistry, so
+                    // The default options resolve through SourceGeneratedFormatterFactory, so
                     // generated types work without manual registration; an explicit chain can
                     // still place GeneratedMessagePackFormatterFactory.Instance directly.
                     [global::System.Runtime.CompilerServices.ModuleInitializer]
@@ -412,7 +414,7 @@ static class Emitter
             """);
         foreach (var model in ordered)
         {
-            builder.Append($"            FormatterRegistry.Instance.Register(typeof({model.FullTypeName}), GeneratedMessagePackFormatterFactory.Instance);\n");
+            builder.Append($"            SourceGeneratedFormatterFactory.Instance.Register(typeof({model.FullTypeName}), GeneratedMessagePackFormatterFactory.Instance);\n");
         }
         builder.Append("""
                     }

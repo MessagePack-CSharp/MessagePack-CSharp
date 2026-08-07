@@ -56,70 +56,70 @@ public class WritePrimitiveTests
     }
 
     [Fact]
-    public void WriteAs_MatchOracle()
+    public void WriteForced_MatchOracle()
     {
         // the oracle's WriteInt8/WriteUInt16/... are its forced-format writers
         foreach (sbyte v in (sbyte[])[sbyte.MinValue, -32, -1, 0, 1, sbyte.MaxValue])
         {
             var oracle = OracleBytes((ref MessagePack.MessagePackWriter w) => w.WriteInt8(v));
-            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteAsInt8(ref MemoryMarshal.GetArrayDataReference(buf), v));
+            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteForcedInt8(ref MemoryMarshal.GetArrayDataReference(buf), v));
             Assert.True(oracle.AsSpan().SequenceEqual(ours), $"as int8 mismatch value={v}");
         }
         foreach (byte v in (byte[])[0, 1, 127, 128, byte.MaxValue])
         {
             var oracle = OracleBytes((ref MessagePack.MessagePackWriter w) => w.WriteUInt8(v));
-            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteAsUInt8(ref MemoryMarshal.GetArrayDataReference(buf), v));
+            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteForcedUInt8(ref MemoryMarshal.GetArrayDataReference(buf), v));
             Assert.True(oracle.AsSpan().SequenceEqual(ours), $"as uint8 mismatch value={v}");
         }
         foreach (short v in (short[])[short.MinValue, -129, -32, -1, 0, 1, 127, 128, short.MaxValue])
         {
             var oracle = OracleBytes((ref MessagePack.MessagePackWriter w) => w.WriteInt16(v));
-            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteAsInt16(ref MemoryMarshal.GetArrayDataReference(buf), v));
+            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteForcedInt16(ref MemoryMarshal.GetArrayDataReference(buf), v));
             Assert.True(oracle.AsSpan().SequenceEqual(ours), $"as int16 mismatch value={v}");
         }
         foreach (ushort v in (ushort[])[0, 1, 127, 128, 255, 256, ushort.MaxValue])
         {
             var oracle = OracleBytes((ref MessagePack.MessagePackWriter w) => w.WriteUInt16(v));
-            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteAsUInt16(ref MemoryMarshal.GetArrayDataReference(buf), v));
+            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteForcedUInt16(ref MemoryMarshal.GetArrayDataReference(buf), v));
             Assert.True(oracle.AsSpan().SequenceEqual(ours), $"as uint16 mismatch value={v}");
         }
         foreach (int v in (int[])[int.MinValue, -32769, -32768, -129, -128, -32, -1, 0, 1, 127, 128, 65535, 65536, int.MaxValue])
         {
             var oracle = OracleBytes((ref MessagePack.MessagePackWriter w) => w.WriteInt32(v));
-            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteAsInt32(ref MemoryMarshal.GetArrayDataReference(buf), v));
+            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteForcedInt32(ref MemoryMarshal.GetArrayDataReference(buf), v));
             Assert.True(oracle.AsSpan().SequenceEqual(ours), $"as int32 mismatch value={v}");
         }
         foreach (uint v in (uint[])[0, 1, 127, 128, 255, 256, 65535, 65536, uint.MaxValue])
         {
             var oracle = OracleBytes((ref MessagePack.MessagePackWriter w) => w.WriteUInt32(v));
-            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteAsUInt32(ref MemoryMarshal.GetArrayDataReference(buf), v));
+            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteForcedUInt32(ref MemoryMarshal.GetArrayDataReference(buf), v));
             Assert.True(oracle.AsSpan().SequenceEqual(ours), $"as uint32 mismatch value={v}");
         }
         foreach (long v in (long[])[long.MinValue, int.MinValue - 1L, -32769, -32, -1, 0, 1, 127, 65536, int.MaxValue + 1L, long.MaxValue])
         {
             var oracle = OracleBytes((ref MessagePack.MessagePackWriter w) => w.WriteInt64(v));
-            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteAsInt64(ref MemoryMarshal.GetArrayDataReference(buf), v));
+            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteForcedInt64(ref MemoryMarshal.GetArrayDataReference(buf), v));
             Assert.True(oracle.AsSpan().SequenceEqual(ours), $"as int64 mismatch value={v}");
         }
         foreach (ulong v in (ulong[])[0, 1, 127, 128, 255, 65536, uint.MaxValue, uint.MaxValue + 1UL, ulong.MaxValue])
         {
             var oracle = OracleBytes((ref MessagePack.MessagePackWriter w) => w.WriteUInt64(v));
-            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteAsUInt64(ref MemoryMarshal.GetArrayDataReference(buf), v));
+            var ours = Ours(buf => MessagePackPrimitives.UnsafeWriteForcedUInt64(ref MemoryMarshal.GetArrayDataReference(buf), v));
             Assert.True(oracle.AsSpan().SequenceEqual(ours), $"as uint64 mismatch value={v}");
         }
     }
 
     [Fact]
-    public void WriteAsHeaders_SpecBytes()
+    public void WriteForcedHeaders_SpecBytes()
     {
         // no forced-header oracle API exists; compare against the spec layout directly
         foreach (int count in (int[])[0, 1, 15, 16, 65535, 65536, int.MaxValue])
         {
             byte[] be = [(byte)(count >>> 24), (byte)(count >>> 16), (byte)(count >>> 8), (byte)count];
-            Assert.Equal([0xdd, .. be], Ours(buf => MessagePackPrimitives.UnsafeWriteAsArray32Header(ref MemoryMarshal.GetArrayDataReference(buf), count)));
-            Assert.Equal([0xdf, .. be], Ours(buf => MessagePackPrimitives.UnsafeWriteAsMap32Header(ref MemoryMarshal.GetArrayDataReference(buf), count)));
-            Assert.Equal([0xdb, .. be], Ours(buf => MessagePackPrimitives.UnsafeWriteAsStr32Header(ref MemoryMarshal.GetArrayDataReference(buf), count)));
-            Assert.Equal([0xc6, .. be], Ours(buf => MessagePackPrimitives.UnsafeWriteAsBin32Header(ref MemoryMarshal.GetArrayDataReference(buf), count)));
+            Assert.Equal([0xdd, .. be], Ours(buf => MessagePackPrimitives.UnsafeWriteForcedArray32Header(ref MemoryMarshal.GetArrayDataReference(buf), count)));
+            Assert.Equal([0xdf, .. be], Ours(buf => MessagePackPrimitives.UnsafeWriteForcedMap32Header(ref MemoryMarshal.GetArrayDataReference(buf), count)));
+            Assert.Equal([0xdb, .. be], Ours(buf => MessagePackPrimitives.UnsafeWriteForcedStr32Header(ref MemoryMarshal.GetArrayDataReference(buf), count)));
+            Assert.Equal([0xc6, .. be], Ours(buf => MessagePackPrimitives.UnsafeWriteForcedBin32Header(ref MemoryMarshal.GetArrayDataReference(buf), count)));
         }
     }
 

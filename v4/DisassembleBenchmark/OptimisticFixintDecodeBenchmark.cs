@@ -191,11 +191,9 @@ public sealed class Int4HybridReadFormatter<TWriteBuffer, TReadBuffer> : IMessag
     }
 }
 
-public sealed partial class Int4HybridReadFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class Int4HybridReadFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return new Int4HybridReadFormatter<TWriteBuffer, TReadBuffer>();
     }
@@ -249,11 +247,9 @@ public sealed class Int4CascadeReadFormatter<TWriteBuffer, TReadBuffer> : IMessa
     }
 }
 
-public sealed partial class Int4CascadeReadFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class Int4CascadeReadFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return new Int4CascadeReadFormatter<TWriteBuffer, TReadBuffer>();
     }
@@ -319,11 +315,9 @@ public sealed class Int4OptimisticFormatter<TWriteBuffer, TReadBuffer> : IMessag
     }
 }
 
-public sealed partial class Int4OptimisticFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class Int4OptimisticFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return new Int4OptimisticFormatter<TWriteBuffer, TReadBuffer>();
     }

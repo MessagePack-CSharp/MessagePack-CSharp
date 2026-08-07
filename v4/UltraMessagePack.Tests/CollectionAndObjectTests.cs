@@ -238,17 +238,17 @@ public class CollectionAndObjectTests
     [Fact]
     public void FactoryChainConstructor_ExactChainSemantics()
     {
-        // no factories = the default chain
-        var byDefault = new MessagePackSerializerOptions();
+        // the shared default options round-trip over the default chain
+        var byDefault = MessagePackSerializerOptions.Default;
         Assert.Equal(42, MessagePackSerializer.Deserialize<int>(MessagePackSerializer.Serialize(42, byDefault), byDefault));
 
         // explicit chain including defaults works end to end
-        var explicitChain = new MessagePackSerializerOptions(PrimitiveFormatterFactory.Instance, GenericFormatterFactory.Instance);
+        var explicitChain = new MessagePackSerializerOptions([BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
         var list = new List<int> { 1, 2, 3 };
         Assert.Equal(list, MessagePackSerializer.Deserialize<List<int>>(MessagePackSerializer.Serialize(list, explicitChain), explicitChain));
 
         // the chain is EXACT: primitives only, so List<int> resolves to Missing
-        var primitivesOnly = new MessagePackSerializerOptions(PrimitiveFormatterFactory.Instance);
+        var primitivesOnly = new MessagePackSerializerOptions([BuiltInFormatterFactory.Instance]);
         Assert.Equal(7, MessagePackSerializer.Deserialize<int>(MessagePackSerializer.Serialize(7, primitivesOnly), primitivesOnly));
         Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(new List<int> { 1 }, primitivesOnly));
     }
@@ -256,7 +256,7 @@ public class CollectionAndObjectTests
     [Fact]
     public void Poco_MatchOracleAndRoundtrip()
     {
-        FormatterRegistry.Instance.RegisterFactory<Person>(new PersonFormatterFactory());
+        SourceGeneratedFormatterFactory.Instance.RegisterFactory<Person>(new PersonFormatterFactory());
 
         var person = new Person { Id = 12345, Name = "山岡士郎", Score = 98.5 };
         var ours = MessagePackSerializer.Serialize(person);
@@ -269,6 +269,66 @@ public class CollectionAndObjectTests
         var fromOracle = Oracle.Deserialize<Person>(ours);
         Assert.Equal(person.Name, fromOracle.Name);
     }
+
+    [Fact]
+    public void Array_Populate_ReusesOnExactLengthOnly()
+    {
+        var bytes = MessagePackSerializer.Serialize(new[] { "x", "yy" });
+
+        // length match: same instance, elements overwritten
+        var target = new[] { "a", "b" };
+        var original = target;
+        MessagePackSerializer.Deserialize(ref target, bytes);
+        Assert.Same(original, target);
+        Assert.Equal(new[] { "x", "yy" }, target);
+
+        // length mismatch: fresh exact-size array
+        var mismatched = new[] { "a" };
+        var before = mismatched;
+        MessagePackSerializer.Deserialize(ref mismatched, bytes);
+        Assert.NotSame(before, mismatched);
+        Assert.Equal(new[] { "x", "yy" }, mismatched);
+    }
+
+    [Fact]
+    public void List_Populate_ReusesInstance_GrowsAndShrinks()
+    {
+        var bytes = MessagePackSerializer.Serialize(new List<string> { "x", "yy" });
+
+        // reuse: same instance, shorter incoming grows to payload size
+        var target = new List<string> { "a" };
+        var original = target;
+        MessagePackSerializer.Deserialize(ref target, bytes);
+        Assert.Same(original, target);
+        Assert.Equal(["x", "yy"], target);
+
+        // longer incoming shrinks to payload size
+        var longer = new List<string> { "a", "b", "c" };
+        MessagePackSerializer.Deserialize(ref longer, bytes);
+        Assert.Equal(["x", "yy"], longer);
+
+        // null incoming: fresh list
+        List<string>? fresh = null;
+        MessagePackSerializer.Deserialize(ref fresh, bytes);
+        Assert.Equal(["x", "yy"], fresh);
+    }
+
+    [Fact]
+    public void Array_CovariantInstance_SerializeAccepts_PopulateReuseThrows()
+    {
+        SourceGeneratedFormatterFactory.Instance.RegisterFactory<Person>(new PersonFormatterFactory());
+
+        // Serialize reads elements with plain loads (deliberately NO AsSpan, which would
+        // throw here): a U[] behind a T[] must serialize byte-identically to the oracle
+        Person[] covariant = new DerivedPerson[] { new() { Id = 1, Name = "n", Score = 2.5 } };
+        var bytes = MessagePackSerializer.Serialize(covariant);
+        Assert.Equal(Oracle.Serialize(covariant), bytes);
+
+        // Populate into a length-matching covariant array hits AsSpan's exact-type check.
+        // Spec'd to throw (populate is new in v4, no compat constraint; see ArrayFormatter)
+        Person[] target = new DerivedPerson[1];
+        Assert.Throws<ArrayTypeMismatchException>(() => MessagePackSerializer.Deserialize(ref target, bytes));
+    }
 }
 
 [MessagePackObject]
@@ -278,6 +338,8 @@ public class Person
     [Key(1)] public string? Name { get; set; }
     [Key(2)] public double Score { get; set; }
 }
+
+public class DerivedPerson : Person { }
 
 
 public sealed class PersonFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Person>
@@ -325,11 +387,9 @@ public sealed class PersonFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
     }
 }
 
-public sealed partial class PersonFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class PersonFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return new PersonFormatter<TWriteBuffer, TReadBuffer>();
     }

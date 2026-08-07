@@ -9,6 +9,8 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Description>Experimental maximum-speed MessagePack serializer core, built from disassembly/branch-counter-driven optimization of the primitive layer.</Description>
 		<IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
+		<!-- DynamicallyAccessedMembers etc. on downlevel TFMs (LazyFormatter propagates Lazy<T>'s annotation) -->
+		<PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
@@ -18,6 +20,8 @@
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'netstandard2.1'">
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
 		<PackageReference Include="System.IO.Pipelines" Version="10.0.0" />
+		<!-- Immutable + Frozen collections (inbox on net10.0) -->
+		<PackageReference Include="System.Collections.Immutable" Version="10.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -33,11 +37,13 @@
 
 	<!-- Analyzer -->
 	<ItemGroup>
+		<ProjectReference Include="..\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\UltraMessagePack.SourceGenerator\UltraMessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 	<!-- Global Usings -->
 	<ItemGroup>
+		<Using Include="SerializerFoundation" />
 		<Using Include="System.Buffers" />
 		<Using Include="System.Runtime.CompilerServices" />
 		<Using Include="System.Runtime.InteropServices" />

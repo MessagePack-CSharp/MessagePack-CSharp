@@ -1,3 +1,5 @@
+// TODO: There is room for optimization in String and Bin(get ReadOnlySequence)
+
 using SerializerFoundation;
 using System.Runtime.CompilerServices;
 using static UltraMessagePack.MessagePackPrimitives;
@@ -134,6 +136,23 @@ public static class ReadBufferExtensions
 
         #region Nil, Boolean, Single, Double
 
+        /// <summary>Reads the next code byte without consuming anything; false iff no bytes
+        /// remain. Relies on the buffer guarantee that the current span is non-empty whenever
+        /// bytes remain (the same single-byte guarantee <see cref="TryReadNil"/> builds on),
+        /// so a segment boundary can never produce a false negative.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryPeek(out byte code)
+        {
+            var span = buffer.GetCurrentSpan();
+            if (span.Length > 0)
+            {
+                code = span[0];
+                return true;
+            }
+            code = 0;
+            return false;
+        }
+
         /// <summary>Consumes 1 byte and returns true iff the next value is nil; otherwise consumes nothing.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryReadNil()
@@ -194,9 +213,20 @@ public static class ReadBufferExtensions
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
-                return count;
             }
-            return ReadArrayHeaderSlow(ref buffer, r, tokenSize);
+            else
+            {
+                count = ReadArrayHeaderSlow(ref buffer, r, tokenSize);
+            }
+
+            // Allocation-bomb guard: formatters preallocate from this count, and every
+            // msgpack element occupies at least one byte, so a count exceeding the
+            // remaining payload is provably a lie — reject it BEFORE anyone allocates.
+            if ((uint)count > (ulong)buffer.BytesRemaining)
+            {
+                MessagePackSerializationException.ThrowImplausibleCollectionHeader("array", count, buffer.BytesRemaining);
+            }
+            return count;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -206,9 +236,18 @@ public static class ReadBufferExtensions
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
-                return count;
             }
-            return ReadMapHeaderSlow(ref buffer, r, tokenSize);
+            else
+            {
+                count = ReadMapHeaderSlow(ref buffer, r, tokenSize);
+            }
+
+            // same guard as ReadArrayHeader; a map pair needs at least two bytes
+            if (2L * (uint)count > buffer.BytesRemaining)
+            {
+                MessagePackSerializationException.ThrowImplausibleCollectionHeader("map", count, buffer.BytesRemaining);
+            }
+            return count;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -218,11 +257,24 @@ public static class ReadBufferExtensions
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
-                return byteCount;
             }
-            return ReadStringHeaderSlow(ref buffer, r, tokenSize);
+            else
+            {
+                byteCount = ReadStringHeaderSlow(ref buffer, r, tokenSize);
+            }
+
+            // Allocation-bomb guard, EXACT for str/bin/ext (unlike array/map's lower
+            // bound): the payload itself must occupy byteCount of the remaining bytes,
+            // so a larger claim is provably a lie — reject it BEFORE the caller
+            // allocates from it.
+            if ((uint)byteCount > (ulong)buffer.BytesRemaining)
+            {
+                MessagePackSerializationException.ThrowImplausiblePayloadHeader("str", byteCount, buffer.BytesRemaining);
+            }
+            return byteCount;
         }
 
+        /// <summary>Reads a bin header; str headers are also accepted (old-spec raw compatibility).</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadBinHeader()
         {
@@ -230,12 +282,21 @@ public static class ReadBufferExtensions
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
-                return byteCount;
             }
-            return ReadBinHeaderSlow(ref buffer, r, tokenSize);
+            else
+            {
+                byteCount = ReadBinHeaderSlow(ref buffer, r, tokenSize);
+            }
+
+            // same exact guard as ReadStringHeader
+            if ((uint)byteCount > (ulong)buffer.BytesRemaining)
+            {
+                MessagePackSerializationException.ThrowImplausiblePayloadHeader("bin", byteCount, buffer.BytesRemaining);
+            }
+            return byteCount;
         }
 
-        /// <summary>Reads a bin (header + payload) as a new array.</summary>
+        /// <summary>Reads a bin (header + payload) as a new array; str-coded payloads are also accepted (old-spec raw compatibility, as in v3).</summary>
         public byte[] ReadBinary()
         {
             var r = TryReadBinary(buffer.GetCurrentSpan(), out var value, out var tokenSize);
@@ -258,9 +319,18 @@ public static class ReadBufferExtensions
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
-                return (typeCode, dataLength);
             }
-            return ReadExtHeaderSlow(ref buffer, r, tokenSize);
+            else
+            {
+                (typeCode, dataLength) = ReadExtHeaderSlow(ref buffer, r, tokenSize);
+            }
+
+            // same exact guard as ReadStringHeader
+            if ((uint)dataLength > (ulong)buffer.BytesRemaining)
+            {
+                MessagePackSerializationException.ThrowImplausiblePayloadHeader("ext", dataLength, buffer.BytesRemaining);
+            }
+            return (typeCode, dataLength);
         }
 
         public DateTime ReadTimestamp()
@@ -298,10 +368,11 @@ public static class ReadBufferExtensions
         /// Skips exactly one msgpack value including its entire subtree. Iterative
         /// count-based walk (no recursion, so adversarial nesting depth cannot blow the
         /// stack): each container adds its children to the outstanding count. Container,
-        /// str/bin and ext headers go through the existing stitch-aware readers; payload
-        /// and fixed-size token advances are validated against BytesRemaining first, so a
-        /// lying length claim (bin32 pretending 2GB) throws instead of silently skipping
-        /// past the end.
+        /// str/bin and ext headers go through the existing stitch-aware readers, whose
+        /// allocation-bomb guards already reject a payload-length claim exceeding the
+        /// remaining data (bin32 pretending 2GB throws at the header), so their payload
+        /// advances are always in bounds; only the fixed-size token advances are
+        /// validated here.
         /// </summary>
         public void Skip()
         {
@@ -363,12 +434,12 @@ public static class ReadBufferExtensions
                         case MessagePackCode.Str8:
                         case MessagePackCode.Str16:
                         case MessagePackCode.Str32:
-                            SkipPayloadChecked(ref buffer, buffer.ReadStringHeader());
+                            buffer.Advance(buffer.ReadStringHeader()); // header guard bounds the payload
                             break;
                         case MessagePackCode.Bin8:
                         case MessagePackCode.Bin16:
                         case MessagePackCode.Bin32:
-                            SkipPayloadChecked(ref buffer, buffer.ReadBinHeader());
+                            buffer.Advance(buffer.ReadBinHeader());
                             break;
                         case MessagePackCode.Ext8:
                         case MessagePackCode.Ext16:
@@ -378,7 +449,7 @@ public static class ReadBufferExtensions
                         case MessagePackCode.FixExt4:
                         case MessagePackCode.FixExt8:
                         case MessagePackCode.FixExt16:
-                            SkipPayloadChecked(ref buffer, buffer.ReadExtHeader().DataLength);
+                            buffer.Advance(buffer.ReadExtHeader().DataLength);
                             break;
                         case MessagePackCode.Array16:
                         case MessagePackCode.Array32:
@@ -410,20 +481,6 @@ public static class ReadBufferExtensions
             throw Unreadable("skip", buffer.GetCurrentSpan(), DecodeResult.InsufficientBuffer);
         }
         buffer.Advance(tokenSize);
-    }
-
-    // header already consumed by a stitch-aware reader; validate and skip the payload
-    static void SkipPayloadChecked<TReadBuffer>(ref TReadBuffer buffer, int byteCount)
-        where TReadBuffer : struct, IReadBuffer
-#if NET9_0_OR_GREATER
-        , allows ref struct
-#endif
-    {
-        if (byteCount > buffer.BytesRemaining)
-        {
-            throw Unreadable("skip", buffer.GetCurrentSpan(), DecodeResult.InsufficientBuffer);
-        }
-        buffer.Advance(byteCount);
     }
 
     // Per-target slow retry loops over the dedicated narrow primitives (range failures
@@ -707,6 +764,27 @@ public static class ReadBufferExtensions
             }
             first = r;
         }
+        if (first == DecodeResult.TokenMismatch)
+        {
+            // old-spec (pre-2013) msgpack encodes binary with raw (= today's str) headers;
+            // reads accept both specs like v3, so retry the token as a str header
+            first = TryReadStringHeader(buffer.GetCurrentSpan(), out var byteCount, out required);
+            if (first == DecodeResult.Success)
+            {
+                buffer.Advance(required);
+                return byteCount;
+            }
+            while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
+            {
+                var r = TryReadStringHeader(window, out byteCount, out required);
+                if (r == DecodeResult.Success)
+                {
+                    buffer.Advance(required);
+                    return byteCount;
+                }
+                first = r;
+            }
+        }
         throw Unreadable("bin header", buffer.GetCurrentSpan(), first);
     }
 
@@ -787,6 +865,29 @@ public static class ReadBufferExtensions
                 return result;
             }
             first = r;
+        }
+        if (first == DecodeResult.TokenMismatch)
+        {
+            // old-spec (pre-2013) msgpack encodes binary with raw (= today's str) headers;
+            // reads accept both specs like v3, so retry the token as a str payload
+            first = TryReadStringSpan(buffer.GetCurrentSpan(), out var strValue, out required);
+            if (first == DecodeResult.Success)
+            {
+                var result = strValue.ToArray(); // before Advance: the span may alias a pooled stitch buffer
+                buffer.Advance(required);
+                return result;
+            }
+            while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
+            {
+                var r = TryReadStringSpan(window, out strValue, out required);
+                if (r == DecodeResult.Success)
+                {
+                    var result = strValue.ToArray(); // before Advance: the span may alias a pooled stitch buffer
+                    buffer.Advance(required);
+                    return result;
+                }
+                first = r;
+            }
         }
         throw Unreadable("binary", buffer.GetCurrentSpan(), first);
     }

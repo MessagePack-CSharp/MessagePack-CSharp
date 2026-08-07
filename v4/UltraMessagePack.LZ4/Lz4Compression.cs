@@ -261,7 +261,7 @@ public sealed class Lz4BlockProcessor : Lz4PayloadProcessor
 
             Span<byte> header = stackalloc byte[MaxHeaderLength];
             var headerLength = UnsafeWriteExtHeader(ref header[0], Lz4BlockType, 5 + lz4Length);
-            headerLength += UnsafeWriteAsInt32(ref header[headerLength], payloadLength);
+            headerLength += UnsafeWriteForcedInt32(ref header[headerLength], payloadLength);
             var start = MaxHeaderLength - headerLength;
             header.Slice(0, headerLength).CopyTo(rented.AsSpan(start));
             return (rented, start, headerLength + lz4Length);
@@ -343,7 +343,7 @@ public sealed class Lz4BlockArrayProcessor : Lz4PayloadProcessor
         var sizing = payload;
         while (sizing.TryGetNext(out var segment))
         {
-            offset += UnsafeWriteAsInt32(ref span[offset], segment.Length);
+            offset += UnsafeWriteForcedInt32(ref span[offset], segment.Length);
         }
 
         // [bin lz4block]...

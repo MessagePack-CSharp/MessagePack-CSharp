@@ -31,9 +31,9 @@ public sealed partial class BridgeValueFormatter<TWriteBuffer, TReadBuffer>
 // member is satisfied by its default-implementation bridge. UMP102 rightly flags this
 // shape for NEW net10 code, which is exactly what this type simulates not being.
 #pragma warning disable UMP102
-sealed class TypeBasedOnlyFactory : IMessagePackFormatterFactory
+sealed class TypeBasedOnlyFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
+    public override object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
         => valueType == typeof(BridgeValue)
             ? Activator.CreateInstance(typeof(BridgeValueFormatter<,>).MakeGenericType(writeBufferType, readBufferType))
             : null;
@@ -50,8 +50,8 @@ public class FactoryBridgeTest
         var resolver = new MessagePackFormatterResolver(new TypeBasedOnlyFactory());
 
         // generic resolution → interface default implementation → Type-based factory
-        var formatter = resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, UnsafeReadOnlySpanReadBuffer, BridgeValue>();
-        Assert.IsType<BridgeValueFormatter<CompatibleArrayPoolListWriteBuffer, UnsafeReadOnlySpanReadBuffer>>(formatter);
+        var formatter = resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, BridgeValue>();
+        Assert.IsType<BridgeValueFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer>>(formatter);
 
         // and the produced formatter actually works over those buffers
         var writeBuffer = new CompatibleArrayPoolListWriteBuffer();
@@ -63,7 +63,7 @@ public class FactoryBridgeTest
 
             fixed (byte* pointer = payload)
             {
-                var readBuffer = new UnsafeReadOnlySpanReadBuffer(pointer, payload.Length);
+                var readBuffer = new CompatibleReadOnlySpanReadBuffer(pointer, payload.Length);
                 var deserializeState = new DeserializeState();
                 var result = default(BridgeValue);
                 formatter.Deserialize(ref readBuffer, ref deserializeState, ref result);
@@ -82,7 +82,7 @@ public class FactoryBridgeTest
         // the serializer's net10 entries resolve with REF STRUCT buffer types; the bridge
         // hands those to the Type-based factory, whose MakeGenericType closes the
         // allows-ref-struct formatter over them (runtime support verified by this test)
-        var options = new MessagePackSerializerOptions(new TypeBasedOnlyFactory());
+        var options = new MessagePackSerializerOptions([new TypeBasedOnlyFactory()]);
         var payload = MessagePackSerializer.Serialize(new BridgeValue { X = -7 }, options);
         var result = MessagePackSerializer.Deserialize<BridgeValue>(payload, options);
         Assert.Equal(-7, result.X);

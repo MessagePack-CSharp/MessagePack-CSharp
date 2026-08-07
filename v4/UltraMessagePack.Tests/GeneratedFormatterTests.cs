@@ -137,9 +137,11 @@ public class GeneratedFormatterTests
     public void ExplicitFactoryChain_WorksWithoutModuleInitializerRegistration()
     {
         var options = new MessagePackSerializerOptions(
+        [
             UltraMessagePack.Generated.GeneratedMessagePackFormatterFactory.Instance,
-            PrimitiveFormatterFactory.Instance,
-            GenericFormatterFactory.Instance);
+            BuiltInFormatterFactory.Instance,
+            GenericFormatterFactory.Instance,
+        ]);
         var value = new GenNestedPoco { Numbers = [1, 2, 3], Stamp = Stamp };
         var bytes = Ultra.Serialize(value, options);
         Assert.Equal(Oracle.Serialize(value), bytes);

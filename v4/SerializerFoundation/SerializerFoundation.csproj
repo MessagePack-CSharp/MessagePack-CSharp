@@ -29,7 +29,7 @@
 
 	<!-- Analyzer: keeps the NonCopyable protection on the buffer structs themselves -->
 	<ItemGroup>
-		<ProjectReference Include="..\UltraMessagePack.SourceGenerator\UltraMessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 	<!-- Global Usings -->

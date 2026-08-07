@@ -10,8 +10,10 @@ using Ultra = UltraMessagePack.MessagePackSerializer;
 // complete with zero IL warnings — treat any IL warning in the publish log as a failure.
 
 var options = new UltraMessagePack.MessagePackSerializerOptions(
+[
     UltraMessagePack.Generated.GeneratedMessagePackFormatterFactory.Instance,
-    PrimitiveFormatterFactory.Instance);
+    BuiltInFormatterFactory.Instance,
+]);
 
 //options = UltraMessagePack.MessagePackSerializerOptions.Default;
 

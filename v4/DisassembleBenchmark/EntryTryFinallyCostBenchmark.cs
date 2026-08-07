@@ -20,7 +20,7 @@ public class EntryTryFinallyCostBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        UltraMessagePack.FormatterRegistry.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
+        UltraMessagePack.SourceGeneratedFormatterFactory.Instance.RegisterFactory<BenchPerson>(new BenchPersonFormatterFactory());
         person = new BenchPerson { Id = 12345, Name = "山岡士郎", Score = 98.5 };
 
         var rand = new Random(42);

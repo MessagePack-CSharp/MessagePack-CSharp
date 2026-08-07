@@ -19,7 +19,14 @@ if (args.Contains("--verify"))
     ok &= VerifyPocoSerializers();
     ok &= VerifyNbOfficial();
     ok &= VerifyAnswer();
+    ok &= VerifyAnswerBufferTier();
     ok &= VerifyGetRefVsGetSpan();
+    ok &= VerifyLinkedListWalk();
+    ok &= VerifyStackPool();
+    ok &= VerifyDictSlotWrite();
+    ok &= VerifySipHash();
+    ok &= VerifyDictComparer();
+    ok &= VerifyPriorityQueueBuild();
     Console.WriteLine(ok ? "all OK" : "FAILED");
     return ok ? 0 : 1;
 }
@@ -62,6 +69,23 @@ if (args.Contains("--answer-sizes"))
 // their Tier1 code — BDN's DisassemblyDiagnoser silently produces no output for these methods
 // (only the Nerdbank ones get disassembled). Usage:
 //   $env:DOTNET_JitDisasm = "*_Ultra *NbPoco*Formatter*"; dotnet run -c Release -- --jit-nb
+// hot-loops the SipHashBenchmark candidates for DOTNET_JitDisasm capture (BDN's diagnoser
+// produced an empty asm.md for this class). Usage:
+//   $env:DOTNET_JitDisasm = "*SipHash*:*"; dotnet run -c Release -- --jit-siphash
+if (args.Contains("--jit-siphash"))
+{
+    var b = new SipHashBenchmark { N = 32 };
+    b.Setup();
+    var sink = 0;
+    for (int i = 0; i < 30_000_000; i++)
+    {
+        sink += b.Reference_1to1();
+        sink += b.BlockRead();
+        sink += b.BlockReadUnrolled();
+    }
+    return sink == 0 ? 0 : 0;
+}
+
 if (args.Contains("--jit-nb"))
 {
     var b = new NerdbankOfficialBenchmark();
@@ -233,6 +257,53 @@ static bool VerifyPocoSerializers()
 // AnswerBenchmark.Setup() is self-verifying: it demands Ultra bytes == MessagePack-CSharp
 // oracle bytes on the nested Stack Overflow Answer graph and re-serializes every library's
 // roundtripped object through the oracle for byte-identity. It throws on any mismatch.
+// SipHashBenchmark candidates must match the Internal/SipHash.cs 1:1 reference port
+// bit-for-bit on lengths 0..129 (every tail residue across zero/one/many whole blocks)
+static bool VerifySipHash()
+{
+    try
+    {
+        SipHashBenchmark.VerifyCandidates();
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"NG SipHash: {ex.Message}");
+        return false;
+    }
+}
+
+// the fixed-4-byte comparer specialization must fold to exactly SipHash.Hash64 of the
+// value's LE bytes under the same key
+static bool VerifyDictComparer()
+{
+    try
+    {
+        DictionaryComparerInt32Benchmark.VerifyCandidates();
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"NG DictComparer: {ex.Message}");
+        return false;
+    }
+}
+
+// the three PriorityQueue build shapes must drain to the same (priority, element) multiset
+static bool VerifyPriorityQueueBuild()
+{
+    try
+    {
+        PriorityQueueBuildBenchmark.VerifyCandidates();
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"NG PriorityQueueBuild: {ex.Message}");
+        return false;
+    }
+}
+
 static bool VerifyAnswer()
 {
     try
@@ -243,6 +314,22 @@ static bool VerifyAnswer()
     catch (Exception ex)
     {
         Console.WriteLine($"NG Answer: {ex.Message}");
+        return false;
+    }
+}
+
+// AnswerBufferTierBenchmark.Setup() is self-verifying: DirectFast/DirectCompatible
+// serialize bytes must equal the endpoint bytes, both direct deserialize paths roundtrip
+static bool VerifyAnswerBufferTier()
+{
+    try
+    {
+        new AnswerBufferTierBenchmark().Setup();
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"NG AnswerBufferTier: {ex.Message}");
         return false;
     }
 }
@@ -311,6 +398,167 @@ static bool VerifyNbOfficial()
                 ok = false;
                 Console.WriteLine($"NG NbOfficial {name} deserialize splitAt={splitAt}: ({someInt}, {someString})");
             }
+        }
+    }
+    return ok;
+}
+
+// the pooled candidate must produce sequence-identical stacks to the shipping formatter,
+// on both the fresh and the populate path (including the rented-slot-never-a-populate-target rule)
+static bool VerifyStackPool()
+{
+    var ok = true;
+    var defaultOptions = new UltraMessagePack.MessagePackSerializerOptions(
+        [UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]);
+    var pooledIntOptions = new UltraMessagePack.MessagePackSerializerOptions(
+        [new PooledStackFormatterFactory<int>(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]);
+    var pooledStringOptions = new UltraMessagePack.MessagePackSerializerOptions(
+        [new PooledStackFormatterFactory<string>(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]);
+
+    foreach (var n in new[] { 0, 1, 2, 16, 17, 1000 })
+    {
+        var ints = new Stack<int>(Enumerable.Range(0, n).Select(i => i * 31 - 7));
+        var intPayload = UltraMessagePack.MessagePackSerializer.Serialize(ints, defaultOptions);
+        var intExpected = UltraMessagePack.MessagePackSerializer.Deserialize<Stack<int>?>(intPayload, defaultOptions)!;
+        var intFresh = UltraMessagePack.MessagePackSerializer.Deserialize<Stack<int>?>(intPayload, pooledIntOptions)!;
+        var intPopulated = new Stack<int>([123]);
+        var intTarget = intPopulated;
+        UltraMessagePack.MessagePackSerializer.Deserialize(ref intTarget, intPayload, pooledIntOptions);
+        if (!intFresh.SequenceEqual(intExpected) || !ReferenceEquals(intTarget, intPopulated) || !intTarget!.SequenceEqual(intExpected))
+        {
+            ok = false;
+            Console.WriteLine($"NG StackPool int n={n}");
+        }
+
+        var strings = new Stack<string>(Enumerable.Range(0, n).Select(i => $"s{i}"));
+        var strPayload = UltraMessagePack.MessagePackSerializer.Serialize(strings, defaultOptions);
+        var strExpected = UltraMessagePack.MessagePackSerializer.Deserialize<Stack<string>?>(strPayload, defaultOptions)!;
+        var strFresh = UltraMessagePack.MessagePackSerializer.Deserialize<Stack<string>?>(strPayload, pooledStringOptions)!;
+        Stack<string>? strTarget = new Stack<string>(["zzz"]);
+        UltraMessagePack.MessagePackSerializer.Deserialize(ref strTarget, strPayload, pooledStringOptions);
+        if (!strFresh.SequenceEqual(strExpected) || !strTarget!.SequenceEqual(strExpected))
+        {
+            ok = false;
+            Console.WriteLine($"NG StackPool string n={n}");
+        }
+    }
+    return ok;
+}
+
+// the two candidate loops (Indexer / SlotCondClear) must produce dictionaries equal to the
+// shipping DictionaryFormatter's output on fresh, populate (reused instance must survive by
+// reference and lose its stale entries), and duplicate-key (last-wins) payloads
+static bool VerifyDictSlotWrite()
+{
+    var ok = true;
+
+    var shipping = new UltraMessagePack.MessagePackSerializerOptions(
+        [new BigValFormatterFactory(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]);
+    var variants = new (string Name, UltraMessagePack.MessagePackSerializerOptions IntOptions, UltraMessagePack.MessagePackSerializerOptions BigOptions, UltraMessagePack.MessagePackSerializerOptions StrOptions)[]
+    {
+        ("Shipping", shipping, shipping, shipping),
+        ("Indexer",
+            new UltraMessagePack.MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<int, int>(DictLoopVariant.Indexer), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]),
+            new UltraMessagePack.MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<int, BigVal>(DictLoopVariant.Indexer), new BigValFormatterFactory(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]),
+            new UltraMessagePack.MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<string, string>(DictLoopVariant.Indexer), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance])),
+        ("SlotCondClear",
+            new UltraMessagePack.MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<int, int>(DictLoopVariant.SlotCondClear), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]),
+            new UltraMessagePack.MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<int, BigVal>(DictLoopVariant.SlotCondClear), new BigValFormatterFactory(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]),
+            new UltraMessagePack.MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<string, string>(DictLoopVariant.SlotCondClear), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance])),
+    };
+
+    foreach (var n in new[] { 0, 1, 2, 15, 16, 17, 1000 })
+    {
+        var rand = new Random(42);
+        var ints = new Dictionary<int, int>(n);
+        var bigs = new Dictionary<int, BigVal>(n);
+        var strs = new Dictionary<string, string>(n);
+        for (int i = 0; i < n; i++)
+        {
+            ints[i * 31 - 7] = rand.Next();
+            bigs[i * 31 - 7] = new BigVal { A = rand.NextInt64(), B = rand.NextInt64(), C = rand.NextInt64(), D = rand.NextInt64() };
+            strs[$"key{i}"] = $"value{i}";
+        }
+        var intPayload = UltraMessagePack.MessagePackSerializer.Serialize(ints, shipping);
+        var bigPayload = UltraMessagePack.MessagePackSerializer.Serialize(bigs, shipping);
+        var strPayload = UltraMessagePack.MessagePackSerializer.Serialize(strs, shipping);
+
+        foreach (var (name, intOptions, bigOptions, strOptions) in variants)
+        {
+            // fresh
+            var intFresh = UltraMessagePack.MessagePackSerializer.Deserialize<Dictionary<int, int>?>(intPayload, intOptions)!;
+            var bigFresh = UltraMessagePack.MessagePackSerializer.Deserialize<Dictionary<int, BigVal>?>(bigPayload, bigOptions)!;
+            var strFresh = UltraMessagePack.MessagePackSerializer.Deserialize<Dictionary<string, string>?>(strPayload, strOptions)!;
+            if (!DictEquals(intFresh, ints) || !DictEquals(bigFresh, bigs) || !DictEquals(strFresh, strs))
+            {
+                ok = false;
+                Console.WriteLine($"NG DictSlotWrite {name} n={n} fresh");
+            }
+
+            // populate: stale entries must vanish, instance must be reused
+            var intTarget = new Dictionary<int, int> { [-999] = 1, [-998] = 2 };
+            var intPopulated = intTarget;
+            UltraMessagePack.MessagePackSerializer.Deserialize(ref intPopulated, intPayload, intOptions);
+            var bigTarget = new Dictionary<int, BigVal> { [-999] = new BigVal { A = 1 } };
+            var bigPopulated = bigTarget;
+            UltraMessagePack.MessagePackSerializer.Deserialize(ref bigPopulated, bigPayload, bigOptions);
+            var strTarget = new Dictionary<string, string> { ["stale"] = "x" };
+            var strPopulated = strTarget;
+            UltraMessagePack.MessagePackSerializer.Deserialize(ref strPopulated, strPayload, strOptions);
+            if (!ReferenceEquals(intPopulated, intTarget) || !DictEquals(intPopulated!, ints)
+                || !ReferenceEquals(bigPopulated, bigTarget) || !DictEquals(bigPopulated!, bigs)
+                || !ReferenceEquals(strPopulated, strTarget) || !DictEquals(strPopulated!, strs))
+            {
+                ok = false;
+                Console.WriteLine($"NG DictSlotWrite {name} n={n} populate");
+            }
+        }
+    }
+
+    // duplicate key: fixmap(2) { 1: 10, 1: 20 } — every variant must resolve to { 1: 20 }
+    byte[] dupPayload = [0x82, 0x01, 0x0a, 0x01, 0x14];
+    foreach (var (name, intOptions, _, _) in variants)
+    {
+        var dup = UltraMessagePack.MessagePackSerializer.Deserialize<Dictionary<int, int>?>(dupPayload, intOptions)!;
+        if (dup.Count != 1 || !dup.TryGetValue(1, out var dv) || dv != 20)
+        {
+            ok = false;
+            Console.WriteLine($"NG DictSlotWrite {name} duplicate-key: count={dup.Count} value={(dup.TryGetValue(1, out var v2) ? v2 : -1)}");
+        }
+    }
+    return ok;
+
+    static bool DictEquals<TKey, TValue>(Dictionary<TKey, TValue> actual, Dictionary<TKey, TValue> expected)
+        where TKey : notnull
+    {
+        if (actual.Count != expected.Count)
+        {
+            return false;
+        }
+        foreach (var (k, v) in expected)
+        {
+            if (!actual.TryGetValue(k, out var av) || !EqualityComparer<TValue>.Default.Equals(av, v))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+static bool VerifyLinkedListWalk()
+{
+    var ok = true;
+    foreach (var n in new[] { 0, 1, 2, 100, 1000 })
+    {
+        var b = new LinkedListWalkBenchmark { N = n };
+        b.Setup();
+        var expected = b.ForEachEnumerator();
+        var actual = b.NodeWalk();
+        if (actual != expected)
+        {
+            ok = false;
+            Console.WriteLine($"NG LinkedListWalk N={n} NodeWalk: {actual} (expected {expected})");
         }
     }
     return ok;

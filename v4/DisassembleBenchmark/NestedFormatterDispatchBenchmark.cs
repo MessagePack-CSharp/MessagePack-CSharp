@@ -124,15 +124,13 @@ public class NestInner
 
 // factory mapping several types to their per-type factories (probe-local; array scan is
 // fine, resolution happens once per instantiation)
-public sealed partial class MapFactoryResolver : UltraMessagePack.IMessagePackFormatterFactory
+public sealed partial class MapFactoryResolver : UltraMessagePack.MessagePackFormatterFactory
 {
-    readonly (Type type, UltraMessagePack.IMessagePackFormatterFactory factory)[] factories;
+    readonly (Type type, UltraMessagePack.MessagePackFormatterFactory factory)[] factories;
 
-    public MapFactoryResolver(params (Type, UltraMessagePack.IMessagePackFormatterFactory)[] factories) => this.factories = factories;
+    public MapFactoryResolver(params (Type, UltraMessagePack.MessagePackFormatterFactory)[] factories) => this.factories = factories;
 
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, SerializerFoundation.IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, SerializerFoundation.IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         foreach (var (t, f) in factories)
         {
@@ -177,11 +175,9 @@ public sealed class InnerFormatter<TWriteBuffer, TReadBuffer> : IMessagePackForm
     }
 }
 
-public sealed partial class InnerFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class InnerFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         => new InnerFormatter<TWriteBuffer, TReadBuffer>();
 }
 
@@ -217,11 +213,9 @@ public sealed class MiddleIfaceFieldFormatter<TWriteBuffer, TReadBuffer> : IMess
     }
 }
 
-public sealed partial class MiddleIfaceFieldFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class MiddleIfaceFieldFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         => new MiddleIfaceFieldFormatter<TWriteBuffer, TReadBuffer>();
 }
 
@@ -255,11 +249,9 @@ public sealed class OuterIfaceFieldFormatter<TWriteBuffer, TReadBuffer> : IMessa
     }
 }
 
-public sealed partial class OuterIfaceFieldFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class OuterIfaceFieldFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         => new OuterIfaceFieldFormatter<TWriteBuffer, TReadBuffer>();
 }
 
@@ -295,11 +287,9 @@ public sealed class MiddlePerCallFormatter<TWriteBuffer, TReadBuffer> : IMessage
     }
 }
 
-public sealed partial class MiddlePerCallFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class MiddlePerCallFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         => new MiddlePerCallFormatter<TWriteBuffer, TReadBuffer>();
 }
 
@@ -333,11 +323,9 @@ public sealed class OuterPerCallFormatter<TWriteBuffer, TReadBuffer> : IMessageP
     }
 }
 
-public sealed partial class OuterPerCallFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class OuterPerCallFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         => new OuterPerCallFormatter<TWriteBuffer, TReadBuffer>();
 }
 
@@ -403,11 +391,9 @@ public sealed class OuterDirectFormatter<TWriteBuffer, TReadBuffer> : IMessagePa
     }
 }
 
-public sealed partial class OuterDirectFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class OuterDirectFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         => new OuterDirectFormatter<TWriteBuffer, TReadBuffer>();
 }
 
@@ -452,10 +438,8 @@ public sealed class OuterFlatFormatter<TWriteBuffer, TReadBuffer> : IMessagePack
     }
 }
 
-public sealed partial class OuterFlatFormatterFactory : IMessagePackFormatterFactory
+public sealed partial class OuterFlatFormatterFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         => new OuterFlatFormatter<TWriteBuffer, TReadBuffer>();
 }

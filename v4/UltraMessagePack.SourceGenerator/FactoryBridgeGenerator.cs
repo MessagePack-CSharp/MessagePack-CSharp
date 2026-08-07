@@ -14,7 +14,7 @@ public sealed record FactoryBridgeModel(
     string HintName);
 
 /// <summary>
-/// Companion to the two-tier IMessagePackFormatterFactory shape: the interface's only
+/// Companion to the two-tier MessagePackFormatterFactory shape: the interface's only
 /// abstract member is the Type-based CreateFormatter(writeBufferType, readBufferType,
 /// valueType), and mapping those Types back into generic construction is pure
 /// boilerplate over the library's built-in buffer pairs. This generator emits that
@@ -60,15 +60,15 @@ public sealed class FactoryBridgeGenerator : IIncrementalGenerator
             return null;
         }
 
-        var factoryDefinition = context.SemanticModel.Compilation.GetTypeByMetadataName("UltraMessagePack.IMessagePackFormatterFactory");
+        var factoryDefinition = context.SemanticModel.Compilation.GetTypeByMetadataName("UltraMessagePack.MessagePackFormatterFactory");
         if (factoryDefinition is null)
         {
             return null;
         }
         var implementsFactory = false;
-        foreach (var implemented in symbol.AllInterfaces)
+        for (var baseType = symbol.BaseType; baseType is not null; baseType = baseType.BaseType)
         {
-            if (SymbolEqualityComparer.Default.Equals(implemented, factoryDefinition))
+            if (SymbolEqualityComparer.Default.Equals(baseType, factoryDefinition))
             {
                 implementsFactory = true;
                 break;

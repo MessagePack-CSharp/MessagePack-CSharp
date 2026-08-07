@@ -44,6 +44,25 @@ namespace UltraMessagePack
             internal static int MaxLength => 0X7FFFFFC7;
         }
 
+        extension<T>(IEnumerable<T> source)
+        {
+            internal bool TryGetNonEnumeratedCount(out int count)
+            {
+                switch (source)
+                {
+                    case ICollection<T> collection:
+                        count = collection.Count;
+                        return true;
+                    case IReadOnlyCollection<T> readOnlyCollection:
+                        count = readOnlyCollection.Count;
+                        return true;
+                    default:
+                        count = 0;
+                        return false;
+                }
+            }
+        }
+
 #if NETSTANDARD2_0
 
         extension(RuntimeHelpers)
@@ -140,6 +159,31 @@ namespace System.Text.Unicode
             charsRead = source.Length;
             return System.Buffers.OperationStatus.Done;
         }
+    }
+}
+
+namespace System.Threading
+{
+    internal sealed class Lock
+    {
+#pragma warning disable CS9216
+        public void Enter() => Monitor.Enter(this);
+        public void Exit() => Monitor.Exit(this);
+        public bool TryEnter() => Monitor.TryEnter(this);
+
+        public Scope EnterScope()
+        {
+            Monitor.Enter(this);
+            return new Scope(this);
+        }
+
+        public ref struct Scope
+        {
+            readonly Lock _owner;
+            internal Scope(Lock owner) => _owner = owner;
+            public void Dispose() => Monitor.Exit(_owner);
+        }
+#pragma warning restore CS9216
     }
 }
 

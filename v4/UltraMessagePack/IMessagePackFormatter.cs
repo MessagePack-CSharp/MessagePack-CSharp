@@ -17,71 +17,69 @@ public interface IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
     void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref T value);
 }
 
-// TODO: implement object-graph guarding (cycle detection) and depth limiting.
+// Object-graph guarding = depth limiting only (MessagePackSerializerOptions.MaxDepth).
+// True cycle DETECTION (reference tracking) is deliberately not implemented: it would
+// cost a hash lookup per object on the hot path; a cyclic graph instead runs into the
+// depth limit and surfaces as a clean MessagePackSerializationException rather than a
+// process-killing StackOverflowException.
+//
+// Container formatters (collections, object formatters — anything that recurses into
+// nested formatters) call Enter() after their null/nil handling and
+// Exit() on the way out. Leaf formatters skip both. No try/finally: a throw
+// abandons the whole (de)serialization and the state with it.
 
 [StructLayout(LayoutKind.Auto)]
 public struct SerializeState
 {
+    // Depth budget counting down to 0. A raw-constructed state starts at 0: the first
+    // Enter takes it negative and it can never reach 0 again (nesting is bounded by the
+    // call stack), which is exactly the documented "unlimited" behavior.
+    int remainingDepth;
+    readonly int maxDepth; // only for the exception message
+
+    /// <summary>A raw-constructed state (maxDepth 0, e.g. direct formatter tests) is unlimited.</summary>
+    public SerializeState(int maxDepth)
+    {
+        this.maxDepth = maxDepth;
+        this.remainingDepth = maxDepth == 0 ? 0 : maxDepth + 1;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Enter()
+    {
+        if (--remainingDepth == 0)
+        {
+            MessagePackSerializationException.ThrowSerializeDepthExceeded(maxDepth);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Exit() => remainingDepth++;
 }
 
 [StructLayout(LayoutKind.Auto)]
 public struct DeserializeState
 {
-    public int Depth;
-}
+    // Same countdown scheme as SerializeState.
+    int remainingDepth;
+    readonly int maxDepth; // only for the exception message
 
-// The factory IS the resolution unit: it receives the requested runtime Type and either
-// creates a formatter for it or returns null ("not mine"). What used to be a separate
-// factory-RESOLVER layer (Type -> factory) collapses into the factory itself, and
-// composition is just CompositeFormatterFactory — a factory over factories. The
-// MessagePackFormatterResolver above all this is nothing but the per-instance formatter
-// cache.
-//
-// Chain discipline: a factory placed DIRECTLY into a chain must check `type` and return
-// null for types it does not serve; a factory registered under a Type key (e.g. via
-// FormatterRegistry.RegisterFactory&lt;T&gt;) is only ever asked for that type and
-// may ignore the parameter.
-public interface IMessagePackFormatterFactory
-{
-    /// <summary>
-    /// Creates an IMessagePackFormatter&lt;TWriteBuffer, TReadBuffer, T&gt; for the
-    /// requested type (returned as object; the resolver validates the shape), or null
-    /// when this factory does not serve the type.
-    ///
-    /// CONTRACT: must return a fresh instance per call. A formatter that captures resolver
-    /// state in Initialize (e.g. nested formatter fields) would be re-Initialized by a
-    /// second resolver and route calls into the wrong formatter graph if shared. Only
-    /// fully stateless formatters may safely return a cached singleton.
-    ///
-    /// MULTI-TARGETING SHAPE (resolves the GVM landmine verified 2026-07: `#if`-ing
-    /// `allows ref struct` on an abstract generic interface METHOD makes downlevel-compiled
-    /// implementations fail to LOAD against the with-flag build — "weaker type parameter
-    /// constraints" TypeLoadException). The generic member therefore exists only on
-    /// `allows ref struct` TFMs and carries a DEFAULT IMPLEMENTATION bridging to the
-    /// Type-based overload below — the same versioning technique as
-    /// INumberBase&lt;T&gt;.MultiplyAddEstimate: an implementation that cannot see this
-    /// member still loads, and calls route through the bridge into its Type-based
-    /// implementation. Implementations that CAN see it should override for direct,
-    /// reflection-free construction (UMP102 nudges this).
-    /// </summary>
-
-#if NET9_0_OR_GREATER
-
-    object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    /// <summary>A raw-constructed state (maxDepth 0, e.g. direct formatter tests) is unlimited.</summary>
+    public DeserializeState(int maxDepth)
     {
-        return CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), type);
+        this.maxDepth = maxDepth;
+        this.remainingDepth = maxDepth == 0 ? 0 : maxDepth + 1;
     }
 
-#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Enter()
+    {
+        if (--remainingDepth == 0)
+        {
+            MessagePackSerializationException.ThrowDeserializeDepthExceeded(maxDepth);
+        }
+    }
 
-    /// <summary>
-    /// Type-based flavor — the only ABSTRACT member, identical on every TFM (this is
-    /// what downlevel factories implement and what the downlevel resolver calls).
-    /// Implementations dispatch known buffer-type pairs back into generic construction
-    /// (the source generator emits that dispatch for partial factories); unknown pairs
-    /// return null.
-    /// </summary>
-    object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Exit() => remainingDepth++;
 }

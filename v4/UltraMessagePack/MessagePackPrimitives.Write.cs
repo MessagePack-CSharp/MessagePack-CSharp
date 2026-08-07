@@ -287,9 +287,9 @@ public static partial class MessagePackPrimitives
 
     #endregion
 
-    #region forced-width (WriteAs*)
+    #region forced-width (WriteForced*)
 
-    // WriteAs* = always the named msgpack format regardless of value ("as int32"), unlike
+    // WriteForced* = always the named msgpack format regardless of value ("as int32"), unlike
     // the smallest-format writers above. Fully branchless (header store + big-endian payload
     // store), constant return, exact-size destination contract, no scratch bytes. Use cases:
     // fixed-size slots that get patched later, stable layouts, and constant-time writes for
@@ -297,7 +297,7 @@ public static partial class MessagePackPrimitives
 
     /// <summary>Writes value in the int8 format (0xd0). Destination must have 2 bytes. Returns 2.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteAsInt8(ref byte destination, sbyte value)
+    public static int UnsafeWriteForcedInt8(ref byte destination, sbyte value)
     {
         destination = MessagePackCode.Int8;
         Unsafe.Add(ref destination, 1) = unchecked((byte)value);
@@ -306,7 +306,7 @@ public static partial class MessagePackPrimitives
 
     /// <summary>Writes value in the uint8 format (0xcc). Destination must have 2 bytes. Returns 2.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteAsUInt8(ref byte destination, byte value)
+    public static int UnsafeWriteForcedUInt8(ref byte destination, byte value)
     {
         destination = MessagePackCode.UInt8;
         Unsafe.Add(ref destination, 1) = value;
@@ -315,7 +315,7 @@ public static partial class MessagePackPrimitives
 
     /// <summary>Writes value in the int16 format (0xd1). Destination must have 3 bytes. Returns 3.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteAsInt16(ref byte destination, short value)
+    public static int UnsafeWriteForcedInt16(ref byte destination, short value)
     {
         destination = MessagePackCode.Int16;
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(unchecked((ushort)value)));
@@ -324,7 +324,7 @@ public static partial class MessagePackPrimitives
 
     /// <summary>Writes value in the uint16 format (0xcd). Destination must have 3 bytes. Returns 3.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteAsUInt16(ref byte destination, ushort value)
+    public static int UnsafeWriteForcedUInt16(ref byte destination, ushort value)
     {
         destination = MessagePackCode.UInt16;
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(value));
@@ -333,7 +333,7 @@ public static partial class MessagePackPrimitives
 
     /// <summary>Writes value in the int32 format (0xd2). Destination must have 5 bytes. Returns 5.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteAsInt32(ref byte destination, int value)
+    public static int UnsafeWriteForcedInt32(ref byte destination, int value)
     {
         destination = MessagePackCode.Int32;
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(unchecked((uint)value)));
@@ -342,7 +342,7 @@ public static partial class MessagePackPrimitives
 
     /// <summary>Writes value in the uint32 format (0xce). Destination must have 5 bytes. Returns 5.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteAsUInt32(ref byte destination, uint value)
+    public static int UnsafeWriteForcedUInt32(ref byte destination, uint value)
     {
         destination = MessagePackCode.UInt32;
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(value));
@@ -351,7 +351,7 @@ public static partial class MessagePackPrimitives
 
     /// <summary>Writes value in the int64 format (0xd3). Destination must have 9 bytes. Returns 9.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteAsInt64(ref byte destination, long value)
+    public static int UnsafeWriteForcedInt64(ref byte destination, long value)
     {
         destination = MessagePackCode.Int64;
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(unchecked((ulong)value)));
@@ -360,7 +360,7 @@ public static partial class MessagePackPrimitives
 
     /// <summary>Writes value in the uint64 format (0xcf). Destination must have 9 bytes. Returns 9.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteAsUInt64(ref byte destination, ulong value)
+    public static int UnsafeWriteForcedUInt64(ref byte destination, ulong value)
     {
         destination = MessagePackCode.UInt64;
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(value));
@@ -548,13 +548,13 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteBinHeader(ref byte destination, int byteCount)
         => WriteHeaderCore(ref destination, (uint)byteCount, ref MemoryMarshal.GetReference(BinHeaderFormats));
 
-    // WriteAs*Header = always the named format regardless of count, same rule as the
-    // WriteAs* value writers. The primary use is fixed-size placeholder headers written
+    // WriteForced*Header = always the named format regardless of count, same rule as the
+    // WriteForced* value writers. The primary use is fixed-size placeholder headers written
     // before the count is known (sequences of unknown length) and patched afterwards.
 
     /// <summary>Writes an array32 header (0xdd). Destination must have 5 bytes. Returns 5. count must be non-negative.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteAsArray32Header(ref byte destination, int count)
+    public static int UnsafeWriteForcedArray32Header(ref byte destination, int count)
     {
         destination = MessagePackCode.Array32;
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)count));
@@ -563,7 +563,7 @@ public static partial class MessagePackPrimitives
 
     /// <summary>Writes a map32 header (0xdf). Destination must have 5 bytes. Returns 5. count must be non-negative.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteAsMap32Header(ref byte destination, int count)
+    public static int UnsafeWriteForcedMap32Header(ref byte destination, int count)
     {
         destination = MessagePackCode.Map32;
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)count));
@@ -572,7 +572,7 @@ public static partial class MessagePackPrimitives
 
     /// <summary>Writes a str32 header (0xdb). Destination must have 5 bytes. Returns 5. byteCount must be non-negative.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteAsStr32Header(ref byte destination, int byteCount)
+    public static int UnsafeWriteForcedStr32Header(ref byte destination, int byteCount)
     {
         destination = MessagePackCode.Str32;
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)byteCount));
@@ -581,7 +581,7 @@ public static partial class MessagePackPrimitives
 
     /// <summary>Writes a bin32 header (0xc6). Destination must have 5 bytes. Returns 5. byteCount must be non-negative.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteAsBin32Header(ref byte destination, int byteCount)
+    public static int UnsafeWriteForcedBin32Header(ref byte destination, int byteCount)
     {
         destination = MessagePackCode.Bin32;
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)byteCount));

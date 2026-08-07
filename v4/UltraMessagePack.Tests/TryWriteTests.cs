@@ -185,30 +185,30 @@ public class TryWriteTests
     [Fact]
     public void ForcedWidth_MirrorUnsafe()
     {
-        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteAsInt8(d, -1, out w),
-            (ref byte d) => MessagePackPrimitives.UnsafeWriteAsInt8(ref d, -1));
-        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteAsUInt8(d, 1, out w),
-            (ref byte d) => MessagePackPrimitives.UnsafeWriteAsUInt8(ref d, 1));
-        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteAsInt16(d, -1, out w),
-            (ref byte d) => MessagePackPrimitives.UnsafeWriteAsInt16(ref d, -1));
-        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteAsUInt16(d, 1, out w),
-            (ref byte d) => MessagePackPrimitives.UnsafeWriteAsUInt16(ref d, 1));
-        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteAsInt32(d, -1, out w),
-            (ref byte d) => MessagePackPrimitives.UnsafeWriteAsInt32(ref d, -1));
-        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteAsUInt32(d, 1, out w),
-            (ref byte d) => MessagePackPrimitives.UnsafeWriteAsUInt32(ref d, 1));
-        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteAsInt64(d, -1, out w),
-            (ref byte d) => MessagePackPrimitives.UnsafeWriteAsInt64(ref d, -1));
-        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteAsUInt64(d, 1, out w),
-            (ref byte d) => MessagePackPrimitives.UnsafeWriteAsUInt64(ref d, 1));
-        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteAsArray32Header(d, 7, out w),
-            (ref byte d) => MessagePackPrimitives.UnsafeWriteAsArray32Header(ref d, 7));
-        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteAsMap32Header(d, 7, out w),
-            (ref byte d) => MessagePackPrimitives.UnsafeWriteAsMap32Header(ref d, 7));
-        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteAsStr32Header(d, 7, out w),
-            (ref byte d) => MessagePackPrimitives.UnsafeWriteAsStr32Header(ref d, 7));
-        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteAsBin32Header(d, 7, out w),
-            (ref byte d) => MessagePackPrimitives.UnsafeWriteAsBin32Header(ref d, 7));
+        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteForcedInt8(d, -1, out w),
+            (ref byte d) => MessagePackPrimitives.UnsafeWriteForcedInt8(ref d, -1));
+        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteForcedUInt8(d, 1, out w),
+            (ref byte d) => MessagePackPrimitives.UnsafeWriteForcedUInt8(ref d, 1));
+        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteForcedInt16(d, -1, out w),
+            (ref byte d) => MessagePackPrimitives.UnsafeWriteForcedInt16(ref d, -1));
+        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteForcedUInt16(d, 1, out w),
+            (ref byte d) => MessagePackPrimitives.UnsafeWriteForcedUInt16(ref d, 1));
+        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteForcedInt32(d, -1, out w),
+            (ref byte d) => MessagePackPrimitives.UnsafeWriteForcedInt32(ref d, -1));
+        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteForcedUInt32(d, 1, out w),
+            (ref byte d) => MessagePackPrimitives.UnsafeWriteForcedUInt32(ref d, 1));
+        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteForcedInt64(d, -1, out w),
+            (ref byte d) => MessagePackPrimitives.UnsafeWriteForcedInt64(ref d, -1));
+        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteForcedUInt64(d, 1, out w),
+            (ref byte d) => MessagePackPrimitives.UnsafeWriteForcedUInt64(ref d, 1));
+        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteForcedArray32Header(d, 7, out w),
+            (ref byte d) => MessagePackPrimitives.UnsafeWriteForcedArray32Header(ref d, 7));
+        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteForcedMap32Header(d, 7, out w),
+            (ref byte d) => MessagePackPrimitives.UnsafeWriteForcedMap32Header(ref d, 7));
+        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteForcedStr32Header(d, 7, out w),
+            (ref byte d) => MessagePackPrimitives.UnsafeWriteForcedStr32Header(ref d, 7));
+        AssertMirror((Span<byte> d, out int w) => MessagePackPrimitives.TryWriteForcedBin32Header(d, 7, out w),
+            (ref byte d) => MessagePackPrimitives.UnsafeWriteForcedBin32Header(ref d, 7));
     }
 
     [Fact]
@@ -224,9 +224,9 @@ public class TryWriteTests
         Assert.False(MessagePackPrimitives.TryWriteFixArrayHeader(buf, 16, out w));
         Assert.False(MessagePackPrimitives.TryWriteFixArrayHeader(buf, -1, out w));
         Assert.False(MessagePackPrimitives.TryWriteFixMapHeader(buf, 16, out w));
-        Assert.False(MessagePackPrimitives.TryWriteAsArray32Header(buf, -1, out w));
-        Assert.False(MessagePackPrimitives.TryWriteAsMap32Header(buf, -1, out w));
-        Assert.False(MessagePackPrimitives.TryWriteAsStr32Header(buf, -1, out w));
-        Assert.False(MessagePackPrimitives.TryWriteAsBin32Header(buf, -1, out w));
+        Assert.False(MessagePackPrimitives.TryWriteForcedArray32Header(buf, -1, out w));
+        Assert.False(MessagePackPrimitives.TryWriteForcedMap32Header(buf, -1, out w));
+        Assert.False(MessagePackPrimitives.TryWriteForcedStr32Header(buf, -1, out w));
+        Assert.False(MessagePackPrimitives.TryWriteForcedBin32Header(buf, -1, out w));
     }
 }

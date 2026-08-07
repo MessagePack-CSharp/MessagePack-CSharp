@@ -25,22 +25,22 @@ public sealed partial class MissingProbeValueFormatter<TWriteBuffer, TReadBuffer
 
 #pragma warning disable UMP102
 // a factory that serves nothing: every resolution lands on MissingMessagePackFormatter
-sealed class NullFactory : IMessagePackFormatterFactory
+sealed class NullFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType) => null;
+    public override object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType) => null;
 }
 
 // SIMULATION of a downlevel-compiled generated factory: serves the type, but only for
 // the fallback pairs its generated Type-based dispatch knows; unknown pairs return null
-sealed class FallbackOnlyFactory : IMessagePackFormatterFactory
+sealed class FallbackOnlyFactory : MessagePackFormatterFactory
 {
-    public object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
+    public override object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
     {
         if (valueType == typeof(MissingProbeValue) &&
             writeBufferType == typeof(CompatibleArrayPoolListWriteBuffer) &&
-            readBufferType == typeof(UnsafeReadOnlySpanReadBuffer))
+            readBufferType == typeof(CompatibleReadOnlySpanReadBuffer))
         {
-            return new MissingProbeValueFormatter<CompatibleArrayPoolListWriteBuffer, UnsafeReadOnlySpanReadBuffer>();
+            return new MissingProbeValueFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer>();
         }
         return null;
     }
@@ -85,7 +85,7 @@ public class MissingFormatterMessageTest
     {
         // non-ref-struct pair: nothing to probe (the request itself was a fallback pair)
         var resolver = new MessagePackFormatterResolver(new NullFactory());
-        var formatter = resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, UnsafeReadOnlySpanReadBuffer, MissingProbeValue>();
+        var formatter = resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, MissingProbeValue>();
 
         InvalidOperationException? caught = null;
         var buffer = new CompatibleArrayPoolListWriteBuffer();
@@ -105,7 +105,7 @@ public class MissingFormatterMessageTest
 
         Assert.NotNull(caught);
         Assert.Contains(nameof(CompatibleArrayPoolListWriteBuffer), caught.Message);
-        Assert.Contains(nameof(UnsafeReadOnlySpanReadBuffer), caught.Message);
+        Assert.Contains(nameof(CompatibleReadOnlySpanReadBuffer), caught.Message);
         Assert.DoesNotContain("net10.0", caught.Message);
     }
 
