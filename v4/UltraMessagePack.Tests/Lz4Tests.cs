@@ -7,7 +7,7 @@ using Ultra = UltraMessagePack.MessagePackSerializer;
 
 namespace UltraMessagePack.Tests;
 
-// UltraMessagePack.LZ4 (PayloadProcessor envelope) against the MessagePack-CSharp oracle:
+// UltraMessagePack.LZ4 (MessageProcessor envelope) against the MessagePack-CSharp oracle:
 // cross-READ compatibility both directions for both codes (ext -99 Lz4Block / -98
 // Lz4BlockArray). Byte identity is NOT asserted for compressed payloads — block
 // segmentation and encoder version legitimately differ; the format contract is that
@@ -140,6 +140,29 @@ public class Lz4Tests
                     ? new ReadOnlySequence<byte>(wrapped)
                     : Split(wrapped, splitAt);
                 Assert.Equal(text, Ultra.Deserialize<string>(sequence, options));
+            }
+        }
+    }
+
+    [Fact]
+    public void SequenceEntry_PassthroughAcrossSplits()
+    {
+        // non-enveloped input reads as-is through processor options whatever the
+        // segmentation, including shapes that enter (and fail) each sniff branch:
+        // fixstr (neither ext nor array) and an ordinary array (the ext-98 branch)
+        var text = "passthrough";
+        int[] array = [1, 2, 3];
+        var textRaw = Ultra.Serialize(text, UltraOptions.Default);
+        var arrayRaw = Ultra.Serialize(array, UltraOptions.Default);
+        foreach (var options in new[] { BlockOptions, BlockArrayOptions })
+        {
+            for (int splitAt = 1; splitAt < textRaw.Length; splitAt++)
+            {
+                Assert.Equal(text, Ultra.Deserialize<string>(Split(textRaw, splitAt), options));
+            }
+            for (int splitAt = 1; splitAt < arrayRaw.Length; splitAt++)
+            {
+                Assert.Equal(array, Ultra.Deserialize<int[]>(Split(arrayRaw, splitAt), options));
             }
         }
     }

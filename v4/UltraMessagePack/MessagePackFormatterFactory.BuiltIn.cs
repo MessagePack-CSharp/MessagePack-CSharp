@@ -68,7 +68,7 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
         // NetworkFormatters.cs
         if (type == typeof(System.Net.IPAddress)) return new IPAddressFormatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(System.Net.IPEndPoint)) return new IPEndPointFormatter<TWriteBuffer, TReadBuffer>();
-        
+
         // typeof(Type) is deliberately NOT served (v4 break from v3's BuiltinResolver)
         if (type == typeof(Type))
         {
@@ -98,15 +98,86 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
 
         // ByteArrayFormatters.cs (bin-format)
         if (type == typeof(byte[])) return new ByteArrayFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(ArraySegment<byte>)) return new ByteArraySegmentFormatter<TWriteBuffer, TReadBuffer>();
+        if (type == typeof(List<byte>)) return new ByteListFormatter<TWriteBuffer, TReadBuffer>(); // List<byte> is not serialized as a bin-format, however, we need to inject it for compatibility of previous issues
         if (type == typeof(Memory<byte>)) return new ByteMemoryFormatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(ReadOnlyMemory<byte>)) return new ByteReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer>();
+        if (type == typeof(ArraySegment<byte>)) return new ByteArraySegmentFormatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(ReadOnlySequence<byte>)) return new ByteReadOnlySequenceFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(List<byte>)) return new ByteListFormatter<TWriteBuffer, TReadBuffer>(); // List<byte> is not serialized as a bin-format, however, we need to inject it for compatibility of previous issues
 
         // PrimitiveCollectionFormatters.cs
-        // TODO: needs more primitive collections
-        if (type == typeof(int[])) return new Int32ArrayFormatter<TWriteBuffer, TReadBuffer>();
-        return null;
-    }
+        if (type == typeof(sbyte[])) return new PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, sbyte, SByteElementCodec>();
+        if (type == typeof(Memory<sbyte>)) return new PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, sbyte, SByteElementCodec>();
+        if (type == typeof(ReadOnlyMemory<sbyte>)) return new PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, sbyte, SByteElementCodec>();
+        if (type == typeof(ArraySegment<sbyte>)) return new PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, sbyte, SByteElementCodec>();
+
+        if (type == typeof(int[])) return new PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, int, Int32ElementCodec>();
+        if (type == typeof(Memory<int>)) return new PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, int, Int32ElementCodec>();
+        if (type == typeof(ReadOnlyMemory<int>)) return new PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, int, Int32ElementCodec>();
+        if (type == typeof(ArraySegment<int>)) return new PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, int, Int32ElementCodec>();
+
+        if (type == typeof(short[])) return new PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, short, Int16ElementCodec>();
+        if (type == typeof(Memory<short>)) return new PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, short, Int16ElementCodec>();
+        if (type == typeof(ReadOnlyMemory<short>)) return new PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, short, Int16ElementCodec>();
+        if (type == typeof(ArraySegment<short>)) return new PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, short, Int16ElementCodec>();
+
+        if (type == typeof(ushort[])) return new PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, ushort, UInt16ElementCodec>();
+        if (type == typeof(Memory<ushort>)) return new PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, ushort, UInt16ElementCodec>();
+        if (type == typeof(ReadOnlyMemory<ushort>)) return new PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, ushort, UInt16ElementCodec>();
+        if (type == typeof(ArraySegment<ushort>)) return new PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, ushort, UInt16ElementCodec>();
+
+        if (type == typeof(uint[])) return new PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, uint, UInt32ElementCodec>();
+        if (type == typeof(Memory<uint>)) return new PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, uint, UInt32ElementCodec>();
+        if (type == typeof(ReadOnlyMemory<uint>)) return new PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, uint, UInt32ElementCodec>();
+        if (type == typeof(ArraySegment<uint>)) return new PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, uint, UInt32ElementCodec>();
+
+        if (type == typeof(long[])) return new PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, long, Int64ElementCodec>();
+        if (type == typeof(Memory<long>)) return new PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, long, Int64ElementCodec>();
+        if (type == typeof(ReadOnlyMemory<long>)) return new PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, long, Int64ElementCodec>();
+        if (type == typeof(ArraySegment<long>)) return new PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, long, Int64ElementCodec>();
+
+        if (type == typeof(ulong[])) return new PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, ulong, UInt64ElementCodec>();
+        if (type == typeof(Memory<ulong>)) return new PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, ulong, UInt64ElementCodec>();
+        if (type == typeof(ReadOnlyMemory<ulong>)) return new PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, ulong, UInt64ElementCodec>();
+        if (type == typeof(ArraySegment<ulong>)) return new PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, ulong, UInt64ElementCodec>();
+
+        if (type == typeof(float[])) return new PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, float, SingleElementCodec>();
+        if (type == typeof(Memory<float>)) return new PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, float, SingleElementCodec>();
+        if (type == typeof(ReadOnlyMemory<float>)) return new PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, float, SingleElementCodec>();
+        if (type == typeof(ArraySegment<float>)) return new PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, float, SingleElementCodec>();
+
+        if (type == typeof(double[])) return new PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, double, DoubleElementCodec>();
+        if (type == typeof(Memory<double>)) return new PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, double, DoubleElementCodec>();
+        if (type == typeof(ReadOnlyMemory<double>)) return new PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, double, DoubleElementCodec>();
+        if (type == typeof(ArraySegment<double>)) return new PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, double, DoubleElementCodec>();
+
+        if (type == typeof(bool[])) return new PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, bool, BooleanElementCodec>();
+        if (type == typeof(Memory<bool>)) return new PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, bool, BooleanElementCodec>();
+        if (type == typeof(ReadOnlyMemory<bool>)) return new PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, bool, BooleanElementCodec>();
+        if (type == typeof(ArraySegment<bool>)) return new PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, bool, BooleanElementCodec>();
+        
+        // List<T>: the codec-backed shape needs CollectionsMarshal.AsSpan, so downlevel TFMs route to the generic ListFormatter instead.
+#if NET
+        if (type == typeof(List<sbyte>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, sbyte, SByteElementCodec>();
+        if (type == typeof(List<int>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, int, Int32ElementCodec>();
+        if (type == typeof(List<short>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, short, Int16ElementCodec>();
+        if (type == typeof(List<ushort>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, ushort, UInt16ElementCodec>();
+        if (type == typeof(List<uint>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, uint, UInt32ElementCodec>();
+        if (type == typeof(List<long>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, long, Int64ElementCodec>();
+        if (type == typeof(List<ulong>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, ulong, UInt64ElementCodec>();
+        if (type == typeof(List<float>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, float, SingleElementCodec>();
+        if (type == typeof(List<double>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, double, DoubleElementCodec>();
+        if (type == typeof(List<bool>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, bool, BooleanElementCodec>();
+#else
+        if (type == typeof(List<sbyte>)) return new ListFormatter<TWriteBuffer, TReadBuffer, sbyte>();
+        if (type == typeof(List<int>)) return new ListFormatter<TWriteBuffer, TReadBuffer, int>();
+        if (type == typeof(List<short>)) return new ListFormatter<TWriteBuffer, TReadBuffer, short>();
+        if (type == typeof(List<ushort>)) return new ListFormatter<TWriteBuffer, TReadBuffer, ushort>();
+        if (type == typeof(List<uint>)) return new ListFormatter<TWriteBuffer, TReadBuffer, uint>();
+        if (type == typeof(List<long>)) return new ListFormatter<TWriteBuffer, TReadBuffer, long>();
+        if (type == typeof(List<ulong>)) return new ListFormatter<TWriteBuffer, TReadBuffer, ulong>();
+        if (type == typeof(List<float>)) return new ListFormatter<TWriteBuffer, TReadBuffer, float>();
+        if (type == typeof(List<double>)) return new ListFormatter<TWriteBuffer, TReadBuffer, double>();
+        if (type == typeof(List<bool>)) return new ListFormatter<TWriteBuffer, TReadBuffer, bool>();
+#endif
+        return null;    }
 }

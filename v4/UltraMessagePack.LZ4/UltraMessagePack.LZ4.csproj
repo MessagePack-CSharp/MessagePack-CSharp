@@ -5,7 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsAotCompatible>true</IsAotCompatible>
-		<Description>LZ4 compression for UltraMessagePack as a MessagePackPayloadProcessor — v3-compatible Lz4Block (ext -99) and Lz4BlockArray (ext -98) envelopes, composed purely through options.</Description>
+		<Description>LZ4 compression for UltraMessagePack as a MessagePackMessageProcessor — v3-compatible Lz4Block (ext -99) and Lz4BlockArray (ext -98) envelopes, composed purely through options.</Description>
 	</PropertyGroup>
 
 	<ItemGroup>

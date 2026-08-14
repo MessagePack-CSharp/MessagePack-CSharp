@@ -1,3 +1,5 @@
+// TODO: still not fully reviewed.
+
 using SerializerFoundation;
 using System.Buffers.Binary;
 using System.Diagnostics;
@@ -118,7 +120,7 @@ public static partial class MessagePackPrimitives
             int len = (int)(e & 0xff);
             destination = (byte)(e >> 8); // write header
             // len in {2,3,5}: shift in {24,16,0}, big-endian payload right after the header
-            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)value << ((5 - len) * 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((uint)value << ((5 - len) * 8)));
             return len;
         }
     }
@@ -144,7 +146,7 @@ public static partial class MessagePackPrimitives
             destination = (byte)(e >> 8);
             // len in {2,3,5,9}: shift in {56,48,32,0} — the fixint fast path removed len==1,
             // so the shift never reaches 64 (which C# would mask to 0)
-            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((ulong)value << ((9 - len) * 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((ulong)value << ((9 - len) * 8)));
             return len;
         }
     }
@@ -174,7 +176,7 @@ public static partial class MessagePackPrimitives
         uint e = Unsafe.Add(ref table, bits);
         int len = (int)(e & 0xff);
         destination = (byte)(e >> 8);
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(value << ((5 - len) * 8)));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian(value << ((5 - len) * 8)));
         return len;
     }
 
@@ -193,7 +195,7 @@ public static partial class MessagePackPrimitives
             uint e = Unsafe.Add(ref MemoryMarshal.GetReference(UInt64Formats), bits);
             int len = (int)(e & 0xff);
             destination = (byte)(e >> 8);
-            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(value << ((9 - len) * 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian(value << ((9 - len) * 8)));
             return len;
         }
     }
@@ -259,7 +261,7 @@ public static partial class MessagePackPrimitives
             int len = (int)(e & 0xff);
             destination = (byte)(e >> 8);
             // len in {2,3}: shift in {8,0}, big-endian payload right after the header
-            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((ushort)(v << ((3 - len) * 8))));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((ushort)(v << ((3 - len) * 8))));
             return len;
         }
     }
@@ -277,7 +279,7 @@ public static partial class MessagePackPrimitives
         // (wide=0: value << 8 -> [value, scratch]; wide=1: [hi, lo])
         int wide = value > 0xff ? 1 : 0;
         destination = (byte)(MessagePackCode.UInt8 + wide); // 0xcc or 0xcd
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((ushort)(value << ((1 - wide) * 8))));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((ushort)(value << ((1 - wide) * 8))));
         return 2 + wide;
     }
 
@@ -318,7 +320,7 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteForcedInt16(ref byte destination, short value)
     {
         destination = MessagePackCode.Int16;
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(unchecked((ushort)value)));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian(unchecked((ushort)value)));
         return 3;
     }
 
@@ -327,7 +329,7 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteForcedUInt16(ref byte destination, ushort value)
     {
         destination = MessagePackCode.UInt16;
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(value));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian(value));
         return 3;
     }
 
@@ -336,7 +338,7 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteForcedInt32(ref byte destination, int value)
     {
         destination = MessagePackCode.Int32;
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(unchecked((uint)value)));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian(unchecked((uint)value)));
         return 5;
     }
 
@@ -345,7 +347,7 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteForcedUInt32(ref byte destination, uint value)
     {
         destination = MessagePackCode.UInt32;
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(value));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian(value));
         return 5;
     }
 
@@ -354,7 +356,7 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteForcedInt64(ref byte destination, long value)
     {
         destination = MessagePackCode.Int64;
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(unchecked((ulong)value)));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian(unchecked((ulong)value)));
         return 9;
     }
 
@@ -363,7 +365,7 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteForcedUInt64(ref byte destination, ulong value)
     {
         destination = MessagePackCode.UInt64;
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(value));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian(value));
         return 9;
     }
 
@@ -402,7 +404,7 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteSingle(ref byte destination, float value)
     {
         destination = MessagePackCode.Float32;
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(BitConverter.SingleToUInt32Bits(value)));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian(BitConverter.SingleToUInt32Bits(value)));
         return 5;
     }
 
@@ -411,7 +413,7 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteDouble(ref byte destination, double value)
     {
         destination = MessagePackCode.Float64;
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness(BitConverter.DoubleToUInt64Bits(value)));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian(BitConverter.DoubleToUInt64Bits(value)));
         return 9;
     }
 
@@ -557,7 +559,7 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteForcedArray32Header(ref byte destination, int count)
     {
         destination = MessagePackCode.Array32;
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)count));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((uint)count));
         return 5;
     }
 
@@ -566,7 +568,7 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteForcedMap32Header(ref byte destination, int count)
     {
         destination = MessagePackCode.Map32;
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)count));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((uint)count));
         return 5;
     }
 
@@ -575,7 +577,7 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteForcedStr32Header(ref byte destination, int byteCount)
     {
         destination = MessagePackCode.Str32;
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)byteCount));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((uint)byteCount));
         return 5;
     }
 
@@ -584,7 +586,7 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteForcedBin32Header(ref byte destination, int byteCount)
     {
         destination = MessagePackCode.Bin32;
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)byteCount));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((uint)byteCount));
         return 5;
     }
 
@@ -669,7 +671,7 @@ public static partial class MessagePackPrimitives
         // len in {3,4,6}: shift in {24,16,0} puts the big-endian length right after the
         // header; len == 2 (fixext) computes shift 32 -> masked to 0 by C#, but all four
         // stored bytes are scratch there (typeCode overwrites offset 1 just below)
-        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)dataLength << ((6 - len) * 8)));
+        Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((uint)dataLength << ((6 - len) * 8)));
         Unsafe.Add(ref destination, len - 1) = unchecked((byte)typeCode);
         return len;
     }
@@ -709,9 +711,12 @@ public static partial class MessagePackPrimitives
             ulong data64 = (ulong)(nanoseconds << 34) | (ulong)seconds;
             ulong hi = data64 >> 32;
             int wide = (int)((hi | (0UL - hi)) >> 63); // 1 -> timestamp64 (data64 needs more than 4 bytes)
-            // one 2-byte store: [0xd6 + wide, 0xff] (no carry into the type byte)
-            Unsafe.WriteUnaligned(ref destination, (ushort)(0xffd6 + (uint)wide));
-            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 2), BinaryPrimitives.ReverseEndianness(data64 << ((1 - wide) << 5)));
+            // one 2-byte store: [0xd6 + wide, 0xff] (no carry into the type byte); the
+            // packed literal depends on store byte order, so each endianness gets its own
+            Unsafe.WriteUnaligned(ref destination, BitConverter.IsLittleEndian
+                ? (ushort)(0xffd6 + (uint)wide)
+                : (ushort)(0xd6ff + ((uint)wide << 8)));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 2), MessagePackEndian.ToBigEndian(data64 << ((1 - wide) << 5)));
             return 6 + (wide << 2);
         }
         else
@@ -728,12 +733,24 @@ public static partial class MessagePackPrimitives
             // data96: [nanoseconds in 32-bit unsigned | seconds in 64-bit signed]
             // one 8-byte store packs [Ext8][len 12][type -1][nanoseconds BE][scratch]
             // (little-endian: low byte lands first); the seconds store at offset 7
-            // overwrites the scratch byte
-            ulong head = MessagePackCode.Ext8 | (12u << 8)
-                | ((uint)unchecked((byte)MessagePackCode.TimestampExtensionTypeCode) << 16)
-                | ((ulong)BinaryPrimitives.ReverseEndianness((uint)nanoseconds) << 24);
-            Unsafe.WriteUnaligned(ref destination, head);
-            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 7), BinaryPrimitives.ReverseEndianness(unchecked((ulong)seconds)));
+            // overwrites the scratch byte. The packed head depends on store byte order,
+            // so the big-endian arm writes the three header bytes individually (cold
+            // path, clarity over cleverness).
+            if (BitConverter.IsLittleEndian)
+            {
+                ulong head = MessagePackCode.Ext8 | (12u << 8)
+                    | ((uint)unchecked((byte)MessagePackCode.TimestampExtensionTypeCode) << 16)
+                    | ((ulong)MessagePackEndian.ToBigEndian((uint)nanoseconds) << 24);
+                Unsafe.WriteUnaligned(ref destination, head);
+            }
+            else
+            {
+                destination = MessagePackCode.Ext8;
+                Unsafe.Add(ref destination, 1) = 12;
+                Unsafe.Add(ref destination, 2) = unchecked((byte)MessagePackCode.TimestampExtensionTypeCode);
+                Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 3), MessagePackEndian.ToBigEndian((uint)nanoseconds));
+            }
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 7), MessagePackEndian.ToBigEndian(unchecked((ulong)seconds)));
             return 15;
         }
     }
@@ -865,11 +882,11 @@ public static partial class MessagePackPrimitives
                 break;
             case 3:
                 destination = MessagePackCode.Str16;
-                Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((ushort)byteCount));
+                Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((ushort)byteCount));
                 break;
             default:
                 destination = MessagePackCode.Str32;
-                Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)byteCount));
+                Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((uint)byteCount));
                 break;
         }
 
@@ -884,7 +901,7 @@ public static partial class MessagePackPrimitives
         {
             int byteCount = Encoding.UTF8.GetByteCount(value);
             destination = MessagePackCode.Str32;
-            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), BinaryPrimitives.ReverseEndianness((uint)byteCount));
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((uint)byteCount));
 #if NETSTANDARD2_0
             unsafe
             {

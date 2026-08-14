@@ -1,3 +1,5 @@
+// TODO: still not fully reviewed.
+
 using SerializerFoundation;
 using System.Buffers.Binary;
 using System.Numerics;
@@ -24,15 +26,15 @@ public static partial class MessagePackPrimitives
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static void UnsafeWriteUInt16BigEndian(Span<byte> destination, int offset, ushort value)
-        => Unsafe.WriteUnaligned(ref Unsafe.Add(ref MemoryMarshal.GetReference(destination), offset), BinaryPrimitives.ReverseEndianness(value));
+        => Unsafe.WriteUnaligned(ref Unsafe.Add(ref MemoryMarshal.GetReference(destination), offset), MessagePackEndian.ToBigEndian(value));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static void UnsafeWriteUInt32BigEndian(Span<byte> destination, int offset, uint value)
-        => Unsafe.WriteUnaligned(ref Unsafe.Add(ref MemoryMarshal.GetReference(destination), offset), BinaryPrimitives.ReverseEndianness(value));
+        => Unsafe.WriteUnaligned(ref Unsafe.Add(ref MemoryMarshal.GetReference(destination), offset), MessagePackEndian.ToBigEndian(value));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static void UnsafeWriteUInt64BigEndian(Span<byte> destination, int offset, ulong value)
-        => Unsafe.WriteUnaligned(ref Unsafe.Add(ref MemoryMarshal.GetReference(destination), offset), BinaryPrimitives.ReverseEndianness(value));
+        => Unsafe.WriteUnaligned(ref Unsafe.Add(ref MemoryMarshal.GetReference(destination), offset), MessagePackEndian.ToBigEndian(value));
 
     // exact-size slot writers shared by the cascades: one format code + big-endian payload
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -2,6 +2,7 @@ using MessagePack;
 using SerializerFoundation;
 using System.Buffers.Binary;
 using UltraMessagePack;
+using UltraMessagePack.Formatters;
 using Xunit;
 using Oracle = MessagePack.MessagePackSerializer;
 using static UltraMessagePack.MessagePackPrimitives;
@@ -170,6 +171,116 @@ public class CollectionAndObjectTests
         Assert.Null(MessagePackSerializer.Deserialize<int[]?>(MessagePackSerializer.Serialize<int[]?>(null)));
     }
 
+    // The specialized int shapes (Int32List/Memory/ReadOnlyMemory/ArraySegment) share the
+    // Int32ElementCodec SIMD core with int[]; the same chunk-boundary sizes and value
+    // distributions must hold for every shape.
+    [Theory]
+    [InlineData("small")]
+    [InlineData("mixed")]
+    [InlineData("large")]
+    public void Int32Shapes_AllSizes_MatchOracleAndRoundtrip(string distribution)
+    {
+        foreach (var count in (int[])[0, 1, 15, 16, 17, 31, 32, 33, 63, 64, 65, 100, 1000])
+        {
+            var value = MakeInts(count, distribution);
+
+            var list = new List<int>(value);
+            var listBytes = MessagePackSerializer.Serialize(list);
+            Assert.True(listBytes.AsSpan().SequenceEqual(Oracle.Serialize(list)), $"List bytes mismatch count={count} dist={distribution}");
+            Assert.Equal(list, MessagePackSerializer.Deserialize<List<int>>(listBytes));
+
+            var memory = new Memory<int>(value);
+            var memoryBytes = MessagePackSerializer.Serialize(memory);
+            Assert.True(memoryBytes.AsSpan().SequenceEqual(Oracle.Serialize(memory)), $"Memory bytes mismatch count={count} dist={distribution}");
+            Assert.Equal(value, MessagePackSerializer.Deserialize<Memory<int>>(memoryBytes).ToArray());
+
+            var readOnlyMemory = new ReadOnlyMemory<int>(value);
+            var romBytes = MessagePackSerializer.Serialize(readOnlyMemory);
+            Assert.True(romBytes.AsSpan().SequenceEqual(Oracle.Serialize(readOnlyMemory)), $"ReadOnlyMemory bytes mismatch count={count} dist={distribution}");
+            Assert.Equal(value, MessagePackSerializer.Deserialize<ReadOnlyMemory<int>>(romBytes).ToArray());
+
+            var segment = new ArraySegment<int>(value);
+            var segmentBytes = MessagePackSerializer.Serialize(segment);
+            Assert.True(segmentBytes.AsSpan().SequenceEqual(Oracle.Serialize(segment)), $"ArraySegment bytes mismatch count={count} dist={distribution}");
+            Assert.Equal(value.AsEnumerable(), MessagePackSerializer.Deserialize<ArraySegment<int>>(segmentBytes));
+        }
+
+        // sliced views: only the window serializes, and offsets hit the SIMD core unaligned
+        var backing = MakeInts(64, distribution);
+        var window = backing.AsSpan(3, 33).ToArray();
+        var slicedSegment = new ArraySegment<int>(backing, 3, 33);
+        Assert.Equal(Oracle.Serialize(slicedSegment), MessagePackSerializer.Serialize(slicedSegment));
+        Assert.Equal(window.AsEnumerable(), MessagePackSerializer.Deserialize<ArraySegment<int>>(MessagePackSerializer.Serialize(slicedSegment)));
+        Assert.Equal(
+            MessagePackSerializer.Serialize(window),
+            MessagePackSerializer.Serialize(backing.AsMemory(3, 33)));
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(7)]
+    [InlineData(16)]
+    [InlineData(64)]
+    public void Int32List_SequenceSegmentBoundaries_Roundtrip(int chunkSize)
+    {
+        // List deserialize goes through SetCount + the shared SIMD read core: short
+        // windows at segment boundaries must fall to the scalar reader and resume SIMD
+        foreach (var distribution in (string[])["small", "mixed", "large"])
+        {
+            var expected = MakeInts(1000, distribution);
+            var bytes = MessagePackSerializer.Serialize(expected);
+
+            var first = new Chunk(bytes.AsMemory(0, Math.Min(chunkSize, bytes.Length)));
+            var last = first;
+            for (int i = chunkSize; i < bytes.Length; i += chunkSize)
+            {
+                last = last.Append(bytes.AsMemory(i, Math.Min(chunkSize, bytes.Length - i)));
+            }
+            var seq = new System.Buffers.ReadOnlySequence<byte>(first, 0, last, last.Memory.Length);
+
+            Assert.Equal(expected, MessagePackSerializer.Deserialize<List<int>>(seq));
+        }
+    }
+
+    [Fact]
+    public void Int32Shapes_ResolveToTheSpecializedFormatters()
+    {
+        // a registration typo would silently fall through to the generic tier and still
+        // pass the wire tests — pin the resolved formatter types instead
+        var resolver = new MessagePackFormatterResolver(MessagePackFormatterFactory.Default);
+        Assert.IsType<UltraMessagePack.Formatters.PrimitiveArrayFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, int, Int32ElementCodec>>(
+            resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, int[]>());
+        Assert.IsType<UltraMessagePack.Formatters.PrimitiveListFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, int, Int32ElementCodec>>(
+            resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, List<int>>());
+        // Memory/ReadOnlyMemory/ArraySegment have no v3 public names: the internal shape
+        // templates are registered directly (visible here via InternalsVisibleTo)
+        Assert.IsType<UltraMessagePack.Formatters.PrimitiveMemoryFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, int, UltraMessagePack.Formatters.Int32ElementCodec>>(
+            resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, Memory<int>>());
+        Assert.IsType<UltraMessagePack.Formatters.PrimitiveReadOnlyMemoryFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, int, UltraMessagePack.Formatters.Int32ElementCodec>>(
+            resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, ReadOnlyMemory<int>>());
+        Assert.IsType<UltraMessagePack.Formatters.PrimitiveArraySegmentFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, int, UltraMessagePack.Formatters.Int32ElementCodec>>(
+            resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, ArraySegment<int>>());
+    }
+
+    [Fact]
+    public void Int32List_Populate_ReusesInstance()
+    {
+        var expected = MakeInts(100, "mixed");
+        var bytes = MessagePackSerializer.Serialize(expected);
+
+        // grow
+        var list = new List<int> { 1, 2, 3 };
+        var before = list;
+        MessagePackSerializer.Deserialize(ref list, bytes);
+        Assert.Same(before, list);
+        Assert.Equal(expected, list);
+
+        // shrink
+        MessagePackSerializer.Deserialize(ref list, MessagePackSerializer.Serialize(new[] { 5 }));
+        Assert.Same(before, list);
+        Assert.Equal([5], list);
+    }
+
     [Fact]
     public void GenericCollections_MatchOracleAndRoundtrip()
     {
@@ -247,10 +358,11 @@ public class CollectionAndObjectTests
         var list = new List<int> { 1, 2, 3 };
         Assert.Equal(list, MessagePackSerializer.Deserialize<List<int>>(MessagePackSerializer.Serialize(list, explicitChain), explicitChain));
 
-        // the chain is EXACT: primitives only, so List<int> resolves to Missing
+        // the chain is EXACT: primitives only, so List<string> resolves to Missing
+        // (List<int> no longer probes this — it became a BuiltIn specialized formatter)
         var primitivesOnly = new MessagePackSerializerOptions([BuiltInFormatterFactory.Instance]);
         Assert.Equal(7, MessagePackSerializer.Deserialize<int>(MessagePackSerializer.Serialize(7, primitivesOnly), primitivesOnly));
-        Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(new List<int> { 1 }, primitivesOnly));
+        Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(new List<string> { "1" }, primitivesOnly));
     }
 
     [Fact]

@@ -34,13 +34,14 @@ public struct SerializeState
     // Depth budget counting down to 0. A raw-constructed state starts at 0: the first
     // Enter takes it negative and it can never reach 0 again (nesting is bounded by the
     // call stack), which is exactly the documented "unlimited" behavior.
+    // The configured limit is deliberately NOT stored (the exception names the option
+    // instead of the number): the state should stay as small as possible because more
+    // fields will land here later.
     int remainingDepth;
-    readonly int maxDepth; // only for the exception message
 
     /// <summary>A raw-constructed state (maxDepth 0, e.g. direct formatter tests) is unlimited.</summary>
     public SerializeState(int maxDepth)
     {
-        this.maxDepth = maxDepth;
         this.remainingDepth = maxDepth == 0 ? 0 : maxDepth + 1;
     }
 
@@ -49,7 +50,7 @@ public struct SerializeState
     {
         if (--remainingDepth == 0)
         {
-            MessagePackSerializationException.ThrowSerializeDepthExceeded(maxDepth);
+            MessagePackSerializationException.ThrowSerializeDepthExceeded();
         }
     }
 
@@ -62,12 +63,10 @@ public struct DeserializeState
 {
     // Same countdown scheme as SerializeState.
     int remainingDepth;
-    readonly int maxDepth; // only for the exception message
 
     /// <summary>A raw-constructed state (maxDepth 0, e.g. direct formatter tests) is unlimited.</summary>
     public DeserializeState(int maxDepth)
     {
-        this.maxDepth = maxDepth;
         this.remainingDepth = maxDepth == 0 ? 0 : maxDepth + 1;
     }
 
@@ -76,7 +75,7 @@ public struct DeserializeState
     {
         if (--remainingDepth == 0)
         {
-            MessagePackSerializationException.ThrowDeserializeDepthExceeded(maxDepth);
+            MessagePackSerializationException.ThrowDeserializeDepthExceeded();
         }
     }
 

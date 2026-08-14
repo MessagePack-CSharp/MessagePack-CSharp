@@ -112,8 +112,9 @@ public sealed partial class ByteReadOnlySequenceFormatter<TWriteBuffer, TReadBuf
 }
 
 // special formatter to maintain compatibility due to bugs, https://github.com/MessagePack-CSharp/MessagePack-CSharp/issues/2134
-// List<byte> should be written in array-format, not bin (also for cross-language compatibility)
+// List<byte> is written in array-format from v1, not bin.
 // This is a workaround to read data that was mistakenly written in bin-format as List<byte> during a certain period in v3
+// Also, to keep compatibility with the serialize format up to v3, we will continue to use array-format.
 public sealed partial class ByteListFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, List<byte>?>
 {
     readonly ListFormatter<TWriteBuffer, TReadBuffer, byte> inner = new();

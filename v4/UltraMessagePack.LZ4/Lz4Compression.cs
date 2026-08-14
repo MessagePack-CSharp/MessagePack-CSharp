@@ -1,4 +1,4 @@
-// TODO: Since PayloadProcessor and NativeCompressions.LZ4 are both still incomplete
+// TODO: Since MessageProcessor and NativeCompressions.LZ4 are both still incomplete
 // this is a provisional implementation.
 // I'll verify basic behavior first and then move on to finalizing the API, so this code is not yet at the stage to be evaluated.
 
@@ -9,52 +9,52 @@ using static UltraMessagePack.MessagePackPrimitives;
 namespace UltraMessagePack;
 
 /// <summary>
-/// v3-compatible LZ4 envelopes as <see cref="MessagePackPayloadProcessor"/>s:
-/// Block = whole payload as one LZ4 block inside ext 99, BlockArray = one LZ4 block per
+/// v3-compatible LZ4 envelopes as <see cref="MessagePackMessageProcessor"/>s:
+/// Block = whole message as one LZ4 block inside ext 99, BlockArray = one LZ4 block per
 /// pooled write segment inside ext 98 (zero-copy on the uncompressed side — the
 /// serializer's segments map 1:1 to blocks). Reading is transparent for BOTH codes and
-/// passes non-enveloped payloads through, matching MessagePack-CSharp semantics.
-/// Payloads smaller than <see cref="Lz4PayloadProcessor.CompressionThreshold"/> are
-/// written unwrapped (compression of tiny messages is a pure loss), and payloads the
+/// passes non-enveloped messages through, matching MessagePack-CSharp semantics.
+/// Messages smaller than <see cref="Lz4MessageProcessor.CompressionThreshold"/> are
+/// written without an envelope (compression of tiny messages is a pure loss), and messages the
 /// codec fails to shrink (match-based LZ4 cannot compress patternless data) fall back
 /// to raw AFTER compressing — unlike MessagePack-CSharp, which ships the expanded
-/// envelope. Readers on either side handle raw payloads transparently.
+/// envelope. Readers on either side handle raw messages transparently.
 /// Codec: NativeCompressions.LZ4 (native lz4 binding). Compressed bytes are
 /// format-compatible with, but not byte-identical to, MessagePack-CSharp's K4os output —
 /// the cross-read tests in Lz4Tests are the compatibility contract.
 /// </summary>
 public static class Lz4Compression
 {
-    public static MessagePackPayloadProcessor Block { get; } = new Lz4BlockProcessor();
-    public static MessagePackPayloadProcessor BlockArray { get; } = new Lz4BlockArrayProcessor();
+    public static MessagePackMessageProcessor Block { get; } = new Lz4BlockProcessor();
+    public static MessagePackMessageProcessor BlockArray { get; } = new Lz4BlockArrayProcessor();
 }
 
 public static class Lz4MessagePackOptionsExtensions
 {
-    /// <summary>Options writing ext 99 (whole-payload block); shares this instance's resolver.</summary>
+    /// <summary>Options writing ext 99 (whole-message block); shares this instance's resolver.</summary>
     public static MessagePackSerializerOptions WithLz4Block(this MessagePackSerializerOptions options)
-        => options with { PayloadProcessor = Lz4Compression.Block };
+        => options with { MessageProcessor = Lz4Compression.Block };
 
     /// <summary>Options writing ext 98 (block per segment); shares this instance's resolver.</summary>
     public static MessagePackSerializerOptions WithLz4BlockArray(this MessagePackSerializerOptions options)
-        => options with { PayloadProcessor = Lz4Compression.BlockArray };
+        => options with { MessageProcessor = Lz4Compression.BlockArray };
 }
 
-public abstract class Lz4PayloadProcessor : MessagePackPayloadProcessor
+public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
 {
     // MessagePack-CSharp extension type codes (ThisLibraryExtensionTypeCode)
     private protected const sbyte Lz4BlockType = 99;
     private protected const sbyte Lz4BlockArrayType = 98;
 
-    /// <summary>Payloads below this many bytes are written without an envelope.</summary>
+    /// <summary>Messages below this many bytes are written without an envelope.</summary>
     public const int CompressionThreshold = 64;
 
     // ---- shared read side: both processors transparently read both codes ----
 
-    public sealed override bool TryUnwrap(ReadOnlySpan<byte> source, out UnwrappedPayload payload)
+    public sealed override bool TryDecode(ReadOnlySpan<byte> source, out DecodedMessage message)
     {
 
-        payload = default;
+        message = default;
 
         // ext 99: [0xd2 uncompressedLength][lz4 bytes]
         if (TryReadExtHeader(source, out var typeCode, out var dataLength, out var tokenSize) == DecodeResult.Success)
@@ -68,7 +68,7 @@ public abstract class Lz4PayloadProcessor : MessagePackPayloadProcessor
             {
                 Lz4Throws.InvalidEnvelope();
             }
-            payload = new UnwrappedPayload(DecodeBlock(data.Slice(intSize), uncompressedLength, out var rented), rented);
+            message = new DecodedMessage(DecodeBlock(data.Slice(intSize), uncompressedLength, out var rented), new RentedSingleOwner(rented));
             return true;
         }
 
@@ -78,7 +78,7 @@ public abstract class Lz4PayloadProcessor : MessagePackPayloadProcessor
             var rest = source.Slice(tokenSize);
             if (TryReadExtHeader(rest, out typeCode, out var sizesLength, out var extSize) != DecodeResult.Success || typeCode != Lz4BlockArrayType)
             {
-                return false; // a perfectly ordinary msgpack array payload
+                return false; // a perfectly ordinary msgpack array message
             }
 
             var blockCount = count - 1;
@@ -87,7 +87,7 @@ public abstract class Lz4PayloadProcessor : MessagePackPayloadProcessor
             var rentedBlocks = new byte[]?[blockCount];
             try
             {
-                Lz4PayloadSegment? first = null, last = null;
+                Lz4DecodedSegment? first = null, last = null;
                 for (int i = 0; i < blockCount; i++)
                 {
                     if (TryReadInt32(sizes, out var uncompressedLength, out var intSize) != DecodeResult.Success || uncompressedLength < 0)
@@ -103,7 +103,7 @@ public abstract class Lz4PayloadProcessor : MessagePackPayloadProcessor
                     var memory = DecodeBlockMemory(blocks.Slice(binSize, binLength), uncompressedLength, out rentedBlocks[i]);
                     blocks = blocks.Slice(binSize + binLength);
 
-                    var segment = new Lz4PayloadSegment(memory, last);
+                    var segment = new Lz4DecodedSegment(memory, last);
                     first ??= segment;
                     last = segment;
                 }
@@ -111,7 +111,7 @@ public abstract class Lz4PayloadProcessor : MessagePackPayloadProcessor
                 var sequence = first == null
                     ? ReadOnlySequence<byte>.Empty
                     : new ReadOnlySequence<byte>(first, 0, last!, last!.Memory.Length);
-                payload = new UnwrappedPayload(sequence, rentedMany: rentedBlocks);
+                message = new DecodedMessage(sequence, new RentedManyOwner(rentedBlocks));
                 return true;
             }
             catch
@@ -125,6 +125,56 @@ public abstract class Lz4PayloadProcessor : MessagePackPayloadProcessor
         }
 
         return false;
+    }
+
+    public sealed override bool TryDecode(in ReadOnlySequence<byte> source, out DecodedMessage message)
+    {
+        if (source.IsSingleSegment)
+        {
+            return TryDecode(source.FirstSpan, out message);
+        }
+
+        // identify non-envelopes from a stitched header prefix first: passthrough input
+        // must never pay a whole-message flatten just to be recognized
+        Span<byte> prefix = stackalloc byte[MaxEnvelopeHeaderLength];
+        var prefixLength = (int)Math.Min(source.Length, MaxEnvelopeHeaderLength);
+        source.Slice(0, prefixLength).CopyTo(prefix);
+        if (!IsEnvelopeHeader(prefix.Slice(0, prefixLength)))
+        {
+            message = default;
+            return false;
+        }
+
+        // our envelope: flatten and reuse the span logic (LZ4 block decompression needs
+        // contiguous compressed bytes anyway; per-block stitching for ext 98 could avoid
+        // the whole-message flatten, deferred until demanded)
+        var length = checked((int)source.Length);
+        var flat = ArrayPool<byte>.Shared.Rent(length);
+        try
+        {
+            source.CopyTo(flat);
+            return TryDecode(flat.AsSpan(0, length), out message);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(flat);
+        }
+    }
+
+    // array32 header (5) + ext32 header (6): a prefix this long always yields a
+    // definitive envelope verdict, and a shorter prefix is the whole message
+    const int MaxEnvelopeHeaderLength = 11;
+
+    static bool IsEnvelopeHeader(ReadOnlySpan<byte> prefix)
+    {
+        if (TryReadExtHeader(prefix, out var typeCode, out _, out var tokenSize) == DecodeResult.Success)
+        {
+            return typeCode == Lz4BlockType;
+        }
+        return TryReadArrayHeader(prefix, out var count, out tokenSize) == DecodeResult.Success
+            && count >= 1
+            && TryReadExtHeader(prefix.Slice(tokenSize), out typeCode, out _, out _) == DecodeResult.Success
+            && typeCode == Lz4BlockArrayType;
     }
 
     static ReadOnlySequence<byte> DecodeBlock(ReadOnlySpan<byte> lz4, int uncompressedLength, out byte[]? rented)
@@ -153,11 +203,11 @@ public abstract class Lz4PayloadProcessor : MessagePackPayloadProcessor
 
     // ---- shared write-side helpers ----
 
-    private protected static byte[] Passthrough(ArrayPoolListWriteBuffer.WrittenSegmentIterator payload, long payloadLength)
+    private protected static byte[] Passthrough(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, long messageLength)
     {
-        var result = GC.AllocateUninitializedArray<byte>(checked((int)payloadLength));
+        var result = GC.AllocateUninitializedArray<byte>(checked((int)messageLength));
         var offset = 0;
-        while (payload.TryGetNext(out var segment))
+        while (message.TryGetNext(out var segment))
         {
             segment.CopyTo(result.AsSpan(offset));
             offset += segment.Length;
@@ -165,17 +215,17 @@ public abstract class Lz4PayloadProcessor : MessagePackPayloadProcessor
         return result;
     }
 
-    private protected static void Passthrough(ArrayPoolListWriteBuffer.WrittenSegmentIterator payload, IBufferWriter<byte> output)
+    private protected static void Passthrough(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, IBufferWriter<byte> output)
     {
-        while (payload.TryGetNext(out var segment))
+        while (message.TryGetNext(out var segment))
         {
             output.Write(segment);
         }
     }
 
-    sealed class Lz4PayloadSegment : ReadOnlySequenceSegment<byte>
+    sealed class Lz4DecodedSegment : ReadOnlySequenceSegment<byte>
     {
-        public Lz4PayloadSegment(ReadOnlyMemory<byte> memory, Lz4PayloadSegment? previous)
+        public Lz4DecodedSegment(ReadOnlyMemory<byte> memory, Lz4DecodedSegment? previous)
         {
             Memory = memory;
             if (previous != null)
@@ -185,23 +235,70 @@ public abstract class Lz4PayloadProcessor : MessagePackPayloadProcessor
             }
         }
     }
+
+    // DecodedMessage owners: release exactly once even if the message struct is copied
+    // and disposed twice, by nulling the pooled references on the first call
+
+    sealed class RentedSingleOwner : IDisposable
+    {
+        byte[]? array;
+
+        public RentedSingleOwner(byte[]? array)
+        {
+            this.array = array;
+        }
+
+        public void Dispose()
+        {
+            if (array != null)
+            {
+                ArrayPool<byte>.Shared.Return(array);
+                array = null;
+            }
+        }
+    }
+
+    sealed class RentedManyOwner : IDisposable
+    {
+        byte[]?[]? arrays;
+
+        public RentedManyOwner(byte[]?[] arrays)
+        {
+            this.arrays = arrays;
+        }
+
+        public void Dispose()
+        {
+            if (arrays != null)
+            {
+                foreach (var array in arrays)
+                {
+                    if (array != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(array);
+                    }
+                }
+                arrays = null;
+            }
+        }
+    }
 }
 
-/// <summary>Whole payload as a single LZ4 block: ext 99 { int32 uncompressedLength, lz4 }.</summary>
-public sealed class Lz4BlockProcessor : Lz4PayloadProcessor
+/// <summary>Whole message as a single LZ4 block: ext 99 { int32 uncompressedLength, lz4 }.</summary>
+public sealed class Lz4BlockProcessor : Lz4MessageProcessor
 {
-    public override byte[] Wrap(ArrayPoolListWriteBuffer.WrittenSegmentIterator payload, long payloadLength)
+    public override byte[] Encode(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, long messageLength)
     {
-        if (payloadLength < CompressionThreshold)
+        if (messageLength < CompressionThreshold)
         {
-            return Passthrough(payload, payloadLength);
+            return Passthrough(message, messageLength);
         }
-        var (rented, start, length) = WrapCore(payload, checked((int)payloadLength));
+        var (rented, start, length) = EncodeCore(message, checked((int)messageLength));
         try
         {
-            if (length >= payloadLength)
+            if (length >= messageLength)
             {
-                return Passthrough(payload, payloadLength); // incompressible: raw is smaller and readers accept it transparently
+                return Passthrough(message, messageLength); // incompressible: raw is smaller and readers accept it transparently
             }
             return rented.AsSpan(start, length).ToArray();
         }
@@ -211,19 +308,19 @@ public sealed class Lz4BlockProcessor : Lz4PayloadProcessor
         }
     }
 
-    public override void Wrap(ArrayPoolListWriteBuffer.WrittenSegmentIterator payload, long payloadLength, IBufferWriter<byte> output)
+    public override void Encode(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, long messageLength, IBufferWriter<byte> output)
     {
-        if (payloadLength < CompressionThreshold)
+        if (messageLength < CompressionThreshold)
         {
-            Passthrough(payload, output);
+            Passthrough(message, output);
             return;
         }
-        var (rented, start, length) = WrapCore(payload, checked((int)payloadLength));
+        var (rented, start, length) = EncodeCore(message, checked((int)messageLength));
         try
         {
-            if (length >= payloadLength)
+            if (length >= messageLength)
             {
-                Passthrough(payload, output);
+                Passthrough(message, output);
                 return;
             }
             output.Write(rented.AsSpan(start, length));
@@ -236,15 +333,15 @@ public sealed class Lz4BlockProcessor : Lz4PayloadProcessor
 
     const int MaxHeaderLength = 6 /* ext header */ + 5 /* forced int32 length prefix */;
 
-    static (byte[] Rented, int Start, int Length) WrapCore(ArrayPoolListWriteBuffer.WrittenSegmentIterator payload, int payloadLength)
+    static (byte[] Rented, int Start, int Length) EncodeCore(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, int messageLength)
     {
-        // a single block needs the uncompressed payload contiguous; flatten segments into
-        // a rented buffer (inherent to the whole-payload mode, BlockArray avoids it)
-        var flat = ArrayPool<byte>.Shared.Rent(payloadLength);
+        // a single block needs the uncompressed message contiguous; flatten segments into
+        // a rented buffer (inherent to the whole-message mode, BlockArray avoids it)
+        var flat = ArrayPool<byte>.Shared.Rent(messageLength);
         try
         {
             var offset = 0;
-            while (payload.TryGetNext(out var segment))
+            while (message.TryGetNext(out var segment))
             {
                 segment.CopyTo(flat.AsSpan(offset));
                 offset += segment.Length;
@@ -252,8 +349,8 @@ public sealed class Lz4BlockProcessor : Lz4PayloadProcessor
 
             // encode at the max-header offset, then right-align the header so envelope and
             // block end up contiguous: [start .. 11) header, [11 ..) lz4 bytes
-            var rented = ArrayPool<byte>.Shared.Rent(MaxHeaderLength + LZ4.Block.GetMaxCompressedLength(payloadLength));
-            var lz4Length = LZ4.Block.Compress(flat.AsSpan(0, payloadLength), rented.AsSpan(MaxHeaderLength));
+            var rented = ArrayPool<byte>.Shared.Rent(MaxHeaderLength + LZ4.Block.GetMaxCompressedLength(messageLength));
+            var lz4Length = LZ4.Block.Compress(flat.AsSpan(0, messageLength), rented.AsSpan(MaxHeaderLength));
             if (lz4Length <= 0) // native LZ4_compress_default reports failure as 0
             {
                 Lz4Throws.InvalidEnvelope(); // cannot happen with a GetMaxCompressedLength-sized target
@@ -261,7 +358,7 @@ public sealed class Lz4BlockProcessor : Lz4PayloadProcessor
 
             Span<byte> header = stackalloc byte[MaxHeaderLength];
             var headerLength = UnsafeWriteExtHeader(ref header[0], Lz4BlockType, 5 + lz4Length);
-            headerLength += UnsafeWriteForcedInt32(ref header[headerLength], payloadLength);
+            headerLength += UnsafeWriteForcedInt32(ref header[headerLength], messageLength);
             var start = MaxHeaderLength - headerLength;
             header.Slice(0, headerLength).CopyTo(rented.AsSpan(start));
             return (rented, start, headerLength + lz4Length);
@@ -274,20 +371,20 @@ public sealed class Lz4BlockProcessor : Lz4PayloadProcessor
 }
 
 /// <summary>One LZ4 block per write segment: [array n+1][ext 98: sizes][bin lz4]...</summary>
-public sealed class Lz4BlockArrayProcessor : Lz4PayloadProcessor
+public sealed class Lz4BlockArrayProcessor : Lz4MessageProcessor
 {
-    public override byte[] Wrap(ArrayPoolListWriteBuffer.WrittenSegmentIterator payload, long payloadLength)
+    public override byte[] Encode(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, long messageLength)
     {
-        if (payloadLength < CompressionThreshold)
+        if (messageLength < CompressionThreshold)
         {
-            return Passthrough(payload, payloadLength);
+            return Passthrough(message, messageLength);
         }
-        var (rented, written) = WrapCore(payload);
+        var (rented, written) = EncodeCore(message);
         try
         {
-            if (written >= payloadLength)
+            if (written >= messageLength)
             {
-                return Passthrough(payload, payloadLength); // incompressible: raw is smaller and readers accept it transparently
+                return Passthrough(message, messageLength); // incompressible: raw is smaller and readers accept it transparently
             }
             return rented.AsSpan(0, written).ToArray();
         }
@@ -297,19 +394,19 @@ public sealed class Lz4BlockArrayProcessor : Lz4PayloadProcessor
         }
     }
 
-    public override void Wrap(ArrayPoolListWriteBuffer.WrittenSegmentIterator payload, long payloadLength, IBufferWriter<byte> output)
+    public override void Encode(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, long messageLength, IBufferWriter<byte> output)
     {
-        if (payloadLength < CompressionThreshold)
+        if (messageLength < CompressionThreshold)
         {
-            Passthrough(payload, output);
+            Passthrough(message, output);
             return;
         }
-        var (rented, written) = WrapCore(payload);
+        var (rented, written) = EncodeCore(message);
         try
         {
-            if (written >= payloadLength)
+            if (written >= messageLength)
             {
-                Passthrough(payload, output);
+                Passthrough(message, output);
                 return;
             }
             output.Write(rented.AsSpan(0, written));
@@ -320,10 +417,10 @@ public sealed class Lz4BlockArrayProcessor : Lz4PayloadProcessor
         }
     }
 
-    static (byte[] Rented, int Written) WrapCore(ArrayPoolListWriteBuffer.WrittenSegmentIterator payload)
+    static (byte[] Rented, int Written) EncodeCore(ArrayPoolListWriteBuffer.WrittenSegmentIterator message)
     {
         // pass 1: count segments and total worst-case size (segments are at most 17)
-        var counting = payload;
+        var counting = message;
         var blockCount = 0;
         long maxTotal = 0;
         while (counting.TryGetNext(out var segment))
@@ -340,14 +437,14 @@ public sealed class Lz4BlockArrayProcessor : Lz4PayloadProcessor
         // [array n+1][ext 98 { int32 sizes... }]
         offset += UnsafeWriteArrayHeader(ref span[0], blockCount + 1);
         offset += UnsafeWriteExtHeader(ref span[offset], Lz4BlockArrayType, 5 * blockCount);
-        var sizing = payload;
+        var sizing = message;
         while (sizing.TryGetNext(out var segment))
         {
             offset += UnsafeWriteForcedInt32(ref span[offset], segment.Length);
         }
 
         // [bin lz4block]...
-        while (payload.TryGetNext(out var segment))
+        while (message.TryGetNext(out var segment))
         {
             var lz4Length = LZ4.Block.Compress(segment, span.Slice(offset + 5));
             if (lz4Length <= 0) // native LZ4_compress_default reports failure as 0

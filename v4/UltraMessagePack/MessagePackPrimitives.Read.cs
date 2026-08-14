@@ -1,3 +1,5 @@
+// TODO: still not fully reviewed.
+
 using SerializerFoundation;
 using System.Buffers.Binary;
 using System.Text;
@@ -56,27 +58,27 @@ public static partial class MessagePackPrimitives
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static ushort UnsafeReadUInt16BigEndian(ReadOnlySpan<byte> source, int offset)
-        => BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ushort>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), offset)));
+        => MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ushort>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), offset)));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static uint UnsafeReadUInt32BigEndian(ReadOnlySpan<byte> source, int offset)
-        => BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), offset)));
+        => MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), offset)));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static ulong UnsafeReadUInt64BigEndian(ReadOnlySpan<byte> source, int offset)
-        => BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), offset)));
+        => MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), offset)));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static short UnsafeReadInt16BigEndian(ReadOnlySpan<byte> source, int offset)
-        => BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<short>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), offset)));
+        => MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<short>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), offset)));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static int UnsafeReadInt32BigEndian(ReadOnlySpan<byte> source, int offset)
-        => BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), offset)));
+        => MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<int>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), offset)));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static long UnsafeReadInt64BigEndian(ReadOnlySpan<byte> source, int offset)
-        => BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), offset)));
+        => MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), offset)));
 
     #endregion
 
@@ -164,12 +166,21 @@ public static partial class MessagePackPrimitives
 
             if ((e & 0xf) == 9) // compare length
             {
-                // this is rare-path so branch-prediction does not miss here
-                return TryReadInt32NineByteToken(source, out value, out tokenSize);
+                // Rare path (branch prediction does not miss here), called with TEMPS
+                // copied to the real outs after: passing the hot outs by address to a
+                // NoInlining callee marks them address-exposed, which de-enregisters
+                // them on the FAST path too (enregistration is all-or-nothing per
+                // local) — splitting alone measured 0.81x on the 5-byte table path
+                // (ColdCallOutParamBenchmark). Same shape at every NoInlining call in
+                // this file.
+                var nineResult = TryReadInt32NineByteToken(source, out var nineValue, out var nineSize);
+                value = nineValue;
+                tokenSize = nineSize;
+                return nineResult;
             }
 
             // unconditional 4-byte big-endian payload load, right-aligned per the entry
-            uint p = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref s, 1)));
+            uint p = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref s, 1)));
             uint sel = p >> (int)((e >> 4) & 0x3f);
             int ext = (int)((e >> 10) & 0x3f);
             long v = ((long)sel << ext) >> ext;
@@ -193,8 +204,9 @@ public static partial class MessagePackPrimitives
             // requirement, NOT TokenMismatch: a wide-encoded value may well fit int32 once
             // the rest arrives, and sequence/async readers rely on the Ensure-and-retry
             // contract at segment boundaries.
-            var r = TryReadInt64ShortBuffer(source, out long v, out tokenSize);
+            var r = TryReadInt64ShortBuffer(source, out long v, out var slowSize);
             value = (int)v;
+            tokenSize = slowSize;
             return r;
         }
 
@@ -252,7 +264,7 @@ public static partial class MessagePackPrimitives
                 return DecodeResult.TokenMismatch;
             }
             uint e = Unsafe.Add(ref MemoryMarshal.GetReference(Int64ReadTable), (int)fmt);
-            ulong p = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref s, 1)));
+            ulong p = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref s, 1)));
             ulong sel = p >> (int)((e >> 4) & 0x3f);
             int ext = (int)((e >> 10) & 0x3f);
             long v = ((long)sel << ext) >> ext;
@@ -264,7 +276,11 @@ public static partial class MessagePackPrimitives
             tokenSize = ok ? len : 0;
             return ok ? DecodeResult.Success : DecodeResult.TokenMismatch;
         }
-        return TryReadInt64ShortBuffer(source, out value, out tokenSize);
+        // temps, not the hot outs — see TryReadInt32's slow-call note
+        var slowResult = TryReadInt64ShortBuffer(source, out var slowValue, out var slowSize);
+        value = slowValue;
+        tokenSize = slowSize;
+        return slowResult;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -381,9 +397,15 @@ public static partial class MessagePackPrimitives
                 return DecodeResult.TokenMismatch;
             }
             uint e = Unsafe.Add(ref MemoryMarshal.GetReference(Int32ReadTable), (int)fmt);
-            if ((e & 0xf) == 9) return NineByteToken(source, max, out value, out tokenSize);
+            if ((e & 0xf) == 9)
+            {
+                var nineResult = NineByteToken(source, max, out var nineValue, out var nineSize);
+                value = nineValue;
+                tokenSize = nineSize;
+                return nineResult;
+            }
 
-            uint p = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref s, 1)));
+            uint p = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref s, 1)));
             uint sel = p >> (int)((e >> 4) & 0x3f);
             int ext = (int)((e >> 10) & 0x3f);
             long v = ((long)sel << ext) >> ext;
@@ -397,7 +419,8 @@ public static partial class MessagePackPrimitives
         // Length < 5: Success from the shared cascade comes from <= 3-byte formats
         // (<= 65535) — that can still exceed a byte target, so fit-check it; the 5- and
         // 9-byte formats report their exact requirement as InsufficientBuffer
-        var r = TryReadUInt64ShortBuffer(source, out ulong wide, out tokenSize);
+        var r = TryReadUInt64ShortBuffer(source, out ulong wide, out var slowSize);
+        tokenSize = slowSize;
         value = unchecked((uint)wide);
         if (r == DecodeResult.Success && wide > max)
         {
@@ -456,9 +479,15 @@ public static partial class MessagePackPrimitives
                 return DecodeResult.TokenMismatch;
             }
             uint e = Unsafe.Add(ref MemoryMarshal.GetReference(Int32ReadTable), (int)fmt);
-            if ((e & 0xf) == 9) return NineByteToken(source, min, max, out value, out tokenSize);
+            if ((e & 0xf) == 9)
+            {
+                var nineResult = NineByteToken(source, min, max, out var nineValue, out var nineSize);
+                value = nineValue;
+                tokenSize = nineSize;
+                return nineResult;
+            }
 
-            uint p = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref s, 1)));
+            uint p = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref s, 1)));
             uint sel = p >> (int)((e >> 4) & 0x3f);
             int ext = (int)((e >> 10) & 0x3f);
             long v = ((long)sel << ext) >> ext;
@@ -471,7 +500,8 @@ public static partial class MessagePackPrimitives
 
         // Length < 5: Success from the shared cascade comes from <= 3-byte formats
         // ([-32768, 65535]) — can exceed either bound of a narrow target, so fit-check
-        var r = TryReadInt64ShortBuffer(source, out long wideV, out tokenSize);
+        var r = TryReadInt64ShortBuffer(source, out long wideV, out var slowSize);
+        tokenSize = slowSize;
         value = unchecked((int)wideV);
         if (r == DecodeResult.Success && (ulong)(wideV - min) > (ulong)(max - min))
         {
@@ -534,7 +564,7 @@ public static partial class MessagePackPrimitives
             // value), while every other format must decode non-negative. The Int64 target
             // reads the same flag the other way around ("cf must be non-negative").
             uint e = Unsafe.Add(ref MemoryMarshal.GetReference(Int64ReadTable), (int)fmt);
-            ulong p = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref s, 1)));
+            ulong p = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref s, 1)));
             ulong sel = p >> (int)((e >> 4) & 0x3f);
             int ext = (int)((e >> 10) & 0x3f);
             long v = ((long)sel << ext) >> ext;
@@ -545,7 +575,10 @@ public static partial class MessagePackPrimitives
             return ok ? DecodeResult.Success : DecodeResult.TokenMismatch;
         }
 
-        return TryReadUInt64ShortBuffer(source, out value, out tokenSize);
+        var slowResult = TryReadUInt64ShortBuffer(source, out var slowValue, out var slowSize);
+        value = slowValue;
+        tokenSize = slowSize;
+        return slowResult;
     }
 
     // careful byte-by-byte path for source shorter than the unconditional-load window
@@ -683,7 +716,10 @@ public static partial class MessagePackPrimitives
                 return DecodeResult.Success;
             }
         }
-        return Rare(source, out value, out tokenSize);
+        var rareResult = Rare(source, out var rareValue, out var rareSize);
+        value = rareValue;
+        tokenSize = rareSize;
+        return rareResult;
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         static DecodeResult Rare(ReadOnlySpan<byte> source, out byte value, out int tokenSize)
@@ -715,7 +751,10 @@ public static partial class MessagePackPrimitives
                 return DecodeResult.Success;
             }
         }
-        return Rare(source, out value, out tokenSize);
+        var rareResult = Rare(source, out var rareValue, out var rareSize);
+        value = rareValue;
+        tokenSize = rareSize;
+        return rareResult;
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         static DecodeResult Rare(ReadOnlySpan<byte> source, out sbyte value, out int tokenSize)
@@ -774,9 +813,15 @@ public static partial class MessagePackPrimitives
                 return DecodeResult.TokenMismatch;
             }
             uint e = Unsafe.Add(ref MemoryMarshal.GetReference(Narrow16ReadTable), (int)fmt);
-            if (e == 0) return Bridge(source, min, max, out value, out tokenSize);
+            if (e == 0)
+            {
+                var wideResult = Bridge(source, min, max, out var wideValue, out var wideSize);
+                value = wideValue;
+                tokenSize = wideSize;
+                return wideResult;
+            }
 
-            uint p = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ushort>(ref Unsafe.Add(ref s, 1)));
+            uint p = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ushort>(ref Unsafe.Add(ref s, 1)));
             uint sel = p >> (int)((e >> 4) & 0x3f);
             int ext = (int)((e >> 10) & 0x3f);
             long v = ((long)sel << ext) >> ext;
@@ -787,7 +832,10 @@ public static partial class MessagePackPrimitives
             return ok ? DecodeResult.Success : DecodeResult.TokenMismatch;
         }
 
-        return Bridge(source, min, max, out value, out tokenSize);
+        var tailResult = Bridge(source, min, max, out var tailValue, out var tailSize);
+        value = tailValue;
+        tokenSize = tailSize;
+        return tailResult;
 
         // Wide encodings and short windows decide cold in the gate-5 signed core. Safe
         // for the ushort bounds too: the ONLY place TryReadSignedCore skips the bias
@@ -896,11 +944,14 @@ public static partial class MessagePackPrimitives
             // length check survives as cmp+jl+throw block and forces a stack frame
             // (probe asm 93B). The unchecked read below is what the gate already paid
             // for: 54B, frameless, one movbe load straight off the code byte.
-            value = BitConverter.UInt32BitsToSingle(BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), 1))));
+            value = BitConverter.UInt32BitsToSingle(MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), 1))));
             tokenSize = 5;
             return DecodeResult.Success;
         }
-        return TryReadSingleSlow(source, out value, out tokenSize);
+        var slowResult = TryReadSingleSlow(source, out var slowValue, out var slowSize);
+        value = slowValue;
+        tokenSize = slowSize;
+        return slowResult;
 
         // COMPAT arms, not perf paths: data written as double/int read into a float field
         // (schema drift, foreign writers). Even then each field's encoding class is stable,
@@ -960,11 +1011,14 @@ public static partial class MessagePackPrimitives
         {
             // unchecked read for the same reason as TryReadSingle: the checked
             // BinaryPrimitives path keeps its internal length check despite the gate
-            value = BitConverter.UInt64BitsToDouble(BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), 1))));
+            value = BitConverter.UInt64BitsToDouble(MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), 1))));
             tokenSize = 9;
             return DecodeResult.Success;
         }
-        return TryReadDoubleSlow(source, out value, out tokenSize);
+        var slowResult = TryReadDoubleSlow(source, out var slowValue, out var slowSize);
+        value = slowValue;
+        tokenSize = slowSize;
+        return slowResult;
 
         // compat arms + the hot gate's truncated-Float64 tail; see TryReadSingleSlow
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -1033,7 +1087,10 @@ public static partial class MessagePackPrimitives
                 return DecodeResult.Success;
             }
         }
-        return TryReadArrayHeaderSlow(source, out count, out tokenSize);
+        var slowResult = TryReadArrayHeaderSlow(source, out var slowCount, out var slowSize);
+        count = slowCount;
+        tokenSize = slowSize;
+        return slowResult;
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         static DecodeResult TryReadArrayHeaderSlow(ReadOnlySpan<byte> source, out int count, out int tokenSize)
@@ -1102,7 +1159,10 @@ public static partial class MessagePackPrimitives
                 return DecodeResult.Success;
             }
         }
-        return TryReadMapHeaderSlow(source, out count, out tokenSize);
+        var slowResult = TryReadMapHeaderSlow(source, out var slowCount, out var slowSize);
+        count = slowCount;
+        tokenSize = slowSize;
+        return slowResult;
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         static DecodeResult TryReadMapHeaderSlow(ReadOnlySpan<byte> source, out int count, out int tokenSize)
@@ -1162,7 +1222,10 @@ public static partial class MessagePackPrimitives
                 return DecodeResult.Success;
             }
         }
-        return TryReadStringHeaderSlow(source, out byteCount, out tokenSize);
+        var slowResult = TryReadStringHeaderSlow(source, out var slowByteCount, out var slowSize);
+        byteCount = slowByteCount;
+        tokenSize = slowSize;
+        return slowResult;
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         static DecodeResult TryReadStringHeaderSlow(ReadOnlySpan<byte> source, out int byteCount, out int tokenSize)
@@ -1339,6 +1402,183 @@ public static partial class MessagePackPrimitives
         }
     }
 
+    // TryReadToken's single-byte-token table: bit0 = the code is a complete one-byte
+    // token, bits1-5 = payloadLength (numeric bodies, capped at fixstr's 31), bits6-10 =
+    // childValueCount (fixmap entries pre-doubled). Zero = multi-byte header or 0xc1,
+    // resolved by the slow path. fixint and fixstr stay ahead of the lookup as
+    // pure-arithmetic branches: deriving even a constant tokenSize from a load puts the
+    // L1 latency into the scanner's index chain (table-only decode measured 1.22x on
+    // fixint-dense streams — TokenScanBenchmark), while a predicted branch is free.
+    static ReadOnlySpan<ushort> SingleByteTokenTable =>
+    [
+        0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
+        0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
+        0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
+        0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
+        0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
+        0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
+        0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
+        0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
+        0x0001, 0x0081, 0x0101, 0x0181, 0x0201, 0x0281, 0x0301, 0x0381, 0x0401, 0x0481, 0x0501, 0x0581, 0x0601, 0x0681, 0x0701, 0x0781,
+        0x0001, 0x0041, 0x0081, 0x00c1, 0x0101, 0x0141, 0x0181, 0x01c1, 0x0201, 0x0241, 0x0281, 0x02c1, 0x0301, 0x0341, 0x0381, 0x03c1,
+        0x0001, 0x0003, 0x0005, 0x0007, 0x0009, 0x000b, 0x000d, 0x000f, 0x0011, 0x0013, 0x0015, 0x0017, 0x0019, 0x001b, 0x001d, 0x001f,
+        0x0021, 0x0023, 0x0025, 0x0027, 0x0029, 0x002b, 0x002d, 0x002f, 0x0031, 0x0033, 0x0035, 0x0037, 0x0039, 0x003b, 0x003d, 0x003f,
+        0x0001, 0x0000, 0x0001, 0x0001, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0009, 0x0011, 0x0003, 0x0005, 0x0009, 0x0011,
+        0x0003, 0x0005, 0x0009, 0x0011, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+        0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
+        0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
+    ];
+
+    /// <summary>
+    /// Reads one token structurally, without decoding its value.
+    /// The building block for skip/boundary scanning; for skipping within a buffer, use the ReadBufferExtensions.Skip() instead.
+    /// </summary>
+    /// <param name="payloadLength">Opaque bytes that follow the token (str/bin/ext payloads and numeric bodies); skip them without inspection.</param>
+    /// <param name="childValueCount">Number of values an array/map opens (map entries count as two); each is a token of its own.</param>
+    /// <param name="tokenSize">The token itself: the code byte, length fields, and the ext type byte.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DecodeResult TryReadToken(ReadOnlySpan<byte> source, out long payloadLength, out long childValueCount, out int tokenSize)
+    {
+        // Three-tier fast path, all yielding tokenSize 1: fixint branch (constant outs,
+        // no load), fixstr branch (payload = code & 31 — the dominant non-fixint token
+        // in object streams: map keys, short strings), then the table for every other
+        // one-byte token (fixmap/fixarray/nil/bool/numeric bodies). Only multi-byte
+        // headers (str8+/bin/ext/array16+/map16+) and 0xc1 fall through to the slow
+        // tail, which is itself inlined (see its comment). Measured on the
+        // boundary-scan loop vs the v1 fixint-only-fast-path-plus-cold-call shape:
+        // 0.55x on object streams, 0.80x on adversarial token mixes, 0.69x on
+        // fixint-dense arrays (TokenScanBenchmark rounds 1-4).
+        //
+        // Unlike the int-target header readers above, the long outputs always fit a u32
+        // length/count, so no well-formed token folds into TokenMismatch here; the only
+        // mismatch is the never-used code 0xc1. That keeps the walk total over spec-legal
+        // data whose payload has not arrived yet (a streaming scanner must accept a 4GB
+        // bin32 claim as data-to-come, not as an error).
+        if (!source.IsEmpty)
+        {
+            byte code0 = source[0];
+            if ((byte)(code0 + 32) <= 159) // positive/negative fixint, folded form
+            {
+                payloadLength = 0;
+                childValueCount = 0;
+                tokenSize = 1;
+                return DecodeResult.Success;
+            }
+            if ((byte)(code0 - MessagePackCode.MinFixStr) < 0x20) // fixstr 101x_xxxx
+            {
+                payloadLength = code0 & 0b0001_1111;
+                childValueCount = 0;
+                tokenSize = 1;
+                return DecodeResult.Success;
+            }
+            uint entry = SingleByteTokenTable[code0];
+            if ((entry & 1) != 0)
+            {
+                payloadLength = (entry >> 1) & 31;
+                childValueCount = entry >> 6;
+                tokenSize = 1;
+                return DecodeResult.Success;
+            }
+        }
+        return TryReadTokenSlow(source, out payloadLength, out childValueCount, out tokenSize);
+
+        // Only what the fast path's three tiers decline arrives here: the multi-byte
+        // headers below, the never-used 0xc1, and an empty source. Every single-byte
+        // token already returned above, so no case for them exists — the default arm
+        // means 0xc1 only while that stays true (keep in sync with
+        // SingleByteTokenTable). Not rare-rare: every str8/str16/array16 header in a
+        // scan lands here.
+        //
+        // AggressiveInlining, deliberately, despite being the cold path: a residual
+        // call takes the out params by address, which forces payloadLength/child/size
+        // into stack slots ON THE FAST PATH too (the enregistration is all-or-nothing
+        // per local). Fully inlined, everything stays in registers: measured 0.69x on
+        // fixint-dense, 0.80x adversarial-mixed, 0.55x object streams vs the
+        // NoInlining shape (TokenScanBenchmark FullyInlined). The only real caller is
+        // MessagePackBoundaryScanner.ScanTokens (2 sites), so the size cost is
+        // contained.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static DecodeResult TryReadTokenSlow(ReadOnlySpan<byte> source, out long payloadLength, out long childValueCount, out int tokenSize)
+        {
+            payloadLength = 0;
+            childValueCount = 0;
+            if (source.IsEmpty)
+            {
+                tokenSize = 1;
+                return DecodeResult.InsufficientBuffer;
+            }
+            byte code = source[0];
+            switch (code)
+            {
+                case MessagePackCode.FixExt1:
+                case MessagePackCode.FixExt2:
+                case MessagePackCode.FixExt4:
+                case MessagePackCode.FixExt8:
+                case MessagePackCode.FixExt16:
+                    tokenSize = 2;
+                    if (source.Length < 2) return DecodeResult.InsufficientBuffer;
+                    payloadLength = 1 << (code - MessagePackCode.FixExt1);
+                    return DecodeResult.Success;
+                case MessagePackCode.Str8:
+                case MessagePackCode.Bin8:
+                    tokenSize = 2;
+                    if (source.Length < 2) return DecodeResult.InsufficientBuffer;
+                    payloadLength = source[1];
+                    return DecodeResult.Success;
+                case MessagePackCode.Str16:
+                case MessagePackCode.Bin16:
+                    tokenSize = 3;
+                    if (source.Length < 3) return DecodeResult.InsufficientBuffer;
+                    payloadLength = UnsafeReadUInt16BigEndian(source, 1);
+                    return DecodeResult.Success;
+                case MessagePackCode.Str32:
+                case MessagePackCode.Bin32:
+                    tokenSize = 5;
+                    if (source.Length < 5) return DecodeResult.InsufficientBuffer;
+                    payloadLength = UnsafeReadUInt32BigEndian(source, 1);
+                    return DecodeResult.Success;
+                case MessagePackCode.Ext8:
+                    tokenSize = 3;
+                    if (source.Length < 3) return DecodeResult.InsufficientBuffer;
+                    payloadLength = source[1];
+                    return DecodeResult.Success;
+                case MessagePackCode.Ext16:
+                    tokenSize = 4;
+                    if (source.Length < 4) return DecodeResult.InsufficientBuffer;
+                    payloadLength = UnsafeReadUInt16BigEndian(source, 1);
+                    return DecodeResult.Success;
+                case MessagePackCode.Ext32:
+                    tokenSize = 6;
+                    if (source.Length < 6) return DecodeResult.InsufficientBuffer;
+                    payloadLength = UnsafeReadUInt32BigEndian(source, 1);
+                    return DecodeResult.Success;
+                case MessagePackCode.Array16:
+                    tokenSize = 3;
+                    if (source.Length < 3) return DecodeResult.InsufficientBuffer;
+                    childValueCount = UnsafeReadUInt16BigEndian(source, 1);
+                    return DecodeResult.Success;
+                case MessagePackCode.Array32:
+                    tokenSize = 5;
+                    if (source.Length < 5) return DecodeResult.InsufficientBuffer;
+                    childValueCount = UnsafeReadUInt32BigEndian(source, 1);
+                    return DecodeResult.Success;
+                case MessagePackCode.Map16:
+                    tokenSize = 3;
+                    if (source.Length < 3) return DecodeResult.InsufficientBuffer;
+                    childValueCount = 2L * UnsafeReadUInt16BigEndian(source, 1);
+                    return DecodeResult.Success;
+                case MessagePackCode.Map32:
+                    tokenSize = 5;
+                    if (source.Length < 5) return DecodeResult.InsufficientBuffer;
+                    childValueCount = 2L * UnsafeReadUInt32BigEndian(source, 1);
+                    return DecodeResult.Success;
+                default: // 0xc1 (never used)
+                    tokenSize = 0;
+                    return DecodeResult.TokenMismatch;
+            }
+        }
+    }
+
     // seconds range representable by DateTime (0001-01-01 .. 9999-12-31 23:59:59), relative to unix epoch
     const long MinTimestampSeconds = -BclSecondsAtUnixEpoch;
     const long MaxTimestampSeconds = 253402300799; // DateTime.MaxValue.Ticks / TicksPerSecond - BclSecondsAtUnixEpoch
@@ -1367,7 +1607,7 @@ public static partial class MessagePackPrimitives
             if (head == ts64Head && source.Length >= 10)
             {
                 // timestamp 64: [nanoseconds in 30-bit | seconds in 34-bit]
-                ulong data64 = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref s, 2)));
+                ulong data64 = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref s, 2)));
                 long nanoseconds = (long)(data64 >> 34);
                 long seconds = (long)(data64 & 0x3_FFFF_FFFF);
                 if ((ulong)nanoseconds < 1_000_000_000)
@@ -1383,13 +1623,16 @@ public static partial class MessagePackPrimitives
             if (head == ts32Head)
             {
                 // timestamp 32: seconds u32, no sub-second part — nothing to validate
-                uint secs = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref s, 2)));
+                uint secs = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref s, 2)));
                 value = new DateTime((secs + BclSecondsAtUnixEpoch) * TimeSpan.TicksPerSecond, DateTimeKind.Utc);
                 tokenSize = 6;
                 return DecodeResult.Success;
             }
         }
-        return TryReadTimestampSlow(source, out value, out tokenSize);
+        var slowResult = TryReadTimestampSlow(source, out var slowValue, out var slowSize);
+        value = slowValue;
+        tokenSize = slowSize;
+        return slowResult;
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         static DecodeResult TryReadTimestampSlow(ReadOnlySpan<byte> source, out DateTime value, out int tokenSize)

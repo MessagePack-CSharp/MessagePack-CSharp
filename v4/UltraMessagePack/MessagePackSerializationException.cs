@@ -62,8 +62,20 @@ public class MessagePackSerializationException : Exception
     internal static Exception ThrowImplausiblePayloadHeader(string kind, int byteCount, long bytesRemaining) => throw new MessagePackSerializationException($"The {kind} header claims a {(uint)byteCount} byte payload, which cannot fit in the {bytesRemaining} remaining bytes");
 
     [DoesNotReturn]
-    internal static Exception ThrowSerializeDepthExceeded(int maxDepth) => throw new MessagePackSerializationException($"The object graph nests deeper than MaxDepth ({maxDepth}); a cyclic reference in the graph also produces this");
+    internal static Exception ThrowSerializeDepthExceeded() => throw new MessagePackSerializationException("The object graph nests deeper than MessagePackSerializerOptions.MaxDepth; a cyclic reference in the graph also produces this");
 
     [DoesNotReturn]
-    internal static Exception ThrowDeserializeDepthExceeded(int maxDepth) => throw new MessagePackSerializationException($"The msgpack payload nests deeper than MaxDepth ({maxDepth})");
+    internal static Exception ThrowDeserializeDepthExceeded() => throw new MessagePackSerializationException("The msgpack payload nests deeper than MessagePackSerializerOptions.MaxDepth");
+
+    [DoesNotReturn]
+    internal static Exception ThrowAsyncMessageMissing() => throw new MessagePackSerializationException("The PipeReader completed without a MessagePack value");
+
+    [DoesNotReturn]
+    internal static Exception ThrowAsyncMessageTruncated() => throw new MessagePackSerializationException("The PipeReader completed before the end of the MessagePack value");
+
+    [DoesNotReturn]
+    internal static Exception ThrowAsyncArrayTruncated(long claimedCount, long deliveredCount) => throw new MessagePackSerializationException($"The array header claims {claimedCount} elements but the PipeReader completed after {deliveredCount}");
+
+    [DoesNotReturn]
+    internal static Exception ThrowAsyncMessageSizeExceeded(long requiredBytes, long maxAsyncMessageSize) => throw new MessagePackSerializationException($"The MessagePack value needs at least {requiredBytes} buffered bytes, which exceeds MessagePackSerializerOptions.MaxAsyncMessageSize ({maxAsyncMessageSize})");
 }

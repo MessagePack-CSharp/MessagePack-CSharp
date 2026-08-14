@@ -35,13 +35,13 @@ public sealed partial class DecimalFormatter<TWriteBuffer, TReadBuffer> : IMessa
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref decimal value)
     {
-        value = DecimalWire.ReadString(ref buffer);
+        value = DecimalCodec.ReadString(ref buffer);
     }
 }
 
 // str-form decimal reader shared by the default formatter and the DotNetOptimized
 // reader's default-form fallback (migration: readers upgrade before writers flip)
-internal static class DecimalWire
+internal static class DecimalCodec
 {
     internal static decimal ReadString<TReadBuffer>(ref TReadBuffer buffer)
         where TReadBuffer : struct, IReadBuffer
@@ -136,13 +136,13 @@ public sealed partial class GuidFormatter<TWriteBuffer, TReadBuffer> : IMessageP
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Guid value)
     {
-        value = GuidWire.ReadString(ref buffer);
+        value = GuidCodec.ReadString(ref buffer);
     }
 }
 
 // str-form Guid reader shared by the default formatter and the DotNetOptimized
 // reader's default-form fallback (migration: readers upgrade before writers flip)
-internal static class GuidWire
+internal static class GuidCodec
 {
     internal static Guid ReadString<TReadBuffer>(ref TReadBuffer buffer)
         where TReadBuffer : struct, IReadBuffer
@@ -327,7 +327,7 @@ public sealed partial class BitArrayFormatter<TWriteBuffer, TReadBuffer> : IMess
     {
         // dual-format: also accepts the DotNetOptimized packed form, so a default-
         // configured peer can read packed data (the forms are type-tag distinguishable)
-        value = BitArrayWire.Read(ref buffer);
+        value = BitArrayCodec.Read(ref buffer);
     }
 }
 

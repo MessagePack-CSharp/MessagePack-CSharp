@@ -37,7 +37,7 @@ public sealed partial class DotNetOptimizedGuidFormatter<TWriteBuffer, TReadBuff
             ((code & 0xE0) == MessagePackCode.MinFixStr ||
              code is MessagePackCode.Str8 or MessagePackCode.Str16 or MessagePackCode.Str32))
         {
-            value = GuidWire.ReadString(ref buffer);
+            value = GuidCodec.ReadString(ref buffer);
             return;
         }
 
@@ -96,7 +96,7 @@ public sealed partial class DotNetOptimizedDecimalFormatter<TWriteBuffer, TReadB
             ((code & 0xE0) == MessagePackCode.MinFixStr ||
              code is MessagePackCode.Str8 or MessagePackCode.Str16 or MessagePackCode.Str32))
         {
-            value = DecimalWire.ReadString(ref buffer);
+            value = DecimalCodec.ReadString(ref buffer);
             return;
         }
 
@@ -306,7 +306,7 @@ public sealed partial class PackedBitArrayFormatter<TWriteBuffer, TReadBuffer> :
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref BitArray? value)
     {
-        value = BitArrayWire.Read(ref buffer);
+        value = BitArrayCodec.Read(ref buffer);
     }
 }
 
@@ -314,7 +314,7 @@ public sealed partial class PackedBitArrayFormatter<TWriteBuffer, TReadBuffer> :
 // legacy bool-array form, and the packed [bitLength, bin] form — distinguished by the
 // FIRST element's type tag (bool => legacy, integer => packed), which is unambiguous
 // because the legacy form's elements are always booleans
-static class BitArrayWire
+static class BitArrayCodec
 {
     internal static BitArray? Read<TReadBuffer>(ref TReadBuffer buffer)
         where TReadBuffer : struct, IReadBuffer

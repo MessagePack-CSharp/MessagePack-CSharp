@@ -73,7 +73,13 @@ public ref struct ReadOnlySequenceReadBuffer : IReadBuffer
         var remaining = currentSpan.Length - currentConsumed;
         if (remaining <= 0 || remaining < sizeHint)
         {
-            return TryGetSpanSlow(sizeHint, out span);
+            // temps, not the caller's out: passing `span` by address to the NoInlining
+            // slow path would address-expose the inlined caller's local and pin the
+            // span to a stack slot on the fast path too (see the slow-call note at
+            // UltraMessagePack's MessagePackPrimitives.TryReadInt32)
+            var slowFilled = TryGetSpanSlow(sizeHint, out var slowSpan);
+            span = slowSpan;
+            return slowFilled;
         }
 
 #if !NETSTANDARD2_0
@@ -252,7 +258,13 @@ public struct CompatibleReadOnlySequenceReadBuffer : IReadBuffer
         var remaining = currentMemory.Length - currentConsumed;
         if (remaining <= 0 || remaining < sizeHint)
         {
-            return TryGetSpanSlow(sizeHint, out span);
+            // temps, not the caller's out: passing `span` by address to the NoInlining
+            // slow path would address-expose the inlined caller's local and pin the
+            // span to a stack slot on the fast path too (see the slow-call note at
+            // UltraMessagePack's MessagePackPrimitives.TryReadInt32)
+            var slowFilled = TryGetSpanSlow(sizeHint, out var slowSpan);
+            span = slowSpan;
+            return slowFilled;
         }
 
         span = currentMemory.Span.Slice((int)currentConsumed, (int)remaining);

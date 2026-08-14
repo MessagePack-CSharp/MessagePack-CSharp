@@ -10,9 +10,11 @@ public sealed record class MessagePackSerializerOptions
     // lazy-load for AOT-clean
     static MessagePackSerializerOptions? defaultOptions;
     static MessagePackSerializerOptions? defaultAotOptions;
+    static MessagePackSerializerOptions? dotNetOptimizedOptions;
+    static MessagePackSerializerOptions? dotNetOptimizedAotOptions;
 
     /// <summary>
-    /// Options over the default factory chain.
+    /// Options over the default factory chain(SourceGenerated -> BuiltIn -> Generic).
     /// </summary>
     public static MessagePackSerializerOptions Default
     {
@@ -21,13 +23,35 @@ public sealed record class MessagePackSerializerOptions
     }
 
     /// <summary>
-    /// Options over the AOT safe factory chain.
+    /// Options over the AOT safe factory chain (SourceGenerated -> BuiltIn).
     /// </summary>
     public static MessagePackSerializerOptions DefaultAot
     {
         get => defaultAotOptions ??= new MessagePackSerializerOptions(new MessagePackFormatterResolver(MessagePackFormatterFactory.DefaultAot));
     }
 
+    /// <summary>
+    /// Options over the .NET Optimzied factory chain(SourceGenerated -> DotNetOptimized -> BuiltIn -> Generic).
+    /// Guid, decimal, DateTime, DateTimeOffset, and BitArray are optimized for .NET and become faster.
+    /// For example, Guid is serialized as binary instead of a string, and DateTime is serialized as Ticks with the Kind preserved, instead of Timestamp.
+    /// </summary>
+    public static MessagePackSerializerOptions DotNetOptimized
+    {
+        [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+        get => dotNetOptimizedOptions ??= new MessagePackSerializerOptions(new MessagePackFormatterResolver(MessagePackFormatterFactory.DotNetOptimized));
+    }
+
+    /// <summary>
+    /// Options over the AOT safe .NET Optimized factory chain(SourceGenerated -> DotNetOptimized -> BuiltIn).
+    /// Guid, decimal, DateTime, DateTimeOffset, and BitArray are optimized for .NET and become faster.
+    /// For example, Guid is serialized as binary instead of a string, and DateTime is serialized as Ticks with the Kind preserved, instead of Timestamp.
+    /// </summary>
+    public static MessagePackSerializerOptions DotNetOptimizedAot
+    {
+        get => dotNetOptimizedAotOptions ??= new MessagePackSerializerOptions(new MessagePackFormatterResolver(MessagePackFormatterFactory.DotNetOptimizedAot));
+    }
+
+    /// <summary>
     readonly MessagePackFormatterResolver resolver;
 
     public MessagePackFormatterResolver Resolver => resolver;
@@ -40,20 +64,34 @@ public sealed record class MessagePackSerializerOptions
     public bool HashFloodingResistant => resolver.HashFloodingResistant;
 
     /// <summary>
-    /// Optional whole-payload transform (compression etc.), applied at the end of
+    /// Optional whole-message transform (compression etc.), applied at the end of
     /// serialization and transparently undone at the start of deserialization.
     /// </summary>
-    public MessagePackPayloadProcessor? PayloadProcessor { get; init; }
+    public MessagePackMessageProcessor? MessageProcessor { get; init; }
 
     /// <summary>
     /// Maximum container nesting depth for both directions.
     /// </summary>
     public int MaxDepth { get; init; } = 500;
 
+    /// <summary>
+    /// Upper bound in bytes for a single message (or a single element of
+    /// <c>DeserializeElementsAsync</c>) that the async deserialization APIs buffer before
+    /// parsing. Bounds the memory an oversized or adversarial stream can pin; the
+    /// synchronous APIs are unaffected because the caller owns the buffer there.
+    /// Defaults to 64MiB; raise it for trusted streams with larger messages, or use
+    /// <c>DeserializeElementsAsync</c> to stream large arrays element by element.
+    /// </summary>
+    public long MaxAsyncMessageSize { get; init; } = 64 * 1024 * 1024;
+
+    // TODO: ctor doc-comment
+
     public MessagePackSerializerOptions(MessagePackFormatterResolver resolver)
     {
         this.resolver = resolver;
     }
+
+    // TODO: doc-comment for throwOnLegacyFormatter
 
     public MessagePackSerializerOptions(MessagePackFormatterFactory[] factories, bool hashFloodingResistant = true, bool throwOnLegacyFormatter = false)
         : this(new MessagePackFormatterResolver(MessagePackFormatterFactory.Combine(factories), hashFloodingResistant, throwOnLegacyFormatter))

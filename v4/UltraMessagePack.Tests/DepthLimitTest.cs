@@ -34,7 +34,9 @@ public class DepthLimitTest
         var options = MessagePackSerializerOptions.Default;
         var ex = Assert.Throws<MessagePackSerializationException>(
             () => Ultra.Deserialize<DepthNode>(NestedPayload(600), options));
-        Assert.Contains("500", ex.Message);
+        // the message names the option, not the configured number: the state deliberately
+        // does not carry maxDepth (kept to a single int, see SerializeState)
+        Assert.Contains("MaxDepth", ex.Message);
 
         // the same shape within the limit roundtrips completely
         var back = Ultra.Deserialize<DepthNode>(NestedPayload(100), options);

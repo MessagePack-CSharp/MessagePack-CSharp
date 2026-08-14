@@ -13,14 +13,14 @@ file static class NumericFusion
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static float ReadSingle(ReadOnlySpan<byte> span, int payloadOffset)
     {
-        var bits = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref MemoryMarshal.GetReference(span), payloadOffset)));
+        var bits = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref MemoryMarshal.GetReference(span), payloadOffset)));
         return Unsafe.As<uint, float>(ref bits);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static double ReadDouble(ReadOnlySpan<byte> span, int payloadOffset)
     {
-        var bits = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(span), payloadOffset)));
+        var bits = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(span), payloadOffset)));
         return Unsafe.As<ulong, double>(ref bits);
     }
 }

@@ -15,7 +15,7 @@ using UltraMessagePack;
 // 2. Endpoint overhead — what does the public MessagePackSerializer.Serialize/
 //    Deserialize entry point add on top of the direct formatter call? Endpoint minus
 //    DirectFast = TryGetFormatter routing + options/processor plumbing + try/finally.
-//    (An endpoint call on a compat-ROUTED graph without a PayloadProcessor is
+//    (An endpoint call on a compat-ROUTED graph without a MessageProcessor is
 //    DirectCompatible + that same routing overhead, so the compat column doubles as the
 //    routed-endpoint estimate.)
 //

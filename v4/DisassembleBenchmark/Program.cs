@@ -27,6 +27,11 @@ if (args.Contains("--verify"))
     ok &= VerifySipHash();
     ok &= VerifyDictComparer();
     ok &= VerifyPriorityQueueBuild();
+    ok &= VerifyFloatWeave();
+    ok &= VerifyBoolSByteWidth();
+    ok &= VerifyLadderSuperlane();
+    ok &= VerifyInt32WideWeave();
+    ok &= VerifyLadderWideWeave();
     Console.WriteLine(ok ? "all OK" : "FAILED");
     return ok ? 0 : 1;
 }
@@ -99,6 +104,44 @@ if (args.Contains("--jit-nb"))
         b.DeserializeMap_Ultra();
     }
     return 0;
+}
+
+// runs AsyncPipeBenchmark's GlobalSetup sanity checks (every competitor must see every
+// message) without BDN — the async paths are outside --verify. Usage:
+//   dotnet run -c Release -- --asyncpipe-sanity
+if (args.Contains("--asyncpipe-sanity"))
+{
+    try
+    {
+        new AsyncPipeBenchmark().Setup();
+        Console.WriteLine("all OK");
+        return 0;
+    }
+    catch (Exception exception)
+    {
+        Console.WriteLine(exception.Message);
+        return 1;
+    }
+}
+
+// same JitDisasm hot-loop for the async pass-1 boundary scanner (token-dense payload:
+// array16 of 1000 fixints — verifies TryReadToken's fixint fast path inlines into the
+// scan loop and only TryReadTokenSlow remains as a cold call). Usage:
+//   $env:DOTNET_JitDisasm = "*TryFindEnd* *ScanTokens*"; dotnet run -c Release -- --jit-tokenscan
+if (args.Contains("--jit-tokenscan"))
+{
+    var payload = new byte[3 + 1000];
+    payload[0] = 0xdc; payload[1] = 0x03; payload[2] = 0xe8; // array16(1000)
+    for (int i = 0; i < 1000; i++) payload[3 + i] = (byte)(i & 0x7f); // positive fixints
+    var sequence = new System.Buffers.ReadOnlySequence<byte>(payload);
+    long sink = 0;
+    for (int i = 0; i < 1_000_000; i++)
+    {
+        var scanner = new UltraMessagePack.MessagePackBoundaryScanner();
+        scanner.TryFindEnd(sequence);
+        sink += scanner.Consumed;
+    }
+    return sink == 0 ? 0 : 0;
 }
 
 // hot-loops the EntryTryFinallyCostBenchmark entry-shape variants for DOTNET_JitDisasm capture — the
@@ -302,6 +345,106 @@ static bool VerifyPriorityQueueBuild()
         Console.WriteLine($"NG PriorityQueueBuild: {ex.Message}");
         return false;
     }
+}
+
+// every weave candidate (serialize tiers 512/256/128, decode gathers) must be
+// bit-identical to the scalar reference on random full-range bit patterns (NaN payloads
+// and subnormals included), at sizes around every tier's iteration boundary, and the
+// decoders must reject a corrupted code byte
+static bool VerifyFloatWeave()
+{
+    var ok = true;
+    var rand = new Random(42);
+    foreach (var n in new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14, 15, 16, 17, 20, 21, 26, 27, 28, 29, 30, 64, 100, 1000 })
+    {
+        var floats = new float[n];
+        var doubles = new double[n];
+        for (int i = 0; i < n; i++)
+        {
+            floats[i] = BitConverter.Int32BitsToSingle(rand.Next(int.MinValue, int.MaxValue));
+            doubles[i] = BitConverter.Int64BitsToDouble(rand.NextInt64(long.MinValue, long.MaxValue));
+        }
+        ok &= FloatWeaveVerify.VerifyAll(floats, doubles);
+    }
+    return ok;
+}
+
+// the bool/sbyte width-cascade candidates must match the scalar reference at sizes
+// around every cascade boundary (64/32/16 remainders)
+static bool VerifyBoolSByteWidth()
+{
+    var ok = true;
+    var rand = new Random(42);
+    foreach (var n in new[] { 0, 1, 15, 16, 17, 31, 32, 33, 47, 48, 63, 64, 65, 95, 96, 97, 127, 128, 129, 1000 })
+    {
+        var bools = new bool[n];
+        var sbytes = new sbyte[n];
+        for (int i = 0; i < n; i++)
+        {
+            bools[i] = rand.Next(2) == 0;
+            sbytes[i] = (sbyte)rand.Next(-32, 128);
+        }
+        ok &= BoolSByteWidthVerify.VerifyAll(bools, sbytes);
+    }
+    return ok;
+}
+
+// the short/long superlane candidates must match the scalar reference on every
+// distribution at sizes around the 16-token (short) and 8-token (long) boundaries,
+// and the decode gates must reject out-of-range unsigned wide tokens
+static bool VerifyLadderSuperlane()
+{
+    var ok = true;
+    foreach (var dist in new[] { "fixint", "wide", "mixed" })
+    {
+        foreach (var n in new[] { 0, 1, 7, 8, 9, 15, 16, 17, 23, 24, 31, 32, 33, 100, 1000 })
+        {
+            var (shorts, longs) = LadderSuperlaneBenchmark.MakeData(n, dist, 42 + n);
+            ok &= LadderSuperlaneVerify.VerifyAll(shorts, longs);
+        }
+    }
+    return ok;
+}
+
+// the int32 wide-weave candidates must match the constant-stride scalar reference at
+// sizes around the 16-block and 6/3-token window boundaries, on random-sign all-wide
+// data including int.MinValue/MaxValue, and the decode gates must reject corrupted
+// codes and out-of-int-range uint32 tokens
+static bool VerifyInt32WideWeave()
+{
+    var ok = true;
+    var rand = new Random(42);
+    foreach (var n in new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 15, 16, 17, 18, 21, 22, 23, 24, 31, 32, 33, 47, 48, 64, 100, 1000 })
+    {
+        var data = new int[n];
+        for (int i = 0; i < n; i++)
+        {
+            int magnitude = rand.Next(65537, int.MaxValue);
+            data[i] = rand.Next(2) == 0 ? magnitude : -magnitude;
+        }
+        if (n >= 2)
+        {
+            data[0] = int.MaxValue;
+            data[n - 1] = int.MinValue;
+        }
+        ok &= Int32WideWeaveVerify.VerifyAll(data);
+    }
+    return ok;
+}
+
+// the short/long wide-weave candidates must match the constant-stride scalar reference
+// at sizes around the 16/8-block and 10/7/5/3/1-token window boundaries, on random-sign
+// all-wide data including the type extremes, and the decode gates must reject corrupted
+// codes and out-of-range unsigned wide tokens
+static bool VerifyLadderWideWeave()
+{
+    var ok = true;
+    foreach (var n in new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 21, 23, 24, 31, 32, 33, 47, 48, 64, 100, 1000 })
+    {
+        var (shorts, longs) = LadderWideWeaveBenchmark.MakeWideData(n, 42 + n);
+        ok &= LadderWideWeaveVerify.VerifyAll(shorts, longs);
+    }
+    return ok;
 }
 
 static bool VerifyAnswer()
