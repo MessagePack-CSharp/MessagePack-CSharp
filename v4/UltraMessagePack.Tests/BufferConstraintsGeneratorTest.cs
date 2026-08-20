@@ -248,6 +248,155 @@ public class BufferConstraintsGeneratorTest
         Assert.Empty(updated.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error));
     }
 
+    // ---- mid-edit resilience: half-written code must not strip the constraints and
+    // ---- turn one real error into a page of constraint violations
+
+    [Fact]
+    public void BodyErrors_AndMissingMembers_StillGenerate()
+    {
+        const string source = """
+            using SerializerFoundation;
+            using UltraMessagePack;
+
+            namespace Sample
+            {
+                public class Foo { }
+
+                public sealed partial class FooFormatter<TWriteBuffer, TReadBuffer>
+                    : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Foo>
+                {
+                    public void Initialize(MessagePackFormatterResolver resolver) { }
+                    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Foo value)
+                    {
+                        this_is_not_a_thing(value);
+                    }
+                    // Deserialize is not written yet
+                }
+            }
+            """;
+        var (_, generated) = RunGenerator(source, modernRuntime: false, LanguageVersion.Latest);
+        var text = Assert.Single(generated).SourceText.ToString();
+        Assert.Contains("where TWriteBuffer : struct, global::SerializerFoundation.IWriteBuffer", text);
+        Assert.Contains("where TReadBuffer : struct, global::SerializerFoundation.IReadBuffer", text);
+    }
+
+    [Fact]
+    public void UnresolvedSerializedType_StillGenerates()
+    {
+        const string source = """
+            using SerializerFoundation;
+            using UltraMessagePack;
+
+            public sealed partial class FreshFormatter<TWriteBuffer, TReadBuffer>
+                : IMessagePackFormatter<TWriteBuffer, TReadBuffer, NotYetWritten>
+            {
+            }
+            """;
+        var (_, generated) = RunGenerator(source, modernRuntime: false, LanguageVersion.Latest);
+        var text = Assert.Single(generated).SourceText.ToString();
+        Assert.Contains("partial class FreshFormatter<TWriteBuffer, TReadBuffer>", text);
+        Assert.Contains("where TWriteBuffer : struct, global::SerializerFoundation.IWriteBuffer", text);
+    }
+
+    [Fact]
+    public void TruncatedFile_StillGenerates()
+    {
+        // the file ends mid-method: unbalanced braces everywhere
+        const string source = """
+            using SerializerFoundation;
+            using UltraMessagePack;
+
+            public class Foo { }
+
+            public sealed partial class HalfFormatter<TWriteBuffer, TReadBuffer>
+                : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Foo>
+            {
+                public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Foo value)
+                {
+                    buffer.
+            """;
+        var (_, generated) = RunGenerator(source, modernRuntime: false, LanguageVersion.Latest);
+        var text = Assert.Single(generated).SourceText.ToString();
+        Assert.Contains("partial class HalfFormatter<TWriteBuffer, TReadBuffer>", text);
+    }
+
+    [Fact]
+    public void BrokenSiblingDeclarations_DoNotSuppressHealthyOutput()
+    {
+        // two half-typed nameless declarations (would collide on hint names) next to a
+        // healthy formatter: the healthy one must keep its constraints
+        const string source = """
+            using SerializerFoundation;
+            using UltraMessagePack;
+
+            public class Foo { }
+
+            public sealed partial class <TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Foo> { }
+            public sealed partial class <TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Foo> { }
+
+            public sealed partial class FooFormatter<TWriteBuffer, TReadBuffer>
+                : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Foo>
+            {
+                public void Initialize(MessagePackFormatterResolver resolver) { }
+                public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Foo value) { }
+                public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Foo value) { value = null; }
+            }
+            """;
+        var (_, generated) = RunGenerator(source, modernRuntime: false, LanguageVersion.Latest);
+        Assert.Contains(generated, g => g.SourceText.ToString().Contains("partial class FooFormatter<TWriteBuffer, TReadBuffer>"));
+    }
+
+    [Fact]
+    public void UnboundInterface_StillGeneratesFromSyntax()
+    {
+        // when the interface cannot bind semantically at all (broken/missing reference —
+        // e.g. the referenced project is itself mid-edit), EVERY formatter would lose its
+        // constraints at once without the syntactic fallback
+        const string source = """
+            public class Foo { }
+
+            public sealed partial class OrphanFormatter<TWriteBuffer, TReadBuffer>
+                : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Foo>
+            {
+            }
+            """;
+        var parseOptions = new CSharpParseOptions(LanguageVersion.Latest);
+        var compilation = CSharpCompilation.Create(
+            "UserAssembly",
+            [CSharpSyntaxTree.ParseText(source, parseOptions)], // note: NO references at all
+            [],
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var driver = CSharpGeneratorDriver.Create(
+            [new BufferConstraintsGenerator().AsSourceGenerator()],
+            parseOptions: parseOptions);
+        driver = (CSharpGeneratorDriver)driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out _);
+
+        var generated = driver.GetRunResult().Results[0].GeneratedSources;
+        var text = Assert.Single(generated).SourceText.ToString();
+        Assert.Contains("partial class OrphanFormatter<TWriteBuffer, TReadBuffer>", text);
+        Assert.Contains("where TWriteBuffer : struct, global::SerializerFoundation.IWriteBuffer", text);
+    }
+
+    [Fact]
+    public void HalfTypedManualConstraint_SkipsInsteadOfConflicting()
+    {
+        // the user began writing a manual where-clause: backing off avoids CS0265 noise
+        const string source = """
+            using SerializerFoundation;
+            using UltraMessagePack;
+
+            public class Foo { }
+
+            public sealed partial class ManualFormatter<TWriteBuffer, TReadBuffer>
+                : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Foo>
+                where TWriteBuffer :
+            {
+            }
+            """;
+        var (_, generated) = RunGenerator(source, modernRuntime: false, LanguageVersion.Latest);
+        Assert.Empty(generated);
+    }
+
     [Fact]
     public void MultiplePartialDeclarations_SingleOutput()
     {

@@ -22,12 +22,12 @@ public class ConstructionRollbackTests
     [Fact]
     public void NestedConstructionFailureRollsBackAndResolverStaysUsable()
     {
-        var options = new MessagePackSerializerOptions(
+        var options = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
         [
             new WrongProductFactory(),
             BuiltInFormatterFactory.Instance,
             GenericFormatterFactory.Instance,
-        ]);
+        ]));
 
         // the List formatter's Initialize resolves BrokenValue → the factory returns a
         // wrong-typed object → InvalidOperationException from a nested frame

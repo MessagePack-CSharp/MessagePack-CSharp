@@ -1,8 +1,9 @@
 namespace SerializerFoundation;
 
-// Unlike SpanWriteBuffer on the write side, this is mainly used as the entry point for accepting byte[]
-// The implementation itself is almost the same
-
+/// <summary>
+/// An <see cref="IReadBuffer"/> over a single contiguous block of memory.
+/// The standard entry point for reading from a byte array or span.
+/// </summary>
 public ref struct ReadOnlySpanReadBuffer : IReadBuffer
 {
     readonly ReadOnlySpan<byte> buffer;
@@ -11,6 +12,7 @@ public ref struct ReadOnlySpanReadBuffer : IReadBuffer
     public long BytesConsumed => consumed;
     public long BytesRemaining => buffer.Length - consumed;
 
+    /// <summary>Creates a read buffer over <paramref name="buffer"/>.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ReadOnlySpanReadBuffer(ReadOnlySpan<byte> buffer)
     {
@@ -49,6 +51,18 @@ public ref struct ReadOnlySpanReadBuffer : IReadBuffer
         return true;
     }
 
+    // always contiguous, so this is the one copy the destination inherently needs.
+    // Span.Length is never negative, so a plain compare covers the guard.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void CopyTo(Span<byte> destination)
+    {
+        if (destination.Length > buffer.Length - consumed)
+        {
+            Throws.InsufficientDataInBuffer();
+        }
+        buffer.Slice(consumed, destination.Length).CopyTo(destination);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Advance(int bytesConsumed)
     {
@@ -64,7 +78,9 @@ public ref struct ReadOnlySpanReadBuffer : IReadBuffer
     }
 }
 
-// compatibility fallback for Target Framework without `allows ref struct`
+/// <summary>
+/// A <see cref="ReadOnlySpanReadBuffer"/> variant over pointer memory for target frameworks without <c>allows ref struct</c> support.
+/// </summary>
 public unsafe struct CompatibleReadOnlySpanReadBuffer : IReadBuffer
 {
     readonly PointerSpan buffer;
@@ -73,6 +89,10 @@ public unsafe struct CompatibleReadOnlySpanReadBuffer : IReadBuffer
     public long BytesConsumed => consumed;
     public long BytesRemaining => buffer.Length - consumed;
 
+    /// <summary>
+    /// Creates a read buffer over <paramref name="length"/> bytes starting at <paramref name="buffer"/>.
+    /// The memory must stay valid and pinned while in use.
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public CompatibleReadOnlySpanReadBuffer(byte* buffer, int length)
     {
@@ -99,6 +119,17 @@ public unsafe struct CompatibleReadOnlySpanReadBuffer : IReadBuffer
 
         span = buffer.AsSpan(consumed, remaining);
         return true;
+    }
+
+    // always contiguous, see ReadOnlySpanReadBuffer.CopyTo
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void CopyTo(Span<byte> destination)
+    {
+        if (destination.Length > buffer.Length - consumed)
+        {
+            Throws.InsufficientDataInBuffer();
+        }
+        buffer.AsSpan(consumed, destination.Length).CopyTo(destination);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

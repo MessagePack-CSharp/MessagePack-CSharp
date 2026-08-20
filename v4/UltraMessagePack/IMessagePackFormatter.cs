@@ -17,11 +17,9 @@ public interface IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
     void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref T value);
 }
 
-// Object-graph guarding = depth limiting only (MessagePackSerializerOptions.MaxDepth).
-// True cycle DETECTION (reference tracking) is deliberately not implemented: it would
-// cost a hash lookup per object on the hot path; a cyclic graph instead runs into the
-// depth limit and surfaces as a clean MessagePackSerializationException rather than a
-// process-killing StackOverflowException.
+// Object-graph guarding = depth limiting (MessagePackSerializerOptions.MaxDepth):
+// a cyclic graph runs into the depth limit and surfaces as a clean
+// MessagePackSerializationException rather than a process-killing StackOverflowException.
 //
 // Container formatters (collections, object formatters — anything that recurses into
 // nested formatters) call Enter() after their null/nil handling and

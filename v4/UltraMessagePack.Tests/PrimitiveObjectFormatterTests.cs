@@ -122,7 +122,7 @@ public class PrimitiveObjectFormatterTests
         // values roundtrip through SELF-DESCRIBING wire types. Under DotNetOptimized the
         // TYPED DateTime path writes ToBinary int64, but a BOXED DateTime still writes
         // the timestamp ext — and therefore still comes back as a DateTime.
-        var opt = new MessagePackSerializerOptions([MessagePackFormatterFactory.DotNetOptimized]);
+        var opt = new MessagePackSerializerOptions(new MessagePackFormatterResolver([MessagePackFormatterFactory.DotNetOptimized]));
         var dt = new DateTime(2026, 8, 7, 1, 2, 3, DateTimeKind.Utc);
 
         var boxed = MessagePackSerializer.Serialize<object>(dt, opt);

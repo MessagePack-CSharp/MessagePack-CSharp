@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using UltraMessagePack.Formatters;
 
 namespace UltraMessagePack;
 
@@ -12,6 +13,11 @@ public abstract class MessagePackFormatterFactory
         "over runtime element types via MakeGenericType. For Native AOT, use MessagePackFormatterFactory.DefaultAot " +
         "(builtin + source-generated formatters) or compose an explicit chain.";
 
+    internal const string RequiresUnreferencedCodeMessage =
+        "The default chain ends in a reflection tier that serves [MessagePackObject] types the source generator " +
+        "did not cover, discovering their members via reflection at runtime; trimming can remove those members " +
+        "silently. For trimmed or Native AOT apps use MessagePackFormatterFactory.DefaultAot.";
+
     // lazy-load for AOT-clean
     static MessagePackFormatterFactory? defaultInstance;
     static MessagePackFormatterFactory? defaultAotInstance;
@@ -19,15 +25,21 @@ public abstract class MessagePackFormatterFactory
     static MessagePackFormatterFactory? dotNetOptimizedAotInstance;
 
     /// <summary>
-    /// The default chain (SourceGenerated -> BuiltIn -> Generic) for JIT Environment.
+    /// The default chain (SourceGenerated -> BuiltIn -> Generic -> annotated Reflection)
+    /// for JIT Environment. The reflection tail serves [MessagePackObject] types the
+    /// source generator did not cover — v3 StandardResolver's DynamicObjectResolver
+    /// fallback, minus the Emit. Attribute-free types still throw; opt into them with
+    /// <see cref="WithContractless"/>.
     /// </summary>
     public static MessagePackFormatterFactory Default
     {
         [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         get => defaultInstance ??= Combine(
             SourceGeneratedFormatterFactory.Instance,
             BuiltInFormatterFactory.Instance,
-            GenericFormatterFactory.Instance);
+            GenericFormatterFactory.Instance,
+            new ReflectionFormatterFactory(annotatedOnly: true));
     }
 
     /// <summary>
@@ -51,11 +63,13 @@ public abstract class MessagePackFormatterFactory
     public static MessagePackFormatterFactory DotNetOptimized
     {
         [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         get => dotNetOptimizedInstance ??= Combine(
             SourceGeneratedFormatterFactory.Instance,
             DotNetOptimizedFormatterFactory.Instance, // insert .NET Optimized before BuiltIn
             BuiltInFormatterFactory.Instance,
-            GenericFormatterFactory.Instance);
+            GenericFormatterFactory.Instance,
+            new ReflectionFormatterFactory(annotatedOnly: true));
     }
 
     /// <summary>
@@ -73,6 +87,44 @@ public abstract class MessagePackFormatterFactory
             SourceGeneratedFormatterFactory.Instance,
             DotNetOptimizedFormatterFactory.Instance, // insert .NET Optimized before BuiltIn
             BuiltInFormatterFactory.Instance);
+    }
+
+    // The static presets stop at the four that mirror MessagePackSerializerOptions'
+    // presets; every optional capability composes fluently instead, so the preset
+    // surface does not explode combinatorially:
+    //   MessagePackFormatterFactory.Default.WithContractless()
+    //   MessagePackFormatterFactory.Default.WithContractless(allowPrivate: true)
+    //   MessagePackFormatterFactory.Default.WithContractless().WithTypeless(TypelessTypeLoader.LoadAnyType())
+
+    /// <summary>
+    /// Appends a contractless-object tail to this chain: attribute-free objects
+    /// serialize as maps of member name to value (v3 contractless wire format), while
+    /// [MessagePackObject] types keep their keyed wire form — the composed result matches
+    /// v3's ContractlessStandardResolver. allowPrivate widens discovery to non-public
+    /// members, accessors and constructors (the v3 AllowPrivate variants).
+    /// </summary>
+    [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
+    public MessagePackFormatterFactory WithContractless(bool allowPrivate = false)
+    {
+        // the contractless tier is a catch-all: it must sit LAST
+        return Combine(this, new ReflectionFormatterFactory(annotatedOnly: false, allowPrivate));
+    }
+
+    /// <summary>
+    /// Prepends a typeless head to this chain: object slots embed the concrete .NET
+    /// type name in the payload, v3 Typeless-compatible. typeLoader decides how payload
+    /// type names resolve on read (<see cref="TypelessTypeLoader.LoadAnyType"/> /
+    /// <see cref="TypelessTypeLoader.AllowedTypes"/> / <see cref="TypelessTypeLoader.Create"/>).
+    /// <c>Default.WithContractless().WithTypeless(TypelessTypeLoader.LoadAnyType())</c>
+    /// is the v3 TypelessContractlessStandardResolver equivalent.
+    /// </summary>
+    [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(TypelessMessages.RequiresUnreferencedCode)]
+    public MessagePackFormatterFactory WithTypeless(TypelessTypeLoader typeLoader, bool omitAssemblyVersion = false)
+    {
+        // typeless claims typeof(object): it must sit FIRST
+        return Combine(new TypelessFormatterFactory(typeLoader, omitAssemblyVersion), this);
     }
 
     /// <summary>
@@ -196,6 +248,7 @@ public abstract class GenericFormatterFactoryBase : MessagePackFormatterFactory
     [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "instances only exist behind the RequiresDynamicCode protected constructor; the caller has already opted into dynamic code")]
     [UnconditionalSuppressMessage("Trimming", "IL2055", Justification = "open factory definitions reach here as typeof references from overrides, which roots them; the type arguments derive from the value type being resolved, which the caller roots")]
     [UnconditionalSuppressMessage("Trimming", "IL2071", Justification = "the override's pattern match guarantees the type arguments satisfy the open definition's constraints; factory constructors are bound by the explicit argument array")]
+    [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "same flow as IL2071 seen from ILC's dataflow: the closed type comes from MakeGenericType over a typeof'd open definition, whose constructors the typeof reference roots")]
     MessagePackFormatterFactory? CreateElementFactory(Type type)
     {
         var openFactoryType = GetOpenFactoryType(type, out var typeArguments, out var constructorArguments);

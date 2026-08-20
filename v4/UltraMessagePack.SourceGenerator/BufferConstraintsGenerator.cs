@@ -50,7 +50,17 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(models.Combine(allowsRefStruct), static (spc, pair) =>
         {
-            spc.AddSource(pair.Left!.HintName, EmitConstraints(pair.Left!, pair.Right));
+            // a thrown exception here (e.g. a duplicate hint name from colliding mid-edit
+            // declarations) would discard EVERY generated source of this generator for the
+            // pass, turning one editing slip into a screenful of constraint errors — drop
+            // just the offending output instead
+            try
+            {
+                spc.AddSource(pair.Left!.HintName, EmitConstraints(pair.Left!, pair.Right));
+            }
+            catch (ArgumentException)
+            {
+            }
         });
     }
 
@@ -68,8 +78,25 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
 
     static BufferConstraintModel? Parse(GeneratorSyntaxContext context, CancellationToken cancellationToken)
     {
-        if (context.SemanticModel.GetDeclaredSymbol((TypeDeclarationSyntax)context.Node, cancellationToken) is not INamedTypeSymbol symbol ||
-            symbol.Arity == 0)
+        // mid-edit code reaches this transform constantly; no shape may throw, because a
+        // generator exception cancels the WHOLE pass and every formatter in the project
+        // loses its constraints at once
+        try
+        {
+            return ParseCore(context, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
+    static BufferConstraintModel? ParseCore(GeneratorSyntaxContext context, CancellationToken cancellationToken)
+    {
+        var typeDeclaration = (TypeDeclarationSyntax)context.Node;
+        if (context.SemanticModel.GetDeclaredSymbol(typeDeclaration, cancellationToken) is not INamedTypeSymbol symbol ||
+            symbol.Arity == 0 ||
+            symbol.Name.Length == 0) // a half-typed nameless declaration would collide on hint names
         {
             return null;
         }
@@ -87,12 +114,6 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
             return null;
         }
 
-        var formatterDefinition = context.SemanticModel.Compilation.GetTypeByMetadataName("UltraMessagePack.IMessagePackFormatter`3");
-        if (formatterDefinition is null)
-        {
-            return null;
-        }
-
         foreach (var typeParameter in symbol.TypeParameters)
         {
             if (HasAnyConstraint(typeParameter))
@@ -100,17 +121,37 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
                 return null;
             }
         }
+        // a manual where-clause that is still being typed may not have reached the symbol
+        // yet; the syntax-level check keeps us from fighting it with CS0265
+        if (typeDeclaration.ConstraintClauses.Count > 0)
+        {
+            return null;
+        }
 
         var roles = new byte[symbol.Arity];
         var found = false;
-        foreach (var implemented in symbol.AllInterfaces)
+        var formatterDefinition = context.SemanticModel.Compilation.GetTypeByMetadataName("UltraMessagePack.IMessagePackFormatter`3");
+        if (formatterDefinition is not null)
         {
-            if (!SymbolEqualityComparer.Default.Equals(implemented.OriginalDefinition, formatterDefinition))
+            foreach (var implemented in symbol.AllInterfaces)
             {
-                continue;
+                if (!SymbolEqualityComparer.Default.Equals(implemented.OriginalDefinition, formatterDefinition))
+                {
+                    continue;
+                }
+                MarkRole(implemented.TypeArguments[0], symbol, roles, RoleWrite, ref found);
+                MarkRole(implemented.TypeArguments[1], symbol, roles, RoleRead, ref found);
             }
-            MarkRole(implemented.TypeArguments[0], symbol, roles, RoleWrite, ref found);
-            MarkRole(implemented.TypeArguments[1], symbol, roles, RoleRead, ref found);
+        }
+        if (!found)
+        {
+            // Syntactic fallback: while the file is mid-edit (unresolved serialized type,
+            // incomplete base list, binding poisoned by errors elsewhere) the interface may
+            // not bind semantically. The constraints must survive those states — otherwise
+            // one real error explodes into a page of constraint violations. Convention
+            // match by NAME: an IMessagePackFormatter<...> base whose first two arguments
+            // are this type's own type parameters.
+            MarkRolesFromBaseListSyntax(typeDeclaration, symbol, roles, ref found);
         }
         if (!found)
         {
@@ -144,6 +185,61 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
             new EquatableArray<string>(typeParameterNames),
             new EquatableArray<byte>(roles),
             hintName.ToString());
+    }
+
+    static void MarkRolesFromBaseListSyntax(TypeDeclarationSyntax typeDeclaration, INamedTypeSymbol symbol, byte[] roles, ref bool found)
+    {
+        if (typeDeclaration.BaseList is null)
+        {
+            return;
+        }
+        foreach (var baseType in typeDeclaration.BaseList.Types)
+        {
+            var name = baseType.Type;
+            while (true)
+            {
+                if (name is QualifiedNameSyntax qualified)
+                {
+                    name = qualified.Right;
+                }
+                else if (name is AliasQualifiedNameSyntax aliasQualified)
+                {
+                    name = aliasQualified.Name;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            if (name is not GenericNameSyntax { Identifier.ValueText: "IMessagePackFormatter" } generic)
+            {
+                continue;
+            }
+            var arguments = generic.TypeArgumentList.Arguments;
+            if (arguments.Count < 2)
+            {
+                continue;
+            }
+            MarkRoleByName(arguments[0], symbol, roles, RoleWrite, ref found);
+            MarkRoleByName(arguments[1], symbol, roles, RoleRead, ref found);
+        }
+    }
+
+    static void MarkRoleByName(TypeSyntax argument, INamedTypeSymbol owner, byte[] roles, byte role, ref bool found)
+    {
+        if (argument is not IdentifierNameSyntax identifier)
+        {
+            return;
+        }
+        for (var i = 0; i < owner.TypeParameters.Length; i++)
+        {
+            if (owner.TypeParameters[i].Name == identifier.Identifier.ValueText)
+            {
+                roles[i] |= role;
+                found = true;
+                return;
+            }
+        }
     }
 
     static void MarkRole(ITypeSymbol argument, INamedTypeSymbol owner, byte[] roles, byte role, ref bool found)

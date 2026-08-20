@@ -155,10 +155,10 @@ public class CollectionFormatterTests
         // populate reuses the instance on BOTH read paths
         var target = new List<byte> { 9 };
         var before = target;
-        MessagePackSerializer.Deserialize(ref target, bin8);
+        MessagePackSerializer.Deserialize(bin8, ref target);
         Assert.Same(before, target);
         Assert.Equal(list, target);
-        MessagePackSerializer.Deserialize(ref target, ours);
+        MessagePackSerializer.Deserialize(ours, ref target);
         Assert.Same(before, target);
         Assert.Equal(list, target);
     }
@@ -216,20 +216,20 @@ public class CollectionFormatterTests
 
         var queue = new Queue<int>([1, 2, 3]);
         var queueTarget = queue;
-        MessagePackSerializer.Deserialize(ref queueTarget, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref queueTarget);
         Assert.Same(queue, queueTarget);
         Assert.Equal([10, 20], queueTarget);
 
         var stackBytes = MessagePackSerializer.Serialize(new Stack<int>([1, 2, 3]));
         var stack = new Stack<int>([9]);
         var stackTarget = stack;
-        MessagePackSerializer.Deserialize(ref stackTarget, stackBytes);
+        MessagePackSerializer.Deserialize(stackBytes, ref stackTarget);
         Assert.Same(stack, stackTarget);
         Assert.Equal(new Stack<int>([1, 2, 3]), stackTarget);
 
         var linked = new LinkedList<int>([9]);
         var linkedTarget = linked;
-        MessagePackSerializer.Deserialize(ref linkedTarget, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref linkedTarget);
         Assert.Same(linked, linkedTarget);
         Assert.Equal([10, 20], linkedTarget);
 
@@ -237,7 +237,7 @@ public class CollectionFormatterTests
         int changes = 0;
         observable.CollectionChanged += (_, _) => changes++;
         var observableTarget = observable;
-        MessagePackSerializer.Deserialize(ref observableTarget, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref observableTarget);
         Assert.Same(observable, observableTarget);
         Assert.Equal([10, 20], observableTarget);
         Assert.True(changes > 0); // populate goes through the notifying mutators
@@ -245,7 +245,7 @@ public class CollectionFormatterTests
         // interface populate: mutable instance behind the interface is reused
         ICollection<int>? collection = new List<int> { 9 };
         var collectionBefore = collection;
-        MessagePackSerializer.Deserialize(ref collection, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref collection);
         Assert.Same(collectionBefore, collection);
         Assert.Equal([10, 20], collection);
     }
@@ -256,7 +256,7 @@ public class CollectionFormatterTests
         var bytes = MessagePackSerializer.Serialize(new[] { "A", "B" });
         var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "x" };
         var target = set;
-        MessagePackSerializer.Deserialize(ref target, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref target);
         Assert.Same(set, target);
         Assert.Contains("a", target); // the case-insensitive comparer survived the populate
     }
@@ -269,20 +269,20 @@ public class CollectionFormatterTests
         // Memory: exact length writes into the caller's backing array
         var memoryBacking = new int[2];
         Memory<int> memory = memoryBacking;
-        MessagePackSerializer.Deserialize(ref memory, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref memory);
         Assert.Equal([7, 8], memoryBacking);
 
         // ArraySegment: exact length writes through at the segment's offset
         var segmentBacking = new[] { 1, 2, 3, 4 };
         var segment = new ArraySegment<int>(segmentBacking, 1, 2);
-        MessagePackSerializer.Deserialize(ref segment, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref segment);
         Assert.Equal([1, 7, 8, 4], segmentBacking);
         Assert.Equal([7, 8], segment);
 
         // length mismatch: fresh backing store, the original is untouched
         var mismatched = new int[5];
         Memory<int> mismatchedMemory = mismatched;
-        MessagePackSerializer.Deserialize(ref mismatchedMemory, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref mismatchedMemory);
         Assert.Equal([7, 8], mismatchedMemory.ToArray());
         Assert.All(mismatched, v => Assert.Equal(0, v));
     }

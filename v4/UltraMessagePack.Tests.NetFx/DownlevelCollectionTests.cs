@@ -27,7 +27,7 @@ public class DownlevelCollectionTests
     {
         var bytes = MessagePackSerializer.Serialize(new List<string> { "x", "yy" });
         List<string>? fresh = null;
-        MessagePackSerializer.Deserialize(ref fresh, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref fresh);
         Assert.Equal(new List<string> { "x", "yy" }, fresh);
     }
 
@@ -39,18 +39,18 @@ public class DownlevelCollectionTests
         // reuse: same instance, shorter incoming grows to payload size (Add branch)
         var target = new List<string> { "a" };
         var original = target;
-        MessagePackSerializer.Deserialize(ref target, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref target);
         Assert.Same(original, target);
         Assert.Equal(new List<string> { "x", "yy" }, target);
 
         // longer incoming shrinks to payload size (RemoveRange branch)
         var longer = new List<string> { "a", "b", "c" };
-        MessagePackSerializer.Deserialize(ref longer, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref longer);
         Assert.Equal(new List<string> { "x", "yy" }, longer);
 
         // exact length: prefix-overwrite branch only
         var exact = new List<string> { "a", "b" };
-        MessagePackSerializer.Deserialize(ref exact, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref exact);
         Assert.Equal(new List<string> { "x", "yy" }, exact);
     }
 
@@ -61,13 +61,13 @@ public class DownlevelCollectionTests
 
         var target = new[] { "a", "b" };
         var original = target;
-        MessagePackSerializer.Deserialize(ref target, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref target);
         Assert.Same(original, target);
         Assert.Equal(new[] { "x", "yy" }, target);
 
         var mismatched = new[] { "a" };
         var before = mismatched;
-        MessagePackSerializer.Deserialize(ref mismatched, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref mismatched);
         Assert.NotSame(before, mismatched);
         Assert.Equal(new[] { "x", "yy" }, mismatched);
     }

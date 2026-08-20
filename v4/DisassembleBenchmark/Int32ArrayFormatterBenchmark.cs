@@ -198,9 +198,9 @@ public class Int32ArrayFormatterBenchmark
         }
 
         // generic per-element path: GenericFormatterFactory first claims int[]
-        scalar = new MessagePackSerializerOptions([GenericFormatterFactory.Instance, BuiltInFormatterFactory.Instance]);
+        scalar = new MessagePackSerializerOptions(new MessagePackFormatterResolver([GenericFormatterFactory.Instance, BuiltInFormatterFactory.Instance]));
         // A/B variant: region + fixint superlane, but mixed 16s emit via the scalar classify chain
-        hybrid = new MessagePackSerializerOptions([new RegionScalarInt32ArrayFormatterFactory(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
+        hybrid = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new RegionScalarInt32ArrayFormatterFactory(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
 
         payload = MessagePackSerializer.Serialize(data);
         var oracle = MessagePack.MessagePackSerializer.Serialize(data);

@@ -75,7 +75,7 @@ public class PocoPerValueVsBatchBenchmark
         // populate overload: same instance must be reused (no allocation) with fields updated
         reusable = new Int4Poco();
         var before = reusable;
-        UltraMessagePack.MessagePackSerializer.Deserialize(ref reusable, payload, perValue);
+        UltraMessagePack.MessagePackSerializer.Deserialize(payload, ref reusable, perValue);
         if (!ReferenceEquals(before, reusable) || !reusable.Equals4(int4)) throw new InvalidOperationException("verify failed: populate");
 
         // the batch read's fallback must survive a value straddling a sequence segment
@@ -108,7 +108,7 @@ public class PocoPerValueVsBatchBenchmark
     [BenchmarkCategory("Deserialize"), Benchmark]
     public Int4Poco DeserializePopulate()
     {
-        UltraMessagePack.MessagePackSerializer.Deserialize(ref reusable, payload, perValue);
+        UltraMessagePack.MessagePackSerializer.Deserialize(payload, ref reusable, perValue);
         return reusable;
     }
 }

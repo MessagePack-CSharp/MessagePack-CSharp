@@ -1,5 +1,3 @@
-// TODO: There is room for optimization in String and Bin(get ReadOnlySequence)
-
 using SerializerFoundation;
 using System.Runtime.CompilerServices;
 using static UltraMessagePack.MessagePackPrimitives;
@@ -14,11 +12,15 @@ namespace UltraMessagePack;
 // stitches precisely that much) and retries; TryGetSpan returning false means genuine
 // truncation and exits the loop into the domain exception — the foundation never throws
 // for it. tokenSize strictly exceeds the window it was reported for, so the loop
-// terminates (str/bin take two hops: header requirement first, then header + payload).
+// terminates (str takes two hops: header requirement first, then header + payload).
 // TokenMismatch throws immediately.
 //
-// Materialization order matters: extract the value (ToArray/GetString) BEFORE Advance,
-// because Advance may return a stitched temp buffer to the pool and invalidate the span.
+// Materialization order matters: extract the value (GetString) BEFORE Advance, because
+// Advance may return a stitched temp buffer to the pool and invalidate the span.
+//
+// Payloads whose destination is already contiguous do not go through a window at all.
+// ReadBinary reads only the header that way and then hands its result array to
+// IReadBuffer.CopyTo, which copies out of the segments once instead of stitching first.
 public static class ReadBufferExtensions
 {
     extension<TReadBuffer>(ref TReadBuffer buffer)
@@ -299,23 +301,60 @@ public static class ReadBufferExtensions
         /// <summary>Reads a bin (header + payload) as a new array; str-coded payloads are also accepted (old-spec raw compatibility, as in v3).</summary>
         public byte[] ReadBinary()
         {
-            var r = TryReadBinary(buffer.GetCurrentSpan(), out var value, out var tokenSize);
-            if (r == DecodeResult.Success)
+            // Header first, then copy the payload straight into the result. The header read
+            // already owns the straddle retry, the old-spec str fallback and the guard proving
+            // byteCount <= BytesRemaining, so nothing is left for a payload slow path: CopyTo
+            // serves a straddling payload out of the segments in ONE copy, where decoding the
+            // whole token from a window would stitch into the pooled temp and then copy again.
+            // A multi-megabyte bin therefore never grows the stitch buffer.
+            var byteCount = buffer.ReadBinHeader();
+            if (byteCount == 0)
             {
-                var result = value.ToArray(); // before Advance: the span may alias a pooled stitch buffer
-                buffer.Advance(tokenSize);
-                return result;
+                return Array.Empty<byte>(); // what ReadOnlySpan.ToArray() returned here before
             }
-            return ReadBinarySlow(ref buffer, r, tokenSize);
+
+            var result = GC.AllocateUninitializedArray<byte>(byteCount); // CopyTo writes every byte
+            buffer.CopyTo(result);
+            buffer.Advance(byteCount);
+            return result;
         }
 
         #endregion
 
         #region Ext, Timestamp
 
+        /// <summary>Consumes the ext header and returns true iff the next token is an ext
+        /// of the given type code; otherwise consumes nothing, leaving the token for its
+        /// real owner. An ext lead byte alone does not identify the extension (fixext4 is
+        /// also timestamp32), so formatters claiming an ext code dispatch through this.
+        /// The data bytes follow for the caller to read.</summary>
+        public bool TryReadExtHeader(sbyte typeCode, out int dataLength)
+        {
+            var span = buffer.GetCurrentSpan();
+            var r = MessagePackPrimitives.TryReadExtHeader(span, out var code, out dataLength, out var tokenSize);
+            while (r == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(tokenSize, out span))
+            {
+                r = MessagePackPrimitives.TryReadExtHeader(span, out code, out dataLength, out tokenSize);
+            }
+            if (r != DecodeResult.Success || code != typeCode)
+            {
+                dataLength = 0;
+                return false;
+            }
+            buffer.Advance(tokenSize);
+
+            // same exact guard as ReadExtHeader: once the code matched, the token is ours,
+            // and a length past the buffer is a malformed header rather than a miss
+            if ((uint)dataLength > (ulong)buffer.BytesRemaining)
+            {
+                MessagePackSerializationException.ThrowImplausiblePayloadHeader("ext", dataLength, buffer.BytesRemaining);
+            }
+            return true;
+        }
+
         public (sbyte TypeCode, int DataLength) ReadExtHeader()
         {
-            var r = TryReadExtHeader(buffer.GetCurrentSpan(), out var typeCode, out var dataLength, out var tokenSize);
+            var r = MessagePackPrimitives.TryReadExtHeader(buffer.GetCurrentSpan(), out var typeCode, out var dataLength, out var tokenSize);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(tokenSize);
@@ -797,7 +836,7 @@ public static class ReadBufferExtensions
     {
         while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
         {
-            var r = TryReadExtHeader(window, out var typeCode, out var dataLength, out required);
+            var r = MessagePackPrimitives.TryReadExtHeader(window, out var typeCode, out var dataLength, out required);
             if (r == DecodeResult.Success)
             {
                 buffer.Advance(required);
@@ -846,50 +885,6 @@ public static class ReadBufferExtensions
             first = r;
         }
         throw Unreadable("string", buffer.GetCurrentSpan(), first);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    static byte[] ReadBinarySlow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
-        where TReadBuffer : struct, IReadBuffer
-#if NET9_0_OR_GREATER
-        , allows ref struct
-#endif
-    {
-        while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
-        {
-            var r = TryReadBinary(window, out var value, out required);
-            if (r == DecodeResult.Success)
-            {
-                var result = value.ToArray(); // before Advance: the span may alias a pooled stitch buffer
-                buffer.Advance(required);
-                return result;
-            }
-            first = r;
-        }
-        if (first == DecodeResult.TokenMismatch)
-        {
-            // old-spec (pre-2013) msgpack encodes binary with raw (= today's str) headers;
-            // reads accept both specs like v3, so retry the token as a str payload
-            first = TryReadStringSpan(buffer.GetCurrentSpan(), out var strValue, out required);
-            if (first == DecodeResult.Success)
-            {
-                var result = strValue.ToArray(); // before Advance: the span may alias a pooled stitch buffer
-                buffer.Advance(required);
-                return result;
-            }
-            while (first == DecodeResult.InsufficientBuffer && buffer.TryGetSpan(required, out var window))
-            {
-                var r = TryReadStringSpan(window, out strValue, out required);
-                if (r == DecodeResult.Success)
-                {
-                    var result = strValue.ToArray(); // before Advance: the span may alias a pooled stitch buffer
-                    buffer.Advance(required);
-                    return result;
-                }
-                first = r;
-            }
-        }
-        throw Unreadable("binary", buffer.GetCurrentSpan(), first);
     }
 
     // exception factory so the throw statement stays in the (cold) caller and the JIT sees

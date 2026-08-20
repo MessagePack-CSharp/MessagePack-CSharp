@@ -22,6 +22,8 @@
 		<PackageReference Include="System.IO.Pipelines" Version="10.0.0" />
 		<!-- Immutable + Frozen collections (inbox on net10.0) -->
 		<PackageReference Include="System.Collections.Immutable" Version="10.0.0" />
+		<!-- ConvertToJson/ConvertFromJson (inbox on net10.0) -->
+		<PackageReference Include="System.Text.Json" Version="10.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

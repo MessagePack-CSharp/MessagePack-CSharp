@@ -13,7 +13,7 @@ namespace UltraMessagePack.Tests;
 public class DotNetOptimizedTests
 {
     static readonly MessagePackSerializerOptions options =
-        new MessagePackSerializerOptions([MessagePackFormatterFactory.DotNetOptimized]);
+        new MessagePackSerializerOptions(new MessagePackFormatterResolver([MessagePackFormatterFactory.DotNetOptimized]));
 
     static MessagePack.MessagePackSerializerOptions OracleOptions { get; } =
         MessagePack.MessagePackSerializerOptions.Standard.WithResolver(
@@ -240,4 +240,48 @@ public class DotNetOptimizedTests
             MessagePackSerializer.Serialize(new List<int> { 1, 2, 3 }),
             MessagePackSerializer.Serialize(new List<int> { 1, 2, 3 }, options));
     }
+
+    [Fact]
+    public void GeneratedFormatter_DateTimeMember_HonorsTheConfiguredChain()
+    {
+        // regression: the generator used to classify DateTime as a direct write
+        // (UnsafeWriteTimestamp / ReadTimestamp inlined into the generated formatter),
+        // which pinned the default encoding and made this whole tier a no-op for every
+        // DateTime member of a [MessagePackObject] type — Kind silently dropped
+        var value = new DotNetOptimizedStampPoco
+        {
+            Id = 7,
+            Utc = new DateTime(2026, 8, 7, 1, 2, 3, DateTimeKind.Utc),
+            Local = new DateTime(2026, 8, 7, 1, 2, 3, DateTimeKind.Local),
+            Unspecified = new DateTime(2026, 8, 7, 1, 2, 3, DateTimeKind.Unspecified),
+        };
+
+        var optimized = MessagePackSerializer.Serialize(value, options);
+        var back = MessagePackSerializer.Deserialize<DotNetOptimizedStampPoco>(optimized, options)!;
+        Assert.Equal(value.Utc, back.Utc);
+        Assert.Equal(DateTimeKind.Utc, back.Utc.Kind);
+        Assert.Equal(value.Local, back.Local);
+        Assert.Equal(DateTimeKind.Local, back.Local.Kind);
+        Assert.Equal(value.Unspecified, back.Unspecified);
+        Assert.Equal(DateTimeKind.Unspecified, back.Unspecified.Kind);
+
+        // the members really are on the optimized wire: fixarray(4), int, then three
+        // forced int64 tokens (the default emits timestamp ext here)
+        Assert.Equal(0x94, optimized[0]);
+        Assert.Equal(0x07, optimized[1]);
+        Assert.Equal(0xD3, optimized[2]);
+        Assert.Equal(2 + (3 * 9), optimized.Length);
+
+        // the default chain is untouched: still byte-identical to the v3 oracle
+        Assert.Equal(Oracle.Serialize(value), MessagePackSerializer.Serialize(value));
+    }
+}
+
+[MessagePack.MessagePackObject]
+public class DotNetOptimizedStampPoco
+{
+    [MessagePack.Key(0)] public int Id { get; set; }
+    [MessagePack.Key(1)] public DateTime Utc { get; set; }
+    [MessagePack.Key(2)] public DateTime Local { get; set; }
+    [MessagePack.Key(3)] public DateTime Unspecified { get; set; }
 }

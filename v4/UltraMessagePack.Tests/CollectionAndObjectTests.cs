@@ -271,12 +271,12 @@ public class CollectionAndObjectTests
         // grow
         var list = new List<int> { 1, 2, 3 };
         var before = list;
-        MessagePackSerializer.Deserialize(ref list, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref list);
         Assert.Same(before, list);
         Assert.Equal(expected, list);
 
         // shrink
-        MessagePackSerializer.Deserialize(ref list, MessagePackSerializer.Serialize(new[] { 5 }));
+        MessagePackSerializer.Deserialize(MessagePackSerializer.Serialize(new[] { 5 }), ref list);
         Assert.Same(before, list);
         Assert.Equal([5], list);
     }
@@ -354,13 +354,13 @@ public class CollectionAndObjectTests
         Assert.Equal(42, MessagePackSerializer.Deserialize<int>(MessagePackSerializer.Serialize(42, byDefault), byDefault));
 
         // explicit chain including defaults works end to end
-        var explicitChain = new MessagePackSerializerOptions([BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
+        var explicitChain = new MessagePackSerializerOptions(new MessagePackFormatterResolver([BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
         var list = new List<int> { 1, 2, 3 };
         Assert.Equal(list, MessagePackSerializer.Deserialize<List<int>>(MessagePackSerializer.Serialize(list, explicitChain), explicitChain));
 
         // the chain is EXACT: primitives only, so List<string> resolves to Missing
         // (List<int> no longer probes this — it became a BuiltIn specialized formatter)
-        var primitivesOnly = new MessagePackSerializerOptions([BuiltInFormatterFactory.Instance]);
+        var primitivesOnly = new MessagePackSerializerOptions(new MessagePackFormatterResolver([BuiltInFormatterFactory.Instance]));
         Assert.Equal(7, MessagePackSerializer.Deserialize<int>(MessagePackSerializer.Serialize(7, primitivesOnly), primitivesOnly));
         Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(new List<string> { "1" }, primitivesOnly));
     }
@@ -390,14 +390,14 @@ public class CollectionAndObjectTests
         // length match: same instance, elements overwritten
         var target = new[] { "a", "b" };
         var original = target;
-        MessagePackSerializer.Deserialize(ref target, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref target);
         Assert.Same(original, target);
         Assert.Equal(new[] { "x", "yy" }, target);
 
         // length mismatch: fresh exact-size array
         var mismatched = new[] { "a" };
         var before = mismatched;
-        MessagePackSerializer.Deserialize(ref mismatched, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref mismatched);
         Assert.NotSame(before, mismatched);
         Assert.Equal(new[] { "x", "yy" }, mismatched);
     }
@@ -410,18 +410,18 @@ public class CollectionAndObjectTests
         // reuse: same instance, shorter incoming grows to payload size
         var target = new List<string> { "a" };
         var original = target;
-        MessagePackSerializer.Deserialize(ref target, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref target);
         Assert.Same(original, target);
         Assert.Equal(["x", "yy"], target);
 
         // longer incoming shrinks to payload size
         var longer = new List<string> { "a", "b", "c" };
-        MessagePackSerializer.Deserialize(ref longer, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref longer);
         Assert.Equal(["x", "yy"], longer);
 
         // null incoming: fresh list
         List<string>? fresh = null;
-        MessagePackSerializer.Deserialize(ref fresh, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref fresh);
         Assert.Equal(["x", "yy"], fresh);
     }
 
@@ -439,7 +439,7 @@ public class CollectionAndObjectTests
         // Populate into a length-matching covariant array hits AsSpan's exact-type check.
         // Spec'd to throw (populate is new in v4, no compat constraint; see ArrayFormatter)
         Person[] target = new DerivedPerson[1];
-        Assert.Throws<ArrayTypeMismatchException>(() => MessagePackSerializer.Deserialize(ref target, bytes));
+        Assert.Throws<ArrayTypeMismatchException>(() => MessagePackSerializer.Deserialize(bytes, ref target));
     }
 }
 

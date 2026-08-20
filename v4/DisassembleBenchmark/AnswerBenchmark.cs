@@ -65,6 +65,26 @@ using System.Buffers;
 // string-first design twice (UTF-16 intermediate: 21.6KB serialize / 15.7KB deserialize
 // allocs). Other notes unchanged (protobuf-net MemoryStream shape, STJ source-gen is
 // serialize-only, JSON payload 2.1-2.2x msgpack).
+//
+// MEASURED round 5 (same machine, ShortRun, 11-way): adds Ultra's DotNetOptimized tier.
+// It only reaches this graph through DateTime (8 members: 5 on Answer, 1 per Comment) —
+// Guid/decimal/DateTimeOffset/BitArray do not appear — and it only reaches it AT ALL
+// because the source generator stopped emitting DateTime as an inlined UnsafeWriteTimestamp
+// (see DirectKind): before that, the tier was a silent no-op for generated types.
+// Its wire is 3 B/member LARGER here (forced int64 9 B vs timestamp32's 6 B, so 1682 vs
+// 1658) — it buys Kind fidelity and a branch-free codec, not size. ns/op, vs Ultra:
+//   Serialize:   Ultra  380 | Ultra DotNetOptimized  382 (1.01x) | mpcs  896 (2.36x)
+//                | Google.Protobuf 1257 (3.31x) | Nerdbank 1342 (3.53x) | Orleans 1537 (4.05x)
+//                | protobuf-net 2400 (6.32x) | STJ source-gen 2723 (7.17x) | STJ 3702 (9.75x)
+//                | Json.NET 7325 (19.3x)
+//   Deserialize: Ultra DotNetOptimized  785 (0.95x) | Ultra  824 | Google.Protobuf 1108 (1.34x)
+//                | mpcs 1484 (1.80x) | Orleans 1608 (1.95x) | protobuf-net 1952 (2.37x)
+//                | Nerdbank 2052 (2.49x) | STJ source-gen 5215 (6.33x) | STJ 5304 (6.44x)
+//                | Json.NET 10594 (12.85x)
+// VERDICT on the tier: a wash on serialize, ~5% on deserialize. Eight timestamps out of a
+// 1.65KB graph is simply not where this payload's time goes (strings are), so DotNetOptimized
+// is a correctness/Kind-fidelity choice here, not a speed one. Its speed case has to be made
+// on Guid/decimal/BitArray-heavy shapes, which this poco has none of.
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [CategoriesColumn]
 public class AnswerBenchmark
@@ -72,6 +92,7 @@ public class AnswerBenchmark
     Answer answer = default!;
     byte[] mpcsPayload = default!;
     byte[] ultraPayload = default!;
+    byte[] ultraDnoPayload = default!;
     byte[] nbPayload = default!;
     byte[] pbPayload = default!;
     byte[] stjPayload = default!;
@@ -81,6 +102,10 @@ public class AnswerBenchmark
     byte[] gpbPayload = default!;
     AnswerProto.Answer protoAnswer = default!; // Google.Protobuf serializes only its generated types (see answer.proto)
     readonly Nerdbank.MessagePack.MessagePackSerializer nb = new();
+    // the .NET-to-.NET tier: only DateTime is re-mapped on this graph (8 members —
+    // 5 on Answer, 1 per Comment), Guid/decimal/DateTimeOffset/BitArray do not appear
+    static readonly UltraMessagePack.MessagePackSerializerOptions dno =
+        UltraMessagePack.MessagePackSerializerOptions.DotNetOptimized;
     // Orleans.Serialization standalone: the Serializer comes out of a minimal DI container
     readonly Orleans.Serialization.Serializer orleans =
         new ServiceCollection().AddSerializer().BuildServiceProvider().GetRequiredService<Orleans.Serialization.Serializer>();
@@ -92,6 +117,7 @@ public class AnswerBenchmark
 
         mpcsPayload = MessagePack.MessagePackSerializer.Serialize(answer);
         ultraPayload = UltraMessagePack.MessagePackSerializer.Serialize(answer);
+        ultraDnoPayload = UltraMessagePack.MessagePackSerializer.Serialize(answer, dno);
         nbPayload = nb.Serialize(answer);
         pbPayload = SerializeProtobufNet();
         stjPayload = SerializeSystemTextJson();
@@ -102,10 +128,14 @@ public class AnswerBenchmark
         gpbPayload = SerializeGoogleProtobuf();
 
         if (!ultraPayload.AsSpan().SequenceEqual(mpcsPayload)) throw new InvalidOperationException($"verify failed: Ultra bytes ({ultraPayload.Length}) != MessagePack-CSharp oracle ({mpcsPayload.Length})");
+        // the optimized tier is a DIFFERENT wire (DateTime as ToBinary int64, not
+        // timestamp ext); identity with the oracle would mean it never took effect
+        if (ultraDnoPayload.AsSpan().SequenceEqual(mpcsPayload)) throw new InvalidOperationException("verify failed: DotNetOptimized bytes are identical to the default wire — the tier is not reaching the generated formatter's DateTime members");
         // reflection and source-gen STJ share the default options: same JSON expected
         if (!stjSgPayload.AsSpan().SequenceEqual(stjPayload)) throw new InvalidOperationException("verify failed: System.Text.Json source-gen bytes != reflection bytes");
 
         VerifyRoundtrip(UltraMessagePack.MessagePackSerializer.Deserialize<Answer>(ultraPayload)!, "Ultra");
+        VerifyRoundtrip(UltraMessagePack.MessagePackSerializer.Deserialize<Answer>(ultraDnoPayload, dno)!, "Ultra DotNetOptimized");
         VerifyRoundtrip(MessagePack.MessagePackSerializer.Deserialize<Answer>(mpcsPayload), "MessagePack-CSharp");
         VerifyRoundtrip(nb.Deserialize<Answer>(new ReadOnlySequence<byte>(nbPayload))!, "Nerdbank");
         VerifyRoundtrip(DeserializeProtobufNet(), "protobuf-net");
@@ -126,6 +156,9 @@ public class AnswerBenchmark
 
     [BenchmarkCategory("Serialize"), Benchmark(Baseline = true)]
     public byte[] SerializeUltra() => UltraMessagePack.MessagePackSerializer.Serialize(answer);
+
+    [BenchmarkCategory("Serialize"), Benchmark]
+    public byte[] SerializeUltraDotNetOptimized() => UltraMessagePack.MessagePackSerializer.Serialize(answer, dno);
 
     [BenchmarkCategory("Serialize"), Benchmark]
     public byte[] SerializeMpcs() => MessagePack.MessagePackSerializer.Serialize(answer);
@@ -163,6 +196,9 @@ public class AnswerBenchmark
 
     [BenchmarkCategory("Deserialize"), Benchmark(Baseline = true)]
     public Answer DeserializeUltra() => UltraMessagePack.MessagePackSerializer.Deserialize<Answer>(ultraPayload)!;
+
+    [BenchmarkCategory("Deserialize"), Benchmark]
+    public Answer DeserializeUltraDotNetOptimized() => UltraMessagePack.MessagePackSerializer.Deserialize<Answer>(ultraDnoPayload, dno)!;
 
     [BenchmarkCategory("Deserialize"), Benchmark]
     public Answer DeserializeMpcs() => MessagePack.MessagePackSerializer.Deserialize<Answer>(mpcsPayload);

@@ -9,6 +9,10 @@ namespace SerializerFoundation;
 
 // If you want to add special hooks on write, implement IWriteBuffer instead of a custom IBufferWriter.
 
+/// <summary>
+/// An <see cref="IWriteBuffer"/> that writes into an <see cref="IBufferWriter{T}"/> such as PipeWriter or ArrayBufferWriter.
+/// Writes are staged in the writer's current span and committed to the writer on <see cref="Flush"/> or Dispose.
+/// </summary>
 public ref struct BufferWriterWriteBuffer : IWriteBuffer
 {
     readonly IBufferWriter<byte> bufferWriter;
@@ -24,6 +28,7 @@ public ref struct BufferWriterWriteBuffer : IWriteBuffer
         this.bufferWriter = default!;
     }
 
+    /// <summary>Creates a write buffer over <paramref name="bufferWriter"/>.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public BufferWriterWriteBuffer(IBufferWriter<byte> bufferWriter)
     {
@@ -93,7 +98,9 @@ public ref struct BufferWriterWriteBuffer : IWriteBuffer
     }
 }
 
-// compatibility fallback for TFMs without `allows ref struct`
+/// <summary>
+/// A <see cref="BufferWriterWriteBuffer"/> variant for target frameworks without <c>allows ref struct</c> support.
+/// </summary>
 public struct CompatibleBufferWriterWriteBuffer : IWriteBuffer
 {
     readonly IBufferWriter<byte> bufferWriter;
@@ -109,6 +116,7 @@ public struct CompatibleBufferWriterWriteBuffer : IWriteBuffer
         this.bufferWriter = default!;
     }
 
+    /// <summary>Creates a write buffer over <paramref name="bufferWriter"/>.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public CompatibleBufferWriterWriteBuffer(IBufferWriter<byte> bufferWriter)
     {

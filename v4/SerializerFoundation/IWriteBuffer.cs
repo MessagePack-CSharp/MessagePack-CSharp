@@ -1,33 +1,33 @@
 ﻿namespace SerializerFoundation;
 
+/// <summary>
+/// Destination that serializers write to.
+/// Request a window with <see cref="GetSpan"/>, write into it, then commit with <see cref="Advance"/>.
+/// </summary>
 public interface IWriteBuffer : IDisposable
 {
+    /// <summary>Total number of bytes written so far.</summary>
+    long BytesWritten { get; }
+
     /// <summary>
-    /// Returns a Span to write to that is at least the requested length (specified by <paramref name="sizeHint"/>).
-    /// If no <paramref name="sizeHint"/> is provided (or it's equal to 0), some non-empty buffer is returned.
-    /// A negative <paramref name="sizeHint"/> throws <see cref="ArgumentOutOfRangeException"/>: it is
-    /// always a caller bug (typically an overflowed size computation) and is never clamped — a
-    /// clamped small window would convert the upstream overflow into an unchecked overrun.
-    /// Implementations keep this check off the hot path: the unsigned capacity guard already
-    /// routes every negative value to the slow/throw path.
+    /// Returns a writable span of at least <paramref name="sizeHint"/> bytes.
+    /// When <paramref name="sizeHint"/> is 0, some non-empty span is returned.
+    /// A negative <paramref name="sizeHint"/> is a caller bug and throws <see cref="ArgumentOutOfRangeException"/> instead of being clamped.
     /// </summary>
     Span<byte> GetSpan(int sizeHint = 0);
 
     /// <summary>
-    /// Commits <paramref name="bytesWritten"/> bytes written into the window obtained from
-    /// <see cref="GetSpan"/>. Throws <see cref="InvalidOperationException"/> when
-    /// <paramref name="bytesWritten"/> is negative or exceeds the remaining window, so the
-    /// bookkeeping can never leave the buffer bounds. It CANNOT detect advancing by a
-    /// reservation instead of the actual written count (the gap would ship uninitialized
-    /// bytes) — always pass the actual number of bytes written (the Unsafe* writers return it).
+    /// Commits <paramref name="bytesWritten"/> bytes written into the span obtained from <see cref="GetSpan"/>.
+    /// Throws <see cref="InvalidOperationException"/> when the value is negative or exceeds the remaining span.
+    /// Always pass the number of bytes actually written, never an upfront reservation.
     /// </summary>
     void Advance(int bytesWritten);
 
-    long BytesWritten { get; }
-
+    /// <summary>Pushes buffered bytes through to the underlying destination, when one exists.</summary>
     void Flush();
 }
 
+/// <summary>Extension methods for <see cref="IWriteBuffer"/> implementations.</summary>
 public static class WriteBufferExtensions
 {
     extension<TWriteBuffer>(ref TWriteBuffer buffer)
@@ -37,11 +37,8 @@ public static class WriteBufferExtensions
 #endif
     {
         /// <summary>
-        /// Returns a reference to write to with at least the requested length (specified by
-        /// <paramref name="sizeHint"/>) of writable bytes behind it. Derived from
-        /// <see cref="IWriteBuffer.GetSpan"/>: the JIT dead-codes the unused span length, so
-        /// this is codegen-equivalent to a dedicated interface member
-        /// (GetReferenceVsGetSpanBenchmark — identical hot-loop asm on net10 x64).
+        /// Returns a reference to writable memory with at least <paramref name="sizeHint"/> bytes behind it.
+        /// A reference-typed shortcut for <see cref="IWriteBuffer.GetSpan"/> with the same contract.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref byte GetReference(int sizeHint = 0)

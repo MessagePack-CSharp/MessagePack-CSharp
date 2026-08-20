@@ -118,8 +118,8 @@ public class StackPoolIntBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        defaultOptions = new MessagePackSerializerOptions([BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
-        pooledOptions = new MessagePackSerializerOptions([new PooledStackFormatterFactory<int>(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
+        defaultOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
+        pooledOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new PooledStackFormatterFactory<int>(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
         var rand = new Random(42);
         var stack = new Stack<int>();
         for (int i = 0; i < N; i++) stack.Push(rand.Next());
@@ -137,7 +137,7 @@ public class StackPoolIntBenchmark
     public Stack<int>? Populate_New()
     {
         var target = populateTarget;
-        MessagePackSerializer.Deserialize(ref target, payload, defaultOptions);
+        MessagePackSerializer.Deserialize(payload, ref target, defaultOptions);
         return target;
     }
 
@@ -145,7 +145,7 @@ public class StackPoolIntBenchmark
     public Stack<int>? Populate_Pooled()
     {
         var target = populateTarget;
-        MessagePackSerializer.Deserialize(ref target, payload, pooledOptions);
+        MessagePackSerializer.Deserialize(payload, ref target, pooledOptions);
         return target;
     }
 }
@@ -165,8 +165,8 @@ public class StackPoolStringBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        defaultOptions = new MessagePackSerializerOptions([BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
-        pooledOptions = new MessagePackSerializerOptions([new PooledStackFormatterFactory<string>(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
+        defaultOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
+        pooledOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new PooledStackFormatterFactory<string>(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
         var stack = new Stack<string>();
         for (int i = 0; i < N; i++) stack.Push($"str{i}");
         payload = MessagePackSerializer.Serialize(stack, defaultOptions);
@@ -183,7 +183,7 @@ public class StackPoolStringBenchmark
     public Stack<string>? Populate_New()
     {
         var target = populateTarget;
-        MessagePackSerializer.Deserialize(ref target, payload, defaultOptions);
+        MessagePackSerializer.Deserialize(payload, ref target, defaultOptions);
         return target;
     }
 
@@ -191,7 +191,7 @@ public class StackPoolStringBenchmark
     public Stack<string>? Populate_Pooled()
     {
         var target = populateTarget;
-        MessagePackSerializer.Deserialize(ref target, payload, pooledOptions);
+        MessagePackSerializer.Deserialize(payload, ref target, pooledOptions);
         return target;
     }
 }

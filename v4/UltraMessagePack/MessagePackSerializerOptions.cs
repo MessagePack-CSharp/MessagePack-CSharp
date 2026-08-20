@@ -14,11 +14,12 @@ public sealed record class MessagePackSerializerOptions
     static MessagePackSerializerOptions? dotNetOptimizedAotOptions;
 
     /// <summary>
-    /// Options over the default factory chain(SourceGenerated -> BuiltIn -> Generic).
+    /// Options over the default factory chain(SourceGenerated -> BuiltIn -> Generic -> annotated Reflection).
     /// </summary>
     public static MessagePackSerializerOptions Default
     {
         [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
         get => defaultOptions ??= new MessagePackSerializerOptions(new MessagePackFormatterResolver(MessagePackFormatterFactory.Default));
     }
 
@@ -38,6 +39,7 @@ public sealed record class MessagePackSerializerOptions
     public static MessagePackSerializerOptions DotNetOptimized
     {
         [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
         get => dotNetOptimizedOptions ??= new MessagePackSerializerOptions(new MessagePackFormatterResolver(MessagePackFormatterFactory.DotNetOptimized));
     }
 
@@ -76,25 +78,19 @@ public sealed record class MessagePackSerializerOptions
 
     /// <summary>
     /// Upper bound in bytes for a single message (or a single element of
-    /// <c>DeserializeElementsAsync</c>) that the async deserialization APIs buffer before
-    /// parsing. Bounds the memory an oversized or adversarial stream can pin; the
-    /// synchronous APIs are unaffected because the caller owns the buffer there.
-    /// Defaults to 64MiB; raise it for trusted streams with larger messages, or use
+    /// <c>DeserializeElementsAsync</c>) that a deserialization entry buffers before parsing.
+    /// It applies to the Stream and PipeReader entries and bounds the memory an oversized
+    /// or adversarial stream can pin. The span and sequence entries are unaffected
+    /// because the caller owns the buffer there.
+    /// Defaults to 64MiB. Raise it for trusted streams with larger messages, or use
     /// <c>DeserializeElementsAsync</c> to stream large arrays element by element.
     /// </summary>
-    public long MaxAsyncMessageSize { get; init; } = 64 * 1024 * 1024;
+    public long MaxBufferedMessageSize { get; init; } = 64 * 1024 * 1024;
 
     // TODO: ctor doc-comment
 
     public MessagePackSerializerOptions(MessagePackFormatterResolver resolver)
     {
         this.resolver = resolver;
-    }
-
-    // TODO: doc-comment for throwOnLegacyFormatter
-
-    public MessagePackSerializerOptions(MessagePackFormatterFactory[] factories, bool hashFloodingResistant = true, bool throwOnLegacyFormatter = false)
-        : this(new MessagePackFormatterResolver(MessagePackFormatterFactory.Combine(factories), hashFloodingResistant, throwOnLegacyFormatter))
-    {
     }
 }

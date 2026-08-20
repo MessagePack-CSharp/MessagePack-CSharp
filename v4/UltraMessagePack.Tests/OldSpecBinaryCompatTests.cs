@@ -12,7 +12,8 @@ namespace UltraMessagePack.Tests;
 // Old-spec (pre-2013) msgpack has no bin family — binary rides raw (= today's str) headers, so
 // binary reads must accept str-coded tokens. Writer-side OldSpec is intentionally NOT carried
 // into v4; this reader-side acceptance is what keeps v3-era old-spec data deserializable.
-// The fallback lives in ReadBinHeaderSlow/ReadBinarySlow (ReadBufferExtensions.cs).
+// The fallback lives in ReadBinHeaderSlow (ReadBufferExtensions.cs); ReadBinary routes its
+// whole token through the header reader, so accepting str there covers the payload too.
 public class OldSpecBinaryCompatTests
 {
     static readonly OracleOptions OldSpec = OracleOptions.Standard.WithOldSpec(true);

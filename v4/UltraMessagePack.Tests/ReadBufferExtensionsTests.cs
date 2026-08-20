@@ -78,6 +78,9 @@ public class ReadBufferExtensionsTests
         W(MessagePackPrimitives.TryWriteBinary(buf.AsSpan(pos), [1, 2, 3, 4, 5], out w), w);
         W(MessagePackPrimitives.TryWriteExtHeader(buf.AsSpan(pos), 7, 16, out w), w);
         pos += 16; // the ext payload itself (zeros)
+        W(MessagePackPrimitives.TryWriteExtHeader(buf.AsSpan(pos), 42, 3, out w), w);
+        buf[pos] = 1; buf[pos + 1] = 2; buf[pos + 2] = 3;
+        pos += 3;
         W(MessagePackPrimitives.TryWriteTimestamp(buf.AsSpan(pos), TestTimestamp, out w), w);
 
         return buf[..pos];
@@ -112,10 +115,16 @@ public class ReadBufferExtensionsTests
         Assert.Equal("こんにちは世界🌍", buffer.ReadString());
         Assert.Equal(new string('x', 300), buffer.ReadString());
         Assert.Equal((byte[])[1, 2, 3, 4, 5], buffer.ReadBinary());
+        Assert.False(buffer.TryReadExtHeader(42, out _)); // wrong ext code: consumes nothing
         var (typeCode, dataLength) = buffer.ReadExtHeader();
         Assert.Equal((sbyte)7, typeCode);
         Assert.Equal(16, dataLength);
         buffer.Advance(16); // skip the ext payload
+        Assert.False(buffer.TryReadExtHeader(7, out _)); // miss again on the next ext
+        Assert.True(buffer.TryReadExtHeader(42, out var extLength)); // match: takes exactly the header
+        Assert.Equal(3, extLength);
+        buffer.Advance(3); // skip the ext payload
+        Assert.False(buffer.TryReadExtHeader(97, out _)); // timestamp (code -1) is not ours: untouched
         Assert.Equal(TestTimestamp, buffer.ReadTimestamp());
         Assert.Equal(0, buffer.BytesRemaining);
     }
@@ -238,6 +247,35 @@ public class ReadBufferExtensionsTests
         // str header larger than the remaining payload
         byte[] shortStr = [0xa5, (byte)'a', (byte)'b']; // fixstr(5) with 2 payload bytes
         AssertThrows(shortStr, (ref ReadOnlySpanReadBuffer b) => b.ReadString());
+    }
+
+    [Fact]
+    public void TryReadExtHeader_MissLeavesBufferUntouched()
+    {
+        // a non-ext token: miss, then the token still reads normally
+        byte[] number = new byte[3];
+        Assert.True(MessagePackPrimitives.TryWriteInt32(number, 300, out int written));
+        var intBuffer = new ReadOnlySpanReadBuffer(number.AsSpan(0, written));
+        Assert.False(intBuffer.TryReadExtHeader(42, out _));
+        Assert.Equal(300, intBuffer.ReadInt32());
+
+        // a header cut mid-token: reported as a miss, bytes stay for the owner's own
+        // truncation error
+        byte[] ext = new byte[8];
+        Assert.True(MessagePackPrimitives.TryWriteExtHeader(ext, 42, 200, out written));
+        var truncated = new ReadOnlySpanReadBuffer(ext.AsSpan(0, 1));
+        Assert.False(truncated.TryReadExtHeader(42, out _));
+        Assert.Equal(1, truncated.BytesRemaining);
+    }
+
+    [Fact]
+    public void TryReadExtHeader_MatchedImplausibleLength_Throws()
+    {
+        // once the code matches the token is ours, so a length past the buffer is a data
+        // error (same guard as ReadExtHeader), not a miss
+        byte[] ext = new byte[8];
+        Assert.True(MessagePackPrimitives.TryWriteExtHeader(ext, 42, 200, out int written));
+        AssertThrows(ext[..written], (ref ReadOnlySpanReadBuffer b) => b.TryReadExtHeader(42, out _));
     }
 
     delegate void SpanBufferAction(ref ReadOnlySpanReadBuffer buffer);

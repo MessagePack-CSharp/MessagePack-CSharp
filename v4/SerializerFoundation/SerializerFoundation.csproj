@@ -7,7 +7,10 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<Description>Serializer-agnostic buffer foundation: IWriteBuffer/IReadBuffer abstractions with pooled, fixed, IBufferWriter and pipe implementations across the modern (`allows ref struct`) and downlevel tiers.</Description>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<!-- interface members carry the docs; implementing members are intentionally undocumented -->
+		<NoWarn>$(NoWarn);CS1591</NoWarn>
+		<Description>Serializer-agnostic buffer foundation.</Description>
 		<IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
 	</PropertyGroup>
 

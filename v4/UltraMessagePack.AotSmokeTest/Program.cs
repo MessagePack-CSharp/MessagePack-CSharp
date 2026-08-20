@@ -9,11 +9,11 @@ using Ultra = UltraMessagePack.MessagePackSerializer;
 // GenericFormatterFactory) is deliberately never referenced, so `dotnet publish` must
 // complete with zero IL warnings — treat any IL warning in the publish log as a failure.
 
-var options = new UltraMessagePack.MessagePackSerializerOptions(
+var options = new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(
 [
     UltraMessagePack.Generated.GeneratedMessagePackFormatterFactory.Instance,
     BuiltInFormatterFactory.Instance,
-]);
+]));
 
 //options = UltraMessagePack.MessagePackSerializerOptions.Default;
 
@@ -103,7 +103,7 @@ foreach (var v in (int[])[0, 1, 127, 128, 255, 256, 65535, 65536, int.MaxValue, 
 
     // populate overload reuses the instance
     var reusable = new SmokeIntKeyPoco();
-    Ultra.Deserialize(ref reusable!, small, options);
+    Ultra.Deserialize(small, ref reusable!, options);
     Check(reusable.Id == 42 && reusable.Name == "山岡士郎", "populate roundtrip");
 }
 
@@ -114,10 +114,12 @@ foreach (var v in (int[])[0, 1, 127, 128, 255, 256, 65535, 65536, int.MaxValue, 
 }
 
 // unregistered type must fail with the resolver's exception, not an AOT crash
+// (List<int> no longer qualifies: primitive Lists are hardwired in BuiltIn since the
+// collection-family work; a List of a user type still needs GenericFormatterFactory)
 try
 {
-    Ultra.Serialize(new List<int> { 1 }, options);
-    Check(false, "List<int> should not resolve without GenericFormatterFactory");
+    Ultra.Serialize(new List<SmokeIntKeyPoco>(), options);
+    Check(false, "List<SmokeIntKeyPoco> should not resolve without GenericFormatterFactory");
 }
 catch (InvalidOperationException)
 {

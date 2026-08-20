@@ -22,19 +22,20 @@ public static partial class MessagePackSerializer
 {
     /// <summary>
     /// Deserializes one MessagePack value from the reader. The value is buffered
-    /// completely (bounded by <see cref="MessagePackSerializerOptions.MaxAsyncMessageSize"/>),
+    /// completely (bounded by <see cref="MessagePackSerializerOptions.MaxBufferedMessageSize"/>),
     /// then parsed synchronously; bytes after the value are left unconsumed.
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
-    public static Task<T> DeserializeAsync<T>(PipeReader pipeReader, CancellationToken cancellationToken = default)
+    [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
+    public static ValueTask<T> DeserializeAsync<T>(PipeReader pipeReader, CancellationToken cancellationToken = default)
     {
         return DeserializeAsync<T>(pipeReader, MessagePackSerializerOptions.Default, cancellationToken);
     }
 
     /// <inheritdoc cref="DeserializeAsync{T}(PipeReader, CancellationToken)"/>
-    public static async Task<T> DeserializeAsync<T>(PipeReader pipeReader, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
+    public static async ValueTask<T> DeserializeAsync<T>(PipeReader pipeReader, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
-        var maxMessageSize = options.MaxAsyncMessageSize;
+        var maxMessageSize = options.MaxBufferedMessageSize;
         var scanner = new MessagePackBoundaryScanner();
         while (true)
         {
@@ -71,7 +72,7 @@ public static partial class MessagePackSerializer
             {
                 if (scanner.Consumed > maxMessageSize)
                 {
-                    MessagePackSerializationException.ThrowAsyncMessageSizeExceeded(scanner.Consumed, maxMessageSize);
+                    MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(scanner.Consumed, maxMessageSize);
                 }
 
                 var message = buffer.Slice(0, scanner.Consumed);
@@ -79,7 +80,7 @@ public static partial class MessagePackSerializer
                 try
                 {
                     // pass 2: the slice is exactly one value, so the sync entry applies as-is.
-                    Deserialize(ref value, in message, options);
+                    Deserialize(in message, ref value, options);
                 }
                 finally
                 {
@@ -92,7 +93,7 @@ public static partial class MessagePackSerializer
             // reject an implausible value before buffering it (headers claiming huge payloads/counts push the lower bound over the cap immediately)
             if (scanner.MinimumMessageSize > maxMessageSize)
             {
-                MessagePackSerializationException.ThrowAsyncMessageSizeExceeded(scanner.MinimumMessageSize, maxMessageSize);
+                MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(scanner.MinimumMessageSize, maxMessageSize);
             }
 
             if (result.IsCompleted)
@@ -111,6 +112,7 @@ public static partial class MessagePackSerializer
     /// than per stream.
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
     public static IAsyncEnumerable<T> DeserializeMessagesAsync<T>(PipeReader pipeReader, CancellationToken cancellationToken = default)
     {
         return DeserializeMessagesAsync<T>(pipeReader, MessagePackSerializerOptions.Default, cancellationToken);
@@ -119,7 +121,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="DeserializeMessagesAsync{T}(PipeReader, CancellationToken)"/>
     public static async IAsyncEnumerable<T> DeserializeMessagesAsync<T>(PipeReader pipeReader, MessagePackSerializerOptions options, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var maxMessageSize = options.MaxAsyncMessageSize;
+        var maxMessageSize = options.MaxBufferedMessageSize;
         var scanner = new MessagePackBoundaryScanner();
         while (true)
         {
@@ -153,14 +155,14 @@ public static partial class MessagePackSerializer
                 var messageEnd = scanner.Consumed;
                 if (messageEnd - batchStart > maxMessageSize)
                 {
-                    MessagePackSerializationException.ThrowAsyncMessageSizeExceeded(messageEnd - batchStart, maxMessageSize);
+                    MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(messageEnd - batchStart, maxMessageSize);
                 }
 
                 var message = buffer.Slice(batchStart, messageEnd - batchStart);
                 T value = default!;
                 try
                 {
-                    Deserialize(ref value, in message, options);
+                    Deserialize(in message, ref value, options);
                 }
                 catch
                 {
@@ -175,7 +177,7 @@ public static partial class MessagePackSerializer
 
             if (scanner.MinimumMessageSize - batchStart > maxMessageSize)
             {
-                MessagePackSerializationException.ThrowAsyncMessageSizeExceeded(scanner.MinimumMessageSize - batchStart, maxMessageSize);
+                MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(scanner.MinimumMessageSize - batchStart, maxMessageSize);
             }
 
             if (result.IsCompleted)
@@ -196,10 +198,11 @@ public static partial class MessagePackSerializer
     /// <summary>
     /// Deserializes the elements of one top-level MessagePack array, streaming element by
     /// element: only one element is buffered at a time (bounded by
-    /// <see cref="MessagePackSerializerOptions.MaxAsyncMessageSize"/>). A nil in place of
+    /// <see cref="MessagePackSerializerOptions.MaxBufferedMessageSize"/>). A nil in place of
     /// the array yields no elements; bytes after the array are left unconsumed.
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
     public static IAsyncEnumerable<T> DeserializeElementsAsync<T>(PipeReader pipeReader, CancellationToken cancellationToken = default)
     {
         return DeserializeElementsAsync<T>(pipeReader, MessagePackSerializerOptions.Default, cancellationToken);
@@ -215,7 +218,7 @@ public static partial class MessagePackSerializer
         }
 
         // batched like DeserializeMessagesAsync, plus: stops after count elements and leaves anything past the array unconsumed
-        var maxMessageSize = options.MaxAsyncMessageSize;
+        var maxMessageSize = options.MaxBufferedMessageSize;
         var scanner = new MessagePackBoundaryScanner();
         var produced = 0L;
         while (true)
@@ -254,14 +257,14 @@ public static partial class MessagePackSerializer
                 var elementEnd = scanner.Consumed;
                 if (elementEnd - batchStart > maxMessageSize)
                 {
-                    MessagePackSerializationException.ThrowAsyncMessageSizeExceeded(elementEnd - batchStart, maxMessageSize);
+                    MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(elementEnd - batchStart, maxMessageSize);
                 }
 
                 var element = buffer.Slice(batchStart, elementEnd - batchStart);
                 T value = default!;
                 try
                 {
-                    Deserialize(ref value, in element, options);
+                    Deserialize(in element, ref value, options);
                 }
                 catch
                 {
@@ -282,7 +285,7 @@ public static partial class MessagePackSerializer
 
             if (scanner.MinimumMessageSize - batchStart > maxMessageSize)
             {
-                MessagePackSerializationException.ThrowAsyncMessageSizeExceeded(scanner.MinimumMessageSize - batchStart, maxMessageSize);
+                MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(scanner.MinimumMessageSize - batchStart, maxMessageSize);
             }
 
             if (result.IsCompleted)

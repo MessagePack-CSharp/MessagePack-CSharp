@@ -27,6 +27,32 @@ public class GeneratedFormatterTests
         Assert.Equal(Oracle.Serialize(fromOracle), oracle);
     }
 
+    // regression + the reason String left the generator's direct-write path: the emitted
+    // formatter used to call buffer.WriteString / buffer.ReadString inline, so a
+    // chain-supplied string formatter (interning, custom encoding) never reached a
+    // [MessagePackObject] member — only standalone string serialization saw it
+    [Fact]
+    public void StringMember_RoutesThroughTheResolvedStringFormatter()
+    {
+        var options = new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(
+            [InterningStringFactory.Instance, MessagePackFormatterFactory.Default]));
+
+        // built at runtime so the instance is not already the interned one
+        var name = string.Concat("gen-", "interned-member-name");
+        var value = new GenIntKeyPoco { Id = 1, Name = name, Score = 1.5, Flag = true, Ticks = 2 };
+
+        // the interning formatter writes the default wire: bytes stay oracle-identical
+        var bytes = Ultra.Serialize(value, options);
+        Assert.Equal(Oracle.Serialize(value), bytes);
+
+        var back = Ultra.Deserialize<GenIntKeyPoco>(bytes, options)!;
+        Assert.Equal(name, back.Name);
+        Assert.Same(string.Intern(name), back.Name); // proof the custom formatter ran
+
+        // the default chain is untouched: it still decodes a fresh, un-interned string
+        Assert.NotSame(string.Intern(name), Ultra.Deserialize<GenIntKeyPoco>(bytes)!.Name);
+    }
+
     [Fact]
     public void IntKey_ContiguousKeys()
     {
@@ -136,12 +162,12 @@ public class GeneratedFormatterTests
     [Fact]
     public void ExplicitFactoryChain_WorksWithoutModuleInitializerRegistration()
     {
-        var options = new MessagePackSerializerOptions(
+        var options = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
         [
             UltraMessagePack.Generated.GeneratedMessagePackFormatterFactory.Instance,
             BuiltInFormatterFactory.Instance,
             GenericFormatterFactory.Instance,
-        ]);
+        ]));
         var value = new GenNestedPoco { Numbers = [1, 2, 3], Stamp = Stamp };
         var bytes = Ultra.Serialize(value, options);
         Assert.Equal(Oracle.Serialize(value), bytes);
@@ -208,7 +234,7 @@ public class GeneratedFormatterTests
         var bytes = Ultra.Serialize(new GenIntKeyPoco { Id = 1, Name = "x", Score = 2, Flag = true, Ticks = 3 });
         var target = new GenIntKeyPoco { Id = 999 };
         var result = target;
-        Ultra.Deserialize(ref result, bytes);
+        Ultra.Deserialize(bytes, ref result);
         Assert.Same(target, result);
         Assert.Equal(1, result.Id);
         Assert.Equal("x", result.Name);
@@ -294,4 +320,36 @@ public struct GenStructPoco
 {
     [Key(0)] public int A { get; set; }
     [Key(1)] public double B { get; set; }
+}
+
+// the motivating custom string tier: same wire as the default, interned on read
+// (partial: FactoryBridgeGenerator supplies the Type-based CreateFormatter tier)
+sealed partial class InterningStringFactory : MessagePackFormatterFactory
+{
+    public static readonly InterningStringFactory Instance = new InterningStringFactory();
+
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+    {
+        return type == typeof(string) ? new InterningStringFormatter<TWriteBuffer, TReadBuffer>() : null;
+    }
+}
+
+sealed class InterningStringFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, string?>
+    where TWriteBuffer : struct, SerializerFoundation.IWriteBuffer, allows ref struct
+    where TReadBuffer : struct, SerializerFoundation.IReadBuffer, allows ref struct
+{
+    public void Initialize(MessagePackFormatterResolver resolver)
+    {
+    }
+
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, string? value)
+    {
+        buffer.WriteString(value);
+    }
+
+    public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref string? value)
+    {
+        var read = buffer.ReadString();
+        value = read == null ? null : string.Intern(read);
+    }
 }

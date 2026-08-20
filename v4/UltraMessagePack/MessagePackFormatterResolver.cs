@@ -1,3 +1,5 @@
+using UltraMessagePack.Formatters;
+
 namespace UltraMessagePack;
 
 // Global per-instantiation id for the resolvers' formatter tables.
@@ -77,6 +79,14 @@ public sealed class MessagePackFormatterResolver
         this.factory = factory;
         this.HashFloodingResistant = hashFloodingResistant;
         this.ThrowOnLegacyFormatter = throwOnLegacyFormatter;
+    }
+
+    /// <summary>
+    /// Composes the factories into one chain; first non-null wins, so put overrides before defaults.
+    /// </summary>
+    public MessagePackFormatterResolver(MessagePackFormatterFactory[] factories, bool hashFloodingResistant = true, bool throwOnLegacyFormatter = false)
+        : this(MessagePackFormatterFactory.Combine(factories), hashFloodingResistant, throwOnLegacyFormatter)
+    {
     }
 
 #if NET9_0_OR_GREATER

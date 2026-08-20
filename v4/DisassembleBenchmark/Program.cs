@@ -19,6 +19,7 @@ if (args.Contains("--verify"))
     ok &= VerifyPocoSerializers();
     ok &= VerifyNbOfficial();
     ok &= VerifyAnswer();
+    ok &= VerifyReflectionObject();
     ok &= VerifyAnswerBufferTier();
     ok &= VerifyGetRefVsGetSpan();
     ok &= VerifyLinkedListWalk();
@@ -51,6 +52,7 @@ if (args.Contains("--answer-sizes"))
     var b = new AnswerBenchmark();
     b.Setup();
     Console.WriteLine($"msgpack (Ultra == MessagePack-CSharp): {b.SerializeUltra().Length} B");
+    Console.WriteLine($"msgpack (Ultra DotNetOptimized):       {b.SerializeUltraDotNetOptimized().Length} B");
     Console.WriteLine($"msgpack (Nerdbank):                    {b.SerializeNerdbank().Length} B");
     Console.WriteLine($"protobuf (protobuf-net):               {b.SerializeProtobufNet().Length} B");
     Console.WriteLine($"Orleans (Microsoft.Orleans):           {b.SerializeOrleans().Length} B");
@@ -461,6 +463,22 @@ static bool VerifyAnswer()
     }
 }
 
+// ReflectionObjectBenchmark.Setup() is self-verifying: generated, reflection and v3-emit
+// bytes must be identical and both non-generated paths must roundtrip
+static bool VerifyReflectionObject()
+{
+    try
+    {
+        new ReflectionObjectBenchmark().Setup();
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"NG ReflectionObject: {ex.Message}");
+        return false;
+    }
+}
+
 // AnswerBufferTierBenchmark.Setup() is self-verifying: DirectFast/DirectCompatible
 // serialize bytes must equal the endpoint bytes, both direct deserialize paths roundtrip
 static bool VerifyAnswerBufferTier()
@@ -551,12 +569,12 @@ static bool VerifyNbOfficial()
 static bool VerifyStackPool()
 {
     var ok = true;
-    var defaultOptions = new UltraMessagePack.MessagePackSerializerOptions(
-        [UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]);
-    var pooledIntOptions = new UltraMessagePack.MessagePackSerializerOptions(
-        [new PooledStackFormatterFactory<int>(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]);
-    var pooledStringOptions = new UltraMessagePack.MessagePackSerializerOptions(
-        [new PooledStackFormatterFactory<string>(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]);
+    var defaultOptions = new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(
+        [UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]));
+    var pooledIntOptions = new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(
+        [new PooledStackFormatterFactory<int>(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]));
+    var pooledStringOptions = new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(
+        [new PooledStackFormatterFactory<string>(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]));
 
     foreach (var n in new[] { 0, 1, 2, 16, 17, 1000 })
     {
@@ -566,7 +584,7 @@ static bool VerifyStackPool()
         var intFresh = UltraMessagePack.MessagePackSerializer.Deserialize<Stack<int>?>(intPayload, pooledIntOptions)!;
         var intPopulated = new Stack<int>([123]);
         var intTarget = intPopulated;
-        UltraMessagePack.MessagePackSerializer.Deserialize(ref intTarget, intPayload, pooledIntOptions);
+        UltraMessagePack.MessagePackSerializer.Deserialize(intPayload, ref intTarget, pooledIntOptions);
         if (!intFresh.SequenceEqual(intExpected) || !ReferenceEquals(intTarget, intPopulated) || !intTarget!.SequenceEqual(intExpected))
         {
             ok = false;
@@ -578,7 +596,7 @@ static bool VerifyStackPool()
         var strExpected = UltraMessagePack.MessagePackSerializer.Deserialize<Stack<string>?>(strPayload, defaultOptions)!;
         var strFresh = UltraMessagePack.MessagePackSerializer.Deserialize<Stack<string>?>(strPayload, pooledStringOptions)!;
         Stack<string>? strTarget = new Stack<string>(["zzz"]);
-        UltraMessagePack.MessagePackSerializer.Deserialize(ref strTarget, strPayload, pooledStringOptions);
+        UltraMessagePack.MessagePackSerializer.Deserialize(strPayload, ref strTarget, pooledStringOptions);
         if (!strFresh.SequenceEqual(strExpected) || !strTarget!.SequenceEqual(strExpected))
         {
             ok = false;
@@ -595,19 +613,19 @@ static bool VerifyDictSlotWrite()
 {
     var ok = true;
 
-    var shipping = new UltraMessagePack.MessagePackSerializerOptions(
-        [new BigValFormatterFactory(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]);
+    var shipping = new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver(
+        [new BigValFormatterFactory(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]));
     var variants = new (string Name, UltraMessagePack.MessagePackSerializerOptions IntOptions, UltraMessagePack.MessagePackSerializerOptions BigOptions, UltraMessagePack.MessagePackSerializerOptions StrOptions)[]
     {
         ("Shipping", shipping, shipping, shipping),
         ("Indexer",
-            new UltraMessagePack.MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<int, int>(DictLoopVariant.Indexer), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]),
-            new UltraMessagePack.MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<int, BigVal>(DictLoopVariant.Indexer), new BigValFormatterFactory(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]),
-            new UltraMessagePack.MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<string, string>(DictLoopVariant.Indexer), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance])),
+            new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver([new VariantDictionaryFormatterFactory<int, int>(DictLoopVariant.Indexer), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance])),
+            new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver([new VariantDictionaryFormatterFactory<int, BigVal>(DictLoopVariant.Indexer), new BigValFormatterFactory(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance])),
+            new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver([new VariantDictionaryFormatterFactory<string, string>(DictLoopVariant.Indexer), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]))),
         ("SlotCondClear",
-            new UltraMessagePack.MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<int, int>(DictLoopVariant.SlotCondClear), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]),
-            new UltraMessagePack.MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<int, BigVal>(DictLoopVariant.SlotCondClear), new BigValFormatterFactory(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]),
-            new UltraMessagePack.MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<string, string>(DictLoopVariant.SlotCondClear), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance])),
+            new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver([new VariantDictionaryFormatterFactory<int, int>(DictLoopVariant.SlotCondClear), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance])),
+            new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver([new VariantDictionaryFormatterFactory<int, BigVal>(DictLoopVariant.SlotCondClear), new BigValFormatterFactory(), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance])),
+            new UltraMessagePack.MessagePackSerializerOptions(new UltraMessagePack.MessagePackFormatterResolver([new VariantDictionaryFormatterFactory<string, string>(DictLoopVariant.SlotCondClear), UltraMessagePack.BuiltInFormatterFactory.Instance, UltraMessagePack.GenericFormatterFactory.Instance]))),
     };
 
     foreach (var n in new[] { 0, 1, 2, 15, 16, 17, 1000 })
@@ -641,13 +659,13 @@ static bool VerifyDictSlotWrite()
             // populate: stale entries must vanish, instance must be reused
             var intTarget = new Dictionary<int, int> { [-999] = 1, [-998] = 2 };
             var intPopulated = intTarget;
-            UltraMessagePack.MessagePackSerializer.Deserialize(ref intPopulated, intPayload, intOptions);
+            UltraMessagePack.MessagePackSerializer.Deserialize(intPayload, ref intPopulated, intOptions);
             var bigTarget = new Dictionary<int, BigVal> { [-999] = new BigVal { A = 1 } };
             var bigPopulated = bigTarget;
-            UltraMessagePack.MessagePackSerializer.Deserialize(ref bigPopulated, bigPayload, bigOptions);
+            UltraMessagePack.MessagePackSerializer.Deserialize(bigPayload, ref bigPopulated, bigOptions);
             var strTarget = new Dictionary<string, string> { ["stale"] = "x" };
             var strPopulated = strTarget;
-            UltraMessagePack.MessagePackSerializer.Deserialize(ref strPopulated, strPayload, strOptions);
+            UltraMessagePack.MessagePackSerializer.Deserialize(strPayload, ref strPopulated, strOptions);
             if (!ReferenceEquals(intPopulated, intTarget) || !DictEquals(intPopulated!, ints)
                 || !ReferenceEquals(bigPopulated, bigTarget) || !DictEquals(bigPopulated!, bigs)
                 || !ReferenceEquals(strPopulated, strTarget) || !DictEquals(strPopulated!, strs))

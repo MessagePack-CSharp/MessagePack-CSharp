@@ -2,15 +2,6 @@
 
 using SerializerFoundation;
 
-// per-TFM segment iterator: downlevel entries serialize into the plain-struct pooled
-// buffer, so the abstract Encode surface follows (multi-targeting processor implementations
-// must #if the parameter type the same way; the in-repo LZ4 package is net10.0-only)
-#if NET9_0_OR_GREATER
-using SegmentIterator = SerializerFoundation.ArrayPoolListWriteBuffer.WrittenSegmentIterator;
-#else
-using SegmentIterator = SerializerFoundation.CompatibleArrayPoolListWriteBuffer.WrittenSegmentIterator;
-#endif
-
 namespace UltraMessagePack;
 
 /// <summary>
@@ -24,13 +15,54 @@ namespace UltraMessagePack;
 public abstract class MessagePackMessageProcessor
 {
     /// <summary>
-    /// Serialize tail: receives the written msgpack message as zero-copy segments and
-    /// produces the final encoded bytes. The segments are only valid during the call.
+    /// Serialize tail, the mirror of TryDecode's transparent passthrough: wrap the written
+    /// msgpack message (zero-copy segments, <see cref="BufferSegments.Length"/> carries the
+    /// total size) in this processor's envelope and return true, or return false and the
+    /// entry writes the raw message itself (envelope not worth it: below a compression
+    /// threshold, incompressible, ...). The segments are only valid during the call.
+    /// The call consumes the iterator (take struct copies for extra passes); a caller
+    /// reusing it afterwards Resets it first.
+    /// CONTRACT: false means output was NOT advanced — bytes obtained from GetSpan without
+    /// Advance are fine, committed bytes are not, because on the streaming entries output
+    /// is the final destination. BufferSegments is TFM-invariant, so implementations
+    /// multi-target without #if.
     /// </summary>
-    public abstract byte[] Encode(SegmentIterator message, long messageLength);
+    public abstract bool TryEncode(ref BufferSegments message, IBufferWriter<byte> output);
 
-    /// <inheritdoc cref="Encode(SegmentIterator, long)"/>
-    public abstract void Encode(SegmentIterator message, long messageLength, IBufferWriter<byte> output);
+#if NET
+    /// <summary>
+    /// Modern path: encode into buffers borrowed directly from the target write buffer.
+    /// Conceptually abstract — implementations are expected to override this. It is
+    /// virtual only because an abstract member present on this TFM alone would make
+    /// processors compiled against the downlevel TFMs fail to LOAD on the modern runtime;
+    /// the bridge body (interface overload into a staging buffer, one extra copy) keeps
+    /// those working instead. Same false-means-passthrough contract.
+    /// </summary>
+    [SerializerFoundation.CodeAnalysis.RequireOverride] // SF003: compiled-against-modern processors must override
+    public virtual bool TryEncode<TWriteBuffer>(ref BufferSegments message, ref TWriteBuffer output)
+        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
+    {
+        var staging = ArrayPoolListWriteBufferCache.Rent();
+        try
+        {
+            if (!TryEncode(ref message, staging))
+            {
+                return false;
+            }
+            var encoded = ArrayPoolListWriteBufferCache.AsBuffer(staging).GetWrittenSegments();
+            while (encoded.TryGetNext(out var segment))
+            {
+                segment.CopyTo(output.GetSpan(segment.Length));
+                output.Advance(segment.Length);
+            }
+            return true;
+        }
+        finally
+        {
+            ArrayPoolListWriteBufferCache.Return(staging);
+        }
+    }
+#endif
 
     /// <summary>
     /// Deserialize head: if source starts with this processor's envelope, produce the

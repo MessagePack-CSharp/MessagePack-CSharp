@@ -3,13 +3,20 @@ namespace SerializerFoundation;
 // This type is frequently used because PipeReader and others return ReadOnlySequence<byte>.
 // Using Slice on ReadOnlySequence<byte> directly is slow, so the structure is designed
 // to prefer operating on a series of chunks (ReadOnlySpan<byte>).
-// Only at seams where the buffer space is not contiguous, we copy into a temporary
-// buffer to create a contiguous buffer.
+// Only at seams where the buffer space is not contiguous, we copy into a temporary buffer to create a contiguous buffer.
 //
 // Terminology used throughout:
 //   STITCH: copy bytes that straddle a segment seam into contiguous storage (scratch or the retained temp) and serve that copy as the window.
 //   COMMIT: apply the locally accumulated `currentConsumed` back into `sequence` via the expensive ReadOnlySequence.Slice (mirrors PipeReader.AdvanceTo).
 
+// NonCopyableBufferAnalyzer monitors the usage of IWriteBuffer/IReadBuffer and reports copies as errors.
+
+/// <summary>
+/// An <see cref="IReadBuffer"/> over a <see cref="ReadOnlySequence{T}"/>, such as one produced by PipeReader.
+/// Reads operate on each contiguous segment,
+/// and bytes that straddle a segment seam are copied into a temporary buffer to form a contiguous window.
+/// Dispose returns any rented buffer and must be called.
+/// </summary>
 public ref struct ReadOnlySequenceReadBuffer : IReadBuffer
 {
     readonly long length; // original sequence length
@@ -17,11 +24,9 @@ public ref struct ReadOnlySequenceReadBuffer : IReadBuffer
     ReadOnlySequence<byte> sequence;  // positioned at the START of the current window
     ReadOnlySpan<byte> currentSpan;   // full current window (segment or stitched temp)
 
-    // Stitch destinations, in preference order: caller-provided scratch (stackalloc'd at
-    // the serializer entry, mirroring Serialize) for small windows — the fixed-size
-    // tokens need at most 15 bytes, so numeric straddles never touch the pool — and a
-    // RETAINED rented buffer for large ones (str/bin payloads), swapped only when it
-    // must grow and returned only at Dispose.
+    // Stitch destinations, in preference order: caller-provided scratch (stackalloc'd at the serializer entry, mirroring Serialize) for small windows.
+    // the fixed-size tokens need at most 15 bytes, so numeric straddles never touch the pool
+    // and a retained rented buffer for large ones (str/bin payloads), swapped only when it must grow and returned only at Dispose.
     readonly Span<byte> scratch;
     byte[]? tempBuffer;
 
@@ -31,12 +36,18 @@ public ref struct ReadOnlySequenceReadBuffer : IReadBuffer
     public long BytesConsumed => committedConsumed + currentConsumed;
     public long BytesRemaining => length - committedConsumed - currentConsumed;
 
+    /// <summary>Creates a read buffer over <paramref name="sequence"/>.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ReadOnlySequenceReadBuffer(in ReadOnlySequence<byte> sequence)
         : this(in sequence, default)
     {
     }
 
+    /// <summary>
+    /// Creates a read buffer over <paramref name="sequence"/>.
+    /// Small windows that straddle a segment seam are copied into <paramref name="scratch"/> (typically stackalloc memory)
+    /// instead of renting from the pool.
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ReadOnlySequenceReadBuffer(in ReadOnlySequence<byte> sequence, Span<byte> scratch)
     {
@@ -179,6 +190,39 @@ public ref struct ReadOnlySequenceReadBuffer : IReadBuffer
         return true;
     }
 
+    // Copy without ever stitching: the destination is already contiguous, so a straddling
+    // payload is served directly out of the segments instead of via the temp buffer.
+    // Span.Length is never negative, so a plain compare against the remaining data covers
+    // the guard (Advance needs the unsigned fold only because its argument can be negative).
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void CopyTo(Span<byte> destination)
+    {
+        if (destination.Length > length - committedConsumed - currentConsumed)
+        {
+            Throws.InsufficientDataInBuffer();
+        }
+
+        // `remaining` is signed and may be NEGATIVE after a skip overshot the window,
+        // which correctly falls through to the slow path
+        var remaining = currentSpan.Length - currentConsumed;
+        if (remaining >= destination.Length)
+        {
+            currentSpan.Slice((int)currentConsumed, destination.Length).CopyTo(destination);
+            return;
+        }
+        CopyToSlow(destination);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    void CopyToSlow(Span<byte> destination)
+    {
+        // `sequence` stays positioned at the start of the current window in EVERY state,
+        // stitched windows included (TryGetSpanSlow commits before it stitches and never
+        // moves the sequence afterwards), so currentConsumed indexes into it directly.
+        // One Slice walk over the segment graph, amortized over the whole payload.
+        sequence.Slice(currentConsumed, destination.Length).CopyTo(destination);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Advance(int bytesConsumed)
     {
@@ -216,6 +260,10 @@ public ref struct ReadOnlySequenceReadBuffer : IReadBuffer
 
 // same window/currentConsumed representation as ReadOnlySequenceReadBuffer,
 // just over a ReadOnlyMemory window unwrapped to a span per access.
+
+/// <summary>
+/// A <see cref="ReadOnlySequenceReadBuffer"/> variant for target frameworks without <c>allows ref struct</c> support.
+/// </summary>
 public struct CompatibleReadOnlySequenceReadBuffer : IReadBuffer
 {
     readonly long length; // original sequence length
@@ -231,6 +279,7 @@ public struct CompatibleReadOnlySequenceReadBuffer : IReadBuffer
     public long BytesConsumed => committedConsumed + currentConsumed;
     public long BytesRemaining => length - committedConsumed - currentConsumed;
 
+    /// <summary>Creates a read buffer over <paramref name="sequence"/>.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public CompatibleReadOnlySequenceReadBuffer(in ReadOnlySequence<byte> sequence)
     {
@@ -337,6 +386,30 @@ public struct CompatibleReadOnlySequenceReadBuffer : IReadBuffer
         currentMemory = tempBuffer.AsMemory(0, sizeHint);
         span = currentMemory.Span;
         return true;
+    }
+
+    // stitch-free copy, see ReadOnlySequenceReadBuffer.CopyTo
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void CopyTo(Span<byte> destination)
+    {
+        if (destination.Length > length - committedConsumed - currentConsumed)
+        {
+            Throws.InsufficientDataInBuffer();
+        }
+
+        var remaining = currentMemory.Length - currentConsumed;
+        if (remaining >= destination.Length)
+        {
+            currentMemory.Span.Slice((int)currentConsumed, destination.Length).CopyTo(destination);
+            return;
+        }
+        CopyToSlow(destination);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    void CopyToSlow(Span<byte> destination)
+    {
+        sequence.Slice(currentConsumed, destination.Length).CopyTo(destination);
     }
 
     // one unsigned compare against the total remaining, see ReadOnlySequenceReadBuffer.Advance

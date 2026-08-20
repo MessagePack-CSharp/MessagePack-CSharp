@@ -60,7 +60,7 @@ public class FallbackTierBufferTest
             buffer.WriteTo(writeTo);
             Assert.Equal(expected, writeTo);
 
-            // the segment iterator (the MessageProcessor.Encode input) must agree too
+            // the segment iterator (the MessageProcessor.TryEncode input) must agree too
             var concatenated = new List<byte>(expected.Length);
             var segments = buffer.GetWrittenSegments();
             while (segments.TryGetNext(out var segment))

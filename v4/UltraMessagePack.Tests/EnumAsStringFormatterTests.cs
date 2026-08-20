@@ -8,8 +8,8 @@ namespace UltraMessagePack.Tests;
 public class EnumAsStringFormatterTests
 {
     // opt-in is chain composition: the enum-as-string factory BEFORE the default chain
-    static readonly MessagePackSerializerOptions options = new MessagePackSerializerOptions(
-        [new GenericEnumAsStringFormatterFactory(), MessagePackFormatterFactory.Default]);
+    static readonly MessagePackSerializerOptions options = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
+        [new GenericEnumAsStringFormatterFactory(), MessagePackFormatterFactory.Default]));
 
     // the oracle is the v3 formatter this implementation was ported from
     static MessagePack.MessagePackSerializerOptions OracleOptions(bool ignoreCase = false) =>
@@ -119,8 +119,8 @@ public class EnumAsStringFormatterTests
     [Fact]
     public void IgnoreCase_DeserializesMismatchedCasing()
     {
-        var ci = new MessagePackSerializerOptions(
-            [new GenericEnumAsStringFormatterFactory(ignoreCase: true), MessagePackFormatterFactory.Default]);
+        var ci = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
+            [new GenericEnumAsStringFormatterFactory(ignoreCase: true), MessagePackFormatterFactory.Default]));
 
         var lower = new byte[] { 0xA1, (byte)'b' };
         Assert.Equal(Simple.B, MessagePackSerializer.Deserialize<Simple>(lower, ci));
@@ -174,8 +174,8 @@ public class EnumAsStringFormatterTests
     {
         // chain discipline: the closed factory answers for Simple only and declines
         // every other type, so the rest of the chain still resolves normally
-        var chain = new MessagePackSerializerOptions(
-            [new EnumAsStringFormatterFactory<Simple>(), MessagePackFormatterFactory.Default]);
+        var chain = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
+            [new EnumAsStringFormatterFactory<Simple>(), MessagePackFormatterFactory.Default]));
 
         Assert.Equal(0xA1, MessagePackSerializer.Serialize(Simple.B, chain)[0]); // string
         Assert.Equal(new byte[] { 1 }, MessagePackSerializer.Serialize(Renamed.Beta, chain)); // other enum: default int encoding

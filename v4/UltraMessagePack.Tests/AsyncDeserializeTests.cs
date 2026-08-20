@@ -192,7 +192,7 @@ public class AsyncDeserializeTests
     public async Task DeserializeAsync_EmptyStream_Throws()
     {
         await Assert.ThrowsAsync<MessagePackSerializationException>(
-            () => MessagePackSerializer.DeserializeAsync<int>(Feed([]), Options));
+            async () => await MessagePackSerializer.DeserializeAsync<int>(Feed([]), Options));
     }
 
     [Fact]
@@ -200,16 +200,16 @@ public class AsyncDeserializeTests
     {
         var bytes = MessagePackSerializer.Serialize(new string('x', 1000), Options);
         await Assert.ThrowsAsync<MessagePackSerializationException>(
-            () => MessagePackSerializer.DeserializeAsync<string>(Feed(bytes.AsSpan(0, bytes.Length - 1).ToArray()), Options));
+            async () => await MessagePackSerializer.DeserializeAsync<string>(Feed(bytes.AsSpan(0, bytes.Length - 1).ToArray()), Options));
     }
 
     [Fact]
     public async Task DeserializeAsync_MessageOverCap_Throws()
     {
-        var options = Options with { MaxAsyncMessageSize = 16 };
+        var options = Options with { MaxBufferedMessageSize = 16 };
         var bytes = MessagePackSerializer.Serialize(new string('x', 1000), options);
         await Assert.ThrowsAsync<MessagePackSerializationException>(
-            () => MessagePackSerializer.DeserializeAsync<string>(Feed(bytes), options));
+            async () => await MessagePackSerializer.DeserializeAsync<string>(Feed(bytes), options));
     }
 
     [Fact]
@@ -219,9 +219,9 @@ public class AsyncDeserializeTests
         // header's lower bound alone — the pipe is never completed, so anything else hangs
         var pipe = new Pipe();
         await pipe.Writer.WriteAsync(new byte[] { 0xc6, 0x06, 0x40, 0x00, 0x00 });
-        var options = Options with { MaxAsyncMessageSize = 1024 };
+        var options = Options with { MaxBufferedMessageSize = 1024 };
         await Assert.ThrowsAsync<MessagePackSerializationException>(
-            () => MessagePackSerializer.DeserializeAsync<byte[]>(pipe.Reader, options).WaitAsync(TimeSpan.FromSeconds(30)));
+            () => MessagePackSerializer.DeserializeAsync<byte[]>(pipe.Reader, options).AsTask().WaitAsync(TimeSpan.FromSeconds(30)));
     }
 
     #endregion
@@ -377,7 +377,7 @@ public class AsyncDeserializeTests
     [Fact]
     public async Task DeserializeElementsAsync_ElementOverCap_Throws()
     {
-        var options = Options with { MaxAsyncMessageSize = 64 };
+        var options = Options with { MaxBufferedMessageSize = 64 };
         var bytes = MessagePackSerializer.Serialize(new[] { "small", new string('x', 1000) }, options);
         var seen = new List<string>();
         await Assert.ThrowsAsync<MessagePackSerializationException>(async () =>
@@ -426,7 +426,7 @@ public class AsyncDeserializeTests
         var bytes = MessagePackSerializer.Serialize(new string('x', 1000), Options);
         var reader = await CompletedFeed(bytes.AsSpan(0, bytes.Length - 1).ToArray());
         await Assert.ThrowsAsync<MessagePackSerializationException>(
-            () => MessagePackSerializer.DeserializeAsync<string>(reader, Options));
+            async () => await MessagePackSerializer.DeserializeAsync<string>(reader, Options));
     }
 
     [Fact]
@@ -434,11 +434,11 @@ public class AsyncDeserializeTests
     {
         // the shortcut is declined when the buffered data exceeds the cap; the scan path
         // must still reject the oversized value
-        var options = Options with { MaxAsyncMessageSize = 16 };
+        var options = Options with { MaxBufferedMessageSize = 16 };
         var bytes = MessagePackSerializer.Serialize(new string('x', 1000), options);
         var reader = await CompletedFeed(bytes);
         await Assert.ThrowsAsync<MessagePackSerializationException>(
-            () => MessagePackSerializer.DeserializeAsync<string>(reader, options));
+            async () => await MessagePackSerializer.DeserializeAsync<string>(reader, options));
     }
 
     [Fact]

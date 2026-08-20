@@ -72,6 +72,20 @@ public sealed partial class PrimitiveObjectFormatter<TWriteBuffer, TReadBuffer> 
             return;
         }
 
+        // string-keyed generic dictionaries without the non-generic interface(ExpandoObject) and friends.
+        if (value is IDictionary<string, object?> stringMap)
+        {
+            state.Enter();
+            buffer.WriteMapHeader(stringMap.Count);
+            foreach (var entry in stringMap)
+            {
+                buffer.WriteString(entry.Key);
+                Serialize(ref buffer, ref state, entry.Value);
+            }
+            state.Exit();
+            return;
+        }
+
         if (value is System.Collections.ICollection collection)
         {
             state.Enter();

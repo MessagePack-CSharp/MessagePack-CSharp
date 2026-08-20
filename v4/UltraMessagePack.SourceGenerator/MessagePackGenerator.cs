@@ -10,6 +10,19 @@ namespace UltraMessagePack.SourceGenerator;
 /// Initialize-resolved formatter field — the shape the dispatch measurements picked
 /// (PocoPerValueVsBatch/NestedFormatterDispatch benchmarks: batch fixed-size writes, loop+switch reads, interface fields over
 /// per-call resolution).
+///
+/// Only types whose wire form is FIXED belong here. A type the factory chain can re-map
+/// must stay on the formatter path, or the generated code silently pins the default
+/// encoding and the configured chain is ignored for every member of a generated type.
+/// Two types were pulled out for exactly that reason:
+///   DateTime - DotNetOptimized rewrites timestamp ext to Kind-preserving ToBinary
+///   String   - the obvious place for an interning / custom-encoding formatter
+/// The move costs about one call's worth per member and no more — measured at ~1 ns on an
+/// adversarial 5-DateTime poco and NOT measurable on Answer (DateTimeFormatterDispatchBenchmark,
+/// StringFormatterDispatchBenchmark, AnswerBenchmark round 5). On the write side the delta
+/// is the lost fused reservation rather than the callvirt: PGO devirtualizes the callsite,
+/// so hand-removing the dispatch buys nothing. An Initialize-time "is this the stock
+/// formatter" flag was measured and rejected; see DateTimeFormatterDispatchBenchmark.
 /// </summary>
 public enum DirectKind
 {
@@ -26,8 +39,6 @@ public enum DirectKind
     Char,
     Single,
     Double,
-    String,
-    DateTime,
 }
 
 public sealed record MemberModel(
@@ -294,8 +305,8 @@ static class Parser
         SpecialType.System_Char => DirectKind.Char,
         SpecialType.System_Single => DirectKind.Single,
         SpecialType.System_Double => DirectKind.Double,
-        SpecialType.System_String => DirectKind.String,
-        SpecialType.System_DateTime => DirectKind.DateTime,
+        // System_String and System_DateTime are deliberately absent: their wire form is
+        // factory-chain configurable (see DirectKind), so they go through the resolved formatter
         _ => DirectKind.None,
     };
 

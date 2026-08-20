@@ -82,7 +82,7 @@ public class FactoryBridgeTest
         // the serializer's net10 entries resolve with REF STRUCT buffer types; the bridge
         // hands those to the Type-based factory, whose MakeGenericType closes the
         // allows-ref-struct formatter over them (runtime support verified by this test)
-        var options = new MessagePackSerializerOptions([new TypeBasedOnlyFactory()]);
+        var options = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new TypeBasedOnlyFactory()]));
         var payload = MessagePackSerializer.Serialize(new BridgeValue { X = -7 }, options);
         var result = MessagePackSerializer.Deserialize<BridgeValue>(payload, options);
         Assert.Equal(-7, result.X);

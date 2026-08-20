@@ -20,7 +20,18 @@ using UltraMessagePack;
 // (Short, where dispatch is proportionally largest) is a flat 1.00-1.01x. VERDICT:
 // routing string members through an IMessagePackFormatter field is free — GDV collapses
 // the callsite, and even the theoretical miss adds one callvirt to work that is 25ns+.
-// The "primitives direct, everything else via formatter field" split stands.
+//
+// RE-MEASURED at MediumRun 15x2 (the block above was ShortRun, whose +-128ns Error made it
+// weak evidence) when String actually moved off the direct path — the generator now routes
+// it through the formatter field so a chain-supplied interning/custom-encoding formatter
+// reaches [MessagePackObject] members at all (see DirectKind):
+//   Short: Serialize 30.92 vs 32.74 ns (1.06x)   Deserialize 28.50 vs 28.21 ns (0.99x)
+//   Long:  Serialize 64.24 vs 62.12 ns (0.97x)   Deserialize 99.91 vs 99.85 ns (1.00x)
+// Three of the four cells are dead flat or favour Via; the one 1.06x is Short/Serialize,
+// where Direct owns the block's widest StdDev (3.23ns) — wider than the 1.8ns delta itself.
+// The original verdict holds with tighter bars: string dispatch is free. Contrast DateTime
+// (DateTimeFormatterDispatchBenchmark), which DID cost ~1 ns/member — because DateTime was
+// FUSED into the shared reservation and strings never were.
 public class StringFormatterDispatchBenchmark
 {
     const int Count = 10_000;

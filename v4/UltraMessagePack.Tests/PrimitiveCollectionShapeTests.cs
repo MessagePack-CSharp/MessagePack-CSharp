@@ -247,11 +247,11 @@ public class PrimitiveCollectionShapeTests
 
         var list = new List<double> { 1, 2, 3 };
         var before = list;
-        MessagePackSerializer.Deserialize(ref list, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref list);
         Assert.Same(before, list);
         Assert.Equal(expected, list);
 
-        MessagePackSerializer.Deserialize(ref list, MessagePackSerializer.Serialize(new[] { 5d }));
+        MessagePackSerializer.Deserialize(MessagePackSerializer.Serialize(new[] { 5d }), ref list);
         Assert.Same(before, list);
         Assert.Equal([5d], list);
     }
@@ -263,12 +263,12 @@ public class PrimitiveCollectionShapeTests
 
         var memoryBacking = new short[2];
         Memory<short> memory = memoryBacking;
-        MessagePackSerializer.Deserialize(ref memory, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref memory);
         Assert.Equal([7, 8], memoryBacking);
 
         var segmentBacking = new short[] { 1, 2, 3, 4 };
         var segment = new ArraySegment<short>(segmentBacking, 1, 2);
-        MessagePackSerializer.Deserialize(ref segment, bytes);
+        MessagePackSerializer.Deserialize(bytes, ref segment);
         Assert.Equal([1, 7, 8, 4], segmentBacking);
     }
 

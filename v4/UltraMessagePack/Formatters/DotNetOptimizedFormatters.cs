@@ -9,8 +9,7 @@ namespace UltraMessagePack.Formatters;
 // wire form (str Guid/decimal, timestamp DateTime/DateTimeOffset).
 
 /// <summary>
-/// Serializes <see cref="Guid"/> as its 16-byte little-endian image, produced via the endian-defined <see cref="Guid"/> byte API
-/// instead of a memory blit.
+/// Serializes <see cref="Guid"/> as its 16-byte little-endian image.
 /// </summary>
 public sealed partial class DotNetOptimizedGuidFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Guid>
 {
@@ -20,6 +19,11 @@ public sealed partial class DotNetOptimizedGuidFormatter<TWriteBuffer, TReadBuff
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Guid value)
     {
+        // RFC 4122/RFC 9562 specifies big-endian.
+        // However, this formatter must keep v3 compatibility, and since .NET-to-.NET interop is the main use case, little-endian causes no real problems.
+        // If your goal is interoperability with other languages and you also want to avoid strings, please create a separate formatter for that.
+        // Either way, since it is stored as ext in little-endian, it is not interoperable anyway, so it is not much different from the current spec.
+
         var span = buffer.GetSpan(2 + 16);
         BinaryPrimitives.WriteUInt16LittleEndian(span, (16 << 8) | MessagePackCode.Bin8);
 #if NETSTANDARD2_0

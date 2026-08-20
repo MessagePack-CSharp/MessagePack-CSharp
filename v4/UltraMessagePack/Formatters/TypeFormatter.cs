@@ -44,7 +44,7 @@ public sealed partial class TypeFormatter<TWriteBuffer, TReadBuffer> : IMessageP
 
 /// <summary>
 /// Opt-in factory for <see cref="TypeFormatter{TWriteBuffer, TReadBuffer}"/> (trusted data only)
-/// compose it BEFORE the default chain, e.g. <c>new MessagePackSerializerOptions([new TypeFormatterFactory(), MessagePackFormatterFactory.Default])</c>.
+/// compose it BEFORE the default chain, e.g. <c>new MessagePackSerializerOptions(new MessagePackFormatterResolver([new TypeFormatterFactory(), MessagePackFormatterFactory.Default]))</c>.
 /// </summary>
 [Obsolete("Deserializing System.Type executes Type.GetType over payload-provided names, which can load assemblies and permanently grow the process. This exists for v3 compatibility with trusted data only; suppress this warning to accept that risk.")]
 public sealed partial class TypeFormatterFactory : MessagePackFormatterFactory

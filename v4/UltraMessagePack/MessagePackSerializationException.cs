@@ -77,5 +77,11 @@ public class MessagePackSerializationException : Exception
     internal static Exception ThrowAsyncArrayTruncated(long claimedCount, long deliveredCount) => throw new MessagePackSerializationException($"The array header claims {claimedCount} elements but the PipeReader completed after {deliveredCount}");
 
     [DoesNotReturn]
-    internal static Exception ThrowAsyncMessageSizeExceeded(long requiredBytes, long maxAsyncMessageSize) => throw new MessagePackSerializationException($"The MessagePack value needs at least {requiredBytes} buffered bytes, which exceeds MessagePackSerializerOptions.MaxAsyncMessageSize ({maxAsyncMessageSize})");
+    internal static Exception ThrowBufferedMessageSizeExceeded(long requiredBytes, long MaxBufferedMessageSize) => throw new MessagePackSerializationException($"The MessagePack value needs at least {requiredBytes} buffered bytes, which exceeds MessagePackSerializerOptions.MaxBufferedMessageSize ({MaxBufferedMessageSize})");
+
+    [DoesNotReturn]
+    internal static Exception ThrowAsyncElementsMissing(long declaredCount, long producedCount) => throw new MessagePackSerializationException($"SerializeElementsAsync declared {declaredCount} elements but the source completed after {producedCount}");
+
+    [DoesNotReturn]
+    internal static Exception ThrowAsyncElementsExceeded(long declaredCount) => throw new MessagePackSerializationException($"SerializeElementsAsync declared {declaredCount} elements but the source yielded more");
 }

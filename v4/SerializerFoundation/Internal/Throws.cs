@@ -16,6 +16,10 @@ internal static class Throws
     [DoesNotReturn]
     internal static void InsufficientSpaceInBuffer() => throw new InvalidOperationException("Insufficient space in buffer.");
 
+    // read-side twin of InsufficientSpaceInBuffer, for a CopyTo destination longer than the remaining data
+    [DoesNotReturn]
+    internal static void InsufficientDataInBuffer() => throw new InvalidOperationException("Insufficient data in buffer.");
+
     [DoesNotReturn]
     internal static T InsufficientSpaceInBuffer<T>() => throw new InvalidOperationException("Insufficient space in buffer.");
 }

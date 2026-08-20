@@ -14,8 +14,8 @@ public class DefaultChainOrderTests
         // an int override in FormatterRegistry.Instance would poison every other test)
         var registry = new SourceGeneratedFormatterFactory();
         registry.RegisterFactory<int>(new NegatingIntFormatterFactory());
-        var options = new MessagePackSerializerOptions(
-            [registry, BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
+        var options = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
+            [registry, BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
 
         // the negating formatter wins over the primitive one: 5 goes to the wire as -5
         Assert.Equal(new byte[] { 0xFB }, MessagePackSerializer.Serialize(5, options));
@@ -29,7 +29,7 @@ public class DefaultChainOrderTests
         // GenericFormatterFactory claimed the enum first with int encoding
         SourceGeneratedFormatterFactory.Instance.RegisterFactory<OrderTestEnum>(
             new EnumAsStringFormatterFactory<OrderTestEnum>());
-        var options = new MessagePackSerializerOptions([MessagePackFormatterFactory.Default]); // fresh resolver over the default chain
+        var options = new MessagePackSerializerOptions(new MessagePackFormatterResolver([MessagePackFormatterFactory.Default])); // fresh resolver over the default chain
 
         var bytes = MessagePackSerializer.Serialize(OrderTestEnum.Two, options);
         Assert.Equal(0xA3, bytes[0]); // fixstr "Two", not fixint 1
@@ -44,7 +44,7 @@ public class DefaultChainOrderTests
     {
         // chain discipline: every public closed leaf factory checks the requested type,
         // so direct chain placement cannot hijack unrelated resolutions
-        var options = new MessagePackSerializerOptions(
+        var options = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
         [
             new NullableFormatterFactory<int>(),
             new EnumFormatterFactory<OrderTestEnum>(),
@@ -52,7 +52,7 @@ public class DefaultChainOrderTests
             new ListFormatterFactory<double>(),
             new DictionaryFormatterFactory<int, int>(),
             MessagePackFormatterFactory.Default,
-        ]);
+        ]));
 
         // foreign types pass through to the default chain
         Assert.Equal(new byte[] { 123 }, MessagePackSerializer.Serialize(123, options));

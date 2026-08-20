@@ -74,7 +74,7 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
         {
             throw new InvalidOperationException(
                 "Serializing System.Type is disabled by default: deserializing executes Type.GetType over payload-provided names, which can load assemblies and permanently grow the process. " +
-                "Opt in by composing the factory before the default chain: new MessagePackSerializerOptions([new TypeFormatterFactory(), MessagePackFormatterFactory.Default]).");
+                "Opt in by composing the factory before the default chain: new MessagePackSerializerOptions(new MessagePackFormatterResolver([new TypeFormatterFactory(), MessagePackFormatterFactory.Default])).");
         }
 
 #if NET
@@ -89,8 +89,9 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
         if (type == typeof(Range)) return new RangeFormatter<TWriteBuffer, TReadBuffer>();
 #endif
 
-        // PrimitiveObjectFormatter.cs / NonGenericCollectionFormatters.cs
+        // PrimitiveObjectFormatter.cs / ExpandoObjectFormatter.cs / NonGenericCollectionFormatters.cs
         if (type == typeof(object)) return new PrimitiveObjectFormatter<TWriteBuffer, TReadBuffer>();
+        if (type == typeof(System.Dynamic.ExpandoObject)) return new ExpandoObjectFormatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(IEnumerable)) return new NonGenericInterfaceEnumerableFormatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(ICollection)) return new NonGenericInterfaceCollectionFormatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(IList)) return new NonGenericInterfaceListFormatter<TWriteBuffer, TReadBuffer>();

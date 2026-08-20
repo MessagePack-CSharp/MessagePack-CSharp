@@ -201,28 +201,6 @@ public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
         return rented.AsMemory(0, uncompressedLength);
     }
 
-    // ---- shared write-side helpers ----
-
-    private protected static byte[] Passthrough(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, long messageLength)
-    {
-        var result = GC.AllocateUninitializedArray<byte>(checked((int)messageLength));
-        var offset = 0;
-        while (message.TryGetNext(out var segment))
-        {
-            segment.CopyTo(result.AsSpan(offset));
-            offset += segment.Length;
-        }
-        return result;
-    }
-
-    private protected static void Passthrough(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, IBufferWriter<byte> output)
-    {
-        while (message.TryGetNext(out var segment))
-        {
-            output.Write(segment);
-        }
-    }
-
     sealed class Lz4DecodedSegment : ReadOnlySequenceSegment<byte>
     {
         public Lz4DecodedSegment(ReadOnlyMemory<byte> memory, Lz4DecodedSegment? previous)
@@ -287,20 +265,21 @@ public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
 /// <summary>Whole message as a single LZ4 block: ext 99 { int32 uncompressedLength, lz4 }.</summary>
 public sealed class Lz4BlockProcessor : Lz4MessageProcessor
 {
-    public override byte[] Encode(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, long messageLength)
+    public override bool TryEncode(ref BufferSegments message, IBufferWriter<byte> output)
     {
-        if (messageLength < CompressionThreshold)
+        if (message.Length < CompressionThreshold)
         {
-            return Passthrough(message, messageLength);
+            return false;
         }
-        var (rented, start, length) = EncodeCore(message, checked((int)messageLength));
+        var (rented, start, length) = EncodeCore(message, checked((int)message.Length));
         try
         {
-            if (length >= messageLength)
+            if (length >= message.Length)
             {
-                return Passthrough(message, messageLength); // incompressible: raw is smaller and readers accept it transparently
+                return false; // incompressible: raw is smaller and readers accept it transparently
             }
-            return rented.AsSpan(start, length).ToArray();
+            output.Write(rented.AsSpan(start, length));
+            return true;
         }
         finally
         {
@@ -308,22 +287,22 @@ public sealed class Lz4BlockProcessor : Lz4MessageProcessor
         }
     }
 
-    public override void Encode(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, long messageLength, IBufferWriter<byte> output)
+    public override bool TryEncode<TWriteBuffer>(ref BufferSegments message, ref TWriteBuffer output)
     {
-        if (messageLength < CompressionThreshold)
+        if (message.Length < CompressionThreshold)
         {
-            Passthrough(message, output);
-            return;
+            return false;
         }
-        var (rented, start, length) = EncodeCore(message, checked((int)messageLength));
+        var (rented, start, length) = EncodeCore(message, checked((int)message.Length));
         try
         {
-            if (length >= messageLength)
+            if (length >= message.Length)
             {
-                Passthrough(message, output);
-                return;
+                return false; // incompressible: raw is smaller and readers accept it transparently
             }
-            output.Write(rented.AsSpan(start, length));
+            rented.AsSpan(start, length).CopyTo(output.GetSpan(length));
+            output.Advance(length);
+            return true;
         }
         finally
         {
@@ -333,7 +312,7 @@ public sealed class Lz4BlockProcessor : Lz4MessageProcessor
 
     const int MaxHeaderLength = 6 /* ext header */ + 5 /* forced int32 length prefix */;
 
-    static (byte[] Rented, int Start, int Length) EncodeCore(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, int messageLength)
+    static (byte[] Rented, int Start, int Length) EncodeCore(BufferSegments message, int messageLength)
     {
         // a single block needs the uncompressed message contiguous; flatten segments into
         // a rented buffer (inherent to the whole-message mode, BlockArray avoids it)
@@ -373,43 +352,21 @@ public sealed class Lz4BlockProcessor : Lz4MessageProcessor
 /// <summary>One LZ4 block per write segment: [array n+1][ext 98: sizes][bin lz4]...</summary>
 public sealed class Lz4BlockArrayProcessor : Lz4MessageProcessor
 {
-    public override byte[] Encode(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, long messageLength)
+    public override bool TryEncode(ref BufferSegments message, IBufferWriter<byte> output)
     {
-        if (messageLength < CompressionThreshold)
+        if (message.Length < CompressionThreshold)
         {
-            return Passthrough(message, messageLength);
+            return false;
         }
         var (rented, written) = EncodeCore(message);
         try
         {
-            if (written >= messageLength)
+            if (written >= message.Length)
             {
-                return Passthrough(message, messageLength); // incompressible: raw is smaller and readers accept it transparently
-            }
-            return rented.AsSpan(0, written).ToArray();
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(rented);
-        }
-    }
-
-    public override void Encode(ArrayPoolListWriteBuffer.WrittenSegmentIterator message, long messageLength, IBufferWriter<byte> output)
-    {
-        if (messageLength < CompressionThreshold)
-        {
-            Passthrough(message, output);
-            return;
-        }
-        var (rented, written) = EncodeCore(message);
-        try
-        {
-            if (written >= messageLength)
-            {
-                Passthrough(message, output);
-                return;
+                return false; // incompressible: raw is smaller and readers accept it transparently
             }
             output.Write(rented.AsSpan(0, written));
+            return true;
         }
         finally
         {
@@ -417,7 +374,30 @@ public sealed class Lz4BlockArrayProcessor : Lz4MessageProcessor
         }
     }
 
-    static (byte[] Rented, int Written) EncodeCore(ArrayPoolListWriteBuffer.WrittenSegmentIterator message)
+    public override bool TryEncode<TWriteBuffer>(ref BufferSegments message, ref TWriteBuffer output)
+    {
+        if (message.Length < CompressionThreshold)
+        {
+            return false;
+        }
+        var (rented, written) = EncodeCore(message);
+        try
+        {
+            if (written >= message.Length)
+            {
+                return false; // incompressible: raw is smaller and readers accept it transparently
+            }
+            rented.AsSpan(0, written).CopyTo(output.GetSpan(written));
+            output.Advance(written);
+            return true;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rented);
+        }
+    }
+
+    static (byte[] Rented, int Written) EncodeCore(BufferSegments message)
     {
         // pass 1: count segments and total worst-case size (segments are at most 17)
         var counting = message;

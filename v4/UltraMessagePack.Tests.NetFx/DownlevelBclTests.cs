@@ -31,7 +31,7 @@ public class DownlevelBclTests
         // Type is opt-in (disabled in the default chain for security); suppressing
         // CS0618 is the intended risk acknowledgement
 #pragma warning disable CS0618
-        var typeOptions = new MessagePackSerializerOptions([new TypeFormatterFactory(), MessagePackFormatterFactory.Default]);
+        var typeOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new TypeFormatterFactory(), MessagePackFormatterFactory.Default]));
 #pragma warning restore CS0618
         var typeBytes = MessagePackSerializer.Serialize(typeof(List<Dictionary<string, int[]>>), typeOptions);
         Assert.Equal(typeof(List<Dictionary<string, int[]>>), MessagePackSerializer.Deserialize<Type>(typeBytes, typeOptions));

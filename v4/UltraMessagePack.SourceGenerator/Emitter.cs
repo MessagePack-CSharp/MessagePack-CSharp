@@ -11,12 +11,13 @@ namespace UltraMessagePack.SourceGenerator;
 ///                 reservations: one GetReference over the summed worst-case sizes, a
 ///                 register-resident offset, one Advance per run (PocoPerValueVsBatchBenchmark: -11..16%
 ///                 vs per-value calls). A member without a direct writer flushes the run
-///                 and dispatches through its formatter field. STRING members also flush
-///                 and go through buffer.WriteString (single-read parameter): fusing them
-///                 evaluated value.X twice — sizing and write — which a property returning
-///                 different strings per call turns into a reservation overflow. String
-///                 KEYS stay fused as pre-encoded header+utf8 blobs via UnsafeWriteRaw
-///                 (compile-time constants; measured no defusion penalty on BenchPerson).
+///                 and dispatches through its formatter field — which is where String and
+///                 DateTime now live (see DirectKind: their wire form is chain-configurable).
+///                 The formatter call reads value.X exactly once, as its argument, so a
+///                 property returning a different string per call can no longer diverge the
+///                 reservation from the write. String KEYS stay fused as pre-encoded
+///                 header+utf8 blobs via UnsafeWriteRaw (compile-time constants; measured
+///                 no defusion penalty on BenchPerson).
 ///   Deserialize - per-value loop+switch (int keys) or utf8 in-place key match (string
 ///                 keys); unknown keys/extra array slots are skipped for version
 ///                 tolerance. Measured equal to straight-line reads (the decode chain
@@ -190,18 +191,6 @@ static class Emitter
             return;
         }
 
-        if (member.Direct == DirectKind.String)
-        {
-            // strings leave the fused batch: buffer.WriteString reads the member exactly
-            // once (as its parameter), so sizing and writing cannot diverge. The fused form
-            // evaluated value.X twice — once in the shared reservation, once in the write —
-            // which a property returning a longer string on the second call would turn
-            // into a reservation overflow (heap corruption, no race required).
-            flush();
-            builder.Append($"            buffer.WriteString(value.{member.Name});\n");
-            return;
-        }
-
         var access = $"value.{member.Name}";
         var (writer, size) = member.Direct switch
         {
@@ -217,7 +206,6 @@ static class Emitter
             DirectKind.Char => ("UnsafeWriteChar", "MaxUInt16Length"),
             DirectKind.Single => ("UnsafeWriteSingle", "MaxFloat32Length"),
             DirectKind.Double => ("UnsafeWriteDouble", "MaxFloat64Length"),
-            DirectKind.DateTime => ("UnsafeWriteTimestamp", "MaxTimestampLength"),
             _ => throw new InvalidOperationException(),
         };
         direct(size, $"{writer}({{DEST}}, {access})");
@@ -343,8 +331,6 @@ static class Emitter
             DirectKind.Char => "ReadChar",
             DirectKind.Single => "ReadSingle",
             DirectKind.Double => "ReadDouble",
-            DirectKind.String => "ReadString",
-            DirectKind.DateTime => "ReadTimestamp",
             _ => throw new InvalidOperationException(),
         };
         builder.Append($"{indent}result.{member.Name} = buffer.{reader}();\n");

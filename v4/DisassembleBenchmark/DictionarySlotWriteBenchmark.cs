@@ -260,9 +260,9 @@ public class DictSlotWriteIntBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        indexerOptions = new MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<int, int>(DictLoopVariant.Indexer), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
-        slotClearOptions = new MessagePackSerializerOptions([BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
-        slotCondClearOptions = new MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<int, int>(DictLoopVariant.SlotCondClear), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
+        indexerOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new VariantDictionaryFormatterFactory<int, int>(DictLoopVariant.Indexer), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
+        slotClearOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
+        slotCondClearOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new VariantDictionaryFormatterFactory<int, int>(DictLoopVariant.SlotCondClear), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
 
         var rand = new Random(42);
         var dict = new Dictionary<int, int>(N);
@@ -284,7 +284,7 @@ public class DictSlotWriteIntBenchmark
     public Dictionary<int, int>? Populate_Indexer()
     {
         var target = populateTarget;
-        MessagePackSerializer.Deserialize(ref target, payload, indexerOptions);
+        MessagePackSerializer.Deserialize(payload, ref target, indexerOptions);
         return target;
     }
 
@@ -292,7 +292,7 @@ public class DictSlotWriteIntBenchmark
     public Dictionary<int, int>? Populate_SlotClear()
     {
         var target = populateTarget;
-        MessagePackSerializer.Deserialize(ref target, payload, slotClearOptions);
+        MessagePackSerializer.Deserialize(payload, ref target, slotClearOptions);
         return target;
     }
 
@@ -300,7 +300,7 @@ public class DictSlotWriteIntBenchmark
     public Dictionary<int, int>? Populate_SlotCondClear()
     {
         var target = populateTarget;
-        MessagePackSerializer.Deserialize(ref target, payload, slotCondClearOptions);
+        MessagePackSerializer.Deserialize(payload, ref target, slotCondClearOptions);
         return target;
     }
 }
@@ -319,9 +319,9 @@ public class DictSlotWriteBigStructBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        indexerOptions = new MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<int, BigVal>(DictLoopVariant.Indexer), new BigValFormatterFactory(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
-        slotClearOptions = new MessagePackSerializerOptions([new BigValFormatterFactory(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
-        slotCondClearOptions = new MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<int, BigVal>(DictLoopVariant.SlotCondClear), new BigValFormatterFactory(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
+        indexerOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new VariantDictionaryFormatterFactory<int, BigVal>(DictLoopVariant.Indexer), new BigValFormatterFactory(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
+        slotClearOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new BigValFormatterFactory(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
+        slotCondClearOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new VariantDictionaryFormatterFactory<int, BigVal>(DictLoopVariant.SlotCondClear), new BigValFormatterFactory(), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
 
         var rand = new Random(42);
         var dict = new Dictionary<int, BigVal>(N);
@@ -343,7 +343,7 @@ public class DictSlotWriteBigStructBenchmark
     public Dictionary<int, BigVal>? Populate_Indexer()
     {
         var target = populateTarget;
-        MessagePackSerializer.Deserialize(ref target, payload, indexerOptions);
+        MessagePackSerializer.Deserialize(payload, ref target, indexerOptions);
         return target;
     }
 
@@ -351,7 +351,7 @@ public class DictSlotWriteBigStructBenchmark
     public Dictionary<int, BigVal>? Populate_SlotClear()
     {
         var target = populateTarget;
-        MessagePackSerializer.Deserialize(ref target, payload, slotClearOptions);
+        MessagePackSerializer.Deserialize(payload, ref target, slotClearOptions);
         return target;
     }
 
@@ -359,7 +359,7 @@ public class DictSlotWriteBigStructBenchmark
     public Dictionary<int, BigVal>? Populate_SlotCondClear()
     {
         var target = populateTarget;
-        MessagePackSerializer.Deserialize(ref target, payload, slotCondClearOptions);
+        MessagePackSerializer.Deserialize(payload, ref target, slotCondClearOptions);
         return target;
     }
 }
@@ -380,9 +380,9 @@ public class DictSlotWriteStringBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        indexerOptions = new MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<string, string>(DictLoopVariant.Indexer), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
-        slotClearOptions = new MessagePackSerializerOptions([BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
-        slotCondClearOptions = new MessagePackSerializerOptions([new VariantDictionaryFormatterFactory<string, string>(DictLoopVariant.SlotCondClear), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]);
+        indexerOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new VariantDictionaryFormatterFactory<string, string>(DictLoopVariant.Indexer), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
+        slotClearOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
+        slotCondClearOptions = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new VariantDictionaryFormatterFactory<string, string>(DictLoopVariant.SlotCondClear), BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance]));
 
         var dict = new Dictionary<string, string>(N);
         for (int i = 0; i < N; i++) dict[$"key{i}"] = $"value{i}";

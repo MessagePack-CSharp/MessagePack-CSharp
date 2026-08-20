@@ -85,12 +85,12 @@ public class OptimisticFixintDecodeBenchmark
         var c = new Int4Poco();
         for (int i = 0; i < Count; i++)
         {
-            MessagePackSerializer.Deserialize(ref a, payloads[i], perValue);
-            MessagePackSerializer.Deserialize(ref b, payloads[i], optimistic);
-            MessagePackSerializer.Deserialize(ref c, payloads[i], cascade);
+            MessagePackSerializer.Deserialize(payloads[i], ref a, perValue);
+            MessagePackSerializer.Deserialize(payloads[i], ref b, optimistic);
+            MessagePackSerializer.Deserialize(payloads[i], ref c, cascade);
             if (!a.Equals4(b)) throw new InvalidOperationException($"verify failed: optimistic payload {i}");
             if (!a.Equals4(c)) throw new InvalidOperationException($"verify failed: cascade payload {i}");
-            MessagePackSerializer.Deserialize(ref c, payloads[i], hybrid);
+            MessagePackSerializer.Deserialize(payloads[i], ref c, hybrid);
             if (!a.Equals4(c)) throw new InvalidOperationException($"verify failed: hybrid payload {i}");
         }
     }
@@ -101,7 +101,7 @@ public class OptimisticFixintDecodeBenchmark
         int sum = 0;
         for (int i = 0; i < Count; i++)
         {
-            MessagePackSerializer.Deserialize(ref reusable, payloads[i], perValue);
+            MessagePackSerializer.Deserialize(payloads[i], ref reusable, perValue);
             sum += reusable.A;
         }
         return sum;
@@ -113,7 +113,7 @@ public class OptimisticFixintDecodeBenchmark
         int sum = 0;
         for (int i = 0; i < Count; i++)
         {
-            MessagePackSerializer.Deserialize(ref reusable, payloads[i], optimistic);
+            MessagePackSerializer.Deserialize(payloads[i], ref reusable, optimistic);
             sum += reusable.A;
         }
         return sum;
@@ -125,7 +125,7 @@ public class OptimisticFixintDecodeBenchmark
         int sum = 0;
         for (int i = 0; i < Count; i++)
         {
-            MessagePackSerializer.Deserialize(ref reusable, payloads[i], cascade);
+            MessagePackSerializer.Deserialize(payloads[i], ref reusable, cascade);
             sum += reusable.A;
         }
         return sum;
@@ -137,7 +137,7 @@ public class OptimisticFixintDecodeBenchmark
         int sum = 0;
         for (int i = 0; i < Count; i++)
         {
-            MessagePackSerializer.Deserialize(ref reusable, payloads[i], hybrid);
+            MessagePackSerializer.Deserialize(payloads[i], ref reusable, hybrid);
             sum += reusable.A;
         }
         return sum;

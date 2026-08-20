@@ -7,6 +7,10 @@
     <IsPackable>false</IsPackable>
     <!-- the pointer-tier buffer tests pass stackalloc scratch via byte* -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- ReflectionObjectFormatterTests declares generator-skipped generic [MessagePackObject]
+         shapes on purpose (they exercise the reflection fallback tier); generator
+         diagnostics ignore #pragma, so the skip notice is silenced project-wide -->
+    <NoWarn>$(NoWarn);UMP005</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

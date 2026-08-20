@@ -1,8 +1,10 @@
-// A class for handling fixed buffers. When it is obvious that the maximum processing size is a fixed length, it allows things like writing directly to stackalloc.
-// It is not normally used inside the serializer framework.
-
 namespace SerializerFoundation;
 
+/// <summary>
+/// An <see cref="IWriteBuffer"/> over a caller-provided fixed span, such as stackalloc memory.
+/// Suited to cases where the maximum message size is known up front.
+/// It never grows; running out of space throws.
+/// </summary>
 public ref struct SpanWriteBuffer : IWriteBuffer
 {
     readonly Span<byte> buffer;
@@ -10,6 +12,7 @@ public ref struct SpanWriteBuffer : IWriteBuffer
 
     public long BytesWritten => written;
 
+    /// <summary>Creates a write buffer over <paramref name="buffer"/>.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public SpanWriteBuffer(Span<byte> buffer)
     {
@@ -56,7 +59,9 @@ public ref struct SpanWriteBuffer : IWriteBuffer
     }
 }
 
-// compatibility fallback for Target Framework without `allows ref struct`
+/// <summary>
+/// A <see cref="SpanWriteBuffer"/> variant over pointer memory for target frameworks without <c>allows ref struct</c> support.
+/// </summary>
 public unsafe struct CompatibleSpanWriteBuffer : IWriteBuffer
 {
     readonly PointerSpan buffer;
@@ -64,6 +69,10 @@ public unsafe struct CompatibleSpanWriteBuffer : IWriteBuffer
 
     public long BytesWritten => written;
 
+    /// <summary>
+    /// Creates a write buffer over <paramref name="length"/> bytes starting at <paramref name="buffer"/>.
+    /// The memory must stay valid and pinned while in use.
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public CompatibleSpanWriteBuffer(byte* buffer, int length)
     {

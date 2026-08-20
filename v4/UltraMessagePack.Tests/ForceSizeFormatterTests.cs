@@ -42,7 +42,7 @@ public partial class ForceSizeFormatterTests
     }
 
     static readonly MessagePackSerializerOptions options =
-        new([new ForceSizeFactory(), MessagePackFormatterFactory.Default]);
+        new(new MessagePackFormatterResolver([new ForceSizeFactory(), MessagePackFormatterFactory.Default]));
 
     static readonly MessagePack.MessagePackSerializerOptions oracleOptions =
         MessagePack.MessagePackSerializerOptions.Standard.WithResolver(

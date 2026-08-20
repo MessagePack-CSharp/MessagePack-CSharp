@@ -196,7 +196,7 @@ public class BclFormatterTests
         // the pragma is the intended consumption model — suppressing CS0618 IS the
         // "I accept the Type.GetType risk" acknowledgement
 #pragma warning disable CS0618
-        var options = new MessagePackSerializerOptions([new TypeFormatterFactory(), MessagePackFormatterFactory.Default]);
+        var options = new MessagePackSerializerOptions(new MessagePackFormatterResolver([new TypeFormatterFactory(), MessagePackFormatterFactory.Default]));
 #pragma warning restore CS0618
         Type?[] values = [typeof(int), typeof(List<Dictionary<string, int[]>>), null];
         foreach (var value in values)
