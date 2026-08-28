@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
   <PropertyGroup>
-    <LangVersion Condition="'$(Language)'=='C#'">14</LangVersion>
+    <LangVersion Condition="'$(Language)'=='C#'">preview</LangVersion>
     <LangVersion Condition="'$(Language)'=='VB'">16.9</LangVersion>
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
     <!-- UMP101 (TargetFrameworkCompatibilityAnalyzer) needs the full TargetFrameworks list,

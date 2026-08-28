@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+		<!-- Unlike AotSmokeTest (which exercises only the AOT-safe surface at runtime),
+		     this project exists purely for `dotnet publish`: TrimmerRootAssembly makes the
+		     ILC/trimmer treat every member of the libraries as referenced, so it analyzes
+		     the entire API surface and surfaces IL2xxx/IL3xxx warnings that the Roslyn
+		     analyzers cannot see. The Roslyn analyzers only check our own source against
+		     annotated APIs; ILC does whole-program dataflow over the compiled IL. -->
+		<PublishAot>true</PublishAot>
+		<SelfContained>true</SelfContained>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<!-- One line per warning instead of a single collapsed IL2104 per assembly. -->
+		<TrimmerSingleWarn>false</TrimmerSingleWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<TrimmerRootAssembly Include="MessagePack" />
+		<TrimmerRootAssembly Include="SerializerFoundation" />
+		<TrimmerRootAssembly Include="MessagePack.LZ4" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+		<ProjectReference Include="..\..\src\SerializerFoundation\SerializerFoundation.csproj" />
+		<ProjectReference Include="..\..\src\MessagePack.LZ4\MessagePack.LZ4.csproj" />
+	</ItemGroup>
+
+</Project>

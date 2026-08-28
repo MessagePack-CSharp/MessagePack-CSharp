@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The v3 SOURCE-GENERATOR satellite. Two libraries that own the same `MessagePack`
+         namespace can never run their generators in one compilation (generated code
+         hard-references global::MessagePack.* and cannot use extern aliases), so this
+         project references ONLY v3 - the repacked MessagePackV3.dll keeps the namespace
+         while its distinct assembly name lets the output coexist with the product in
+         the benchmark process. MessagePackAnalyzer runs v3's real source generator over
+         the model twins here, producing MessagePack.GeneratedMessagePackResolver. -->
+    <Reference Include="MessagePackV3">
+      <HintPath>..\..\tools\oracle\MessagePackV3.dll</HintPath>
+    </Reference>
+    <!-- everything PrivateAssets=all: the consuming benchmark carries its OWN (V3-aliased)
+         Annotations/StringTools references, and MessagePackAnalyzer must NEVER flow —
+         v3's generator dll is also named MessagePack.SourceGenerator.dll, and the
+         same-filename analyzer dedup picks the higher AssemblyVersion (3.1.8 beats our
+         1.0.0), silently dropping the product's generator from the consumer -->
+    <PackageReference Include="MessagePack.Annotations" Version="3.1.8" PrivateAssets="all" />
+    <PackageReference Include="MessagePackAnalyzer" Version="3.1.8" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NET.StringTools" Version="17.11.4" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

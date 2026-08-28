@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- The assembly keeps the project name. CAUTION: v3's generator (from the
+         MessagePackAnalyzer package) is ALSO named MessagePack.SourceGenerator.dll and
+         same-named analyzer files get deduplicated by highest AssemblyVersion — never
+         reference that package in a project consuming this generator (no project does:
+         the v3 oracle is a repacked runtime dll, not the NuGet package). -->
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <!-- RS2008: analyzer release tracking files are packaging ceremony, not needed in the lab -->
+    <NoWarn>$(NoWarn);RS2008</NoWarn>
+    <!-- demotes the linked KeyNamingPolicy.cs types to internal (see that file) -->
+    <DefineConstants>$(DefineConstants);MESSAGEPACK_SOURCE_GENERATOR</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- keep the floor low: the IDE loads generators with ITS OWN Roslyn, so targeting a
+         new Microsoft.CodeAnalysis breaks Visual Studio versions older than that Roslyn
+         while dotnet build keeps working. 4.8 covers everything used here
+         (ForAttributeWithMetadataName needs only 4.3.1). -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- shared source: compile-time key conversion must match the runtime reflection tier
+         exactly, so both compile the same file (an analyzer cannot reference MessagePack) -->
+    <Compile Include="..\MessagePack\KeyNamingPolicy.cs" Link="KeyNamingPolicy.cs" />
+  </ItemGroup>
+
+</Project>

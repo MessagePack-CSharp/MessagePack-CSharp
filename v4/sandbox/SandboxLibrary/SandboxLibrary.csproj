@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- The 3rd-party custom-formatter library scenario from the Round doc. The full
+         TFM set is the FAST shape: net10.0 consumers ride the ref struct buffers.
+         Dropping net10.0 is legal (no analyzer enforces it anymore) — the library then
+         serves only the Compatible pairs and net10 apps run its graphs over the
+         compatibility path (see MessagePackFormatterResolver.CompatibilityFallback):
+
+           dotnet build SandboxLibrary -p:SandboxDropNet10=true -->
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net10.0</TargetFrameworks>
+		<TargetFrameworks Condition="'$(SandboxDropNet10)' == 'true'">netstandard2.0;netstandard2.1</TargetFrameworks>
+		<LangVersion>latest</LangVersion>
+		<Nullable>enable</Nullable>
+		<!-- demo project with a duplicated core-surface stub in the downlevel assets:
+         never let this become a package -->
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- the analyzer under test, wired the same way a NuGet consumer would get it -->
+		<ProjectReference Include="..\..\src\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<!-- the core multi-targets the same TFM set, so every pass compiles against the
+         real surface (the former Stubs/ tier is gone) -->
+		<ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+	</ItemGroup>
+
+</Project>

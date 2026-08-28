@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+		<!-- Native AOT test suite over the AOT-supported configuration: "explicit options over
+		     the source-generated factory + primitives". The V3-oracle suite (MessagePack.Tests)
+		     can never run here — the repacked v3 runtime is Reflection.Emit — so this project
+		     covers the AOT-safe surface with known-answer vectors instead. The tests also run
+		     under the JIT (dotnet test / IDE); publish with `dotnet publish -c Release` and run
+		     the produced exe for the real Native AOT verification. The publish must complete
+		     with zero IL warnings from our assemblies. -->
+		<PublishAot>true</PublishAot>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<InvariantGlobalization>true</InvariantGlobalization>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- the source-generator-driven (reflection-free) xunit v4 packages -->
+		<PackageReference Include="xunit.v3.aot" Version="4.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="Xunit" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+		<ProjectReference Include="..\..\src\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+</Project>
