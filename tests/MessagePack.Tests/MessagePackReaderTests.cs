@@ -137,11 +137,11 @@ namespace MessagePack.Tests
 
         [Fact]
         [Trait("CWE", "190")]
-        public void ReadArrayHeader_MitigatesLargeAllocations_WhenMinimumPayloadLengthIsNegative()
+        public void ReadArrayHeader_MitigatesLargeAllocations_WhenElementCountExceedsInt32()
         {
             byte[] msgpack = { MessagePackCode.Array32, 0x80, 0, 0, 0 };
 
-            Assert.Throws<EndOfStreamException>(() =>
+            Assert.Throws<OverflowException>(() =>
             {
                 var reader = new MessagePackReader(msgpack);
                 reader.ReadArrayHeader();
@@ -327,11 +327,11 @@ namespace MessagePack.Tests
 
         [Fact]
         [Trait("CWE", "190")]
-        public void ReadMapHeader_MitigatesLargeAllocations_WhenMinimumPayloadLengthIsNegative()
+        public void ReadMapHeader_MitigatesLargeAllocations_WhenElementCountExceedsInt32()
         {
             byte[] msgpack = { MessagePackCode.Map32, 0x80, 0, 0, 0 };
 
-            Assert.Throws<EndOfStreamException>(() =>
+            Assert.Throws<OverflowException>(() =>
             {
                 var reader = new MessagePackReader(msgpack);
                 reader.ReadMapHeader();
