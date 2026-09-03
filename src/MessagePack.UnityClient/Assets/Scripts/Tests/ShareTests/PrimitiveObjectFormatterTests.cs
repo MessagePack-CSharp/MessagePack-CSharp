@@ -3,11 +3,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MessagePack.Formatters;
 using MessagePack.Resolvers;
+using Nerdbank.Streams;
 using Xunit;
 
 namespace MessagePack.Tests
@@ -56,6 +58,33 @@ namespace MessagePack.Tests
             var bin = MessagePackSerializer.Serialize<object>(SomeEnum.SomeValue, PrimitiveObjectResolver.Options);
             var result = (SomeEnum)MessagePackSerializer.Deserialize<object>(bin, PrimitiveObjectResolver.Options);
             Assert.Equal(SomeEnum.SomeValue, result);
+        }
+
+        [Fact]
+        [Trait("CWE", "789")]
+        public void NestedArraysCannotReuseTrailingBytesToJustifyAllocations()
+        {
+            const int arrayLength = 1000;
+            const int nestingDepth = 10;
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            for (int i = 0; i < nestingDepth; i++)
+            {
+                writer.WriteArrayHeader(arrayLength);
+            }
+
+            for (int i = 0; i < arrayLength; i++)
+            {
+                writer.WriteNil();
+            }
+
+            writer.Flush();
+
+            MessagePackSerializationException exception = Assert.Throws<MessagePackSerializationException>(
+                () => MessagePackSerializer.Deserialize<object>(
+                    sequence.AsReadOnlySequence,
+                    ContractlessStandardResolver.Options.WithSecurity(MessagePackSecurity.UntrustedData)));
+            Assert.IsType<EndOfStreamException>(exception.InnerException);
         }
 
         public enum SomeEnum : ushort
