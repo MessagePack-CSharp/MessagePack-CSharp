@@ -70,6 +70,142 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        [Trait("CWE", "789")]
+        public void ReadArrayHeader_MitigatesNestedAllocationAmplification()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteArrayHeader(4);
+            writer.WriteArrayHeader(4);
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.Flush();
+
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(sequence);
+                Assert.Equal(4, reader.ReadArrayHeader());
+                reader.ReadArrayHeader();
+            });
+        }
+
+        [Fact]
+        public void ReadArrayHeader_AllowsValidNestedAndConsecutiveContainers()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteArrayHeader(2);
+            writer.Write("long child");
+            writer.WriteArrayHeader(2);
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteArrayHeader(1);
+            writer.WriteNil();
+            writer.Flush();
+
+            var reader = new MessagePackReader(sequence);
+            Assert.Equal(2, reader.ReadArrayHeader());
+            Assert.Equal("long child", reader.ReadString());
+            Assert.Equal(2, reader.ReadArrayHeader());
+            reader.ReadNil();
+            reader.ReadNil();
+            Assert.Equal(1, reader.ReadArrayHeader());
+            reader.ReadNil();
+            Assert.True(reader.End);
+        }
+
+        [Fact]
+        public void TryReadArrayHeader_DoesNotReserveMinimumChildBytes()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteArrayHeader(4);
+            writer.WriteArrayHeader(4);
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.Flush();
+
+            var reader = new MessagePackReader(sequence);
+            Assert.Equal(4, reader.ReadArrayHeader());
+            Assert.True(reader.TryReadArrayHeader(out int count));
+            Assert.Equal(4, count);
+        }
+
+        [Fact]
+        [Trait("CWE", "190")]
+        public void ReadArrayHeader_MitigatesLargeAllocations_WhenMinimumPayloadLengthIsNegative()
+        {
+            byte[] msgpack = { MessagePackCode.Array32, 0x80, 0, 0, 0 };
+
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(msgpack);
+                reader.ReadArrayHeader();
+            });
+        }
+
+        [Fact]
+        public void CreatePeekReader_CopiesMinimumChildByteReservation()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteArrayHeader(4);
+            writer.WriteArrayHeader(4);
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.Flush();
+
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(sequence);
+                Assert.Equal(4, reader.ReadArrayHeader());
+                MessagePackReader peekReader = reader.CreatePeekReader();
+                peekReader.ReadArrayHeader();
+            });
+
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(sequence);
+                Assert.Equal(4, reader.ReadArrayHeader());
+                reader.ReadArrayHeader();
+            });
+        }
+
+        [Fact]
+        public void Clone_StartsMinimumChildByteReservationForReplacementBuffer()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteArrayHeader(4);
+            writer.WriteArrayHeader(4);
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.Flush();
+
+            var reader = new MessagePackReader(sequence);
+            Assert.Equal(4, reader.ReadArrayHeader());
+
+            var replacementSequence = new Sequence<byte>();
+            writer = new MessagePackWriter(replacementSequence);
+            writer.WriteArrayHeader(1);
+            writer.WriteNil();
+            writer.Flush();
+
+            MessagePackReader clone = reader.Clone(replacementSequence);
+            Assert.Equal(1, clone.ReadArrayHeader());
+            clone.ReadNil();
+            Assert.True(clone.End);
+        }
+
+        [Fact]
         public void TryReadArrayHeader()
         {
             var sequence = new Sequence<byte>();
@@ -102,10 +238,98 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        [Trait("CWE", "789")]
+        public void ReadMapHeader_MitigatesNestedAllocationAmplification()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteMapHeader(2);
+            writer.WriteMapHeader(2);
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.Flush();
+
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(sequence);
+                Assert.Equal(2, reader.ReadMapHeader());
+                reader.ReadMapHeader();
+            });
+        }
+
+        [Fact]
+        [Trait("CWE", "789")]
+        public void ReadMapHeader_MitigatesMixedNestedAllocationAmplification()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteArrayHeader(4);
+            writer.WriteMapHeader(2);
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.Flush();
+
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(sequence);
+                Assert.Equal(4, reader.ReadArrayHeader());
+                reader.ReadMapHeader();
+            });
+        }
+
+        [Fact]
+        public void ReadMapHeader_ReturnsReservationAsContentsAreConsumed()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteMapHeader(2);
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteMapHeader(2);
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.WriteNil();
+            writer.Flush();
+
+            var reader = new MessagePackReader(sequence);
+            Assert.Equal(2, reader.ReadMapHeader());
+            reader.ReadNil();
+            reader.ReadNil();
+            reader.ReadNil();
+            reader.ReadNil();
+            Assert.Equal(2, reader.ReadMapHeader());
+            reader.ReadNil();
+            reader.ReadNil();
+            reader.ReadNil();
+            reader.ReadNil();
+            Assert.True(reader.End);
+        }
+
+        [Fact]
         [Trait("CWE", "190")]
         public void ReadMapHeader_MitigatesLargeAllocations_WhenMinimumPayloadLengthOverflowsInt32()
         {
             byte[] msgpack = { MessagePackCode.Map32, 0x40, 0, 0, 0 };
+
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(msgpack);
+                reader.ReadMapHeader();
+            });
+        }
+
+        [Fact]
+        [Trait("CWE", "190")]
+        public void ReadMapHeader_MitigatesLargeAllocations_WhenMinimumPayloadLengthIsNegative()
+        {
+            byte[] msgpack = { MessagePackCode.Map32, 0x80, 0, 0, 0 };
 
             Assert.Throws<EndOfStreamException>(() =>
             {
