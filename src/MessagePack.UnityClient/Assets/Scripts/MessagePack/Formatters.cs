@@ -1140,4 +1140,47 @@ namespace MessagePack.Unity
             return ____result;
         }
     }
+
+    public sealed class PoseFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::UnityEngine.Pose>
+    {
+        public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Pose value, MessagePackSerializerOptions options)
+        {
+            IFormatterResolver resolver = options.Resolver;
+            writer.WriteArrayHeader(2);
+            resolver.GetFormatterWithVerify<global::UnityEngine.Vector3>().Serialize(ref writer, value.position, options);
+            resolver.GetFormatterWithVerify<global::UnityEngine.Quaternion>().Serialize(ref writer, value.rotation, options);
+        }
+
+        public global::UnityEngine.Pose Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.IsNil)
+            {
+                throw new InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            IFormatterResolver resolver = options.Resolver;
+            var length = reader.ReadArrayHeader();
+            var position = default(global::UnityEngine.Vector3);
+            var rotation = default(global::UnityEngine.Quaternion);
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+                switch (key)
+                {
+                    case 0:
+                        position = resolver.GetFormatterWithVerify<global::UnityEngine.Vector3>().Deserialize(ref reader, options);
+                        break;
+                    case 1:
+                        rotation = resolver.GetFormatterWithVerify<global::UnityEngine.Quaternion>().Deserialize(ref reader, options);
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var result = new global::UnityEngine.Pose(position, rotation);
+            return result;
+        }
+    }
 }
