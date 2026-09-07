@@ -58,15 +58,37 @@ public class ReadPrimitiveTests
             Assert.Equal(LenOr(v is >= sbyte.MinValue and <= sbyte.MaxValue, written), consumed);
             if (v is >= sbyte.MinValue and <= sbyte.MaxValue) Assert.Equal((sbyte)v, i8);
 
-            // unsigned targets reject negatives
+            // unsigned targets reject negatives (every width: the narrow readers have their own cores and bridges)
             Assert.Equal(FitOr(v >= 0), MessagePackPrimitives.TryReadUInt64(msg, out ulong u64, out consumed));
             Assert.Equal(LenOr(v >= 0, written), consumed);
             if (v >= 0) Assert.Equal((ulong)v, u64);
 
+            Assert.Equal(FitOr(v is >= 0 and <= uint.MaxValue), MessagePackPrimitives.TryReadUInt32(msg, out uint u32, out consumed));
+            Assert.Equal(LenOr(v is >= 0 and <= uint.MaxValue, written), consumed);
+            if (v is >= 0 and <= uint.MaxValue) Assert.Equal((uint)v, u32);
+
+            Assert.Equal(FitOr(v is >= 0 and <= ushort.MaxValue), MessagePackPrimitives.TryReadUInt16(msg, out ushort u16, out consumed));
+            Assert.Equal(LenOr(v is >= 0 and <= ushort.MaxValue, written), consumed);
+            if (v is >= 0 and <= ushort.MaxValue) Assert.Equal((ushort)v, u16);
+
+            Assert.Equal(FitOr(v is >= 0 and <= char.MaxValue), MessagePackPrimitives.TryReadChar(msg, out char ch, out consumed));
+            Assert.Equal(LenOr(v is >= 0 and <= char.MaxValue, written), consumed);
+            if (v is >= 0 and <= char.MaxValue) Assert.Equal((char)v, ch);
+
+            Assert.Equal(FitOr(v is >= 0 and <= byte.MaxValue), MessagePackPrimitives.TryReadByte(msg, out byte u8, out consumed));
+            Assert.Equal(LenOr(v is >= 0 and <= byte.MaxValue, written), consumed);
+            if (v is >= 0 and <= byte.MaxValue) Assert.Equal((byte)v, u8);
+
             var msgArray = msg.ToArray();
             AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadInt64(s, out _, out c));
             AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadInt32(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadInt16(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadSByte(s, out _, out c));
             AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadUInt64(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadUInt32(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadUInt16(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadChar(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadByte(s, out _, out c));
         }
 
         // a non-int token is TokenMismatch with 0 (both fast and careful windows)
@@ -107,12 +129,155 @@ public class ReadPrimitiveTests
             if (v <= byte.MaxValue) Assert.Equal((byte)v, u8);
 
             Assert.Equal(FitOr(v <= char.MaxValue), MessagePackPrimitives.TryReadChar(msg, out char ch, out consumed));
+            Assert.Equal(LenOr(v <= char.MaxValue, written), consumed);
             if (v <= char.MaxValue) Assert.Equal((char)v, ch);
 
-            // signed target: uint64 above long.MaxValue must not alias to a negative long
+            // signed targets: uint64 above long.MaxValue must not alias to a negative long, at any width
+            // (the narrow readers reinterpret the raw bits as long before their range check, so an alias in
+            // [min, -1] would slip through without a format-aware sign test)
             Assert.Equal(FitOr(v <= long.MaxValue), MessagePackPrimitives.TryReadInt64(msg, out long i64, out consumed));
             Assert.Equal(LenOr(v <= long.MaxValue, written), consumed);
             if (v <= long.MaxValue) Assert.Equal((long)v, i64);
+
+            Assert.Equal(FitOr(v <= int.MaxValue), MessagePackPrimitives.TryReadInt32(msg, out int i32, out consumed));
+            Assert.Equal(LenOr(v <= int.MaxValue, written), consumed);
+            if (v <= int.MaxValue) Assert.Equal((int)v, i32);
+
+            Assert.Equal(FitOr(v <= (ulong)short.MaxValue), MessagePackPrimitives.TryReadInt16(msg, out short i16, out consumed));
+            Assert.Equal(LenOr(v <= (ulong)short.MaxValue, written), consumed);
+            if (v <= (ulong)short.MaxValue) Assert.Equal((short)v, i16);
+
+            Assert.Equal(FitOr(v <= (ulong)sbyte.MaxValue), MessagePackPrimitives.TryReadSByte(msg, out sbyte i8, out consumed));
+            Assert.Equal(LenOr(v <= (ulong)sbyte.MaxValue, written), consumed);
+            if (v <= (ulong)sbyte.MaxValue) Assert.Equal((sbyte)v, i8);
+
+            var msgArray = msg.ToArray();
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadUInt64(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadUInt32(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadUInt16(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadChar(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadByte(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadInt64(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadInt32(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadInt16(s, out _, out c));
+            AssertTruncationFails(msgArray, (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadSByte(s, out _, out c));
+        }
+    }
+
+    // Regression: uint64(cf) values whose raw bits alias to a small negative long. The signed narrow readers
+    // bias-check a long reinterpretation, so without a format-aware sign test cf ff..ff read as sbyte -1.
+    [Fact]
+    public void UInt64AliasingToSmallNegative_RejectedByEverySignedTarget()
+    {
+        foreach (ulong v in (ulong[])[
+            0x8000_0000_0000_0000UL,                  // long.MinValue alias
+            unchecked((ulong)long.MinValue + 1),
+            unchecked((ulong)(long)int.MinValue),      // -2147483648 alias
+            unchecked((ulong)-65536L),
+            unchecked((ulong)-32768L),                 // short.MinValue alias: exactly at the int16 lower bound
+            unchecked((ulong)-129L),
+            unchecked((ulong)-128L),                   // sbyte.MinValue alias: exactly at the sbyte lower bound
+            unchecked((ulong)-33L),
+            unchecked((ulong)-32L),                    // would be a negative fixint if it were signed
+            unchecked((ulong)-2L),
+            ulong.MaxValue])                           // -1 alias
+        {
+            byte[] msg = new byte[9];
+            msg[0] = MessagePackCode.UInt64;
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt64BigEndian(msg.AsSpan(1), v);
+
+            Assert.Equal(DecodeResult.Success, MessagePackPrimitives.TryReadUInt64(msg, out ulong u64, out int consumed));
+            Assert.Equal(v, u64);
+            Assert.Equal(9, consumed);
+
+            Assert.Equal(DecodeResult.TokenMismatch, MessagePackPrimitives.TryReadInt64(msg, out _, out consumed));
+            Assert.Equal(0, consumed);
+            Assert.Equal(DecodeResult.TokenMismatch, MessagePackPrimitives.TryReadInt32(msg, out _, out consumed));
+            Assert.Equal(0, consumed);
+            Assert.Equal(DecodeResult.TokenMismatch, MessagePackPrimitives.TryReadInt16(msg, out _, out consumed));
+            Assert.Equal(0, consumed);
+            Assert.Equal(DecodeResult.TokenMismatch, MessagePackPrimitives.TryReadSByte(msg, out _, out consumed));
+            Assert.Equal(0, consumed);
+
+            // and the same bit pattern as int64(d3) is a genuine negative: it must fit or not by value, never by alias
+            long asSigned = unchecked((long)v);
+            msg[0] = MessagePackCode.Int64;
+            Assert.Equal(DecodeResult.Success, MessagePackPrimitives.TryReadInt64(msg, out long i64, out consumed));
+            Assert.Equal(asSigned, i64);
+            Assert.Equal(FitOr(asSigned >= int.MinValue), MessagePackPrimitives.TryReadInt32(msg, out int i32, out consumed));
+            if (asSigned >= int.MinValue) Assert.Equal((int)asSigned, i32);
+            Assert.Equal(FitOr(asSigned >= short.MinValue), MessagePackPrimitives.TryReadInt16(msg, out short i16, out consumed));
+            if (asSigned >= short.MinValue) Assert.Equal((short)asSigned, i16);
+            Assert.Equal(FitOr(asSigned >= sbyte.MinValue), MessagePackPrimitives.TryReadSByte(msg, out sbyte i8, out consumed));
+            if (asSigned >= sbyte.MinValue) Assert.Equal((sbyte)asSigned, i8);
+            Assert.Equal(DecodeResult.TokenMismatch, MessagePackPrimitives.TryReadUInt64(msg, out _, out consumed));
+            Assert.Equal(0, consumed);
+        }
+    }
+
+    // Regression: negative fixint is a complete 1-byte token, so the window it arrives in can be as short as 1 byte
+    // (a sequence tail). The unsigned 16-bit readers used to bridge short windows into the signed core, whose fixint
+    // fast path accepted it. Every unsigned target must reject every negative encoding in every window length.
+    [Fact]
+    public void NegativeValues_RejectedByUnsignedTargets_InEveryWindow()
+    {
+        var messages = new List<byte[]>();
+        for (int b = MessagePackCode.MinNegativeFixInt; b <= MessagePackCode.MaxNegativeFixInt; b++)
+        {
+            messages.Add([(byte)b]);
+        }
+        foreach (long v in (long[])[-1, -32, -33, -128, -129, -32768, -32769, int.MinValue, int.MinValue - 1L, long.MinValue])
+        {
+            // minimal encodings plus the forced wider widths (all are legal encodings of a negative value)
+            var buf = new byte[9];
+            Assert.True(MessagePackPrimitives.TryWriteInt64(buf, v, out int written));
+            messages.Add(buf.AsSpan(0, written).ToArray());
+            if (v >= sbyte.MinValue)
+            {
+                Assert.True(MessagePackPrimitives.TryWriteForcedInt8(buf, (sbyte)v, out written));
+                messages.Add(buf.AsSpan(0, written).ToArray());
+            }
+            if (v >= short.MinValue)
+            {
+                Assert.True(MessagePackPrimitives.TryWriteForcedInt16(buf, (short)v, out written));
+                messages.Add(buf.AsSpan(0, written).ToArray());
+            }
+            if (v >= int.MinValue)
+            {
+                Assert.True(MessagePackPrimitives.TryWriteForcedInt32(buf, (int)v, out written));
+                messages.Add(buf.AsSpan(0, written).ToArray());
+            }
+            Assert.True(MessagePackPrimitives.TryWriteForcedInt64(buf, v, out written));
+            messages.Add(buf.AsSpan(0, written).ToArray());
+        }
+
+        TryReader[] unsignedReaders =
+        [
+            (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadUInt64(s, out _, out c),
+            (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadUInt32(s, out _, out c),
+            (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadUInt16(s, out _, out c),
+            (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadChar(s, out _, out c),
+            (ReadOnlySpan<byte> s, out int c) => MessagePackPrimitives.TryReadByte(s, out _, out c),
+        ];
+
+        foreach (var message in messages)
+        {
+            // pad with trailing garbage so windows longer than the token exist too (past the 9-byte load gates)
+            var padded = new byte[message.Length + 12];
+            message.CopyTo(padded, 0);
+            padded.AsSpan(message.Length).Fill(0xEE);
+
+            foreach (var reader in unsignedReaders)
+            {
+                // complete token in any window: TokenMismatch with tokenSize 0
+                for (int window = message.Length; window <= padded.Length; window++)
+                {
+                    Assert.Equal(DecodeResult.TokenMismatch, reader(padded.AsSpan(0, window), out int tokenSize));
+                    Assert.Equal(0, tokenSize);
+                }
+                // strict prefixes: still InsufficientBuffer (the reader may not pre-judge a token it cannot see)
+                AssertTruncationFails(message, reader);
+            }
         }
     }
 
@@ -365,7 +530,7 @@ public class ReadPrimitiveTests
         Span<byte> ext32 = stackalloc byte[6];
         ext32[0] = MessagePackCode.Ext32;
         System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(ext32.Slice(1), int.MaxValue);
-        ext32[5] = unchecked((byte)MessagePackCode.TimestampExtensionTypeCode);
+        ext32[5] = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
         Assert.Equal(DecodeResult.TokenMismatch, MessagePackPrimitives.TryReadTimestamp(ext32, out _, out ts));
         Assert.Equal(0, ts);
 

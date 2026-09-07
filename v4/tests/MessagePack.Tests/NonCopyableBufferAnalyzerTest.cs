@@ -37,6 +37,15 @@ public class NonCopyableBufferAnalyzerTest
                 public int Length { get { return 0; } }
             }
         }
+        namespace System.Runtime.InteropServices
+        {
+            public sealed class InAttribute : Attribute { }
+        }
+        namespace System.Runtime.CompilerServices
+        {
+            public sealed class IsReadOnlyAttribute : Attribute { }
+            public sealed class RequiresLocationAttribute : Attribute { }
+        }
         namespace System.Collections
         {
             public interface IEnumerator
@@ -204,6 +213,228 @@ public class NonCopyableBufferAnalyzerTest
             .GetAnalyzerDiagnosticsAsync(CancellationToken.None);
         var diagnostic = Assert.Single(diagnostics);
         Assert.Contains("passed by value", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task InParameterDeclaration_Reports()
+    {
+        const string source = """
+            public static class Code
+            {
+                public static void Consume(in MyBuffer buffer) { }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source);
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Contains("readonly reference", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task RefReadonlyParameterDeclaration_Reports()
+    {
+        const string source = """
+            public static class Code
+            {
+                public static void Consume(ref readonly MyBuffer buffer) { }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source);
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Contains("readonly reference", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task RefAndOutParameters_Silent()
+    {
+        const string source = """
+            public static class Code
+            {
+                public static void Mutate(ref MyBuffer buffer) { }
+                public static void Create(out MyBuffer buffer) { buffer = new MyBuffer(); }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source);
+        Assert.Empty(diagnostics);
+    }
+
+    [Fact]
+    public async Task InArgumentToExternalCallee_Reports()
+    {
+        const string source = """
+            public static class Code
+            {
+                public static void Run()
+                {
+                    var a = new MyBuffer();
+                    External.Take(in a);
+                    External.Take(a);
+                }
+            }
+            """;
+        // the callee lives in a separate compilation so only the ARGUMENT rule fires;
+        // both the explicit `in a` and the implicit readonly-reference binding are copies in disguise
+        var corlib = CompileStub("corlibstub", CorlibStub);
+        var coreLibrary = CompileStub("MessagePack", CoreLibraryStub, corlib);
+        var callee = CompileStub("Callee", BufferDefinition + """
+            public static class External
+            {
+                public static void Take(in MyBuffer buffer) { }
+            }
+            """, corlib, coreLibrary);
+        var compilation = CSharpCompilation.Create(
+            "UserAssembly",
+            [CSharpSyntaxTree.ParseText(source)],
+            [corlib, coreLibrary, callee],
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        Assert.Empty(compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error));
+        var diagnostics = await compilation.WithAnalyzers([new NonCopyableBufferAnalyzer()])
+            .GetAnalyzerDiagnosticsAsync(CancellationToken.None);
+        Assert.Equal(2, diagnostics.Length);
+        Assert.All(diagnostics, d => Assert.Contains("readonly reference", d.GetMessage()));
+    }
+
+    [Fact]
+    public async Task RefLocalAndRefReassignment_Silent()
+    {
+        const string source = """
+            public static class Code
+            {
+                public static void Run(ref MyBuffer a, ref MyBuffer b)
+                {
+                    ref MyBuffer r = ref a;
+                    r.Dispose();
+                    r = ref b;
+                    r.Dispose();
+                }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source);
+        Assert.Empty(diagnostics);
+    }
+
+    [Fact]
+    public async Task ConditionalOfFreshValues_Silent()
+    {
+        const string source = """
+            public static class Code
+            {
+                public static void Run(bool flag)
+                {
+                    var a = flag ? new MyBuffer() : default(MyBuffer);
+                    var b = flag switch { true => new MyBuffer(), false => default(MyBuffer) };
+                }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source);
+        Assert.Empty(diagnostics);
+    }
+
+    [Fact]
+    public async Task ReadOnlyFieldReceiver_Reports()
+    {
+        const string source = """
+            public class Holder
+            {
+                readonly MyBuffer buffer;
+                public void Run() { buffer.Dispose(); }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source);
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Contains("readonly reference", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task ReadOnlyStructFieldReceiver_Reports()
+    {
+        const string source = """
+            public readonly struct Holder
+            {
+                readonly MyBuffer buffer;
+                public void Run() { buffer.Dispose(); }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source);
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Contains("readonly reference", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task ReadOnlyMemberReceiver_Reports()
+    {
+        const string source = """
+            public struct Holder
+            {
+                MyBuffer buffer;
+                public readonly void Run() { buffer.Dispose(); }
+                public void Mutable() { buffer.Dispose(); }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source);
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Contains("readonly reference", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task RefReadonlyLocalAndReturnReceiver_Reports()
+    {
+        const string source = """
+            public class Holder
+            {
+                MyBuffer buffer;
+                public ref readonly MyBuffer Peek() { return ref buffer; }
+                public void Run()
+                {
+                    ref readonly MyBuffer r = ref buffer;
+                    r.Dispose();
+                    Peek().Dispose();
+                }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source);
+        Assert.Equal(2, diagnostics.Length);
+        Assert.All(diagnostics, d => Assert.Contains("readonly reference", d.GetMessage()));
+    }
+
+    [Fact]
+    public async Task InParameterPathReceiver_Reports()
+    {
+        const string source = """
+            public struct Holder
+            {
+                public MyBuffer buffer;
+            }
+            public static class Code
+            {
+                public static void Run(in Holder holder) { holder.buffer.Dispose(); }
+            }
+            """;
+        // Holder is not a buffer, so its `in` parameter is legal; the buffer inside is still readonly through it
+        var diagnostics = await RunAnalyzerAsync(source);
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Contains("readonly reference", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task MutableFieldAndRefReceivers_Silent()
+    {
+        const string source = """
+            public class Holder
+            {
+                MyBuffer buffer;
+                public ref MyBuffer Get() { return ref buffer; }
+                public void Run(ref MyBuffer parameter)
+                {
+                    buffer.Dispose();
+                    Get().Dispose();
+                    parameter.Dispose();
+                    var fresh = new MyBuffer();
+                    fresh.Dispose();
+                }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source);
+        Assert.Empty(diagnostics);
     }
 
     [Fact]
@@ -464,6 +695,81 @@ public class NonCopyableBufferAnalyzerTest
         var diagnostics = await RunAnalyzerAsync(source);
         var diagnostic = Assert.Single(diagnostics);
         Assert.Contains("Nullable", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task RefReturnReceivedByValue_Reports()
+    {
+        // a ref-returning method hands out existing storage: receiving the result by value
+        // (assignment, argument, or a by-value return) dereferences and copies it
+        const string source = """
+            public class Holder
+            {
+                MyBuffer field;
+                public ref MyBuffer Get() { return ref field; }
+                public MyBuffer TakeCopy() { return Get(); }
+                public void Run()
+                {
+                    var copy = Get();
+                    External.Take(Get());
+                    ref var alias = ref Get();
+                    alias.Dispose();
+                }
+            }
+            """;
+        var corlib = CompileStub("corlibstub", CorlibStub);
+        var coreLibrary = CompileStub("MessagePack", CoreLibraryStub, corlib);
+        var callee = CompileStub("Callee", BufferDefinition + """
+            public static class External
+            {
+                public static void Take(MyBuffer buffer) { }
+            }
+            """, corlib, coreLibrary);
+        var compilation = CSharpCompilation.Create(
+            "UserAssembly",
+            [CSharpSyntaxTree.ParseText(source)],
+            [corlib, coreLibrary, callee],
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        Assert.Empty(compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error));
+        var diagnostics = await compilation.WithAnalyzers([new NonCopyableBufferAnalyzer()]).GetAnalyzerDiagnosticsAsync(CancellationToken.None);
+
+        Assert.Equal(3, diagnostics.Length);
+        Assert.Contains(diagnostics, d => d.GetMessage().Contains("returned by value from existing storage"));
+        Assert.Contains(diagnostics, d => d.GetMessage().Contains("copied by assignment"));
+        Assert.Contains(diagnostics, d => d.GetMessage().Contains("passed by value"));
+    }
+
+    [Fact]
+    public async Task ReturnOfUsingLocal_Reports()
+    {
+        // the frame disposes a using local on exit, so the returned copy is already dead
+        const string source = """
+            public static class Code
+            {
+                public static MyBuffer FromDeclaration()
+                {
+                    using var local = new MyBuffer();
+                    return local;
+                }
+
+                public static MyBuffer FromStatement()
+                {
+                    using (var local = new MyBuffer())
+                    {
+                        return local;
+                    }
+                }
+
+                public static MyBuffer PlainLocal()
+                {
+                    var local = new MyBuffer();
+                    return local;
+                }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source);
+        Assert.Equal(2, diagnostics.Length);
+        Assert.All(diagnostics, d => Assert.Contains("using local", d.GetMessage()));
     }
 
     [Fact]

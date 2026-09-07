@@ -6,9 +6,7 @@ public static partial class MessagePackSerializer
 {
     const int DeserializeScratchSize = 64;
 
-	/// <summary>
-	/// Deserializes a value from the MessagePack binary in the span.
-	/// </summary>
+	/// <summary>Deserializes a value from the MessagePack bytes in <paramref name="source"/>.</summary>
 	[RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
 	[RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
 	public static T Deserialize<T>(ReadOnlySpan<byte> source)
@@ -25,9 +23,8 @@ public static partial class MessagePackSerializer
 	}
 
 	/// <summary>
-	/// Populate overload that deserializes into an existing instance.
-	/// Formatters treat a non-null ref as an instance to reuse,
-	/// so pooled objects avoid the result allocation.
+	/// Deserializes from <paramref name="source"/> into an existing instance.
+	/// A non-null <paramref name="value"/> is reused, so pooled objects avoid the result allocation.
 	/// </summary>
 	[RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
 	[RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
@@ -59,10 +56,8 @@ public static partial class MessagePackSerializer
 #if NET9_0_OR_GREATER
 
 	/// <summary>
-	/// Deserializes one value directly from a read buffer, leaving any following bytes unconsumed.
-	/// This is the low-level entry for reading MessagePack embedded inside another protocol.
-	/// Options carrying a MessageProcessor are rejected because the processor
-	/// needs the complete message, which this entry never sees.
+	/// Deserializes one value straight from a read buffer and leaves the following bytes unconsumed, for reading MessagePack embedded inside another protocol.
+	/// Options with a MessageProcessor are rejected, since the processor needs the complete message and this entry never sees it.
 	/// </summary>
 	[RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
 	[RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
@@ -104,9 +99,7 @@ public static partial class MessagePackSerializer
 
 #endif
 
-	/// <summary>
-	/// Deserializes a value from the MessagePack binary in the sequence.
-	/// </summary>
+	/// <summary>Deserializes a value from the MessagePack bytes in <paramref name="source"/>.</summary>
 	[RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
 	[RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
 	public static T Deserialize<T>(in ReadOnlySequence<byte> source)
@@ -123,9 +116,8 @@ public static partial class MessagePackSerializer
 	}
 
 	/// <summary>
-	/// Populate overload that deserializes into an existing instance.
-	/// Formatters treat a non-null ref as an instance to reuse,
-	/// so pooled objects avoid the result allocation.
+	/// Deserializes from <paramref name="source"/> into an existing instance.
+	/// A non-null <paramref name="value"/> is reused, so pooled objects avoid the result allocation.
 	/// </summary>
 	[RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
 	[RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
@@ -185,9 +177,8 @@ public static partial class MessagePackSerializer
 		static long DeserializeSpanCompatible(ref T value, ReadOnlySpan<byte> source, MessagePackSerializerOptions options)
 #endif
 		{
-			// the Compatible read buffer reads through a fixed view of the caller's span;
-			// the whole deserialization runs inside the fixed scope (empty source pins to
-			// null, which PointerSpan represents as an empty window)
+			// The Compatible read buffer reads through a fixed view of the caller's span, so the whole deserialization
+			// runs inside the fixed scope (an empty source pins to null, which PointerSpan represents as an empty window).
 			fixed (byte* pointer = source)
 			{
 				var buffer = new CompatibleReadOnlySpanReadBuffer(pointer, source.Length);
@@ -231,8 +222,8 @@ public static partial class MessagePackSerializer
 		static long DeserializeSequenceCompatible(ref T value, in ReadOnlySequence<byte> source, MessagePackSerializerOptions options)
 #endif
 		{
-			// the Compatible tier windows each segment as ReadOnlyMemory (pin-free) and
-			// stitches through its rented temp; no caller scratch involved
+			// the Compatible tier windows each segment as ReadOnlyMemory (pin-free) and stitches through its rented temp,
+			// with no caller scratch involved
 			var buffer = new CompatibleReadOnlySequenceReadBuffer(in source);
 			try
 			{

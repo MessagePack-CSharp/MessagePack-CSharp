@@ -5,32 +5,28 @@ using static MessagePack.MessagePackPrimitives;
 
 namespace MessagePack;
 
-// JSON conversion utilities (debug / interop view), built on System.Text.Json.
-// The mapping is lossy where JSON is poorer than msgpack: bin becomes a Base64 string,
-// the timestamp ext becomes an ISO-8601 string, other exts become {"$extension": code, "$data": base64},
-// non-string map keys are stringified, and NaN/Infinity become strings.
-
-// This implementation does not chase performance to the extreme
+// JSON conversion utilities (a debug and interop view), built on System.Text.Json.
+// The mapping is lossy where JSON is poorer than msgpack. bin becomes a Base64 string, the timestamp ext becomes an
+// ISO-8601 string, other exts become {"$extension": code, "$data": base64}, non-string map keys are stringified,
+// and NaN/Infinity become strings.
+// This implementation does not chase performance to the extreme.
 
 public static partial class MessagePackSerializer
 {
-    // Renders one MessagePack value as JSON text (a debugging/interop view, not a wire format: bin, ext and non-string map keys have no JSON equivalent and are approximated).
     static readonly JsonWriterOptions JsonViewOptions = new()
     {
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
     /// <summary>
-    /// Converts one MessagePack value to JSON text. This is a diagnostic view, not a
-    /// lossless conversion: binary renders as base64, timestamps as ISO 8601 strings,
-    /// other extensions as <c>{"$extension", "$data"}</c> objects, and non-string map
-    /// keys are stringified.
+    /// Converts one MessagePack value to JSON text, for diagnostics.
+    /// The conversion is lossy. Binary becomes base64, timestamps become ISO 8601 strings, other extensions become objects with <c>$extension</c> and <c>$data</c>, and non-string map keys are stringified.
     /// </summary>
     public static string ConvertToJson(ReadOnlySpan<byte> messagePack)
     {
 #if NETSTANDARD2_0
-        // ns2.0 has no ArrayBufferWriter: keep the stream target, but read the exposable
-        // buffer instead of copying it out with ToArray
+        // ns2.0 has no ArrayBufferWriter, so keep the stream target but read the exposable buffer instead of copying
+        // it out with ToArray
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream, JsonViewOptions))
         {
@@ -40,8 +36,8 @@ public static partial class MessagePackSerializer
         stream.TryGetBuffer(out var buffer);
         return Encoding.UTF8.GetString(buffer.Array!, buffer.Offset, buffer.Count);
 #else
-        // IBufferWriter target: Utf8JsonWriter writes into it directly, where a Stream
-        // target goes through the writer's internal rented buffer plus a flush copy
+        // Utf8JsonWriter writes into an IBufferWriter target directly, whereas a Stream target goes through the writer's
+        // internal rented buffer plus a flush copy
         var output = new ArrayBufferWriter<byte>();
         using (var writer = new Utf8JsonWriter(output, JsonViewOptions))
         {
@@ -63,9 +59,8 @@ public static partial class MessagePackSerializer
     }
 
     /// <summary>
-    /// Converts JSON text to one MessagePack value: objects to maps, arrays to arrays,
-    /// numbers to the smallest integer form (or float64), strings/booleans/null to their
-    /// natural forms. Invalid JSON throws <see cref="JsonException"/>.
+    /// Converts JSON text to one MessagePack value.
+    /// Objects become maps, arrays become arrays, numbers the smallest integer form or float64, and strings, booleans and null their natural forms. Invalid JSON throws <see cref="JsonException"/>.
     /// </summary>
     public static byte[] ConvertFromJson(string json)
     {
@@ -255,8 +250,8 @@ file static class JsonCodec
         writer.WriteEndObject();
     }
 
-    // JSON property names must be strings: str keys pass through as UTF-8, scalar keys
-    // are stringified invariantly, container/bin/ext keys have no sane JSON spelling
+    // JSON property names must be strings. str keys pass through as UTF-8, scalar keys are stringified invariantly,
+    // and container/bin/ext keys have no sane JSON spelling.
     internal static void WriteJsonPropertyName(Utf8JsonWriter writer, ReadOnlySpan<byte> source, ref int position)
     {
         if (position >= source.Length)
@@ -293,7 +288,16 @@ file static class JsonCodec
             position++;
             return;
         }
-        if (code is MessagePackCode.Float32 or MessagePackCode.Float64)
+        if (code is MessagePackCode.Float32)
+        {
+            // read as float so the key prints the float's shortest round-trip, not the double expansion
+            // ("3.33", never "3.3299999237060547")
+            Ensure(TryReadSingle(span, out float single, out var singleSize), "float");
+            writer.WritePropertyName(single.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+            position += singleSize;
+            return;
+        }
+        if (code is MessagePackCode.Float64)
         {
             Ensure(TryReadDouble(span, out double floating, out var tokenSize), "float");
             writer.WritePropertyName(floating.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
@@ -324,6 +328,20 @@ file static class JsonCodec
         if (double.IsNaN(value) || double.IsInfinity(value))
         {
             // JSON numbers cannot spell these; strings are the conventional escape hatch
+            writer.WriteStringValue(value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+        else
+        {
+            writer.WriteNumberValue(value);
+        }
+    }
+
+    // the float overload keeps float32 values at the float's shortest round-trip ("3.33"); without it the value widens
+    // to double and prints "3.3299999237060547"
+    internal static void WriteJsonFloat(Utf8JsonWriter writer, float value)
+    {
+        if (float.IsNaN(value) || float.IsInfinity(value))
+        {
             writer.WriteStringValue(value.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
         else

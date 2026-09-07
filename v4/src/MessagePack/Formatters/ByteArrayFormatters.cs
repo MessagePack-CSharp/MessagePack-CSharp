@@ -22,7 +22,32 @@ public sealed partial class ByteArrayFormatter<TWriteBuffer, TReadBuffer> : IMes
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref byte[]? value)
     {
-        value = buffer.TryReadNil() ? null : buffer.ReadBinary();
+        if (buffer.TryReadNil())
+        {
+            value = null;
+            return;
+        }
+        // compatible-path: v3 also read byte[] from the array-of-integers wire form
+        // (payloads from producers that wrote byte arrays as arrays); each element must
+        // fit a byte - ReadByte rejects anything wider, same as v3
+        if (buffer.TryPeek(out var code) &&
+            ((code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MinFixArray + MessagePackRange.MaxFixArrayCount) || code == MessagePackCode.Array16 || code == MessagePackCode.Array32))
+        {
+            var count = buffer.ReadArrayHeader();
+            if (count == 0)
+            {
+                value = []; // the singleton empty array, same as v3
+                return;
+            }
+            var result = new byte[count];
+            for (int i = 0; i < count; i++)
+            {
+                result[i] = buffer.ReadByte();
+            }
+            value = result;
+            return;
+        }
+        value = buffer.ReadBinary();
     }
 }
 
@@ -91,18 +116,7 @@ public sealed partial class ByteReadOnlySequenceFormatter<TWriteBuffer, TReadBuf
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ReadOnlySequence<byte> value)
     {
         // struct with no null state: default = empty bin (same contract as Memory<byte>)
-        if (value.IsSingleSegment)
-        {
-            buffer.WriteBinary(value.First.Span);
-            return;
-        }
-
-        // multi-segment: bin header once, then copy each segment straight into the buffer
-        buffer.WriteBinaryHeader(checked((int)value.Length));
-        foreach (var segment in value)
-        {
-            buffer.WriteRaw(segment.Span);
-        }
+        buffer.WriteBinary(value);
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref ReadOnlySequence<byte> value)
@@ -135,7 +149,7 @@ public sealed partial class ByteListFormatter<TWriteBuffer, TReadBuffer> : IMess
         if (buffer.TryPeek(out var code) && code is MessagePackCode.Bin8 or MessagePackCode.Bin16 or MessagePackCode.Bin32)
         {
             var bytes = buffer.ReadBinary();
-#if NET
+#if NET9_0_OR_GREATER
             var result = value ?? new List<byte>(bytes.Length);
             CollectionsMarshal.SetCount(result, bytes.Length);
             bytes.CopyTo(CollectionsMarshal.AsSpan(result));

@@ -1,42 +1,30 @@
-// TODO: this API is not finished yet.
-
-using SerializerFoundation;
-
 namespace MessagePack;
 
 /// <summary>
-/// Envelope hook for whole-message transforms (compression, encryption, framing).
-/// Set on <see cref="MessagePackSerializerOptions.MessageProcessor"/>; null means the
-/// entries behave exactly as before (one perfectly-predicted null check per call).
-/// The core deliberately knows only this CONCEPT — concrete processors (e.g. LZ4) live
-/// in external packages, yet integrations keep composing purely through options, the
-/// same way v2/v3's options.Compression flowed through ASP.NET Core formatters.
+/// Transforms whole messages on their way in and out, for compression, encryption or framing.
+/// Set it on <see cref="MessagePackSerializerOptions.MessageProcessor"/>; null leaves messages untouched.
 /// </summary>
 public abstract class MessagePackMessageProcessor
 {
+    // Contract details for implementers that do not belong in the summary. The segments are only valid during
+    // the call, and the call consumes the iterator (take struct copies for extra passes); a caller reusing it
+    // afterwards Resets it first. BufferSegments is TFM-invariant, so implementations multi-target without #if.
+
     /// <summary>
-    /// Serialize tail, the mirror of TryDecode's transparent passthrough: wrap the written
-    /// msgpack message (zero-copy segments, <see cref="BufferSegments.Length"/> carries the
-    /// total size) in this processor's envelope and return true, or return false and the
-    /// entry writes the raw message itself (envelope not worth it: below a compression
-    /// threshold, incompressible, ...). The segments are only valid during the call.
-    /// The call consumes the iterator (take struct copies for extra passes); a caller
-    /// reusing it afterwards Resets it first.
-    /// CONTRACT: false means output was NOT advanced — bytes obtained from GetSpan without
-    /// Advance are fine, committed bytes are not, because on the streaming entries output
-    /// is the final destination. BufferSegments is TFM-invariant, so implementations
-    /// multi-target without #if.
+    /// Wraps a serialized message in this processor's envelope and writes it to <paramref name="output"/>.
+    /// Return false to have the message written as is, for example when it is below a compression threshold.
+    /// On false nothing may have been committed to <paramref name="output"/>, because for streaming entries it is the final destination.
     /// </summary>
     public abstract bool TryEncode(ref BufferSegments message, IBufferWriter<byte> output);
 
-#if NET
+#if NET9_0_OR_GREATER
+    // Conceptually abstract. It is virtual only because an abstract member present on this TFM alone would make
+    // processors compiled against the downlevel TFMs fail to load on the modern runtime; the bridge body
+    // (interface overload into a staging buffer, one extra copy) keeps those working instead.
+
     /// <summary>
-    /// Modern path: encode into buffers borrowed directly from the target write buffer.
-    /// Conceptually abstract — implementations are expected to override this. It is
-    /// virtual only because an abstract member present on this TFM alone would make
-    /// processors compiled against the downlevel TFMs fail to LOAD on the modern runtime;
-    /// the bridge body (interface overload into a staging buffer, one extra copy) keeps
-    /// those working instead. Same false-means-passthrough contract.
+    /// Same as <see cref="TryEncode(ref BufferSegments, IBufferWriter{byte})"/>, writing straight into the target buffer.
+    /// Override it; the default goes through a staging buffer and costs one extra copy.
     /// </summary>
     [SerializerFoundation.CodeAnalysis.RequireOverride] // SF003: compiled-against-modern processors must override
     public virtual bool TryEncode<TWriteBuffer>(ref BufferSegments message, ref TWriteBuffer output)
@@ -65,41 +53,38 @@ public abstract class MessagePackMessageProcessor
 #endif
 
     /// <summary>
-    /// Deserialize head: if source starts with this processor's envelope, produce the
-    /// decoded message (true); otherwise return false and the entry reads source as-is
-    /// (v3-style transparent passthrough of uncompressed data).
-    /// CONTRACT: the returned message must NOT alias source — it owns its own (typically
-    /// rented) buffers, released by <see cref="DecodedMessage.Dispose"/>.
+    /// Unwraps a message that starts with this processor's envelope.
+    /// Return false when <paramref name="source"/> carries no envelope, and it is read as is.
+    /// The returned message must not alias <paramref name="source"/>; it owns its own buffers, released by <see cref="DecodedMessage.Dispose"/>.
     /// </summary>
     public abstract bool TryDecode(ReadOnlySpan<byte> source, out DecodedMessage message);
 
     /// <inheritdoc cref="TryDecode(ReadOnlySpan{byte}, out DecodedMessage)"/>
-    /// <remarks>
-    /// Multi-segment handling is the implementation's job; identify a non-envelope from a
-    /// small stitched prefix so passthrough input never pays a whole-message flatten.
-    /// </remarks>
+    /// <remarks>Identify a message without envelope from a small prefix, so that passthrough input never pays for flattening the whole sequence.</remarks>
     public abstract bool TryDecode(in ReadOnlySequence<byte> source, out DecodedMessage message);
 }
 
 /// <summary>
-/// A decoded message plus the owner that releases the memory backing it. Disposed by the
-/// entry after deserialization completes; the producer defines the release policy (pool
-/// return, native free, ...) through <c>owner</c>, and null means nothing to release.
+/// A decoded message together with the owner that releases the memory behind it.
+/// Disposed by the serializer after deserialization; a null owner means there is nothing to release.
 /// </summary>
 public readonly struct DecodedMessage : IDisposable
 {
     readonly ReadOnlySequence<byte> sequence;
     readonly IDisposable? owner;
 
+    /// <summary>The decoded message bytes.</summary>
     public ReadOnlySequence<byte> Sequence => sequence;
 
+    /// <summary>Wraps <paramref name="sequence"/>, with <paramref name="owner"/> releasing its memory on dispose.</summary>
     public DecodedMessage(ReadOnlySequence<byte> sequence, IDisposable? owner = null)
     {
         this.sequence = sequence;
         this.owner = owner;
     }
 
-    // copies share the owner, so surviving double-dispose is the owner's job: release
-    // exactly once (e.g. null out the pooled references on the first call)
+    // Copies share the owner, so surviving double-dispose is the owner's job. Release exactly once
+    // (e.g. null out the pooled references on the first call).
+    /// <summary>Releases the memory behind <see cref="Sequence"/>.</summary>
     public void Dispose() => owner?.Dispose();
 }

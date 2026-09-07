@@ -30,10 +30,8 @@ internal sealed class PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, T, TCod
             buffer.WriteNil();
             return;
         }
-        state.Enter(); // flat elements cannot recurse, but the depth contract must not depend on the element type
         buffer.WriteArrayHeader(value.Length);
         default(TCodec).WriteElements(ref buffer, value);
-        state.Exit();
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref T[]? value)
@@ -55,14 +53,12 @@ internal sealed class PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, T, TCod
         // Populate contract: reuse the incoming array only on an exact length match;
         // a fresh array may be uninitialized because the codec writes every element
         var result = (value != null && value.Length == count) ? value : GC.AllocateUninitializedArray<T>(count);
-        state.Enter();
         default(TCodec).ReadElements(ref buffer, result);
         value = result;
-        state.Exit();
     }
 }
 
-#if NET
+#if NET9_0_OR_GREATER
 // modern TFMs only: the whole point of this shape is CollectionsMarshal span access to
 // the List's backing array. Downlevel TFMs route List<primitive> to the generic
 // ListFormatter instead (see BuiltInFormatterFactory) — no perf chase there.
@@ -91,11 +87,9 @@ internal sealed class PrimitiveListFormatter<TWriteBuffer, TReadBuffer, T, TCode
             buffer.WriteNil();
             return;
         }
-        state.Enter(); // same depth contract as ListFormatter
         var span = CollectionsMarshal.AsSpan(value);
         buffer.WriteArrayHeader(span.Length);
         default(TCodec).WriteElements(ref buffer, span);
-        state.Exit();
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref List<T>? value)
@@ -108,14 +102,11 @@ internal sealed class PrimitiveListFormatter<TWriteBuffer, TReadBuffer, T, TCode
 
         // ReadArrayHeader validates the claimed count against BytesRemaining.
         var count = buffer.ReadArrayHeader();
-
-        state.Enter(); // same depth contract as ListFormatter
         var result = value ?? new List<T>(count);
         CollectionsMarshal.SetCount(result, count);
         var span = CollectionsMarshal.AsSpan(result);
         default(TCodec).ReadElements(ref buffer, span);
         value = result;
-        state.Exit();
     }
 }
 #endif
@@ -142,11 +133,9 @@ internal sealed class PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, T, TCo
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Memory<T> value)
     {
         // Memory has no null: default serializes as an empty array, never nil
-        state.Enter(); // same depth contract as MemoryFormatter
         var span = value.Span;
         buffer.WriteArrayHeader(span.Length);
         default(TCodec).WriteElements(ref buffer, span);
-        state.Exit();
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Memory<T> value)
@@ -162,11 +151,9 @@ internal sealed class PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, T, TCo
         // exact-length reuse writes through to the caller's backing store (array or
         // MemoryManager) — the ArrayFormatter populate rule applied to a view
         var result = value.Length == count ? value : GC.AllocateUninitializedArray<T>(count);
-        state.Enter();
         var span = result.Span;
         default(TCodec).ReadElements(ref buffer, span);
         value = result;
-        state.Exit();
     }
 }
 
@@ -191,11 +178,9 @@ internal sealed class PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ReadOnlyMemory<T> value)
     {
-        state.Enter(); // same depth contract as ReadOnlyMemoryFormatter
         var span = value.Span;
         buffer.WriteArrayHeader(span.Length);
         default(TCodec).WriteElements(ref buffer, span);
-        state.Exit();
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref ReadOnlyMemory<T> value)
@@ -210,10 +195,8 @@ internal sealed class PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer
 
         // read-only view: no write-through possible, always a fresh backing array
         var array = GC.AllocateUninitializedArray<T>(count); // the codec writes every element
-        state.Enter();
         default(TCodec).ReadElements(ref buffer, array);
         value = array;
-        state.Exit();
     }
 }
 
@@ -244,11 +227,9 @@ internal sealed class PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, 
             buffer.WriteNil();
             return;
         }
-        state.Enter(); // same depth contract as ArraySegmentFormatter
         var span = value.AsSpan();
         buffer.WriteArrayHeader(span.Length);
         default(TCodec).WriteElements(ref buffer, span);
-        state.Exit();
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref ArraySegment<T> value)
@@ -275,11 +256,8 @@ internal sealed class PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, 
             array = GC.AllocateUninitializedArray<T>(count); // the codec writes every element
             offset = 0;
         }
-
-        state.Enter();
         var span = array.AsSpan(offset, count);
         default(TCodec).ReadElements(ref buffer, span);
         value = new ArraySegment<T>(array, offset, count);
-        state.Exit();
     }
 }

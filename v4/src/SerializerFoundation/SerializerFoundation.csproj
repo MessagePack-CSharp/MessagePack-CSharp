@@ -45,8 +45,8 @@
 
 	<!-- Internals Visible To -->
 	<ItemGroup>
-		<InternalsVisibleTo Include="MessagePack.Tests" />
-		<InternalsVisibleTo Include="DisassembleBenchmark" />
+		<InternalsVisibleTo Include="MessagePack.Tests" Key="$(MessagePackPublicKey)" />
+		<InternalsVisibleTo Include="DisassembleBenchmark" Key="$(MessagePackPublicKey)" />
 	</ItemGroup>
 
 </Project>

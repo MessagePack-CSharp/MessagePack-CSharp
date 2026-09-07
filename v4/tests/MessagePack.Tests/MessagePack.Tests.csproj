@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -10,12 +10,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- This project is an InternalsVisibleTo friend of the signed src assemblies, so it signs with the same key.
+         CS8002 (a signed assembly referencing unsigned packages) is harmless on every runtime this repo targets. -->
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\..\opensource.snk</AssemblyOriginatorKeyFile>
+    <NoWarn>$(NoWarn);CS8002</NoWarn>
     <!-- the pointer-tier buffer tests pass stackalloc scratch via byte* -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <NoWarn>1701;1702;xUnit1051;xUnit2013</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

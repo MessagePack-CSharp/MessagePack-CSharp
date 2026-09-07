@@ -4,19 +4,23 @@ using MessagePack.Formatters;
 
 namespace MessagePack;
 
+/// <summary>Formatters for primitives, common BCL types and collections in the standard MessagePack formats.</summary>
 public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactory
 {
+    /// <summary>Shared instance.</summary>
     public static readonly BuiltInFormatterFactory Instance = new BuiltInFormatterFactory();
 
-    // public: [MessagePackFormatter] constructs its own instance, which is how a member
-    // opts OUT of a chain customization back to the default wire form (e.g. one plain
-    // timestamp DateTime under a DotNetOptimized chain); chain composition keeps Instance
+    // Public because [MessagePackFormatter] constructs its own instance, which is how a member opts out of a chain
+    // customization back to the default format (e.g. one plain timestamp DateTime under a DotNetOptimized chain).
+    // Chain composition keeps using Instance.
+    /// <summary>Creates a new instance, for use with <see cref="MessagePackFormatterAttribute"/>. Chains use <see cref="Instance"/>.</summary>
     public BuiltInFormatterFactory()
     {
     }
 
-    // one method, two signatures: net9+ overrides the base virtual (constraints
-    // inherited); downlevel has no base member, so the constraints are spelled out
+    // One method, two signatures. net9+ overrides the base virtual (constraints inherited), while downlevel has no base
+    // member, so the constraints are spelled out.
+    /// <summary>Creates a formatter for <paramref name="type"/>, or returns null when it is not a built-in type.</summary>
 #if NET9_0_OR_GREATER
     public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
 #else
@@ -81,7 +85,7 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
                 "MessagePackUnknownMembers is not serializable on its own: declare a settable member of this type on a [MessagePackObject] type and the source-generated formatter captures and replays unknown members through it.");
         }
 
-        // typeof(Type) is deliberately NOT served (v4 break from v3's BuiltinResolver)
+        // typeof(Type) is deliberately not served (v4 break from v3's BuiltinResolver)
         if (type == typeof(Type))
         {
             throw new InvalidOperationException(
@@ -89,7 +93,7 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
                 "Opt in by composing the factory before the default chain: new MessagePackSerializerOptions(new MessagePackFormatterResolver([new TypeFormatterFactory(), MessagePackFormatterFactory.Default])).");
         }
 
-#if NET
+#if NET9_0_OR_GREATER
         // BclFormatters.cs (types that do not exist downlevel)
         if (type == typeof(Half)) return new HalfFormatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(Rune)) return new RuneFormatter<TWriteBuffer, TReadBuffer>();
@@ -177,9 +181,9 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
         if (type == typeof(Memory<bool>)) return new PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, bool, BooleanElementCodec>();
         if (type == typeof(ReadOnlyMemory<bool>)) return new PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, bool, BooleanElementCodec>();
         if (type == typeof(ArraySegment<bool>)) return new PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, bool, BooleanElementCodec>();
-        
+
         // List<T>: the codec-backed shape needs CollectionsMarshal.AsSpan, so downlevel TFMs route to the generic ListFormatter instead.
-#if NET
+#if NET9_0_OR_GREATER
         if (type == typeof(List<sbyte>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, sbyte, SByteElementCodec>();
         if (type == typeof(List<int>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, int, Int32ElementCodec>();
         if (type == typeof(List<short>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, short, Int16ElementCodec>();
@@ -202,5 +206,6 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
         if (type == typeof(List<double>)) return new ListFormatter<TWriteBuffer, TReadBuffer, double>();
         if (type == typeof(List<bool>)) return new ListFormatter<TWriteBuffer, TReadBuffer, bool>();
 #endif
-        return null;    }
+        return null;
+    }
 }

@@ -1,20 +1,17 @@
-#if NET
 namespace MessagePack.Formatters;
 
-// net10.0+ only, like IMessagePackSurrogate itself. The manual TSurrogate constraint opts
-// this type out of the BufferConstraints generator, so the buffer constraints are spelled
-// here too (this file never compiles downlevel, so `allows ref struct` is unconditional).
+// The manual TSurrogate constraint opts this type out of the BufferConstraints generator,
+// so the buffer constraints are spelled here by hand, downlevel split included.
 
-/// <summary>
-/// Serializes TTarget through its <see cref="IMessagePackSurrogate{TTarget, TSurrogate}"/>
-/// stand-in: the wire is exactly TSurrogate's shape, resolved through the chain like any
-/// member, and every deserialized value flows through TSurrogate.FromSurrogate. The static
-/// abstract calls are constrained-dispatched: a struct surrogate makes them direct and
-/// inlinable.
-/// </summary>
 public sealed class SurrogateFormatter<TWriteBuffer, TReadBuffer, TTarget, TSurrogate> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, TTarget?>
-    where TWriteBuffer : struct, IWriteBuffer, allows ref struct
-    where TReadBuffer : struct, IReadBuffer, allows ref struct
+    where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+    , allows ref struct
+#endif
+    where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+    , allows ref struct
+#endif
     where TSurrogate : struct, IMessagePackSurrogate<TTarget, TSurrogate>
 {
     // "does TTarget have a null representation" (reference types AND Nullable<S>), the
@@ -38,7 +35,7 @@ public sealed class SurrogateFormatter<TWriteBuffer, TReadBuffer, TTarget, TSurr
             buffer.WriteNil();
             return;
         }
-        surrogateFormatter.Serialize(ref buffer, ref state, TSurrogate.ToSurrogate(value));
+        surrogateFormatter.Serialize(ref buffer, ref state, default(TSurrogate).ToSurrogate(value));
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref TTarget? value)
@@ -51,7 +48,7 @@ public sealed class SurrogateFormatter<TWriteBuffer, TReadBuffer, TTarget, TSurr
         }
         TSurrogate surrogate = default;
         surrogateFormatter.Deserialize(ref buffer, ref state, ref surrogate);
-        value = TSurrogate.FromSurrogate(surrogate);
+        value = surrogate.ToTarget();
     }
 }
 
@@ -64,7 +61,15 @@ public sealed class SurrogateFormatter<TWriteBuffer, TReadBuffer, TTarget, TSurr
 public sealed partial class SurrogateFormatterFactory<TTarget, TSurrogate> : MessagePackFormatterFactory
     where TSurrogate : struct, IMessagePackSurrogate<TTarget, TSurrogate>
 {
+    // one method, two signatures: net9+ overrides the base virtual (constraints inherited);
+    // downlevel has no base member, so the constraints are spelled out
+#if NET9_0_OR_GREATER
     public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+#else
+    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+        where TWriteBuffer : struct, IWriteBuffer
+        where TReadBuffer : struct, IReadBuffer
+#endif
     {
         if (type == typeof(TTarget))
         {
@@ -73,4 +78,3 @@ public sealed partial class SurrogateFormatterFactory<TTarget, TSurrogate> : Mes
         return null;
     }
 }
-#endif

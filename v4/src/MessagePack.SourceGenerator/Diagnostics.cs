@@ -4,11 +4,11 @@ namespace MessagePack.SourceGenerator;
 
 public static class Diagnostics
 {
-    // UMP0xx = generator pipeline diagnostics (this class); UMP1xx = standalone
-    // DiagnosticAnalyzers under Analyzers/ (same dll, MessagePack-CSharp v3 layout)
+    // UMP0xx = generator pipeline diagnostics (this class); UMP1xx = standalone DiagnosticAnalyzers under Analyzers/
+    // (same dll, MessagePack-CSharp v3 layout)
 
-    // {0} carries the whole pre-formatted message: keeps DiagnosticInfo equatable without
-    // dragging object[] args through the pipeline
+    // {0} carries the whole pre-formatted message: keeps DiagnosticInfo equatable without dragging object[] args
+    // through the pipeline
     static DiagnosticDescriptor Make(string id, string title, DiagnosticSeverity severity) =>
         new(id, title, "{0}", "MessagePack.SourceGenerator", severity, isEnabledByDefault: true);
 
@@ -32,6 +32,7 @@ public static class Diagnostics
     public static readonly DiagnosticDescriptor DuplicateSurrogate = Make("MsgPack018", "Multiple surrogates declared for one target type", DiagnosticSeverity.Error);
     public static readonly DiagnosticDescriptor SurrogateNotRegistered = Make("MsgPack019", "Surrogate declaration is not auto-registered", DiagnosticSeverity.Warning);
     public static readonly DiagnosticDescriptor InvalidUnknownMembersMember = Make("MsgPack020", "MessagePackUnknownMembers member is invalid", DiagnosticSeverity.Error);
+    public static readonly DiagnosticDescriptor OverrideChangesKey = Make("MsgPack021", "Property override declares a different key than the declaration it overrides", DiagnosticSeverity.Error);
 
     public static DiagnosticDescriptor ById(string id) => id switch
     {
@@ -55,6 +56,7 @@ public static class Diagnostics
         "MsgPack018" => DuplicateSurrogate,
         "MsgPack019" => SurrogateNotRegistered,
         "MsgPack020" => InvalidUnknownMembersMember,
+        "MsgPack021" => OverrideChangesKey,
         _ => InvalidKey,
     };
 }

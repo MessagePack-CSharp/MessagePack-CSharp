@@ -9,7 +9,7 @@ namespace MessagePack.SourceGenerator.Analyzers;
 /// <summary>
 /// Every serialized member's type must be resolvable by the default formatter chain, or
 /// deserialization dies at runtime with formatter-not-found. The set of "resolvable"
-/// types is NOT hardcoded here — that table would silently drift from the library — it is
+/// types is not hardcoded here, that table would silently drift from the library, it is
 /// harvested from the referenced MessagePack assembly (and the user's own assembly):
 /// every type implementing IMessagePackFormatter&lt;TWriteBuffer, TReadBuffer, TValue&gt;
 /// contributes its TValue as a pattern, with the formatter's own type parameters acting
@@ -20,7 +20,7 @@ namespace MessagePack.SourceGenerator.Analyzers;
 ///   - [MessagePackFormatter] on the member, or type-level on a non-generic member type, passes
 ///   - [assembly: MessagePackKnownType(typeof(X))] passes X
 /// Severity is Warning, not Error: the factory chain is composable at runtime, and the
-/// analyzer can only approximate the DEFAULT chain — the assembly attribute above is
+/// analyzer can only approximate the default chain, the assembly attribute above is
 /// the sanctioned way to tell it about custom tiers (harvested from every referenced
 /// assembly too, so a library declares its coverage once for all consumers).
 /// </summary>
@@ -48,13 +48,12 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         description: "A [MessagePackObject] member (or [UnionTag] case type) whose type no formatter serves fails at runtime with formatter-not-found. The serializable set is harvested from the formatter implementations visible to the compilation, so custom formatters in the user's own assembly are recognized automatically; coverage provided any other way (factories, runtime registration, other assemblies) is declared with [assembly: MessagePackKnownType].");
 
-    // MsgPack108, the usage-site twin of MsgPack101 (v3's MsgPack003 territory): the payload
-    // type of a MessagePackSerializer.Serialize<T>/Deserialize<T> call gets the same
-    // resolvability check as a serialized member — catching root types that never appear
-    // as anyone's member. Same Warning rationale: the analyzer approximates the DEFAULT chain.
-    // A call passing its own options swaps that chain out entirely (contractless, custom
-    // resolvers), so only default-chain calls are judged: no options argument, or an
-    // argument that is literally MessagePackSerializerOptions.Default.
+    // MsgPack108, the usage-site twin of MsgPack101 (v3's MsgPack003 territory): the payload type of a
+    // MessagePackSerializer.Serialize<T>/Deserialize<T> call gets the same resolvability check as a serialized member,
+    // catching root types that never appear as anyone's member. Same Warning rationale: the analyzer approximates the
+    // default chain. A call passing its own options swaps that chain out entirely (contractless, custom resolvers),
+    // so only default-chain calls are judged: no options argument, or an argument that is literally
+    // MessagePackSerializerOptions.Default.
     public const string UsageDiagnosticId = "MsgPack108";
 
     const string SerializerTypeName = "MessagePack.MessagePackSerializer";
@@ -99,9 +98,9 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
 
         if (FindAttribute(type, UnionTagAttributeName) is not null)
         {
-            // a union root's own members never ride the wire (the generator routes it to
-            // UnionParser, not ObjectParser), so only the case types get checked — this
-            // also keeps a struct union's public Value property out of the member walk
+            // a union root's own members never ride the wire (the generator routes it to UnionParser,
+            // not ObjectParser), so only the case types get checked, this also keeps a struct union's public Value
+            // property out of the member walk
             AnalyzeUnionCases(context, registry, type);
             return;
         }
@@ -160,9 +159,9 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    // A custom options argument carries its own resolver chain, which this analyzer cannot
-    // see into — judging the call against the default chain would false-positive every
-    // contractless call site. Only MessagePackSerializerOptions.Default keeps the check.
+    // A custom options argument carries its own resolver chain, which this analyzer cannot see into,
+    // judging the call against the default chain would false-positive every contractless call site.
+    // Only MessagePackSerializerOptions.Default keeps the check.
     static bool PassesCustomOptions(IInvocationOperation invocation)
     {
         foreach (var argument in invocation.Arguments)
@@ -192,8 +191,8 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
-    // symbol comparison, not display strings: the parameter may be nullable-annotated
-    // (MessagePackSerializerOptions?), which a name comparison must not trip over
+    // symbol comparison, not display strings: the parameter may be nullable-annotated (MessagePackSerializerOptions?),
+    // which a name comparison must not trip over
     static bool IsOptionsType(ITypeSymbol? type) =>
         type is INamedTypeSymbol { Name: "MessagePackSerializerOptions", ContainingType: null } named
         && named.ContainingNamespace?.ToDisplayString() == "MessagePack";
@@ -219,25 +218,33 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    // the generator's participation rules, reduced to "which member TYPES ride the wire":
-    // properties across the hierarchy then fields, derived-first dedup; public members
-    // (public getter) participate, non-public only with allowPrivate; a member counts
-    // when it carries [Key] or the type uses map-by-name mode
+    // the generator's participation rules, reduced to "which member types ride the wire": properties across the
+    // hierarchy then fields, derived-first dedup; public members (public getter) participate,
+    // non-public only with allowPrivate; a member counts when it carries [Key] or the type uses map-by-name mode
     static IEnumerable<(ISymbol Member, ITypeSymbol Type)> SerializedMembers(INamedTypeSymbol type, bool keyAsPropertyName, bool allowPrivate)
     {
-        var seenNames = new HashSet<string>();
+        // dedup by override chain, not by name, mirroring ObjectParser: an override shares its base declaration's
+        // storage, but a `new`-shadowed member is separate storage and every declaration's type rides the wire
+        var seenOverrideRoots = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
         for (var current = type; current is not null && current.SpecialType != SpecialType.System_Object && current.SpecialType != SpecialType.System_ValueType; current = current.BaseType)
         {
             foreach (var member in current.GetMembers())
             {
                 if (member is IPropertySymbol { IsStatic: false, IsIndexer: false, IsImplicitlyDeclared: false } property
                     && property.GetMethod is { } getter
-                    && (allowPrivate || (property.DeclaredAccessibility == Accessibility.Public && getter.DeclaredAccessibility == Accessibility.Public))
-                    && seenNames.Add(property.Name)
-                    && Participates(property, keyAsPropertyName)
-                    && !ObjectParser.IsUnknownMembersType(property.Type))
+                    && (allowPrivate || (property.DeclaredAccessibility == Accessibility.Public && getter.DeclaredAccessibility == Accessibility.Public)))
                 {
-                    yield return (property, property.Type);
+                    var root = (IPropertySymbol)property.OriginalDefinition;
+                    while (root.OverriddenProperty is { } overridden)
+                    {
+                        root = (IPropertySymbol)overridden.OriginalDefinition;
+                    }
+                    if (seenOverrideRoots.Add(root)
+                        && Participates(property, keyAsPropertyName)
+                        && !ObjectParser.IsUnknownMembersType(property.Type))
+                    {
+                        yield return (property, property.Type);
+                    }
                 }
             }
         }
@@ -245,9 +252,9 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
         {
             foreach (var member in current.GetMembers())
             {
+                // fields never override, so every declaration is its own storage
                 if (member is IFieldSymbol { IsStatic: false, IsConst: false, IsImplicitlyDeclared: false } field
                     && (allowPrivate || field.DeclaredAccessibility == Accessibility.Public)
-                    && seenNames.Add(field.Name)
                     && Participates(field, keyAsPropertyName)
                     && !ObjectParser.IsUnknownMembersType(field.Type))
                 {
@@ -260,7 +267,9 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
     static bool Participates(ISymbol member, bool keyAsPropertyName)
     {
         var hasKey = false;
-        foreach (var attribute in member.GetAttributes())
+        // override-chain walk, mirroring the parser: an override inherits [Key]/[IgnoreMember] from the base virtual
+        // declaration
+        foreach (var attribute in ObjectParser.MemberAttributes(member))
         {
             var name = attribute.AttributeClass?.ToDisplayString();
             if (name == IgnoreMemberAttributeName || name == IgnoreDataMemberAttributeName)
@@ -272,13 +281,13 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                 hasKey = true;
             }
         }
-        // an unkeyed public member outside map-by-name mode is the generator's MsgPack001
-        // error; no point stacking a type warning on top of it
+        // an unkeyed public member outside map-by-name mode is the generator's MsgPack001 error;
+        // no point stacking a type warning on top of it
         return hasKey || keyAsPropertyName;
     }
 
-    // hands the code fix the offender's identity (the diagnostic sits on the MEMBER, but
-    // the fix annotates the offending TYPE, possibly in another document)
+    // hands the code fix the offender's identity (the diagnostic sits on the member,
+    // but the fix annotates the offending type, possibly in another document)
     static ImmutableDictionary<string, string?> OffenderProperties(ITypeSymbol offender) =>
         offender is INamedTypeSymbol { IsGenericType: false } named
             && DocumentationCommentId.CreateDeclarationId(named) is { } declarationId
@@ -328,28 +337,28 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
 
     sealed class Registry
     {
-        // patterns indexed by the served named type's original definition; array patterns
-        // (T[], T[,], ...) keyed by rank instead
+        // patterns indexed by the served named type's original definition; array patterns (T[], T[,], ...)
+        // keyed by rank instead
         readonly Dictionary<INamedTypeSymbol, List<ITypeSymbol>> namedPatterns = new(SymbolEqualityComparer.Default);
         readonly HashSet<int> arrayRanks = [];
         readonly HashSet<ITypeSymbol> knownTypes = new(SymbolEqualityComparer.Default);
         readonly HashSet<ITypeSymbol> surrogateTargets = new(SymbolEqualityComparer.Default);
         readonly ConcurrentDictionary<ITypeSymbol, bool> memo = new(SymbolEqualityComparer.Default);
+        Compilation compilation = null!;
 
         public static Registry Build(Compilation compilation, INamedTypeSymbol formatterInterface)
         {
-            var registry = new Registry();
+            var registry = new Registry { compilation = compilation };
             var interfaceDefinition = formatterInterface.OriginalDefinition;
 
-            // the MessagePack assembly is the default-chain surface; the user's own
-            // assembly makes hand-written formatters count without any declaration
+            // the MessagePack assembly is the default-chain surface; the user's own assembly makes hand-written
+            // formatters count without any declaration
             HarvestNamespace(formatterInterface.ContainingAssembly.GlobalNamespace, interfaceDefinition, registry);
             HarvestNamespace(compilation.Assembly.GlobalNamespace, interfaceDefinition, registry);
 
-            // IMessagePackSurrogate implementations auto-register their targets through the
-            // generated factory, so a target is serializable with no declaration of its own
-            // (same own-assembly scope as hand-written formatters: another assembly's
-            // surrogates declare coverage with [assembly: MessagePackKnownType])
+            // IMessagePackSurrogate implementations auto-register their targets through the generated factory,
+            // so a target is serializable with no declaration of its own (same own-assembly scope as hand-written
+            // formatters: another assembly's surrogates declare coverage with [assembly: MessagePackKnownType])
             if (compilation.GetTypeByMetadataName("MessagePack.IMessagePackSurrogate`2") is { } surrogateInterface)
             {
                 HarvestSurrogateTargets(compilation.Assembly.GlobalNamespace, surrogateInterface, registry);
@@ -400,8 +409,8 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
         {
             foreach (var implemented in type.AllInterfaces)
             {
-                // only the self-shaped, registrable implementations count: a generic
-                // surrogate is skipped by the generator too (MsgPack019)
+                // only the self-shaped, registrable implementations count: a generic surrogate is skipped by the
+                // generator too (MsgPack019)
                 if (SymbolEqualityComparer.Default.Equals(implemented.OriginalDefinition, surrogateDefinition)
                     && SymbolEqualityComparer.Default.Equals(implemented.TypeArguments[1], type)
                     && !ObjectParser.ContainsTypeParameter(type)
@@ -436,9 +445,8 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
             switch (pattern)
             {
                 case ITypeParameterSymbol:
-                    // a bare-wildcard pattern (EnumFormatter's T, blit formatters) would
-                    // declare EVERYTHING serializable; those tiers are modeled by the
-                    // explicit enum rule instead
+                    // a bare-wildcard pattern (EnumFormatter's T, blit formatters)
+                    // would declare everything serializable; those tiers are modeled by the explicit enum rule instead
                     return;
                 case IArrayTypeSymbol array:
                     arrayRanks.Add(array.Rank);
@@ -543,8 +551,8 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
             {
                 return true;
             }
-            // type-level [MessagePackFormatter] registers through the annotated assembly's
-            // generated factory — but only for non-generic types (MsgPack014 territory otherwise)
+            // type-level [MessagePackFormatter] registers through the annotated assembly's generated factory,
+            // but only for non-generic types (MsgPack014 territory otherwise)
             if (type is not INamedTypeSymbol { IsGenericType: true }
                 && FindAttribute(type, FormatterAttributeName) is not null)
             {
@@ -553,8 +561,8 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
 
             if (namedPatterns.TryGetValue(type.OriginalDefinition, out var patterns))
             {
-                // a pattern match binds the member type's arguments to the formatter's
-                // wildcards; the binding must itself be serializable (List<X> ⇔ X)
+                // a pattern match binds the member type's arguments to the formatter's wildcards;
+                // the binding must itself be serializable (List<X> ⇔ X)
                 foreach (var pattern in patterns)
                 {
                     var bindings = new List<ITypeSymbol>();
@@ -575,34 +583,36 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                         }
                     }
                 }
-                // structurally served, but a type argument was the problem: offender
-                // already points at the innermost failure
+                // structurally served, but a type argument was the problem: offender already points at the innermost
+                // failure
                 if (!SymbolEqualityComparer.Default.Equals(offender, type))
                 {
                     return false;
                 }
             }
 
-            // the runtime catch-all tier (GenericCollection/GenericDictionary/
-            // NonGenericList/NonGenericDictionary formatters, mirrored by the source
-            // generator's collection harvest for AOT): a concrete class with a public
-            // parameterless constructor exposing a collection view serializes through it.
-            // Their TValue patterns are bare wildcards, skipped by the harvest above, so
-            // the rule is modeled explicitly.
+            // the runtime catch-all tier (v3 DynamicGenericResolver's inherited-type rules,
+            // mirrored by the source generator's collection harvest for AOT): a public parameterless constructor
+            // unlocks the Add-based formatters over IDictionary<K,V>/ICollection<T>/the non-generic views,
+            // and a public single-parameter collection-accepting constructor unlocks the construct-from-intermediate
+            // formatters (IReadOnlyDictionary<K,V>, IEnumerable<T>). Their TValue patterns are bare wildcards,
+            // skipped by the harvest above, so the rule is modeled explicitly.
             if (type.TypeKind == TypeKind.Class
                 && !type.IsAbstract
-                && type.ToDisplayString() != "System.Dynamic.ExpandoObject"
-                && HasPublicParameterlessConstructor(type))
+                && type.ToDisplayString() != "System.Dynamic.ExpandoObject")
             {
+                var hasDefaultConstructor = HasPublicParameterlessConstructor(type);
                 INamedTypeSymbol? dictionaryInterface = null;
                 INamedTypeSymbol? collectionInterface = null;
+                INamedTypeSymbol? readOnlyDictionaryInterface = null;
+                List<INamedTypeSymbol>? enumerableInterfaces = null;
                 var nonGenericView = false;
                 foreach (var implemented in type.AllInterfaces)
                 {
                     var interfaceNamespace = implemented.ContainingNamespace.ToDisplayString();
                     if (implemented.IsGenericType && interfaceNamespace == "System.Collections.Generic")
                     {
-                        if (implemented.OriginalDefinition.MetadataName == "IDictionary`2")
+                        if (implemented.OriginalDefinition.MetadataName == "IDictionary`2" && hasDefaultConstructor)
                         {
                             dictionaryInterface = implemented;
                             break;
@@ -611,16 +621,64 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                         {
                             collectionInterface = implemented;
                         }
+                        if (readOnlyDictionaryInterface is null && implemented.OriginalDefinition.MetadataName == "IReadOnlyDictionary`2")
+                        {
+                            readOnlyDictionaryInterface = implemented;
+                        }
+                        if (implemented.OriginalDefinition.MetadataName == "IEnumerable`1")
+                        {
+                            (enumerableInterfaces ??= new()).Add(implemented);
+                        }
                     }
                     else if (interfaceNamespace == "System.Collections" && implemented.MetadataName is "IList" or "IDictionary")
                     {
                         nonGenericView = true; // object elements ride PrimitiveObjectFormatter
                     }
                 }
-                if (dictionaryInterface is not null || collectionInterface is not null)
+
+                // runtime priority: IDictionary+new -> IReadOnlyDictionary+ctor ->
+                // ICollection+new -> non-generic views+new -> IEnumerable<T>+ctor
+                INamedTypeSymbol? chosen = dictionaryInterface;
+                if (chosen is null && readOnlyDictionaryInterface is not null
+                    && compilation.GetTypeByMetadataName("System.Collections.Generic.IDictionary`2") is { } dictionaryDefinition
+                    && compilation.GetTypeByMetadataName("System.Collections.Generic.KeyValuePair`2") is { } kvpDefinition
+                    && compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1") is { } enumerableDefinition)
+                {
+                    var args = readOnlyDictionaryInterface.TypeArguments.ToArray();
+                    ITypeSymbol[] acceptable =
+                    [
+                        dictionaryDefinition.Construct(args),
+                        readOnlyDictionaryInterface,
+                        enumerableDefinition.Construct(kvpDefinition.Construct(args)),
+                    ];
+                    if (ObjectParser.HasCollectionAcceptingConstructor(type, acceptable, compilation))
+                    {
+                        chosen = readOnlyDictionaryInterface;
+                    }
+                }
+                if (chosen is null && hasDefaultConstructor && collectionInterface is not null)
+                {
+                    chosen = collectionInterface;
+                }
+                if (chosen is null && hasDefaultConstructor && nonGenericView)
+                {
+                    return true;
+                }
+                if (chosen is null && enumerableInterfaces is not null)
+                {
+                    foreach (var implemented in enumerableInterfaces)
+                    {
+                        if (ObjectParser.HasCollectionAcceptingConstructor(type, [implemented], compilation))
+                        {
+                            chosen = implemented;
+                            break;
+                        }
+                    }
+                }
+                if (chosen is not null)
                 {
                     var elementsOk = true;
-                    foreach (var argument in (dictionaryInterface ?? collectionInterface)!.TypeArguments)
+                    foreach (var argument in chosen.TypeArguments)
                     {
                         if (!IsSerializable(argument, ref offender))
                         {
@@ -636,10 +694,6 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                     {
                         return false;
                     }
-                }
-                else if (nonGenericView)
-                {
-                    return true;
                 }
             }
 

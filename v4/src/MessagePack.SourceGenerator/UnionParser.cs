@@ -3,14 +3,13 @@ using Microsoft.CodeAnalysis;
 namespace MessagePack.SourceGenerator;
 
 /// <summary>
-/// Turns a [MessagePackObject] + [UnionTag] root — an interface, an abstract class, or a
-/// pattern union (a C# union declaration, or a hand-written [Union]-pattern struct or
-/// class, optionally delegating its members to a nested IUnionMembers provider) — into a
+/// Turns a [MessagePackObject] + [UnionTag] root, an interface, an abstract class,
+/// or a pattern union (a C# union declaration, or a hand-written [Union]-pattern struct or class,
+/// optionally delegating its members to a nested IUnionMembers provider), into a
 /// <see cref="UnionModel"/>: case collection in attribute order, tag/case-type validation
-/// (duplicates, assignability or creation-member presence, accessibility), non-boxing
-/// pattern detection, and the not-yet-supported gates (generic unions). Reached only
-/// through the [MessagePackObject] pipeline — [UnionTag] alone is
-/// invisible to the generator (the MsgPack103 analyzer errors on it).
+/// (duplicates, assignability or creation-member presence, accessibility), non-boxing pattern detection,
+/// and the not-yet-supported gates (generic unions). Reached only through the [MessagePackObject] pipeline,
+/// [UnionTag] alone is invisible to the generator (the MsgPack103 analyzer errors on it).
 /// </summary>
 static class UnionParser
 {
@@ -41,12 +40,10 @@ static class UnionParser
         return false;
     }
 
-    // the attribute shapes: (typeof, tag) with a closed type, or an UNBOUND generic
-    // (typeof(Some<>)) matched against the creation members' parameter types — the union's
-    // own declaration knows how a generic case closes over the root's parameters;
-    // UnionTagAttribute<TCaseType>(tag); and ("TypeParameterName", tag) for a case that IS
-    // a type parameter of a generic union (typeof cannot express one). Null when nothing
-    // resolves.
+    // the attribute shapes: (typeof, tag) with a closed type, or an unbound generic (typeof(Some<>))
+    // matched against the creation members' parameter types, the union's own declaration knows how a generic case
+    // closes over the root's parameters; UnionTagAttribute<TCaseType>(tag); and ("TypeParameterName", tag)
+    // for a case that is a type parameter of a generic union (typeof cannot express one). Null when nothing resolves.
     public static ITypeSymbol? ResolveCaseType(AttributeData attribute, INamedTypeSymbol root)
     {
         if (attribute.AttributeClass is { IsGenericType: true, TypeArguments.Length: 1 } genericAttribute)
@@ -121,18 +118,18 @@ static class UnionParser
         // context.Attributes[0] is the [MessagePackObject] the pipeline matched on
         if (ObjectParser.ReadNamedBool(context.Attributes[0], "SuppressSourceGeneration"))
         {
-            // suppressed object types have a fallback (the runtime reflection tier serves the same wire format), but no runtime tier handles unions.
-            // silently skipping would strand the root with no formatter and a runtime failure, so the combination is rejected here.
+            // suppressed object types have a fallback (the runtime reflection tier serves the same wire format),
+            // but no runtime tier handles unions. silently skipping would strand the root with no formatter and a
+            // runtime failure, so the combination is rejected here.
             diagnostics.Add(new DiagnosticInfo("MsgPack011", $"'{typeName}': SuppressSourceGeneration cannot be used on a union root. Suppressed object types fall back to the runtime reflection formatters, but unions are source-generator-only, so a suppressed union root would have no formatter at all. Remove SuppressSourceGeneration, or remove the [UnionTag] declarations.", typeLocation));
             return new UnionParseResult(null, new EquatableArray<DiagnosticInfo>([.. diagnostics]));
         }
 
         if (ObjectParser.ReadNamedBool(context.Attributes[0], "AllowCircularReferences"))
         {
-            // a union root's wire is [tag, case]; nesting the identity envelope into that
-            // dispatch is an open design question. Concrete case types can carry the flag
-            // themselves — identity then rides the case formatter, which the union path
-            // already routes through.
+            // a union root's wire is [tag, case]; nesting the identity envelope into that dispatch is an open design
+            // question. Concrete case types can carry the flag themselves,
+            // identity then rides the case formatter, which the union path already routes through.
             diagnostics.Add(new DiagnosticInfo("MsgPack015", $"'{typeName}': AllowCircularReferences is not supported on union roots yet; annotate the concrete case types instead.", typeLocation));
             return new UnionParseResult(null, new EquatableArray<DiagnosticInfo>([.. diagnostics]));
         }
@@ -147,10 +144,9 @@ static class UnionParser
         }
         else if (type.TypeKind is TypeKind.Struct or TypeKind.Class)
         {
-            // pattern union: a C# union declaration, or a hand-written type following the
-            // spec's union pattern. Case pattern matching is compiler magic reserved for
-            // these, so the formatter goes through Value/TryGetValue and the creation
-            // members, which every union kind shares.
+            // pattern union: a C# union declaration, or a hand-written type following the spec's union pattern.
+            // Case pattern matching is compiler magic reserved for these,
+            // so the formatter goes through Value/TryGetValue and the creation members, which every union kind shares.
             isPatternUnion = HasUnionMarker(type);
             isStructRoot = type.TypeKind == TypeKind.Struct;
             if (!isPatternUnion)
@@ -159,8 +155,8 @@ static class UnionParser
                 return Invalid(diagnostics);
             }
 
-            // a nested public interface named IUnionMembers is a union member provider: the
-            // union members (static Create factories + Value) live there, not on the type
+            // a nested public interface named IUnionMembers is a union member provider: the union members (static
+            // Create factories + Value) live there, not on the type
             if (FindUnionMemberProvider(type) is { } provider)
             {
                 if (provider.DeclaredAccessibility != Accessibility.Public
@@ -186,9 +182,8 @@ static class UnionParser
         }
         if (type.IsGenericType)
         {
-            // generic roots exist for pattern unions only (union Result<T>(T, Error)):
-            // an inheritance union would need open-vs-open assignability semantics that
-            // v3 never defined
+            // generic roots exist for pattern unions only (union Result<T>(T,
+            // Error)): an inheritance union would need open-vs-open assignability semantics that v3 never defined
             if (!isPatternUnion)
             {
                 diagnostics.Add(new DiagnosticInfo("MsgPack011", $"'{typeName}': generic [UnionTag] roots are supported only for unions (a C# union declaration or a [Union]-pattern type).", typeLocation));
@@ -217,8 +212,8 @@ static class UnionParser
         var seenCaseTypes = new HashSet<string>();
         var valid = true;
         var useNonBoxing = isPatternUnion;
-        // enum / Nullable / BCL-collection case types ride the same AOT harvesting as
-        // object members (the generic dictionary stays empty: generic case types are gated above)
+        // enum / Nullable / BCL-collection case types ride the same AOT harvesting as object members (the generic
+        // dictionary stays empty: generic case types are gated above)
         var harvestedGenerics = new Dictionary<string, HarvestedGenericModel>();
         var harvestedBuiltIns = new Dictionary<string, HarvestedBuiltInModel>();
 
@@ -275,8 +270,8 @@ static class UnionParser
             cases.Add(new UnionCaseModel(
                 Tag: tag,
                 TypeName: caseTypeName,
-                // a type-parameter case gets no "?" suffix either: T? on an unconstrained
-                // parameter is only an annotation, and default(T) is the natural fresh value
+                // a type-parameter case gets no "?" suffix either: T? on an unconstrained parameter is only an
+                // annotation, and default(T) is the natural fresh value
                 IsValueType: caseType.IsValueType || caseType is ITypeParameterSymbol,
                 FieldName: "f" + ObjectParser.Sanitize(caseTypeName)));
         }
@@ -295,7 +290,7 @@ static class UnionParser
             IsStructRoot: isStructRoot,
             ProviderInterface: providerInterface?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             UseNonBoxing: useNonBoxing,
-            TypeParameterList: type.IsGenericType ? string.Join(", ", type.TypeParameters.Select(static p => p.Name)) : "",
+            TypeParameterList: type.IsGenericType ? string.Join(", ", type.TypeParameters.Select(static p => ObjectParser.Identifier(p.Name))) : "",
             WhereClauses: type.IsGenericType ? ObjectParser.BuildWhereClauses(type) : new EquatableArray<string>([]),
             OpenTypeOf: type.IsGenericType
                 ? ObjectParser.StripTypeArguments(fullTypeName) + "<" + new string(',', type.TypeParameters.Length - 1) + ">"
@@ -357,9 +352,8 @@ static class UnionParser
         return false;
     }
 
-    // the generated formatter rebuilds with `new TUnion(caseValue)`: a declared union has a
-    // constructor per case, a hand-written pattern union may take each case's base type,
-    // an interface, or a single object parameter instead
+    // the generated formatter rebuilds with `new TUnion(caseValue)`: a declared union has a constructor per case,
+    // a hand-written pattern union may take each case's base type, an interface, or a single object parameter instead
     static bool HasCaseConstructor(INamedTypeSymbol type, ITypeSymbol caseType)
     {
         foreach (var constructor in type.InstanceConstructors)
@@ -374,8 +368,8 @@ static class UnionParser
         return false;
     }
 
-    // provider-based creation: `TUnion.IUnionMembers.Create(caseValue)` — a static Create
-    // with a single accepting parameter, returning the union type
+    // provider-based creation: `TUnion.IUnionMembers.Create(caseValue)`,
+    // a static Create with a single accepting parameter, returning the union type
     static bool HasCaseFactory(INamedTypeSymbol provider, INamedTypeSymbol unionType, ITypeSymbol caseType)
     {
         foreach (var member in provider.GetMembers("Create"))

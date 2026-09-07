@@ -1,29 +1,12 @@
-// TODO: still not fully reviewed.
-
-using SerializerFoundation;
-using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Unicode;
 
 namespace MessagePack;
 
-// Span-checked write primitives for hand-written callers. Deliberately NOT wrappers over
-// the UnsafeWrite* layer: that layer trades safety for speed (branchless cores, scratch
-// stores, caller-guaranteed worst-case windows) and is what source-generated formatters
-// target. This layer is a simple compare cascade with exact-size semantics instead:
-// the destination only needs the bytes actually written for this value, nothing is
-// written on failure (bytesWritten = 0, destination untouched), and value contracts that
-// are Debug.Assert-only on the Unsafe side (negative counts, fix ranges) return false.
 public static partial class MessagePackPrimitives
 {
-    // Unchecked big-endian stores for sites already dominated by an explicit Length
-    // check — same library policy as the read side's UnsafeRead*BigEndian: the checked
-    // BinaryPrimitives.WriteXxxBigEndian(span) forms keep their internal length check
-    // (the JIT cannot propagate the guard through Slice), which costs a cmp+throw block
-    // and a forced stack frame per call site. Guard once, never pay a second check.
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static void UnsafeWriteUInt16BigEndian(Span<byte> destination, int offset, ushort value)
         => Unsafe.WriteUnaligned(ref Unsafe.Add(ref MemoryMarshal.GetReference(destination), offset), MessagePackEndian.ToBigEndian(value));
@@ -260,7 +243,7 @@ public static partial class MessagePackPrimitives
             bytesWritten = 0;
             return false;
         }
-        if (count <= MessagePackCode.MaxFixArrayCount)
+        if (count <= MessagePackRange.MaxFixArrayCount)
         {
             return TryWrite1(destination, (byte)(MessagePackCode.MinFixArray | count), out bytesWritten);
         }
@@ -279,7 +262,7 @@ public static partial class MessagePackPrimitives
             bytesWritten = 0;
             return false;
         }
-        if (count <= MessagePackCode.MaxFixMapCount)
+        if (count <= MessagePackRange.MaxFixMapCount)
         {
             return TryWrite1(destination, (byte)(MessagePackCode.MinFixMap | count), out bytesWritten);
         }
@@ -291,9 +274,9 @@ public static partial class MessagePackPrimitives
     }
 
     /// <summary>Writes a fixarray header. Requires 1 byte. False when count is outside 0..15.</summary>
-    public static bool TryWriteFixArrayHeader(Span<byte> destination, int count, out int bytesWritten)
+    public static bool TryWriteFixArrayHeader(Span<byte> destination, [ConstantExpected(Min = 0, Max = 15)] int count, out int bytesWritten)
     {
-        if ((uint)count <= MessagePackCode.MaxFixArrayCount)
+        if ((uint)count <= MessagePackRange.MaxFixArrayCount)
         {
             return TryWrite1(destination, (byte)(MessagePackCode.MinFixArray | count), out bytesWritten);
         }
@@ -302,9 +285,9 @@ public static partial class MessagePackPrimitives
     }
 
     /// <summary>Writes a fixmap header. Requires 1 byte. False when count is outside 0..15.</summary>
-    public static bool TryWriteFixMapHeader(Span<byte> destination, int count, out int bytesWritten)
+    public static bool TryWriteFixMapHeader(Span<byte> destination, [ConstantExpected(Min = 0, Max = 15)] int count, out int bytesWritten)
     {
-        if ((uint)count <= MessagePackCode.MaxFixMapCount)
+        if ((uint)count <= MessagePackRange.MaxFixMapCount)
         {
             return TryWrite1(destination, (byte)(MessagePackCode.MinFixMap | count), out bytesWritten);
         }
@@ -320,7 +303,7 @@ public static partial class MessagePackPrimitives
             bytesWritten = 0;
             return false;
         }
-        if (byteCount <= MessagePackCode.MaxFixStringLength)
+        if (byteCount <= MessagePackRange.MaxFixStringLength)
         {
             return TryWrite1(destination, (byte)(MessagePackCode.MinFixStr | byteCount), out bytesWritten);
         }
@@ -354,15 +337,23 @@ public static partial class MessagePackPrimitives
         return TryWrite5(destination, MessagePackCode.Bin32, (uint)byteCount, out bytesWritten);
     }
 
-    /// <summary>Writes a bin (header + payload). Requires only the encoded size (header + value.Length bytes).</summary>
+    /// <summary>
+    /// Writes a bin (header + payload). Requires only the encoded size (header + value.Length bytes).
+    /// value may overlap destination, so a payload already sitting at the start of the buffer can be wrapped in place.
+    /// </summary>
     public static bool TryWriteBinary(Span<byte> destination, ReadOnlySpan<byte> value, out int bytesWritten)
     {
         int headerSize = value.Length <= byte.MaxValue ? 2 : value.Length <= ushort.MaxValue ? 3 : 5;
         // subtraction form so headerSize + value.Length can't overflow int
         if (destination.Length - headerSize >= value.Length)
         {
-            TryWriteBinHeader(destination, value.Length, out _);
+            // payload before header: CopyTo has memmove semantics, and once the payload has moved the header slot
+            // holds nothing that is still needed, so any overlap between value and destination is fine.
+            // Writing the header first would clobber a value that starts inside the header slot.
+            // (This layer writes no scratch bytes, so the order costs nothing; the Unsafe layer is header-first
+            // by necessity and does not support overlap.)
             value.CopyTo(destination.Slice(headerSize));
+            TryWriteBinHeader(destination, value.Length, out _);
             bytesWritten = headerSize + value.Length;
             return true;
         }
@@ -441,7 +432,7 @@ public static partial class MessagePackPrimitives
                 if (destination.Length >= 6)
                 {
                     destination[0] = MessagePackCode.FixExt4;
-                    destination[1] = unchecked((byte)MessagePackCode.TimestampExtensionTypeCode);
+                    destination[1] = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
                     UnsafeWriteUInt32BigEndian(destination, 2, (uint)data64);
                     bytesWritten = 6;
                     return true;
@@ -453,7 +444,7 @@ public static partial class MessagePackPrimitives
                 if (destination.Length >= 10)
                 {
                     destination[0] = MessagePackCode.FixExt8;
-                    destination[1] = unchecked((byte)MessagePackCode.TimestampExtensionTypeCode);
+                    destination[1] = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
                     UnsafeWriteUInt64BigEndian(destination, 2, data64);
                     bytesWritten = 10;
                     return true;
@@ -465,7 +456,7 @@ public static partial class MessagePackPrimitives
             // timestamp 96: ext8(12, -1), nanoseconds u32 + seconds i64
             destination[0] = MessagePackCode.Ext8;
             destination[1] = 12;
-            destination[2] = unchecked((byte)MessagePackCode.TimestampExtensionTypeCode);
+            destination[2] = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
             UnsafeWriteUInt32BigEndian(destination, 3, (uint)nanoseconds);
             UnsafeWriteUInt64BigEndian(destination, 7, unchecked((ulong)seconds));
             bytesWritten = 15;
@@ -480,11 +471,8 @@ public static partial class MessagePackPrimitives
     #region String
 
     /// <summary>
-    /// Writes a string in the smallest msgpack str format (nil when null). Requires only
-    /// the encoded size (exact UTF-8 byte count + header). When destination has worst-case
-    /// room (GetMaxStringByteCount) the single-pass speculative writer runs — size your
-    /// span with GetMaxStringByteCount to stay on that path; tighter spans fall back to a
-    /// two-pass exact count (GetByteCount, then transcode).
+    /// Writes a string in the smallest msgpack str format, or nil when null. Requires only the encoded size, the exact UTF-8 byte count plus header.
+    /// A destination sized with <see cref="GetMaxStringByteCount"/> takes the single-pass fast path; a tighter one falls back to counting the bytes first.
     /// </summary>
     public static bool TryWriteString(Span<byte> destination, string? value, out int bytesWritten)
     {
@@ -492,10 +480,9 @@ public static partial class MessagePackPrimitives
         {
             return TryWriteNil(destination, out bytesWritten);
         }
-        // fast path: with worst-case room the single-pass speculative writer (the same code
-        // behind buffer.WriteString) runs instead of the two-pass exact-count fallback.
-        // The bound is checked against the ACTUAL span, and value is read once as a
-        // parameter, so a caller-side stale size can only send us down the slow path,
+        // fast path: with worst-case room the single-pass speculative writer (the same code behind buffer.WriteString)
+        // runs instead of the two-pass exact-count fallback. The bound is checked against the actual span,
+        // and value is read once as a parameter, so a caller-side stale size can only send us down the slow path,
         // never past the end of destination.
         int length = value.Length;
         if (length <= MaxWorstCaseStringLength && destination.Length >= length * 3 + 5)
@@ -504,13 +491,13 @@ public static partial class MessagePackPrimitives
             return true;
         }
         int byteCount = Encoding.UTF8.GetByteCount(value);
-        int headerSize = byteCount <= MessagePackCode.MaxFixStringLength ? 1 : byteCount <= byte.MaxValue ? 2 : byteCount <= ushort.MaxValue ? 3 : 5;
+        int headerSize = byteCount <= MessagePackRange.MaxFixStringLength ? 1 : byteCount <= byte.MaxValue ? 2 : byteCount <= ushort.MaxValue ? 3 : 5;
         // subtraction form so headerSize + byteCount can't overflow int
         if (destination.Length - headerSize >= byteCount)
         {
             TryWriteStringHeader(destination, byteCount, out _);
-            // GetByteCount (replacement fallback) and FromUtf16 (replace: true) agree on
-            // U+FFFD for invalid surrogates, so the exact-size span is always filled exactly
+            // GetByteCount (replacement fallback) and FromUtf16 (replace: true)
+            // agree on U+FFFD for invalid surrogates, so the exact-size span is always filled exactly
             Utf8.FromUtf16(value, destination.Slice(headerSize, byteCount), out _, out _);
             bytesWritten = headerSize + byteCount;
             return true;
@@ -519,16 +506,20 @@ public static partial class MessagePackPrimitives
         return false;
     }
 
-    /// <summary>Writes a str from already-encoded UTF-8 bytes. Requires only the encoded size (header + utf8Value.Length bytes).</summary>
+    /// <summary>
+    /// Writes a str from already-encoded UTF-8 bytes. Requires only the encoded size (header + utf8Value.Length bytes).
+    /// utf8Value may overlap destination, so a payload already sitting at the start of the buffer can be wrapped in place.
+    /// </summary>
     public static bool TryWriteString(Span<byte> destination, ReadOnlySpan<byte> utf8Value, out int bytesWritten)
     {
         int byteCount = utf8Value.Length;
-        int headerSize = byteCount <= MessagePackCode.MaxFixStringLength ? 1 : byteCount <= byte.MaxValue ? 2 : byteCount <= ushort.MaxValue ? 3 : 5;
+        int headerSize = byteCount <= MessagePackRange.MaxFixStringLength ? 1 : byteCount <= byte.MaxValue ? 2 : byteCount <= ushort.MaxValue ? 3 : 5;
         // subtraction form so headerSize + byteCount can't overflow int
         if (destination.Length - headerSize >= byteCount)
         {
-            TryWriteStringHeader(destination, byteCount, out _);
+            // payload before header, see TryWriteBinary: overlap-safe at no cost in this layer
             utf8Value.CopyTo(destination.Slice(headerSize));
+            TryWriteStringHeader(destination, byteCount, out _);
             bytesWritten = headerSize + byteCount;
             return true;
         }

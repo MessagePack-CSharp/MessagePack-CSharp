@@ -240,6 +240,26 @@ public class TypelessFormatterTests
             () => MessagePackSerializer.Deserialize<object?>(denied, allowed));
     }
 
+    // the write side must not seed the read-side name cache: serializing an unlisted type through the SAME
+    // resolver used to make that type's payload deserializable, so the allow policy depended on cache state
+    [Fact]
+    public void AllowedTypes_WritingAnUnlistedTypeDoesNotAdmitItForReading()
+    {
+        var allowed = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
+        [
+            MessagePackFormatterFactory.Combine(
+                new TypelessFormatterFactory(TypelessTypeLoader.AllowedTypes(typeof(TypelessPerson))),
+                SourceGeneratedFormatterFactory.Instance,
+                BuiltInFormatterFactory.Instance,
+                GenericFormatterFactory.Instance,
+                new ReflectionFormatterFactory()),
+        ]));
+
+        var written = MessagePackSerializer.Serialize<object?>(new ObjectHolder(), allowed);
+        Assert.Throws<MessagePackSerializationException>(
+            () => MessagePackSerializer.Deserialize<object?>(written, allowed));
+    }
+
     [Fact]
     public void AllowedTypes_MatchesShortenedAndDriftedSpellings()
     {
@@ -388,6 +408,32 @@ public class TypelessFormatterTests
         }
     }
 
+    [Fact]
+    public void ExtDeclaredLengthMismatch_Throws()
+    {
+        // the ext header's declared body length is the boundary a header-based skip would
+        // use; a body that parses to a different span is a parser-differential smuggling
+        // vector and must be rejected rather than silently accepted.
+        var nameUtf8 = System.Text.Encoding.UTF8.GetBytes(typeof(TypelessPerson).AssemblyQualifiedName!);
+        var body = new List<byte> { 0xD9, (byte)nameUtf8.Length };
+        body.AddRange(nameUtf8);
+        // a valid TypelessPerson map body ({ "Age": 0, "Name": nil } is not needed — an array
+        // form the reader accepts): reuse the real serializer to get an exact-length inner
+        var inner = MessagePackSerializer.Serialize(new TypelessPerson { Age = 3, Name = "x" },
+            new MessagePackSerializerOptions(new MessagePackFormatterResolver([MessagePackFormatterFactory.Default.WithContractless()])));
+        body.AddRange(inner);
+
+        // declare the body ONE byte longer than it is: parse consumes the true length, the
+        // header claims more, the equality check fires
+        var payload = new List<byte> { 0xC7, (byte)(body.Count + 1), 0x64 };
+        payload.AddRange(body);
+        payload.Add(0xC0); // a trailing byte so the inflated declaration stays within the buffer
+
+        var ex = Assert.Throws<MessagePackSerializationException>(
+            () => MessagePackSerializer.Deserialize<object?>(payload.ToArray(), options));
+        Assert.Contains("byte body", ex.Message);
+    }
+
     // hand-built ext(100) { str typeName, inner } payload
     static byte[] BuildTypelessPayload(string typeName, byte[]? inner = null)
     {
@@ -401,5 +447,76 @@ public class TypelessFormatterTests
         var payload = new List<byte> { 0xC7, (byte)body.Count, 0x64 }; // ext8, len, code 100
         payload.AddRange(body);
         return [.. payload];
+    }
+
+    // ---- interface/abstract static types (ForceTypelessFormatter, the v3 tail) ----
+
+    public interface ITypelessShape
+    {
+        int X { get; }
+    }
+
+    public class TypelessShape : ITypelessShape
+    {
+        public int X { get; set; }
+    }
+
+    public abstract class TypelessBase
+    {
+        public int X { get; set; }
+    }
+
+    public class TypelessDerived : TypelessBase
+    {
+        public int Y { get; set; }
+    }
+
+    public class ShapeHolder
+    {
+        public ITypelessShape? Iface { get; set; }
+        public TypelessBase? Abstract { get; set; }
+        public IList<int>? Ints { get; set; }
+    }
+
+    [Fact]
+    public void InterfaceAndAbstractMembers_RestoreConcreteTypes()
+    {
+        var holder = new ShapeHolder
+        {
+            Iface = new TypelessShape { X = 999 },
+            Abstract = new TypelessDerived { X = 1, Y = 2 },
+            Ints = new List<int> { 1, 2 },
+        };
+        var back = MessagePackSerializer.Deserialize<ShapeHolder>(MessagePackSerializer.Serialize(holder, options), options)!;
+
+        Assert.Equal(999, Assert.IsType<TypelessShape>(back.Iface).X);
+        var derived = Assert.IsType<TypelessDerived>(back.Abstract);
+        Assert.Equal(1, derived.X);
+        Assert.Equal(2, derived.Y);
+        Assert.Equal([1, 2], back.Ints);
+    }
+
+    [Fact]
+    public void CollectionInterfaces_KeepBuiltInClaim()
+    {
+        // the tail half must NOT capture IList<int>: that claim belongs to BuiltIn's
+        // interface formatters, so the wire stays a plain array with no typeless envelope
+        Assert.Equal(new byte[] { 0x92, 0x01, 0x02 }, MessagePackSerializer.Serialize<IList<int>>(new List<int> { 1, 2 }, options));
+    }
+
+    [Fact]
+    public void InterfaceMembers_CrossCompatible_WithV3_BothDirections()
+    {
+        var holder = new ShapeHolder { Iface = new TypelessShape { X = 7 }, Abstract = new TypelessDerived { X = 8, Y = 9 } };
+
+        var fromV3 = MessagePackSerializer.Deserialize<ShapeHolder>(
+            V3::MessagePack.MessagePackSerializer.Serialize(holder, V3::MessagePack.Resolvers.TypelessContractlessStandardResolver.Options), options)!;
+        Assert.Equal(7, Assert.IsType<TypelessShape>(fromV3.Iface).X);
+        Assert.Equal(9, Assert.IsType<TypelessDerived>(fromV3.Abstract).Y);
+
+        var toV3 = V3::MessagePack.MessagePackSerializer.Deserialize<ShapeHolder>(
+            MessagePackSerializer.Serialize(holder, options), V3::MessagePack.Resolvers.TypelessContractlessStandardResolver.Options);
+        Assert.Equal(7, Assert.IsType<TypelessShape>(toV3.Iface).X);
+        Assert.Equal(9, Assert.IsType<TypelessDerived>(toV3.Abstract).Y);
     }
 }

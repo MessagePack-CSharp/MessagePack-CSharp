@@ -1,9 +1,3 @@
-// MessagePack-CSharp compatible force-size formatters (ForceSizePrimitiveFormatter.cs in v3):
-// Serialize always emits the named msgpack format regardless of value, Deserialize accepts
-// any integer format (same write-forced / read-lenient split as v3). Not part of any factory
-// chain — these exist to be named explicitly, so the type names match v3 exactly
-// (Force<Type>Block, not the primitive layer's Forced<FormatName> vocabulary).
-
 namespace MessagePack.Formatters;
 
 #region scalar

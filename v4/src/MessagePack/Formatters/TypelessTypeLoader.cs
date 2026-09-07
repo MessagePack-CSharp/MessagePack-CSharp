@@ -5,7 +5,7 @@ namespace MessagePack.Formatters;
 
 internal static partial class TypelessTypeNames
 {
-#if NET
+#if NET9_0_OR_GREATER
     // v3's exact pattern (bug-compat included: a hyphenated Culture would not match), so both sides shorten identically
     [GeneratedRegex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled)]
     internal static partial Regex SubtractFullNameRegex { get; }

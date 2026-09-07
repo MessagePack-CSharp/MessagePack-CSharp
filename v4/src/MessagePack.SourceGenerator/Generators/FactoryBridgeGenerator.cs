@@ -14,14 +14,12 @@ public sealed record FactoryBridgeModel(
     string HintName);
 
 /// <summary>
-/// Companion to the two-tier MessagePackFormatterFactory shape: the interface's only
-/// abstract member is the Type-based CreateFormatter(writeBufferType, readBufferType,
-/// valueType), and mapping those Types back into generic construction is pure
-/// boilerplate over the library's built-in buffer pairs. This generator emits that
-/// dispatch (see <see cref="BufferPairs"/>) for every PARTIAL factory that implements
-/// the generic CreateFormatter&lt;TWriteBuffer, TReadBuffer&gt; and has not written the
-/// Type-based overload itself — so a factory author writes only the generic method plus
-/// the `partial` keyword.
+/// Companion to the two-tier MessagePackFormatterFactory shape: the interface's only abstract member is the Type-based
+/// CreateFormatter(writeBufferType, readBufferType, valueType), and mapping those Types back into generic construction
+/// is pure boilerplate over the library's built-in buffer pairs. This generator emits that dispatch (see
+/// <see cref="BufferPairs"/>) for every partial factory that implements the generic CreateFormatter&lt;TWriteBuffer,
+/// TReadBuffer&gt; and has not written the Type-based overload itself,
+/// so a factory author writes only the generic method plus the `partial` keyword.
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class FactoryBridgeGenerator : IIncrementalGenerator
@@ -79,7 +77,7 @@ public sealed class FactoryBridgeGenerator : IIncrementalGenerator
             return null;
         }
 
-        // the dispatch delegates into the type's own generic CreateFormatter — require it,
+        // the dispatch delegates into the type's own generic CreateFormatter, require it,
         // and stand down when the author wrote the Type-based overload themselves
         var hasGeneric = false;
         foreach (var member in symbol.GetMembers("CreateFormatter"))

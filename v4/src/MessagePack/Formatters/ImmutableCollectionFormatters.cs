@@ -63,7 +63,7 @@ public sealed partial class ImmutableArrayFormatter<TWriteBuffer, TReadBuffer, T
             f.Deserialize(ref buffer, ref state, ref array[i]);
         }
 
-#if NET
+#if NET9_0_OR_GREATER
         value = ImmutableCollectionsMarshal.AsImmutableArray(array); // zero-copy: array never escapes
 #else
         value = ImmutableArray.Create(array);

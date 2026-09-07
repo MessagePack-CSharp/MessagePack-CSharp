@@ -6,30 +6,43 @@ using MessagePack.Formatters;
 
 namespace MessagePack;
 
+/// <summary>
+/// Closes generic formatters over runtime type arguments for collections, dictionaries, tuples, Nullable, enums and similar shapes.
+/// Requires dynamic code, so the AOT chains leave it out.
+/// </summary>
 public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
 {
     static GenericFormatterFactory? instance;
 
+    /// <summary>Shared instance.</summary>
     public static GenericFormatterFactory Instance
     {
         [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
         get => instance ??= new GenericFormatterFactory(); // benign race: stateless singleton
     }
 
-    // public for [MessagePackFormatter] use (the attribute paths construct via new); the
-    // RequiresDynamicCode gate carries over, so AOT-enabled consumers get the warning
+    // Public for [MessagePackFormatter] use (the attribute paths construct via new). The RequiresDynamicCode gate
+    // carries over, so AOT-enabled consumers get the warning.
+    /// <summary>Creates a new instance, for use with <see cref="MessagePackFormatterAttribute"/>. Chains use <see cref="Instance"/>.</summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     public GenericFormatterFactory()
     {
     }
 
+    /// <inheritdoc/>
     [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "the default-ctor probe only refines routing for the non-generic IList/IDictionary catch-all; this whole tier is gated by RequiresDynamicCode at acquisition, and a trimmed-away ctor just means the type falls through to the missing-formatter path")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "the interface instantiations (IEnumerable<KVP<K,V>> etc.) exist only to probe constructor parameters; this whole tier is gated by RequiresDynamicCode at acquisition")]
     protected override Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments)
     {
         constructorArguments = null;
         if (type.IsArray)
         {
-            typeArguments = [type.GetElementType()!];
+            var elementType = type.GetElementType()!;
+            typeArguments = [elementType];
+            if (elementType.IsEnum && type.GetArrayRank() == 1)
+            {
+                return typeof(EnumArrayFormatterFactory<>); // the underlying-integer codec loop, see EnumCollectionFormatters.cs
+            }
             return type.GetArrayRank() switch
             {
                 1 => typeof(ArrayFormatterFactory<>), // jagged arrays recurse here naturally (element = inner array)
@@ -62,6 +75,12 @@ public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
 #endif
             if (definition == typeof(List<>))
             {
+#if NET9_0_OR_GREATER
+                if (typeArguments[0].IsEnum)
+                {
+                    return typeof(EnumListFormatterFactory<>); // the underlying-integer codec loop, see EnumCollectionFormatters.cs
+                }
+#endif
                 return typeof(ListFormatterFactory<>);
             }
             if (definition == typeof(Dictionary<,>))
@@ -164,7 +183,7 @@ public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
             {
                 return typeof(SortedSetFormatterFactory<>);
             }
-#if NET
+#if NET9_0_OR_GREATER
             if (definition == typeof(System.Collections.ObjectModel.ReadOnlySet<>))
             {
                 return typeof(ReadOnlySetFormatterFactory<>);
@@ -234,7 +253,7 @@ public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
             {
                 return typeof(InterfaceSetFormatterFactory<>);
             }
-#if NET
+#if NET9_0_OR_GREATER
             if (definition == typeof(IReadOnlySet<>))
             {
                 return typeof(InterfaceReadOnlySetFormatterFactory<>);
@@ -273,7 +292,7 @@ public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
                 return typeof(OrderedDictionaryFormatterFactory<,>);
             }
 #endif
-#if NET
+#if NET9_0_OR_GREATER
             if (definition == typeof(PriorityQueue<,>))
             {
                 return typeof(PriorityQueueFormatterFactory<,>);
@@ -354,14 +373,17 @@ public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
             }
         }
 
-        // catch-alls for anything with a default ctor.
-        // ExpandoObject structurally matches the IDictionary<,> branch,
-        // but serving it would silently revive the deprecated quadratic-Add path;
-        // only the opt-in ExpandoObjectFormatterFactory serves it, so the miss stays loud
-        if (type != typeof(System.Dynamic.ExpandoObject)
-            && !type.IsAbstract && !type.IsValueType && type.GetConstructor(Type.EmptyTypes) != null)
+        // Catch-alls for concrete collection shapes (v3 DynamicGenericResolver's inherited-type rules). A public default
+        // ctor unlocks the Add-based formatters, and a public single-parameter collection-accepting ctor unlocks the
+        // construct-from-intermediate formatters (which also serve struct collections). ExpandoObject structurally
+        // matches the IDictionary<,> branch, but serving it would silently revive the deprecated quadratic-Add path,
+        // so only the opt-in ExpandoObjectFormatterFactory serves it and the miss stays loud.
+        if (type != typeof(System.Dynamic.ExpandoObject) && !type.IsAbstract)
         {
+            var hasDefaultConstructor = !type.IsValueType && type.GetConstructor(Type.EmptyTypes) != null;
             Type? collectionInterface = null;
+            Type? readOnlyDictionaryInterface = null;
+            List<Type>? enumerableInterfaces = null;
             foreach (var iface in type.GetInterfaces())
             {
                 if (!iface.IsGenericType)
@@ -369,7 +391,7 @@ public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
                     continue;
                 }
                 var interfaceDefinition = iface.GetGenericTypeDefinition();
-                if (interfaceDefinition == typeof(IDictionary<,>))
+                if (hasDefaultConstructor && interfaceDefinition == typeof(IDictionary<,>))
                 {
                     var args = iface.GetGenericArguments();
                     typeArguments = [args[0], args[1], type];
@@ -379,27 +401,86 @@ public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
                 {
                     collectionInterface = iface; // keep scanning: a dictionary interface may still follow
                 }
+                if (readOnlyDictionaryInterface == null && interfaceDefinition == typeof(IReadOnlyDictionary<,>))
+                {
+                    readOnlyDictionaryInterface = iface;
+                }
+                if (interfaceDefinition == typeof(IEnumerable<>))
+                {
+                    (enumerableInterfaces ??= []).Add(iface);
+                }
             }
-            if (collectionInterface != null)
+
+            // v3 priority: IDictionary+new (above), then IReadOnlyDictionary+ctor, ICollection+new, non-generic views+new,
+            // and IEnumerable<T>+ctor last, so it only catches shapes nothing else claims
+            if (readOnlyDictionaryInterface != null)
+            {
+                var args = readOnlyDictionaryInterface.GetGenericArguments();
+                Type kvpEnumerable = typeof(IEnumerable<>).MakeGenericType(typeof(KeyValuePair<,>).MakeGenericType(args));
+                if (HasCollectionAcceptingConstructor(type, [typeof(IDictionary<,>).MakeGenericType(args), readOnlyDictionaryInterface, kvpEnumerable]))
+                {
+                    typeArguments = [args[0], args[1], type];
+                    return typeof(GenericReadOnlyDictionaryFormatterFactory<,,>);
+                }
+            }
+            if (hasDefaultConstructor && collectionInterface != null)
             {
                 typeArguments = [collectionInterface.GetGenericArguments()[0], type];
                 return typeof(GenericCollectionFormatterFactory<,>);
             }
 
-            // non-generic object-element views (ArrayList, Hashtable, ...)
-            if (typeof(System.Collections.IList).IsAssignableFrom(type))
+            if (hasDefaultConstructor)
             {
-                typeArguments = [type];
-                return typeof(NonGenericListFormatterFactory<>);
+                // non-generic object-element views (ArrayList, Hashtable, ...)
+                if (typeof(System.Collections.IList).IsAssignableFrom(type))
+                {
+                    typeArguments = [type];
+                    return typeof(NonGenericListFormatterFactory<>);
+                }
+                if (typeof(System.Collections.IDictionary).IsAssignableFrom(type))
+                {
+                    typeArguments = [type];
+                    return typeof(NonGenericDictionaryFormatterFactory<>);
+                }
             }
-            if (typeof(System.Collections.IDictionary).IsAssignableFrom(type))
+
+            if (enumerableInterfaces != null)
             {
-                typeArguments = [type];
-                return typeof(NonGenericDictionaryFormatterFactory<>);
+                foreach (var iface in enumerableInterfaces)
+                {
+                    if (HasCollectionAcceptingConstructor(type, [iface]))
+                    {
+                        typeArguments = [iface.GetGenericArguments()[0], type];
+                        return typeof(GenericEnumerableFormatterFactory<,>);
+                    }
+                }
             }
         }
 
         typeArguments = Type.EmptyTypes;
         return null;
+    }
+
+    // A public single-parameter constructor whose parameter accepts one of the given collection views. Public only,
+    // because the formatters construct through Activator's public binder, so a non-public match would just fail later.
+    [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "a claim check for the RequiresDynamicCode-gated tier; the formatters' DynamicallyAccessedMembers-annotated type parameters root the constructors wherever the formatter is actually constructed")]
+    static bool HasCollectionAcceptingConstructor(Type type, Type[] acceptableArguments)
+    {
+        foreach (var constructor in type.GetConstructors())
+        {
+            var parameters = constructor.GetParameters();
+            if (parameters.Length != 1)
+            {
+                continue;
+            }
+            foreach (var argument in acceptableArguments)
+            {
+                if (parameters[0].ParameterType.IsAssignableFrom(argument))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

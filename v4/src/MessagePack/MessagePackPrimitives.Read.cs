@@ -1,60 +1,30 @@
-// TODO: still not fully reviewed.
-
-using SerializerFoundation;
-using System.Buffers.Binary;
 using System.Text;
-using System.Text.Unicode;
 
 namespace MessagePack;
 
-// Three-category decode contract (MessagePack-CSharp v3 minus its redundant members;
-// measured zero-cost vs the old bool in TryReadInt32Benchmark — Success == 0 keeps the
-// caller's check a single test). The only category that changes control flow is
-// InsufficientBuffer (sequence readers stitch and retry, async readers Ensure and retry);
-// everything else is fatal, so "wrong token" and "well-formed value that doesn't fit the
-// target" deliberately share TokenMismatch. Folding out-of-range into the enum also keeps
-// the Try layer TOTAL: MessagePack-CSharp v3 / Nerdbank.MessagePack have no out-of-range
-// category and their TryRead itself escapes OverflowException (a checked cast) on e.g.
-// int64(0xd3) holding 2^31 read as an int32 target — verified 2026-07 on 3.1.8 / 1.2.36;
-// wide-encoding ACCEPTANCE when the value fits matches all three libraries. Ours never
-// throws from TryRead; throwing is deferred to the Read* extensions (MessagePackSerializationException).
-//
-// tokenSize (name shared with MessagePack-CSharp v3 / Nerdbank):
-//   Success            -> the token's length: advance by it
-//   InsufficientBuffer -> the total bytes this token requires (>= 1): fetch that much and
-//                         retry. Exact, not worst-case — an async Ensure(tokenSize) never
-//                         over-waits past a stream boundary, and str/bin report
-//                         header+payload so one fetch completes the token. May grow across
-//                         retries (header first, then header+payload) but strictly exceeds
-//                         the window it was reported for, so retry loops terminate.
-//   TokenMismatch      -> 0 (skip support intentionally not provided)
+/// <summary>
+/// Outcome of a TryRead primitive.
+/// Only <see cref="InsufficientBuffer"/> is recoverable, by fetching <c>tokenSize</c> bytes and retrying; the primitives never throw.
+/// </summary>
 public enum DecodeResult
 {
+    /// <summary>The value was read and <c>tokenSize</c> is the token's length.</summary>
     Success = 0,
+
+    /// <summary>The next token is of another type, or is well-formed but does not fit the requested target. <c>tokenSize</c> is 0.</summary>
     TokenMismatch = 1,
+
+    /// <summary>The source ends inside the token. <c>tokenSize</c> is the total number of bytes the token requires.</summary>
     InsufficientBuffer = 2,
 }
 
-// Read primitives. TryReadInt32/TryReadInt64 are ported from the DisassembleBenchmark
-// loop's converged winners. Shape: fixint fast branch (constant tokenSize — no
-// consumed->next-address chain link for the dominant class) + unconditional payload load
-// with an 8-entry format table + arithmetic sign extension for the rest. int64(d3)/
-// uint64(cf) wider-than-needed encodings are legal msgpack and handled on a cold path.
-// Everything else below is a plain compare cascade — a functional baseline in TryWrite
-// style, and the candidate pool for future loop rounds.
-//
-// Contract: on non-Success, value is unspecified; tokenSize semantics per DecodeResult.
+/// <summary>
+/// Low-level readers and writers for single MessagePack tokens over spans.
+/// The TryRead and TryWrite families are bounds-checked and never throw. The UnsafeWrite family assumes the destination holds the worst-case size and is meant for generated code.
+/// </summary>
 public static partial class MessagePackPrimitives
 {
     #region unchecked big-endian loads
-
-    // Unchecked big-endian loads for sites already dominated by an explicit Length
-    // check. The checked BinaryPrimitives.ReadXxxBigEndian(span) forms keep their
-    // internal length check — the JIT cannot propagate the caller's guard through Slice
-    // (asm-verified in TryReadSingle: cmp+jl+throw block plus a forced stack frame
-    // survive) — and the cold cascades are NOT rare paths: every message's trailing
-    // fields hit them, since the remaining window tightens toward the buffer's end.
-    // Each helper is exactly one unaligned load + bswap (movbe where available).
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static ushort UnsafeReadUInt16BigEndian(ReadOnlySpan<byte> source, int offset)
@@ -85,13 +55,6 @@ public static partial class MessagePackPrimitives
     #region ReadInt32, 64
 
     // Int32/Int64 read tables: 8 entries indexed by code - 0xcc (uint8 cc .. int64 d3).
-    // The fixint fast path in front structurally removes fixint, and the range check
-    // rejects every other code, so no total-domain table is needed. (The original Int32
-    // design was a 256-entry 1KB table indexed by the raw code byte, with 128 fixint rows
-    // and a codeMask field. Measured equal on TryReadInt32RematchBenchmark.V4 —
-    // FieldCycle 2.05->2.09, FixPos 0.60->0.59, Int32 2.60->2.66, Mixed 3.27->3.24 ns,
-    // all inside the 10% ShortRun band — so the compact form was adopted for the 32x
-    // smaller D-cache footprint at the cost of one predicted fatal-path branch.)
     // entry: len | rawShift<<4 | ext<<10 | isUInt64<<16 (64-bit table only)
     //   len      - token length in bytes ('entry & 0xf'; 9 marks Int32's nine-byte cold path)
     //   rawShift - right-aligns the payload inside the unconditional big-endian load
@@ -126,23 +89,15 @@ public static partial class MessagePackPrimitives
         R64U1, R64U2, R64U4, R64U8, R64I1, R64I2, R64I4, R64I8,
     ];
 
+    /// <summary>Reads an int32 from any msgpack int format. Out-of-range values report TokenMismatch.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DecodeResult TryReadInt32(ReadOnlySpan<byte> source, out int value, out int tokenSize)
     {
-        // fixint fast path: one predicted branch, and tokenSize is a
-        // CONSTANT — the consumed->next-address chain vanishes for the dominant class.
-        // Measured end-to-end: 0.43x on fixint-heavy streams, 0.81x at 50/50, 1.03x (noise) on adversarial mixes;
-        // micro: harmless when fixint never occurs (predicted not-taken).
-        // Needs only 1 byte, so it also serves buffer tails ahead of the >= 5 gate.
+        // fixint fast path: one predicted branch, and tokenSize is a constant,
+        // the consumed->next-address chain vanishes for the dominant class.
         if (!source.IsEmpty)
         {
             byte code0 = source[0];
-
-            // The (byte) cast is load-bearing: it wraps the negative-fixint codes
-            // 0xe0-0xff (+32 -> 256..287, mod 256 -> 0..31) down next to the positive
-            // ones (32..159) so one unsigned compare covers both — (uint) would reject
-            // them. Same bias+wrap idiom as the write side's (uint)(value + 32) <= 159,
-            // but wrapping mod 2^8 over the code byte instead of mod 2^32 over the value.
             if ((byte)(code0 + 32) <= 159)
             {
                 value = unchecked((sbyte)code0);
@@ -166,13 +121,7 @@ public static partial class MessagePackPrimitives
 
             if ((e & 0xf) == 9) // compare length
             {
-                // Rare path (branch prediction does not miss here), called with TEMPS
-                // copied to the real outs after: passing the hot outs by address to a
-                // NoInlining callee marks them address-exposed, which de-enregisters
-                // them on the FAST path too (enregistration is all-or-nothing per
-                // local) — splitting alone measured 0.81x on the 5-byte table path
-                // (ColdCallOutParamBenchmark). Same shape at every NoInlining call in
-                // this file.
+                // don't pass out value directly
                 var nineResult = TryReadInt32NineByteToken(source, out var nineValue, out var nineSize);
                 value = nineValue;
                 tokenSize = nineSize;
@@ -186,24 +135,12 @@ public static partial class MessagePackPrimitives
             long v = ((long)sel << ext) >> ext;
             int len = (int)(e & 0xf);
             value = (int)v;
-            // uint32 above int.MaxValue is the only reachable fit failure. Asm-verified
-            // (FullOpts probe, 2026-07): the fit check is a sete and tokenSize a cmov, so
-            // the consumed->next-address chain stays branchless; the DecodeResult return
-            // itself may compile to a predicted branch (off the chain, harmless)
             bool ok = v == value;
             tokenSize = ok ? len : 0;
             return ok ? DecodeResult.Success : DecodeResult.TokenMismatch;
         }
         else
         {
-            // Careful byte-by-byte path for source shorter than the unconditional-load window.
-            // Reached only with Length < 5, so any Success from the int64 cascade came from a
-            // <= 3-byte format — those always fit int32, and the only fit-breaking format
-            // (uint32, 5 bytes) cannot reach Success here; no narrowing check needed. The
-            // 5- and 9-byte formats deliberately report InsufficientBuffer with their exact
-            // requirement, NOT TokenMismatch: a wide-encoded value may well fit int32 once
-            // the rest arrives, and sequence/async readers rely on the Ensure-and-retry
-            // contract at segment boundaries.
             var r = TryReadInt64ShortBuffer(source, out long v, out var slowSize);
             value = (int)v;
             tokenSize = slowSize;
@@ -219,9 +156,8 @@ public static partial class MessagePackPrimitives
                 byte code = MemoryMarshal.GetReference(source);
                 long v = unchecked((long)UnsafeReadUInt64BigEndian(source, 1));
                 value = (int)v;
-                // two conditions: uint64 must be non-negative as long (reinterpreting
-                // 0xFFFF.. as -1 would slip through the fit check), and the value must
-                // survive the int32 narrowing
+                // two conditions: uint64 must be non-negative as long (reinterpreting 0xFFFF..
+                // as -1 would slip through the fit check), and the value must survive the int32 narrowing
                 if (((code == MessagePackCode.Int64) | (v >= 0)) & (v == value))
                 {
                     tokenSize = 9;
@@ -236,6 +172,7 @@ public static partial class MessagePackPrimitives
         }
     }
 
+    /// <summary>Reads an int64 from any msgpack int format. A uint64 above long.MaxValue reports TokenMismatch.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DecodeResult TryReadInt64(ReadOnlySpan<byte> source, out long value, out int tokenSize)
     {
@@ -270,13 +207,13 @@ public static partial class MessagePackPrimitives
             long v = ((long)sel << ext) >> ext;
             int len = (int)(e & 0xf);
             value = v;
-            // the isUInt64 flag catches uint64 payloads above long.MaxValue; same cmov/sete
-            // codegen as TryReadInt32 (verified there)
+            // the isUInt64 flag catches uint64 payloads above long.MaxValue;
+            // same cmov/sete codegen as TryReadInt32 (verified there)
             bool ok = ((e >> 16) == 0) | (v >= 0);
             tokenSize = ok ? len : 0;
             return ok ? DecodeResult.Success : DecodeResult.TokenMismatch;
         }
-        // temps, not the hot outs — see TryReadInt32's slow-call note
+        // temps, not the hot outs, see TryReadInt32's slow-call note
         var slowResult = TryReadInt64ShortBuffer(source, out var slowValue, out var slowSize);
         value = slowValue;
         tokenSize = slowSize;
@@ -359,21 +296,11 @@ public static partial class MessagePackPrimitives
     public static DecodeResult TryReadUInt32(ReadOnlySpan<byte> source, out uint value, out int tokenSize)
         => TryReadUnsignedCore(source, uint.MaxValue, out value, out tokenSize);
 
-    // Every unsigned target from uint32 down is the SAME gate-5 table body — NOT a
-    // narrowing wrapper over TryReadUInt64, whose >= 9 gate would drop complete tokens
-    // in 5..8-byte windows (buffer tails, exact-requirement sequence windows) to the
-    // cascade. The range folds into ONE unsigned compare: (ulong)v <= max rejects
-    // negatives (they alias to huge ulongs) and overflow together. Callers pass constant
-    // bounds into the AggressiveInlining core, so each wrapper specializes into a
-    // dedicated body — no shared-code dispatch survives to runtime.
-    // (Why not gate 3 for byte/uint16? wide acceptance: uint32/int32-encoded values that
-    // fit the target are legal, and decoding a 5-byte token inline needs the 4-byte
-    // load, hence Length >= 5. The 9-byte formats stay on a cold path as usual.)
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static DecodeResult TryReadUnsignedCore(ReadOnlySpan<byte> source, ulong max, out uint value, out int tokenSize)
     {
-        // positive-fixint fast path (127 fits every unsigned target here); negative
-        // fixint falls through and the range check rejects it for free
+        // positive-fixint fast path (127 fits every unsigned target here);
+        // negative fixint falls through and the range check rejects it for free
         if (!source.IsEmpty)
         {
             byte code0 = source[0];
@@ -416,9 +343,9 @@ public static partial class MessagePackPrimitives
             return ok ? DecodeResult.Success : DecodeResult.TokenMismatch;
         }
 
-        // Length < 5: Success from the shared cascade comes from <= 3-byte formats
-        // (<= 65535) — that can still exceed a byte target, so fit-check it; the 5- and
-        // 9-byte formats report their exact requirement as InsufficientBuffer
+        // Length < 5: Success from the shared cascade comes from <= 3-byte formats (<= 65535),
+        // that can still exceed a byte target, so fit-check it; the 5- and 9-byte formats report their exact
+        // requirement as InsufficientBuffer
         var r = TryReadUInt64ShortBuffer(source, out ulong wide, out var slowSize);
         tokenSize = slowSize;
         value = unchecked((uint)wide);
@@ -430,8 +357,8 @@ public static partial class MessagePackPrimitives
         }
         return r;
 
-        // cold path for the 9-byte formats: raw <= max covers both — cf's raw bits are
-        // the value, and d3's negative values alias to huge ulongs
+        // cold path for the 9-byte formats: raw <= max covers both, cf's raw bits are the value,
+        // and d3's negative values alias to huge ulongs
         [MethodImpl(MethodImplOptions.NoInlining)]
         static DecodeResult NineByteToken(ReadOnlySpan<byte> source, ulong max, out uint value, out int tokenSize)
         {
@@ -449,13 +376,12 @@ public static partial class MessagePackPrimitives
         }
     }
 
-    // Signed mirror of TryReadUnsignedCore for sbyte/int16: the range check biases into
-    // one unsigned compare, (ulong)(v - min) <= (ulong)(max - min) — any v outside
-    // [min, max] lands above the tiny range, wraparound included.
+    // Signed mirror of TryReadUnsignedCore for sbyte/int16: the range check biases into one unsigned compare,
+    // (ulong)(v - min) <= (ulong)(max - min), any v outside [min, max] lands above the tiny range, wraparound included.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static DecodeResult TryReadSignedCore(ReadOnlySpan<byte> source, long min, long max, out int value, out int tokenSize)
     {
-        // full fixint fast path — every fixint value [-32, 127] fits every signed target
+        // full fixint fast path, every fixint value [-32, 127] fits every signed target
         if (!source.IsEmpty)
         {
             byte code0 = source[0];
@@ -498,8 +424,8 @@ public static partial class MessagePackPrimitives
             return ok ? DecodeResult.Success : DecodeResult.TokenMismatch;
         }
 
-        // Length < 5: Success from the shared cascade comes from <= 3-byte formats
-        // ([-32768, 65535]) — can exceed either bound of a narrow target, so fit-check
+        // Length < 5: Success from the shared cascade comes from <= 3-byte formats ([-32768, 65535]),
+        // can exceed either bound of a narrow target, so fit-check
         var r = TryReadInt64ShortBuffer(source, out long wideV, out var slowSize);
         tokenSize = slowSize;
         value = unchecked((int)wideV);
@@ -511,16 +437,19 @@ public static partial class MessagePackPrimitives
         }
         return r;
 
-        // cold path for the 9-byte formats: the bias check also rejects cf values above
-        // long.MaxValue (they alias negative)
+        // cold path for the 9-byte formats. Two conditions, like TryReadInt32NineByteToken: uint64(cf) must be
+        // non-negative as long (a cf value above long.MaxValue aliases to a negative long, and with min < 0 the bias
+        // check alone would accept the alias, cf ff..ff as -1), and the value must fit [min, max].
         [MethodImpl(MethodImplOptions.NoInlining)]
         static DecodeResult NineByteToken(ReadOnlySpan<byte> source, long min, long max, out int value, out int tokenSize)
         {
             if (source.Length >= 9)
             {
+                byte code = MemoryMarshal.GetReference(source);
                 long v = unchecked((long)UnsafeReadUInt64BigEndian(source, 1));
                 value = unchecked((int)v);
-                bool ok = (ulong)(v - min) <= (ulong)(max - min);
+                bool signOk = code != MessagePackCode.UInt64 || v >= 0;
+                bool ok = signOk && (ulong)(v - min) <= (ulong)(max - min);
                 tokenSize = ok ? 9 : 0;
                 return ok ? DecodeResult.Success : DecodeResult.TokenMismatch;
             }
@@ -535,8 +464,8 @@ public static partial class MessagePackPrimitives
     public static DecodeResult TryReadUInt64(ReadOnlySpan<byte> source, out ulong value, out int tokenSize)
     {
         // positive-fixint fast path (constant tokenSize, same rationale as TryReadInt32).
-        // Negative fixint needs no arm here: it falls through and the range check below
-        // rejects it for free — a negative value never fits an unsigned target.
+        // Negative fixint needs no arm here: it falls through and the range check below rejects it for free,
+        // a negative value never fits an unsigned target.
         if (!source.IsEmpty)
         {
             byte code0 = source[0];
@@ -559,10 +488,10 @@ public static partial class MessagePackPrimitives
                 tokenSize = 0;
                 return DecodeResult.TokenMismatch;
             }
-            // Int64ReadTable reused wholesale — only the sign predicate flips. The bit16
-            // flag marks uint64(cf): always valid for THIS target (its raw bits are the
-            // value), while every other format must decode non-negative. The Int64 target
-            // reads the same flag the other way around ("cf must be non-negative").
+            // Int64ReadTable reused wholesale, only the sign predicate flips.
+            // The bit16 flag marks uint64(cf): always valid for this target (its raw bits are the value),
+            // while every other format must decode non-negative. The Int64 target reads the same flag the other way
+            // around ("cf must be non-negative").
             uint e = Unsafe.Add(ref MemoryMarshal.GetReference(Int64ReadTable), (int)fmt);
             ulong p = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref s, 1)));
             ulong sel = p >> (int)((e >> 4) & 0x3f);
@@ -687,19 +616,17 @@ public static partial class MessagePackPrimitives
 
     #region ReadInt8, 16
 
-    // Natural-width tiers. The gate-5 cores above "round up" the narrow targets: a
-    // 2..4-byte window holding a COMPLETE uint8/int16 token would drop to the cascade —
-    // and that is not a rare tail, a trailing byte field sees remaining == 2 on every
-    // message. So each narrow target decides its NATURAL encoding domain (everything a
-    // minimal writer can emit for its value range) inline under the smallest possible
-    // gate, and defers only the wide compat encodings and true tails to a NoInlining
-    // bridge into the gate-5 cores.
+    // Natural-width tiers. The gate-5 cores above "round up" the narrow targets: a 2..4-byte window holding a complete
+    // uint8/int16 token would drop to the cascade, and that is not a rare tail,
+    // a trailing byte field sees remaining == 2 on every message. So each narrow target decides its natural encoding
+    // domain (everything a minimal writer can emit for its value range) inline under the smallest possible gate,
+    // and defers only the wide compat encodings and true tails to a NoInlining bridge into the gate-5 cores.
 
     /// <summary>Reads a byte from any msgpack int format. Out-of-range values report TokenMismatch.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DecodeResult TryReadByte(ReadOnlySpan<byte> source, out byte value, out int tokenSize)
     {
-        // natural domain: fixint + uint8, both fit unconditionally — no range check at all
+        // natural domain: fixint + uint8, both fit unconditionally, no range check at all
         if (!source.IsEmpty)
         {
             byte code0 = source[0];
@@ -765,10 +692,9 @@ public static partial class MessagePackPrimitives
         }
     }
 
-    // 16-bit natural tier: the minimal encodings for the whole ushort/short domain are
-    // cc/cd/d0/d1 (+fixint, handled in front), so a 2-byte unconditional load and this
-    // mini-table decode everything a minimal writer can emit under a Length >= 3 gate.
-    // Zero entries (ce/cf/d2/d3) are legal wide encodings — decided cold in the bridge.
+    // 16-bit natural tier: the minimal encodings for the whole ushort/short domain are cc/cd/d0/d1 (+fixint,
+    // handled in front), so a 2-byte unconditional load and this mini-table decode everything a minimal writer can emit
+    // under a Length >= 3 gate. Zero entries (ce/cf/d2/d3) are legal wide encodings, decided cold in the bridge.
     // entry: len | rawShift<<4 | ext<<10 (same field meanings as the 8-entry tables)
     const uint N16U1 = 2 | (8u << 4);                  // uint8
     const uint N16U2 = 3 | (0u << 4);                  // uint16
@@ -784,12 +710,11 @@ public static partial class MessagePackPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static DecodeResult TryReadNarrow16Core(ReadOnlySpan<byte> source, long min, long max, out int value, out int tokenSize)
     {
-        // fixint fast path: ONE validity compare and an unconditional Success — tokenSize
-        // must stay a CONSTANT here. (A bias-checked cmov variant made consumed
-        // data-dependent and cost 4x on fixint streams, measured.) The min == 0 selector
-        // is folded by the JIT per specialization: unsigned targets accept only positive
-        // fixint (negative falls through to the range check, which rejects it for free);
-        // signed targets accept every fixint — [-32, 127] fits them all.
+        // fixint fast path: one validity compare and an unconditional Success, tokenSize must stay a constant here.
+        // (A bias-checked cmov variant made consumed data-dependent and cost 4x on fixint streams, measured.)
+        // The min == 0 selector is folded by the JIT per specialization: unsigned targets accept only positive fixint
+        // (negative falls through to the range check, which rejects it for free);
+        // signed targets accept every fixint, [-32, 127] fits them all.
         if (!source.IsEmpty)
         {
             byte code0 = source[0];
@@ -832,15 +757,25 @@ public static partial class MessagePackPrimitives
             return ok ? DecodeResult.Success : DecodeResult.TokenMismatch;
         }
 
+        // Length < 3 tail. For unsigned targets a negative fixint can still be here (the fast path only takes
+        // positive fixint, and the >= 3 gate that would reject it via fmt > 7 was not entered), and the signed core's
+        // own fixint fast path would accept it for any bounds. It is a complete token that never fits: reject it.
+        // Folded away for signed specializations (their fast path consumed every fixint already).
+        if (min == 0 && !source.IsEmpty && source[0] >= MessagePackCode.MinNegativeFixInt)
+        {
+            value = 0;
+            tokenSize = 0;
+            return DecodeResult.TokenMismatch;
+        }
         var tailResult = Bridge(source, min, max, out var tailValue, out var tailSize);
         value = tailValue;
         tokenSize = tailSize;
         return tailResult;
 
-        // Wide encodings and short windows decide cold in the gate-5 signed core. Safe
-        // for the ushort bounds too: the ONLY place TryReadSignedCore skips the bias
-        // check is its fixint fast path, and fixint never reaches this bridge (the fast
-        // path above consumes it for any non-empty source).
+        // Wide encodings and short windows decide cold in the gate-5 signed core.
+        // Safe for the ushort bounds too: the only place TryReadSignedCore skips the bias check is its fixint fast
+        // path, and no fixint reaches this bridge: the fast path above consumes every fixint a signed target accepts,
+        // the >= 3 gate rejects negative fixint for unsigned targets, and the tail guard above covers the < 3 window.
         [MethodImpl(MethodImplOptions.NoInlining)]
         static DecodeResult Bridge(ReadOnlySpan<byte> source, long min, long max, out int value, out int tokenSize)
             => TryReadSignedCore(source, min, max, out value, out tokenSize);
@@ -878,11 +813,8 @@ public static partial class MessagePackPrimitives
     #region fixed-length(Nil, Boolean, Single, Double)
 
     /// <summary>
-    /// True iff the next value is nil (which is always exactly 1 byte, hence no
-    /// tokenSize out). Peek-style bool on purpose: false only means "not nil here,
-    /// read the real type", never an error, so the DecodeResult contract does not apply —
-    /// an empty source answers false and defers error reporting to the typed read that
-    /// follows.
+    /// Returns true when the next token is nil, which is always one byte.
+    /// False only means "not nil here", never an error; an empty source answers false and leaves error reporting to the typed read that follows.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryReadNil(ReadOnlySpan<byte> source)
@@ -903,13 +835,13 @@ public static partial class MessagePackPrimitives
         }
 
         // False=0xc2 / True=0xc3: one biased compare validates, the low bit is the value.
-        // The only branch here depends on VALIDITY, not on the value — on well-formed data it
-        // always takes the same direction, so it predicts ~100% regardless of the true/false
-        // mix; the value itself is derived without a branch (d != 0 -> setne). A switch/if on
-        // the code byte branches on the value itself and mispredicts on unpredictable bools
-        // (up to 50% for random data — measured 3.8x slower; predictable data ties). Removing
-        // this last branch too is NOT better: tokenSize then becomes data-dependent and joins
-        // the consumed->next-address serial chain (measured 2.4x slower on every distribution).
+        // The only branch here depends on validity, not on the value, on well-formed data it always takes the same
+        // direction, so it predicts ~100% regardless of the true/false mix;
+        // the value itself is derived without a branch (d != 0 -> setne).
+        // A switch/if on the code byte branches on the value itself and mispredicts on unpredictable bools (up to 50%
+        // for random data, measured 3.8x slower; predictable data ties).
+        // Removing this last branch too is not better: tokenSize then becomes data-dependent and joins the
+        // consumed->next-address serial chain (measured 2.4x slower on every distribution).
         uint d = (uint)source[0] - MessagePackCode.False;
         if (d <= 1)
         {
@@ -927,23 +859,16 @@ public static partial class MessagePackPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DecodeResult TryReadSingle(ReadOnlySpan<byte> source, out float value, out int tokenSize)
     {
-        // The Float32 arm IS the whole hot path: unlike int, float has no size-minimized
-        // encoding variety — a conforming writer emits 0xca for every float32 value. So we
-        // bet on it up front, TryReadInt32-gate style: one length check covers the whole
-        // 5-byte token and the arm runs with no per-arm guard. Two always-predicted
-        // branches (length, mono-class code compare), constant tokenSize (no consumed->
-        // next-address chain link), branchless value load — the shape TryReadBoolean/
-        // TryReadInt32 converged on. Everything else, including the truncated-Float32
-        // tail, lives in the NoInlining slow half, keeping the inlined footprint at
-        // formatter callsites tiny.
+        // The Float32 arm is the whole hot path: unlike int, float has no size-minimized encoding variety,
+        // a conforming writer emits 0xca for every float32 value. So we bet on it up front,
+        // TryReadInt32-gate style: one length check covers the whole 5-byte token and the arm runs with no per-arm
+        // guard. Two always-predicted branches (length, mono-class code compare),
+        // constant tokenSize (no consumed-> next-address chain link), branchless value load,
+        // the shape TryReadBoolean/TryReadInt32 converged on. Everything else,
+        // including the truncated-Float32 tail, lives in the NoInlining slow half,
+        // keeping the inlined footprint at formatter callsites tiny.
         if (source.Length >= 5 && source[0] == MessagePackCode.Float32)
         {
-            // NOT BinaryPrimitives.ReadSingleBigEndian(source.Slice(1)) — that compiles
-            // byte-identically to the Slice+ReadUInt32 pair, and in BOTH the >= 5 gate
-            // fails to propagate through Slice for the JIT: the primitive's internal
-            // length check survives as cmp+jl+throw block and forces a stack frame
-            // (probe asm 93B). The unchecked read below is what the gate already paid
-            // for: 54B, frameless, one movbe load straight off the code byte.
             value = BitConverter.UInt32BitsToSingle(MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), 1))));
             tokenSize = 5;
             return DecodeResult.Success;
@@ -953,12 +878,11 @@ public static partial class MessagePackPrimitives
         tokenSize = slowSize;
         return slowResult;
 
-        // COMPAT arms, not perf paths: data written as double/int read into a float field
-        // (schema drift, foreign writers). Even then each field's encoding class is stable,
-        // so the cascade's branches still predict; a 256-entry table would only trade a
-        // predicted branch for a data-dependent tokenSize (measured 2.4x worse in the
-        // boolean round) and is deliberately not used here. Also catches the hot gate's
-        // truncated-Float32 tail (Length < 5) to report the exact tokenSize.
+        // compat arms, not perf paths: data written as double/int read into a float field (schema drift,
+        // foreign writers). Even then each field's encoding class is stable, so the cascade's branches still predict;
+        // a 256-entry table would only trade a predicted branch for a data-dependent tokenSize (measured 2.4x worse in
+        // the boolean round) and is deliberately not used here. Also catches the hot gate's truncated-Float32 tail
+        // (Length < 5) to report the exact tokenSize.
         [MethodImpl(MethodImplOptions.NoInlining)]
         static DecodeResult TryReadSingleSlow(ReadOnlySpan<byte> source, out float value, out int tokenSize)
         {
@@ -983,8 +907,8 @@ public static partial class MessagePackPrimitives
                     return DecodeResult.Success;
                 }
 
-                // uint64 above long.MaxValue: TryReadInt64 folds it to TokenMismatch, but as a
-                // float source it is a valid magnitude — handle before falling through
+                // uint64 above long.MaxValue: TryReadInt64 folds it to TokenMismatch,
+                // but as a float source it is a valid magnitude, handle before falling through
                 if (code == MessagePackCode.UInt64)
                 {
                     value = default;
@@ -1005,12 +929,10 @@ public static partial class MessagePackPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DecodeResult TryReadDouble(ReadOnlySpan<byte> source, out double value, out int tokenSize)
     {
-        // Same hot-path bet as TryReadSingle (see its comment) with the gate at 9:
-        // Float64 (0xcb) is the sole encoding a double-writing producer emits.
+        // Same hot-path bet as TryReadSingle (see its comment) with the gate at 9: Float64 (0xcb)
+        // is the sole encoding a double-writing producer emits.
         if (source.Length >= 9 && source[0] == MessagePackCode.Float64)
         {
-            // unchecked read for the same reason as TryReadSingle: the checked
-            // BinaryPrimitives path keeps its internal length check despite the gate
             value = BitConverter.UInt64BitsToDouble(MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(source), 1))));
             tokenSize = 9;
             return DecodeResult.Success;
@@ -1069,14 +991,12 @@ public static partial class MessagePackPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DecodeResult TryReadArrayHeader(ReadOnlySpan<byte> source, out int count, out int tokenSize)
     {
-        // fixarray fast path inline (the dominant class: POCO field counts, small
-        // collections — one predicted mask+compare, constant tokenSize, branchless
-        // count); array16/32 and every failure decide cold, keeping the inlined
-        // footprint at formatter callsites minimal. Measured NEUTRAL on flat-POCO e2e
-        // (one header per message amortizes; the call hid under OoO) — kept for shape
-        // consistency with the value readers and for nested collections, where headers
-        // are per-ELEMENT and the call-to-work ratio matches the byte-reader round's
-        // winning conditions.
+        // fixarray fast path inline (the dominant class: POCO field counts, small collections,
+        // one predicted mask+compare, constant tokenSize, branchless count);
+        // array16/32 and every failure decide cold, keeping the inlined footprint at formatter callsites minimal.
+        // Measured neutral on flat-POCO e2e (one header per message amortizes; the call hid under OoO),
+        // kept for shape consistency with the value readers and for nested collections,
+        // where headers are per-element and the call-to-work ratio matches the byte-reader round's winning conditions.
         if (!source.IsEmpty)
         {
             byte code0 = source[0];
@@ -1120,15 +1040,10 @@ public static partial class MessagePackPrimitives
                         tokenSize = 5;
                         if (source.Length < 5) return DecodeResult.InsufficientBuffer;
                         uint c = UnsafeReadUInt32BigEndian(source, 1);
-                        // NOT malformed data: a u32 count is legal msgpack, it just exceeds
-                        // .NET's int indexing limit — nothing on this platform could
-                        // materialize it. Per the contract, "well-formed but does not fit
-                        // the declared target (int count)" folds into TokenMismatch, same
-                        // as cf(2^63)->Int64. MessagePack-CSharp v3 / Nerdbank instead type
-                        // the primitive `out uint` and let their reader layer throw
-                        // OverflowException on the cast — that only relocates the same
-                        // fatal outcome while spreading the fit check to every caller.
-                        // (Applies equally to the Map32/Str32/Bin32 twins below.)
+                        // not malformed data: a u32 count is legal msgpack, it just exceeds .NET's int indexing limit,
+                        // nothing on this platform could materialize it. Per the contract,
+                        // "well-formed but does not fit the declared target (int count)" folds into TokenMismatch,
+                        // same as cf(2^63)->Int64.
                         if (c > int.MaxValue)
                         {
                             tokenSize = 0;
@@ -1148,7 +1063,7 @@ public static partial class MessagePackPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DecodeResult TryReadMapHeader(ReadOnlySpan<byte> source, out int count, out int tokenSize)
     {
-        // fixmap fast path inline, everything else cold — see TryReadArrayHeader
+        // fixmap fast path inline, everything else cold, see TryReadArrayHeader
         if (!source.IsEmpty)
         {
             byte code0 = source[0];
@@ -1192,7 +1107,7 @@ public static partial class MessagePackPrimitives
                         tokenSize = 5;
                         if (source.Length < 5) return DecodeResult.InsufficientBuffer;
                         uint c = UnsafeReadUInt32BigEndian(source, 1);
-                        if (c > int.MaxValue) // legal msgpack, exceeds the int target — see Array32
+                        if (c > int.MaxValue) // legal msgpack, exceeds the int target, see Array32
                         {
                             tokenSize = 0;
                             return DecodeResult.TokenMismatch;
@@ -1211,7 +1126,7 @@ public static partial class MessagePackPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DecodeResult TryReadStringHeader(ReadOnlySpan<byte> source, out int byteCount, out int tokenSize)
     {
-        // fixstr fast path inline, everything else cold — see TryReadArrayHeader
+        // fixstr fast path inline, everything else cold, see TryReadArrayHeader
         if (!source.IsEmpty)
         {
             byte code0 = source[0];
@@ -1260,7 +1175,7 @@ public static partial class MessagePackPrimitives
                         tokenSize = 5;
                         if (source.Length < 5) return DecodeResult.InsufficientBuffer;
                         uint c = UnsafeReadUInt32BigEndian(source, 1);
-                        if (c > int.MaxValue) // legal msgpack, exceeds the int target — see Array32
+                        if (c > int.MaxValue) // legal msgpack, exceeds the int target, see Array32
                         {
                             tokenSize = 0;
                             return DecodeResult.TokenMismatch;
@@ -1301,7 +1216,7 @@ public static partial class MessagePackPrimitives
                     tokenSize = 5;
                     if (source.Length < 5) return DecodeResult.InsufficientBuffer;
                     uint c = UnsafeReadUInt32BigEndian(source, 1);
-                    if (c > int.MaxValue) // legal msgpack, exceeds the int target — see Array32
+                    if (c > int.MaxValue) // legal msgpack, exceeds the int target, see Array32
                     {
                         tokenSize = 0;
                         return DecodeResult.TokenMismatch;
@@ -1315,7 +1230,7 @@ public static partial class MessagePackPrimitives
         }
     }
 
-    /// <summary>Reads a bin payload as a slice of source (no copy). On InsufficientBuffer, tokenSize reports header + payload so one fetch completes the token.</summary>
+    /// <summary>Reads a bin payload as a slice of source without copying. On InsufficientBuffer, tokenSize reports header plus payload so one fetch completes the token.</summary>
     public static DecodeResult TryReadBinary(ReadOnlySpan<byte> source, out ReadOnlySpan<byte> value, out int tokenSize)
     {
         value = default;
@@ -1325,10 +1240,9 @@ public static partial class MessagePackPrimitives
             tokenSize = headerSize; // header's own requirement (or 0 on mismatch)
             return r;
         }
-        // header + payload must stay an int: a total above int.MaxValue fits no span on
-        // this platform (same fold as count > int.MaxValue), and letting it wrap would
-        // hand a NEGATIVE tokenSize to sequence retry loops — an infinite loop on
-        // adversarial headers
+        // header + payload must stay an int: a total above int.MaxValue fits no span on this platform (same fold as
+        // count > int.MaxValue), and letting it wrap would hand a negative tokenSize to sequence retry loops,
+        // an infinite loop on adversarial headers
         if (byteCount > int.MaxValue - headerSize)
         {
             tokenSize = 0;
@@ -1402,13 +1316,9 @@ public static partial class MessagePackPrimitives
         }
     }
 
-    // TryReadToken's single-byte-token table: bit0 = the code is a complete one-byte
-    // token, bits1-5 = payloadLength (numeric bodies, capped at fixstr's 31), bits6-10 =
-    // childValueCount (fixmap entries pre-doubled). Zero = multi-byte header or 0xc1,
-    // resolved by the slow path. fixint and fixstr stay ahead of the lookup as
-    // pure-arithmetic branches: deriving even a constant tokenSize from a load puts the
-    // L1 latency into the scanner's index chain (table-only decode measured 1.22x on
-    // fixint-dense streams — TokenScanBenchmark), while a predicted branch is free.
+    // TryReadToken's single-byte-token table: bit0 = the code is a complete one-byte token,
+    // bits1-5 = payloadLength (numeric bodies, capped at fixstr's 31),
+    // bits6-10 = childValueCount (fixmap entries pre-doubled). Zero = multi-byte header or 0xc1, resolved by the slow path.
     static ReadOnlySpan<ushort> SingleByteTokenTable =>
     [
         0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
@@ -1430,30 +1340,26 @@ public static partial class MessagePackPrimitives
     ];
 
     /// <summary>
-    /// Reads one token structurally, without decoding its value.
-    /// The building block for skip/boundary scanning; for skipping within a buffer, use the ReadBufferExtensions.Skip() instead.
+    /// Reads one token structurally, without decoding its value. This is the building block for skipping and boundary scanning.
+    /// To skip within a buffer, use the buffer's Skip method instead.
     /// </summary>
+    /// <param name="source">Bytes starting at the token.</param>
     /// <param name="payloadLength">Opaque bytes that follow the token (str/bin/ext payloads and numeric bodies); skip them without inspection.</param>
     /// <param name="childValueCount">Number of values an array/map opens (map entries count as two); each is a token of its own.</param>
     /// <param name="tokenSize">The token itself: the code byte, length fields, and the ext type byte.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DecodeResult TryReadToken(ReadOnlySpan<byte> source, out long payloadLength, out long childValueCount, out int tokenSize)
     {
-        // Three-tier fast path, all yielding tokenSize 1: fixint branch (constant outs,
-        // no load), fixstr branch (payload = code & 31 — the dominant non-fixint token
-        // in object streams: map keys, short strings), then the table for every other
-        // one-byte token (fixmap/fixarray/nil/bool/numeric bodies). Only multi-byte
-        // headers (str8+/bin/ext/array16+/map16+) and 0xc1 fall through to the slow
-        // tail, which is itself inlined (see its comment). Measured on the
-        // boundary-scan loop vs the v1 fixint-only-fast-path-plus-cold-call shape:
-        // 0.55x on object streams, 0.80x on adversarial token mixes, 0.69x on
-        // fixint-dense arrays (TokenScanBenchmark rounds 1-4).
-        //
-        // Unlike the int-target header readers above, the long outputs always fit a u32
-        // length/count, so no well-formed token folds into TokenMismatch here; the only
-        // mismatch is the never-used code 0xc1. That keeps the walk total over spec-legal
-        // data whose payload has not arrived yet (a streaming scanner must accept a 4GB
-        // bin32 claim as data-to-come, not as an error).
+        // Three-tier fast path, all yielding tokenSize 1: fixint branch (constant outs, no load),
+        // fixstr branch (payload = code & 31, the dominant non-fixint token in object streams: map keys,
+        // short strings), then the table for every other one-byte token (fixmap/fixarray/nil/bool/numeric bodies).
+        // Only multi-byte headers (str8+/bin/ext/array16+/map16+) and 0xc1 fall through to the slow tail,
+        // which is itself inlined (see its comment).
+        
+        // Unlike the int-target header readers above, the long outputs always fit a u32 length/count,
+        // so no well-formed token folds into TokenMismatch here; the only mismatch is the never-used code 0xc1.
+        // That keeps the walk total over spec-legal data whose payload has not arrived yet (a streaming scanner must
+        // accept a 4GB bin32 claim as data-to-come, not as an error).
         if (!source.IsEmpty)
         {
             byte code0 = source[0];
@@ -1482,21 +1388,15 @@ public static partial class MessagePackPrimitives
         }
         return TryReadTokenSlow(source, out payloadLength, out childValueCount, out tokenSize);
 
-        // Only what the fast path's three tiers decline arrives here: the multi-byte
-        // headers below, the never-used 0xc1, and an empty source. Every single-byte
-        // token already returned above, so no case for them exists — the default arm
-        // means 0xc1 only while that stays true (keep in sync with
-        // SingleByteTokenTable). Not rare-rare: every str8/str16/array16 header in a
-        // scan lands here.
+        // Only what the fast path's three tiers decline arrives here: the multi-byte headers below,
+        // the never-used 0xc1, and an empty source. Every single-byte token already returned above,
+        // so no case for them exists, the default arm means 0xc1 only while that stays true (keep in sync with
+        // SingleByteTokenTable). Not rare-rare: every str8/str16/array16 header in a scan lands here.
         //
-        // AggressiveInlining, deliberately, despite being the cold path: a residual
-        // call takes the out params by address, which forces payloadLength/child/size
-        // into stack slots ON THE FAST PATH too (the enregistration is all-or-nothing
-        // per local). Fully inlined, everything stays in registers: measured 0.69x on
-        // fixint-dense, 0.80x adversarial-mixed, 0.55x object streams vs the
-        // NoInlining shape (TokenScanBenchmark FullyInlined). The only real caller is
-        // MessagePackBoundaryScanner.ScanTokens (2 sites), so the size cost is
-        // contained.
+        // AggressiveInlining, deliberately, despite being the cold path: a residual call takes the out params by
+        // address, which forces payloadLength/child/size into stack slots on the fast path too (the enregistration is
+        // all-or-nothing per local). Fully inlined, everything stays in registers.
+        // The only real caller is MessagePackBoundaryScanner.ScanTokens (2 sites), so the size cost is contained.
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static DecodeResult TryReadTokenSlow(ReadOnlySpan<byte> source, out long payloadLength, out long childValueCount, out int tokenSize)
         {
@@ -1584,20 +1484,18 @@ public static partial class MessagePackPrimitives
     const long MaxTimestampSeconds = 253402300799; // DateTime.MaxValue.Ticks / TicksPerSecond - BclSecondsAtUnixEpoch
 
     /// <summary>
-    /// Reads a msgpack timestamp (ext type -1, 32/64/96-bit form) as a UTC DateTime.
-    /// A well-formed ext of another type, or a timestamp outside DateTime's range,
-    /// reports TokenMismatch. On InsufficientBuffer, tokenSize reports header + payload.
+    /// Reads a msgpack timestamp (ext type -1 in its 32, 64 or 96-bit form) as a UTC DateTime.
+    /// An ext of another type, or a timestamp outside DateTime's range, reports TokenMismatch. On InsufficientBuffer, tokenSize reports header plus payload.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DecodeResult TryReadTimestamp(ReadOnlySpan<byte> source, out DateTime value, out int tokenSize)
     {
-        // ts64/ts32 fast paths: real timestamps are fixed byte patterns ([d7 ff|8B] /
-        // [d6 ff|4B]), so ONE 16-bit load compares the format code and the ext type (-1)
-        // together — no ext-header call, no dataLength switch. The generic range checks
-        // exist only for ts96 generality: ts64's unsigned 34-bit seconds top out in year
-        // 2514 and ts32's u32 seconds in 2106, both inside DateTime's range, so the only
-        // data check left is ts64's nanoseconds < 1e9 (ts32 needs none). ts96, short
-        // windows and mismatches decide cold in Rare (the previous full implementation).
+        // ts64/ts32 fast paths: real timestamps are fixed byte patterns ([d7 ff|8B] /[d6 ff|4B]),
+        // so one 16-bit load compares the format code and the ext type (-1) together, no ext-header call,
+        // no dataLength switch. The generic range checks exist only for ts96 generality: ts64's unsigned 34-bit seconds
+        // top out in year 2514 and ts32's u32 seconds in 2106, both inside DateTime's range,
+        // so the only data check left is ts64's nanoseconds < 1e9 (ts32 needs none). ts96,
+        // short windows and mismatches decide cold in Rare (the previous full implementation).
         if (source.Length >= 6)
         {
             ref byte s = ref MemoryMarshal.GetReference(source);
@@ -1622,7 +1520,7 @@ public static partial class MessagePackPrimitives
             }
             if (head == ts32Head)
             {
-                // timestamp 32: seconds u32, no sub-second part — nothing to validate
+                // timestamp 32: seconds u32, no sub-second part, nothing to validate
                 uint secs = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref s, 2)));
                 value = new DateTime((secs + BclSecondsAtUnixEpoch) * TimeSpan.TicksPerSecond, DateTimeKind.Utc);
                 tokenSize = 6;
@@ -1644,13 +1542,11 @@ public static partial class MessagePackPrimitives
                 tokenSize = headerSize; // header's own requirement (or 0 on mismatch)
                 return r;
             }
-            // A wrong ext type or a non-timestamp length is fatal regardless of
-            // truncation — decide BEFORE reporting Insufficient (no pointless fetches
-            // for data we could never accept). This also caps tokenSize at 6 + 12,
-            // killing the headerSize + dataLength int overflow a malicious ext32
-            // length would otherwise cause (negative tokenSize would hang sequence
-            // retry loops).
-            if (typeCode != MessagePackCode.TimestampExtensionTypeCode
+            // A wrong ext type or a non-timestamp length is fatal regardless of truncation,
+            // decide before reporting Insufficient (no pointless fetches for data we could never accept).
+            // This also caps tokenSize at 6 + 12, killing the headerSize + dataLength int overflow a malicious ext32
+            // length would otherwise cause (negative tokenSize would hang sequence retry loops).
+            if (typeCode != ReservedMessagePackExtensionTypeCode.DateTime
                 || (dataLength != 4 && dataLength != 8 && dataLength != 12))
             {
                 tokenSize = 0;
@@ -1704,7 +1600,7 @@ public static partial class MessagePackPrimitives
 
     #region String
 
-    /// <summary>Reads a str as a string; nil reads as null (mirror of UnsafeWriteString(string?)). On InsufficientBuffer, tokenSize reports header + payload so one fetch completes the token.</summary>
+    /// <summary>Reads a str as a string, and nil as null. On InsufficientBuffer, tokenSize reports header plus payload so one fetch completes the token.</summary>
     public static DecodeResult TryReadString(ReadOnlySpan<byte> source, out string? value, out int tokenSize)
     {
         value = null;
@@ -1734,7 +1630,7 @@ public static partial class MessagePackPrimitives
         return DecodeResult.Success;
     }
 
-    /// <summary>Reads a str payload as a UTF-8 slice of source (no copy, no nil handling; mirror of UnsafeWriteString(ReadOnlySpan&lt;byte&gt;)). On InsufficientBuffer, tokenSize reports header + payload.</summary>
+    /// <summary>Reads a str payload as a UTF-8 slice of source without copying. Nil is a mismatch. On InsufficientBuffer, tokenSize reports header plus payload.</summary>
     public static DecodeResult TryReadStringSpan(ReadOnlySpan<byte> source, out ReadOnlySpan<byte> utf8Value, out int tokenSize)
     {
         utf8Value = default;

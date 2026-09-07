@@ -6,39 +6,11 @@ using Microsoft.CodeAnalysis.Operations;
 namespace SerializerFoundation.Analyzers;
 
 /// <summary>
-/// Every struct implementing IWriteBuffer/IReadBuffer is
-/// single-owner mutable state — a copy diverges silently (two write indexes over one
-/// window) and double-returns pooled arrays at Dispose. The BCL declined a general
-/// [NonCopyable] (dotnet/runtime#50389), and for this library no attribute is needed
-/// anyway: implementing a buffer interface IS the non-copyable marker, so the analyzer
-/// keys directly on that.
-///
-/// v2 rules (move-friendly: fresh values — object creation, default, method returns —
-/// may be assigned, passed, returned, or stored by value, transferring ownership):
-///  - assigning/initializing from an EXISTING buffer value (local, parameter, field)
-///  - passing an existing buffer value as a by-value argument
-///  - declaring a by-value buffer parameter anywhere a parameter can appear: methods,
-///    constructors, local functions, LAMBDAS, and delegate declarations
-///    (ref/in/out are the sanctioned shapes)
-///  - boxing a buffer struct (interface/object conversion — the plain-struct fallback
-///    tier compiles this happily and every mutation then hits a hidden copy) and
-///    wrapping one in a Nullable
-///  - returning EXISTING storage by value (a field, a ref target, a by-ref parameter);
-///    returning a local or a fresh value is the sanctioned factory move, and
-///    ref-returning members are exempt by construction
-///  - exposing a buffer as a by-value property or indexer: the getter hands out a copy
-///    on EVERY access, so `x.Buffer.Dispose()` silently disposes a temporary
-///    (ref-returning properties and plain fields are the sanctioned shapes)
-///  - the foreach iteration variable (element copy per iteration; `foreach (ref ...)`
-///    over a span stays legal)
-///  - binding a pattern variable (`is MyBuffer b`, `case MyBuffer b`: an unboxing copy)
-///  - `with` expressions (a copy by definition)
-///  - capturing a buffer in a tuple (the tuple is not itself a buffer type, so every
-///    subsequent tuple copy silently duplicates the buffer)
-///  - copying an EXISTING value into an array initializer (collection expressions wait
-///    on the Roslyn 4.10 floor, see the KNOWN GAP note below)
-///  - `using (existingBuffer)` statements (the statement disposes a hidden copy;
-///    declare the resource inside the using instead)
+/// Every struct implementing IWriteBuffer/IReadBuffer is single-owner mutable state,
+/// a copy diverges silently (two write indexes over one window) and double-returns pooled arrays at Dispose.
+/// The BCL declined a general [NonCopyable] (dotnet/runtime#50389),
+/// and for this library no attribute is needed anyway: implementing a buffer interface IS the non-copyable marker,
+/// so the analyzer keys directly on that.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class NonCopyableBufferAnalyzer : DiagnosticAnalyzer
@@ -48,11 +20,11 @@ public sealed class NonCopyableBufferAnalyzer : DiagnosticAnalyzer
     static readonly DiagnosticDescriptor Rule = new(
         DiagnosticId,
         "Buffer structs are single-owner and must not be copied",
-        "'{0}' implements a buffer interface and must not be {1}; buffers are single-owner — pass by ref or construct in place",
+        "'{0}' implements a buffer interface and must not be {1}; buffers are single-owner - pass by ref or construct in place",
         "SerializerFoundation.Correctness",
         DiagnosticSeverity.Error, // this must not allow silent divergence of mutable state, so it's an error, not a warning
         isEnabledByDefault: true,
-        description: "Structs implementing IWriteBuffer/IReadBuffer (or the async flavors) hold single-owner mutable state (write indexes, rented pool arrays, pinned windows). A copy diverges silently and double-disposes pooled state. Pass buffers by ref (the formatter contract), construct them in place, and never box them.");
+        description: "Structs implementing IWriteBuffer/IReadBuffer (or the async flavors) hold single-owner mutable state (write indexes, rented pool arrays, pinned windows). A copy diverges silently and double-disposes pooled state. Pass buffers by ref (the formatter contract), construct them in place, and never box them. `in` and `ref readonly` parameters count as copies: the buffer's mutating members act on a defensive copy, and so does any non-readonly member called through a readonly field or a ref readonly reference.");
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
@@ -137,6 +109,9 @@ public sealed class NonCopyableBufferAnalyzer : DiagnosticAnalyzer
             startContext.RegisterOperationAction(
                 context => AnalyzeUsing(context, interfaces),
                 OperationKind.Using);
+            startContext.RegisterOperationAction(
+                context => AnalyzeReadOnlyReceiver(context, interfaces),
+                OperationKind.Invocation);
         });
     }
 
@@ -144,8 +119,9 @@ public sealed class NonCopyableBufferAnalyzer : DiagnosticAnalyzer
     {
         var (target, value) = context.Operation switch
         {
-            ISimpleAssignmentOperation assignment => ((ITypeSymbol?)assignment.Target.Type, assignment.Value),
-            IVariableDeclaratorOperation { Initializer.Value: { } initializer } declarator => (declarator.Symbol.Type, initializer),
+            // `r = ref b` and `ref var r = ref b` rebind a reference, no value moves
+            ISimpleAssignmentOperation { IsRef: false } assignment => ((ITypeSymbol?)assignment.Target.Type, assignment.Value),
+            IVariableDeclaratorOperation { Symbol.IsRef: false, Initializer.Value: { } initializer } declarator => (declarator.Symbol.Type, initializer),
             _ => (null, null),
         };
         if (target is null || value is null || !IsBufferStruct(target, interfaces) || IsFreshValue(value))
@@ -158,10 +134,19 @@ public sealed class NonCopyableBufferAnalyzer : DiagnosticAnalyzer
     static void AnalyzeArgument(OperationAnalysisContext context, ImmutableArray<INamedTypeSymbol> interfaces)
     {
         var argument = (IArgumentOperation)context.Operation;
-        if (argument.Parameter is not { RefKind: RefKind.None } ||
-            argument.Value.Type is not { } type ||
-            !IsBufferStruct(type, interfaces) ||
-            IsFreshValue(argument.Value))
+        if (argument.Parameter is not { } parameter || argument.Value.Type is not { } type || !IsBufferStruct(type, interfaces))
+        {
+            return;
+        }
+        if (parameter.RefKind is RefKind.In or RefKind.RefReadOnlyParameter)
+        {
+            // no copy at the call site, but the callee cannot mutate through a readonly reference:
+            // every mutating member call inside acts on a hidden defensive copy, so the
+            // caller's buffer never advances (flagged even for a fresh value, the callee is wrong either way)
+            context.ReportDiagnostic(Diagnostic.Create(Rule, argument.Syntax.GetLocation(), type.Name, "passed as a readonly reference (the callee's in/ref readonly parameter mutates a defensive copy)"));
+            return;
+        }
+        if (parameter.RefKind != RefKind.None || IsFreshValue(argument.Value))
         {
             return;
         }
@@ -196,11 +181,18 @@ public sealed class NonCopyableBufferAnalyzer : DiagnosticAnalyzer
         }
         foreach (var parameter in method.Parameters)
         {
-            if (parameter.RefKind == RefKind.None && IsBufferStruct(parameter.Type, interfaces))
+            // ref and out are the only sanctioned shapes: a buffer's members are mutating, so an
+            // in / ref readonly parameter is a by-value parameter in disguise (each mutating
+            // call acts on a hidden defensive copy and the caller's buffer never advances)
+            if (parameter.RefKind is not (RefKind.None or RefKind.In or RefKind.RefReadOnlyParameter) || !IsBufferStruct(parameter.Type, interfaces))
             {
-                var location = parameter.Locations.IsDefaultOrEmpty ? Location.None : parameter.Locations[0];
-                context.ReportDiagnostic(Diagnostic.Create(Rule, location, parameter.Type.Name, "received by value (declare the parameter ref/in/out)"));
+                continue;
             }
+            var location = parameter.Locations.IsDefaultOrEmpty ? Location.None : parameter.Locations[0];
+            var shape = parameter.RefKind == RefKind.None
+                ? "received by value (declare the parameter ref)"
+                : "received as a readonly reference (in/ref readonly: every mutating call acts on a hidden defensive copy; declare the parameter ref)";
+            context.ReportDiagnostic(Diagnostic.Create(Rule, location, parameter.Type.Name, shape));
         }
     }
 
@@ -221,7 +213,9 @@ public sealed class NonCopyableBufferAnalyzer : DiagnosticAnalyzer
     // returning a LOCAL or a fresh value is the factory move (the storage dies with the
     // frame); returning a field, a ref target, or a by-ref parameter duplicates storage
     // that stays alive behind the caller's back. Ref-returning members hand out the
-    // storage itself and are exempt.
+    // storage itself and are exempt. A `using` local is the exception among locals: the
+    // frame disposes it on exit, so the caller receives a copy of a dead buffer (and the
+    // pooled state behind it is returned twice).
     static void AnalyzeReturn(OperationAnalysisContext context, ImmutableArray<INamedTypeSymbol> interfaces)
     {
         var returnOperation = (IReturnOperation)context.Operation;
@@ -232,6 +226,11 @@ public sealed class NonCopyableBufferAnalyzer : DiagnosticAnalyzer
             return;
         }
         var unwrapped = Unwrap(value);
+        if (unwrapped is ILocalReferenceOperation { Local: { IsRef: false, IsUsing: true } })
+        {
+            context.ReportDiagnostic(Diagnostic.Create(Rule, value.Syntax.GetLocation(), type.Name, "returned from a using local (the local is disposed when the method exits, so the caller gets a copy of a disposed buffer; drop the using and let the caller own it)"));
+            return;
+        }
         if (IsFreshValue(unwrapped) ||
             unwrapped is ILocalReferenceOperation { Local.IsRef: false } ||
             unwrapped is IParameterReferenceOperation { Parameter.RefKind: RefKind.None }) // the by-value parameter was already diagnosed at its declaration
@@ -322,6 +321,54 @@ public sealed class NonCopyableBufferAnalyzer : DiagnosticAnalyzer
         }
     }
 
+    // a buffer reached through a READONLY reference (readonly field, `ref readonly`
+    // local/return, an `in` path through a containing struct, `this` inside a readonly
+    // member) cannot be mutated in place: the compiler runs every non-readonly member on
+    // a hidden defensive copy, so the write index advances on a temporary and the real
+    // buffer never moves. The `in`-parameter form is already reported at its declaration.
+    static void AnalyzeReadOnlyReceiver(OperationAnalysisContext context, ImmutableArray<INamedTypeSymbol> interfaces)
+    {
+        var invocation = (IInvocationOperation)context.Operation;
+        if (invocation.TargetMethod.IsStatic ||
+            invocation.TargetMethod.IsReadOnly ||
+            invocation.Instance is not { Type: { } receiverType } receiver ||
+            !IsBufferStruct(receiverType, interfaces) ||
+            receiver is IParameterReferenceOperation ||
+            !IsReadOnlyReference(receiver, context.ContainingSymbol))
+        {
+            return;
+        }
+        context.ReportDiagnostic(Diagnostic.Create(Rule, receiver.Syntax.GetLocation(), receiverType.Name, $"mutated through a readonly reference (the non-readonly member '{invocation.TargetMethod.Name}' runs on a hidden defensive copy; reach the buffer through a ref or a mutable field)"));
+    }
+
+    static bool IsReadOnlyReference(IOperation reference, ISymbol containingSymbol)
+    {
+        switch (reference)
+        {
+            case IFieldReferenceOperation field:
+                if (field.Field.IsReadOnly)
+                {
+                    return true;
+                }
+                // a mutable field of a struct is still readonly when the struct itself is
+                // reached through a readonly reference (h.b with `in Holder h`)
+                return field.Field.ContainingType.IsValueType && field.Instance is { } instance && IsReadOnlyReference(instance, containingSymbol);
+            case ILocalReferenceOperation local:
+                return local.Local.RefKind == RefKind.RefReadOnly;
+            case IParameterReferenceOperation parameter:
+                return parameter.Parameter.RefKind is RefKind.In or RefKind.RefReadOnlyParameter;
+            case IInvocationOperation call:
+                return call.TargetMethod.RefKind == RefKind.RefReadOnly;
+            case IPropertyReferenceOperation property:
+                return property.Property.RefKind == RefKind.RefReadOnly;
+            case IInstanceReferenceOperation:
+                // `this` inside a readonly member (or any member of a readonly struct)
+                return containingSymbol is IMethodSymbol { IsReadOnly: true } || containingSymbol.ContainingType is { IsReadOnly: true };
+            default:
+                return false;
+        }
+    }
+
     static IOperation Unwrap(IOperation value)
     {
         while (value is IConversionOperation conversion)
@@ -332,10 +379,19 @@ public sealed class NonCopyableBufferAnalyzer : DiagnosticAnalyzer
     }
 
     // fresh values transfer ownership (move, not copy): construction, default, and
-    // method returns; everything read from an existing storage location is a copy
+    // by-value method returns; everything read from an existing storage location is a copy.
+    // A ref-returning method hands out existing storage, so receiving its result by value
+    // dereferences and copies, same as reading a field.
     static bool IsFreshValue(IOperation value)
     {
-        return Unwrap(value) is IObjectCreationOperation or IDefaultValueOperation or IInvocationOperation or ILiteralOperation;
+        return Unwrap(value) switch
+        {
+            IObjectCreationOperation or IDefaultValueOperation or ILiteralOperation => true,
+            IInvocationOperation invocation => invocation.TargetMethod.RefKind == RefKind.None,
+            IConditionalOperation { WhenFalse: { } whenFalse } conditional => IsFreshValue(conditional.WhenTrue) && IsFreshValue(whenFalse),
+            ISwitchExpressionOperation switchExpression => switchExpression.Arms.All(static arm => IsFreshValue(arm.Value)),
+            _ => false,
+        };
     }
 
     static bool IsBufferStruct(ITypeSymbol type, ImmutableArray<INamedTypeSymbol> interfaces)

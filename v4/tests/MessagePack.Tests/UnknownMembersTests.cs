@@ -65,6 +65,47 @@ public class UnknownMembersTests
         Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<UnkPacketOnly>(payload));
     }
 
+    // a wide map (thousands of unknown keys) is ordinary input: capture is indexed past a few
+    // keys so it stays linear, and the index enforces the same duplicate policy
+    [Theory]
+    [InlineData(20)]
+    [InlineData(5000)]
+    public void MapMode_WideUnknownMaps_CaptureLinearlyAndStillRejectDuplicates(int keyCount)
+    {
+        var map = new Dictionary<string, int>();
+        for (var i = 0; i < keyCount; i++)
+        {
+            map["k" + i] = i;
+        }
+        var value = V4.Deserialize<UnkPacketOnly>(V4.Serialize(map))!;
+        Assert.Equal(keyCount, value.Extra!.Count);
+        Assert.Equal(map, value.Extra.ToMapDictionary().ToDictionary(static p => p.Key, static p => Convert.ToInt32(p.Value)));
+
+        // the duplicate lands past the linear-scan window, so the indexed path must catch it.
+        // The payload is the serialized map with one more pair appended and the map header recounted
+        // (map16/map32 header: 0xde + 2 bytes, 0xdf + 4 bytes, both big-endian counts)
+        var pairs = V4.Serialize(map);
+        var extraPair = V4.Serialize(new Dictionary<string, int> { ["k3"] = 99 }).AsSpan(1).ToArray(); // fixmap(1) header stripped
+        var headerLength = pairs[0] == 0xde ? 3 : 5;
+        var payload = new byte[pairs.Length + extraPair.Length];
+        pairs.CopyTo(payload, 0);
+        extraPair.CopyTo(payload, pairs.Length);
+        var count = keyCount + 1;
+        if (headerLength == 3)
+        {
+            payload[1] = (byte)(count >> 8);
+            payload[2] = (byte)count;
+        }
+        else
+        {
+            payload[1] = (byte)(count >> 24);
+            payload[2] = (byte)(count >> 16);
+            payload[3] = (byte)(count >> 8);
+            payload[4] = (byte)count;
+        }
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<UnkPacketOnly>(payload));
+    }
+
     // ---- array (int-key) mode ----
 
     [Fact]

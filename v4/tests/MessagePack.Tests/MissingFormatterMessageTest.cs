@@ -7,6 +7,8 @@ public struct MissingProbeValue
 }
 
 // probe target: only ever constructed and discarded by the resolver's fallback-pair probe
+// (never serializes anything, so its empty bodies are exempt from the untouched-buffer rule)
+#pragma warning disable MsgPack114
 public sealed partial class MissingProbeValueFormatter<TWriteBuffer, TReadBuffer>
     : IMessagePackFormatter<TWriteBuffer, TReadBuffer, MissingProbeValue>
 {
@@ -22,6 +24,7 @@ public sealed partial class MissingProbeValueFormatter<TWriteBuffer, TReadBuffer
     {
     }
 }
+#pragma warning restore MsgPack114
 
 #pragma warning disable MsgPack102
 // a factory that serves nothing: every resolution lands on MissingMessagePackFormatter

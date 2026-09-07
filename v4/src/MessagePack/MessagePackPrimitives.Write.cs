@@ -1,37 +1,50 @@
-// TODO: still not fully reviewed.
-
-using SerializerFoundation;
-using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text;
 using System.Text.Unicode;
 
 namespace MessagePack;
 
-// Write primitives. Contract: the caller guarantees the destination has the worst-case
-// size for the method (UnsafeWriteInt32: 5 bytes, UnsafeWriteInt64/UnsafeWriteDouble: 9 bytes, ...).
-// Methods may write scratch bytes beyond the returned length, always within that
-// worst-case window. MessagePackWriter.Reserve provides the guarantee.
+// Contract: the caller guarantees the destination has the worst-case size for the method
+// (UnsafeWriteInt32: 5 bytes, UnsafeWriteInt64/UnsafeWriteDouble: 9 bytes, ...).
+// Methods may write scratch bytes beyond the returned length, always within that worst-case window.
 
 public static partial class MessagePackPrimitives
 {
-    // Contract Size
+    // worst-case sizes of the UnsafeWrite contract
+
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteForcedInt8"/> requires.</summary>
     public const int MaxInt8Length = 2;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteInt16"/> requires.</summary>
     public const int MaxInt16Length = 3;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteInt32"/> requires.</summary>
     public const int MaxInt32Length = 5;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteInt64"/> requires.</summary>
     public const int MaxInt64Length = 9;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteByte"/> requires.</summary>
     public const int MaxUInt8Length = 2;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteUInt16"/> requires.</summary>
     public const int MaxUInt16Length = 3;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteUInt32"/> requires.</summary>
     public const int MaxUInt32Length = 5;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteUInt64"/> requires.</summary>
     public const int MaxUInt64Length = 9;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteSingle"/> requires.</summary>
     public const int MaxFloat32Length = 5;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteDouble"/> requires.</summary>
     public const int MaxFloat64Length = 9;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteTimestamp"/> requires.</summary>
     public const int MaxTimestampLength = 15;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteArrayHeader"/> requires.</summary>
     public const int MaxArrayHeaderLength = 5;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteMapHeader"/> requires.</summary>
     public const int MaxMapHeaderLength = 5;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteBinHeader"/> requires.</summary>
     public const int MaxBinHeaderLength = 5;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteStringHeader"/> requires.</summary>
     public const int MaxStrHeaderLength = 5;
+    /// <summary>Destination size in bytes that <see cref="UnsafeWriteExtHeader"/> requires.</summary>
     public const int MaxExtHeaderLength = 6;
 
     // packed entry: len | header << 8
@@ -44,9 +57,9 @@ public static partial class MessagePackPrimitives
     const uint WI32 = 5 | ((uint)MessagePackCode.Int32 << 8);
     const uint WI64 = 9 | ((uint)MessagePackCode.Int64 << 8);
 
-    // index = ((value >>> 26) & 32) | significantBits(value ^ (value >> 31)); fixint rows
-    // (bits <= 7 positive / <= 5 negative) are unreachable behind the fixint fast path
-    // but hold the correct next-larger format for safety.
+    // index = ((value >>> 26) & 32) | significantBits(value ^ (value >> 31));
+    // fixint rows (bits <= 7 positive / <= 5 negative) are unreachable behind the fixint fast path but hold the correct
+    // next-larger format for safety.
     static ReadOnlySpan<uint> Int32Formats =>
     [
         // non-negative: bits 0..8 uint8, 9..16 uint16, 17..31 uint32
@@ -100,8 +113,8 @@ public static partial class MessagePackPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteInt32(ref byte destination, int value)
     {
-        // The hybrid approach (a branch of fixint) minimizes overall branching errors while ensuring high performance for small integers that occur frequently.
-        // Measurements show that this is the most well-balanced heuristic.
+        // The hybrid approach (a branch of fixint) minimizes overall branching errors while ensuring high performance
+        // for small integers that occur frequently. Measurements show that this is the most well-balanced heuristic.
 
         // fixint fast path: 0..127 positive, -32..-1 negative 
         if ((uint)(value + 32) <= 159)
@@ -144,7 +157,7 @@ public static partial class MessagePackPrimitives
             uint e = Unsafe.Add(ref MemoryMarshal.GetReference(Int64Formats), idx);
             int len = (int)(e & 0xff);
             destination = (byte)(e >> 8);
-            // len in {2,3,5,9}: shift in {56,48,32,0} — the fixint fast path removed len==1,
+            // len in {2,3,5,9}: shift in {56,48,32,0}, the fixint fast path removed len==1,
             // so the shift never reaches 64 (which C# would mask to 0)
             Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((ulong)value << ((9 - len) * 8)));
             return len;
@@ -163,12 +176,11 @@ public static partial class MessagePackPrimitives
         return WriteHeaderCore(ref destination, value, ref MemoryMarshal.GetReference(UInt32Formats));
     }
 
-    // shared branchless core for every wide 32-bit-value format: significant-bit count
-    // indexes a 33-entry table of {len, header}; one header store + one unconditional
-    // big-endian store (len in {2,3,5}: shift in {24,16,0}, scratch stays within the
-    // 5-byte window). Every caller's hybrid front filters out the fix-form range, so
-    // the tables hold no fix rows and no header needs value bits folded in (a former
-    // fix-mask fold here was dead on all paths — 3 ALU ops saved).
+    // shared branchless core for every wide 32-bit-value format: significant-bit count indexes a 33-entry table of
+    // {len, header}; one header store + one unconditional big-endian store (len in {2,3,5}: shift in {24,16,0},
+    // scratch stays within the 5-byte window). Every caller's hybrid front filters out the fix-form range,
+    // so the tables hold no fix rows and no header needs value bits folded in (a former fix-mask fold here was dead on
+    // all paths, 3 ALU ops saved).
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static int WriteHeaderCore(ref byte destination, uint value, ref uint table)
     {
@@ -243,9 +255,9 @@ public static partial class MessagePackPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteInt16(ref byte destination, short value)
     {
-        // same shape as UnsafeWriteInt32 (fixint front + Int32Formats core, index layout
-        // identical; short can never reach the len-5 rows) but the unconditional payload
-        // store narrows to 2 bytes, giving a 3-byte contract.
+        // same shape as UnsafeWriteInt32 (fixint front + Int32Formats core, index layout identical;
+        // short can never reach the len-5 rows) but the unconditional payload store narrows to 2 bytes,
+        // giving a 3-byte contract.
         int v = value;
         if ((uint)(v + 32) <= 159)
         {
@@ -291,11 +303,11 @@ public static partial class MessagePackPrimitives
 
     #region forced-width (WriteForced*)
 
-    // WriteForced* = always the named msgpack format regardless of value ("as int32"), unlike
-    // the smallest-format writers above. Fully branchless (header store + big-endian payload
-    // store), constant return, exact-size destination contract, no scratch bytes. Use cases:
-    // fixed-size slots that get patched later, stable layouts, and constant-time writes for
-    // unpredictable value distributions (trading output size for zero branches).
+    // WriteForced* = always the named msgpack format regardless of value ("as int32"),
+    // unlike the smallest-format writers above. Fully branchless (header store + big-endian payload store),
+    // constant return, exact-size destination contract, no scratch bytes.
+    // Use cases: fixed-size slots that get patched later, stable layouts,
+    // and constant-time writes for unpredictable value distributions (trading output size for zero branches).
 
     /// <summary>Writes value in the int8 format (0xd0). Destination must have 2 bytes. Returns 2.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -373,7 +385,7 @@ public static partial class MessagePackPrimitives
 
     #region fixed-length(Nil, Boolean, Single, Double)
 
-    /// <summary>Destination must have 1 byte.</summary>
+    /// <summary>Writes nil. Destination must have 1 byte.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteNil(ref byte destination)
     {
@@ -381,25 +393,22 @@ public static partial class MessagePackPrimitives
         return 1;
     }
 
-    /// <summary>Destination must have 1 byte.</summary>
+    /// <summary>Writes a boolean. Destination must have 1 byte.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteBoolean(ref byte destination, bool value)
     {
-        // simple implementation `value ? True : False` is slower:
-        // the asm generates `test je mov` (a real branch — if-conversion is disabled inside loops)
-        // measured 11.7x slower on random bools
+        // simple implementation `value ? True : False` is slower: the asm generates `test je mov` (a real branch,
+        // if-conversion is disabled inside loops) measured 11.7x slower on random bools
 
-        // MessagePack False is 1100_0010
-        // MessagePack True is  1100_0011
-        // .NET False is        0000_0000
-        // .NET True is         0000_0001
-        // `(uint)-raw >> 31` is normalize, so that any non-zero value (interop, etc) becomes 1, and 0 stays 0.
+        // MessagePack False is 1100_0010 MessagePack True is  1100_0011 .NET False is        0000_0000 .NET True is    
+        // 0000_0001 `(uint)-raw >> 31` is normalize, so that any non-zero value (interop, etc) becomes 1,
+        // and 0 stays 0.
         byte raw = Unsafe.BitCast<bool, byte>(value);
         destination = (byte)(MessagePackCode.False | ((uint)-raw >> 31));
         return 1;
     }
 
-    /// <summary>Destination must have 5 bytes.</summary>
+    /// <summary>Writes a float32. Destination must have 5 bytes.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteSingle(ref byte destination, float value)
     {
@@ -408,7 +417,7 @@ public static partial class MessagePackPrimitives
         return 5;
     }
 
-    /// <summary>Destination must have 9 bytes.</summary>
+    /// <summary>Writes a float64. Destination must have 9 bytes.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteDouble(ref byte destination, double value)
     {
@@ -435,7 +444,8 @@ public static partial class MessagePackPrimitives
 
     static ReadOnlySpan<uint> ArrayHeaderFormats =>
     [
-        // bits 0..4(count 0..15 = fixarray) is unreachable behind the fast path, but holds the correct next-larger format for safety
+        // bits 0..4(count 0..15 = fixarray) is unreachable behind the fast path,
+        // but holds the correct next-larger format for safety
         WA16, WA16, WA16, WA16, WA16,
         // bits 5..16 array16
         WA16, WA16, WA16, WA16, WA16, WA16, WA16, WA16, WA16, WA16, WA16, WA16,
@@ -445,7 +455,8 @@ public static partial class MessagePackPrimitives
 
     static ReadOnlySpan<uint> MapHeaderFormats =>
     [
-        // bits 0..4(count 0..15 = fixmap) is unreachable behind the fast path, but holds the correct next-larger format for safety
+        // bits 0..4(count 0..15 = fixmap) is unreachable behind the fast path,
+        // but holds the correct next-larger format for safety
         WM16, WM16, WM16, WM16, WM16,
         // bits 5..16 map16
         WM16, WM16, WM16, WM16, WM16, WM16, WM16, WM16, WM16, WM16, WM16, WM16,
@@ -455,7 +466,8 @@ public static partial class MessagePackPrimitives
 
     static ReadOnlySpan<uint> StringHeaderFormats =>
     [
-        // bits 0..5(byteCount 0..31 = fixstr) is unreachable behind the fast path, but holds the correct next-larger format for safety
+        // bits 0..5(byteCount 0..31 = fixstr) is unreachable behind the fast path,
+        // but holds the correct next-larger format for safety
         WS8, WS8, WS8, WS8, WS8, WS8,
         // bits 6..8 str8
         WS8, WS8, WS8,
@@ -475,17 +487,16 @@ public static partial class MessagePackPrimitives
         WB32, WB32, WB32, WB32, WB32, WB32, WB32, WB32, WB32, WB32, WB32, WB32, WB32, WB32, WB32, WB32,
     ];
 
-    // Hybrid front for the fix forms: collection counts and string lengths at a given call
-    // site are typically small and often constant (POCO formatters write a fixed field count),
-    // making this branch near-perfectly predictable — 1 compare + 1 store beats the table.
-    // Unpredictable count distributions fall into the flat branchless core, so the worst
-    // case stays bounded, same trade as the integer writers.
+    // Hybrid front for the fix forms: collection counts and string lengths at a given call site are typically small and
+    // often constant (POCO formatters write a fixed field count), making this branch near-perfectly predictable,
+    // 1 compare + 1 store beats the table. Unpredictable count distributions fall into the flat branchless core,
+    // so the worst case stays bounded, same trade as the integer writers.
 
     /// <summary>Writes an array header. Destination must have 5 bytes. count must be non-negative.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteArrayHeader(ref byte destination, int count)
     {
-        if ((uint)count <= MessagePackCode.MaxFixArrayCount)
+        if ((uint)count <= MessagePackRange.MaxFixArrayCount)
         {
             destination = (byte)(MessagePackCode.MinFixArray | count);
             return 1;
@@ -494,16 +505,13 @@ public static partial class MessagePackPrimitives
     }
 
     /// <summary>
-    /// Writes a fixarray header. Destination must have 1 byte. Unlike the other Unsafe
-    /// methods this also has a value contract: count must be 0..15, a violation silently
-    /// corrupts the stream. Intended for source-generated call sites where the count is a
-    /// compile-time constant; keeps the inlined IL to two instructions so huge generated
-    /// serializers don't burn JIT inliner budget on the general header body.
+    /// Writes a fixarray header. Destination must have 1 byte, and count must be 0..15; a violation silently corrupts the output.
+    /// Intended for generated code where the count is a compile-time constant.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteFixArrayHeader(ref byte destination, int count)
+    public static int UnsafeWriteFixArrayHeader(ref byte destination, [ConstantExpected(Min = 0, Max = 15)] int count)
     {
-        Debug.Assert((uint)count <= MessagePackCode.MaxFixArrayCount);
+        Debug.Assert((uint)count <= MessagePackRange.MaxFixArrayCount);
         destination = (byte)(MessagePackCode.MinFixArray | count);
         return 1;
     }
@@ -512,7 +520,7 @@ public static partial class MessagePackPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteMapHeader(ref byte destination, int count)
     {
-        if ((uint)count <= MessagePackCode.MaxFixMapCount)
+        if ((uint)count <= MessagePackRange.MaxFixMapCount)
         {
             destination = (byte)(MessagePackCode.MinFixMap | count);
             return 1;
@@ -520,15 +528,11 @@ public static partial class MessagePackPrimitives
         return WriteHeaderCore(ref destination, (uint)count, ref MemoryMarshal.GetReference(MapHeaderFormats));
     }
 
-    /// <summary>
-    /// Writes a fixmap header. Destination must have 1 byte. Same contract as
-    /// <see cref="UnsafeWriteFixArrayHeader"/>: count must be 0..15, caller-verified
-    /// (source-generated constant counts).
-    /// </summary>
+    /// <summary>Writes a fixmap header. Destination must have 1 byte, and count must be 0..15, as for <see cref="UnsafeWriteFixArrayHeader"/>.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int UnsafeWriteFixMapHeader(ref byte destination, int count)
+    public static int UnsafeWriteFixMapHeader(ref byte destination, [ConstantExpected(Min = 0, Max = 15)] int count)
     {
-        Debug.Assert((uint)count <= MessagePackCode.MaxFixMapCount);
+        Debug.Assert((uint)count <= MessagePackRange.MaxFixMapCount);
         destination = (byte)(MessagePackCode.MinFixMap | count);
         return 1;
     }
@@ -537,7 +541,7 @@ public static partial class MessagePackPrimitives
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteStringHeader(ref byte destination, int byteCount)
     {
-        if ((uint)byteCount <= MessagePackCode.MaxFixStringLength)
+        if ((uint)byteCount <= MessagePackRange.MaxFixStringLength)
         {
             destination = (byte)(MessagePackCode.MinFixStr | byteCount);
             return 1;
@@ -550,9 +554,9 @@ public static partial class MessagePackPrimitives
     public static int UnsafeWriteBinHeader(ref byte destination, int byteCount)
         => WriteHeaderCore(ref destination, (uint)byteCount, ref MemoryMarshal.GetReference(BinHeaderFormats));
 
-    // WriteForced*Header = always the named format regardless of count, same rule as the
-    // WriteForced* value writers. The primary use is fixed-size placeholder headers written
-    // before the count is known (sequences of unknown length) and patched afterwards.
+    // WriteForced*Header = always the named format regardless of count,
+    // same rule as the WriteForced* value writers. The primary use is fixed-size placeholder headers written before the
+    // count is known (sequences of unknown length) and patched afterwards.
 
     /// <summary>Writes an array32 header (0xdd). Destination must have 5 bytes. Returns 5. count must be non-negative.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -590,18 +594,18 @@ public static partial class MessagePackPrimitives
         return 5;
     }
 
-    /// <summary>
-    /// Writes a bin payload. Destination must have value.Length + 5 bytes.
-    /// INTERNAL ONLY: data-length-dependent Unsafe writers are not public API — a caller
-    /// sizing the destination from a second read of a mutable field (TOCTOU) turns into a
-    /// heap overflow. The safe entrances are buffer.WriteBinary (size and data derive from
-    /// the single span parameter) and TryWriteBinary (bounds-checked).
-    /// </summary>
+    // Writes a bin payload. Destination must have value.Length + 5 bytes. Internal only.
+    // Data-length-dependent Unsafe writers are not public API, because a caller sizing the destination from a second
+    // read of a mutable field (TOCTOU) turns into a heap overflow. The safe entrances are buffer.WriteBinary (size and
+    // data derive from the single span parameter) and TryWriteBinary (bounds-checked).
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int UnsafeWriteBinary(ref byte destination, ReadOnlySpan<byte> value)
     {
-        // bin header class is exact upfront (the length IS the byte count); the fast header's
-        // scratch bytes land in [1..5) and are overwritten by the payload copy right after
+        // bin header class is exact upfront (the length is the byte count);
+        // the fast header's scratch bytes land in [1..5) and are overwritten by the payload copy right after.
+        // Header-first is therefore load-bearing here, which is why value must not overlap destination
+        // (unlike the TryWrite twins, which copy first and accept overlap). Callers reach this through the
+        // writer's own reserved window, so the two never alias in practice.
         int headerSize = UnsafeWriteBinHeader(ref destination, value.Length);
 
 #if NETSTANDARD2_0
@@ -628,9 +632,9 @@ public static partial class MessagePackPrimitives
     const uint WF8 = 2 | ((uint)MessagePackCode.FixExt8 << 8);
     const uint WF16 = 2 | ((uint)MessagePackCode.FixExt16 << 8);
 
-    // idx 0..31 = significant bits of dataLength (non-fix forms), idx 32..37 = fix flag set:
-    // 32 is dataLength == 0 (passes the pow2-or-zero test, must stay ext8), 33..37 are
-    // fixext1/2/4/8/16 (bits = log2 + 1, and the FixExt codes are consecutive)
+    // idx 0..31 = significant bits of dataLength (non-fix forms), idx 32..37 = fix flag set: 32 is dataLength == 0
+    // (passes the pow2-or-zero test, must stay ext8), 33..37 are fixext1/2/4/8/16 (bits = log2 + 1,
+    // and the FixExt codes are consecutive)
     static ReadOnlySpan<uint> ExtHeaderFormats =>
     [
         // bits 0..8 ext8
@@ -646,21 +650,19 @@ public static partial class MessagePackPrimitives
     ];
 
     /// <summary>
-    /// Writes an ext header: fixext1/2/4/8/16 (2 bytes) when dataLength is exactly
-    /// 1/2/4/8/16, otherwise ext8/16/32 (3/4/6 bytes) — same format choice as
-    /// MessagePack-CSharp. Destination must have 6 bytes. dataLength must be non-negative.
+    /// Writes an ext header, as fixext when dataLength is exactly 1, 2, 4, 8 or 16 and as ext8, ext16 or ext32 otherwise, the same choice v3 makes.
+    /// Destination must have 6 bytes. dataLength must be non-negative.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteExtHeader(ref byte destination, sbyte typeCode, int dataLength)
     {
-        // Fully branchless (loop-counter-only asm, ExtTimestampWriteBenchmark): the fixext
-        // class test is an arithmetic flag folded into the table index, so every format
-        // class runs the same instruction path. Unlike the container headers, ext lengths
-        // have no dominant fix range to justify a hybrid front: the flat core is level
-        // ~1.13ns on every distribution, vs the cascade's 0.49ns predictable / 4.08ns
-        // mixed — same bounded-worst-case trade as the bin header.
+        // Fully branchless (loop-counter-only asm, ExtTimestampWriteBenchmark): the fixext class test is an arithmetic
+        // flag folded into the table index, so every format class runs the same instruction path.
+        // Unlike the container headers, ext lengths have no dominant fix range to justify a hybrid front: the flat core
+        // is level ~1.13ns on every distribution, vs the cascade's 0.49ns predictable / 4.08ns mixed,
+        // same bounded-worst-case trade as the bin header.
 
-        // fixMask == 0 iff dataLength in {0, 1, 2, 4, 8, 16}: pow2-or-zero AND below 32
+        // fixMask == 0 iff dataLength in {0, 1, 2, 4, 8, 16}: pow2-or-zero and below 32
         int fixMask = (dataLength & (dataLength - 1)) | (dataLength & ~31);
         int isFix = (int)((uint)(fixMask - 1) >> 31); // 1 when fixMask == 0
         int bits = 32 - BitOperations.LeadingZeroCount((uint)dataLength); // 0..31
@@ -668,9 +670,9 @@ public static partial class MessagePackPrimitives
         uint e = Unsafe.Add(ref MemoryMarshal.GetReference(ExtHeaderFormats), idx);
         int len = (int)(e & 0xff);
         destination = (byte)(e >> 8);
-        // len in {3,4,6}: shift in {24,16,0} puts the big-endian length right after the
-        // header; len == 2 (fixext) computes shift 32 -> masked to 0 by C#, but all four
-        // stored bytes are scratch there (typeCode overwrites offset 1 just below)
+        // len in {3,4,6}: shift in {24,16,0} puts the big-endian length right after the header;
+        // len == 2 (fixext) computes shift 32 -> masked to 0 by C#, but all four stored bytes are scratch there
+        // (typeCode overwrites offset 1 just below)
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 1), MessagePackEndian.ToBigEndian((uint)dataLength << ((6 - len) * 8)));
         Unsafe.Add(ref destination, len - 1) = unchecked((byte)typeCode);
         return len;
@@ -679,9 +681,7 @@ public static partial class MessagePackPrimitives
     const long BclSecondsAtUnixEpoch = 62135596800; // DateTime.UnixEpoch.Ticks / TicksPerSecond
     const int NanosecondsPerTick = 100;
 
-    /// <summary>
-    /// Writes a msgpack timestamp (ext type -1) in the smallest form. Destination must have 15 bytes.
-    /// </summary>
+    /// <summary>Writes a msgpack timestamp (ext type -1) in the smallest form. Destination must have 15 bytes.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteTimestamp(ref byte destination, DateTime value)
     {
@@ -699,11 +699,10 @@ public static partial class MessagePackPrimitives
         long nanoseconds = value.Ticks % TimeSpan.TicksPerSecond * NanosecondsPerTick;
 
         // timestamp32/64 collapse to one flat path (both are fixext with the same layout;
-        // 0xd6/0xd7 differ by 1 and the ts32 payload is data64's low u32 lifted to the high
-        // half for one unconditional 8-byte store) — the 32-vs-64 pick is per-value data
-        // (ns == 0 or not) and mispredicts hard as a branch: mixed-precision streams ran
-        // 5.08ns -> 2.13ns (ExtTimestampWriteBenchmark). Only timestamp96 branches; real
-        // data is essentially never pre-1970/post-2514, so that branch stays predicted.
+        // 0xd6/0xd7 differ by 1 and the ts32 payload is data64's low u32 lifted to the high half for one unconditional
+        // 8-byte store), the 32-vs-64 pick is per-value data (ns == 0 or not)
+        // and mispredicts hard as a branch: mixed-precision streams ran 5.08ns -> 2.13ns (ExtTimestampWriteBenchmark).
+        // Only timestamp96 branches; real data is essentially never pre-1970/post-2514, so that branch stays predicted.
 
         if ((ulong)seconds >> 34 == 0) // ts64 is 0(unix epoch) ~ 2^34(2514-05-30 01:53:04 UTC)
         {
@@ -711,8 +710,8 @@ public static partial class MessagePackPrimitives
             ulong data64 = (ulong)(nanoseconds << 34) | (ulong)seconds;
             ulong hi = data64 >> 32;
             int wide = (int)((hi | (0UL - hi)) >> 63); // 1 -> timestamp64 (data64 needs more than 4 bytes)
-            // one 2-byte store: [0xd6 + wide, 0xff] (no carry into the type byte); the
-            // packed literal depends on store byte order, so each endianness gets its own
+            // one 2-byte store: [0xd6 + wide, 0xff] (no carry into the type byte);
+            // the packed literal depends on store byte order, so each endianness gets its own
             Unsafe.WriteUnaligned(ref destination, BitConverter.IsLittleEndian
                 ? (ushort)(0xffd6 + (uint)wide)
                 : (ushort)(0xd6ff + ((uint)wide << 8)));
@@ -725,21 +724,19 @@ public static partial class MessagePackPrimitives
             return WriteTimestamp96(ref destination, seconds, nanoseconds);
         }
 
-        // cold (pre-1970/post-2514 only), out of line so the AggressiveInlining hot body
-        // stays a Kind check + constant div/mod + two stores at every call site
+        // cold (pre-1970/post-2514 only), out of line so the AggressiveInlining hot body stays a Kind check + constant
+        // div/mod + two stores at every call site
         [MethodImpl(MethodImplOptions.NoInlining)]
         static int WriteTimestamp96(ref byte destination, long seconds, long nanoseconds)
         {
-            // data96: [nanoseconds in 32-bit unsigned | seconds in 64-bit signed]
-            // one 8-byte store packs [Ext8][len 12][type -1][nanoseconds BE][scratch]
-            // (little-endian: low byte lands first); the seconds store at offset 7
-            // overwrites the scratch byte. The packed head depends on store byte order,
-            // so the big-endian arm writes the three header bytes individually (cold
-            // path, clarity over cleverness).
+            // data96: [nanoseconds in 32-bit unsigned | seconds in 64-bit signed] one 8-byte store packs [Ext8][len
+            // 12][type -1][nanoseconds BE][scratch] (little-endian: low byte lands first);
+            // the seconds store at offset 7 overwrites the scratch byte. The packed head depends on store byte order,
+            // so the big-endian arm writes the three header bytes individually (cold path, clarity over cleverness).
             if (BitConverter.IsLittleEndian)
             {
                 ulong head = MessagePackCode.Ext8 | (12u << 8)
-                    | ((uint)unchecked((byte)MessagePackCode.TimestampExtensionTypeCode) << 16)
+                    | ((uint)unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime) << 16)
                     | ((ulong)MessagePackEndian.ToBigEndian((uint)nanoseconds) << 24);
                 Unsafe.WriteUnaligned(ref destination, head);
             }
@@ -747,7 +744,7 @@ public static partial class MessagePackPrimitives
             {
                 destination = MessagePackCode.Ext8;
                 Unsafe.Add(ref destination, 1) = 12;
-                Unsafe.Add(ref destination, 2) = unchecked((byte)MessagePackCode.TimestampExtensionTypeCode);
+                Unsafe.Add(ref destination, 2) = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
                 Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 3), MessagePackEndian.ToBigEndian((uint)nanoseconds));
             }
             Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 7), MessagePackEndian.ToBigEndian(unchecked((ulong)seconds)));
@@ -759,18 +756,16 @@ public static partial class MessagePackPrimitives
 
     #region String
 
-    // above this length the O(1) worst-case bound 3n+5 no longer fits in int; the huge
-    // paths below switch to an exact GetByteCount walk so any string whose UTF-8 fits in
-    // a byte[] stays writable (instead of failing on an artificial worst-case limit)
+    // above this length the O(1) worst-case bound 3n+5 no longer fits in int;
+    // the huge paths below switch to an exact GetByteCount walk so any string whose UTF-8 fits in a byte[] stays
+    // writable (instead of failing on an artificial worst-case limit)
     const int MaxWorstCaseStringLength = (int.MaxValue - 5) / 3; // 715,827,880
 
+    // O(1) normally. For strings longer than 715,827,880 chars the worst-case bound overflows int,
+    // so this walks the string once (O(n)) for an exact count instead.
     /// <summary>
-    /// Destination size sufficient for UnsafeWriteString: largest header (5) + UTF-8 worst
-    /// case (3 bytes per char); 1 (nil) when null. O(1) normally; for strings longer
-    /// than 715,827,880 chars the worst-case bound overflows int, so this walks the
-    /// string once (O(n)) for an exact count instead. Throws
-    /// <see cref="OverflowException"/> / <see cref="ArgumentException"/> only when the
-    /// encoded bytes cannot fit in an array at all.
+    /// Destination size sufficient to write <paramref name="value"/> as a str, the largest header plus the UTF-8 worst case of 3 bytes per char, or 1 for null.
+    /// Throws <see cref="OverflowException"/> or <see cref="ArgumentException"/> only when the encoded bytes cannot fit in an array at all.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetMaxStringByteCount(string? value)
@@ -786,22 +781,19 @@ public static partial class MessagePackPrimitives
         }
         return length * 3 + 5;
 
-        // cold, out of line to keep the hot path within inlining budget. GetByteCount throws
-        // ArgumentException when the utf8 length itself exceeds int.MaxValue; checked catches
-        // the +5 wraparound just below that (a negative return would pass callers' capacity
-        // checks and turn into an out-of-bounds write inside UnsafeWriteString)
+        // cold, out of line to keep the hot path within inlining budget.
+        // GetByteCount throws ArgumentException when the utf8 length itself exceeds int.MaxValue;
+        // checked catches the +5 wraparound just below that (a negative return would pass callers' capacity checks and
+        // turn into an out-of-bounds write inside UnsafeWriteString)
         [MethodImpl(MethodImplOptions.NoInlining)]
         static int GetHugeStringByteCount(string value) => checked(Encoding.UTF8.GetByteCount(value) + 5);
     }
 
-    /// <summary>
-    /// Writes a string in the smallest msgpack str format (nil when null).
-    /// Destination must have GetMaxStringByteCount(value) bytes (utf8 worst case + largest header).
-    /// INTERNAL ONLY: sizing and writing from two separate reads of a mutable field (TOCTOU)
-    /// would overflow the reservation. The safe entrances — buffer.WriteString and
-    /// TryWriteString's worst-case fast path — reach this exact code with size and data
-    /// derived from one read of one parameter, so the speed is fully retained.
-    /// </summary>
+    // Writes a string in the smallest msgpack str format (nil when null).
+    // Destination must have GetMaxStringByteCount(value) bytes (utf8 worst case + largest header).
+    // Internal only. Sizing and writing from two separate reads of a mutable field (TOCTOU)
+    // would overflow the reservation. The safe entrances, buffer.WriteString and TryWriteString's worst-case fast path,
+    // reach this exact code with size and data derived from one read of one parameter, so the speed is fully retained.
     internal static int UnsafeWriteString(ref byte destination, string? value) // no inlining
     {
         if (value == null)
@@ -817,19 +809,18 @@ public static partial class MessagePackPrimitives
         }
 
         // Single pass, class-stability strategy: byteCount always lies in [length, 3*length],
-        // so wherever class(length) == class(3*length) the guessed header size is provably
-        // exact (L in [0..10], [32..85], [256..21845], [65536..]); in the straddle zones the
-        // guess is exact for ASCII (byteCount == length), and only non-ASCII near a class
-        // boundary pays a payload memmove — far cheaper than a second UTF8 walk (GetByteCount).
+        // so wherever class(length) == class(3*length) the guessed header size is provably exact (L in [0..10],
+        // [32..85], [256..21845], [65536..]); in the straddle zones the guess is exact for ASCII (byteCount == length),
+        // and only non-ASCII near a class boundary pays a payload memmove,
+        // far cheaper than a second UTF8 walk (GetByteCount).
         int headerSize = length <= 31 ? 1
                        : length <= 255 ? 2
                        : length <= 65535 ? 3
                        : 5;
 
-        // Utf8.FromUtf16 over Encoding.UTF8.GetBytes: both inline down to the same
-        // Utf8Utility.TranscodeToUtf8, but GetBytes pays a frozen Encoding.UTF8 load plus a
-        // pointer-diff/2 chain to recompute charsConsumed; FromUtf16's OperationStatus check
-        // is 2 instructions and charsRead is discarded (-0.3ns/op on short strings).
+        // Utf8.FromUtf16 over Encoding.UTF8.GetBytes: both inline down to the same Utf8Utility.TranscodeToUtf8,
+        // but GetBytes pays a frozen Encoding.UTF8 load plus a pointer-diff/2 chain to recompute charsConsumed;
+        // FromUtf16's OperationStatus check is 2 instructions and charsRead is discarded (-0.3ns/op on short strings).
         // Invalid surrogates replace with U+FFFD in both, so output is identical.
 #if NETSTANDARD2_0
         int byteCount;
@@ -867,10 +858,10 @@ public static partial class MessagePackPrimitives
 #endif
         }
 
-        // header written after the payload, so no scratch bytes allowed (unlike
-        // UnsafeWriteStringHeader, whose scratch would clobber the payload start): once per string.
-        // must switch on actualHeaderSize: when the guess missed, the payload was moved and
-        // the header class is the recomputed one
+        // header written after the payload, so no scratch bytes allowed (unlike UnsafeWriteStringHeader,
+        // whose scratch would clobber the payload start): once per string.
+        // must switch on actualHeaderSize: when the guess missed, the payload was moved and the header class is the
+        // recomputed one
         switch (actualHeaderSize)
         {
             case 1:
@@ -892,10 +883,10 @@ public static partial class MessagePackPrimitives
 
         return actualHeaderSize + byteCount;
 
-        // byteCount >= length > 65535 means always str32: the header is known upfront, so no
-        // speculation needed — one exact GetByteCount walk, then encode once at the final
-        // position. GetByteCount (replacement fallback) and FromUtf16 (replace: true) agree
-        // on U+FFFD for invalid surrogates, so the exact-size span is always filled exactly.
+        // byteCount >= length > 65535 means always str32: the header is known upfront, so no speculation needed,
+        // one exact GetByteCount walk, then encode once at the final position. GetByteCount (replacement fallback)
+        // and FromUtf16 (replace: true) agree on U+FFFD for invalid surrogates,
+        // so the exact-size span is always filled exactly.
         [MethodImpl(MethodImplOptions.NoInlining)]
         static int WriteHugeString(ref byte destination, string value)
         {
@@ -918,20 +909,17 @@ public static partial class MessagePackPrimitives
         }
     }
 
-    /// <summary>
-    /// Writes a str from already-encoded UTF-8 bytes (the fast path for cached property
-    /// names / u8 literals; the caller guarantees the bytes are valid UTF-8, they are
-    /// copied as-is). Destination must have utf8Value.Length + 5 bytes.
-    /// INTERNAL ONLY: see UnsafeWriteString(string?). Generated code writes constant keys
-    /// via UnsafeWriteRaw with the header pre-encoded into the blob instead.
-    /// </summary>
+    // Writes a str from already-encoded UTF-8 bytes (the fast path for cached property names and u8 literals;
+    // the caller guarantees the bytes are valid UTF-8, they are copied as-is).
+    // Destination must have utf8Value.Length + 5 bytes. Internal only, see UnsafeWriteString(string?).
+    // Generated code writes constant keys via UnsafeWriteRaw with the header pre-encoded into the blob instead.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int UnsafeWriteString(ref byte destination, ReadOnlySpan<byte> utf8Value)
     {
-        // unlike the string overload no speculation is needed: the length IS the byte
-        // count, so the header class is exact upfront (same shape as UnsafeWriteBinary);
-        // the fast header's scratch bytes land in [1..5) and are overwritten by the
-        // payload copy right after
+        // unlike the string overload no speculation is needed: the length is the byte count,
+        // so the header class is exact upfront (same shape as UnsafeWriteBinary);
+        // the fast header's scratch bytes land in [1..5) and are overwritten by the payload copy right after,
+        // so utf8Value must not overlap destination (see UnsafeWriteBinary)
         int headerSize = UnsafeWriteStringHeader(ref destination, utf8Value.Length);
 #if NETSTANDARD2_0
         if (utf8Value.Length > 0)
@@ -944,12 +932,11 @@ public static partial class MessagePackPrimitives
         return headerSize + utf8Value.Length;
     }
 
+    // Unlike the data-length-dependent Unsafe writers there is no second object the size could be computed from,
+    // since the span is both the data and the length, which is what makes this one safe to expose.
     /// <summary>
-    /// Copies pre-encoded msgpack bytes as-is (a raw memcpy; returns value.Length).
-    /// Destination must have value.Length bytes. Intended for compile-time-constant blobs
-    /// (e.g. generated string keys with the header pre-encoded): unlike the removed
-    /// data-length-dependent Unsafe writers there is no second object the size could be
-    /// computed from — the span IS both the data and the length.
+    /// Copies pre-encoded MessagePack bytes as they are and returns value.Length. Destination must have value.Length bytes.
+    /// Intended for compile-time constant blobs such as generated string keys with the header pre-encoded.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsafeWriteRaw(ref byte destination, ReadOnlySpan<byte> value)

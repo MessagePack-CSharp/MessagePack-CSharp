@@ -7,7 +7,7 @@
 // During Serialize, the batch buffer acquisition is not for the full amount but is split
 // by SerializeRegionElements, to avoid requesting an excessively large buffer
 
-#if NET
+#if NET9_0_OR_GREATER
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 #endif
@@ -33,7 +33,7 @@ internal interface IElementCodec<T> where T : unmanaged
 
 #region varint
 
-#if NET
+#if NET9_0_OR_GREATER
 // Shuffle tables for the wide (multi-byte token) SIMD tiers. Shape tables shared by every
 // family of the same token width carry a Token{3,5,9} prefix (token = [code][BE payload],
 // 3/5/9 bytes total); serialize tables are Weave*, decode tables are Decode*. Code
@@ -405,7 +405,7 @@ internal readonly struct Int32ElementCodec : IElementCodec<int>
             // by 2 bytes, which lands past the worst case when the block ends the region
             ref byte d = ref buffer.GetReference(((regionEnd - i) * MessagePackPrimitives.MaxInt32Length) + 2);
             int written = 0;
-#if NET
+#if NET9_0_OR_GREATER
             if (Vector512.IsHardwareAccelerated && Avx512F.IsSupported)
             {
                 while (regionEnd - i >= 16)
@@ -607,7 +607,7 @@ internal readonly struct Int32ElementCodec : IElementCodec<int>
         }
     }
 
-#if NET
+#if NET9_0_OR_GREATER
     /// <summary>
     /// 6 tokens from a vpermq-arranged vector (lane 0 = elements 0-3, lane 1 = 2-5):
     /// the shared float payload shuffle reverses into the payload slots, and a second
@@ -631,7 +631,7 @@ internal readonly struct Int32ElementCodec : IElementCodec<int>
         int count = destination.Length;
 
         int i = 0;
-#if NET
+#if NET9_0_OR_GREATER
         if (Vector128.IsHardwareAccelerated)
         {
             while (count - i >= 16)
@@ -718,8 +718,8 @@ internal readonly struct Int32ElementCodec : IElementCodec<int>
                         if (((ce | d2) & 0x2108421u) == 0x2108421u && (((ce & 0x2108421u) << 1) & msb) == 0)
                         {
                             var shuffled = Avx2.Shuffle(w, WeaveTables.Token5DecodeShuffle256);
-                            shuffled.GetLower().StoreUnsafe(ref Unsafe.As<int, byte>(ref dst), (nuint)(i * 4));
-                            shuffled.GetUpper().StoreUnsafe(ref Unsafe.As<int, byte>(ref dst), (nuint)((i * 4) + 12));
+                            shuffled.GetLower().StoreUnsafe(ref Unsafe.As<int, byte>(ref dst), (nuint)i * 4);
+                            shuffled.GetUpper().StoreUnsafe(ref Unsafe.As<int, byte>(ref dst), ((nuint)i * 4) + 12);
                             buffer.Advance(30);
                             i += 6;
                             continue;
@@ -735,7 +735,7 @@ internal readonly struct Int32ElementCodec : IElementCodec<int>
                         if (((ce | d2) & 0x421u) == 0x421u && (((ce & 0x421u) << 1) & msb) == 0)
                         {
                             Ssse3.Shuffle(w, WeaveTables.Token5DecodeShuffle128)
-                                .StoreUnsafe(ref Unsafe.As<int, byte>(ref dst), (nuint)(i * 4));
+                                .StoreUnsafe(ref Unsafe.As<int, byte>(ref dst), (nuint)i * 4);
                             buffer.Advance(15);
                             i += 3;
                             continue;
@@ -824,7 +824,7 @@ internal readonly struct SByteElementCodec : IElementCodec<sbyte>
             int regionEnd = i + Math.Min(length - i, SerializeRegionElements);
             ref byte d = ref buffer.GetReference((regionEnd - i) * MessagePackPrimitives.MaxInt8Length);
             int written = 0;
-#if NET
+#if NET9_0_OR_GREATER
             if (Vector128.IsHardwareAccelerated)
             {
                 // width cascade: probe the widest all-fixint run first; a mixed wide chunk
@@ -894,7 +894,7 @@ internal readonly struct SByteElementCodec : IElementCodec<sbyte>
         int count = destination.Length;
 
         int i = 0;
-#if NET
+#if NET9_0_OR_GREATER
         if (Vector128.IsHardwareAccelerated)
         {
             // same width cascade as the serialize side: widest all-fixint window first
@@ -952,6 +952,153 @@ internal readonly struct SByteElementCodec : IElementCodec<sbyte>
     }
 }
 
+/// <summary>
+/// byte element core (uint8 tokens). byte[] itself is bin-format, so this core serves only the
+/// byte-backed enum collections. A positive fixint token is the value byte itself, so a 16-lane
+/// run with every element &lt;= 0x7f copies verbatim in BOTH directions; runs containing uint8
+/// tokens (0xcc, 2 bytes) fall to the scalar ladder.
+/// </summary>
+internal readonly struct ByteElementCodec : IElementCodec<byte>
+{
+    internal const int SerializeRegionElements = 8192; // * 2B = 16KB
+
+    public void WriteElements<TWriteBuffer>(ref TWriteBuffer buffer, ReadOnlySpan<byte> source)
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        ref byte src = ref MemoryMarshal.GetReference(source);
+        int length = source.Length;
+
+        int i = 0;
+        while (i < length)
+        {
+            int regionEnd = i + Math.Min(length - i, SerializeRegionElements);
+            ref byte d = ref buffer.GetReference((regionEnd - i) * MessagePackPrimitives.MaxUInt8Length);
+            int written = 0;
+#if NET9_0_OR_GREATER
+            if (Vector128.IsHardwareAccelerated)
+            {
+                // same width cascade as SByteElementCodec; the gate is simpler because the
+                // fixint window is the unsigned range 0x00-0x7f: a passing run stores verbatim
+                while (regionEnd - i >= 16)
+                {
+                    if (Vector512.IsHardwareAccelerated && regionEnd - i >= 64)
+                    {
+                        var v64 = Vector512.LoadUnsafe(ref src, (nuint)i);
+                        if (Vector512.LessThanOrEqualAll(v64, Vector512.Create((byte)0x7f)))
+                        {
+                            v64.StoreUnsafe(ref Unsafe.Add(ref d, written));
+                            written += 64;
+                            i += 64;
+                            continue;
+                        }
+                    }
+                    if (Vector256.IsHardwareAccelerated && regionEnd - i >= 32)
+                    {
+                        var v32 = Vector256.LoadUnsafe(ref src, (nuint)i);
+                        if (Vector256.LessThanOrEqualAll(v32, Vector256.Create((byte)0x7f)))
+                        {
+                            v32.StoreUnsafe(ref Unsafe.Add(ref d, written));
+                            written += 32;
+                            i += 32;
+                            continue;
+                        }
+                    }
+                    var v = Vector128.LoadUnsafe(ref src, (nuint)i);
+                    if (Vector128.LessThanOrEqualAll(v, Vector128.Create((byte)0x7f)))
+                    {
+                        v.StoreUnsafe(ref Unsafe.Add(ref d, written));
+                        written += 16;
+                        i += 16;
+                    }
+                    else
+                    {
+                        // uint8 stragglers mixed in: scalar for these 16, then re-probe
+                        int end = i + 16;
+                        for (; i < end; i++)
+                        {
+                            written += MessagePackPrimitives.UnsafeWriteByte(ref Unsafe.Add(ref d, written), Unsafe.Add(ref src, i));
+                        }
+                    }
+                }
+            }
+#endif
+            for (; i < regionEnd; i++)
+            {
+                written += MessagePackPrimitives.UnsafeWriteByte(ref Unsafe.Add(ref d, written), Unsafe.Add(ref src, i));
+            }
+            buffer.Advance(written);
+        }
+    }
+
+    public void ReadElements<TReadBuffer>(ref TReadBuffer buffer, Span<byte> destination)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        ref byte dst = ref MemoryMarshal.GetReference(destination);
+        int count = destination.Length;
+
+        int i = 0;
+#if NET9_0_OR_GREATER
+        if (Vector128.IsHardwareAccelerated)
+        {
+            // widest all-positive-fixint window first; 16 fixint codes ARE the 16 byte values
+            while (count - i >= 16)
+            {
+                var window = buffer.GetCurrentSpan();
+                if (Vector512.IsHardwareAccelerated && count - i >= 64 && window.Length >= 64)
+                {
+                    var codes64 = Vector512.LoadUnsafe(ref MemoryMarshal.GetReference(window));
+                    if (Vector512.LessThanOrEqualAll(codes64, Vector512.Create((byte)0x7f)))
+                    {
+                        codes64.StoreUnsafe(ref dst, (nuint)i);
+                        buffer.Advance(64);
+                        i += 64;
+                        continue;
+                    }
+                }
+                if (Vector256.IsHardwareAccelerated && count - i >= 32 && window.Length >= 32)
+                {
+                    var codes32 = Vector256.LoadUnsafe(ref MemoryMarshal.GetReference(window));
+                    if (Vector256.LessThanOrEqualAll(codes32, Vector256.Create((byte)0x7f)))
+                    {
+                        codes32.StoreUnsafe(ref dst, (nuint)i);
+                        buffer.Advance(32);
+                        i += 32;
+                        continue;
+                    }
+                }
+                if (window.Length >= 16)
+                {
+                    var codes = Vector128.LoadUnsafe(ref MemoryMarshal.GetReference(window));
+                    if (Vector128.LessThanOrEqualAll(codes, Vector128.Create((byte)0x7f)))
+                    {
+                        codes.StoreUnsafe(ref dst, (nuint)i);
+                        buffer.Advance(16);
+                        i += 16;
+                        continue;
+                    }
+                }
+                // mixed chunk or short window: scalar for these 16, then try SIMD again
+                int end = i + 16;
+                for (; i < end; i++)
+                {
+                    Unsafe.Add(ref dst, i) = buffer.ReadByte();
+                }
+            }
+        }
+#endif
+        for (; i < count; i++)
+        {
+            Unsafe.Add(ref dst, i) = buffer.ReadByte();
+        }
+    }
+}
+
 /// <summary>int16 element core: region-reserved scalar ladder emit (see <see cref="Int32ElementCodec"/> for the region rationale).</summary>
 internal readonly struct Int16ElementCodec : IElementCodec<short>
 {
@@ -972,7 +1119,7 @@ internal readonly struct Int16ElementCodec : IElementCodec<short>
             int regionEnd = i + Math.Min(length - i, SerializeRegionElements);
             ref byte d = ref buffer.GetReference((regionEnd - i) * MessagePackPrimitives.MaxInt16Length);
             int written = 0;
-#if NET
+#if NET9_0_OR_GREATER
             if (Vector256.IsHardwareAccelerated)
             {
                 while (i + 16 <= regionEnd)
@@ -1096,7 +1243,7 @@ internal readonly struct Int16ElementCodec : IElementCodec<short>
         }
     }
 
-#if NET
+#if NET9_0_OR_GREATER
     static void EmitWide16(ref byte d, int written, ref short src, int i)
     {
         for (int t = 0; t < 16; t++)
@@ -1142,7 +1289,7 @@ internal readonly struct Int16ElementCodec : IElementCodec<short>
         int count = destination.Length;
 
         int i = 0;
-#if NET
+#if NET9_0_OR_GREATER
         if (Vector128.IsHardwareAccelerated)
         {
             while (i + 16 <= count)
@@ -1193,8 +1340,8 @@ internal readonly struct Int16ElementCodec : IElementCodec<short>
                         if (((cd | d1) & 0x9249249u) == 0x9249249u && (((cd & 0x9249249u) << 1) & msb) == 0)
                         {
                             var shuffled = Avx2.Shuffle(w, WeaveTables.Token3DecodeShuffle256);
-                            shuffled.GetLower().StoreUnsafe(ref Unsafe.As<short, byte>(ref dst), (nuint)(i * 2));
-                            shuffled.GetUpper().StoreUnsafe(ref Unsafe.As<short, byte>(ref dst), (nuint)((i * 2) + 10));
+                            shuffled.GetLower().StoreUnsafe(ref Unsafe.As<short, byte>(ref dst), (nuint)i * 2);
+                            shuffled.GetUpper().StoreUnsafe(ref Unsafe.As<short, byte>(ref dst), ((nuint)i * 2) + 10);
                             buffer.Advance(30);
                             i += 10;
                             continue;
@@ -1208,7 +1355,7 @@ internal readonly struct Int16ElementCodec : IElementCodec<short>
                         uint msb = w.ExtractMostSignificantBits();
                         if (((cd | d1) & 0x1249u) == 0x1249u && (((cd & 0x1249u) << 1) & msb) == 0)
                         {
-                            Ssse3.Shuffle(w, WeaveTables.Token3DecodeShuffle128).StoreUnsafe(ref Unsafe.As<short, byte>(ref dst), (nuint)(i * 2));
+                            Ssse3.Shuffle(w, WeaveTables.Token3DecodeShuffle128).StoreUnsafe(ref Unsafe.As<short, byte>(ref dst), (nuint)i * 2);
                             buffer.Advance(15);
                             i += 5;
                             continue;
@@ -1260,7 +1407,7 @@ internal readonly struct UInt16ElementCodec : IElementCodec<ushort>
             int regionEnd = i + Math.Min(length - i, SerializeRegionElements);
             ref byte d = ref buffer.GetReference((regionEnd - i) * MessagePackPrimitives.MaxUInt16Length);
             int written = 0;
-#if NET
+#if NET9_0_OR_GREATER
             if (Vector256.IsHardwareAccelerated)
             {
                 while (i + 16 <= regionEnd)
@@ -1361,7 +1508,7 @@ internal readonly struct UInt16ElementCodec : IElementCodec<ushort>
         }
     }
 
-#if NET
+#if NET9_0_OR_GREATER
     static void EmitWide16(ref byte d, int written, ref ushort src, int i)
     {
         for (int t = 0; t < 16; t++)
@@ -1399,7 +1546,7 @@ internal readonly struct UInt16ElementCodec : IElementCodec<ushort>
         int count = destination.Length;
 
         int i = 0;
-#if NET
+#if NET9_0_OR_GREATER
         if (Vector128.IsHardwareAccelerated)
         {
             while (i + 16 <= count)
@@ -1440,8 +1587,8 @@ internal readonly struct UInt16ElementCodec : IElementCodec<ushort>
                         if ((Vector256.Equals(w, Vector256.Create((byte)0xcd)).ExtractMostSignificantBits() & 0x9249249u) == 0x9249249u)
                         {
                             var shuffled = Avx2.Shuffle(w, WeaveTables.Token3DecodeShuffle256);
-                            shuffled.GetLower().StoreUnsafe(ref Unsafe.As<ushort, byte>(ref dst), (nuint)(i * 2));
-                            shuffled.GetUpper().StoreUnsafe(ref Unsafe.As<ushort, byte>(ref dst), (nuint)((i * 2) + 10));
+                            shuffled.GetLower().StoreUnsafe(ref Unsafe.As<ushort, byte>(ref dst), (nuint)i * 2);
+                            shuffled.GetUpper().StoreUnsafe(ref Unsafe.As<ushort, byte>(ref dst), ((nuint)i * 2) + 10);
                             buffer.Advance(30);
                             i += 10;
                             continue;
@@ -1452,7 +1599,7 @@ internal readonly struct UInt16ElementCodec : IElementCodec<ushort>
                         var w = Vector128.LoadUnsafe(ref MemoryMarshal.GetReference(window));
                         if ((Vector128.Equals(w, Vector128.Create((byte)0xcd)).ExtractMostSignificantBits() & 0x1249u) == 0x1249u)
                         {
-                            Ssse3.Shuffle(w, WeaveTables.Token3DecodeShuffle128).StoreUnsafe(ref Unsafe.As<ushort, byte>(ref dst), (nuint)(i * 2));
+                            Ssse3.Shuffle(w, WeaveTables.Token3DecodeShuffle128).StoreUnsafe(ref Unsafe.As<ushort, byte>(ref dst), (nuint)i * 2);
                             buffer.Advance(15);
                             i += 5;
                             continue;
@@ -1506,7 +1653,7 @@ internal readonly struct UInt32ElementCodec : IElementCodec<uint>
             // 2-byte store overhang at the region end
             ref byte d = ref buffer.GetReference(((regionEnd - i) * MessagePackPrimitives.MaxUInt32Length) + 2);
             int written = 0;
-#if NET
+#if NET9_0_OR_GREATER
             if (Vector512.IsHardwareAccelerated && Avx512F.IsSupported)
             {
                 while (i + 16 <= regionEnd)
@@ -1647,7 +1794,7 @@ internal readonly struct UInt32ElementCodec : IElementCodec<uint>
         }
     }
 
-#if NET
+#if NET9_0_OR_GREATER
     static void EmitWide16(ref byte d, int written, ref uint src, int i)
     {
         for (int t = 0; t < 16; t++)
@@ -1684,7 +1831,7 @@ internal readonly struct UInt32ElementCodec : IElementCodec<uint>
         int count = destination.Length;
 
         int i = 0;
-#if NET
+#if NET9_0_OR_GREATER
         if (Vector128.IsHardwareAccelerated)
         {
             while (i + 16 <= count)
@@ -1741,8 +1888,8 @@ internal readonly struct UInt32ElementCodec : IElementCodec<uint>
                         if ((Vector256.Equals(w, Vector256.Create(MessagePackCode.UInt32)).ExtractMostSignificantBits() & 0x2108421u) == 0x2108421u)
                         {
                             var shuffled = Avx2.Shuffle(w, WeaveTables.Token5DecodeShuffle256);
-                            shuffled.GetLower().StoreUnsafe(ref Unsafe.As<uint, byte>(ref dst), (nuint)(i * 4));
-                            shuffled.GetUpper().StoreUnsafe(ref Unsafe.As<uint, byte>(ref dst), (nuint)((i * 4) + 12));
+                            shuffled.GetLower().StoreUnsafe(ref Unsafe.As<uint, byte>(ref dst), (nuint)i * 4);
+                            shuffled.GetUpper().StoreUnsafe(ref Unsafe.As<uint, byte>(ref dst), ((nuint)i * 4) + 12);
                             buffer.Advance(30);
                             i += 6;
                             continue;
@@ -1754,7 +1901,7 @@ internal readonly struct UInt32ElementCodec : IElementCodec<uint>
                         if ((Vector128.Equals(w, Vector128.Create(MessagePackCode.UInt32)).ExtractMostSignificantBits() & 0x421u) == 0x421u)
                         {
                             Ssse3.Shuffle(w, WeaveTables.Token5DecodeShuffle128)
-                                .StoreUnsafe(ref Unsafe.As<uint, byte>(ref dst), (nuint)(i * 4));
+                                .StoreUnsafe(ref Unsafe.As<uint, byte>(ref dst), (nuint)i * 4);
                             buffer.Advance(15);
                             i += 3;
                             continue;
@@ -1810,7 +1957,7 @@ internal readonly struct Int64ElementCodec : IElementCodec<long>
             // 1 byte, which lands past the worst case when the block ends the region
             ref byte d = ref buffer.GetReference(((regionEnd - i) * MessagePackPrimitives.MaxInt64Length) + 1);
             int written = 0;
-#if NET
+#if NET9_0_OR_GREATER
             if (Vector512.IsHardwareAccelerated && Avx512F.IsSupported)
             {
                 while (i + 8 <= regionEnd)
@@ -1920,7 +2067,7 @@ internal readonly struct Int64ElementCodec : IElementCodec<long>
         }
     }
 
-#if NET
+#if NET9_0_OR_GREATER
     static void EmitWide8(ref byte d, int written, ref long src, int i)
     {
         for (int t = 0; t < 8; t++)
@@ -1978,7 +2125,7 @@ internal readonly struct Int64ElementCodec : IElementCodec<long>
         int count = destination.Length;
 
         int i = 0;
-#if NET
+#if NET9_0_OR_GREATER
         if (Vector128.IsHardwareAccelerated)
         {
             while (i + 8 <= count)
@@ -2039,7 +2186,7 @@ internal readonly struct Int64ElementCodec : IElementCodec<long>
                         {
                             var vB = Avx2.Permute4x64(w.AsUInt64(), 0b00_00_10_01).AsByte();
                             (Avx2.Shuffle(w, WeaveTables.Token9DecodeShuffleA256) | Avx2.Shuffle(vB, WeaveTables.Token9DecodeShuffleB256))
-                                .StoreUnsafe(ref Unsafe.As<long, byte>(ref dst), (nuint)(i * 8));
+                                .StoreUnsafe(ref Unsafe.As<long, byte>(ref dst), (nuint)i * 8);
                             buffer.Advance(27);
                             i += 3;
                             continue;
@@ -2095,7 +2242,7 @@ internal readonly struct UInt64ElementCodec : IElementCodec<ulong>
             // weave's 1-byte store overhang at the region end
             ref byte d = ref buffer.GetReference(((regionEnd - i) * MessagePackPrimitives.MaxUInt64Length) + 1);
             int written = 0;
-#if NET
+#if NET9_0_OR_GREATER
             if (Vector512.IsHardwareAccelerated && Avx512F.IsSupported)
             {
                 while (i + 8 <= regionEnd)
@@ -2189,7 +2336,7 @@ internal readonly struct UInt64ElementCodec : IElementCodec<ulong>
         }
     }
 
-#if NET
+#if NET9_0_OR_GREATER
     static void EmitWide8(ref byte d, int written, ref ulong src, int i)
     {
         for (int t = 0; t < 8; t++)
@@ -2235,7 +2382,7 @@ internal readonly struct UInt64ElementCodec : IElementCodec<ulong>
         int count = destination.Length;
 
         int i = 0;
-#if NET
+#if NET9_0_OR_GREATER
         if (Vector128.IsHardwareAccelerated)
         {
             while (i + 8 <= count)
@@ -2287,7 +2434,7 @@ internal readonly struct UInt64ElementCodec : IElementCodec<ulong>
                         {
                             var vB = Avx2.Permute4x64(w.AsUInt64(), 0b00_00_10_01).AsByte();
                             (Avx2.Shuffle(w, WeaveTables.Token9DecodeShuffleA256) | Avx2.Shuffle(vB, WeaveTables.Token9DecodeShuffleB256))
-                                .StoreUnsafe(ref Unsafe.As<ulong, byte>(ref dst), (nuint)(i * 8));
+                                .StoreUnsafe(ref Unsafe.As<ulong, byte>(ref dst), (nuint)i * 8);
                             buffer.Advance(27);
                             i += 3;
                             continue;
@@ -2341,7 +2488,7 @@ internal readonly struct SingleElementCodec : IElementCodec<float>
             int regionEnd = i + Math.Min(length - i, SerializeRegionElements);
             ref byte d = ref buffer.GetReference((regionEnd - i) * MessagePackPrimitives.MaxFloat32Length);
             int written = 0;
-#if NET
+#if NET9_0_OR_GREATER
             if (Vector512.IsHardwareAccelerated && Avx512Vbmi.IsSupported)
             {
                 // the guard needs 16 readable input floats but consumes 13, so the store
@@ -2432,7 +2579,7 @@ internal readonly struct SingleElementCodec : IElementCodec<float>
         int count = destination.Length;
 
         int i = 0;
-#if NET
+#if NET9_0_OR_GREATER
         if (Vector512.IsHardwareAccelerated && Avx512Vbmi.IsSupported)
         {
             while (count - i >= 16)
@@ -2476,8 +2623,8 @@ internal readonly struct SingleElementCodec : IElementCodec<float>
                     if ((Vector256.Equals(w, Vector256.Create(MessagePackCode.Float32)).ExtractMostSignificantBits() & 0x2108421u) == 0x2108421u)
                     {
                         var shuffled = Avx2.Shuffle(w, WeaveTables.Token5DecodeShuffle256);
-                        shuffled.GetLower().StoreUnsafe(ref Unsafe.As<float, byte>(ref dst), (nuint)(i * 4));
-                        shuffled.GetUpper().StoreUnsafe(ref Unsafe.As<float, byte>(ref dst), (nuint)((i * 4) + 12));
+                        shuffled.GetLower().StoreUnsafe(ref Unsafe.As<float, byte>(ref dst), (nuint)i * 4);
+                        shuffled.GetUpper().StoreUnsafe(ref Unsafe.As<float, byte>(ref dst), ((nuint)i * 4) + 12);
                         buffer.Advance(30);
                         i += 6;
                         continue;
@@ -2505,7 +2652,7 @@ internal readonly struct SingleElementCodec : IElementCodec<float>
                         var shuffled = Ssse3.IsSupported
                             ? Ssse3.Shuffle(w, WeaveTables.Token5DecodeShuffle128)
                             : Vector128.Shuffle(w, WeaveTables.Token5DecodeShuffle128Portable);
-                        shuffled.StoreUnsafe(ref Unsafe.As<float, byte>(ref dst), (nuint)(i * 4));
+                        shuffled.StoreUnsafe(ref Unsafe.As<float, byte>(ref dst), (nuint)i * 4);
                         buffer.Advance(15);
                         i += 3;
                         continue;
@@ -2583,7 +2730,7 @@ internal readonly struct DoubleElementCodec : IElementCodec<double>
             int regionEnd = i + Math.Min(length - i, SerializeRegionElements);
             ref byte d = ref buffer.GetReference((regionEnd - i) * MessagePackPrimitives.MaxFloat64Length);
             int written = 0;
-#if NET
+#if NET9_0_OR_GREATER
             if (Vector512.IsHardwareAccelerated && Avx512Vbmi.IsSupported)
             {
                 // 7 tokens per 64B store, 63B advance: the 64th byte lands in the next
@@ -2658,7 +2805,7 @@ internal readonly struct DoubleElementCodec : IElementCodec<double>
         int count = destination.Length;
 
         int i = 0;
-#if NET
+#if NET9_0_OR_GREATER
         if (Vector512.IsHardwareAccelerated && Avx512Vbmi.IsSupported)
         {
             // single-source gather: 7 tokens from a 64B window (see Token9DecodeValues512).
@@ -2704,7 +2851,7 @@ internal readonly struct DoubleElementCodec : IElementCodec<double>
                     {
                         var vB = Avx2.Permute4x64(w.AsUInt64(), 0b00_00_10_01).AsByte();
                         (Avx2.Shuffle(w, WeaveTables.Token9DecodeShuffleA256) | Avx2.Shuffle(vB, WeaveTables.Token9DecodeShuffleB256))
-                            .StoreUnsafe(ref Unsafe.As<double, byte>(ref dst), (nuint)(i * 8));
+                            .StoreUnsafe(ref Unsafe.As<double, byte>(ref dst), (nuint)i * 8);
                         buffer.Advance(27);
                         i += 3;
                         continue;
@@ -2731,7 +2878,7 @@ internal readonly struct DoubleElementCodec : IElementCodec<double>
                     var shuffled = Ssse3.IsSupported
                         ? Ssse3.Shuffle(w, WeaveTables.Token9DecodeShuffle128)
                         : Vector128.Shuffle(w, WeaveTables.Token9DecodeShuffle128Portable);
-                    shuffled.StoreUnsafe(ref Unsafe.As<double, byte>(ref dst), (nuint)(i * 8));
+                    shuffled.StoreUnsafe(ref Unsafe.As<double, byte>(ref dst), (nuint)i * 8);
                     buffer.Advance(9);
                     i += 1;
                     continue;
@@ -2813,7 +2960,7 @@ internal readonly struct BooleanElementCodec : IElementCodec<bool>
             int regionStart = i;
             int regionEnd = i + Math.Min(length - i, SerializeRegionElements);
             ref byte d = ref buffer.GetReference(regionEnd - i);
-#if NET
+#if NET9_0_OR_GREATER
             if (Vector128.IsHardwareAccelerated && regionEnd - regionStart >= 16)
             {
                 // Min(v, 1) => 0(false) = 0, others(true) is normalize, any non-zero value becomes 1, and 0 stays 0
@@ -2875,7 +3022,7 @@ internal readonly struct BooleanElementCodec : IElementCodec<bool>
         int count = destination.Length;
 
         int i = 0;
-#if NET
+#if NET9_0_OR_GREATER
         if (Vector128.IsHardwareAccelerated)
         {
             while (count - i >= 16)

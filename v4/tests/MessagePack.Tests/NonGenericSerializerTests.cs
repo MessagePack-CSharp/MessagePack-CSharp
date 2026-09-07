@@ -42,7 +42,7 @@ public class NonGenericSerializerTests
         var bytes = MessagePackSerializer.Serialize(typeof(string), (object?)null);
         Assert.Equal(MessagePackSerializer.Serialize<string?>(null), bytes);
 
-        Assert.Throws<ArgumentNullException>("options", () => MessagePackSerializer.Serialize(typeof(string), null));
+        Assert.Throws<ArgumentNullException>("options", () => MessagePackSerializer.Serialize(typeof(string), null!));
     }
 
     [Fact]

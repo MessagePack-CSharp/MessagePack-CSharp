@@ -5,12 +5,11 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace MessagePack.SourceGenerator.Analyzers;
 
 /// <summary>
-/// The generic CreateFormatter&lt;TWriteBuffer, TReadBuffer&gt; is a base-class virtual
-/// whose body bridges to the Type-based overload — that keeps downlevel-compiled
-/// factories loading, but a factory COMPILED against the modern surface has no reason
-/// to ride the bridge: forgetting the override is silent and costs direct construction
-/// (the Type-based path typically means reflection, which Native AOT cannot follow).
-/// MsgPack102 makes the omission visible.
+/// The generic CreateFormatter&lt;TWriteBuffer, TReadBuffer&gt; is a base-class virtual whose body bridges to the
+/// Type-based overload, that keeps downlevel-compiled factories loading,
+/// but a factory compiled against the modern surface has no reason to ride the bridge: forgetting the override is
+/// silent and costs direct construction (the Type-based path typically means reflection,
+/// which Native AOT cannot follow). MsgPack102 makes the omission visible.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class FactoryGenericOverrideAnalyzer : DiagnosticAnalyzer
@@ -41,9 +40,8 @@ public sealed class FactoryGenericOverrideAnalyzer : DiagnosticAnalyzer
                 return;
             }
 
-            // the generic member only EXISTS on the modern surface — its absence means
-            // this compilation is downlevel, where the Type-based member is the whole
-            // contract and there is nothing to override
+            // the generic member only exists on the modern surface, its absence means this compilation is downlevel,
+            // where the Type-based member is the whole contract and there is nothing to override
             IMethodSymbol? genericMember = null;
             foreach (var member in factoryInterface.GetMembers("CreateFormatter"))
             {
@@ -85,8 +83,8 @@ public sealed class FactoryGenericOverrideAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        // only the base's bridge body runs when nothing between the type and the factory
-        // base (other partials and generated parts included) overrides the virtual
+        // only the base's bridge body runs when nothing between the type and the factory base (other partials and
+        // generated parts included) overrides the virtual
         for (var current = type; current is not null && !SymbolEqualityComparer.Default.Equals(current, factoryBase); current = current.BaseType)
         {
             foreach (var member in current.GetMembers("CreateFormatter"))

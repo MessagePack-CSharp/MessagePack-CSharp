@@ -44,6 +44,8 @@ public class WritePrimitiveTests
     [Fact]
     public void FixHeaders_MatchOracle()
     {
+        // CA1857: the fix-header writers expect a constant count; the oracle sweep passes the loop variable on purpose
+#pragma warning disable CA1857
         for (int count = 0; count <= 15; count++)
         {
             var arrayOracle = OracleBytes((ref V3::MessagePack.MessagePackWriter w) => w.WriteArrayHeader(count));
@@ -54,6 +56,7 @@ public class WritePrimitiveTests
             var mapOurs = Ours(buf => MessagePackPrimitives.UnsafeWriteFixMapHeader(ref MemoryMarshal.GetArrayDataReference(buf), count));
             Assert.True(mapOracle.AsSpan().SequenceEqual(mapOurs), $"fixmap header mismatch count={count}");
         }
+#pragma warning restore CA1857
     }
 
     [Fact]

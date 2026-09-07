@@ -6,17 +6,14 @@ using Microsoft.CodeAnalysis.Operations;
 namespace MessagePack.SourceGenerator.Analyzers;
 
 /// <summary>
-/// string and DateTime are the two primitives whose wire behavior is resolver-configurable
-/// (StringInterningFormatter, DotNetOptimizedDateTimeFormatter's native format), so a
-/// formatter that calls buffer.WriteString(string)/ReadString()/WriteTimestamp/ReadTimestamp
-/// directly silently bypasses that configuration.
-/// For DateTime the bypass is a wire-compat bug (timestamp ext mixed into a graph the
-/// resolver serializes natively); for string it silently defeats interning.
-/// MsgPack104 steers hand-written formatters to the resolver-obtained formatter, the same route
-/// generated formatters always take.
-/// Protocol-structural writes (map keys, enum names, wire-representation strings of
-/// non-string types) stay legal through the UTF-8 span overload and the header APIs, which
-/// this rule deliberately does not match.
+/// string and DateTime are the two primitives whose wire behavior is resolver-configurable (StringInterningFormatter,
+/// DotNetOptimizedDateTimeFormatter's native format), so a formatter that calls
+/// buffer.WriteString(string)/ReadString()/WriteTimestamp/ReadTimestamp directly silently bypasses that configuration.
+/// For DateTime the bypass is a wire-compat bug (timestamp ext mixed into a graph the resolver serializes natively);
+/// for string it silently defeats interning. MsgPack104 steers hand-written formatters to the resolver-obtained
+/// formatter, the same route generated formatters always take. Protocol-structural writes (map keys,
+/// enum names, wire-representation strings of non-string types) stay legal through the UTF-8 span overload and the
+/// header APIs, which this rule deliberately does not match.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class CustomizablePrimitiveBypassAnalyzer : DiagnosticAnalyzer
@@ -60,8 +57,8 @@ public sealed class CustomizablePrimitiveBypassAnalyzer : DiagnosticAnalyzer
         var invocation = (IInvocationOperation)context.Operation;
         var method = invocation.TargetMethod;
 
-        // WriteString needs overload discrimination: the ReadOnlySpan<byte> overload is the
-        // sanctioned route for structural strings (map keys, enum names) and must stay silent
+        // WriteString needs overload discrimination: the ReadOnlySpan<byte> overload is the sanctioned route for
+        // structural strings (map keys, enum names) and must stay silent
         var valueTypeName = method.Name switch
         {
             "WriteString" when HasStringParameter(method) => "string",
@@ -75,8 +72,8 @@ public sealed class CustomizablePrimitiveBypassAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        // the extension members live in an extension block, so the invocation's method sits
-        // in a synthesized container nested in the static class; walk up to the named owner
+        // the extension members live in an extension block, so the invocation's method sits in a synthesized container
+        // nested in the static class; walk up to the named owner
         if (!IsDeclaredIn(method.ReducedFrom ?? method, writeExtensions, readExtensions))
         {
             return;
@@ -117,8 +114,8 @@ public sealed class CustomizablePrimitiveBypassAnalyzer : DiagnosticAnalyzer
 
     static bool IsInsideFormatter(ISymbol? containingSymbol, INamedTypeSymbol formatterInterface)
     {
-        // nested helper classes (member slots and the like) count as long as any enclosing
-        // type is a formatter: they serialize the formatter's values
+        // nested helper classes (member slots and the like) count as long as any enclosing type is a formatter: they
+        // serialize the formatter's values
         for (var type = containingSymbol?.ContainingType; type is not null; type = type.ContainingType)
         {
             foreach (var implemented in type.AllInterfaces)

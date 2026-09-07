@@ -1,9 +1,8 @@
-using System.Collections;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Text;
 using System.Buffers.Binary;
 using System.Buffers.Text;
+using System.Collections;
+using System.Globalization;
+using System.Text;
 
 namespace MessagePack.Formatters;
 
@@ -24,8 +23,8 @@ public sealed partial class DecimalFormatter<TWriteBuffer, TReadBuffer> : IMessa
     {
         // invariant decimal is at most 31 utf8 bytes (sign + 29 digits + point)
         // always fixstr, so the 1-byte header is known upfront and the digits are formatted straight into the buffer window.
-        var span = buffer.GetSpan(1 + MessagePackCode.MaxFixStringLength);
-        if (Utf8Formatter.TryFormat(value, span.Slice(1, MessagePackCode.MaxFixStringLength), out var written))
+        var span = buffer.GetSpan(1 + MessagePackRange.MaxFixStringLength);
+        if (Utf8Formatter.TryFormat(value, span.Slice(1, MessagePackRange.MaxFixStringLength), out var written))
         {
             span[0] = (byte)(MessagePackCode.MinFixStr | written);
             buffer.Advance(1 + written);
@@ -210,7 +209,7 @@ public sealed partial class VersionFormatter<TWriteBuffer, TReadBuffer> : IMessa
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Version? value)
     {
-#if NET
+#if NET9_0_OR_GREATER
         // Version is IUtf8SpanFormattable on net: format straight into the buffer window.
         // 4 int components + 3 dots = at most 43 bytes, so TryFormat cannot fail. The
         // header is 1 byte (fixstr) or 2 (str8) depending on the formatted length, so
@@ -220,7 +219,7 @@ public sealed partial class VersionFormatter<TWriteBuffer, TReadBuffer> : IMessa
         {
             var span = buffer.GetSpan(2 + 43);
             value.TryFormat(span.Slice(1, 43), out var written);
-            if (written <= MessagePackCode.MaxFixStringLength)
+            if (written <= MessagePackRange.MaxFixStringLength)
             {
                 span[0] = (byte)(MessagePackCode.MinFixStr | written);
                 buffer.Advance(1 + written);
@@ -239,7 +238,7 @@ public sealed partial class VersionFormatter<TWriteBuffer, TReadBuffer> : IMessa
 #endif
     }
 
-#if NET
+#if NET9_0_OR_GREATER
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Version? value)
     {
         // Version is IUtf8SpanParsable on net: parse the payload without the intermediate string
@@ -406,7 +405,7 @@ public sealed partial class TimeZoneInfoFormatter<TWriteBuffer, TReadBuffer> : I
     }
 }
 
-#if NET
+#if NET9_0_OR_GREATER
 
 /// <summary>
 /// Serializes <see cref="Index"/> as an int32: the value itself, or the from-end value

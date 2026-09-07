@@ -1,38 +1,34 @@
-#if NET
 namespace MessagePack;
 
+// Design notes:
+// Both conversions are instance members so the interface compiles on every target framework (no static abstract members),
+// and a constrained instance call on a struct is resolved and inlined even inside shared generic code,
+// whereas a static virtual call from a formatter instantiated over a class target needs a runtime dictionary lookup.
+// ToSurrogate is the creation direction, which no instance can own, so the formatter invokes it on default(TSurrogate).
+// Surrogates are structs by constraint. The conversion is a one-shot projection with a bounded copy count
+// (one per direction), so a struct costs a small memcpy where a class would cost an allocation per value,
+// and a value-type argument fully specializes the conversion calls.
+// A recursive target still works, because the surrogate references the target type in its members
+// (e.g. Node[]? Children) and resolution recurses through the registered surrogate formatter one level at a time.
+// Shapes the generator cannot register (generic surrogates, MsgPack019) compose SurrogateFormatterFactory into an explicit chain instead.
+
 /// <summary>
-/// Declares TSurrogate as the serialized stand-in for TTarget: the wire carries
-/// TSurrogate's shape, and the two static conversions bridge it to TTarget. This is the
-/// declarative alternative to a hand-written formatter for types whose natural shape
-/// cannot ride the wire directly (constructor-enforced invariants, third-party types,
-/// computed state): mark the surrogate itself [MessagePackObject] and implement this
-/// interface ON the surrogate (TSurrogate is the implementing type) — that implementation
-/// is the whole declaration, discovered by the source generator and auto-registered, so
-/// the target needs no attribute at all. Deserialization always flows through
-/// <see cref="FromSurrogate"/>, so the target's constructor validation stays in force.
+/// Declares <typeparamref name="TSurrogate"/> as the serialized stand-in for <typeparamref name="TTarget"/>,
+/// for types whose own shape cannot be serialized directly, such as third-party types or types with constructor-enforced invariants.
+/// Implement it on the surrogate, a struct marked with <see cref="MessagePackObjectAttribute"/>.
+/// The source generator discovers the implementation and registers a formatter for the target, which needs no attribute of its own.
 /// </summary>
-/// <remarks>
-/// Surrogates are STRUCTS by constraint: the conversion is a one-shot projection whose
-/// copy count is bounded (one per direction), so a struct costs a small memcpy where a
-/// class would cost an allocation per value plus shared-generics dictionary dispatch for
-/// the static abstract calls — and a value-type argument fully specializes the formatter
-/// instantiation. Nothing is lost: a RECURSIVE target still works, because the surrogate
-/// references the TARGET type in its members (e.g. Node[]? Children) and resolution
-/// recurses through the registered surrogate formatter one level at a time. Hand-write a
-/// formatter when even the one projection copy shows up in a profile.
-/// net10.0+ only (static abstract interface members): downlevel targets keep using
-/// hand-written formatters. Shapes the generator cannot register (generic surrogates,
-/// MsgPack019) compose <see cref="Formatters.SurrogateFormatterFactory{TTarget, TSurrogate}"/>
-/// into an explicit chain instead.
-/// </remarks>
+/// <typeparam name="TTarget">Type being serialized.</typeparam>
+/// <typeparam name="TSurrogate">Struct whose members form the serialized representation.</typeparam>
 public interface IMessagePackSurrogate<TTarget, TSurrogate>
     where TSurrogate : struct, IMessagePackSurrogate<TTarget, TSurrogate>
 {
-    /// <summary>Projects a (non-null) target value into its wire stand-in.</summary>
-    static abstract TSurrogate ToSurrogate(TTarget value);
+    /// <summary>
+    /// Converts a non-null target value into its surrogate.
+    /// Called on a default instance, so build the result from <paramref name="value"/> alone.
+    /// </summary>
+    TSurrogate ToSurrogate(TTarget value);
 
-    /// <summary>Reconstructs the target value from its wire stand-in.</summary>
-    static abstract TTarget FromSurrogate(TSurrogate surrogate);
+    /// <summary>Reconstructs the target value from this deserialized surrogate.</summary>
+    TTarget ToTarget();
 }
-#endif

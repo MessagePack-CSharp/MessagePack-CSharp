@@ -1,0 +1,16 @@
+<Project>
+
+	<!-- Every shipped assembly is strong-name signed with the key v3 used (opensource.snk, PublicKeyToken b4a0369545f0a1be).
+	     This is a contract on the assembly identity, not a formality. Assemblies built against v3 reference
+	     "MessagePack, PublicKeyToken=b4a0369545f0a1be" and "MessagePack.Annotations, PublicKeyToken=b4a0369545f0a1be",
+	     and the runtime binds only to an assembly carrying that public key. An unsigned build was verified to fail
+	     with FileNotFoundException at the first custom-attribute load of a v3-built type. -->
+	<PropertyGroup>
+		<SignAssembly>true</SignAssembly>
+		<AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\opensource.snk</AssemblyOriginatorKeyFile>
+		<!-- The full public key, for InternalsVisibleTo. A signed assembly may only befriend signed assemblies,
+		     named together with their public key, and the friend projects sign with the same file. -->
+		<MessagePackPublicKey>0024000004800000940000000602000000240000525341310004000001000100293894d4e8ad2b53afbea4e949ef54c2a388b08b5ebd143c811da82f22aa20c839ed1c0b4da83e7195e8c1dbe1bf3934e4e8fd7fb93f893439106fbf055a97c7fac0f7f8c39e58e78371dc0e3825e5b9d7e2afff0372f03c4d67ff7df0dbfb58dcadeb1044840de152bf8270de7fc54255ace8efd026c16311760d1a2570c3e8</MessagePackPublicKey>
+	</PropertyGroup>
+
+</Project>

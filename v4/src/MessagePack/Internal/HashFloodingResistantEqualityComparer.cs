@@ -4,10 +4,9 @@ using System.Security.Cryptography;
 namespace MessagePack;
 
 /// <summary>
-/// Supplies hash-flooding-resistant <see cref="IEqualityComparer{T}"/> instances for
-/// hash-based collections (<c>Dictionary&lt;TKey,&gt;</c> / <c>HashSet&lt;T&gt;</c>) built
-/// during deserialization, so that adversarial payloads cannot force O(n²) bucket collisions.
-/// Hashing is SipHash-1-3 (the Rust/Ruby/Python std HashMap variant) keyed with a per-process random 128-bit key.
+/// Supplies hash-flooding-resistant <see cref="IEqualityComparer{T}"/> instances for the hash-based collections built during deserialization,
+/// so that adversarial payloads cannot force quadratic bucket collisions.
+/// Hashing is SipHash-1-3, the variant Rust, Ruby and Python use, keyed with a per-process random 128-bit key.
 /// </summary>
 internal static class HashFloodingResistantEqualityComparer
 {
@@ -18,7 +17,7 @@ internal static class HashFloodingResistantEqualityComparer
     static HashFloodingResistantEqualityComparer()
     {
         var key = new byte[16];
-#if NET
+#if NET9_0_OR_GREATER
         RandomNumberGenerator.Fill(key);
 #else
         using var rng = RandomNumberGenerator.Create();
@@ -29,9 +28,8 @@ internal static class HashFloodingResistantEqualityComparer
     }
 
     /// <summary>
-    /// The hash-flooding-resistant comparer for <typeparamref name="T"/>, or
-    /// <see langword="null"/> when <typeparamref name="T"/> is outside the supported set
-    /// (callers pass null through, keeping the collection's default comparer).
+    /// The hash-flooding-resistant comparer for <typeparamref name="T"/>, or null when the type is outside the supported set.
+    /// Callers pass null through, keeping the collection's default comparer.
     /// </summary>
     public static IEqualityComparer<T>? Get<T>() => Cache<T>.Instance;
 
@@ -75,16 +73,15 @@ internal static class HashFloodingResistantEqualityComparer
 
             if (t == typeof(object)) return (IEqualityComparer<T>)(object)ObjectFallbackHashComparer.Instance;
 
-#if !NET
-            // Modern .NET's Dictionary<string,V> with a null comparer already defends HashDoS by itself.
-            // (non-randomized fast hash, swapped for randomized Marvin once a bucket chain passes the collision threshold)
+#if !NET9_0_OR_GREATER
+            // Modern .NET's Dictionary<string,V> with a null comparer already defends HashDoS by itself
+            // (a non-randomized fast hash, swapped for randomized Marvin once a bucket chain passes the collision threshold).
             if (t == typeof(string)) return (IEqualityComparer<T>)(object)StringHashComparer.Instance;
 #endif
 
-            // Only built-in types are covered, not custom user types and so on.
-            // Since such types are unlikely to be used as keys, and the difficulty of an attack is different
-            // (Hash.Combine uses xxHash32 and is not HashDoS resistant, but it is still different from int and similar types),
-            // the serializer probably does not need to take responsibility for that part.
+            // Only built-in types are covered, not user types. Such types are unlikely to be used as keys, and the
+            // difficulty of an attack is different (HashCode.Combine uses xxHash32 and is not HashDoS resistant, but it is
+            // still different from int and similar types), so the serializer does not take responsibility for that part.
             return null;
         }
     }
@@ -249,8 +246,8 @@ sealed class ObjectFallbackHashComparer : IEqualityComparer<object>
     {
         return value switch
         {
-            // string cannot use Get<string>() (null = pass-through on NET)
-            // object keys must never pass through, the attacker picks the runtime type
+            // string cannot use Get<string>(), which is null (pass-through) on modern .NET, and object keys must never
+            // pass through, because the attacker picks the runtime type
             string v => StringHashComparer.Instance.GetHashCode(v),
             int v => HashVia(v),
             long v => HashVia(v),

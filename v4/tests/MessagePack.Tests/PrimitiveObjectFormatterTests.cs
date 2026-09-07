@@ -7,9 +7,10 @@ using Oracle = V3::MessagePack.MessagePackSerializer;
 namespace MessagePack.Tests;
 
 // object handling (PrimitiveObjectFormatter) and the non-generic collection world.
-// The oracle is v3 with PrimitiveObjectResolver composed FIRST — the exact configuration
-// this design mirrors (StandardResolver alone routes object through
-// DynamicObjectTypeFallback, which is a different beast).
+// The oracle is v3 with PrimitiveObjectResolver composed FIRST — the mini-protocol these
+// tests pin. (Since ObjectFallbackFormatter landed, the DEFAULT chain routes object
+// through runtime-type dispatch like v3's StandardResolver — ObjectFallbackTests covers
+// that layer; the scalar/mini-protocol behavior asserted here is shared by both.)
 public class PrimitiveObjectFormatterTests
 {
     static V3::MessagePack.MessagePackSerializerOptions OracleOptions { get; } =
@@ -133,10 +134,17 @@ public class PrimitiveObjectFormatterTests
     }
 
     [Fact]
-    public void UnsupportedRuntimeType_Throws()
+    public void FallbackRuntimeType_RidesTypedFormatter()
     {
+        // a boxed Uri leaves the mini-protocol and rides the object fallback to its typed
+        // formatter (v3 behavior); only the AOT chains keep the closed-table throw
+        var uri = new Uri("https://example.com");
+        Assert.Equal(
+            Oracle.Serialize<object>(uri, V3::MessagePack.MessagePackSerializerOptions.Standard),
+            MessagePackSerializer.Serialize<object>(uri));
+
         Assert.Throws<MessagePackSerializationException>(
-            () => MessagePackSerializer.Serialize<object>(new Uri("https://example.com")));
+            () => MessagePackSerializer.Serialize<object>(uri, MessagePackSerializerOptions.DefaultAot));
     }
 
     [Fact]

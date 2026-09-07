@@ -95,6 +95,24 @@ public class MessagePackSerializationException : Exception
     internal static Exception ThrowDuplicateMapKey() => throw new MessagePackSerializationException("The map in the payload defines the same key more than once");
 
     [DoesNotReturn]
+    internal static Exception ThrowNullMapKey() => throw new MessagePackSerializationException("The map in the payload contains a nil key, which the target dictionary cannot store");
+
+    // Guards a dictionary key read from the payload before it reaches the collection.
+    // For value-type TKey the null test folds to a constant false and the whole call is
+    // elided, so this is free on the common numeric-key path; only reference-type keys
+    // (string, records) pay a predicted null-check per entry. A nil key would otherwise
+    // surface as a raw ArgumentNullException from the dictionary, breaking the contract
+    // that every malformed payload throws MessagePackSerializationException.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static void ThrowIfNullMapKey<TKey>(TKey key)
+    {
+        if (key is null)
+        {
+            ThrowNullMapKey();
+        }
+    }
+
+    [DoesNotReturn]
     internal static Exception ThrowMissingRequiredMember(string? typeName, string memberName) => throw new MessagePackSerializationException($"Required member '{memberName}' of '{typeName}' is missing from the payload (required member validation, MessagePackFormatterResolver validateRequiredMembers, on by default)");
 
     [DoesNotReturn]

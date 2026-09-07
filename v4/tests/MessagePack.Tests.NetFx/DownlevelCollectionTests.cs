@@ -2,7 +2,7 @@ using MessagePack;
 
 namespace MessagePack.Tests.NetFx;
 
-// Executes the collection formatters' downlevel branches (#if !NET: indexer-based List
+// Executes the collection formatters' downlevel branches (#if !NET9_0_OR_GREATER: indexer-based List
 // populate, Add-loop fresh path) on the netstandard2.0 asset via .NET Framework 4.8.
 // The main net10-only test project compiles these branches but never runs them.
 public class DownlevelCollectionTests

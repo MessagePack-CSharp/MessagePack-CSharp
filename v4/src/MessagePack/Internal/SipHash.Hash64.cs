@@ -62,16 +62,13 @@ internal static partial class SipHash
         return v0 ^ v1 ^ v2 ^ v3;
     }
 
-    /// <summary>
-    /// <see cref="Hash64"/> specialized for fixed-size keys of at most 8 bytes: the value
-    /// (little-endian) either fits the length-tagged final block outright (length &lt; 8;
-    /// unused upper bytes are masked off, so garbage or sign extension in them cannot
-    /// change the hash) or is exactly one compression block with an empty tail
-    /// (length == 8), so there is no span, no block loop, and no tail switch. ~30% faster
-    /// than the span path per Dictionary insert. Callers pass a JIT-constant
-    /// <paramref name="length"/> (Unsafe.SizeOf), which folds the branch and mask away
-    /// into constants.
-    /// </summary>
+    // The little-endian value either fits the length-tagged final block outright (length < 8, where unused upper bytes
+    // are masked off so garbage or sign extension in them cannot change the hash) or is exactly one compression block
+    // with an empty tail (length == 8), so there is no span, no block loop and no tail switch. About 30% faster than
+    // the span path per Dictionary insert. Callers pass a JIT-constant length (Unsafe.SizeOf), which folds the branch
+    // and mask away into constants.
+
+    /// <summary><see cref="Hash64"/> specialized for fixed-size keys of at most 8 bytes, bit-identical to hashing their little-endian bytes.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static ulong Hash64Fixed(ulong littleEndianBits, int length, ulong k0, ulong k1)
     {
@@ -110,12 +107,9 @@ internal static partial class SipHash
         return v0 ^ v1 ^ v2 ^ v3;
     }
 
-    /// <summary>
-    /// <see cref="Hash64"/> specialized for exactly-16-byte keys (Guid): two compression
-    /// blocks plus the empty length-tagged tail, all in registers — no span, no block
-    /// loop, no tail switch. Bit-identical to <c>Hash64(LE bytes, k0, k1)</c> for the
-    /// same 16 bytes (bits0 = bytes 0..7, bits1 = bytes 8..15, little-endian).
-    /// </summary>
+    // Two compression blocks plus the empty length-tagged tail, all in registers, with no span, no block loop and no tail switch.
+
+    /// <summary><see cref="Hash64"/> specialized for 16-byte keys such as Guid, bit-identical to hashing their little-endian bytes (bits0 = bytes 0..7, bits1 = bytes 8..15).</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static ulong Hash64Fixed16(ulong bits0, ulong bits1, ulong k0, ulong k1)
     {

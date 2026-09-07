@@ -182,6 +182,74 @@ public class RequireOverrideAnalyzerTest
     }
 
     [Fact]
+    public async Task IntermediateOverrideReappliesAttribute_ReportsOnLeaf()
+    {
+        // the attribute is not inherited, so an intermediate override that marks itself
+        // re-imposes the requirement on its own leaves; the base's original is satisfied
+        // by the intermediate override, so exactly one diagnostic (for the intermediate's) lands
+        const string source = """
+            public abstract class Intermediate : MessagePack.MessageProcessor
+            {
+                [SerializerFoundation.CodeAnalysis.RequireOverride]
+                public override bool TryEncode<TWriteBuffer>(int message, ref TWriteBuffer output)
+                {
+                    return false;
+                }
+            }
+
+            public sealed class Leaf : Intermediate
+            {
+                public override bool TryEncode(int output)
+                {
+                    return false;
+                }
+            }
+
+            public sealed class OverridingLeaf : Intermediate
+            {
+                public override bool TryEncode(int output)
+                {
+                    return false;
+                }
+
+                public override bool TryEncode<TWriteBuffer>(int message, ref TWriteBuffer output)
+                {
+                    return true;
+                }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source, modernCore: true);
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Contains("'Leaf'", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task SealedIntermediateOverrideWithAttribute_Silent()
+    {
+        // a sealed override cannot be overridden, so an attribute on it requires nothing
+        const string source = """
+            public abstract class Intermediate : MessagePack.MessageProcessor
+            {
+                [SerializerFoundation.CodeAnalysis.RequireOverride]
+                public sealed override bool TryEncode<TWriteBuffer>(int message, ref TWriteBuffer output)
+                {
+                    return false;
+                }
+            }
+
+            public sealed class Leaf : Intermediate
+            {
+                public override bool TryEncode(int output)
+                {
+                    return false;
+                }
+            }
+            """;
+        var diagnostics = await RunAnalyzerAsync(source, modernCore: true);
+        Assert.Empty(diagnostics);
+    }
+
+    [Fact]
     public async Task DownlevelSurface_Silent()
     {
         // the member (and the attribute type itself) do not exist downlevel: nothing to require

@@ -10,7 +10,7 @@ public class HashFloodingResistantEqualityComparerTests
 
     struct CustomKey : IEquatable<CustomKey>
     {
-        public int Value;
+        public int Value { get; init; }
         public bool Equals(CustomKey other) => Value == other.Value;
     }
 

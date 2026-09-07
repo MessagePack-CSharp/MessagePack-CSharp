@@ -38,6 +38,26 @@ public class DictionaryFamilyFormatterTests
         AssertOracleAndRoundtrip<IReadOnlyDictionary<int, string>>(NewSource());
     }
 
+    // A nil key in the payload of a reference-key dictionary is a data error: it must
+    // surface as MessagePackSerializationException, not the raw ArgumentNullException the
+    // underlying Dictionary/indexer would throw (found by MessagePack.Tests.Robustness; the
+    // sibling collection/object formatters already wrapped this, the Dictionary family
+    // did not). Covers every formatter in the family plus the string-key interface views.
+    [Fact]
+    public void NilKey_ThrowsSerializationException()
+    {
+        // map(1) { nil: 1 }
+        byte[] nilKeyMap = [0x81, 0xc0, 0x01];
+
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<Dictionary<string, int>>(nilKeyMap));
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<SortedList<string, int>>(nilKeyMap));
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<SortedDictionary<string, int>>(nilKeyMap));
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<ReadOnlyDictionary<string, int>>(nilKeyMap));
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<ConcurrentDictionary<string, int>>(nilKeyMap));
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<IDictionary<string, int>>(nilKeyMap));
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<IReadOnlyDictionary<string, int>>(nilKeyMap));
+    }
+
     [Fact]
     public void Nulls_Roundtrip()
     {

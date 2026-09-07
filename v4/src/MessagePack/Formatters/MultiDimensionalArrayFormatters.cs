@@ -1,13 +1,37 @@
 // v3-parity multi-dimensional arrays: a (rank+1)-element outer array holding each
-// dimension length followed by the flat element array in row-major order —
+// dimension length followed by the flat element array in row-major order
 // T[,]   → [len0, len1, [elements]]
 // T[,,]  → [len0, len1, len2, [elements]]
 // T[,,,] → [len0, len1, len2, len3, [elements]]
-// Rank > 4 stays unsupported (v3-parity). The element-array header is bomb-guarded by
-// ReadArrayHeader and must equal the checked product of the dimension lengths, so the
-// multi-dim allocation is always bounded by actual payload bytes.
 
 namespace MessagePack.Formatters;
+
+// The element count must equal the product of the dimension lengths.
+static class DimensionProduct
+{
+    static bool Matches(int count, ReadOnlySpan<int> lengths)
+    {
+        long product = 1;
+        foreach (var length in lengths)
+        {
+            product *= length;
+            if (product > int.MaxValue)
+            {
+                return false;
+            }
+        }
+        return count == product;
+    }
+
+    public static bool Matches(int count, int len0, int len1)
+        => Matches(count, [len0, len1]);
+
+    public static bool Matches(int count, int len0, int len1, int len2)
+        => Matches(count, [len0, len1, len2]);
+
+    public static bool Matches(int count, int len0, int len1, int len2, int len3)
+        => Matches(count, [len0, len1, len2, len3]);
+}
 
 public sealed partial class TwoDimensionalArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T[,]?>
 {
@@ -65,7 +89,7 @@ public sealed partial class TwoDimensionalArrayFormatter<TWriteBuffer, TReadBuff
         var len0 = buffer.ReadInt32();
         var len1 = buffer.ReadInt32();
         var count = buffer.ReadArrayHeader(); // bomb-guarded against BytesRemaining
-        if (len0 < 0 || len1 < 0 || count != checked(len0 * len1))
+        if (len0 < 0 || len1 < 0 || !DimensionProduct.Matches(count, len0, len1))
         {
             throw new MessagePackSerializationException($"Invalid T[,] format: {len0}x{len1} does not match {count} elements.");
         }
@@ -173,7 +197,7 @@ public sealed partial class ThreeDimensionalArrayFormatter<TWriteBuffer, TReadBu
         var len1 = buffer.ReadInt32();
         var len2 = buffer.ReadInt32();
         var count = buffer.ReadArrayHeader();
-        if (len0 < 0 || len1 < 0 || len2 < 0 || count != checked(len0 * len1 * len2))
+        if (len0 < 0 || len1 < 0 || len2 < 0 || !DimensionProduct.Matches(count, len0, len1, len2))
         {
             throw new MessagePackSerializationException($"Invalid T[,,] format: {len0}x{len1}x{len2} does not match {count} elements.");
         }
@@ -287,7 +311,7 @@ public sealed partial class FourDimensionalArrayFormatter<TWriteBuffer, TReadBuf
         var len2 = buffer.ReadInt32();
         var len3 = buffer.ReadInt32();
         var count = buffer.ReadArrayHeader();
-        if (len0 < 0 || len1 < 0 || len2 < 0 || len3 < 0 || count != checked(len0 * len1 * len2 * len3))
+        if (len0 < 0 || len1 < 0 || len2 < 0 || len3 < 0 || !DimensionProduct.Matches(count, len0, len1, len2, len3))
         {
             throw new MessagePackSerializationException($"Invalid T[,,,] format: {len0}x{len1}x{len2}x{len3} does not match {count} elements.");
         }

@@ -1,6 +1,5 @@
 using System.Buffers.Binary;
 using System.Numerics;
-using SerializerFoundation;
 using static MessagePack.MessagePackPrimitives;
 
 namespace MessagePack.Formatters;
@@ -493,7 +492,7 @@ public sealed partial class Matrix4x4Formatter<TWriteBuffer, TReadBuffer> : IMes
     }
 }
 
-#if NET
+#if NET9_0_OR_GREATER
 /// <summary>Serializes <see cref="System.Runtime.InteropServices.NFloat"/> as a float64 — a lossless widening on every platform (a 32-bit reader narrows on assignment, as the platform itself would).</summary>
 public sealed partial class NFloatFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, System.Runtime.InteropServices.NFloat>
 {
@@ -646,9 +645,11 @@ public sealed class ComplexFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePac
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Complex<T> value)
     {
+        state.Enter(); // descends into the resolver's T formatter, so this is a nesting level
         buffer.WriteFixArrayHeader(2);
         componentFormatter.Serialize(ref buffer, ref state, value.Real);
         componentFormatter.Serialize(ref buffer, ref state, value.Imaginary);
+        state.Exit();
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Complex<T> value)
@@ -657,10 +658,12 @@ public sealed class ComplexFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePac
         {
             throw new MessagePackSerializationException("Invalid Complex format.");
         }
+        state.Enter();
         T real = default!;
         T imaginary = default!;
         componentFormatter.Deserialize(ref buffer, ref state, ref real);
         componentFormatter.Deserialize(ref buffer, ref state, ref imaginary);
+        state.Exit();
         value = new Complex<T>(real, imaginary);
     }
 }

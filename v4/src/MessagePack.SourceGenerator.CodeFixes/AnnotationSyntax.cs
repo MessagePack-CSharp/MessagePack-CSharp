@@ -7,9 +7,9 @@ using Microsoft.CodeAnalysis.Simplification;
 namespace MessagePack.CodeFixes;
 
 /// <summary>
-/// The shared annotation edits behind the fixers: adding [MessagePackObject], numbering
-/// [Key(n)] over a declaration's unannotated members, appending [UnionTag]. All symbol
-/// matching goes by full attribute name (base-chain walk), mirroring the parsers.
+/// The shared annotation edits behind the fixers: adding [MessagePackObject],
+/// numbering [Key(n)] over a declaration's unannotated members, appending [UnionTag].
+/// All symbol matching goes by full attribute name (base-chain walk), mirroring the parsers.
 /// </summary>
 static class AnnotationSyntax
 {
@@ -38,9 +38,9 @@ static class AnnotationSyntax
         editor.AddAttribute(declaration, editor.Generator.Attribute("MessagePack.MessagePackObject").WithAdditionalAnnotations(Simplifier.Annotation));
     }
 
-    // annotates every unannotated serialized member of THIS declaration with [Key(n)],
-    // numbering properties first then fields (the generator's wire order) and continuing
-    // after the highest key already present anywhere in the type's hierarchy
+    // annotates every unannotated serialized member of this declaration with [Key(n)],
+    // numbering properties first then fields (the generator's wire order)
+    // and continuing after the highest key already present anywhere in the type's hierarchy
     public static void AddKeyAttributes(DocumentEditor editor, SemanticModel semanticModel, TypeDeclarationSyntax declaration)
     {
         var type = semanticModel.GetDeclaredSymbol(declaration);

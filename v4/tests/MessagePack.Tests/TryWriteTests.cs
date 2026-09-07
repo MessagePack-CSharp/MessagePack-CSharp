@@ -221,12 +221,78 @@ public class TryWriteTests
         Assert.False(MessagePackPrimitives.TryWriteStringHeader(buf, -1, out w));
         Assert.False(MessagePackPrimitives.TryWriteBinHeader(buf, -1, out w));
         Assert.False(MessagePackPrimitives.TryWriteExtHeader(buf, 42, -1, out w));
+        // CA1857: the out-of-range constants are the point, this verifies the fix-header range contract
+#pragma warning disable CA1857
         Assert.False(MessagePackPrimitives.TryWriteFixArrayHeader(buf, 16, out w));
         Assert.False(MessagePackPrimitives.TryWriteFixArrayHeader(buf, -1, out w));
         Assert.False(MessagePackPrimitives.TryWriteFixMapHeader(buf, 16, out w));
+#pragma warning restore CA1857
         Assert.False(MessagePackPrimitives.TryWriteForcedArray32Header(buf, -1, out w));
         Assert.False(MessagePackPrimitives.TryWriteForcedMap32Header(buf, -1, out w));
         Assert.False(MessagePackPrimitives.TryWriteForcedStr32Header(buf, -1, out w));
         Assert.False(MessagePackPrimitives.TryWriteForcedBin32Header(buf, -1, out w));
+    }
+
+    // TryWriteBinary / TryWriteString(utf8) accept a payload that overlaps the destination (payload copied before
+    // the header is written), so bytes already sitting in the buffer can be wrapped in place. Sweep every payload
+    // placement relative to the header slot, at every header class (fixstr/str8/str16/str32, bin8/bin16/bin32),
+    // and compare against encoding from a separate copy.
+    [Fact]
+    public void PayloadOverlappingDestination_EncodesInPlace()
+    {
+        foreach (int length in (int[])[0, 1, 31, 32, 255, 256, 65535, 65536])
+        {
+            var payload = new byte[length];
+            for (int i = 0; i < length; i++) payload[i] = (byte)(i * 31 + 7);
+
+            var expectedBin = new byte[length + 5];
+            Assert.True(MessagePackPrimitives.TryWriteBinary(expectedBin, payload, out int expectedBinLen));
+            var expectedStr = new byte[length + 5];
+            Assert.True(MessagePackPrimitives.TryWriteString(expectedStr, payload, out int expectedStrLen));
+
+            int binHeader = expectedBinLen - length;
+            int strHeader = expectedStrLen - length;
+
+            // payload starts at every offset from 0 (fully inside the header slot, moved forward) through the
+            // header size (already in place, only the header lands) to beyond it (moved backward)
+            foreach (int offset in (int[])[0, 1, binHeader - 1, binHeader, binHeader + 1, strHeader, 5, 6, 16])
+            {
+                if (offset < 0) continue;
+
+                var buf = new byte[offset + length + 5];
+                buf.AsSpan().Fill(0xEE);
+                payload.CopyTo(buf, offset);
+                Assert.True(MessagePackPrimitives.TryWriteBinary(buf, buf.AsSpan(offset, length), out int written),
+                    $"bin length={length} offset={offset}");
+                Assert.Equal(expectedBinLen, written);
+                Assert.True(expectedBin.AsSpan(0, expectedBinLen).SequenceEqual(buf.AsSpan(0, written)),
+                    $"bin bytes differ: length={length} offset={offset}");
+
+                buf.AsSpan().Fill(0xEE);
+                payload.CopyTo(buf, offset);
+                Assert.True(MessagePackPrimitives.TryWriteString(buf, buf.AsSpan(offset, length), out written),
+                    $"str length={length} offset={offset}");
+                Assert.Equal(expectedStrLen, written);
+                Assert.True(expectedStr.AsSpan(0, expectedStrLen).SequenceEqual(buf.AsSpan(0, written)),
+                    $"str bytes differ: length={length} offset={offset}");
+            }
+
+            // destination that is exactly the payload's own storage plus header room: the tightest in-place wrap
+            var tight = new byte[expectedBinLen];
+            payload.CopyTo(tight, 0);
+            Assert.True(MessagePackPrimitives.TryWriteBinary(tight, tight.AsSpan(0, length), out int tightWritten));
+            Assert.Equal(expectedBinLen, tightWritten);
+            Assert.True(expectedBin.AsSpan(0, expectedBinLen).SequenceEqual(tight));
+
+            // and one byte short of that still fails without touching the payload
+            if (length > 0)
+            {
+                var tooTight = new byte[expectedBinLen - 1];
+                payload.CopyTo(tooTight, 0);
+                Assert.False(MessagePackPrimitives.TryWriteBinary(tooTight, tooTight.AsSpan(0, length), out tightWritten));
+                Assert.Equal(0, tightWritten);
+                Assert.True(payload.AsSpan().SequenceEqual(tooTight.AsSpan(0, length)), "failed overlapping TryWriteBinary touched the payload");
+            }
+        }
     }
 }

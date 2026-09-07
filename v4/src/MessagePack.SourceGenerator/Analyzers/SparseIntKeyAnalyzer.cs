@@ -7,10 +7,10 @@ namespace MessagePack.SourceGenerator.Analyzers;
 /// <summary>
 /// [Key(int)] numbering with large gaps: the array wire form writes MaxKey+1 slots, so
 /// every hole costs one nil byte on every serialized instance of the type. More than 8
-/// holes warns, uniformly — tens-style numbering (0, 10, 20, ...), stray huge keys, and
+/// holes warns, uniformly, tens-style numbering (0, 10, 20, ...), stray huge keys, and
 /// reserved leading regions ([Key(10)] starts) alike. Small gaps stay under the bar
 /// because retiring a deleted member's key is normal versioning; a type that has retired
-/// MORE than 8 keys (where renumbering would break its wire) suppresses per type with
+/// More than 8 keys (where renumbering would break its wire) suppresses per type with
 /// #pragma warning disable MsgPack111. v3 had no counterpart (checked MsgPack003-018);
 /// the runtime silently pads, which is exactly why the mistake deserves a compile-time eye.
 /// </summary>
@@ -69,9 +69,8 @@ public sealed class SparseIntKeyAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        // distinct key VALUES across the hierarchy: shadowed/duplicate keys are
-        // MsgPack003's business, negative keys MsgPack008's — this analyzer only sizes
-        // the array the surviving keys imply
+        // distinct key values across the hierarchy: shadowed/duplicate keys are MsgPack003's business,
+        // negative keys MsgPack008's, this analyzer only sizes the array the surviving keys imply
         var keys = new HashSet<int>();
         var maxKey = -1;
         for (var current = type; current is not null && current.SpecialType is not (SpecialType.System_Object or SpecialType.System_ValueType); current = current.BaseType)

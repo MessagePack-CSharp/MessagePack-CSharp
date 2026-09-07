@@ -99,9 +99,8 @@ internal struct CompletedLengths
 /// </summary>
 public ref struct BufferSegments
 {
-    // first (scratch, pre-sliced; empty means "no first segment") followed by rented
-    // arrays with normalized lengths ([i + 1] = finished length of pooled segment i,
-    // the last one uses currentWritten)
+    // first (scratch, pre-sliced; empty means "no first segment") followed by
+    // rented arrays with normalized lengths ([i + 1] = finished length of pooled segment i, the last one uses currentWritten)
     readonly ReadOnlySpan<byte> first;
     readonly PooledArrays pooledArrays;
     readonly CompletedLengths completedLengths;

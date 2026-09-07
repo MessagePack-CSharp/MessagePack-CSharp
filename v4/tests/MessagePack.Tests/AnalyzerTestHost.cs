@@ -40,18 +40,44 @@ static class AnalyzerTestHost
         return [.. references];
     }
 
-    // NET9_0_OR_GREATER matches the test project's own compilation: probes exercise the
+    // NET10_0_OR_GREATER matches the test project's own compilation: probes exercise the
     // same #if branches of generated code that the real build takes
     public static CSharpCompilation CreateCompilation(string source, string assemblyName = "AnalyzerProbe")
     {
         var parseOptions = CSharpParseOptions.Default
             .WithLanguageVersion(LanguageVersion.Latest)
-            .WithPreprocessorSymbols("NET9_0_OR_GREATER");
+            .WithPreprocessorSymbols("NET10_0_OR_GREATER");
         return CSharpCompilation.Create(
             assemblyName,
             [CSharpSyntaxTree.ParseText(source, parseOptions)],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+    }
+
+    // Compiles the source through the real generator (or without it) and loads the result
+    // into the default load context, for shapes the generator refuses or warns about that a
+    // test still needs to execute (the generated tier serving them, or the reflection tier
+    // alone when withGenerator is false)
+    public static System.Reflection.Assembly CompileAndLoad(string source, bool withGenerator, params MetadataReference[] additionalReferences)
+    {
+        var compilation = CreateCompilation(source, "Probe" + Guid.NewGuid().ToString("N")).AddReferences(additionalReferences);
+        if (withGenerator)
+        {
+            var parseOptions = (CSharpParseOptions)compilation.SyntaxTrees.First().Options;
+            var driver = CSharpGeneratorDriver.Create([new MessagePack.SourceGenerator.Generators.MessagePackGenerator().AsSourceGenerator()], parseOptions: parseOptions);
+            driver.RunGeneratorsAndUpdateCompilation(compilation, out var updated, out var generatorDiagnostics);
+            Assert.Empty(generatorDiagnostics.Where(static d => d.Severity == DiagnosticSeverity.Error));
+            compilation = (CSharpCompilation)updated;
+        }
+        using var stream = new MemoryStream();
+        var emitted = compilation.Emit(stream);
+        Assert.True(emitted.Success, string.Join(Environment.NewLine, emitted.Diagnostics.Where(static d => d.Severity == DiagnosticSeverity.Error)));
+        var assembly = System.Reflection.Assembly.Load(stream.ToArray());
+        if (withGenerator)
+        {
+            System.Runtime.CompilerServices.RuntimeHelpers.RunModuleConstructor(assembly.ManifestModule.ModuleHandle);
+        }
+        return assembly;
     }
 
     public static async Task<ImmutableArray<Diagnostic>> RunAnalyzerAsync(DiagnosticAnalyzer analyzer, string source)

@@ -1,20 +1,18 @@
 namespace MessagePack.SourceGenerator;
 
 /// <summary>
-/// Emits the polymorphism formatter for a [Union] base, MessagePack-CSharp wire form:
-/// fixarray(2) of [int tag, case payload]; nil for null. An untagged runtime type
-/// THROWS on serialize (a v4 deviation from v3's silent nil: the writer knows its own
-/// type set, so an untagged value is a declaration bug, not version skew — this is the
-/// runtime backstop for the open hierarchies MsgPack106 cannot see). An unknown tag on read
-/// still skips its payload and yields null — that one is genuine version tolerance
-/// (newer writer, older reader), kept from the v3 UnionResolver.
-/// A pattern union (a C# union declaration, or a hand-written [Union]-pattern type) rides
-/// the same wire: the held case is read through the non-boxing TryGetValue accessors when
-/// the union declares them for every tagged case, through Value otherwise (via the
-/// IUnionMembers provider interface when the union delegates its members there), and goes
-/// back in through the creation members (per-case constructor, or IUnionMembers.Create).
-/// For a struct root every null/unknown outcome becomes default(TUnion) — whose Value is
-/// null, so the nil round-trip stays symmetric.
+/// Emits the polymorphism formatter for a [Union] base, MessagePack-CSharp wire form: fixarray(2) of [int tag,
+/// case payload]; nil for null. An untagged runtime type throws on serialize (a v4 deviation from v3's silent nil: the
+/// writer knows its own type set, so an untagged value is a declaration bug, not version skew,
+/// this is the runtime backstop for the open hierarchies MsgPack106 cannot see).
+/// An unknown tag on read still skips its payload and yields null, that one is genuine version tolerance (newer writer,
+/// older reader), kept from the v3 UnionResolver. A pattern union (a C# union declaration,
+/// or a hand-written [Union]-pattern type) rides the same wire: the held case is read through the non-boxing
+/// TryGetValue accessors when the union declares them for every tagged case,
+/// through Value otherwise (via the IUnionMembers provider interface when the union delegates its members there),
+/// and goes back in through the creation members (per-case constructor, or IUnionMembers.Create).
+/// For a struct root every null/unknown outcome becomes default(TUnion), whose Value is null,
+/// so the nil round-trip stays symmetric.
 /// </summary>
 static class UnionEmitter
 {
@@ -58,8 +56,8 @@ static class UnionEmitter
             }
         }
 
-        // union members live on the provider interface when one exists; the cast is an
-        // interface access (boxes a struct union, but provider unions are class-shaped)
+        // union members live on the provider interface when one exists;
+        // the cast is an interface access (boxes a struct union, but provider unions are class-shaped)
         var access = model.ProviderInterface is null ? "value" : $"(({model.ProviderInterface})value)";
 
         writer.Line();
@@ -76,8 +74,8 @@ static class UnionEmitter
             }
             if (model.UseNonBoxing)
             {
-                // TryGetValue dispatch: strongly typed access, no Value boxing; the final
-                // else covers both a null-held union and an untagged held case
+                // TryGetValue dispatch: strongly typed access, no Value boxing;
+                // the final else covers both a null-held union and an untagged held case
                 writer.Line("state.Enter();");
                 var caseIndex = 0;
                 var first = true;
@@ -99,8 +97,8 @@ static class UnionEmitter
                 }
                 using (writer.Block("else"))
                 {
-                    // Value is only read on this cold miss path; the tagged cases stay
-                    // on the non-boxing TryGetValue dispatch above
+                    // Value is only read on this cold miss path; the tagged cases stay on the non-boxing TryGetValue
+                    // dispatch above
                     writer.Line($"throw new MessagePackSerializationException($\"Runtime type '{{{access}.Value!.GetType()}}' is not a [UnionTag] case of '{model.FullTypeName}'.\");");
                 }
                 writer.Line("state.Exit();");
@@ -120,9 +118,9 @@ static class UnionEmitter
                 writer.Line("state.Enter();");
                 if (model.TypeParameterList.Length > 0)
                 {
-                    // generic roots cannot dispatch on exact runtime type (a case may BE a
-                    // type parameter): `is` matching in attribute order decides, so an
-                    // instance assignable to several cases takes the first tag
+                    // generic roots cannot dispatch on exact runtime type (a case may be a type parameter): `is`
+                    // matching in attribute order decides, so an instance assignable to several cases takes the first
+                    // tag
                     var caseIndex = 0;
                     var first = true;
                     foreach (var unionCase in model.Cases)
@@ -190,8 +188,8 @@ static class UnionEmitter
                     {
                         if (model.IsPatternUnion)
                         {
-                            // a union value is replaced wholesale, so the case deserializes
-                            // into a fresh default and rides a creation member back in
+                            // a union value is replaced wholesale, so the case deserializes into a fresh default and
+                            // rides a creation member back in
                             writer.Line($"{CaseValueType(unionCase)} v = default!;");
                             writer.Line($"{unionCase.FieldName}.Deserialize(ref buffer, ref state, ref v);");
                             writer.Line(model.ProviderInterface is null

@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- Migration shim for v3's MessagePack.Annotations package.
+	     v4 ships every attribute inside MessagePack itself. The source generator lives there and has to run on the assembly
+	     that declares the annotated types, so an annotations-only reference is exactly the setup v4 wants to rule out.
+	     This package exists so that
+	       * a csproj that references MessagePack.Annotations keeps compiling after a version bump
+	         (the types type-forward to MessagePack, and the dependency pulls the generator in),
+	       * MessagePack.Annotations 3.x and MessagePack 4.x never coexist in one graph
+	         (NuGet lifts the 3.x reference to this version instead of leaving two identities of every attribute and CS0433 at each usage site),
+	       * assemblies compiled against v3 keep loading. Their attribute references name this assembly, the forwarders resolve them
+	         to MessagePack, and the v3-only attributes that v4 renamed or deleted still exist here in their v3 shape,
+	         as compile-time [Obsolete] errors that spell out the migration, loadable at runtime so the reflection tier can read them.
+	     A single netstandard2.0 build is enough, since forwarders resolve by simple assembly name. -->
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Description>Migration shim for MessagePack v3 code: the attributes now live in the MessagePack package and this package type-forwards to it. Reference MessagePack directly in new projects.</Description>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<!-- Binary compatibility with v3-built assemblies is a contract on the assembly identity, not just on the name.
+		     Their references read "MessagePack.Annotations, Version=3.1.8.0, PublicKeyToken=b4a0369545f0a1be", and the runtime binds
+		     only to an assembly carrying that public key (src/Directory.Build.props signs every src assembly with it) and a version
+		     that is not lower, hence the pin below. An unsigned 1.0.0.0 build was verified to fail with FileNotFoundException
+		     at the first GetCustomAttributes on a v3-built type. -->
+		<AssemblyVersion>4.0.0.0</AssemblyVersion>
+		<!-- The shim deliberately declares [Obsolete(error: true)] types, and the compiler must not trip over them inside this assembly
+		     (CS0619 is the error form of the warning). -->
+		<NoWarn>$(NoWarn);CS0619;CS0618</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- PrivateAssets="none" because a ProjectReference packs as a dependency with exclude="Build,Analyzers" by default,
+		     which would stop MessagePack's source generator and analyzers from flowing to a consumer that references only this package.
+		     That flow is the whole reason the shim depends on MessagePack rather than copying the attributes. -->
+		<ProjectReference Include="..\MessagePack\MessagePack.csproj" PrivateAssets="none" />
+	</ItemGroup>
+
+</Project>

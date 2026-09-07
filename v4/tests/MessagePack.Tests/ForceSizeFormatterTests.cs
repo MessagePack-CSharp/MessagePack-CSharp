@@ -9,41 +9,10 @@ namespace MessagePack.Tests;
 // roundtripped through our reader (which stays lenient about integer formats).
 public partial class ForceSizeFormatterTests
 {
-    // the intended consumption model: not in any default chain, composed explicitly
-    // (partial: FactoryBridgeGenerator supplies the Type-based CreateFormatter tier)
-    sealed partial class ForceSizeFactory : MessagePackFormatterFactory
-    {
-        public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        {
-            if (type == typeof(sbyte)) return new ForceSByteBlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(byte)) return new ForceByteBlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(short)) return new ForceInt16BlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(ushort)) return new ForceUInt16BlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(int)) return new ForceInt32BlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(uint)) return new ForceUInt32BlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(long)) return new ForceInt64BlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(ulong)) return new ForceUInt64BlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(sbyte?)) return new NullableForceSByteBlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(byte?)) return new NullableForceByteBlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(short?)) return new NullableForceInt16BlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(ushort?)) return new NullableForceUInt16BlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(int?)) return new NullableForceInt32BlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(uint?)) return new NullableForceUInt32BlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(long?)) return new NullableForceInt64BlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(ulong?)) return new NullableForceUInt64BlockFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(sbyte[])) return new ForceSByteBlockArrayFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(short[])) return new ForceInt16BlockArrayFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(ushort[])) return new ForceUInt16BlockArrayFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(int[])) return new ForceInt32BlockArrayFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(uint[])) return new ForceUInt32BlockArrayFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(long[])) return new ForceInt64BlockArrayFormatter<TWriteBuffer, TReadBuffer>();
-            if (type == typeof(ulong[])) return new ForceUInt64BlockArrayFormatter<TWriteBuffer, TReadBuffer>();
-            return null;
-        }
-    }
-
+    // the chain-composition consumption model: ForceSizeFormatterFactory is in no default
+    // chain, so it is placed ahead of Default to force every integer width in the graph
     static readonly MessagePackSerializerOptions options =
-        new(new MessagePackFormatterResolver([new ForceSizeFactory(), MessagePackFormatterFactory.Default]));
+        new(new MessagePackFormatterResolver([ForceSizeFormatterFactory.Instance, MessagePackFormatterFactory.Default]));
 
     static readonly V3::MessagePack.MessagePackSerializerOptions oracleOptions =
         V3::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(
@@ -150,6 +119,48 @@ public partial class ForceSizeFormatterTests
     }
 
     [Fact]
+    public void PerMember_FactoryAttribute_MatchesV3PerFieldFormatters()
+    {
+        // v3 named the width per member ([MessagePackFormatter(typeof(ForceInt32BlockFormatter))]);
+        // v4 puts the one factory on the member and the type dispatch picks the width from the
+        // member type, scalar, nullable and array alike. Untouched members keep the compact format.
+        var v4 = new ForcedMembersPoco { Value = 1, Wide = 1, MaybeValue = 1, Values = [1, 2], Compact = 1 };
+        var v3 = new V3ForcedMembersPoco { Value = 1, Wide = 1, MaybeValue = 1, Values = [1, 2], Compact = 1 };
+
+        var ours = MessagePackSerializer.Serialize(v4);
+        Assert.Equal(Oracle.Serialize(v3), ours);
+
+        // [0x95, d2 00000001, d3 0000000000000001, d2 00000001, 92 d2..1 d2..2, 01]
+        Assert.Equal(1 + 5 + 9 + 5 + 11 + 1, ours.Length);
+        Assert.Equal(0xd2, ours[1]);
+        Assert.Equal(0xd3, ours[6]);
+        Assert.Equal(0xd2, ours[15]);
+        Assert.Equal(0x92, ours[20]);
+        Assert.Equal(0x01, ours[^1]);
+
+        var back = MessagePackSerializer.Deserialize<ForcedMembersPoco>(ours)!;
+        Assert.Equal(1, back.Value);
+        Assert.Equal(1L, back.Wide);
+        Assert.Equal(1, back.MaybeValue);
+        Assert.Equal(new[] { 1, 2 }, back.Values);
+        Assert.Equal(1, back.Compact);
+
+        // null goes to nil through the nullable companion
+        v4.MaybeValue = null;
+        v3.MaybeValue = null;
+        Assert.Equal(Oracle.Serialize(v3), MessagePackSerializer.Serialize(v4));
+    }
+
+    [Fact]
+    public void PerMember_OpenFormatterForm_StillNamesTheV3Formatter()
+    {
+        // the v3 spelling with <,> appended keeps working next to the factory form
+        var ours = MessagePackSerializer.Serialize(new OpenFormatterFormPoco { Value = 1 });
+        Assert.Equal(new byte[] { 0x91, 0xd2, 0, 0, 0, 1 }, ours);
+        Assert.Equal(1, MessagePackSerializer.Deserialize<OpenFormatterFormPoco>(ours)!.Value);
+    }
+
+    [Fact]
     public void LenientRead_CompactWireStillDeserializes()
     {
         // bytes produced by the DEFAULT chain (smallest-format encoding: fixint etc.)
@@ -160,3 +171,62 @@ public partial class ForceSizeFormatterTests
         Assert.Equal(new long[] { 1, 2, 3 }, MessagePackSerializer.Deserialize<long[]>(MessagePackSerializer.Serialize(new long[] { 1, 2, 3 }), options));
     }
 }
+
+[MessagePackObject]
+public class ForcedMembersPoco
+{
+    [Key(0)]
+    [MessagePackFormatter(typeof(ForceSizeFormatterFactory))]
+    public int Value { get; set; }
+
+    [Key(1)]
+    [MessagePackFormatter<ForceSizeFormatterFactory>]
+    public long Wide { get; set; }
+
+    [Key(2)]
+    [MessagePackFormatter<ForceSizeFormatterFactory>]
+    public int? MaybeValue { get; set; }
+
+    [Key(3)]
+    [MessagePackFormatter<ForceSizeFormatterFactory>]
+    public int[]? Values { get; set; }
+
+    [Key(4)]
+    public int Compact { get; set; }
+}
+
+[MessagePackObject]
+public class OpenFormatterFormPoco
+{
+    [Key(0)]
+    [MessagePackFormatter(typeof(ForceInt32BlockFormatter<,>))]
+    public int Value { get; set; }
+}
+
+// oracle only, serialized by v3; SuppressSourceGeneration keeps v4's generator (which matches
+// the attribute by name) off it, and MsgPack105 is right that v3's non-generic formatter
+// types are unusable from v4, which is exactly why the factory exists
+#pragma warning disable MsgPack105
+[V3::MessagePack.MessagePackObject(SuppressSourceGeneration = true)]
+public class V3ForcedMembersPoco
+{
+    [V3::MessagePack.Key(0)]
+    [V3::MessagePack.MessagePackFormatter(typeof(V3::MessagePack.Formatters.ForceInt32BlockFormatter))]
+    public int Value { get; set; }
+
+    [V3::MessagePack.Key(1)]
+    [V3::MessagePack.MessagePackFormatter(typeof(V3::MessagePack.Formatters.ForceInt64BlockFormatter))]
+    public long Wide { get; set; }
+
+    [V3::MessagePack.Key(2)]
+    [V3::MessagePack.MessagePackFormatter(typeof(V3::MessagePack.Formatters.NullableForceInt32BlockFormatter))]
+    public int? MaybeValue { get; set; }
+
+    [V3::MessagePack.Key(3)]
+    [V3::MessagePack.MessagePackFormatter(typeof(V3::MessagePack.Formatters.ForceInt32BlockArrayFormatter))]
+    public int[]? Values { get; set; }
+
+    [V3::MessagePack.Key(4)]
+    public int Compact { get; set; }
+}
+#pragma warning restore MsgPack105

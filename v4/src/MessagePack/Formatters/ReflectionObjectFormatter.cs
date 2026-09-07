@@ -1,9 +1,5 @@
-// TODO: This formatter is not finished yet, it is a provisional implementation at the concept level.
-// It needs to be developed further along with the progress of the Source Generator.
-
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using MessagePack.Internal;
 #if !NETSTANDARD2_0
 using System.Reflection.Emit;
 #endif
@@ -11,18 +7,20 @@ using System.Text;
 
 namespace MessagePack.Formatters;
 
-// MsgPack104: the direct member slots only swap in AFTER the resolver returned the canonical StringFormatter, so their direct primitive calls are resolver-respecting by construction (see the Direct-slot comment).
+// MsgPack104: the direct member slots only swap in after the resolver returned the canonical StringFormatter,
+// so their direct primitive calls are resolver-respecting by construction (see the Direct-slot comment).
 #pragma warning disable MsgPack104
 
-// The attribute CONTRACT is MessagePack-CSharp's, matched by full name exactly like the
-// source generator does: the core library takes no dependency on the MessagePack package,
-// and the annotations assembly a v3 codebase already references keeps working unchanged.
-// The System.Runtime.Serialization alternates ride the same name matching — the v3
-// dynamic resolvers honored them, and this tier keeps that (the generator does not).
+// The attribute contract is MessagePack-CSharp's, matched by full name exactly like the source generator does,
+// so an annotations assembly a v3 codebase already references keeps working unchanged.
+// The System.Runtime.Serialization alternates ride the same name matching. The v3 dynamic resolvers honored them,
+// and this tier keeps that (the generator does not).
 static class MessagePackAttributeNames
 {
     public const string MessagePackObject = "MessagePack.MessagePackObjectAttribute";
     public const string Key = "MessagePack.KeyAttribute";
+    public const string UnionTag = "MessagePack.UnionTagAttribute";
+    public const string V3Union = "MessagePack.UnionAttribute"; // v3's name for UnionTag, from v3-built assemblies
     public const string IgnoreMember = "MessagePack.IgnoreMemberAttribute";
     public const string SerializationConstructor = "MessagePack.SerializationConstructorAttribute";
     public const string RequiredMember = "System.Runtime.CompilerServices.RequiredMemberAttribute";
@@ -32,13 +30,11 @@ static class MessagePackAttributeNames
     public const string IgnoreDataMember = "System.Runtime.Serialization.IgnoreDataMemberAttribute";
 }
 
-// Reflection-driven object formatter: a plain generic class driven by a member table built
-// once in Initialize. Reflection is distilled into typed delegates at construction time;
-// the steady-state serialize path is one virtual call plus one delegate call per member,
-// boxing-free. Formatters are never emitted — the only IL generation in here is the
-// one-instruction field accessors in FieldSlot (fields have no MethodInfo to bind a
-// delegate to). It replaces v3's whole DynamicObject/DynamicContractlessObject resolver
-// family with one class whose wire form follows the type:
+// A plain generic class driven by a member table built once in Initialize. Reflection is distilled into typed
+// delegates at construction time, so the steady-state serialize path is one virtual call plus one delegate call per
+// member, boxing-free. Formatters are never emitted. The only IL generation in here is the one-instruction field
+// accessors in FieldSlot (fields have no MethodInfo to bind a delegate to). It replaces v3's whole
+// DynamicObject/DynamicContractlessObject resolver family with one class whose format follows the type:
 //   [MessagePackObject] with [Key(int)]    - array of MaxKey+1 slots, nil holes
 //                                            (byte-compatible with the source-generated
 //                                            formatter and v3's DynamicObjectResolver)
@@ -48,21 +44,24 @@ static class MessagePackAttributeNames
 //                                            int key, Name the string key, neither means
 //                                            the member name (v3 DynamicObjectResolver)
 //   no attribute                           - map of member name to value (v3 contractless)
-// Annotated shapes are validated at Initialize with the source generator's rules (MsgPack001
-// missing key, MsgPack002 mixed keys, MsgPack003 duplicates, MsgPack008 negative), so a type cannot
-// silently serialize differently depending on whether the generator covered it. One
-// deliberate relaxation: a keyed member without a setter (MsgPack007, a generator error) is
-// serialized and skipped on read here — the constructor-argument path below often fills
+// Annotated shapes are validated at Initialize with the source generator's rules (MsgPack001 missing key, MsgPack002
+// mixed keys, MsgPack003 duplicates, MsgPack008 negative), so a type cannot silently serialize differently depending
+// on whether the generator covered it. One deliberate relaxation: a keyed member without a setter (MsgPack007, a
+// generator error) is serialized and skipped on read here, because the constructor-argument path below often fills
 // it, which the runtime can verify and the generator cannot yet.
 //
-// Contractless members: public instance properties (public getter required, setter
-// optional) and public instance fields. Construction follows v3's rule: the public
-// constructor with the most parameters where EVERY parameter name-matches a member
-// (ordinal-ignore-case, exact type) wins; parameterless is the natural last resort. A
-// parameterized winner switches deserialization to the argument-state path (values
-// buffered boxed, constructor invoked, leftovers applied through setters) — this is what
-// makes records, anonymous types and getter-only members round-trip. The zero-boxing
-// populate path still serves parameterless types and explicit populate calls.
+// Contractless members are public instance properties (public getter required, setter optional)
+// and public instance fields. Construction follows v3's rule. The public constructor with the most parameters where
+// every parameter name-matches a member (ordinal-ignore-case, assignable type) wins,
+// and parameterless is the natural last resort. A parameterized winner switches deserialization to the argument-state
+// path (values buffered boxed, constructor invoked, leftovers applied through setters),
+// which is what makes records, anonymous types and getter-only members round-trip.
+// The zero-boxing populate path still serves parameterless types and explicit populate calls.
+
+/// <summary>
+/// Serializes objects through reflection, following the same attribute rules as the source generator and producing the same bytes.
+/// Types without attributes are serialized as maps of member name to value.
+/// </summary>
 public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
 {
     enum ConstructionMode
@@ -88,30 +87,29 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     bool hasRequiredSlots;
     int requiredArrayCount;       // array mode: smallest count that still carries every required slot
 
+    /// <summary>Creates a formatter over the public members of <typeparamref name="T"/>.</summary>
     public ReflectionObjectFormatter()
         : this(allowPrivate: false)
     {
     }
 
-    /// <summary>
-    /// allowPrivate widens discovery to non-public members, accessors and constructors
-    /// (v3's AllowPrivate resolvers). No extra machinery is needed: delegate binding to a
-    /// private accessor is just reflection, which is what made v3 grow a separate
-    /// DynamicMethod-based resolver family.
-    /// </summary>
+    // No extra machinery is needed for allowPrivate. Delegate binding to a private accessor is just reflection,
+    // which is what made v3 grow a separate DynamicMethod-based resolver family.
+    /// <summary>Creates a formatter that, with <paramref name="allowPrivate"/>, also includes non-public members, accessors and constructors.</summary>
     public ReflectionObjectFormatter(bool allowPrivate)
     {
         this.allowPrivate = allowPrivate;
     }
 
+    /// <inheritdoc/>
     public void Initialize(MessagePackFormatterResolver resolver)
     {
         BuildMemberTable();
         validateRequired = resolver.ValidateRequiredMembers;
         for (int i = 0; i < slots.Length; i++)
         {
-            // ValidateNull was pre-set to the member's non-nullable annotation; the
-            // resolver flag gates whether that annotation is actually enforced
+            // ValidateNull was pre-set to the member's non-nullable annotation;
+            // the resolver flag gates whether that annotation is actually enforced
             slots[i].ValidateNull &= resolver.ValidateNullableAnnotations;
             hasRequiredSlots |= slots[i].IsRequired;
             slots[i].Initialize(resolver);
@@ -137,74 +135,152 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
     }
 
-    readonly record struct MemberCandidate(MemberInfo Member, Type MemberType, bool IsPublic);
+    readonly record struct MemberCandidate(MemberInfo Member, Type MemberType, bool IsPublic, string WireName);
+
+    sealed class BaseTypesFirstComparer : IComparer<Type?>
+    {
+        public static readonly BaseTypesFirstComparer Instance = new();
+
+        public int Compare(Type? x, Type? y)
+        {
+            if (x == y)
+            {
+                return 0;
+            }
+            if (x is null)
+            {
+                return -1;
+            }
+            if (y is null)
+            {
+                return 1;
+            }
+            if (x.IsAssignableFrom(y))
+            {
+                return -1; // x is a base of y
+            }
+            if (y.IsAssignableFrom(x))
+            {
+                return 1;
+            }
+            return 0;
+        }
+    }
 
     [UnconditionalSuppressMessage("Trimming", "IL2090", Justification = "reflection member discovery is gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; trimmed members are the documented risk the caller accepted")]
     [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "the allowPrivate hierarchy walk enumerates base types of T; same RequiresUnreferencedCode gate and documented trimming risk as the direct typeof(T) discovery")]
     void BuildMemberTable()
     {
-        var typeAttributes = typeof(T).GetCustomAttributes(inherit: false);
+        // inherit: true, honoring each attribute's own AttributeUsage: [MessagePackObject] declares Inherited = true
+        // (v3 and v4 alike), so an unannotated derived type serializes by its base's contract;
+        // [DataContract] declares Inherited = false
+        var typeAttributes = typeof(T).GetCustomAttributes(inherit: true);
         var objectAttribute = FindAttribute(typeAttributes, MessagePackAttributeNames.MessagePackObject);
         allowPrivate |= ReadBoolProperty(objectAttribute, "AllowPrivate");
         if (ReadBoolProperty(objectAttribute, "AllowCircularReferences"))
         {
-            // the envelope/back-reference wire and register-before-populate discipline live
-            // only in the source-generated formatter; serving the type here would silently
-            // produce a different (untracked) wire format
+            // the envelope/back-reference wire and register-before-populate discipline live only in the
+            // source-generated formatter; serving the type here would silently produce a different (untracked)
+            // wire format
             throw new NotSupportedException($"[MessagePackObject(AllowCircularReferences = true)] on '{typeof(T).FullName}' requires the source-generated formatter; the reflection tier does not serve circular-reference types.");
         }
 
-        // Discovery collects candidates in wire order (properties, then fields), shared by
-        // both modes. Public mode reads the flattened public surface in one pass.
-        // allowPrivate must walk the hierarchy with DeclaredOnly instead: reflection never
-        // returns a base class's private members on the derived type. Derived-first order
-        // plus the seenNames dedup keeps the most derived of any override/`new`-shadowed
-        // member.
-        var candidates = new List<MemberCandidate>();
-        var seenNames = new HashSet<string>();
-        var memberFlags = BindingFlags.Public | BindingFlags.Instance
-            | (allowPrivate ? BindingFlags.NonPublic | BindingFlags.DeclaredOnly : 0);
-        for (var current = typeof(T); current is not null && current != typeof(object); current = allowPrivate ? current.BaseType : null)
+        // Discovery enumerates v3's attributed-table order: every property across the hierarchy base-types-first,
+        // then every field the same way (DynamicObjectResolver's GetAllProperties/GetAllFields recursion),
+        // each level DeclaredOnly, a flattened GetProperties call would hide a `new`-shadowed base property,
+        // and every declaration of a shadowed name serializes (v3's contract, oracle-probed).
+        // Overrides are enumerated at both declarations, exactly like v3: each is independently eligible (a
+        // [DataMember]/[Key] may sit on either end of the chain), and the keyed tables below collapse the pair when
+        // their keys collide.
+        var levels = new List<Type>();
+        for (var current = typeof(T); current is not null && current != typeof(object); current = current.BaseType)
         {
-            foreach (var property in current.GetProperties(memberFlags))
+            levels.Add(current);
+        }
+        levels.Reverse();
+
+        var candidates = new List<MemberCandidate>();
+        var memberFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
+            | (allowPrivate ? BindingFlags.NonPublic : 0);
+        foreach (var level in levels)
+        {
+            foreach (var property in level.GetProperties(memberFlags))
             {
                 var getMethod = property.GetMethod;
                 if (property.GetIndexParameters().Length != 0 ||
                     getMethod is null ||
-                    (!allowPrivate && !getMethod.IsPublic) ||
-                    !seenNames.Add(property.Name))
+                    (!allowPrivate && !getMethod.IsPublic))
                 {
                     continue;
                 }
-                candidates.Add(new MemberCandidate(property, property.PropertyType, getMethod.IsPublic));
-            }
-
-            foreach (var field in current.GetFields(memberFlags))
-            {
-                // compiler-generated fields are auto-property backing fields (and
-                // friends): the property slot already owns that data
-                if (field.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false) ||
-                    !seenNames.Add(field.Name))
-                {
-                    continue;
-                }
-                candidates.Add(new MemberCandidate(field, field.FieldType, field.IsPublic));
+                candidates.Add(new MemberCandidate(property, property.PropertyType, getMethod.IsPublic, property.Name));
             }
         }
+        foreach (var level in levels)
+        {
+            foreach (var field in level.GetFields(memberFlags))
+            {
+                // compiler-generated fields are auto-property backing fields (and friends): the property slot already
+                // owns that data. [NonSerialized] opts a field out in every mode (v3's shared rule)
+                if (field.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false) ||
+                    field.IsDefined(typeof(NonSerializedAttribute), inherit: true))
+                {
+                    continue;
+                }
+                candidates.Add(new MemberCandidate(field, field.FieldType, field.IsPublic, field.Name));
+            }
+        }
+
+        // v3's contractless/map-by-name order is different: base level first,
+        // properties then fields within each level (a stable declaring-type sort over the kind-major list produces
+        // exactly that). Overrides collapse to the most derived declaration here (no keys to collide on,
+        // so the collapse happens in the view itself). The shadowed-name qualification is defined on this view: the
+        // base-most declaration keeps the plain name, every later one gets the "{DeclaringType.FullName}.{Name}" map
+        // key. deliberate deviation from v3's dynamic resolver: v3 quietly dropped a property shadowed by another
+        // property (a GetRuntimeProperties flattening artifact, shadowed fields it qualified and kept);
+        // v4 treats every declaration as the separate storage it is, uniformly (v3's own mpc kept both, too).
+        var seenRootGetters = new HashSet<MethodInfo>();
+        var keepForPerLevel = new bool[candidates.Count];
+        for (int i = candidates.Count - 1; i >= 0; i--)
+        {
+            keepForPerLevel[i] = candidates[i].Member is not PropertyInfo property
+                || property.GetMethod is not { } getMethod
+                || seenRootGetters.Add(getMethod.GetBaseDefinition());
+        }
+        var perLevelCandidates = candidates
+            .Where((c, i) => keepForPerLevel[i])
+            .OrderBy(static c => c.Member.DeclaringType, BaseTypesFirstComparer.Instance)
+            .ToList();
+        var namesInBaseOrder = new HashSet<string>();
+        for (int i = 0; i < perLevelCandidates.Count; i++)
+        {
+            if (!namesInBaseOrder.Add(perLevelCandidates[i].Member.Name))
+            {
+                perLevelCandidates[i] = perLevelCandidates[i] with { WireName = $"{perLevelCandidates[i].Member.DeclaringType!.FullName}.{perLevelCandidates[i].Member.Name}" };
+            }
+        }
+
+        // v3 sorts string-keyed members by [DataMember(Order)] last of all (absent members sort as int.MaxValue,
+        // present-without-Order as -1, ties stay stable); the int-keyed wire is positioned by key,
+        // so applying it uniformly is harmless there
+        candidates = [.. candidates.OrderBy(static c => GetDataMemberOrder(c.Member))];
+        perLevelCandidates = [.. perLevelCandidates.OrderBy(static c => GetDataMemberOrder(c.Member))];
 
         foreach (var candidate in candidates)
         {
             if (candidate.MemberType == typeof(MessagePackUnknownMembers))
             {
-                // capture/replay lives only in the source-generated formatter; serving the
-                // type here would silently drop the retention the member exists to provide
+                // capture/replay lives only in the source-generated formatter;
+                // serving the type here would silently drop the retention the member exists to provide
                 throw new NotSupportedException($"'{typeof(T).FullName}.{candidate.Member.Name}' declares a MessagePackUnknownMembers member, which requires the source-generated formatter; the reflection tier does not capture unknown members.");
             }
         }
 
         if (objectAttribute is not null)
         {
-            BuildAttributedTable(candidates, objectAttribute);
+            // map-by-name mode follows the contractless enumeration (v3 routed KeyAsPropertyName through the same
+            // branch); explicit [Key] the attributed one
+            BuildAttributedTable(candidates, perLevelCandidates, objectAttribute);
         }
         else if (FindAttribute(typeAttributes, MessagePackAttributeNames.DataContract) is not null)
         {
@@ -212,18 +288,19 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
         else
         {
-            BuildContractlessTable(candidates);
+            BuildContractlessTable(perLevelCandidates);
         }
     }
 
     void BuildContractlessTable(List<MemberCandidate> candidates)
     {
-        // [IgnoreMember]/[IgnoreDataMember] exclude in contractless too (v3's
-        // DynamicContractlessObjectResolver honored both); [Key] stays meaningless here
+        // [IgnoreMember]/[IgnoreDataMember] exclude in contractless too (v3's DynamicContractlessObjectResolver honored
+        // both); [Key] stays meaningless here
         var included = new List<MemberCandidate>(candidates.Count);
         foreach (var candidate in candidates)
         {
-            var attributes = candidate.Member.GetCustomAttributes(inherit: false);
+            // includes contract attributes declared on a base virtual (see GetMemberAttributes)
+            var attributes = GetMemberAttributes(candidate.Member);
             if (FindAttribute(attributes, MessagePackAttributeNames.IgnoreMember) is null
                 && FindAttribute(attributes, MessagePackAttributeNames.IgnoreDataMember) is null)
             {
@@ -234,38 +311,49 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         var memberSlots = new MemberSlot[included.Count];
         var keys = new byte[included.Count][];
         var names = new string[included.Count];
+        var keepWithoutConstructor = new List<bool>(included.Count);
         for (int i = 0; i < included.Count; i++)
         {
-            var name = included[i].Member.Name;
             memberSlots[i] = CreateSlot(included[i]);
             ApplyMemberMetadata(memberSlots[i], included[i]);
-            keys[i] = Encoding.UTF8.GetBytes(name);
-            names[i] = name;
+            keys[i] = Encoding.UTF8.GetBytes(included[i].WireName); // shadowed members carry their qualified key
+            names[i] = included[i].Member.Name;                     // constructor parameters match the plain name
+            keepWithoutConstructor.Add(IsWritableMember(included[i], allowPrivate));
         }
 
         slots = memberSlots;
         encodedKeys = keys;
         SelectConstructor(names);
+        FilterNonContractSlots(keepWithoutConstructor);
     }
 
-    void BuildAttributedTable(List<MemberCandidate> candidates, object objectAttribute)
+    void BuildAttributedTable(List<MemberCandidate> candidates, List<MemberCandidate> perLevelCandidates, object objectAttribute)
     {
         var keyAsPropertyName = ReadBoolProperty(objectAttribute, "KeyAsPropertyName");
         var namingPolicy = ReadKeyNamingPolicyProperty(objectAttribute);
+        if (keyAsPropertyName)
+        {
+            // v3 wire order per branch: map-by-name follows the contractless per-level enumeration (which also carries
+            // the shadowed-name qualification); explicit [Key] keeps the kind-major list.
+            // Int keys position by key either way.
+            candidates = perLevelCandidates;
+        }
 
         var memberSlots = new List<MemberSlot>();
         var names = new List<string>();
         var memberIntKeys = new List<int>();
         var memberStringKeys = new List<string?>();
-        var seenIntKeys = new HashSet<int>();
-        var seenStringKeys = new HashSet<string>();
+        var seenIntKeys = new Dictionary<int, MemberCandidate>();
+        var seenStringKeys = new Dictionary<string, MemberCandidate>();
+        var keepWithoutConstructor = new List<bool>();
         var hasIntKey = false;
         var hasStringKey = keyAsPropertyName;
 
         foreach (var candidate in candidates)
         {
             var name = candidate.Member.Name;
-            var attributes = candidate.Member.GetCustomAttributes(inherit: false);
+            // includes contract attributes declared on a base virtual (see GetMemberAttributes)
+            var attributes = GetMemberAttributes(candidate.Member);
             if (FindAttribute(attributes, MessagePackAttributeNames.IgnoreMember) is not null
                 || FindAttribute(attributes, MessagePackAttributeNames.IgnoreDataMember) is not null)
             {
@@ -277,19 +365,28 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             if (FindAttribute(attributes, MessagePackAttributeNames.Key) is { } keyAttribute)
             {
                 (intKey, stringKey) = ReadKeyArguments(keyAttribute);
+                ThrowIfOverrideChangesKey(attributes, intKey, stringKey, name);
+            }
+
+            if (keyAsPropertyName && intKey is not null)
+            {
+                // v3 rule: KeyAsPropertyName wins; a stray int [Key] on a map-mode type is ignored and the member keeps
+                // its name-derived string key
+                intKey = null;
             }
 
             if (intKey is null && stringKey is null)
             {
                 if (keyAsPropertyName)
                 {
-                    // an explicit [Key("...")] took the branch above, so the policy only shapes defaults
-                    stringKey = KeyNamingPolicyConverter.ConvertName(namingPolicy, name);
+                    // an explicit [Key("...")] took the branch above, so the policy only shapes defaults;
+                    // a shadowed member's qualified key passes through raw
+                    stringKey = candidate.WireName != name ? candidate.WireName : KeyNamingPolicyConverter.ConvertName(namingPolicy, name);
                 }
                 else if (candidate.IsPublic)
                 {
-                    // the source generator's MsgPack001, enforced at runtime so the reflection
-                    // and generated interpretations of a type can never diverge
+                    // the source generator's MsgPack001, enforced at runtime so the reflection and generated
+                    // interpretations of a type can never diverge
                     throw new MessagePackSerializationException($"'{typeof(T).FullName}.{name}' is a public member of a [MessagePackObject] type and needs [Key] or [IgnoreMember] (or use [MessagePackObject(true)]).");
                 }
                 else
@@ -304,18 +401,28 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 {
                     throw new MessagePackSerializationException($"'{typeof(T).FullName}.{name}' has a negative key ({key}).");
                 }
-                if (!seenIntKeys.Add(key))
+                if (seenIntKeys.TryGetValue(key, out var conflicting))
                 {
+                    if (IsQuietOverrideCollapse(conflicting, candidate))
+                    {
+                        continue;
+                    }
                     throw new MessagePackSerializationException($"'{typeof(T).FullName}' declares key {key} more than once.");
                 }
+                seenIntKeys.Add(key, candidate);
                 hasIntKey = true;
             }
             else
             {
-                if (!seenStringKeys.Add(stringKey!))
+                if (seenStringKeys.TryGetValue(stringKey!, out var conflicting))
                 {
+                    if (IsQuietOverrideCollapse(conflicting, candidate))
+                    {
+                        continue;
+                    }
                     throw new MessagePackSerializationException($"'{typeof(T).FullName}' declares key \"{stringKey}\" more than once.");
                 }
+                seenStringKeys.Add(stringKey!, candidate);
                 hasStringKey = true;
             }
 
@@ -325,6 +432,9 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             names.Add(name);
             memberIntKeys.Add(intKey ?? -1);
             memberStringKeys.Add(stringKey);
+            // in map mode, a name-defaulted member follows the contractless inclusion rule (v3 treated it as
+            // non-explicit); an explicit [Key] always serializes
+            keepWithoutConstructor.Add(FindAttribute(attributes, MessagePackAttributeNames.Key) is not null || IsWritableMember(candidate, allowPrivate));
         }
 
         if (hasIntKey && hasStringKey)
@@ -333,27 +443,31 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
 
         FinishKeyedTable(memberSlots, names, memberIntKeys, memberStringKeys, hasStringKey);
+        if (keyAsPropertyName)
+        {
+            FilterNonContractSlots(keepWithoutConstructor);
+        }
     }
 
-    // [DataContract] (v3 DynamicObjectResolver parity): members are OPT-IN via
-    // [DataMember] — Order becomes the int key, Name the string key, neither means the
-    // member name — and the array/map split plus duplicate/mixed validation follow the
-    // [Key] rules exactly
+    // [DataContract] (v3 DynamicObjectResolver parity): members are opt-in via [DataMember],
+    // Order becomes the int key, Name the string key, neither means the member name,
+    // and the array/map split plus duplicate/mixed validation follow the [Key] rules exactly
     void BuildDataContractTable(List<MemberCandidate> candidates)
     {
         var memberSlots = new List<MemberSlot>();
         var names = new List<string>();
         var memberIntKeys = new List<int>();
         var memberStringKeys = new List<string?>();
-        var seenIntKeys = new HashSet<int>();
-        var seenStringKeys = new HashSet<string>();
+        var seenIntKeys = new Dictionary<int, MemberCandidate>();
+        var seenStringKeys = new Dictionary<string, MemberCandidate>();
         var hasIntKey = false;
         var hasStringKey = false;
 
         foreach (var candidate in candidates)
         {
             var name = candidate.Member.Name;
-            var attributes = candidate.Member.GetCustomAttributes(inherit: false);
+            // includes contract attributes declared on a base virtual (see GetMemberAttributes)
+            var attributes = GetMemberAttributes(candidate.Member);
             if (FindAttribute(attributes, MessagePackAttributeNames.DataMember) is not { } dataMember
                 || FindAttribute(attributes, MessagePackAttributeNames.IgnoreMember) is not null
                 || FindAttribute(attributes, MessagePackAttributeNames.IgnoreDataMember) is not null)
@@ -367,18 +481,28 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
             if (intKey is { } key)
             {
-                if (!seenIntKeys.Add(key))
+                if (seenIntKeys.TryGetValue(key, out var conflicting))
                 {
+                    if (IsQuietOverrideCollapse(conflicting, candidate))
+                    {
+                        continue;
+                    }
                     throw new MessagePackSerializationException($"'{typeof(T).FullName}' declares [DataMember] Order {key} more than once.");
                 }
+                seenIntKeys.Add(key, candidate);
                 hasIntKey = true;
             }
             else
             {
-                if (!seenStringKeys.Add(stringKey!))
+                if (seenStringKeys.TryGetValue(stringKey!, out var conflicting))
                 {
+                    if (IsQuietOverrideCollapse(conflicting, candidate))
+                    {
+                        continue;
+                    }
                     throw new MessagePackSerializationException($"'{typeof(T).FullName}' declares [DataMember] name \"{stringKey}\" more than once.");
                 }
+                seenStringKeys.Add(stringKey!, candidate);
                 hasStringKey = true;
             }
 
@@ -403,8 +527,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         slots = [.. memberSlots];
         if (!hasStringKey)
         {
-            // int keys (or a memberless annotated type, which the generator also treats as
-            // an empty array) serialize as the v3 array format with nil key holes
+            // int keys (or a memberless annotated type, which the generator also treats as an empty array)
+            // serialize as the v3 array format with nil key holes
             arrayFormat = true;
             var length = 0;
             foreach (var key in memberIntKeys)
@@ -436,8 +560,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         SelectConstructor([.. names]);
     }
 
-    // duck-typed like the [MessagePackObject] property reads: the attribute is matched by
-    // full name, so the System.Runtime.Serialization reference stays the user's
+    // duck-typed like the [MessagePackObject] property reads: the attribute is matched by full name,
+    // so the System.Runtime.Serialization reference stays the user's
     [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; attributes applied in user code keep their properties rooted")]
     static (int Order, string? Name) ReadDataMemberArguments(object attribute)
     {
@@ -463,10 +587,11 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     static void ApplyMemberMetadata(MemberSlot slot, in MemberCandidate candidate)
     {
         slot.MemberName = candidate.Member.Name;
-        // the C# required modifier surfaces as a compiler-embedded attribute, matched by
-        // name like the rest of the contract; constructor-parameter required-ness is
-        // added in SelectConstructor once the deserialization constructor is known
-        var attributes = candidate.Member.GetCustomAttributes(inherit: false);
+        // the C# required modifier surfaces as a compiler-embedded attribute,
+        // matched by name like the rest of the contract; constructor-parameter required-ness is added in
+        // SelectConstructor once the deserialization constructor is known includes contract attributes declared on a
+        // base virtual (see GetMemberAttributes)
+            var attributes = GetMemberAttributes(candidate.Member);
         slot.IsRequired = FindAttribute(attributes, MessagePackAttributeNames.RequiredMember) is not null;
         slot.ValidateNull = NullableAnnotationReader.IsNonNullableReference(candidate.Member, candidate.MemberType);
         if (FindAttribute(attributes, MessagePackAttributeNames.Formatter) is { } formatterAttribute)
@@ -475,8 +600,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
     }
 
-    // member-level [MessagePackFormatter]: the v3-form interpretation (and the rejection
-    // of the source generator's expression-string form) lives in AttributeFormatterActivator
+    // member-level [MessagePackFormatter]: the v3-form interpretation (and the rejection of the source generator's
+    // expression-string form) lives in AttributeFormatterActivator
     static object CreateCustomFormatter(object attribute, Type memberType, string memberName)
     {
         var subject = $"{typeof(T).FullName}.{memberName}";
@@ -502,6 +627,89 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         return resolver.GetFormatter<TWriteBuffer, TReadBuffer, TMember>();
     }
 
+    static int GetDataMemberOrder(MemberInfo member) =>
+        FindAttribute(GetMemberAttributes(member), MessagePackAttributeNames.DataMember) is { } dataMember
+            ? ReadDataMemberArguments(dataMember).Order
+            : int.MaxValue;
+
+    // v3's serialization-inclusion writability: a public setter (any setter under allowPrivate)
+    // or a non-initonly field. Distinct from MemberSlot.CanSet, which reports what the slot can physically write
+    // (initonly fields included).
+    static bool IsWritableMember(in MemberCandidate candidate, bool allowPrivate) => candidate.Member switch
+    {
+        PropertyInfo property => property.SetMethod is { } setMethod && (allowPrivate || setMethod.IsPublic),
+        FieldInfo field => allowPrivate || !field.IsInitOnly, // v3: AllowPrivate counted even initonly fields
+        _ => false,
+    };
+
+    // v3's contractless rule: a member that is not writable, not an explicit contract,
+    // and not consumed by the selected constructor does not serialize at all - computed getter-only properties (`public
+    // int Bad => throw ...`) are never touched
+    void FilterNonContractSlots(List<bool> keepWithoutConstructor)
+    {
+        var keep = new List<int>(slots.Length);
+        for (int i = 0; i < slots.Length; i++)
+        {
+            if (keepWithoutConstructor[i] || slots[i].ConstructorParameterIndex >= 0)
+            {
+                keep.Add(i);
+            }
+        }
+        if (keep.Count == slots.Length)
+        {
+            return;
+        }
+        var filteredSlots = new MemberSlot[keep.Count];
+        var filteredKeys = new byte[keep.Count][];
+        for (int i = 0; i < keep.Count; i++)
+        {
+            filteredSlots[i] = slots[keep[i]];
+            filteredKeys[i] = encodedKeys[keep[i]];
+        }
+        slots = filteredSlots;
+        encodedKeys = filteredKeys;
+    }
+
+    // A property override inherits its base declaration's contract attributes.
+    // Plain inherit: true cannot deliver them, [DataMember] (and friends)
+    // declare AttributeUsage(Inherited = false), but v3 discovered the base declaration as its own candidate,
+    // so those attributes always took effect; walk the base declarations by hand instead.
+    // Derived declarations come first, so FindAttribute's first match lets an override's own attribute win over the
+    // base one.
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "the base-declaration walk enumerates base types of the already-discovered member's declaring type; gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation like the discovery itself")]
+    static object[] GetMemberAttributes(MemberInfo member)
+    {
+        if (member is not PropertyInfo property
+            || property.GetMethod is not { IsVirtual: true } getMethod
+            || getMethod.GetBaseDefinition() == getMethod)
+        {
+            return member.GetCustomAttributes(inherit: false);
+        }
+
+        var result = new List<object>(property.GetCustomAttributes(inherit: false));
+        var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+        for (var current = property.DeclaringType?.BaseType; current is not null && current != typeof(object); current = current.BaseType)
+        {
+            if (current.GetProperty(property.Name, flags) is { } baseProperty)
+            {
+                result.AddRange(baseProperty.GetCustomAttributes(inherit: false));
+            }
+        }
+        return [.. result];
+    }
+
+    // v3's quiet override collapse (AddEmittableMemberOrIgnore): the base-first walk enumerates both declarations of an
+    // override chain; when the derived one's key lands on the already-added base declaration of the same name and that
+    // declaration is overridable, it is the same storage seen twice and the later arrival is skipped.
+    // Anything else on a taken key is a genuine duplicate and throws.
+    static bool IsQuietOverrideCollapse(MemberCandidate added, MemberCandidate later)
+    {
+        return added.Member is PropertyInfo existing && later.Member is PropertyInfo
+            && existing.Name == later.Member.Name
+            && (existing.GetMethod is { IsVirtual: true, IsFinal: false }
+                || existing.SetMethod is { IsVirtual: true, IsFinal: false });
+    }
+
     static object? FindAttribute(object[] attributes, string fullName) =>
         AttributeFormatterActivator.FindAttribute(attributes, fullName);
 
@@ -511,13 +719,33 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         return attribute is not null && attribute.GetType().GetProperty(propertyName)?.GetValue(attribute) is true;
     }
 
-    // duck-typed like ReadBoolProperty: a v3 annotations assembly's attribute has no
-    // KeyNamingPolicy property and lands on None
+    // duck-typed like ReadBoolProperty: a v3 annotations assembly's attribute has no KeyNamingPolicy property and lands
+    // on None
     [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; attributes applied in user code keep their properties rooted")]
     static KeyNamingPolicy ReadKeyNamingPolicyProperty(object? attribute)
     {
         var value = attribute?.GetType().GetProperty("KeyNamingPolicy")?.GetValue(attribute);
         return value is null ? KeyNamingPolicy.None : (KeyNamingPolicy)Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; attributes applied in user code keep their properties rooted")]
+    // the source generator's MsgPack021, enforced at runtime: an override declaring a different [Key] than the
+    // declaration it overrides keys the same storage twice (v3's dynamic resolver wrote both slots, mpc kept one),
+    // so the shape is refused in both tiers
+    static void ThrowIfOverrideChangesKey(object[] attributes, int? intKey, string? stringKey, string name)
+    {
+        foreach (var attribute in attributes)
+        {
+            if (FindAttribute([attribute], MessagePackAttributeNames.Key) is null)
+            {
+                continue;
+            }
+            var (otherInt, otherString) = ReadKeyArguments(attribute);
+            if (otherInt != intKey || otherString != stringKey)
+            {
+                throw new MessagePackSerializationException($"'{typeof(T).FullName}.{name}' overrides a property declared with a different [Key]; an override keeps the key of the declaration it overrides.");
+            }
+        }
     }
 
     [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; attributes applied in user code keep their properties rooted")]
@@ -528,21 +756,24 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 type.GetProperty("StringKey")?.GetValue(keyAttribute) as string);
     }
 
-    // v3's rule: [SerializationConstructor] wins outright; otherwise iterate public
-    // constructors by parameter count descending and take the first whose parameters ALL
-    // match a member by name (ordinal-ignore-case, so camelCase parameters bind
-    // PascalCase members) with the exact member type.
+    // v3's rule: [SerializationConstructor] wins outright; otherwise iterate public constructors by parameter count
+    // descending and take the first whose parameters all match a member by name (ordinal-ignore-case,
+    // so camelCase parameters bind PascalCase members) with an assignable member type (an IEnumerable<T> parameter
+    // binds an IReadOnlyList<T> member, an object parameter binds anything,
+    // the argument path buffers values boxed and Invoke accepts any assignable value).
     [UnconditionalSuppressMessage("Trimming", "IL2090", Justification = "gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation, same as the member discovery above")]
     void SelectConstructor(string[] memberNames)
     {
+        // [SerializationConstructor] is an explicit contract and is honored even on a non-public constructor regardless
+        // of allowPrivate (v3 searched Public|NonPublic unconditionally; Invoke has no visibility constraint).
+        // The descending fallback scan stays public unless allowPrivate widens it.
+        var attributed = typeof(T).GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            .FirstOrDefault(static c => FindAttribute(c.GetCustomAttributes(inherit: false), MessagePackAttributeNames.SerializationConstructor) is not null);
         var constructorFlags = BindingFlags.Public | BindingFlags.Instance
             | (allowPrivate ? BindingFlags.NonPublic : 0);
-        var constructors = typeof(T).GetConstructors(constructorFlags);
-        var attributed = constructors.FirstOrDefault(static c =>
-            FindAttribute(c.GetCustomAttributes(inherit: false), MessagePackAttributeNames.SerializationConstructor) is not null);
         IEnumerable<ConstructorInfo> candidates = attributed is not null
             ? [attributed]
-            : constructors.OrderByDescending(c => c.GetParameters().Length);
+            : typeof(T).GetConstructors(constructorFlags).OrderByDescending(c => c.GetParameters().Length);
         foreach (var candidate in candidates)
         {
             var parameters = candidate.GetParameters();
@@ -554,7 +785,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 for (int s = 0; s < memberNames.Length; s++)
                 {
                     if (string.Equals(memberNames[s], parameters[i].Name, StringComparison.OrdinalIgnoreCase) &&
-                        slots[s].MemberType == parameters[i].ParameterType)
+                        parameters[i].ParameterType.IsAssignableFrom(slots[s].MemberType))
                     {
                         slotIndex = s;
                         break;
@@ -591,13 +822,13 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         if (attributed is not null)
         {
-            // an attributed constructor is an explicit contract; silently falling back to
-            // populate would deserialize different members than the author declared
-            throw new MessagePackSerializationException($"'{typeof(T).FullName}': every [SerializationConstructor] parameter must match a serialized member by name (case-insensitive) and exact type.");
+            // an attributed constructor is an explicit contract; silently falling back to populate would deserialize
+            // different members than the author declared
+            throw new MessagePackSerializationException($"'{typeof(T).FullName}': every [SerializationConstructor] parameter must match a serialized member by name (case-insensitive) and assignable type.");
         }
 
-        // no constructor matched: structs always default-construct, classes fall
-        // back to a (possibly non-public) parameterless constructor
+        // no constructor matched: structs always default-construct, classes fall back to a (possibly non-public)
+        // parameterless constructor
         if (typeof(T).IsValueType ||
             typeof(T).GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, binder: null, Type.EmptyTypes, modifiers: null) != null)
         {
@@ -609,6 +840,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
     }
 
+    /// <inheritdoc/>
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
     {
         if (value is null)
@@ -656,6 +888,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         state.Exit();
     }
 
+    /// <inheritdoc/>
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref T value)
     {
         if (buffer.TryReadNil())
@@ -670,17 +903,16 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         var count = arrayFormat ? buffer.ReadArrayHeader() : buffer.ReadMapHeader();
 
-        // Argument-state path for fresh instances of constructor-matched types. A class
-        // instance supplied by the caller keeps populate semantics (structs have no
-        // identity to preserve, so they always reconstruct).
+        // Argument-state path for fresh instances of constructor-matched types.
+        // A class instance supplied by the caller keeps populate semantics (structs have no identity to preserve,
+        // so they always reconstruct).
         if (mode == ConstructionMode.Arguments && (value is null || typeof(T).IsValueType))
         {
             DeserializeWithArguments(ref buffer, ref state, ref value, count);
             return;
         }
 
-        // Populate contract: reuse the incoming instance; members absent from the
-        // payload keep their current values.
+        // Populate contract: reuse the incoming instance; members absent from the payload keep their current values.
         if (value is null)
         {
             value = CreateInstance();
@@ -759,8 +991,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         if (validateRequired && hasRequiredSlots)
         {
-            // before Invoke: a missing required argument should surface as the contract
-            // violation, not as whatever the constructor does with its default
+            // before Invoke: a missing required argument should surface as the contract violation,
+            // not as whatever the constructor does with its default
             ThrowIfRequiredMemberMissing(count, in seenSlots);
         }
 
@@ -780,10 +1012,9 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
     }
 
-    // Box round-trip so explicit interface implementations stay reachable and struct
-    // mutations land back in the value being (de)serialized: the interface call mutates
-    // the box, which is then unboxed back (for a class the box IS the same reference,
-    // so this degrades to a plain cast-and-call).
+    // Box round-trip so explicit interface implementations stay reachable and struct mutations land back in the value
+    // being (de)serialized: the interface call mutates the box, which is then unboxed back (for a class the box is the
+    // same reference, so this degrades to a plain cast-and-call).
     static void InvokeOnBeforeSerialize(ref T value)
     {
         object boxed = value!;
@@ -798,8 +1029,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         value = (T)boxed;
     }
 
-    // array mode indexes directly into the key table; map mode consumes and matches the
-    // key token. arrayFormat is fixed per instantiation, so the branch predicts perfectly.
+    // array mode indexes directly into the key table; map mode consumes and matches the key token.
+    // arrayFormat is fixed per instantiation, so the branch predicts perfectly.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     int NextSlot(ref TReadBuffer buffer, int index)
     {
@@ -821,10 +1052,9 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
         var key = window.Slice(0, keyLength);
 
-        // POCO member counts are single-digit in practice and the length mismatch exits
-        // early, so linear memcmp stays. Decided against automata/bucket machinery
-        // (2026-08-17); if wide types ever bite, try slot i for entry i first — payloads
-        // we wrote ourselves then match in O(n).
+        // POCO member counts are single-digit in practice and the length mismatch exits early,
+        // so linear memcmp stays. Decided against automata/bucket machinery (2026-08-17); if wide types ever bite,
+        // try slot i for entry i first, payloads we wrote ourselves then match in O(n).
         var slotIndex = -1;
         var keys = encodedKeys;
         for (int i = 0; i < keys.Length; i++)
@@ -901,15 +1131,13 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     }
 
     // Duplicate known-key detection for the map wire forms (the array form is positional,
-    // so a slot cannot repeat): ulong bitmask for the common narrow types, a Span<bool>
-    // beyond 64 — caller-provided stackalloc storage when it fits (see SeenSlotsStorage),
-    // heap array beyond. Duplicate map keys are data errors, the same policy as the
-    // dictionary formatters.
+    // so a slot cannot repeat): ulong bitmask for the common narrow types, a Span<bool> beyond 64,
+    // caller-provided stackalloc storage when it fits (see SeenSlotsStorage), heap array beyond.
+    // Duplicate map keys are data errors, the same policy as the dictionary formatters.
     const int StackallocSeenSlotsLimit = 256;
 
-    // the stackalloc must live in the caller's frame, so this only decides whether the
-    // use site should reserve one; the constructor falls back to a heap array when the
-    // provided storage is too small (or absent)
+    // the stackalloc must live in the caller's frame, so this only decides whether the use site should reserve one;
+    // the constructor falls back to a heap array when the provided storage is too small (or absent)
     static bool WantsStackallocSeenSlots(bool arrayFormat, int slotCount) =>
         !arrayFormat && slotCount > 64 && slotCount <= StackallocSeenSlotsLimit;
 
@@ -963,7 +1191,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         public int ConstructorParameterIndex = -1;
         public string MemberName = "";
         public bool IsRequired;    // required modifier, or a no-default constructor parameter
-        public bool ValidateNull;  // non-nullable annotated AND the resolver enforces the annotation
+        public bool ValidateNull;  // non-nullable annotated and the resolver enforces the annotation
         public object? CustomFormatter; // [MessagePackFormatter] instance, overrides resolver resolution
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -980,9 +1208,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         public abstract object? ReadBoxed(ref TReadBuffer buffer, ref DeserializeState state);
         public abstract void SetBoxed(ref T obj, object? value);
 
-        // Called once after Initialize: a slot whose formatter resolved to the built-in
-        // Int32/String formatter returns a direct-dispatch replacement (see the Direct*
-        // slots below); everything else stays as is.
+        // Called once after Initialize: a slot whose formatter resolved to the built-in Int32/String formatter returns
+        // a direct-dispatch replacement (see the Direct* slots below); everything else stays as is.
         public virtual MemberSlot Specialize() => this;
     }
 
@@ -1130,17 +1357,16 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
     }
 
-    // Direct primitive slots (Nerdbank.MessagePack PR #1014's technique, adapted): when a
-    // member's formatter resolved to the built-in Int32/String formatter, the generic slot
-    // swaps itself for one of these, whose Write/Read call the buffer primitive directly.
-    // Two wins over dispatching through the formatter interface: one indirection less per
-    // member, and independence from guarded devirtualization. The latter matters most for
-    // string members: ClassPropertySlot<string> shares __Canon code with every reference
-    // TMember in the process, so its formatter call site's profile is polymorphic and PGO
-    // devirtualization is per-launch luck (measured as 29<->50ns flips in
-    // ReflectionObjectBenchmark). These classes are not generic over TMember, so the hot
-    // path has no dispatch left to devirtualize. Semantics are identical by construction:
-    // the built-in formatters are one-line wrappers over the same buffer extensions.
+    // Direct primitive slots (Nerdbank.MessagePack PR #1014's technique,
+    // adapted): when a member's formatter resolved to the built-in Int32/String formatter,
+    // the generic slot swaps itself for one of these, whose Write/Read call the buffer primitive directly.
+    // Two wins over dispatching through the formatter interface: one indirection less per member,
+    // and independence from guarded devirtualization. The latter matters most for string members:
+    // ClassPropertySlot<string> shares __Canon code with every reference TMember in the process,
+    // so its formatter call site's profile is polymorphic and PGO devirtualization is per-launch luck (measured as
+    // 29<->50ns flips in ReflectionObjectBenchmark). These classes are not generic over TMember,
+    // so the hot path has no dispatch left to devirtualize. Semantics are identical by construction: the built-in
+    // formatters are one-line wrappers over the same buffer extensions.
 
     sealed class DirectInt32Slot(Func<T, int> getter, Action<T, int>? setter) : MemberSlot
     {
@@ -1307,8 +1533,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     }
 
 #if NETSTANDARD2_0
-    // netstandard2.0 has no DynamicMethod surface, so fields go through boxed FieldInfo
-    // access there (the ns2.0 build is the compatibility tier; speed lives upstack).
+    // netstandard2.0 has no DynamicMethod surface, so fields go through boxed FieldInfo access there (the ns2.0 build
+    // is the compatibility tier; speed lives upstack).
     sealed class FieldSlot<TMember> : MemberSlot
     {
         readonly FieldInfo field;
@@ -1318,7 +1544,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         public FieldSlot(FieldInfo field)
         {
             this.field = field;
-            writable = !field.IsInitOnly;
+            writable = true; // readonly included: v3 wrote initonly fields, and FieldInfo.SetValue can
         }
 
         public override Type MemberType => typeof(TMember);
@@ -1370,22 +1596,21 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
     }
 #else
-    // Fields have no accessor MethodInfo to bind a delegate to, so the accessors are the
-    // one place this formatter emits: a single-ldfld/stfld DynamicMethod per field,
-    // distilled into the same ref-this delegates the property slots use. This is
-    // deliberately NOT a violation of the no-Emit policy — that policy bans emitting whole
-    // formatters, not a one-instruction accessor (user decision 2026-08-17).
+    // Fields have no accessor MethodInfo to bind a delegate to, so the accessors are the one place this formatter
+    // emits: a single-ldfld/stfld DynamicMethod per field, distilled into the same ref-this delegates the property
+    // slots use. This is deliberately not a violation of the no-Emit policy,
+    // that policy bans emitting whole formatters, not a one-instruction accessor (user decision 2026-08-17).
     // skipVisibility covers private fields (AllowPrivate) including base-class ones.
     sealed class FieldSlot<TMember> : MemberSlot
     {
         readonly MemberGetter<TMember> getter;
-        readonly MemberSetter<TMember>? setter; // null: initOnly field, payload value is skipped
+        readonly MemberSetter<TMember>? setter;
         IMessagePackFormatter<TWriteBuffer, TReadBuffer, TMember> formatter = null!;
 
         public FieldSlot(FieldInfo field)
         {
             getter = CreateGetter(field);
-            setter = field.IsInitOnly ? null : CreateSetter(field);
+            setter = CreateSetter(field); // readonly included: v3 wrote initonly fields, and skipVisibility stfld can
         }
 
         [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "instances only exist behind ReflectionFormatterFactory's RequiresDynamicCode gate; the caller has already opted into dynamic code")]
@@ -1478,10 +1703,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 #endif
 }
 
+/// <summary>Creates <see cref="ReflectionObjectFormatter{TWriteBuffer, TReadBuffer, T}"/> instances for <typeparamref name="T"/>.</summary>
 public sealed partial class ReflectionObjectFormatterFactory<T> : MessagePackFormatterFactory
 {
     readonly bool allowPrivate;
 
+    /// <summary>Creates a factory over the public members of <typeparamref name="T"/>.</summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
     public ReflectionObjectFormatterFactory()
@@ -1489,6 +1716,7 @@ public sealed partial class ReflectionObjectFormatterFactory<T> : MessagePackFor
     {
     }
 
+    /// <summary>Creates a factory that, with <paramref name="allowPrivate"/>, also includes non-public members, accessors and constructors.</summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
     public ReflectionObjectFormatterFactory(bool allowPrivate)
@@ -1496,8 +1724,9 @@ public sealed partial class ReflectionObjectFormatterFactory<T> : MessagePackFor
         this.allowPrivate = allowPrivate;
     }
 
-    // one method, two signatures: net9+ overrides the base virtual (constraints
-    // inherited); downlevel has no base member, so the constraints are spelled out
+    // One method, two signatures. net9+ overrides the base virtual (constraints inherited),
+    // while downlevel has no base member, so the constraints are spelled out.
+    /// <summary>Creates the formatter for <paramref name="type"/>, which must be <typeparamref name="T"/>.</summary>
 #if NET9_0_OR_GREATER
     public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
 #else

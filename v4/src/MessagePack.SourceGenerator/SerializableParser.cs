@@ -5,12 +5,11 @@ namespace MessagePack.SourceGenerator;
 /// <summary>
 /// Parses a [MessagePackSerializable&lt;T&gt;]-annotated partial factory class into a
 /// <see cref="SerializableFactoryModel"/>. Each declared root type runs through
-/// <see cref="ObjectParser.HarvestSerializedType"/> — exactly the pipeline serialized
-/// members use — so a root declaration serves the whole reachable closure (the array or
-/// collection wrapper, nested collections, enums, Nullable, closed user generics), not
-/// just the named type. The class shape mirrors JsonSerializerContext: a partial,
-/// non-generic class whose generated half derives MessagePackFormatterFactory.
-/// The generic and non-generic attribute forms arrive through separate FAWMN pipelines
+/// <see cref="ObjectParser.HarvestSerializedType"/>, exactly the pipeline serialized
+/// members use, so a root declaration serves the whole reachable closure (the array or collection wrapper,
+/// nested collections, enums, Nullable, closed user generics), not just the named type.
+/// The class shape mirrors JsonSerializerContext: a partial, non-generic class whose generated half derives
+/// MessagePackFormatterFactory. The generic and non-generic attribute forms arrive through separate FAWMN pipelines
 /// (exact-name matching); the factory node merges results targeting the same class.
 /// </summary>
 static class SerializableParser
@@ -36,13 +35,13 @@ static class SerializableParser
         {
             if (accessible.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal))
             {
-                diagnostics.Add(new DiagnosticInfo("MsgPack016", $"'{typeName}': [MessagePackSerializable] requires the class (and every containing type) to be public or internal — the module-initializer registration must be reachable from the module.", typeLocation));
+                diagnostics.Add(new DiagnosticInfo("MsgPack016", $"'{typeName}': [MessagePackSerializable] requires the class (and every containing type) to be public or internal, because the module-initializer registration must be reachable from the module.", typeLocation));
                 return Empty(diagnostics);
             }
         }
-        // the generated partial declares the base, so the user half may omit it; an
-        // explicit MessagePackFormatterFactory base is redundant-but-legal, anything else
-        // would collide (CS0263) — diagnose it with intent instead
+        // the generated partial declares the base, so the user half may omit it;
+        // an explicit MessagePackFormatterFactory base is redundant-but-legal,
+        // anything else would collide (CS0263), diagnose it with intent instead
         if (type.BaseType is { SpecialType: not SpecialType.System_Object } baseType
             && baseType.ToDisplayString() != "MessagePack.MessagePackFormatterFactory")
         {
@@ -55,8 +54,8 @@ static class SerializableParser
         var harvestedBuiltIns = new Dictionary<string, HarvestedBuiltInModel>();
         foreach (var attribute in context.Attributes)
         {
-            // generic form: the root is the attribute's type argument (metadata carries no
-            // constructor arguments there); typeof form: the single constructor argument
+            // generic form: the root is the attribute's type argument (metadata carries no constructor arguments
+            // there); typeof form: the single constructor argument
             var root = attribute.AttributeClass is { IsGenericType: true } attributeClass
                 ? attributeClass.TypeArguments[0]
                 : attribute.ConstructorArguments.Length > 0 ? attribute.ConstructorArguments[0].Value as ITypeSymbol : null;
@@ -66,7 +65,7 @@ static class SerializableParser
             }
             if (ContainsTypeParameterDeep(root))
             {
-                diagnostics.Add(new DiagnosticInfo("MsgPack017", $"'{typeName}': [MessagePackSerializable] root '{root.ToDisplayString()}' is not a closed type — a serialization root must be fully constructed (open generics and type parameters cannot be registered).", typeLocation));
+                diagnostics.Add(new DiagnosticInfo("MsgPack017", $"'{typeName}': [MessagePackSerializable] root '{root.ToDisplayString()}' is not a closed type. A serialization root must be fully constructed (open generics and type parameters cannot be registered).", typeLocation));
                 continue;
             }
             ObjectParser.HarvestSerializedType(root, compilation, harvestedGenerics, harvestedBuiltIns);

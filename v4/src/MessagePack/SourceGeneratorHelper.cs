@@ -4,18 +4,14 @@ using System.ComponentModel;
 namespace MessagePack;
 
 /// <summary>
-/// Support surface for source-generated formatters, not part of the general-purpose API:
-/// the circular-reference back-reference token (ext type
-/// <see cref="MessagePackCode.CircularReferenceExtensionTypeCode"/>) emitted for
-/// <see cref="MessagePackObjectAttribute.AllowCircularReferences"/> types, and the
-/// capture/replay calls behind <see cref="MessagePackUnknownMembers"/>. A hand-written
-/// formatter for such a type may use these alongside the SerializeState/DeserializeState
-/// tracking methods.
+/// Support methods for source-generated formatters, not part of the general-purpose API.
+/// They write and read the circular-reference back-reference token and capture and replay <see cref="MessagePackUnknownMembers"/>.
+/// A hand-written formatter for such a type may use them alongside the SerializeState and DeserializeState tracking methods.
 /// </summary>
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class SourceGeneratorHelper
 {
-    // fixext4 + type + 4-byte id: the widest back-reference token
+    // fixext4 + type + 4-byte id, the widest back-reference token
     const int MaxCircularReferenceBackReferenceLength = 6;
 
     extension<TWriteBuffer>(ref TWriteBuffer buffer)
@@ -24,13 +20,12 @@ public static class SourceGeneratorHelper
         , allows ref struct
 #endif
     {
-        /// <summary>Writes a circular-reference back-reference: fixext1/2/4 carrying the
-        /// id as raw big-endian in the smallest width.</summary>
+        /// <summary>Writes a circular-reference back-reference as fixext1, fixext2 or fixext4, whichever is the smallest that holds the id.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public void WriteCircularReferenceBackReference(uint referenceId)
         {
             ref var destination = ref buffer.GetReference(MaxCircularReferenceBackReferenceLength);
-            Unsafe.Add(ref destination, 1) = unchecked((byte)MessagePackCode.CircularReferenceExtensionTypeCode);
+            Unsafe.Add(ref destination, 1) = unchecked((byte)ThisLibraryExtensionTypeCodes.CircularReference);
             if (referenceId <= byte.MaxValue)
             {
                 destination = MessagePackCode.FixExt1;
@@ -50,12 +45,15 @@ public static class SourceGeneratorHelper
             buffer.Advance(6);
         }
 
-        /// <summary>Replays captured string-keyed unknown members after the declared members: each key as a canonical str header plus the original utf8, each value verbatim. The map header count written earlier must already include <see cref="MessagePackUnknownMembers.Count"/>.</summary>
+        /// <summary>
+        /// Replays captured string-keyed members after the declared members, each key as a str header plus the original utf8 and each value verbatim.
+        /// The map header written earlier must already include <see cref="MessagePackUnknownMembers.Count"/>.
+        /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public void WriteUnknownStringKeyed(MessagePackUnknownMembers members)
         {
-            // a packet is settable and therefore transplantable across types; an
-            // array-mode packet replayed into a map would silently corrupt the wire
+            // A packet is settable and therefore transplantable across types. An array-mode packet replayed into
+            // a map would silently corrupt the output.
             if (!members.IsMap)
             {
                 throw new MessagePackSerializationException("This MessagePackUnknownMembers packet was constructed for array-format (int-keyed) capture and cannot be replayed by a map-format (string-keyed) type.");
@@ -67,7 +65,11 @@ public static class SourceGeneratorHelper
             }
         }
 
-        /// <summary>Replays the captured entry for one key hole (an index inside the declared key range with no member): the packet's next unreplayed entry when it sits at <paramref name="index"/> (advancing <paramref name="replayedCount"/>), the hole's nil padding otherwise. Captured entries ascend by index, so one cursor walks every hole in key order.</summary>
+        /// <summary>
+        /// Writes the array element for a key hole, an index inside the declared key range with no member.
+        /// The packet's next entry is replayed when it sits at <paramref name="index"/>, advancing <paramref name="replayedCount"/>; otherwise nil is written.
+        /// Entries ascend by index, so one cursor walks every hole in key order.
+        /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public void WriteUnknownIntKeyedHole(MessagePackUnknownMembers? members, ref int replayedCount, int index)
         {
@@ -80,9 +82,9 @@ public static class SourceGeneratorHelper
                     replayedCount++;
                     return;
                 }
-                // ascending entries make a lower index a passed-over one: a map-mode
-                // packet (string-keyed entries carry Index -1) or a transplanted packet
-                // whose entry sits at a declared key of this type. Fail loud either way.
+                // Ascending entries make a lower index a passed-over one, which means a map-mode packet
+                // (string-keyed entries carry Index -1) or a transplanted packet whose entry sits at a declared key
+                // of this type. Fail loud either way.
                 if (entry.Index < index)
                 {
                     throw members.IsMap
@@ -93,7 +95,11 @@ public static class SourceGeneratorHelper
             buffer.WriteNil();
         }
 
-        /// <summary>Replays captured int-keyed unknown members as the array's trailing elements starting at <paramref name="declaredCount"/>: gaps between captured indices become nil. <paramref name="replayedCount"/> skips the leading entries <see cref="WriteUnknownIntKeyedHole"/> already replayed into this type's key holes. The array header count written earlier must be <see cref="GetUnknownArrayCount"/>.</summary>
+        /// <summary>
+        /// Replays captured int-keyed members as the array's trailing elements starting at <paramref name="declaredCount"/>, with nil for gaps between captured indices.
+        /// <paramref name="replayedCount"/> skips the entries <see cref="WriteUnknownIntKeyedHole"/> already replayed into key holes.
+        /// The array header written earlier must be <see cref="GetUnknownArrayCount"/>.
+        /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public void WriteUnknownIntKeyed(MessagePackUnknownMembers members, int declaredCount, int replayedCount = 0)
         {
@@ -106,10 +112,9 @@ public static class SourceGeneratorHelper
             for (var i = replayedCount; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                // an entry still unreplayed below the declared width sits at a DECLARED
-                // key of this type (every hole was offered the cursor first): a
-                // transplanted packet colliding with a member value fails loud here
-                // instead of corrupting the wire
+                // An entry still unreplayed below the declared width sits at a declared key of this type (every hole
+                // was offered the cursor first), so a transplanted packet colliding with a member value fails loud
+                // here instead of corrupting the output.
                 if (entry.Index < next)
                 {
                     throw new MessagePackSerializationException("This MessagePackUnknownMembers packet holds entries at indices that are declared keys of the type replaying it.");
@@ -124,14 +129,14 @@ public static class SourceGeneratorHelper
         }
     }
 
-    /// <summary>Array header count for a type carrying int-keyed unknown members: the declared width, extended to cover the captured indices.</summary>
+    /// <summary>Array header count for a type with int-keyed unknown members, the declared width extended to cover the captured indices.</summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static int GetUnknownArrayCount(MessagePackUnknownMembers? members, int declaredCount) =>
         members is null ? declaredCount : members.GetArrayCount(declaredCount);
 
-    // no-box bridges to explicit IMessagePackSerializationCallbackReceiver implementations on
-    // structs: the constrained call through the type parameter dispatches on the value's address,
-    // so callback mutations land in the caller's local without the box round-trip
+    // No-box bridges to explicit IMessagePackSerializationCallbackReceiver implementations on structs. The constrained
+    // call through the type parameter dispatches on the value's address, so callback mutations land in the caller's
+    // local without the box round-trip.
 
     /// <summary>Invokes <see cref="IMessagePackSerializationCallbackReceiver.OnBeforeSerialize"/> on a struct without boxing.</summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
@@ -153,19 +158,20 @@ public static class SourceGeneratorHelper
         , allows ref struct
 #endif
     {
-        /// <summary>Consumes a circular-reference back-reference and returns its id;
-        /// returns false consuming nothing when the next token is something else. A matched
-        /// token with a payload width other than 1/2/4 bytes is malformed and throws.</summary>
+        /// <summary>
+        /// Consumes a circular-reference back-reference and returns its id.
+        /// Returns false without consuming anything when the next token is something else. A token with a payload width other than 1, 2 or 4 bytes throws.
+        /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public bool TryReadCircularReferenceBackReference(out uint referenceId)
         {
-            if (!buffer.TryReadExtHeader(MessagePackCode.CircularReferenceExtensionTypeCode, out var dataLength))
+            if (!buffer.TryReadExtHeader(ThisLibraryExtensionTypeCodes.CircularReference, out var dataLength))
             {
                 referenceId = 0;
                 return false;
             }
-            // TryReadExtHeader proved dataLength fits in BytesRemaining, so TryGetSpan
-            // (which stitches straddles) can only fail on a broken buffer implementation
+            // TryReadExtHeader proved dataLength fits in BytesRemaining, so TryGetSpan (which stitches straddles)
+            // can only fail on a broken buffer implementation.
             if (!buffer.TryGetSpan(dataLength, out var span))
             {
                 throw new MessagePackSerializationException("Unexpected end of data while reading a circular-reference back-reference");
@@ -181,7 +187,10 @@ public static class SourceGeneratorHelper
             return true;
         }
 
-        /// <summary>Captures one unknown string-keyed member into <paramref name="members"/> (created on first capture): the key's utf8 bytes, copied before the buffer advances past the (possibly pooled) window they live in, then the value verbatim via ReadRaw. Duplicate captured keys throw, matching the declared-key policy.</summary>
+        /// <summary>
+        /// Captures one unknown string-keyed member into <paramref name="members"/>, creating the packet on first use.
+        /// The key bytes are copied before the buffer advances, then the value is taken verbatim. A duplicate key throws, as for declared keys.
+        /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public void CaptureUnknownStringKeyed(ref MessagePackUnknownMembers? members, scoped ReadOnlySpan<byte> keyUtf8)
         {
@@ -190,14 +199,17 @@ public static class SourceGeneratorHelper
             (members ??= new MessagePackUnknownMembers(isMap: true)).AddStringKeyed(key, buffer.ReadRaw());
         }
 
-        /// <summary>Captures one unknown int-keyed member (an array element beyond the declared keys) into <paramref name="members"/> (created on first capture).</summary>
+        /// <summary>Captures one array element beyond the declared keys into <paramref name="members"/>, creating the packet on first use.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public void CaptureUnknownIntKeyed(ref MessagePackUnknownMembers? members, int index)
         {
             (members ??= new MessagePackUnknownMembers(isMap: false)).AddIntKeyed(index, buffer.ReadRaw());
         }
 
-        /// <summary>Captures one unknown int-keyed member at a key hole (an index inside the declared key range with no member) into <paramref name="members"/> (created on first capture). Nil is consumed without capturing: it is the padding serialization regenerates for every hole, so the type's own payloads round trip packet-free. Anything else is data a wider schema wrote at a key this type retired, held for replay at the same index.</summary>
+        /// <summary>
+        /// Captures the array element at a key hole, an index inside the declared key range with no member, into <paramref name="members"/>, creating the packet on first use.
+        /// Nil is consumed without capturing, since serialization regenerates it for every hole anyway. Anything else is held for replay at the same index.
+        /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public void CaptureUnknownIntKeyedHole(ref MessagePackUnknownMembers? members, int index)
         {

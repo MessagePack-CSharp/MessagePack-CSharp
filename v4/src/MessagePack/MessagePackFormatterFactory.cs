@@ -4,7 +4,8 @@ using MessagePack.Formatters;
 namespace MessagePack;
 
 /// <summary>
-/// Base for the factory that produces IMessagePackFormatter&lt;TWriteBuffer, TReadBuffer, T&gt; instances.
+/// Creates the formatters a <see cref="MessagePackFormatterResolver"/> hands out.
+/// Factories compose into a chain with <see cref="Combine"/>, where the first factory that serves a type wins.
 /// </summary>
 public abstract class MessagePackFormatterFactory
 {
@@ -25,14 +26,9 @@ public abstract class MessagePackFormatterFactory
     static MessagePackFormatterFactory? dotNetOptimizedAotInstance;
 
     /// <summary>
-    /// The default chain (SourceGenerated -> BuiltIn -> Generic -> annotated Reflection)
-    /// for JIT Environment. The SourceGenerated tier serves generated object formatters
-    /// AND type-level [MessagePackFormatter] annotations (the generator registers both
-    /// through the module initializer — there is no runtime attribute tier, so annotated
-    /// assemblies must be compiled with the generator). The reflection tail serves
-    /// [MessagePackObject] types the source generator did not cover — v3 StandardResolver's
-    /// DynamicObjectResolver fallback, minus the Emit. Attribute-free types still throw;
-    /// opt into them with <see cref="WithContractless"/>.
+    /// Default chain for JIT environments.
+    /// Serves source-generated formatters, built-in types, generic collections, and <see cref="MessagePackObjectAttribute"/> types the generator did not cover through reflection.
+    /// Types without attributes are rejected; add them with <see cref="WithContractless"/>.
     /// </summary>
     public static MessagePackFormatterFactory Default
     {
@@ -40,14 +36,13 @@ public abstract class MessagePackFormatterFactory
         [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         get => defaultInstance ??= Combine(
             SourceGeneratedFormatterFactory.Instance,
+            ObjectFallbackFormatterFactory.Instance, // object by runtime type (v3 fallback); before BuiltIn's closed-table claim
             BuiltInFormatterFactory.Instance,
             GenericFormatterFactory.Instance,
             new ReflectionFormatterFactory(annotatedOnly: true));
     }
 
-    /// <summary>
-    /// The default chain (SourceGenerated -> BuiltIn) for AOT Environment. This does not include generic formatters so Native AOT / trimming safe.
-    /// </summary>
+    /// <summary>Default chain for Native AOT and trimmed applications. Serves source-generated and built-in formatters only.</summary>
     public static MessagePackFormatterFactory DefaultAot
     {
         get => defaultAotInstance ??= Combine(
@@ -56,12 +51,9 @@ public abstract class MessagePackFormatterFactory
     }
 
     /// <summary>
-    /// The .NET optimized chain (SourceGenerated -> DotNetOptimized -> BuiltIn -> Generic) for JIT Environment.
-    /// <see cref="Default"/> plus alternate wire formats where the default pays for
-    /// cross-language readability — Guid and decimal as 16-byte little-endian binary
-    /// images, DateTime as ToBinary (preserving <see cref="DateTimeKind"/>),
-    /// DateTimeOffset as Ticks + Offset, BitArray bit-packed.
-    /// All reads are validated, so this is as safe for untrusted input as the default chain.
+    /// <see cref="Default"/> plus formats that favor .NET-to-.NET exchange over cross-language readability.
+    /// Guid and decimal are written as 16-byte binary, DateTime through ToBinary preserving <see cref="DateTimeKind"/>, DateTimeOffset as ticks and offset, and BitArray bit-packed.
+    /// Reads are validated, so untrusted input is as safe as with the default chain.
     /// </summary>
     public static MessagePackFormatterFactory DotNetOptimized
     {
@@ -69,21 +61,14 @@ public abstract class MessagePackFormatterFactory
         [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         get => dotNetOptimizedInstance ??= Combine(
             SourceGeneratedFormatterFactory.Instance,
+            ObjectFallbackFormatterFactory.Instance, // object by runtime type (v3 fallback); before BuiltIn's closed-table claim
             DotNetOptimizedFormatterFactory.Instance, // insert .NET Optimized before BuiltIn
             BuiltInFormatterFactory.Instance,
             GenericFormatterFactory.Instance,
             new ReflectionFormatterFactory(annotatedOnly: true));
     }
 
-    /// <summary>
-    /// The .NET optimized chain (SourceGenerated -> DotNetOptimized -> BuiltIn) for AOT Environment.
-    /// This does not include generic formatters so Native AOT / trimming safe.
-    /// <see cref="DefaultAot"/> plus alternate wire formats where the default pays for
-    /// cross-language readability — Guid and decimal as 16-byte little-endian binary
-    /// images, DateTime as ToBinary (preserving <see cref="DateTimeKind"/>),
-    /// DateTimeOffset as Ticks + Offset, BitArray bit-packed.
-    /// All reads are validated, so this is as safe for untrusted input as the default chain.
-    /// </summary>
+    /// <summary><see cref="DefaultAot"/> plus the .NET-to-.NET formats described on <see cref="DotNetOptimized"/>.</summary>
     public static MessagePackFormatterFactory DotNetOptimizedAot
     {
         get => dotNetOptimizedAotInstance ??= Combine(
@@ -92,47 +77,41 @@ public abstract class MessagePackFormatterFactory
             BuiltInFormatterFactory.Instance);
     }
 
-    // The static presets stop at the four that mirror MessagePackSerializerOptions'
-    // presets; every optional capability composes fluently instead, so the preset
-    // surface does not explode combinatorially:
+    // The static presets stop at the four that mirror MessagePackSerializerOptions' presets.
+    // Every optional capability composes fluently instead, so the preset surface does not explode combinatorially:
     //   MessagePackFormatterFactory.Default.WithContractless()
     //   MessagePackFormatterFactory.Default.WithContractless(allowPrivate: true)
     //   MessagePackFormatterFactory.Default.WithContractless().WithTypeless(TypelessTypeLoader.LoadAnyType())
 
     /// <summary>
-    /// Appends a contractless-object tail to this chain: attribute-free objects
-    /// serialize as maps of member name to value (v3 contractless wire format), while
-    /// [MessagePackObject] types keep their keyed wire form — the composed result matches
-    /// v3's ContractlessStandardResolver. allowPrivate widens discovery to non-public
-    /// members, accessors and constructors (the v3 AllowPrivate variants).
+    /// Appends a tail that serializes objects without attributes as maps of member name to value, the format of v3's ContractlessStandardResolver.
+    /// <paramref name="allowPrivate"/> includes non-public members, accessors and constructors.
     /// </summary>
     [RequiresDynamicCode(RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
     public MessagePackFormatterFactory WithContractless(bool allowPrivate = false)
     {
-        // the contractless tier is a catch-all: it must sit LAST
+        // the contractless tier is a catch-all, so it must sit last
         return Combine(this, new ReflectionFormatterFactory(annotatedOnly: false, allowPrivate));
     }
 
     /// <summary>
-    /// Prepends a typeless head to this chain: object slots embed the concrete .NET
-    /// type name in the payload, v3 Typeless-compatible. typeLoader decides how payload
-    /// type names resolve on read (<see cref="TypelessTypeLoader.LoadAnyType"/> /
-    /// <see cref="TypelessTypeLoader.AllowedTypes"/> / <see cref="TypelessTypeLoader.Create"/>).
-    /// <c>Default.WithContractless().WithTypeless(TypelessTypeLoader.LoadAnyType())</c>
-    /// is the v3 TypelessContractlessStandardResolver equivalent.
+    /// Adds typeless handling, where object slots embed the concrete .NET type name, compatible with v3's Typeless format.
+    /// <paramref name="typeLoader"/> decides how type names in the payload resolve on read.
+    /// <c>Default.WithContractless().WithTypeless(TypelessTypeLoader.LoadAnyType())</c> is the equivalent of v3's TypelessContractlessStandardResolver.
     /// </summary>
     [RequiresDynamicCode(RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(TypelessMessages.RequiresUnreferencedCode)]
     public MessagePackFormatterFactory WithTypeless(TypelessTypeLoader typeLoader, bool omitAssemblyVersion = false)
     {
-        // typeless claims typeof(object): it must sit FIRST
-        return Combine(new TypelessFormatterFactory(typeLoader, omitAssemblyVersion), this);
+        // Typeless splits across both ends of the chain. typeof(object) must sit first (before BuiltIn's and the object
+        // fallback's claims), while interface/abstract static types sit last so BuiltIn's collection-interface formatters
+        // and generated union roots keep their claims. v3 kept its TypelessObjectResolver at the tail for the same reason,
+        // and needed no head because nothing earlier claimed object.
+        return Combine(new TypelessFormatterFactory(typeLoader, omitAssemblyVersion), this, new ForceTypelessFormatterFactory());
     }
 
-    /// <summary>
-    /// Composes factories into one chain. First non-null wins, so put overrides before defaults.
-    /// </summary>
+    /// <summary>Composes factories into one chain. The first factory that serves a type wins, so put overrides before defaults.</summary>
     public static MessagePackFormatterFactory Combine(params MessagePackFormatterFactory[] factories)
     {
         if (factories.Length == 0)
@@ -162,13 +141,13 @@ public abstract class MessagePackFormatterFactory
 
 #if NET9_0_OR_GREATER
 
-    // This is virtual, not abstract: a downlevel-compiled override cannot emit the `allows ref struct` flag and would fail to load (TypeLoadException).
-    // However implementer "must" override this method to support the new ref struct buffers and AOT safety.
+    // Virtual, not abstract. A downlevel-compiled override cannot emit the `allows ref struct` flag and would fail to load (TypeLoadException).
+    // Implementers should still override it to support the ref struct buffers and stay AOT safe.
 
     /// <summary>
-    /// Creates an IMessagePackFormatter&lt;TWriteBuffer, TReadBuffer, T&gt; for the
-    /// requested type or null when this factory does not serve the type.
-    /// Implementations must return a fresh instance per call, only fully stateless formatters may return a cached singleton.
+    /// Creates a formatter for <paramref name="type"/>, or returns null when this factory does not serve it.
+    /// Return a fresh instance per call unless the formatter is fully stateless.
+    /// The default forwards to the <see cref="Type"/>-based overload; overriding this one avoids reflection.
     /// </summary>
     public virtual object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -180,10 +159,9 @@ public abstract class MessagePackFormatterFactory
 #endif
 
     /// <summary>
-    /// Creates an IMessagePackFormatter&lt;TWriteBuffer, TReadBuffer, T&gt; for the
-    /// requested type or null when this factory does not serve the type.
-    /// Implementations must return a fresh instance per call, only fully stateless formatters may return a cached singleton.
-    /// This is the compatibility tier for target-framework that can't use "allows ref struct".
+    /// Creates a formatter for <paramref name="valueType"/> over the given buffer types, or returns null when this factory does not serve it.
+    /// Return a fresh instance per call unless the formatter is fully stateless.
+    /// This overload is required on every target framework.
     /// </summary>
     public abstract object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType);
 }
@@ -229,22 +207,21 @@ internal sealed class CompositeFormatterFactory : MessagePackFormatterFactory
 }
 
 /// <summary>
-/// Base for the runtime-closing factory tier: an override only pattern-matches the value
-/// type to an OPEN generic factory definition plus the arguments to close it with. All
-/// reflection (MakeGenericType, Activator, the AOT suppressions) lives here once. Derived
-/// constructors must carry [RequiresDynamicCode].
+/// Base for factories that close an open generic factory over the requested type at runtime.
+/// Derived classes only map a type to the open definition and its arguments; the reflection lives here.
+/// Derived constructors must carry <see cref="RequiresDynamicCodeAttribute"/>.
 /// </summary>
 public abstract class GenericFormatterFactoryBase : MessagePackFormatterFactory
 {
+    /// <summary>Initializes the factory. Requires dynamic code, so derived constructors carry the same annotation.</summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     protected GenericFormatterFactoryBase()
     {
     }
 
     /// <summary>
-    /// Maps a type to the open generic factory definition that serves it (e.g.
-    /// <c>typeof(ListFormatterFactory&lt;&gt;)</c>), the type arguments to close it over,
-    /// and the constructor arguments (null = parameterless). Return null to decline.
+    /// Maps a type to the open generic factory definition that serves it, such as <c>typeof(ListFormatterFactory&lt;&gt;)</c>,
+    /// the type arguments to close it with, and the constructor arguments (null for parameterless). Return null to decline.
     /// </summary>
     protected abstract Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments);
 
@@ -267,12 +244,14 @@ public abstract class GenericFormatterFactoryBase : MessagePackFormatterFactory
     }
 
 #if NET9_0_OR_GREATER
+    /// <inheritdoc/>
     public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
     {
         return CreateElementFactory(type)?.CreateFormatter<TWriteBuffer, TReadBuffer>(type);
     }
 #endif
 
+    /// <inheritdoc/>
     public override object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
     {
         return CreateElementFactory(valueType)?.CreateFormatter(writeBufferType, readBufferType, valueType);

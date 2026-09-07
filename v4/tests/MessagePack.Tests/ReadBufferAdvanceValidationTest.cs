@@ -87,6 +87,86 @@ public class ReadBufferAdvanceValidationTest
         Assert.True(compatibleThrown, "CompatibleReadOnlySequenceReadBuffer");
     }
 
+    // the bound is the DATA remaining (a long): once more than 2 GB remain, a negative argument
+    // zero-extended through (uint) would fit under it (int.MinValue past 2 GB, -1 past 4 GB), so
+    // the guard must sign-extend. The sequence is one 64 KB block linked 2^16 + 1 times (no real
+    // 4 GB allocation).
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(int.MinValue)]
+    public void Advance_RejectsNegative_WhenMoreThan4GBRemain(int bytesConsumed)
+    {
+        var block = new byte[64 * 1024];
+        var segmentCount = (1 << 16) + 1;
+        Segment? next = null;
+        Segment? last = null;
+        for (var i = segmentCount - 1; i >= 0; i--)
+        {
+            next = new Segment(block, next, (long)i * block.Length);
+            last ??= next;
+        }
+        var sequence = new ReadOnlySequence<byte>(next!, 0, last!, block.Length);
+        Assert.True(sequence.Length > uint.MaxValue);
+
+        var sequenceThrown = false;
+        {
+            var buffer = new ReadOnlySequenceReadBuffer(sequence);
+            try
+            {
+                buffer.Advance(bytesConsumed);
+            }
+            catch (InvalidOperationException) { sequenceThrown = true; }
+            finally { buffer.Dispose(); }
+        }
+        Assert.True(sequenceThrown, "ReadOnlySequenceReadBuffer");
+
+        var compatibleThrown = false;
+        {
+            var buffer = new CompatibleReadOnlySequenceReadBuffer(sequence);
+            try
+            {
+                buffer.Advance(bytesConsumed);
+            }
+            catch (InvalidOperationException) { compatibleThrown = true; }
+            finally { buffer.Dispose(); }
+        }
+        Assert.True(compatibleThrown, "CompatibleReadOnlySequenceReadBuffer");
+    }
+
+    // a negative sizeHint is a caller bug; the sequence buffers' fast path (data remaining in
+    // the current segment) used to accept it while only the slow path rejected it
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(int.MinValue)]
+    public void TryGetSpan_RejectsNegativeSizeHint_OnBothSequenceBuffers_FastPathIncluded(int sizeHint)
+    {
+        var data = new byte[16];
+
+        var sequenceThrown = false;
+        {
+            var buffer = new ReadOnlySequenceReadBuffer(new ReadOnlySequence<byte>(data));
+            try
+            {
+                buffer.TryGetSpan(sizeHint, out _);
+            }
+            catch (ArgumentOutOfRangeException) { sequenceThrown = true; }
+            finally { buffer.Dispose(); }
+        }
+        Assert.True(sequenceThrown, "ReadOnlySequenceReadBuffer");
+
+        var compatibleThrown = false;
+        {
+            var buffer = new CompatibleReadOnlySequenceReadBuffer(new ReadOnlySequence<byte>(data));
+            try
+            {
+                buffer.TryGetSpan(sizeHint, out _);
+            }
+            catch (ArgumentOutOfRangeException) { compatibleThrown = true; }
+            finally { buffer.Dispose(); }
+        }
+        Assert.True(compatibleThrown, "CompatibleReadOnlySequenceReadBuffer");
+    }
+
     [Fact]
     public void Advance_ExactFillIsLegal_AndGetSpanReportsExhaustion()
     {

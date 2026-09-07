@@ -8,6 +8,15 @@
     <Nullable>enable</Nullable>
     <!-- required so the dynamically-loaded HardwareCounters diagnoser assembly is copied to output -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <!-- This project is an InternalsVisibleTo friend of the signed src assemblies, so it signs with the same key.
+         CS8002 (a signed assembly referencing unsigned packages) is harmless on every runtime this repo targets. -->
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\..\opensource.snk</AssemblyOriginatorKeyFile>
+    <NoWarn>$(NoWarn);CS8002</NoWarn>
+    <!-- MsgPack113 (container formatter without state.Enter): the hand-written formatter
+         candidates here are dispatch-shape experiments whose numbers are already recorded;
+         they leave the depth contract out on purpose and must not be retrofitted -->
+    <NoWarn>$(NoWarn);MsgPack113</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,8 +35,9 @@
       <HintPath>..\..\tools\oracle\MessagePackV3.dll</HintPath>
     </Reference>
     <PackageReference Include="MessagePack.Annotations" Version="3.1.8" Aliases="V3" />
-    <!-- the oracle's runtime dependency (string interning paths) -->
-    <PackageReference Include="Microsoft.NET.StringTools" Version="17.11.4" />
+    <!-- the oracle's runtime dependency (string interning paths); 18.x because
+         ShapeShift.MsgPack's transitive floor is 18.0.2 (17.x would be a downgrade) -->
+    <PackageReference Include="Microsoft.NET.StringTools" Version="18.0.2" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
     <PackageReference Include="Microsoft.Orleans.CodeGenerator" Version="10.2.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -35,6 +45,13 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Orleans.Serialization" Version="10.2.2" />
     <PackageReference Include="Nerdbank.MessagePack" Version="1.3.85" />
+    <!-- PolyType-based multi-format serializer (same author as Nerdbank.MessagePack;
+         alpha, net10.0-only). The MsgPack, Json and Protobuf format packages share one
+         shape graph; Protobuf (new in 1068) has no field-number attribute and rides the
+         default property-name contract. -->
+    <PackageReference Include="ShapeShift.MsgPack" Version="0.1.1068-alpha" />
+    <PackageReference Include="ShapeShift.Json" Version="0.1.1068-alpha" />
+    <PackageReference Include="ShapeShift.Protobuf" Version="0.1.1068-alpha" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="protobuf-net" Version="3.2.56" />
     <PackageReference Include="System.Numerics.Tensors" Version="10.0.9" />

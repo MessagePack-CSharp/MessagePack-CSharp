@@ -21,9 +21,8 @@ namespace MessagePack;
 public static partial class MessagePackSerializer
 {
     /// <summary>
-    /// Deserializes one MessagePack value from the reader. The value is buffered
-    /// completely (bounded by <see cref="MessagePackSerializerOptions.MaxBufferedMessageSize"/>),
-    /// then parsed synchronously; bytes after the value are left unconsumed.
+    /// Deserializes one value from <paramref name="pipeReader"/>.
+    /// The value is buffered completely, up to <see cref="MessagePackSerializerOptions.MaxBufferedMessageSize"/>, then parsed. Bytes after it stay unconsumed.
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
@@ -106,10 +105,8 @@ public static partial class MessagePackSerializer
     }
 
     /// <summary>
-    /// Deserializes a stream of concatenated top-level MessagePack values (the msgpack
-    /// analog of json lines) until the reader completes. Each message is buffered
-    /// completely, then parsed synchronously, so memory is bounded per message rather
-    /// than per stream.
+    /// Deserializes concatenated top-level values until the reader completes, the MessagePack counterpart of JSON Lines.
+    /// Each message is buffered completely, then parsed, so memory is bounded per message rather than per stream.
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
@@ -123,83 +120,106 @@ public static partial class MessagePackSerializer
     {
         var maxMessageSize = options.MaxBufferedMessageSize;
         var scanner = new MessagePackBoundaryScanner();
-        while (true)
+        // Every yield sits between a ReadAsync and its AdvanceTo. Leaving the iterator there (the consumer breaks
+        // out of its await foreach, or a size/truncation check throws) must still hand the read back, or the
+        // reader's next ReadAsync fails with "reading is already in progress": the finally advances through the
+        // messages already yielded, so the rest stays for the next reader.
+        var reading = false;
+        var consumed = 0L;
+        ReadOnlySequence<byte> buffer = default;
+        try
         {
-            var result = await pipeReader.ReadAsync(cancellationToken).ConfigureAwait(false);
-            var buffer = result.Buffer;
-            if (result.IsCanceled)
+            while (true)
             {
-                throw new OperationCanceledException("The PipeReader read was canceled");
-            }
-
-            // completed reader: single-pass drain, the parser finds each boundary itself
-            if (result.IsCompleted && options.MessageProcessor == null && buffer.Length <= maxMessageSize)
-            {
-                var position = 0L;
-                while (position < buffer.Length)
+                var result = await pipeReader.ReadAsync(cancellationToken).ConfigureAwait(false);
+                buffer = result.Buffer;
+                reading = true;
+                consumed = 0;
+                if (result.IsCanceled)
                 {
+                    throw new OperationCanceledException("The PipeReader read was canceled");
+                }
+
+                // completed reader: single-pass drain, the parser finds each boundary itself
+                if (result.IsCompleted && options.MessageProcessor == null && buffer.Length <= maxMessageSize)
+                {
+                    var position = 0L;
+                    while (position < buffer.Length)
+                    {
+                        T value = default!;
+                        var tail = buffer.Slice(position);
+                        position += tail.IsSingleSegment
+                            ? DeserializeSpanCore(ref value, tail.FirstSpan, options)
+                            : DeserializeSequenceCore(ref value, in tail, options);
+                        consumed = position;
+                        yield return value;
+                    }
+                    reading = false;
+                    pipeReader.AdvanceTo(buffer.End);
+                    yield break;
+                }
+
+                var batchStart = 0L;
+                while (scanner.TryFindEnd(buffer))
+                {
+                    var messageEnd = scanner.Consumed;
+                    if (messageEnd - batchStart > maxMessageSize)
+                    {
+                        MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(messageEnd - batchStart, maxMessageSize);
+                    }
+
+                    var message = buffer.Slice(batchStart, messageEnd - batchStart);
                     T value = default!;
-                    var tail = buffer.Slice(position);
-                    position += tail.IsSingleSegment
-                        ? DeserializeSpanCore(ref value, tail.FirstSpan, options)
-                        : DeserializeSequenceCore(ref value, in tail, options);
+                    try
+                    {
+                        Deserialize(in message, ref value, options);
+                    }
+                    catch
+                    {
+                        // the boundary is known even when the parse throws: consume through it
+                        reading = false;
+                        pipeReader.AdvanceTo(buffer.GetPosition(messageEnd));
+                        throw;
+                    }
+                    scanner.StartNextValue();
+                    batchStart = messageEnd;
+                    consumed = batchStart;
                     yield return value;
                 }
-                pipeReader.AdvanceTo(buffer.End);
-                yield break;
-            }
 
-            var batchStart = 0L;
-            while (scanner.TryFindEnd(buffer))
+                if (scanner.MinimumMessageSize - batchStart > maxMessageSize)
+                {
+                    MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(scanner.MinimumMessageSize - batchStart, maxMessageSize);
+                }
+
+                if (result.IsCompleted)
+                {
+                    if (buffer.Length == batchStart)
+                    {
+                        reading = false;
+                        pipeReader.AdvanceTo(buffer.End);
+                        yield break; // clean end-of-stream at a message boundary
+                    }
+                    MessagePackSerializationException.ThrowAsyncMessageTruncated();
+                }
+
+                reading = false;
+                pipeReader.AdvanceTo(buffer.GetPosition(batchStart), buffer.End);
+                scanner.Rebase(batchStart);
+            }
+        }
+        finally
+        {
+            if (reading)
             {
-                var messageEnd = scanner.Consumed;
-                if (messageEnd - batchStart > maxMessageSize)
-                {
-                    MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(messageEnd - batchStart, maxMessageSize);
-                }
-
-                var message = buffer.Slice(batchStart, messageEnd - batchStart);
-                T value = default!;
-                try
-                {
-                    Deserialize(in message, ref value, options);
-                }
-                catch
-                {
-                    // the boundary is known even when the parse throws: consume through it
-                    pipeReader.AdvanceTo(buffer.GetPosition(messageEnd));
-                    throw;
-                }
-                scanner.StartNextValue();
-                batchStart = messageEnd;
-                yield return value;
+                pipeReader.AdvanceTo(buffer.GetPosition(consumed));
             }
-
-            if (scanner.MinimumMessageSize - batchStart > maxMessageSize)
-            {
-                MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(scanner.MinimumMessageSize - batchStart, maxMessageSize);
-            }
-
-            if (result.IsCompleted)
-            {
-                if (buffer.Length == batchStart)
-                {
-                    pipeReader.AdvanceTo(buffer.End);
-                    yield break; // clean end-of-stream at a message boundary
-                }
-                MessagePackSerializationException.ThrowAsyncMessageTruncated();
-            }
-
-            pipeReader.AdvanceTo(buffer.GetPosition(batchStart), buffer.End);
-            scanner.Rebase(batchStart);
         }
     }
 
     /// <summary>
-    /// Deserializes the elements of one top-level MessagePack array, streaming element by
-    /// element: only one element is buffered at a time (bounded by
-    /// <see cref="MessagePackSerializerOptions.MaxBufferedMessageSize"/>). A nil in place of
-    /// the array yields no elements; bytes after the array are left unconsumed.
+    /// Deserializes the elements of one top-level array one at a time, buffering a single element at most.
+    /// A nil in place of the array yields nothing. Bytes after the array stay unconsumed.
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
@@ -221,84 +241,107 @@ public static partial class MessagePackSerializer
         var maxMessageSize = options.MaxBufferedMessageSize;
         var scanner = new MessagePackBoundaryScanner();
         var produced = 0L;
-        while (true)
+        // the same early-exit guard as DeserializeMessagesAsync: a broken-out enumeration leaves the read
+        // advanced through the elements already yielded
+        var reading = false;
+        var consumed = 0L;
+        ReadOnlySequence<byte> buffer = default;
+        try
         {
-            var result = await pipeReader.ReadAsync(cancellationToken).ConfigureAwait(false);
-            var buffer = result.Buffer;
-            if (result.IsCanceled)
+            while (true)
             {
-                throw new OperationCanceledException("The PipeReader read was canceled");
-            }
-
-            if (result.IsCompleted && options.MessageProcessor == null && buffer.Length <= maxMessageSize)
-            {
-                var position = 0L;
-                while (produced < count)
+                var result = await pipeReader.ReadAsync(cancellationToken).ConfigureAwait(false);
+                buffer = result.Buffer;
+                reading = true;
+                consumed = 0;
+                if (result.IsCanceled)
                 {
-                    if (position >= buffer.Length)
+                    throw new OperationCanceledException("The PipeReader read was canceled");
+                }
+
+                if (result.IsCompleted && options.MessageProcessor == null && buffer.Length <= maxMessageSize)
+                {
+                    var position = 0L;
+                    while (produced < count)
+                    {
+                        if (position >= buffer.Length)
+                        {
+                            MessagePackSerializationException.ThrowAsyncArrayTruncated(count, produced);
+                        }
+                        T value = default!;
+                        var tail = buffer.Slice(position);
+                        position += tail.IsSingleSegment
+                            ? DeserializeSpanCore(ref value, tail.FirstSpan, options)
+                            : DeserializeSequenceCore(ref value, in tail, options);
+                        produced++;
+                        consumed = position;
+                        yield return value;
+                    }
+                    reading = false;
+                    pipeReader.AdvanceTo(buffer.GetPosition(position)); // trailing data stays
+                    yield break;
+                }
+
+                var batchStart = 0L;
+                while (produced < count && scanner.TryFindEnd(buffer))
+                {
+                    var elementEnd = scanner.Consumed;
+                    if (elementEnd - batchStart > maxMessageSize)
+                    {
+                        MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(elementEnd - batchStart, maxMessageSize);
+                    }
+
+                    var element = buffer.Slice(batchStart, elementEnd - batchStart);
+                    T value = default!;
+                    try
+                    {
+                        Deserialize(in element, ref value, options);
+                    }
+                    catch
+                    {
+                        reading = false;
+                        pipeReader.AdvanceTo(buffer.GetPosition(elementEnd));
+                        throw;
+                    }
+                    scanner.StartNextValue();
+                    batchStart = elementEnd;
+                    produced++;
+                    consumed = batchStart;
+                    yield return value;
+                }
+
+                if (produced == count)
+                {
+                    reading = false;
+                    pipeReader.AdvanceTo(buffer.GetPosition(batchStart)); // trailing data stays
+                    yield break;
+                }
+
+                if (scanner.MinimumMessageSize - batchStart > maxMessageSize)
+                {
+                    MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(scanner.MinimumMessageSize - batchStart, maxMessageSize);
+                }
+
+                if (result.IsCompleted)
+                {
+                    if (buffer.Length == batchStart)
                     {
                         MessagePackSerializationException.ThrowAsyncArrayTruncated(count, produced);
                     }
-                    T value = default!;
-                    var tail = buffer.Slice(position);
-                    position += tail.IsSingleSegment
-                        ? DeserializeSpanCore(ref value, tail.FirstSpan, options)
-                        : DeserializeSequenceCore(ref value, in tail, options);
-                    produced++;
-                    yield return value;
+                    MessagePackSerializationException.ThrowAsyncMessageTruncated();
                 }
-                pipeReader.AdvanceTo(buffer.GetPosition(position)); // trailing data stays
-                yield break;
-            }
 
-            var batchStart = 0L;
-            while (produced < count && scanner.TryFindEnd(buffer))
+                reading = false;
+                pipeReader.AdvanceTo(buffer.GetPosition(batchStart), buffer.End);
+                scanner.Rebase(batchStart);
+            }
+        }
+        finally
+        {
+            if (reading)
             {
-                var elementEnd = scanner.Consumed;
-                if (elementEnd - batchStart > maxMessageSize)
-                {
-                    MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(elementEnd - batchStart, maxMessageSize);
-                }
-
-                var element = buffer.Slice(batchStart, elementEnd - batchStart);
-                T value = default!;
-                try
-                {
-                    Deserialize(in element, ref value, options);
-                }
-                catch
-                {
-                    pipeReader.AdvanceTo(buffer.GetPosition(elementEnd));
-                    throw;
-                }
-                scanner.StartNextValue();
-                batchStart = elementEnd;
-                produced++;
-                yield return value;
+                pipeReader.AdvanceTo(buffer.GetPosition(consumed));
             }
-
-            if (produced == count)
-            {
-                pipeReader.AdvanceTo(buffer.GetPosition(batchStart)); // trailing data stays
-                yield break;
-            }
-
-            if (scanner.MinimumMessageSize - batchStart > maxMessageSize)
-            {
-                MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(scanner.MinimumMessageSize - batchStart, maxMessageSize);
-            }
-
-            if (result.IsCompleted)
-            {
-                if (buffer.Length == batchStart)
-                {
-                    MessagePackSerializationException.ThrowAsyncArrayTruncated(count, produced);
-                }
-                MessagePackSerializationException.ThrowAsyncMessageTruncated();
-            }
-
-            pipeReader.AdvanceTo(buffer.GetPosition(batchStart), buffer.End);
-            scanner.Rebase(batchStart);
         }
     }
 

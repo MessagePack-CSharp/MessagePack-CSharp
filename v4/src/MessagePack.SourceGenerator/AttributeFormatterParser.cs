@@ -3,15 +3,14 @@ using Microsoft.CodeAnalysis;
 namespace MessagePack.SourceGenerator;
 
 /// <summary>
-/// Parses a TYPE-LEVEL [MessagePackFormatter] into an <see cref="AttributeFormatterTypeModel"/>:
-/// the generated factory constructs the attribute-directed formatter with compiled code and
-/// registers the type into SourceGeneratedFormatterFactory through the module initializer, so
-/// the annotation rides the same registry tier as generated object formatters. There is NO
-/// runtime attribute tier — a type the generator cannot compile a registration for is served
-/// by nothing, which MsgPack014 surfaces instead of a silent stand-down. Binding of the attribute
-/// itself is shared with the member-level path
-/// (<see cref="ObjectParser.TryBuildCustomFormatter"/>), so the expression-string argument
-/// form is compile-time checked here too.
+/// Parses a type-level [MessagePackFormatter] into an <see cref="AttributeFormatterTypeModel"/>: the generated factory
+/// constructs the attribute-directed formatter with compiled code and registers the type into
+/// SourceGeneratedFormatterFactory through the module initializer, so the annotation rides the same registry tier as
+/// generated object formatters. There is no runtime attribute tier, a type the generator cannot compile a registration
+/// for is served by nothing, which MsgPack014 surfaces instead of a silent stand-down.
+/// Binding of the attribute itself is shared with the member-level path
+/// (<see cref="ObjectParser.TryBuildCustomFormatter"/>), so the expression-string argument form is compile-time checked
+/// here too.
 /// </summary>
 static class AttributeFormatterParser
 {

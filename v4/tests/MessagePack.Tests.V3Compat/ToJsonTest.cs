@@ -1,0 +1,129 @@
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Nerdbank.Streams;
+using Xunit;
+
+namespace MessagePack.Tests
+{
+    public class ToJsonTest
+    {
+        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Default.WithCompression(MessagePackCompression.Lz4Block);
+
+        private string JsonConvert(string json, MessagePackSerializerOptions options)
+        {
+            // V3COMPAT-EDIT: v4's Json conversions are byte[]-in/out and take no options
+            return MessagePackSerializer.ConvertToJson(MessagePackSerializer.ConvertFromJson(json));
+        }
+
+        [Theory]
+        [InlineData("null")]
+        [InlineData("true")]
+        [InlineData("false")]
+        [InlineData("4141.431242")]
+        [InlineData("414")]
+        [InlineData(@"{""hoge"":100,""huga"":null,""nano"":false}")]
+        [InlineData(@"[1,20,false,true,3424.432]")]
+        public void SimpleToJson(string json)
+        {
+            this.JsonConvert(json, MessagePackSerializerOptions.Default).Is(json);
+            this.JsonConvert(json, LZ4Standard).Is(json);
+        }
+
+        [Fact]
+        public void ComplexToJson()
+        {
+            var json = @"{""reservations"":[{""instances"":[{""type"":""small"",""state"":{""name"":""running""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]},{""type"":""large"",""state"":{""name"":""stopped""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]}]},{""instances"":[{""type"":""medium"",""state"":{""name"":""terminated""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]},{""type"":""xlarge"",""state"":{""name"":""running""},""tags"":[{""Key"":""Name"",""Values"":[""DB""]},{""Key"":""version"",""Values"":[""1""]}]}]}]}";
+            this.JsonConvert(json, MessagePackSerializerOptions.Default).Is(json);
+            this.JsonConvert(json, LZ4Standard).Is(json);
+        }
+
+#if V3COMPAT_EXCLUDED // V3COMPAT-EDIT: v4 ConvertFromJson takes no options, so the per-call depth guard is inexpressible
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        [Trait("CWE", "674")]
+        public void ConvertFromJsonRejectsExcessiveNesting(bool compression)
+        {
+            var options = MessagePackSerializerOptions.Default
+                .WithCompression(compression ? MessagePackCompression.Lz4Block : MessagePackCompression.None)
+                .WithSecurity(MessagePackSecurity.UntrustedData.WithMaximumObjectGraphDepth(3));
+
+            Assert.Throws<InsufficientExecutionStackException>(() => MessagePackSerializer.ConvertFromJson("[[[[1]]]]", options));
+        }
+#endif
+
+        [Fact(Skip = "v4 intentional: strict JSON parsing rejects separator runs that v3's lenient reader skipped")]
+        [Trait("CWE", "674")]
+        public void ConvertFromJsonSkipsLongSeparatorRunIteratively()
+        {
+            var json = new string(',', 200_000) + "null";
+            var msgpack = MessagePackSerializer.ConvertFromJson(json);
+
+            MessagePackSerializer.ConvertToJson(msgpack).Is("null");
+        }
+
+        [Fact]
+        public void FloatJson()
+        {
+            var f = 3.33f;
+            var xs = MessagePackSerializer.Serialize(f);
+            var json = MessagePackSerializer.ConvertToJson(xs);
+            json.Is("3.33");
+        }
+
+        [Theory]
+        [InlineData(@"{""Amount"":1.0E-6}", @"{""Amount"":1E-06}")]
+        [InlineData(@"{""Amount"":1.0E-06}", @"{""Amount"":1E-06}")]
+        [InlineData(@"{""Amount"":1E-6}", @"{""Amount"":1E-06}")]
+        [InlineData(@"{""Amount"":1E-06}", @"{""Amount"":1E-06}")]
+        public void ScientificFloatJsonRoundTrip(string inputJson, string expectedRoundTripJson)
+        {
+            this.JsonConvert(inputJson, MessagePackSerializerOptions.Default).Is(expectedRoundTripJson);
+            this.JsonConvert(inputJson, LZ4Standard).Is(expectedRoundTripJson);
+        }
+
+        [Fact(Skip = "v4 intentional: no fabricated InnerException. v3's inner EndOfStreamException was an artifact of its reader architecture (the reader threw, the serializer wrapped), not a designed contract; v4 throws MessagePackSerializationException directly")]
+        public void ConvertToJson_InvalidMsgPack()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteInt32(1);
+            writer.Flush();
+
+            var truncatedSequence = sequence.AsReadOnlySequence.Slice(0, sequence.Length - 1);
+            var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.ConvertToJson(truncatedSequence));
+            Assert.IsType<EndOfStreamException>(ex.InnerException);
+        }
+
+        [Fact(Skip = "v4 intentional: ConvertToJson is a documented diagnostic view; ext values render as {$extension,$data} objects, not v3's [code,base64] array")]
+        public void ExtJson()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteExtensionFormat(new ExtensionResult(47, new byte[] { 1, 10, 100 }));
+            writer.Flush();
+
+            var msgpack = sequence.AsReadOnlySequence;
+            var str = MessagePackSerializer.ConvertToJson(msgpack);
+            var b64 = Convert.ToBase64String(new byte[] { 1, 10, 100 });
+
+            str.Is(@"[47,""" + b64 + @"""]");
+        }
+
+        [Fact(Skip = "v4 intentional-leaning: diagnostic JSON view delegates DateTime to Utf8JsonWriter ISO-8601 (fractional zeros trimmed); v3 printed the O format")]
+        public void DateTimeJson()
+        {
+            var now = new DateTime(1999, 12, 19, 11, 19, 19, DateTimeKind.Utc);
+            var bin = MessagePackSerializer.Serialize(now);
+            var json = MessagePackSerializer.ConvertToJson(bin);
+            json.Is(@"""1999-12-19T11:19:19.0000000Z""");
+        }
+    }
+}

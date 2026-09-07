@@ -10,10 +10,11 @@ using V4 = MessagePack.MessagePackSerializer;
 
 namespace MessagePack.Tests;
 
-// IMessagePackSurrogate<T, TSelf>: T rides the wire as TSurrogate's shape, and every
-// deserialized value flows through FromSurrogate (constructor validation stays in force).
-// The declarative alternative to hand-writing a buffer-generic formatter; net10+ only
-// (static abstract interface members).
+// IMessagePackSurrogate<TTarget, TSurrogate>: TTarget rides the wire as TSurrogate's shape,
+// and every deserialized value flows through ToTarget (constructor validation stays in
+// force). The declarative alternative to hand-writing a buffer-generic formatter. Both
+// conversions are instance members (ToSurrogate runs on default(TSurrogate)), so the
+// feature compiles on every TFM; the downlevel roundtrip lives in Tests.NetFx.
 public class SurrogateTests
 {
     [Fact]
@@ -131,14 +132,14 @@ public class SurrogateTests
             [MessagePackObject]
             public record struct SurrogateA([property: Key(0)] int X) : IMessagePackSurrogate<Target, SurrogateA>
             {
-                public static SurrogateA ToSurrogate(Target value) => new(value.X);
-                public static Target FromSurrogate(SurrogateA s) => new() { X = s.X };
+                public SurrogateA ToSurrogate(Target value) => new(value.X);
+                public Target ToTarget() => new() { X = X };
             }
             [MessagePackObject]
             public record struct SurrogateB([property: Key(0)] int X) : IMessagePackSurrogate<Target, SurrogateB>
             {
-                public static SurrogateB ToSurrogate(Target value) => new(value.X);
-                public static Target FromSurrogate(SurrogateB s) => new() { X = s.X };
+                public SurrogateB ToSurrogate(Target value) => new(value.X);
+                public Target ToTarget() => new() { X = X };
             }
             """);
         Assert.Equal(2, result.Diagnostics.Count(d => d.Id == "MsgPack018"));
@@ -154,8 +155,8 @@ public class SurrogateTests
             [MessagePackObject]
             public record struct OwnedSurrogate([property: Key(0)] int X) : IMessagePackSurrogate<Owned, OwnedSurrogate>
             {
-                public static OwnedSurrogate ToSurrogate(Owned value) => new(value.X);
-                public static Owned FromSurrogate(OwnedSurrogate s) => new() { X = s.X };
+                public OwnedSurrogate ToSurrogate(Owned value) => new(value.X);
+                public Owned ToTarget() => new() { X = X };
             }
             """);
         Assert.Contains(result.Diagnostics, d => d.Id == "MsgPack019" && d.GetMessage().Contains("wins"));
@@ -170,8 +171,8 @@ public class SurrogateTests
             [MessagePackObject]
             public record struct BoxSurrogate<T>([property: Key(0)] T? Item) : IMessagePackSurrogate<Box<T>, BoxSurrogate<T>>
             {
-                public static BoxSurrogate<T> ToSurrogate(Box<T> value) => new(value.Item);
-                public static Box<T> FromSurrogate(BoxSurrogate<T> s) => new() { Item = s.Item };
+                public BoxSurrogate<T> ToSurrogate(Box<T> value) => new(value.Item);
+                public Box<T> ToTarget() => new() { Item = Item };
             }
             """);
         Assert.Contains(result.Diagnostics, d => d.Id == "MsgPack019" && d.GetMessage().Contains("generic"));
@@ -204,9 +205,9 @@ public readonly record struct SurrogateUserSurrogate(
     [property: V3::MessagePack.Key(1)] string Realm)
     : IMessagePackSurrogate<SurrogateUser, SurrogateUserSurrogate>
 {
-    public static SurrogateUserSurrogate ToSurrogate(SurrogateUser value) => new(value.Value, value.Realm);
+    public SurrogateUserSurrogate ToSurrogate(SurrogateUser value) => new(value.Value, value.Realm);
 
-    public static SurrogateUser FromSurrogate(SurrogateUserSurrogate surrogate) => new(surrogate.Value, surrogate.Realm);
+    public SurrogateUser ToTarget() => new(Value, Realm);
 }
 
 // struct T through a surrogate: the nil-means-null branch folds away
@@ -220,9 +221,9 @@ public readonly record struct SurrogateTickSurrogate(
     [property: Key(0)] long Ticks)
     : IMessagePackSurrogate<SurrogateTick, SurrogateTickSurrogate>
 {
-    public static SurrogateTickSurrogate ToSurrogate(SurrogateTick value) => new(value.Ticks);
+    public SurrogateTickSurrogate ToSurrogate(SurrogateTick value) => new(value.Ticks);
 
-    public static SurrogateTick FromSurrogate(SurrogateTickSurrogate surrogate) => new(surrogate.Ticks);
+    public SurrogateTick ToTarget() => new(Ticks);
 }
 
 [MessagePackObject]
@@ -245,9 +246,9 @@ public readonly record struct RecursiveNodeSurrogate(
     [property: Key(1)] RecursiveNode[] Children)
     : IMessagePackSurrogate<RecursiveNode, RecursiveNodeSurrogate>
 {
-    public static RecursiveNodeSurrogate ToSurrogate(RecursiveNode value) => new(value.Value, value.Children);
+    public RecursiveNodeSurrogate ToSurrogate(RecursiveNode value) => new(value.Value, value.Children);
 
-    public static RecursiveNode FromSurrogate(RecursiveNodeSurrogate surrogate) => new(surrogate.Value, surrogate.Children);
+    public RecursiveNode ToTarget() => new(Value, Children);
 }
 
 // stands in for a type from an assembly the user cannot annotate
@@ -263,7 +264,7 @@ public readonly record struct ThirdPartyPointSurrogate(
     [property: Key(1)] int Y)
     : IMessagePackSurrogate<ThirdPartyPoint, ThirdPartyPointSurrogate>
 {
-    public static ThirdPartyPointSurrogate ToSurrogate(ThirdPartyPoint value) => new(value.X, value.Y);
+    public ThirdPartyPointSurrogate ToSurrogate(ThirdPartyPoint value) => new(value.X, value.Y);
 
-    public static ThirdPartyPoint FromSurrogate(ThirdPartyPointSurrogate surrogate) => new(surrogate.X, surrogate.Y);
+    public ThirdPartyPoint ToTarget() => new(X, Y);
 }

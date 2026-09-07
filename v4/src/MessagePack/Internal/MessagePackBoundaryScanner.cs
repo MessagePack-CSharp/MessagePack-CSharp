@@ -1,13 +1,14 @@
+#if NET9_0_OR_GREATER
+using System.Runtime.Intrinsics;
+#endif
+
 namespace MessagePack;
 
 /// <summary>
-/// Resumable boundary scanner for the async two-pass deserializer:
-/// pass 1 walks tokens via <see cref="MessagePackPrimitives.TryReadToken"/> over the PipeReader's
-/// buffered-but-unconsumed bytes to find where one top-level value ends,
-/// pass 2 hands exactly that range to the synchronous parser.
-/// Count-based like ReadBufferExtensions.Skip (iterative, so adversarial nesting depth cannot blow the stack),
-/// but suspendable: the whole resume state is the outstanding value count plus the opaque payload bytes still to pass over,
-/// so a scan can stop at the end of the buffered data and continue when more arrives without re-reading anything already scanned.
+/// Resumable boundary scanner for the async two-pass deserializer.
+/// Pass 1 walks tokens through <see cref="MessagePackPrimitives.TryReadToken"/> over the PipeReader's buffered bytes to find where one top-level value ends, and pass 2 hands exactly that range to the synchronous parser.
+/// The walk is count-based like Skip, so nesting depth cannot exhaust the stack, and suspendable. The whole resume state is the outstanding value count plus the payload bytes still to pass over,
+/// so a scan can stop at the end of the buffered data and continue when more arrives without re-reading anything.
 /// </summary>
 internal struct MessagePackBoundaryScanner
 {
@@ -27,18 +28,15 @@ internal struct MessagePackBoundaryScanner
     /// </summary>
     public long MinimumMessageSize => consumed + pendingPayloadBytes + remainingValues;
 
-    /// <summary>
-    /// A fresh scanner is primed to find the end of one value.
-    /// </summary>
+    /// <summary>A fresh scanner is primed to find the end of one value.</summary>
     public MessagePackBoundaryScanner()
     {
         remainingValues = 1;
     }
 
     /// <summary>
-    /// Re-arms the scanner for the value that follows the one just found, keeping the
-    /// scan position, so successive <see cref="Consumed"/> values are the boundaries of
-    /// consecutive messages within the same buffered sequence.
+    /// Re-arms the scanner for the value that follows the one just found, keeping the scan position,
+    /// so successive <see cref="Consumed"/> values are the boundaries of consecutive messages within the same buffered sequence.
     /// </summary>
     public void StartNextValue()
     {
@@ -46,10 +44,8 @@ internal struct MessagePackBoundaryScanner
     }
 
     /// <summary>
-    /// Shifts the scan origin after the caller consumed the leading
-    /// <paramref name="consumedBytes"/> of the buffered sequence (PipeReader.AdvanceTo):
-    /// the next TryFindEnd expects a sequence starting where those bytes ended, and any
-    /// progress into a not-yet-complete value is kept.
+    /// Shifts the scan origin after the caller consumed the leading <paramref name="consumedBytes"/> of the buffered sequence.
+    /// The next TryFindEnd expects a sequence starting where those bytes ended, and any progress into an incomplete value is kept.
     /// </summary>
     public void Rebase(long consumedBytes)
     {
@@ -57,10 +53,9 @@ internal struct MessagePackBoundaryScanner
     }
 
     /// <summary>
-    /// Scans forward from the previous stop. True when the end of the value is found, at
-    /// which point <see cref="Consumed"/> is its total size; false means every buffered
-    /// byte was scanned and more data is required. The buffer must be the same sequence
-    /// as the previous call, only grown (the PipeReader examined-but-not-consumed pattern).
+    /// Scans forward from the previous stop. Returns true when the end of the value is found, at which point <see cref="Consumed"/> is its total size,
+    /// and false when every buffered byte was scanned and more data is required.
+    /// The buffer must be the same sequence as in the previous call, only grown.
     /// </summary>
     public bool TryFindEnd(in ReadOnlySequence<byte> buffer)
     {
@@ -69,9 +64,8 @@ internal struct MessagePackBoundaryScanner
         var pending = pendingPayloadBytes;
         var offset = consumed;
 
-        // the value ends when its outstanding work — values still to read plus payload
-        // bytes still to pass over — reaches zero; running out of buffered data breaks
-        // out instead, and the epilogue reports which of the two happened
+        // The value ends when its outstanding work (values still to read plus payload bytes still to pass over)
+        // reaches zero. Running out of buffered data breaks out instead, and the epilogue reports which of the two happened.
         while (remaining > 0 || pending > 0)
         {
             // opaque payload bytes: pure arithmetic, crosses segment boundaries freely
@@ -133,6 +127,43 @@ internal struct MessagePackBoundaryScanner
                     remaining += childValueCount - 1;
                     pending = payloadLength;
                     index += tokenSize;
+
+#if NET9_0_OR_GREATER
+                    // Bulk fixint skip
+                    if (Vector256.IsHardwareAccelerated)
+                    {
+                        if (remaining >= 32 && (payloadLength | childValueCount) == 0 && tokenSize == 1)
+                        {
+                            while (remaining >= 32 && span.Length - index >= 32)
+                            {
+                                var v = Vector256.LoadUnsafe(ref MemoryMarshal.GetReference(span), (nuint)index).AsSByte();
+                                if (!Vector256.GreaterThanAll(v, Vector256.Create((sbyte)-33)))
+                                {
+                                    break;
+                                }
+                                index += 32;
+                                remaining -= 32;
+                            }
+                        }
+                    }
+                    else if (Vector128.IsHardwareAccelerated)
+                    {
+                        // unmeasured (no ARM box here), same shape at half width
+                        if (remaining >= 16 && (payloadLength | childValueCount) == 0 && tokenSize == 1)
+                        {
+                            while (remaining >= 16 && span.Length - index >= 16)
+                            {
+                                var v = Vector128.LoadUnsafe(ref MemoryMarshal.GetReference(span), (nuint)index).AsSByte();
+                                if (!Vector128.GreaterThanAll(v, Vector128.Create((sbyte)-33)))
+                                {
+                                    break;
+                                }
+                                index += 16;
+                                remaining -= 16;
+                            }
+                        }
+                    }
+#endif
                     continue;
                 }
                 if (result == DecodeResult.TokenMismatch)
@@ -140,9 +171,8 @@ internal struct MessagePackBoundaryScanner
                     throw new MessagePackSerializationException("The msgpack data contains the never-used code 0xc1");
                 }
 
-                // InsufficientBuffer with the code byte present, so tokenSize is the
-                // token's exact requirement: its length bytes straddle the segment
-                // boundary. Stitch them through the sequence if buffered.
+                // InsufficientBuffer with the code byte present, so tokenSize is the token's exact requirement and its
+                // length bytes straddle the segment boundary. Stitch them through the sequence if buffered.
                 var tokenStart = offset + index;
                 if (totalLength - tokenStart < tokenSize)
                 {

@@ -2,13 +2,15 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MessagePack;
 
+/// <summary>
+/// Serializes and deserializes values in MessagePack format.
+/// Overloads without an options argument use <see cref="MessagePackSerializerOptions.Default"/>.
+/// </summary>
 public static partial class MessagePackSerializer
 {
     const int SerializeScratchSize = 1024;
 
-    /// <summary>
-    /// Serializes a value and returns the MessagePack binary as a new byte array.
-    /// </summary>
+    /// <summary>Serializes <paramref name="value"/> and returns the MessagePack bytes as a new array.</summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
     public static byte[] Serialize<T>(T value)
@@ -72,9 +74,7 @@ public static partial class MessagePackSerializer
         }
     }
 
-    /// <summary>
-    /// Serializes a value and writes the MessagePack binary to the buffer writer.
-    /// </summary>
+    /// <summary>Serializes <paramref name="value"/> and writes the MessagePack bytes to <paramref name="output"/>.</summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
     public static void Serialize<T>(IBufferWriter<byte> output, T value)
@@ -88,8 +88,8 @@ public static partial class MessagePackSerializer
         var processor = options.MessageProcessor;
         if (processor != null)
         {
-            // an envelope needs the complete message before the first output byte,
-            // so this path serializes into the pooled segment buffer first
+            // an envelope needs the complete message before the first output byte, so this path serializes into
+            // the pooled segment buffer first
             SerializeEncoded(output, value, options, processor);
             return;
         }
@@ -135,10 +135,8 @@ public static partial class MessagePackSerializer
 #if NET9_0_OR_GREATER
 
     /// <summary>
-    /// Serializes a value directly into a write buffer without flushing.
-    /// This is the low-level entry for embedding MessagePack inside another protocol.
-    /// Options carrying a MessageProcessor are rejected because the processor
-    /// needs the complete message, which this entry never sees.
+    /// Serializes <paramref name="value"/> straight into a write buffer without flushing, for embedding MessagePack inside another protocol.
+    /// Options with a MessageProcessor are rejected, since the processor needs the complete message and this entry never sees it.
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
@@ -228,8 +226,9 @@ public static partial class MessagePackSerializer
     [SkipLocalsInit]
     static bool TryEncodeToArray(scoped BufferSegments message, MessagePackMessageProcessor processor, [NotNullWhen(true)] out byte[]? encoded)
     {
-        // envelope staging for the byte[] entry: the encoded size is unknown upfront, so the processor writes into a staging buffer.
-        // and the exact-size copy happens once at the end; false (passthrough) falls back to the caller's optimal raw path
+        // Envelope staging for the byte[] entry. The encoded size is unknown upfront, so the processor writes into a staging
+        // buffer and the exact-size copy happens once at the end. A false result (passthrough) falls back to the caller's
+        // optimal raw path.
 
 #if NET9_0_OR_GREATER
         Span<byte> scratch = stackalloc byte[SerializeScratchSize];

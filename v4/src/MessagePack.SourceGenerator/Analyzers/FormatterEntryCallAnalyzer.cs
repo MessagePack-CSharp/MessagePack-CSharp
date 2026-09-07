@@ -6,13 +6,11 @@ using Microsoft.CodeAnalysis.Operations;
 namespace MessagePack.SourceGenerator.Analyzers;
 
 /// <summary>
-/// A formatter that calls a MessagePackSerializer entry point from inside its own
-/// Serialize/Deserialize re-enters the serializer from the top: the active resolver and
-/// options are replaced by whatever the entry call defaults to, the depth/security
-/// tracking in SerializeState restarts from zero, and the buffer in flight is bypassed
-/// entirely. The member's formatter should come from the Initialize-provided resolver
-/// instead. MsgPack109 flags every entry invocation lexically inside an
-/// IMessagePackFormatter implementation.
+/// A formatter that calls a MessagePackSerializer entry point from inside its own Serialize/Deserialize re-enters the
+/// serializer from the top: the active resolver and options are replaced by whatever the entry call defaults to,
+/// the depth/security tracking in SerializeState restarts from zero, and the buffer in flight is bypassed entirely.
+/// The member's formatter should come from the Initialize-provided resolver instead.
+/// MsgPack109 flags every entry invocation lexically inside an IMessagePackFormatter implementation.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class FormatterEntryCallAnalyzer : DiagnosticAnalyzer
@@ -24,7 +22,7 @@ public sealed class FormatterEntryCallAnalyzer : DiagnosticAnalyzer
     static readonly DiagnosticDescriptor Rule = new(
         DiagnosticId,
         "Formatters should not call serializer entry points",
-        "'{0}' implements IMessagePackFormatter but calls MessagePackSerializer.{1}; an entry call restarts serialization with default options, bypassing the active resolver, the in-flight buffer, and the depth tracking — use the resolver handed to Initialize instead",
+        "'{0}' implements IMessagePackFormatter but calls MessagePackSerializer.{1}; an entry call restarts serialization with default options, bypassing the active resolver, the in-flight buffer, and the depth tracking. Use the resolver handed to Initialize instead.",
         "MessagePack.SourceGenerator",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
@@ -51,7 +49,7 @@ public sealed class FormatterEntryCallAnalyzer : DiagnosticAnalyzer
         // lexical walk: lambdas and local functions inside a formatter method count too
         for (var containing = context.ContainingSymbol?.ContainingType; containing is not null; containing = containing.ContainingType)
         {
-            if (ImplementsFormatterInterface(containing))
+            if (FormatterSymbols.ImplementsFormatterInterface(containing))
             {
                 context.ReportDiagnostic(Diagnostic.Create(
                     Rule,
@@ -68,19 +66,6 @@ public sealed class FormatterEntryCallAnalyzer : DiagnosticAnalyzer
         for (var containing = method.ContainingType; containing is not null; containing = containing.ContainingType)
         {
             if (containing.ToDisplayString() == SerializerTypeName)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    static bool ImplementsFormatterInterface(INamedTypeSymbol type)
-    {
-        foreach (var implemented in type.AllInterfaces)
-        {
-            if (implemented.OriginalDefinition is { MetadataName: "IMessagePackFormatter`3" } original
-                && original.ContainingNamespace.ToDisplayString() == "MessagePack")
             {
                 return true;
             }

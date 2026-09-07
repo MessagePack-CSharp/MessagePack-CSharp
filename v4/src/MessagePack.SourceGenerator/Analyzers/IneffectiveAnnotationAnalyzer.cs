@@ -5,13 +5,12 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace MessagePack.SourceGenerator.Analyzers;
 
 /// <summary>
-/// Annotations the serializer silently ignores: a member carrying BOTH [Key] and
-/// [IgnoreMember] (ignore wins, the key is dead), [Key]/[IgnoreMember] on a static member
-/// (statics never participate), and [Key]/[IgnoreMember] on a member of a struct or
-/// sealed class that carries neither [MessagePackObject] nor [DataContract] (nothing can
-/// inherit it into an annotated hierarchy, so the annotation can never take effect —
-/// unsealed classes are exempt: a base member's [Key] is honored through an annotated
-/// derived type). MsgPack110 turns each silent no-op into a warning.
+/// Annotations the serializer silently ignores: a member carrying both [Key] and [IgnoreMember] (ignore wins,
+/// the key is dead), [Key]/[IgnoreMember] on a static member (statics never participate),
+/// and [Key]/[IgnoreMember] on a member of a struct or sealed class that carries neither [MessagePackObject] nor
+/// [DataContract] (nothing can inherit it into an annotated hierarchy,
+/// so the annotation can never take effect, unsealed classes are exempt: a base member's [Key] is honored through an
+/// annotated derived type). MsgPack110 turns each silent no-op into a warning.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class IneffectiveAnnotationAnalyzer : DiagnosticAnalyzer
@@ -64,7 +63,7 @@ public sealed class IneffectiveAnnotationAnalyzer : DiagnosticAnalyzer
             context.ReportDiagnostic(Diagnostic.Create(
                 Rule,
                 PickLocation(member),
-                $"'{member.ContainingType.ToDisplayString()}.{member.Name}' carries both [Key] and [IgnoreMember]; the member is ignored and the key is dead — remove one of them"));
+                $"'{member.ContainingType.ToDisplayString()}.{member.Name}' carries both [Key] and [IgnoreMember]; the member is ignored and the key is dead, so remove one of them"));
             return;
         }
 
@@ -77,11 +76,10 @@ public sealed class IneffectiveAnnotationAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        // a struct or sealed class cannot be inherited into an annotated hierarchy, so a
-        // [Key] without [MessagePackObject]/[DataContract] on the type is provably dead —
-        // [Key] means nothing to contractless either. [IgnoreMember] is exempt (the
-        // contractless tier honors it), and so is an unsealed class (a derived
-        // [MessagePackObject] type honors a base member's [Key]).
+        // a struct or sealed class cannot be inherited into an annotated hierarchy,
+        // so a [Key] without [MessagePackObject]/[DataContract] on the type is provably dead,
+        // [Key] means nothing to contractless either. [IgnoreMember] is exempt (the contractless tier honors it),
+        // and so is an unsealed class (a derived [MessagePackObject] type honors a base member's [Key]).
         var containingType = member.ContainingType;
         if (hasKey
             && (containingType.TypeKind == TypeKind.Struct || (containingType.TypeKind == TypeKind.Class && containingType.IsSealed))

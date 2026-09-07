@@ -1,26 +1,26 @@
-using SerializerFoundation;
-using System.Runtime.CompilerServices;
 using static MessagePack.MessagePackPrimitives;
 
 namespace MessagePack;
 
-// Read-side mirror of WriteBufferExtensions: throwing readers layered over the span-based
-// TryRead primitives. Fast path decodes straight from the buffer's current span (for
-// contiguous buffers that is everything remaining). The NoInlining slow path is driven by
-// the DecodeResult category: on InsufficientBuffer it demands EXACTLY the tokenSize the
-// primitive reported via TryGetSpan (the ReadOnlySequenceReadBuffer straddle case
-// stitches precisely that much) and retries; TryGetSpan returning false means genuine
-// truncation and exits the loop into the domain exception — the foundation never throws
-// for it. tokenSize strictly exceeds the window it was reported for, so the loop
-// terminates (str takes two hops: header requirement first, then header + payload).
+// Read-side mirror of WriteBufferExtensions: throwing readers layered over the span-based TryRead primitives.
+// Fast path decodes straight from the buffer's current span (for contiguous buffers that is everything remaining).
+// The NoInlining slow path is driven by the DecodeResult category.
+// InsufficientBuffer it demands exactly the tokenSize the primitive reported via TryGetSpan (the ReadOnlySequenceReadBuffer straddle case stitches precisely that much) and retries.
+// TryGetSpan returning false means genuine truncation and exits the loop into the domain exception, the foundation never throws for it.
+// tokenSize strictly exceeds the window it was reported for, so the loop terminates (str takes two hops: header requirement first, then header + payload).
 // TokenMismatch throws immediately.
 //
-// Materialization order matters: extract the value (GetString) BEFORE Advance, because
-// Advance may return a stitched temp buffer to the pool and invalidate the span.
+// Materialization order matters: extract the value (GetString) before Advance,
+// because Advance may return a stitched temp buffer to the pool and invalidate the span.
 //
 // Payloads whose destination is already contiguous do not go through a window at all.
-// ReadBinary reads only the header that way and then hands its result array to
-// IReadBuffer.CopyTo, which copies out of the segments once instead of stitching first.
+// ReadBinary reads only the header that way and then hands its result array to IReadBuffer.CopyTo,
+// which copies out of the segments once instead of stitching first.
+
+/// <summary>
+/// Reads single MessagePack tokens from any <see cref="IReadBuffer"/>.
+/// Each call consumes exactly one token and throws <see cref="MessagePackSerializationException"/> on a mismatch, an out-of-range value or truncated data.
+/// </summary>
 public static class ReadBufferExtensions
 {
     extension<TReadBuffer>(ref TReadBuffer buffer)
@@ -31,6 +31,7 @@ public static class ReadBufferExtensions
     {
         #region Int32, 64 / UInt32, 64
 
+        /// <summary>Reads an int32 from any msgpack int format.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadInt32()
         {
@@ -43,6 +44,7 @@ public static class ReadBufferExtensions
             return ReadInt32Slow(ref buffer, r, tokenSize);
         }
 
+        /// <summary>Reads an int64 from any msgpack int format.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long ReadInt64()
         {
@@ -55,6 +57,7 @@ public static class ReadBufferExtensions
             return ReadInt64Slow(ref buffer, r, tokenSize);
         }
 
+        /// <summary>Reads a uint32 from any msgpack int format.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint ReadUInt32()
         {
@@ -67,6 +70,7 @@ public static class ReadBufferExtensions
             return ReadUInt32Slow(ref buffer, r, tokenSize);
         }
 
+        /// <summary>Reads a uint64 from any msgpack int format.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ulong ReadUInt64()
         {
@@ -83,6 +87,7 @@ public static class ReadBufferExtensions
 
         #region Int8, 16
 
+        /// <summary>Reads a byte from any msgpack int format.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public byte ReadByte()
         {
@@ -95,6 +100,7 @@ public static class ReadBufferExtensions
             return ReadByteSlow(ref buffer, r, tokenSize);
         }
 
+        /// <summary>Reads an sbyte from any msgpack int format.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public sbyte ReadSByte()
         {
@@ -107,6 +113,7 @@ public static class ReadBufferExtensions
             return ReadSByteSlow(ref buffer, r, tokenSize);
         }
 
+        /// <summary>Reads an int16 from any msgpack int format.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short ReadInt16()
         {
@@ -119,6 +126,7 @@ public static class ReadBufferExtensions
             return ReadInt16Slow(ref buffer, r, tokenSize);
         }
 
+        /// <summary>Reads a uint16 from any msgpack int format.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ushort ReadUInt16()
         {
@@ -131,6 +139,7 @@ public static class ReadBufferExtensions
             return ReadUInt16Slow(ref buffer, r, tokenSize);
         }
 
+        /// <summary>Reads a char encoded as a uint16.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public char ReadChar() => (char)ReadUInt16(ref buffer);
 
@@ -138,13 +147,11 @@ public static class ReadBufferExtensions
 
         #region Nil, Boolean, Single, Double
 
-        /// <summary>Reads the next code byte without consuming anything; false iff no bytes
-        /// remain. Relies on the buffer guarantee that the current span is non-empty whenever
-        /// bytes remain (the same single-byte guarantee <see cref="TryReadNil"/> builds on),
-        /// so a segment boundary can never produce a false negative.</summary>
+        /// <summary>Returns the next code byte without consuming it, or false when no bytes remain.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryPeek(out byte code)
         {
+            // Relies on the buffer guarantee that the current span is non-empty whenever bytes remain (the same single-byte guarantee TryReadNil builds on).
             var span = buffer.GetCurrentSpan();
             if (span.Length > 0)
             {
@@ -155,7 +162,7 @@ public static class ReadBufferExtensions
             return false;
         }
 
-        /// <summary>Consumes 1 byte and returns true iff the next value is nil; otherwise consumes nothing.</summary>
+        /// <summary>Consumes the nil and returns true when the next value is nil; otherwise consumes nothing.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryReadNil()
         {
@@ -167,6 +174,7 @@ public static class ReadBufferExtensions
             return false;
         }
 
+        /// <summary>Reads a boolean.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ReadBoolean()
         {
@@ -180,6 +188,7 @@ public static class ReadBufferExtensions
             throw Unreadable("boolean", buffer.GetCurrentSpan(), r);
         }
 
+        /// <summary>Reads a float32. A float64 or an int format is converted.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float ReadSingle()
         {
@@ -192,6 +201,7 @@ public static class ReadBufferExtensions
             return ReadSingleSlow(ref buffer, r, tokenSize);
         }
 
+        /// <summary>Reads a float64. A float32 or an int format is converted.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double ReadDouble()
         {
@@ -208,6 +218,7 @@ public static class ReadBufferExtensions
 
         #region headers(array, map, string, bin), binary
 
+        /// <summary>Reads an array header and returns the element count. A count larger than the remaining data throws.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadArrayHeader()
         {
@@ -221,9 +232,9 @@ public static class ReadBufferExtensions
                 count = ReadArrayHeaderSlow(ref buffer, r, tokenSize);
             }
 
-            // Allocation-bomb guard: formatters preallocate from this count, and every
-            // msgpack element occupies at least one byte, so a count exceeding the
-            // remaining payload is provably a lie — reject it BEFORE anyone allocates.
+            // Allocation-bomb guard: formatters preallocate from this count,
+            // and every msgpack element occupies at least one byte, so a count exceeding the remaining payload is
+            // provably a lie, reject it before anyone allocates.
             if ((uint)count > (ulong)buffer.BytesRemaining)
             {
                 MessagePackSerializationException.ThrowImplausibleCollectionHeader("array", count, buffer.BytesRemaining);
@@ -231,6 +242,7 @@ public static class ReadBufferExtensions
             return count;
         }
 
+        /// <summary>Reads a map header and returns the entry count. A count larger than the remaining data throws.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadMapHeader()
         {
@@ -252,6 +264,7 @@ public static class ReadBufferExtensions
             return count;
         }
 
+        /// <summary>Reads a str header and returns the payload byte count, which the caller then reads. A count larger than the remaining data throws.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadStringHeader()
         {
@@ -265,10 +278,9 @@ public static class ReadBufferExtensions
                 byteCount = ReadStringHeaderSlow(ref buffer, r, tokenSize);
             }
 
-            // Allocation-bomb guard, EXACT for str/bin/ext (unlike array/map's lower
-            // bound): the payload itself must occupy byteCount of the remaining bytes,
-            // so a larger claim is provably a lie — reject it BEFORE the caller
-            // allocates from it.
+            // Allocation-bomb guard, exact for str/bin/ext (unlike array/map's lower bound): the payload itself must
+            // occupy byteCount of the remaining bytes, so a larger claim is provably a lie,
+            // reject it before the caller allocates from it.
             if ((uint)byteCount > (ulong)buffer.BytesRemaining)
             {
                 MessagePackSerializationException.ThrowImplausiblePayloadHeader("str", byteCount, buffer.BytesRemaining);
@@ -276,7 +288,7 @@ public static class ReadBufferExtensions
             return byteCount;
         }
 
-        /// <summary>Reads a bin header; str headers are also accepted (old-spec raw compatibility).</summary>
+        /// <summary>Reads a bin header and returns the payload byte count, which the caller then reads. A str header is also accepted, for data written in the old spec.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadBinHeader()
         {
@@ -298,15 +310,14 @@ public static class ReadBufferExtensions
             return byteCount;
         }
 
-        /// <summary>Reads a bin (header + payload) as a new array; str-coded payloads are also accepted (old-spec raw compatibility, as in v3).</summary>
+        /// <summary>Reads a bin, header and payload, into a new array. A str-coded payload is also accepted, for data written in the old spec.</summary>
         public byte[] ReadBinary()
         {
-            // Header first, then copy the payload straight into the result. The header read
-            // already owns the straddle retry, the old-spec str fallback and the guard proving
-            // byteCount <= BytesRemaining, so nothing is left for a payload slow path: CopyTo
-            // serves a straddling payload out of the segments in ONE copy, where decoding the
-            // whole token from a window would stitch into the pooled temp and then copy again.
-            // A multi-megabyte bin therefore never grows the stitch buffer.
+            // Header first, then copy the payload straight into the result.
+            // The header read already owns the straddle retry, the old-spec str fallback and the guard proving
+            // byteCount <= BytesRemaining, so nothing is left for a payload slow path: CopyTo serves a straddling
+            // payload out of the segments in one copy, where decoding the whole token from a window would stitch into
+            // the pooled temp and then copy again. A multi-megabyte bin therefore never grows the stitch buffer.
             var byteCount = buffer.ReadBinHeader();
             if (byteCount == 0)
             {
@@ -323,11 +334,12 @@ public static class ReadBufferExtensions
 
         #region Ext, Timestamp
 
-        /// <summary>Consumes the ext header and returns true iff the next token is an ext
-        /// of the given type code; otherwise consumes nothing, leaving the token for its
-        /// real owner. An ext lead byte alone does not identify the extension (fixext4 is
-        /// also timestamp32), so formatters claiming an ext code dispatch through this.
-        /// The data bytes follow for the caller to read.</summary>
+        // An ext lead byte alone does not identify the extension (fixext4 is also timestamp32),
+        // so formatters claiming an ext code dispatch through this.
+        /// <summary>
+        /// Consumes the ext header and returns true when the next token is an ext of <paramref name="typeCode"/>; otherwise consumes nothing.
+        /// The data bytes follow for the caller to read.
+        /// </summary>
         public bool TryReadExtHeader(sbyte typeCode, out int dataLength)
         {
             var span = buffer.GetCurrentSpan();
@@ -352,6 +364,7 @@ public static class ReadBufferExtensions
             return true;
         }
 
+        /// <summary>Reads an ext header and returns its type code and data length. The data bytes follow for the caller to read.</summary>
         public (sbyte TypeCode, int DataLength) ReadExtHeader()
         {
             var r = MessagePackPrimitives.TryReadExtHeader(buffer.GetCurrentSpan(), out var typeCode, out var dataLength, out var tokenSize);
@@ -372,6 +385,7 @@ public static class ReadBufferExtensions
             return (typeCode, dataLength);
         }
 
+        /// <summary>Reads a msgpack timestamp (ext type -1) as a UTC DateTime.</summary>
         public DateTime ReadTimestamp()
         {
             var r = TryReadTimestamp(buffer.GetCurrentSpan(), out var value, out var tokenSize);
@@ -387,7 +401,7 @@ public static class ReadBufferExtensions
 
         #region String
 
-        /// <summary>Reads a str as a string; nil reads as null (mirror of WriteString(string?)).</summary>
+        /// <summary>Reads a str as a string, and nil as null.</summary>
         public string? ReadString()
         {
             var r = TryReadString(buffer.GetCurrentSpan(), out var value, out var tokenSize);
@@ -403,16 +417,12 @@ public static class ReadBufferExtensions
 
         #region Skip
 
-        /// <summary>
-        /// Skips exactly one msgpack value including its entire subtree. Iterative
-        /// count-based walk (no recursion, so adversarial nesting depth cannot blow the
-        /// stack): each container adds its children to the outstanding count. Container,
-        /// str/bin and ext headers go through the existing stitch-aware readers, whose
-        /// allocation-bomb guards already reject a payload-length claim exceeding the
-        /// remaining data (bin32 pretending 2GB throws at the header), so their payload
-        /// advances are always in bounds; only the fixed-size token advances are
-        /// validated here.
-        /// </summary>
+        // Iterative count-based walk, where each container adds its children to the outstanding count.
+        // Container, str/bin and ext headers go through the existing stitch-aware readers,
+        // whose allocation-bomb guards already reject a payload-length claim exceeding the remaining data (bin32pretending 2GB throws at the header),
+        // so their payload advances are always in bounds; only the fixed-size token advances are validated here.
+
+        /// <summary>Skips exactly one value including its entire subtree, without recursion, so nesting depth cannot exhaust the stack.</summary>
         public void Skip()
         {
             long remaining = 1;
@@ -422,7 +432,7 @@ public static class ReadBufferExtensions
                 var span = buffer.GetCurrentSpan();
                 if (span.IsEmpty)
                 {
-                    throw Unreadable("skip", span, DecodeResult.InsufficientBuffer);
+                    ThrowTruncatedSkip(ref buffer);
                 }
                 var code = span[0];
                 if (code <= MessagePackCode.MaxFixInt || code >= MessagePackCode.MinNegativeFixInt)
@@ -509,10 +519,13 @@ public static class ReadBufferExtensions
 
         #region ReadRaw
 
+        // Skip's capturing twin. The walk measures the value against a contiguous window first (escalating through
+        // TryGetSpan when the value crosses a segment seam), then copies once and advances once,
+        // so header widths and extension payloads survive byte-for-byte.
+        // MessagePackUnknownMembers is captured this way.
+
         /// <summary>
-        /// Reads exactly one msgpack value including its entire subtree and returns its raw bytes verbatim.
-        /// Skip's capturing twin: the walk measures the value against a contiguous window first (escalating through TryGetSpan when the value crosses a segment seam), then copies once and advances once, so header widths and extension payloads survive byte-for-byte.
-        /// The capture side of <see cref="MessagePackUnknownMembers"/>, and the general escape hatch for forwarding a value without interpreting it.
+        /// Reads exactly one value including its entire subtree and returns its bytes unchanged.
         /// </summary>
         public byte[] ReadRaw()
         {
@@ -524,8 +537,8 @@ public static class ReadBufferExtensions
                 {
                     throw Unreadable("raw value", span, DecodeResult.InsufficientBuffer);
                 }
-                // grow the window; TryMeasureValue proved every payload claim so far fits
-                // BytesRemaining, so escalation never stitches toward a lie
+                // grow the window; TryMeasureValue proved every payload claim so far fits BytesRemaining,
+                // so escalation never stitches toward a lie
                 var hint = (int)Math.Min(int.MaxValue, Math.Min(buffer.BytesRemaining, Math.Max(2L * span.Length, 512L)));
                 if (hint <= span.Length || !buffer.TryGetSpan(hint, out span))
                 {
@@ -546,6 +559,7 @@ public static class ReadBufferExtensions
     }
 
     // fixed-size token: the whole token must exist even though we don't decode it
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static void SkipPayload<TReadBuffer>(ref TReadBuffer buffer, int tokenSize)
         where TReadBuffer : struct, IReadBuffer
 #if NET9_0_OR_GREATER
@@ -554,14 +568,22 @@ public static class ReadBufferExtensions
     {
         if (tokenSize > buffer.BytesRemaining)
         {
-            throw Unreadable("skip", buffer.GetCurrentSpan(), DecodeResult.InsufficientBuffer);
+            ThrowTruncatedSkip(ref buffer);
         }
         buffer.Advance(tokenSize);
     }
 
-    // Per-target slow retry loops over the dedicated narrow primitives (range failures
-    // arrive as TokenMismatch from the primitive layer, so no target-level range logic
-    // lives here anymore).
+    static Exception ThrowTruncatedSkip<TReadBuffer>(ref TReadBuffer buffer)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        throw Unreadable("skip", buffer.GetCurrentSpan(), DecodeResult.InsufficientBuffer);
+    }
+
+    // Per-target slow retry loops over the dedicated narrow primitives (range failures arrive as TokenMismatch from the
+    // primitive layer, so no target-level range logic lives here anymore).
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     static uint ReadUInt32Slow<TReadBuffer>(ref TReadBuffer buffer, DecodeResult first, int required)
@@ -924,10 +946,10 @@ public static class ReadBufferExtensions
         throw Unreadable("string", buffer.GetCurrentSpan(), first);
     }
 
-    // Skip's structural walk, consuming nothing: token sizes and payload claims accumulate
-    // into the value's total length. False = the window ended mid-value (the caller
-    // escalates the window); a payload claim that cannot fit the buffer's remaining bytes
-    // throws here, so window escalation only ever chases real data.
+    // Skip's structural walk, consuming nothing: token sizes and payload claims accumulate into the value's total length.
+    // False = the window ended mid-value (the caller escalates the window);
+    // a payload claim that cannot fit the buffer's remaining bytes throws here,
+    // so window escalation only ever chases real data.
     static bool TryMeasureValue(ReadOnlySpan<byte> window, long bytesRemaining, out long length)
     {
         long offset = 0;
@@ -960,9 +982,9 @@ public static class ReadBufferExtensions
         return true;
     }
 
-    // exception factory so the throw statement stays in the (cold) caller and the JIT sees
-    // it as unreachable-hot; the DecodeResult picks the message. Success only arrives here
-    // from the narrow-target readers, where it means "decoded fine but out of target range"
+    // exception factory so the throw statement stays in the (cold) caller and the JIT sees it as unreachable-hot;
+    // the DecodeResult picks the message. Success only arrives here from the narrow-target readers,
+    // where it means "decoded fine but out of target range"
     [MethodImpl(MethodImplOptions.NoInlining)]
     static MessagePackSerializationException Unreadable(string target, ReadOnlySpan<byte> source, DecodeResult result)
     {

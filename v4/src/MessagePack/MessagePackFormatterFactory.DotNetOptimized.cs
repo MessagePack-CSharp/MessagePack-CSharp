@@ -4,25 +4,26 @@ using MessagePack.Formatters;
 namespace MessagePack;
 
 /// <summary>
-/// The .NET-to-.NET wire tier behind <see cref="MessagePackFormatterFactory.DotNetOptimized"/>:
-/// Guid/decimal as 16-byte little-endian binary images, DateTime as ToBinary
-/// (Kind-preserving), DateTimeOffset as Tick + Offset, BitArray bit-packed.
-/// All reads are validated - as safe for untrusted input as the default chain.
+/// Formats that favor .NET-to-.NET exchange, used by <see cref="MessagePackFormatterFactory.DotNetOptimized"/>.
+/// Guid and decimal are written as 16-byte binary, DateTime through ToBinary preserving <see cref="DateTimeKind"/>, DateTimeOffset as ticks and offset, and BitArray bit-packed.
+/// Reads are validated, so untrusted input is as safe as with the default formats.
 /// </summary>
 public sealed partial class DotNetOptimizedFormatterFactory : MessagePackFormatterFactory
 {
+    /// <summary>Shared instance.</summary>
     public static readonly DotNetOptimizedFormatterFactory Instance = new DotNetOptimizedFormatterFactory();
 
-    // public: [MessagePackFormatter(typeof(DotNetOptimizedFormatterFactory))] constructs
-    // its own instance (the attribute paths cannot reach Instance) and the type dispatch
-    // picks the member's wire form, so this one factory covers per-member use too;
-    // chain composition keeps using Instance
+    // Public because [MessagePackFormatter(typeof(DotNetOptimizedFormatterFactory))] constructs its own instance
+    // (the attribute paths cannot reach Instance) and the type dispatch picks the member's format, so this one factory
+    // covers per-member use too. Chain composition keeps using Instance.
+    /// <summary>Creates a new instance, for use with <see cref="MessagePackFormatterAttribute"/> on a single member. Chains use <see cref="Instance"/>.</summary>
     public DotNetOptimizedFormatterFactory()
     {
     }
 
-    // one method, two signatures: net9+ overrides the base virtual (constraints
-    // inherited); downlevel has no base member, so the constraints are spelled out
+    // One method, two signatures. net9+ overrides the base virtual (constraints inherited), while downlevel has no base
+    // member, so the constraints are spelled out.
+    /// <summary>Creates a formatter for <paramref name="type"/>, or returns null when it has no .NET-optimized format.</summary>
 #if NET9_0_OR_GREATER
     public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
 #else

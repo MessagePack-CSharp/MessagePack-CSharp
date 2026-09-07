@@ -3,26 +3,23 @@ using System.Text;
 namespace MessagePack.SourceGenerator;
 
 /// <summary>
-/// Minimal indentation-owning writer for the emitters: Line() prefixes the current
-/// depth, Block()/OpenScope() write braces and track depth via disposal, so emission
-/// code never threads indent strings by hand. Deliberately nothing more — no wrapping,
-/// no token awareness; the emitters stay plain string writes.
+/// Minimal indentation-owning writer for the emitters: Line() prefixes the current depth, Block()/OpenScope()
+/// write braces and track depth via disposal, so emission code never threads indent strings by hand.
+/// Deliberately nothing more, no wrapping, no token awareness; the emitters stay plain string writes.
 /// </summary>
 sealed class CodeWriter
 {
     const string IndentUnit = "    ";
 
-    // Reuse: one cached instance per thread, rented at the top of an emit and returned
-    // by ToStringAndReturn. Serial execution of RegisterSourceOutput callbacks is an
-    // implementation detail, and the SAME generator instance can run concurrently for
-    // different projects in one IDE process (AnalyzerFileReference shares generator
-    // instances across drivers) — so a plain static would corrupt; ThreadStatic is
-    // correct by construction. Clear() keeps the chunk arrays, which is the point.
+    // Reuse: one cached instance per thread, rented at the top of an emit and returned by ToStringAndReturn.
+    // Serial execution of RegisterSourceOutput callbacks is an implementation detail,
+    // and the same generator instance can run concurrently for different projects in one IDE process
+    // (AnalyzerFileReference shares generator instances across drivers), so a plain static would corrupt;
+    // ThreadStatic is correct by construction. Clear() keeps the chunk arrays, which is the point.
     [ThreadStatic]
     static CodeWriter? cached;
 
-    // an emitter gone pathological (a multi-thousand-member type) should not pin its
-    // buffer on the thread forever
+    // an emitter gone pathological (a multi-thousand-member type) should not pin its buffer on the thread forever
     const int MaxCachedCapacity = 256 * 1024;
 
     static readonly char[] NewlineChars = ['\r', '\n'];
@@ -60,9 +57,9 @@ sealed class CodeWriter
     {
         if (text.IndexOfAny(NewlineChars) >= 0)
         {
-            // the writer OWNS every newline ('\n' only): a multi-line literal sneaking in
-            // here is how \r\n and \n get mixed in generated output (string literals take
-            // the line endings of the source file they sit in, which git rewrites per OS)
+            // the writer owns every newline ('\n' only): a multi-line literal sneaking in here is how \r\n and \n get
+            // mixed in generated output (string literals take the line endings of the source file they sit in,
+            // which git rewrites per OS)
             throw new ArgumentException($"Line text must be a single line: \"{text}\"", nameof(text));
         }
         if (text.Length > 0)

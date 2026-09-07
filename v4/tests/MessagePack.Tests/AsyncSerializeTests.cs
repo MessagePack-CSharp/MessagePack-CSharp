@@ -228,6 +228,127 @@ public class AsyncSerializeTests
         Assert.True(produced < 100);
     }
 
+    // the reader completes while the source's MoveNextAsync is pending: the producer must let
+    // that MoveNextAsync settle before disposing the enumerator (an async iterator refuses
+    // DisposeAsync mid-MoveNext with NotSupportedException), and still return silently
+    [Fact]
+    public async Task SerializeMessagesAsync_ReaderCompletedWhileSourcePending_StopsSilently()
+    {
+        // the first message exceeds the pause threshold, so the flush-before-suspend (issued while the
+        // second MoveNextAsync is parked) waits on the reader, which then walks away
+        var source = new GatedSource(new string('x', 1000), "second");
+        var pipe = new Pipe(new PipeOptions(pauseWriterThreshold: 64, resumeWriterThreshold: 32));
+        var writeTask = MessagePackSerializer.SerializeMessagesAsync(pipe.Writer, source, Options);
+        await source.Suspended.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        pipe.Reader.Complete();
+        await Task.Delay(200); // long enough for a premature DisposeAsync to have happened
+        source.Gate.SetResult();
+        await writeTask.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.True(source.Disposed);
+    }
+
+    [Fact]
+    public async Task SerializeElementsAsync_ReaderCompletedWhileSourcePending_StopsSilently()
+    {
+        var source = new GatedSource(new string('x', 1000), "second");
+        var pipe = new Pipe(new PipeOptions(pauseWriterThreshold: 64, resumeWriterThreshold: 32));
+        var writeTask = MessagePackSerializer.SerializeElementsAsync(pipe.Writer, source, 2, Options);
+        await source.Suspended.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        pipe.Reader.Complete();
+        await Task.Delay(200);
+        source.Gate.SetResult();
+        await writeTask.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.True(source.Disposed);
+    }
+
+    // the flush-before-suspend is canceled (or faults) while the source's MoveNextAsync is
+    // pending: the cancellation must surface as such, not as the enumerator's
+    // NotSupportedException from a DisposeAsync issued mid-MoveNext
+    [Theory]
+    [InlineData("messages")]
+    [InlineData("elements")]
+    [InlineData("elements-probe")]
+    public async Task FlushCanceledWhileSourcePending_SurfacesTheCancellation(string entry)
+    {
+        var source = entry == "elements-probe" ? new GatedSource(new string('x', 1000)) : new GatedSource(new string('x', 1000), "second");
+        var pipe = new Pipe(new PipeOptions(pauseWriterThreshold: 64, resumeWriterThreshold: 32));
+        using var cancellation = new CancellationTokenSource();
+        var writeTask = entry switch
+        {
+            "messages" => MessagePackSerializer.SerializeMessagesAsync(pipe.Writer, source, Options, cancellation.Token),
+            "elements" => MessagePackSerializer.SerializeElementsAsync(pipe.Writer, source, 2, Options, cancellation.Token),
+            _ => MessagePackSerializer.SerializeElementsAsync(pipe.Writer, source, 1, Options, cancellation.Token),
+        };
+        await source.Suspended.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        cancellation.Cancel(); // the paused flush observes it
+        await Task.Delay(200);
+        source.Gate.SetResult();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => writeTask.WaitAsync(TimeSpan.FromSeconds(30)));
+        Assert.True(source.Disposed);
+    }
+
+    // yields its first item synchronously, then parks the second MoveNextAsync on Gate; like a
+    // compiler-generated async iterator, DisposeAsync while that MoveNextAsync is pending throws
+    sealed class GatedSource(params string[] items) : IAsyncEnumerable<string>, IAsyncEnumerator<string>
+    {
+        public readonly TaskCompletionSource Gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public readonly TaskCompletionSource Suspended = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public bool Disposed;
+        int index = -1;
+        bool pending;
+
+        public IAsyncEnumerator<string> GetAsyncEnumerator(CancellationToken cancellationToken = default) => this;
+        public string Current => items[index];
+
+        public ValueTask<bool> MoveNextAsync()
+        {
+            index++;
+            if (index == 0)
+            {
+                return new ValueTask<bool>(true);
+            }
+            pending = true;
+            Suspended.TrySetResult();
+            return new ValueTask<bool>(Gate.Task.ContinueWith(_ => { pending = false; return index < items.Length; }, TaskScheduler.Default));
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            if (pending)
+            {
+                throw new NotSupportedException("DisposeAsync while MoveNextAsync is pending");
+            }
+            Disposed = true;
+            return default;
+        }
+    }
+
+    // the excess probe after the last element is one more MoveNextAsync: the elements already
+    // serialized must be flushed before it waits on the source's end
+    [Fact]
+    public async Task SerializeElementsAsync_FlushesBeforeTheExcessProbeSuspends()
+    {
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        async IAsyncEnumerable<string> Source()
+        {
+            yield return "only";
+            await gate.Task; // the source's end is not known until the gate opens
+        }
+
+        var pipe = new Pipe();
+        var writeTask = MessagePackSerializer.SerializeElementsAsync(pipe.Writer, Source(), 1, Options);
+        var enumerator = MessagePackSerializer.DeserializeElementsAsync<string>(pipe.Reader, Options).GetAsyncEnumerator();
+
+        // "only" must reach the reader while the source is still parked on the gate
+        Assert.True(await enumerator.MoveNextAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(30)));
+        Assert.Equal("only", enumerator.Current);
+
+        gate.SetResult();
+        await writeTask.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.False(await enumerator.MoveNextAsync());
+        await enumerator.DisposeAsync();
+    }
+
     [Fact]
     public async Task SerializeMessagesAsync_Lz4Envelope_Roundtrips()
     {

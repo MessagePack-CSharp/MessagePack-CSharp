@@ -9,10 +9,9 @@ using Microsoft.CodeAnalysis.Editing;
 namespace MessagePack.CodeFixes;
 
 /// <summary>
-/// MsgPack106 (closed hierarchy) and MsgPack107 (pattern union): an untagged case gets its
-/// [UnionTag(typeof(Case), nextTag)] appended on the root, whose identity rides in the
-/// diagnostic's RootDocId/CaseDocId properties (the tag continues after the highest
-/// already declared — the tag rides last in every attribute shape).
+/// MsgPack106 (closed hierarchy) and MsgPack107 (pattern union): an untagged case gets its [UnionTag(typeof(Case),
+/// nextTag)] appended on the root, whose identity rides in the diagnostic's RootDocId/CaseDocId properties (the tag
+/// continues after the highest already declared, the tag rides last in every attribute shape).
 /// </summary>
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(AddUnionTagCodeFixProvider))]
 [Shared]

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <!-- v3 comparison, same wiring as DisassembleBenchmark.csproj: the repacked oracle
+         behind `extern alias V3`, plus V3GeneratedModels for the model twins and v3's
+         real source-generated resolver -->
+    <Reference Include="MessagePackV3" Aliases="V3">
+      <HintPath>..\..\tools\oracle\MessagePackV3.dll</HintPath>
+    </Reference>
+    <PackageReference Include="MessagePack.Annotations" Version="3.1.8" Aliases="V3" />
+    <PackageReference Include="Microsoft.NET.StringTools" Version="17.11.4" />
+    <ProjectReference Include="..\V3GeneratedModels\V3GeneratedModels.csproj" />
+  </ItemGroup>
+
+</Project>

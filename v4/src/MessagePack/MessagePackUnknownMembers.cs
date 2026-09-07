@@ -1,54 +1,87 @@
 using System.Diagnostics;
 using System.Text;
-using MessagePack.Internal;
 
 namespace MessagePack;
 
 /// <summary>
-/// Round-trip retention for schema evolution: captures the members of a payload that the deserializing type does not declare, and writes them back on serialization, so an older schema in the middle of a pipeline no longer silently strips what a newer writer produced.
-/// Declare exactly one settable member of this type on a [MessagePackObject] type; it carries no [Key] and is served by the source-generated formatter only.
-/// The captured data is opaque by design: values are held and replayed as raw msgpack bytes, byte-for-byte (keys re-encode with canonical string headers), which is what keeps the round trip faithful and keeps unvalidated data uninterpreted.
-/// One packet holds one kind of entry, fixed at construction: string keys (<see cref="IsMap"/>) or array indices (<see cref="IsArray"/>), never both. Each deserialization assigns a freshly captured packet in its own wire mode.
-/// <see cref="ToMapDictionary"/> and <see cref="ToArrayDictionary"/> offer read-only materialized views for diagnostics; there is deliberately no write access, because edited entries would have to be re-encoded and the fidelity guarantee would be gone.
-/// Replay order: string-keyed entries append after the declared members in capture order; int-keyed entries rejoin the array at their original indices, both inside the declared key range (filling the key holes they were captured from) and beyond it (gaps become nil).
-/// A nil at a key hole is not captured: it is the padding serialization regenerates for every hole anyway, so the type's own payloads round trip packet-free. A non-nil hole value (a wider schema still writing a key this schema retired by deleting the member) is captured and replayed in place.
-/// A deserialization always replaces the whole packet on the target member, never merges.
+/// Holds the members of a payload that the deserialized type does not declare, and writes them back on serialization,
+/// so that an older schema in the middle of a pipeline does not strip what a newer writer produced.
+/// Declare one settable member of this type on a <see cref="MessagePackObjectAttribute"/> type, without <see cref="KeyAttribute"/>. The source-generated formatter fills it.
+/// Values are kept as raw MessagePack bytes and replayed unchanged.
+/// A packet holds either string-keyed members (<see cref="IsMap"/>) or array elements by index (<see cref="IsArray"/>), decided at construction.
+/// <see cref="ToMapDictionary"/> and <see cref="ToArrayDictionary"/> decode the contents for inspection.
 /// </summary>
 public sealed class MessagePackUnknownMembers
 {
-    // string-keyed entries carry the key's utf8 bytes (Index -1); int-keyed entries carry
-    // the array index (KeyUtf8 null). Values are verbatim raw msgpack.
+    // String-keyed entries carry the key's utf8 bytes (Index -1), int-keyed entries carry the array index
+    // (KeyUtf8 null). Values are verbatim raw msgpack.
     internal readonly record struct Entry(int Index, byte[]? KeyUtf8, byte[] Value);
 
     internal readonly List<Entry> Entries = new();
     readonly bool isMap;
 
-    /// <summary>Creates an empty packet fixed to one wire mode: <paramref name="isMap"/> true for string-keyed map capture, false for int-keyed array capture. Entries are only ever added by deserialization, so constructing one is rarely useful beyond resetting a member.</summary>
+    /// <summary>
+    /// Creates an empty packet, for string-keyed members when <paramref name="isMap"/> is true and for array elements otherwise.
+    /// Entries are only added by deserialization, so constructing one is rarely needed beyond resetting a member.
+    /// </summary>
     public MessagePackUnknownMembers(bool isMap) => this.isMap = isMap;
 
     /// <summary>Number of captured members.</summary>
     public int Count => Entries.Count;
 
-    /// <summary>True when this packet captures string-keyed members (map-format types). Fixed at construction, meaningful even while empty.</summary>
+    /// <summary>Whether this packet holds string-keyed members. Fixed at construction, so it is meaningful while empty.</summary>
     public bool IsMap => isMap;
 
-    /// <summary>True when this packet captures trailing array elements keyed by index (int-keyed array-format types). Fixed at construction, meaningful even while empty.</summary>
+    /// <summary>Whether this packet holds array elements keyed by index. Fixed at construction, so it is meaningful while empty.</summary>
     public bool IsArray => !isMap;
+
+    // Duplicate-key index for wide maps. Entries keeps the raw data in payload order; past a handful of
+    // keys the linear scan would make capture quadratic in the key count (a schema relay with thousands of
+    // unknown members is ordinary input), so a keyed set takes over. Keys are payload-chosen, hence the
+    // hash-flooding-resistant comparer like every other input-keyed table here.
+    const int LinearScanLimit = 8;
+    HashSet<byte[]>? keyIndex;
 
     internal void AddStringKeyed(byte[] keyUtf8, byte[] value)
     {
         Debug.Assert(isMap, "capture created this packet for the map mode it runs in");
-        // the generated formatter rejects duplicate DECLARED keys; captured keys keep the
-        // same policy, otherwise a hostile duplicate would be preserved and replayed into
-        // a payload that every strict reader downstream rejects
-        foreach (var entry in Entries)
+        // The generated formatter rejects duplicate declared keys, and captured keys keep the same policy.
+        // Otherwise a hostile duplicate would be preserved and replayed into a payload that every strict reader
+        // downstream rejects.
+        if (keyIndex is null)
         {
-            if (entry.KeyUtf8 is { } existing && existing.AsSpan().SequenceEqual(keyUtf8))
+            foreach (var entry in Entries)
             {
-                throw new MessagePackSerializationException("The map in the payload defines the same key more than once");
+                if (entry.KeyUtf8 is { } existing && existing.AsSpan().SequenceEqual(keyUtf8))
+                {
+                    ThrowDuplicateKey();
+                }
+            }
+            if (Entries.Count >= LinearScanLimit)
+            {
+                keyIndex = new HashSet<byte[]>(Utf8KeyComparer.Instance);
+                foreach (var entry in Entries)
+                {
+                    keyIndex.Add(entry.KeyUtf8!);
+                }
             }
         }
+        if (keyIndex is not null && !keyIndex.Add(keyUtf8))
+        {
+            ThrowDuplicateKey();
+        }
         Entries.Add(new Entry(-1, keyUtf8, value));
+    }
+
+    static void ThrowDuplicateKey() => throw new MessagePackSerializationException("The map in the payload defines the same key more than once");
+
+    sealed class Utf8KeyComparer : IEqualityComparer<byte[]>
+    {
+        public static readonly Utf8KeyComparer Instance = new();
+
+        public bool Equals(byte[]? x, byte[]? y) => x.AsSpan().SequenceEqual(y);
+
+        public int GetHashCode(byte[] key) => (int)SipHash.Hash64(key, HashFloodingResistantEqualityComparer.sipHashKey0, HashFloodingResistantEqualityComparer.sipHashKey1);
     }
 
     internal void AddIntKeyed(int index, byte[] value)
@@ -57,10 +90,9 @@ public sealed class MessagePackUnknownMembers
         Entries.Add(new Entry(index, null, value));
     }
 
-    // array header count when this packet extends a wire array whose declared members
-    // occupy [0, declaredCount): entries ascend by index (the capture loop's own
-    // counter), so the last entry is the packet's max and Math.Max covers a capture
-    // whose entries all sit at key holes inside the declared range
+    // Array header count when this packet extends a wire array whose declared members occupy [0, declaredCount).
+    // Entries ascend by index (the capture loop's own counter), so the last entry is the packet's max, and Math.Max
+    // covers a capture whose entries all sit at key holes inside the declared range.
     internal int GetArrayCount(int declaredCount)
     {
         var count = Entries.Count;
@@ -68,9 +100,9 @@ public sealed class MessagePackUnknownMembers
     }
 
     /// <summary>
-    /// Materializes a string-keyed capture for inspection: values deserialize the way <see cref="PrimitiveObjectFormatter{TWriteBuffer, TReadBuffer}"/> reads <c>object</c> (maps become dictionaries, arrays become object[], the timestamp extension becomes DateTime; any other extension throws).
-    /// The view is a snapshot; serialization always replays the raw captured bytes, never this materialization.
-    /// Throws when the packet is an array-format capture (<see cref="IsArray"/>), empty or not.
+    /// Decodes the string-keyed members for inspection. Values are read the way <c>object</c> deserializes, so maps become dictionaries and arrays become object arrays.
+    /// The result is a snapshot; serialization replays the raw bytes, not this view.
+    /// Throws when the packet holds array elements.
     /// </summary>
     public Dictionary<string, object?> ToMapDictionary(MessagePackSerializerOptions? options = null)
     {
@@ -78,9 +110,8 @@ public sealed class MessagePackUnknownMembers
         {
             throw new InvalidOperationException("This packet holds trailing array elements keyed by index; use ToArrayDictionary.");
         }
-        // DefaultAot, not Default: object deserialization is the builtin tier's
-        // PrimitiveObjectFormatter in both presets, and this one keeps the method clean
-        // for trimming/Native AOT (no reflection tail, no MakeGenericType tier)
+        // DefaultAot, not Default. Object deserialization is the builtin tier's PrimitiveObjectFormatter in both
+        // presets, and this one keeps the method clean for trimming/Native AOT (no reflection tail, no MakeGenericType tier).
         options ??= MessagePackSerializerOptions.DefaultAot;
         var result = options.Resolver.HashFloodingResistant
             ? new Dictionary<string, object?>(Entries.Count, HashFloodingResistantEqualityComparer.Get<string>())
@@ -93,8 +124,8 @@ public sealed class MessagePackUnknownMembers
     }
 
     /// <summary>
-    /// Materializes an array-format capture for inspection, keyed by the original array index; values deserialize as in <see cref="ToMapDictionary"/> (a captured nil, the wider schema's key padding, becomes null).
-    /// Throws when the packet is a map-format capture (<see cref="IsMap"/>), empty or not.
+    /// Decodes the array elements for inspection, keyed by their original index. Values are read as in <see cref="ToMapDictionary"/>, and a captured nil becomes null.
+    /// Throws when the packet holds string-keyed members.
     /// </summary>
     public Dictionary<int, object?> ToArrayDictionary(MessagePackSerializerOptions? options = null)
     {
@@ -103,8 +134,8 @@ public sealed class MessagePackUnknownMembers
             throw new InvalidOperationException("This packet holds string-keyed members; use ToMapDictionary.");
         }
         options ??= MessagePackSerializerOptions.DefaultAot;
-        // no flooding-resistant comparer here: the keys are loop-counter indices the
-        // capture assigned in ascending order, not attacker-chosen values
+        // No flooding-resistant comparer here, because the keys are loop-counter indices the capture assigned in
+        // ascending order, not attacker-chosen values.
         var result = new Dictionary<int, object?>(Entries.Count);
         foreach (var entry in Entries)
         {

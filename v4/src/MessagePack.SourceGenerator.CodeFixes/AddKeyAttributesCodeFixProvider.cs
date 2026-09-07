@@ -9,9 +9,9 @@ using Microsoft.CodeAnalysis.Editing;
 namespace MessagePack.CodeFixes;
 
 /// <summary>
-/// MsgPack001 (a public member of a [MessagePackObject] type needs [Key] or
-/// [IgnoreMember]): one whole-type action numbers every unannotated member, properties
-/// then fields, continuing after the highest key already present — v3's flagship fix.
+/// MsgPack001 (a public member of a [MessagePackObject] type needs [Key] or [IgnoreMember]): one whole-type action
+/// numbers every unannotated member, properties then fields, continuing after the highest key already present,
+/// v3's flagship fix.
 /// </summary>
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(AddKeyAttributesCodeFixProvider))]
 [Shared]

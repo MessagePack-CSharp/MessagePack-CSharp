@@ -3,23 +3,20 @@ using System.Collections.Immutable;
 namespace MessagePack.SourceGenerator;
 
 /// <summary>
-/// Emits the single per-assembly factory over every generated formatter (object and
-/// union) plus the module-initializer registration into SourceGeneratedFormatterFactory.
-/// Non-generic types construct directly; generic types register their OPEN definition
-/// and serve closed requests two ways: instantiations harvested from the serialized
-/// member graph construct statically (the Native AOT route, which also skips Activator
-/// on CoreCLR), and anything else closes the open formatter over the runtime type
-/// arguments via MakeGenericType (declined on Native AOT, where ref struct buffer
-/// arguments cannot be closed — the resolver's formatter-not-found surfaces instead of
-/// a reflection crash).
+/// Emits the single per-assembly factory over every generated formatter (object and union)
+/// plus the module-initializer registration into SourceGeneratedFormatterFactory.
+/// Non-generic types construct directly; generic types register their open definition and serve closed requests two
+/// ways: instantiations harvested from the serialized member graph construct statically (the Native AOT route,
+/// which also skips Activator on CoreCLR), and anything else closes the open formatter over the runtime type arguments
+/// via MakeGenericType (declined on Native AOT, where ref struct buffer arguments cannot be closed,
+/// the resolver's formatter-not-found surfaces instead of a reflection crash).
 /// </summary>
 static class FactoryEmitter
 {
     public static string EmitFactory(ImmutableArray<(ObjectModel? Object, UnionModel? Union)> models, ImmutableArray<AttributeFormatterTypeModel> attributeModels, ImmutableArray<SurrogateModel> surrogateModels)
     {
-        // one surrogate per target: duplicates are a MsgPack018 error reported by the
-        // generator's duplicate-site node, so first-by-name here just keeps the (already
-        // failing) emission deterministic
+        // one surrogate per target: duplicates are a MsgPack018 error reported by the generator's duplicate-site node,
+        // so first-by-name here just keeps the (already failing) emission deterministic
         var orderedSurrogates = surrogateModels
             .GroupBy(static m => m.TargetTypeName, StringComparer.Ordinal)
             .Select(static group => group.OrderBy(static m => m.SurrogateTypeName, StringComparer.Ordinal).First())
@@ -41,11 +38,10 @@ static class FactoryEmitter
         var anyGeneric = ordered.Any(static m => m.OpenFormatterTypeOf.Length > 0)
             || orderedUnions.Any(static m => m.OpenFormatterTypeOf.Length > 0);
 
-        // harvested closed instantiations, joined against the open models that actually
-        // exist (a suppressed or invalid definition never got a model — drop its harvest);
-        // nested (AllowPrivate) formatters are skipped: their closed form lives inside the
-        // user's type and the MakeGenericType fallback still serves them on CoreCLR.
-        // The value is the open formatter reference: object and generic-union models alike.
+        // harvested closed instantiations, joined against the open models that actually exist (a suppressed or invalid
+        // definition never got a model, drop its harvest); nested (AllowPrivate)
+        // formatters are skipped: their closed form lives inside the user's type and the MakeGenericType fallback still
+        // serves them on CoreCLR. The value is the open formatter reference: object and generic-union models alike.
         var genericByOpen = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var model in ordered)
         {
@@ -69,10 +65,9 @@ static class FactoryEmitter
             .OrderBy(static h => h.ClosedTypeName, StringComparer.Ordinal)
             .ToArray();
 
-        // enums, Nullable<T>, and BCL collection/wrapper closed forms (List<string>,
-        // string[], ...) from the member graph: statically constructed and registered, so
-        // the Native AOT chain (which omits the RequiresDynamicCode GenericFormatterFactory
-        // tier) resolves them
+        // enums, Nullable<T>, and BCL collection/wrapper closed forms (List<string>, string[], ...)
+        // from the member graph: statically constructed and registered,
+        // so the Native AOT chain (which omits the RequiresDynamicCode GenericFormatterFactory tier) resolves them
         var harvestedBuiltIns = ordered.SelectMany(static m => m.HarvestedBuiltIns)
             .Concat(orderedUnions.SelectMany(static m => m.HarvestedBuiltIns))
             .GroupBy(static h => h.ClosedTypeName, StringComparer.Ordinal)
@@ -102,15 +97,15 @@ static class FactoryEmitter
         AppendGenericCreateFormatterSignature(writer);
         using (writer.OpenScope())
         {
-            // type-level [MessagePackFormatter] first: on a type that ALSO has a generated
-            // object formatter, the annotation wins (v3's AttributeFormatterResolver sat
-            // before its source-generated tier; here the same precedence is compiled in).
-            // The resolver initializes whatever this factory returns, so no Initialize here.
+            // type-level [MessagePackFormatter] first: on a type that also has a generated object formatter,
+            // the annotation wins (v3's AttributeFormatterResolver sat before its source-generated tier;
+            // here the same precedence is compiled in). The resolver initializes whatever this factory returns,
+            // so no Initialize here.
             foreach (var model in orderedAttributes)
             {
                 if (model.Custom.FactoryNew is { } factoryNew)
                 {
-                    writer.Line("#if NET9_0_OR_GREATER");
+                    writer.Line("#if NET10_0_OR_GREATER");
                     writer.Line($"if (type == typeof({model.FullTypeName})) return {factoryNew}.CreateFormatter<TWriteBuffer, TReadBuffer>(type);");
                     writer.Line("#else");
                     writer.Line($"if (type == typeof({model.FullTypeName})) return {factoryNew}.CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), type);");
@@ -121,9 +116,9 @@ static class FactoryEmitter
                     writer.Line($"if (type == typeof({model.FullTypeName})) return {model.Custom.FormatterNew};");
                 }
             }
-            // surrogate-declared targets (IMessagePackSurrogate implementations): before
-            // the harvested constructions, so a surrogate target that is also reachable as
-            // a collection-shaped member resolves through its surrogate deterministically
+            // surrogate-declared targets (IMessagePackSurrogate implementations): before the harvested constructions,
+            // so a surrogate target that is also reachable as a collection-shaped member resolves through its surrogate
+            // deterministically
             foreach (var surrogate in orderedSurrogates)
             {
                 writer.Line($"if (type == typeof({surrogate.TargetTypeName})) return new global::MessagePack.Formatters.SurrogateFormatter<TWriteBuffer, TReadBuffer, {surrogate.TargetTypeName}, {surrogate.SurrogateTypeName}>();");
@@ -196,8 +191,8 @@ static class FactoryEmitter
         }
 
         writer.Line();
-        // the Type-based member (the base class's only abstract one): dispatch the
-        // built-in buffer pairs into the generic method above
+        // the Type-based member (the base class's only abstract one): dispatch the built-in buffer pairs into the
+        // generic method above
         BufferPairs.AppendCreateFormatterDispatch(writer);
         factory.Dispose();
 
@@ -228,9 +223,11 @@ static class FactoryEmitter
                 {
                     writer.Line($"SourceGeneratedFormatterFactory.Instance.Register(typeof({model.OpenTypeOf}), GeneratedMessagePackFormatterFactory.Instance);");
                 }
+                // harvested closed built-ins are incidental defaults: they must not displace a declaration (surrogate,
+                // attribute) another assembly registers for the same type
                 foreach (var builtIn in harvestedBuiltIns)
                 {
-                    writer.Line($"SourceGeneratedFormatterFactory.Instance.Register(typeof({builtIn.ClosedTypeName}), GeneratedMessagePackFormatterFactory.Instance);");
+                    writer.Line($"SourceGeneratedFormatterFactory.Instance.RegisterHarvested(typeof({builtIn.ClosedTypeName}), GeneratedMessagePackFormatterFactory.Instance);");
                 }
             }
         }
@@ -241,9 +238,11 @@ static class FactoryEmitter
 
     static void AppendGenericCreateFormatterSignature(CodeWriter writer)
     {
-        writer.Line("// one method, two signatures: net9+ overrides the base virtual (constraints");
-        writer.Line("// inherited); downlevel has no base member, so the constraints are spelled out");
-        writer.Line("#if NET9_0_OR_GREATER");
+        writer.Line("// one method, two signatures: net10+ overrides the base virtual (constraints");
+        writer.Line("// inherited); downlevel has no base member, so the constraints are spelled out.");
+        writer.Line("// the gate is the core package's own tier line (net10.0 is its first modern target;");
+        writer.Line("// a net9.0 consumer resolves the netstandard2.1 core), not the language's allows-ref-struct floor");
+        writer.Line("#if NET10_0_OR_GREATER");
         writer.Line("public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(global::System.Type type)");
         writer.Line("#else");
         writer.Line("public object? CreateFormatter<TWriteBuffer, TReadBuffer>(global::System.Type type)");
@@ -255,17 +254,15 @@ static class FactoryEmitter
     }
 
     /// <summary>
-    /// Emits the generated half of a [MessagePackSerializable]-annotated partial factory
-    /// class: the MessagePackFormatterFactory base, an Instance, static closed
-    /// constructions for the class's harvested root closure, and a module-initializer
-    /// registration of each closed type into SourceGeneratedFormatterFactory — so root-only
-    /// shapes resolve through DefaultAot, while Instance stays composable in explicit chains.
+    /// Emits the generated half of a [MessagePackSerializable]-annotated partial factory class: the
+    /// MessagePackFormatterFactory base, an Instance, static closed constructions for the class's harvested root
+    /// closure, and a module-initializer registration of each closed type into SourceGeneratedFormatterFactory,
+    /// so root-only shapes resolve through DefaultAot, while Instance stays composable in explicit chains.
     /// </summary>
     public static string EmitSerializableFactory(SerializableFactoryModel model, ImmutableArray<(ObjectModel? Object, UnionModel? Union)> models)
     {
-        // the same open-model join EmitFactory performs: a harvested closed user generic is
-        // constructible only when its open [MessagePackObject] definition produced a
-        // non-nested model in this compilation
+        // the same open-model join EmitFactory performs: a harvested closed user generic is constructible only when its
+        // open [MessagePackObject] definition produced a non-nested model in this compilation
         var genericByOpen = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var (obj, union) in models)
         {
@@ -331,7 +328,7 @@ static class FactoryEmitter
             {
                 foreach (var registration in registrations)
                 {
-                    writer.Line($"global::MessagePack.SourceGeneratedFormatterFactory.Instance.Register(typeof({registration}), Instance);");
+                    writer.Line($"global::MessagePack.SourceGeneratedFormatterFactory.Instance.RegisterHarvested(typeof({registration}), Instance);");
                 }
             }
         }

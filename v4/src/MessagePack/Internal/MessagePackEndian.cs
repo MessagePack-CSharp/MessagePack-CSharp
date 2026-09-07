@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 
 namespace MessagePack;
 
-// similar naming conversion as Microsoft.NET.HostModel ConvertToBigEndian/ConvertFromBigEndian
+// Naming follows Microsoft.NET.HostModel's ConvertToBigEndian/ConvertFromBigEndian.
 
 /// <summary>
 /// Host to msgpack byte order (big-endian) conversion.

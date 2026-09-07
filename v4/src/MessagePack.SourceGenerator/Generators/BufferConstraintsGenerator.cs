@@ -17,19 +17,17 @@ public sealed record BufferConstraintModel(
 /// <summary>
 /// The Round's multi-targeting escape hatch for formatter authors: write
 /// <c>partial class FooFormatter&lt;TWriteBuffer, TReadBuffer&gt; : IMessagePackFormatter&lt;...&gt;</c>
-/// with NO constraints, and this generator emits the matching partial declaration
-/// carrying <c>where T : struct, IWriteBuffer/IReadBuffer</c> — plus
-/// <c>allows ref struct</c> exactly when the current compilation can express it
-/// (net9.0+ runtime and C# 13+). No <c>#if</c> in user code or generated code:
-/// each TFM's compilation regenerates the right shape.
+/// with no constraints, and this generator emits the matching partial declaration carrying <c>where T : struct,
+/// IWriteBuffer/IReadBuffer</c>, plus <c>allows ref struct</c> exactly when the current compilation can express it
+/// (net9.0+ runtime and C# 13+). No <c>#if</c> in user code or generated code: each TFM's compilation regenerates the
+/// right shape.
 ///
-/// Convention, not attribute: any partial type implementing IMessagePackFormatter`3
-/// whose buffer slots are its own type parameters. A single hand-written constraint
-/// on ANY type parameter opts the whole type out — partial declarations that both
-/// carry where-clauses must match exactly (CS0265), so generated and manual clauses
-/// cannot coexist. (This also means method-level buffer generics, e.g. factory
-/// CreateFormatter, stay manual: C# has no way to add constraints to a method from
-/// another partial declaration.)
+/// Convention, not attribute: any partial type implementing IMessagePackFormatter`3 whose buffer slots are its own type
+/// parameters. A single hand-written constraint on any type parameter opts the whole type out,
+/// partial declarations that both carry where-clauses must match exactly (CS0265),
+/// so generated and manual clauses cannot coexist. (This also means method-level buffer generics, e.g.
+/// factory CreateFormatter, stay manual: C# has no way to add constraints to a method from another partial
+/// declaration.)
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class BufferConstraintsGenerator : IIncrementalGenerator
@@ -50,10 +48,9 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(models.Combine(allowsRefStruct), static (spc, pair) =>
         {
-            // a thrown exception here (e.g. a duplicate hint name from colliding mid-edit
-            // declarations) would discard EVERY generated source of this generator for the
-            // pass, turning one editing slip into a screenful of constraint errors — drop
-            // just the offending output instead
+            // a thrown exception here (e.g. a duplicate hint name from colliding mid-edit declarations)
+            // would discard every generated source of this generator for the pass,
+            // turning one editing slip into a screenful of constraint errors, drop just the offending output instead
             try
             {
                 spc.AddSource(pair.Left!.HintName, EmitConstraints(pair.Left!, pair.Right));
@@ -66,11 +63,10 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
 
     static bool SupportsAllowsRefStruct(Compilation compilation)
     {
-        // corelib advertising ByRefLikeGenerics means the runtime executes ref-struct
-        // generic instantiations. The language gate is numeric
-        // because this project pins Microsoft.CodeAnalysis 4.8, whose LanguageVersion enum
-        // predates C# 13 (values are major * 100; the compiler actually hosting the
-        // generator is newer and resolves Latest/Default to its own real version).
+        // corelib advertising ByRefLikeGenerics means the runtime executes ref-struct generic instantiations.
+        // The language gate is numeric because this project pins Microsoft.CodeAnalysis 4.8,
+        // whose LanguageVersion enum predates C# 13 (values are major * 100;
+        // the compiler actually hosting the generator is newer and resolves Latest/Default to its own real version).
         var runtimeFeature = compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.RuntimeFeature");
         var runtimeSupports = runtimeFeature is not null && !runtimeFeature.GetMembers("ByRefLikeGenerics").IsEmpty;
         return runtimeSupports && compilation is CSharpCompilation csharp && (int)csharp.LanguageVersion >= 1300;
@@ -78,9 +74,9 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
 
     static BufferConstraintModel? Parse(GeneratorSyntaxContext context, CancellationToken cancellationToken)
     {
-        // mid-edit code reaches this transform constantly; no shape may throw, because a
-        // generator exception cancels the WHOLE pass and every formatter in the project
-        // loses its constraints at once
+        // mid-edit code reaches this transform constantly; no shape may throw,
+        // because a generator exception cancels the whole pass and every formatter in the project loses its constraints
+        // at once
         try
         {
             return ParseCore(context, cancellationToken);
@@ -101,8 +97,8 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
             return null;
         }
 
-        // one model per type, not per partial declaration: only the first declaration in
-        // source order produces output (duplicate hint names would throw at AddSource)
+        // one model per type, not per partial declaration: only the first declaration in source order produces output
+        // (duplicate hint names would throw at AddSource)
         var declarations = symbol.DeclaringSyntaxReferences;
         if (declarations.Length == 0)
         {
@@ -121,8 +117,8 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
                 return null;
             }
         }
-        // a manual where-clause that is still being typed may not have reached the symbol
-        // yet; the syntax-level check keeps us from fighting it with CS0265
+        // a manual where-clause that is still being typed may not have reached the symbol yet;
+        // the syntax-level check keeps us from fighting it with CS0265
         if (typeDeclaration.ConstraintClauses.Count > 0)
         {
             return null;
@@ -145,12 +141,11 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
         }
         if (!found)
         {
-            // Syntactic fallback: while the file is mid-edit (unresolved serialized type,
-            // incomplete base list, binding poisoned by errors elsewhere) the interface may
-            // not bind semantically. The constraints must survive those states — otherwise
-            // one real error explodes into a page of constraint violations. Convention
-            // match by NAME: an IMessagePackFormatter<...> base whose first two arguments
-            // are this type's own type parameters.
+            // Syntactic fallback: while the file is mid-edit (unresolved serialized type, incomplete base list,
+            // binding poisoned by errors elsewhere) the interface may not bind semantically.
+            // The constraints must survive those states, otherwise one real error explodes into a page of constraint
+            // violations. Convention match by name: an IMessagePackFormatter<...> base whose first two arguments are
+            // this type's own type parameters.
             MarkRolesFromBaseListSyntax(typeDeclaration, symbol, roles, ref found);
         }
         if (!found)
@@ -244,8 +239,8 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
 
     static void MarkRole(ITypeSymbol argument, INamedTypeSymbol owner, byte[] roles, byte role, ref bool found)
     {
-        // only type parameters DECLARED ON this type can be constrained by its partial
-        // declaration; parameters owned by containing types are out of reach
+        // only type parameters declared on this type can be constrained by its partial declaration;
+        // parameters owned by containing types are out of reach
         if (argument is ITypeParameterSymbol typeParameter &&
             SymbolEqualityComparer.Default.Equals(typeParameter.ContainingSymbol, owner))
         {

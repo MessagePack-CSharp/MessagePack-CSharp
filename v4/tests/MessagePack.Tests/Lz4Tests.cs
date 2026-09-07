@@ -9,7 +9,7 @@ using V4 = MessagePack.MessagePackSerializer;
 namespace MessagePack.Tests;
 
 // MessagePack.LZ4 (MessageProcessor envelope) against the MessagePack-CSharp oracle:
-// cross-READ compatibility both directions for both codes (ext -99 Lz4Block / -98
+// cross-READ compatibility both directions for both codes (ext 99 Lz4Block / 98
 // Lz4BlockArray). Byte identity is NOT asserted for compressed payloads — block
 // segmentation and encoder version legitimately differ; the format contract is that
 // either side reads the other's output.
@@ -65,24 +65,31 @@ public class Lz4Tests
     }
 
     [Fact]
-    public void Incompressible_FallsBackToRaw()
+    public void Incompressible_StillWrapsEnvelope()
     {
-        // large random bin: LZ4 expands it (~+0.4%); mpc 3.1.8 ships the expanded envelope,
-        // we fall back to the raw payload (readers on both sides accept raw transparently)
+        // large random bin: LZ4 expands it (~+0.4%). The envelope is written anyway,
+        // exactly like mpc 3.1.8: whether the envelope appears depends only on the size
+        // threshold, never on the data content (ratified 2026-08-29; a raw fallback
+        // shipped briefly and was reverted for v3 parity)
         var rand = new Random(42);
         var blob = new byte[100_000];
         rand.NextBytes(blob);
 
         var raw = V4.Serialize(blob, V4Options.Default);
-        foreach (var options in new[] { BlockOptions, BlockArrayOptions })
-        {
-            var bytes = V4.Serialize(blob, options);
-            Assert.Equal(raw, bytes); // no envelope, no expansion
-            Assert.Equal(blob, V4.Deserialize<byte[]>(bytes, options));
-        }
-        Assert.Equal(blob, Oracle.Deserialize<byte[]>(V4.Serialize(blob, BlockOptions), OracleBlock));
-        // and mpc's expanded envelope still reads fine on our side
+        var block = V4.Serialize(blob, BlockOptions);
+        Assert.Equal(0xc9, block[0]); // ext32, type 99 envelope
+        Assert.True(block.Length > raw.Length); // expanded, and that is the point
+        Assert.Equal(blob, V4.Deserialize<byte[]>(block, BlockOptions));
+
+        var blockArray = V4.Serialize(blob, BlockArrayOptions);
+        Assert.True(blockArray[0] >= 0x91 && blockArray[0] <= 0x9f); // [array n+1] envelope
+        Assert.Equal(blob, V4.Deserialize<byte[]>(blockArray, BlockArrayOptions));
+
+        // both directions of the mpc cross-read hold for the expanded envelopes too
+        Assert.Equal(blob, Oracle.Deserialize<byte[]>(block, OracleBlock));
+        Assert.Equal(blob, Oracle.Deserialize<byte[]>(blockArray, OracleBlockArray));
         Assert.Equal(blob, V4.Deserialize<byte[]>(Oracle.Serialize(blob, OracleBlock), BlockOptions));
+        Assert.Equal(blob, V4.Deserialize<byte[]>(Oracle.Serialize(blob, OracleBlockArray), BlockArrayOptions));
     }
 
     [Fact]
@@ -182,6 +189,59 @@ public class Lz4Tests
             Memory = memory;
             Next = next;
             RunningIndex = runningIndex;
+        }
+    }
+
+    // ---- decompression-bomb guards (CWE-409): both fire BEFORE any allocation ----
+
+    [Fact]
+    public void Bomb_TinyPayloadDeclaringHugeLength_Rejected()
+    {
+        // a wire claim no amount of decompression can honor: LZ4 expands at most 255:1,
+        // so 1 compressed byte declaring int.MaxValue is a provable lie
+        byte[] blockBomb = [0xC7, 0x06, 0x63, 0xD2, 0x7F, 0xFF, 0xFF, 0xFF, 0x00]; // ext8(6, 99) { int32 int.MaxValue, 1 lz4 byte }
+        var ex1 = Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<byte[]>(blockBomb, BlockOptions));
+        Assert.Contains("cannot produce", ex1.Message);
+
+        byte[] blockArrayBomb = [0x92, 0xC7, 0x05, 0x62, 0xD2, 0x7F, 0xFF, 0xFF, 0xFF, 0xC4, 0x01, 0x00]; // [ext8(5, 98) { int32 }, bin8(1)]
+        var ex2 = Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<byte[]>(blockArrayBomb, BlockArrayOptions));
+        Assert.Contains("cannot produce", ex2.Message);
+    }
+
+    [Fact]
+    public void CorruptBlock_DecodeFailure_ThrowsSanctioned_AndReturnsBuffer()
+    {
+        // declared length is plausible (32 <= 1 compressed byte * 255) so the payload passes
+        // the bomb guard and reaches LZ4.Block.Decompress, which rents a 32-byte buffer and
+        // then fails on the garbage block. The fix returns that rented buffer before throwing
+        // (the ext-99 path used to leak it); we assert the sanctioned exception, and run the
+        // failure many times so a leak would show as pool churn / eventual pressure rather
+        // than a clean repeat.
+        byte[] corrupt = [0xC7, 0x06, 0x63, 0xD2, 0x00, 0x00, 0x00, 0x20, 0x00]; // ext8(6, 99) { int32 32, one 0x00 lz4 byte }
+        for (int i = 0; i < 10_000; i++)
+        {
+            var ex = Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<byte[]>(corrupt, BlockOptions));
+            Assert.Contains("Invalid LZ4 envelope", ex.Message);
+        }
+    }
+
+    [Fact]
+    public void Bomb_DeclaredOverMaxDecompressedSize_Rejected()
+    {
+        // 65MB of zeros compresses to ~256KB, and the envelope honestly declares 65MB —
+        // over the 64MB default cap, under the raised one. BlockArray exercises the
+        // per-block running total (each segment is under the cap, the sum is not)
+        var big = new byte[65 * 1024 * 1024];
+        foreach (var (capped, uncapped) in new[]
+        {
+            (BlockOptions, V4Options.Default.WithLz4Block(long.MaxValue)),
+            (BlockArrayOptions, V4Options.Default.WithLz4BlockArray(long.MaxValue)),
+        })
+        {
+            var payload = V4.Serialize(big, capped);
+            var ex = Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<byte[]>(payload, capped));
+            Assert.Contains("exceeds the configured maximum", ex.Message);
+            Assert.Equal(big, V4.Deserialize<byte[]>(payload, uncapped));
         }
     }
 }

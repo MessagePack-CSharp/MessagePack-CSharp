@@ -96,15 +96,29 @@ public class DepthLimitTest
     [Fact]
     public void BuiltinCollectionFormatters_CountTowardDepth()
     {
-        // double[][] nests two ArrayFormatter levels
-        var jagged = new double[][] { [1.5], [2.5] };
+        // string[][] nests two ArrayFormatter levels (each descends into the element formatter)
+        var jagged = new string[][] { ["a"], ["b"] };
         var two = MessagePackSerializerOptions.Default with { MaxDepth = 2 };
         var bytes = V4.Serialize(jagged, two);
-        Assert.Equal(jagged, V4.Deserialize<double[][]>(bytes, two));
+        Assert.Equal(jagged, V4.Deserialize<string[][]>(bytes, two));
 
         var one = MessagePackSerializerOptions.Default with { MaxDepth = 1 };
         Assert.Throws<MessagePackSerializationException>(() => V4.Serialize(jagged, one));
-        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<double[][]>(bytes, one));
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<string[][]>(bytes, one));
+    }
+
+    [Fact]
+    public void FlatPrimitiveArrays_DoNotCountTowardDepth()
+    {
+        // a level is a formatter descending into another formatter: the outer ArrayFormatter
+        // is one, the primitive-codec double[] inside writes its elements inline and is none
+        // (v3's Int32ArrayFormatter and friends skipped DepthStep the same way)
+        var jagged = new double[][] { [1.5], [2.5] };
+        var one = MessagePackSerializerOptions.Default with { MaxDepth = 1 };
+        var bytes = V4.Serialize(jagged, one);
+        Assert.Equal(jagged, V4.Deserialize<double[][]>(bytes, one));
+
+        Assert.Throws<MessagePackSerializationException>(() => V4.Serialize(new double[][][] { [[1.5]] }, one));
     }
 }
 

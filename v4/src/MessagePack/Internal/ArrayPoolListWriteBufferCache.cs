@@ -1,15 +1,12 @@
-using System.Runtime.CompilerServices;
-using SerializerFoundation;
-
 namespace MessagePack;
 
+// Internal on purpose. A global mutable slot behind Rent/Return is an aliasing footgun as public API,
+// so the pooling policy stays an implementation detail of the entries.
+
 /// <summary>
-/// Thread-cached, boxed <see cref="CompatibleArrayPoolListWriteBuffer"/> for places that
-/// need an IBufferWriter&lt;byte&gt;-shaped staging buffer (the byte[] entries, the
-/// generic TryEncode bridge). Interface calls mutate the box in place, so the one heap
-/// object IS the buffer; members not on the interface go through <see cref="AsBuffer"/>.
-/// Internal on purpose: a global mutable slot behind Rent/Return is an aliasing footgun
-/// as public API, so the pooling policy stays an implementation detail of the entries.
+/// Thread-cached, boxed <see cref="CompatibleArrayPoolListWriteBuffer"/> for places that need an IBufferWriter-shaped
+/// staging buffer, such as the byte[] entries and the generic TryEncode bridge.
+/// Interface calls mutate the box in place, so the one heap object is the buffer; members not on the interface go through <see cref="AsBuffer"/>.
 /// </summary>
 internal static class ArrayPoolListWriteBufferCache
 {
@@ -21,9 +18,8 @@ internal static class ArrayPoolListWriteBufferCache
         var writer = cached;
         if (writer == null)
         {
-            // SF002 guards against a boxed copy escaping its owner; here the box IS the
-            // single owner (freshly constructed, never copied out, mutated only through
-            // interface calls and Unbox refs), which is the one sound way to box a buffer
+            // SF002 guards against a boxed copy escaping its owner. Here the box is the single owner (freshly constructed,
+            // never copied out, mutated only through interface calls and Unbox refs), which is the one sound way to box a buffer.
 #pragma warning disable SF002
             return new CompatibleArrayPoolListWriteBuffer();
 #pragma warning restore SF002

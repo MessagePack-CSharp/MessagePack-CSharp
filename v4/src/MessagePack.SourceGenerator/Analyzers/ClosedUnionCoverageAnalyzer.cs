@@ -9,13 +9,15 @@ namespace MessagePack.SourceGenerator.Analyzers;
 /// A closed class confines its hierarchy to the declaring assembly, so a [UnionTag] root
 /// that is closed has a knowable case universe: every concrete type deriving from it in
 /// the compilation must carry a tag on the root, or serializing it through the root
-/// silently writes nil — the open-hierarchy version tolerance, which a closed root has no
-/// excuse for. MsgPack106 reports the missing tag on the derived type as an error (a
-/// deliberately unserialized case can #pragma-suppress).
-/// Detection walks each concrete type's base chain: closedness reads the `closed`
-/// modifier token off the declaration (the declaring compilation never surfaces the
-/// lowered [IsClosedType] attribute on the symbol) and falls back to the attribute for
-/// metadata symbols.
+/// silently writes nil, the open-hierarchy version tolerance, which a closed root has no
+/// excuse for. MsgPack106 reports each missing case as an error on the root, where the
+/// [UnionTag] list lives and where the fix lands (a deliberately unserialized case can
+/// #pragma-suppress there).
+/// Detection starts from the root: closedness reads the `closed` modifier token off the
+/// declaration (the declaring compilation never surfaces the lowered [IsClosedType]
+/// attribute on the symbol) and falls back to the attribute for metadata symbols; the
+/// concrete descendants are enumerated from the compilation's own assembly, which is the
+/// whole universe a closed class permits.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class ClosedUnionCoverageAnalyzer : DiagnosticAnalyzer
@@ -31,7 +33,7 @@ public sealed class ClosedUnionCoverageAnalyzer : DiagnosticAnalyzer
         "MessagePack.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "A closed class confines its derived types to the declaring assembly, so the union case universe of a closed [UnionTag] root is known at compile time. A concrete derived type without a [UnionTag] entry serializes as nil through the root — silent data loss that the closed declaration makes detectable.");
+        description: "A closed class confines its derived types to the declaring assembly, so the union case universe of a closed [UnionTag] root is known at compile time. A concrete derived type without a [UnionTag] entry serializes as nil through the root, a silent data loss that the closed declaration makes detectable.");
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
@@ -39,42 +41,87 @@ public sealed class ClosedUnionCoverageAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterSymbolAction(AnalyzeType, SymbolKind.NamedType);
+        context.RegisterSymbolAction(AnalyzeRoot, SymbolKind.NamedType);
     }
 
-    static void AnalyzeType(SymbolAnalysisContext context)
+    static void AnalyzeRoot(SymbolAnalysisContext context)
     {
-        var type = (INamedTypeSymbol)context.Symbol;
-        if (type.TypeKind != TypeKind.Class || type.IsAbstract)
+        var root = (INamedTypeSymbol)context.Symbol;
+        if (root.TypeKind != TypeKind.Class)
         {
-            return; // only concrete classes are union cases
+            return;
         }
 
+        HashSet<ISymbol>? taggedCases = null;
+        Location? tagLocation = null;
+        foreach (var attribute in root.GetAttributes())
+        {
+            if (!UnionParser.IsUnionTagAttribute(attribute.AttributeClass))
+            {
+                continue;
+            }
+            taggedCases ??= new HashSet<ISymbol>(SymbolEqualityComparer.Default);
+            if (UnionParser.ResolveCaseType(attribute, root) is { } caseType)
+            {
+                taggedCases.Add(caseType);
+            }
+            // the partial declaration that carries the [UnionTag] list is where the error belongs
+            tagLocation ??= attribute.ApplicationSyntaxReference?.GetSyntax(context.CancellationToken)
+                .FirstAncestorOrSelf<TypeDeclarationSyntax>()?.Identifier.GetLocation();
+        }
+        if (taggedCases is null || !IsClosed(root, context.CancellationToken))
+        {
+            return;
+        }
+
+        var location = tagLocation ?? PickLocation(root);
+        var rootDocId = DocumentationCommentId.CreateDeclarationId(root);
+        foreach (var candidate in EnumerateTypes(context.Compilation.Assembly.GlobalNamespace))
+        {
+            if (candidate.TypeKind != TypeKind.Class || candidate.IsAbstract
+                || !DerivesFrom(candidate, root) || taggedCases.Contains(candidate))
+            {
+                continue; // only concrete descendants are union cases
+            }
+
+            // the fix adds the missing [UnionTag] on the root, so hand it both ends
+            var properties = ImmutableDictionary<string, string?>.Empty
+                .Add("RootDocId", rootDocId)
+                .Add("CaseDocId", DocumentationCommentId.CreateDeclarationId(candidate));
+            context.ReportDiagnostic(Diagnostic.Create(Rule, location, properties, root.ToDisplayString(), candidate.ToDisplayString()));
+        }
+    }
+
+    static bool DerivesFrom(INamedTypeSymbol type, INamedTypeSymbol root)
+    {
         for (var baseType = type.BaseType; baseType is not null && baseType.SpecialType != SpecialType.System_Object; baseType = baseType.BaseType)
         {
-            var hasUnionTag = false;
-            var tagged = false;
-            foreach (var attribute in baseType.GetAttributes())
+            if (SymbolEqualityComparer.Default.Equals(baseType.OriginalDefinition, root))
             {
-                if (!UnionParser.IsUnionTagAttribute(attribute.AttributeClass))
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static IEnumerable<INamedTypeSymbol> EnumerateTypes(INamespaceOrTypeSymbol container)
+    {
+        foreach (var member in container.GetMembers())
+        {
+            if (member is INamespaceSymbol nestedNamespace)
+            {
+                foreach (var type in EnumerateTypes(nestedNamespace))
                 {
-                    continue;
-                }
-                hasUnionTag = true;
-                if (UnionParser.ResolveCaseType(attribute, baseType) is { } caseType
-                    && SymbolEqualityComparer.Default.Equals(caseType, type))
-                {
-                    tagged = true;
-                    break;
+                    yield return type;
                 }
             }
-            if (hasUnionTag && !tagged && IsClosed(baseType, context.CancellationToken))
+            else if (member is INamedTypeSymbol type)
             {
-                // the fix adds the missing [UnionTag] on the ROOT, so hand it both ends
-                var properties = ImmutableDictionary<string, string?>.Empty
-                    .Add("RootDocId", DocumentationCommentId.CreateDeclarationId(baseType))
-                    .Add("CaseDocId", DocumentationCommentId.CreateDeclarationId(type));
-                context.ReportDiagnostic(Diagnostic.Create(Rule, PickLocation(type), properties, baseType.ToDisplayString(), type.ToDisplayString()));
+                yield return type;
+                foreach (var nested in EnumerateTypes(type))
+                {
+                    yield return nested;
+                }
             }
         }
     }
@@ -89,8 +136,8 @@ public sealed class ClosedUnionCoverageAnalyzer : DiagnosticAnalyzer
                 return true;
             }
         }
-        // source symbols only show the modifier; the token text is readable without the
-        // union-aware Roslyn API surface (this analyzer compiles against the older floor)
+        // source symbols only show the modifier; the token text is readable without the union-aware Roslyn API surface
+        // (this analyzer compiles against the older floor)
         foreach (var syntaxReference in type.DeclaringSyntaxReferences)
         {
             if (syntaxReference.GetSyntax(cancellationToken) is TypeDeclarationSyntax declaration)

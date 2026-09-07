@@ -67,6 +67,29 @@ public class StreamEntryTests
         Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<string>(stream, small));
     }
 
+    // a message of exactly the cap is legal; the pooled array filling up at the cap used to be
+    // mistaken for the input exceeding it (a non-seekable stream, so the reader cannot size ahead)
+    [Theory]
+    [InlineData(4096)]
+    [InlineData(4095)]
+    public void SyncDeserialize_MessageAtTheCap_IsLegal(int cap)
+    {
+        var options = new MessagePackSerializerOptions(new MessagePackFormatterResolver([MessagePackFormatterFactory.Default]))
+        {
+            MaxBufferedMessageSize = cap,
+        };
+        var bytes = MessagePackSerializer.Serialize(new byte[cap - 3]); // bin16: 3-byte header
+        Assert.Equal(cap, bytes.Length);
+
+        var value = MessagePackSerializer.Deserialize<byte[]>(new NonSeekableStream(bytes), options);
+        Assert.Equal(cap - 3, value!.Length);
+
+        // one byte over: rejected
+        var over = MessagePackSerializer.Serialize(new byte[cap - 2]);
+        Assert.Equal(cap + 1, over.Length);
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<byte[]>(new NonSeekableStream(over), options));
+    }
+
     [Fact]
     public async Task AsyncRoundTrip()
     {
@@ -165,5 +188,51 @@ public class StreamEntryTests
 
         // the wire is one plain msgpack array: readable by the ordinary entry too
         Assert.Equal(["a", "b"], MessagePackSerializer.Deserialize<string[]>(stream.ToArray()));
+    }
+
+    // the pipe over the stream reads ahead; on a seekable stream the over-read goes back so data after
+    // the array (or after a broken-out enumeration, the rest of it) stays readable, like the single-value overload
+    [Fact]
+    public async Task StreamingElements_OverSeekableStream_LeavesTrailingDataReadable()
+    {
+        var stream = new MemoryStream();
+        await MessagePackSerializer.SerializeElementsAsync(stream, new[] { 11, 22 }, 2);
+        MessagePackSerializer.Serialize(stream, 33);
+
+        stream.Position = 0;
+        var received = new List<int>();
+        await foreach (var value in MessagePackSerializer.DeserializeElementsAsync<int>(stream))
+        {
+            received.Add(value);
+        }
+        Assert.Equal([11, 22], received);
+        Assert.Equal(33, MessagePackSerializer.Deserialize<int>(stream));
+
+        stream.Position = 0;
+        await foreach (var value in MessagePackSerializer.DeserializeElementsAsync<int>(stream))
+        {
+            Assert.Equal(11, value);
+            break;
+        }
+        Assert.Equal(22, MessagePackSerializer.Deserialize<int>(stream));
+        Assert.Equal(33, MessagePackSerializer.Deserialize<int>(stream));
+    }
+
+    [Fact]
+    public async Task StreamingMessages_OverSeekableStream_BreakLeavesRestReadable()
+    {
+        var stream = new MemoryStream();
+        MessagePackSerializer.Serialize(stream, "one");
+        MessagePackSerializer.Serialize(stream, "two");
+        MessagePackSerializer.Serialize(stream, "three");
+
+        stream.Position = 0;
+        await foreach (var value in MessagePackSerializer.DeserializeMessagesAsync<string>(stream))
+        {
+            Assert.Equal("one", value);
+            break;
+        }
+        Assert.Equal("two", MessagePackSerializer.Deserialize<string>(stream));
+        Assert.Equal("three", MessagePackSerializer.Deserialize<string>(stream));
     }
 }

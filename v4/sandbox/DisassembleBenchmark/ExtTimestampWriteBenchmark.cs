@@ -288,12 +288,12 @@ public class TimestampWriteBenchmark
             if ((data64 & 0xffffffff00000000UL) == 0)
             {
                 destination = MessagePackCode.FixExt4;
-                Unsafe.Add(ref destination, 1) = unchecked((byte)MessagePackCode.TimestampExtensionTypeCode);
+                Unsafe.Add(ref destination, 1) = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
                 Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 2), BinaryPrimitives.ReverseEndianness((uint)data64));
                 return 6;
             }
             destination = MessagePackCode.FixExt8;
-            Unsafe.Add(ref destination, 1) = unchecked((byte)MessagePackCode.TimestampExtensionTypeCode);
+            Unsafe.Add(ref destination, 1) = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
             Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 2), BinaryPrimitives.ReverseEndianness(data64));
             return 10;
         }
@@ -301,7 +301,7 @@ public class TimestampWriteBenchmark
         // data96: [nanoseconds in 32-bit unsigned | seconds in 64-bit signed]
         destination = MessagePackCode.Ext8;
         Unsafe.Add(ref destination, 1) = 12;
-        Unsafe.Add(ref destination, 2) = unchecked((byte)MessagePackCode.TimestampExtensionTypeCode);
+        Unsafe.Add(ref destination, 2) = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 3), BinaryPrimitives.ReverseEndianness((uint)nanoseconds));
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 7), BinaryPrimitives.ReverseEndianness(unchecked((ulong)seconds)));
         return 15;
@@ -334,7 +334,7 @@ public class TimestampWriteBenchmark
 
         destination = MessagePackCode.Ext8;
         Unsafe.Add(ref destination, 1) = 12;
-        Unsafe.Add(ref destination, 2) = unchecked((byte)MessagePackCode.TimestampExtensionTypeCode);
+        Unsafe.Add(ref destination, 2) = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 3), BinaryPrimitives.ReverseEndianness((uint)nanoseconds));
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref destination, 7), BinaryPrimitives.ReverseEndianness(unchecked((ulong)seconds)));
         return 15;

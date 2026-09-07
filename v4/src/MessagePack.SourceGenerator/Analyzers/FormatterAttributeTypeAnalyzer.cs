@@ -5,16 +5,14 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace MessagePack.SourceGenerator.Analyzers;
 
 /// <summary>
-/// [MessagePackFormatter]'s Type argument only fails at runtime when it is not a usable
-/// factory or formatter, and the generator's own MsgPack012/MsgPack013 cover just the contexts it
-/// consumes ([MessagePackObject] members and type-level targets). MsgPack105 checks
-/// every application live: the type must be a concrete, fully constructed
-/// MessagePackFormatterFactory, or a formatter passed as an unbound generic over the
-/// buffer pair, AND expose an accessible constructor matching the supplied argument
-/// count — both attribute paths construct via new, so a private-ctor singleton is
-/// unusable here no matter how valid its shape is. The
-/// MessagePackFormatterAttribute&lt;TFactory&gt; variant gets the factory check from its
-/// constraint; this analyzer adds the abstract/unbound/constructor checks there.
+/// [MessagePackFormatter]'s Type argument only fails at runtime when it is not a usable factory or formatter,
+/// and the generator's own MsgPack012/MsgPack013 cover just the contexts it consumes ([MessagePackObject] members and
+/// type-level targets). MsgPack105 checks every application live: the type must be a concrete,
+/// fully constructed MessagePackFormatterFactory, or a formatter passed as an unbound generic over the buffer pair,
+/// and expose an accessible constructor matching the supplied argument count,
+/// both attribute paths construct via new, so a private-ctor singleton is unusable here no matter how valid its shape
+/// is. The MessagePackFormatterAttribute&lt;TFactory&gt; variant gets the factory check from its constraint;
+/// this analyzer adds the abstract/unbound/constructor checks there.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class FormatterAttributeTypeAnalyzer : DiagnosticAnalyzer
@@ -76,9 +74,8 @@ public sealed class FormatterAttributeTypeAnalyzer : DiagnosticAnalyzer
             }
 
             // the generic variant carries the factory as the attribute's type argument;
-            // the Type-based form as the first constructor argument. A derived attribute
-            // baking the type into a base() call is invisible here — the runtime tiers
-            // still validate it.
+            // the Type-based form as the first constructor argument. A derived attribute baking the type into a base()
+            // call is invisible here, the runtime tiers still validate it.
             INamedTypeSymbol? target = null;
             var argumentCount = 0;
             if (attribute.AttributeClass is { IsGenericType: true, TypeArguments.Length: 1 } genericAttribute
@@ -99,8 +96,8 @@ public sealed class FormatterAttributeTypeAnalyzer : DiagnosticAnalyzer
             }
             if (target is null || target.TypeKind == TypeKind.Error)
             {
-                // an error type (e.g. an open generic name in the attribute's type argument,
-                // CS0305) already carries a compiler error; piling MsgPack105 on top is noise
+                // an error type (e.g. an open generic name in the attribute's type argument, CS0305)
+                // already carries a compiler error; piling MsgPack105 on top is noise
                 continue;
             }
 
@@ -114,8 +111,8 @@ public sealed class FormatterAttributeTypeAnalyzer : DiagnosticAnalyzer
 
     static string? Validate(INamedTypeSymbol target, int argumentCount, Compilation compilation)
     {
-        // the base class itself counts as "factory-shaped" so it gets the abstract
-        // message instead of the neither-form one
+        // the base class itself counts as "factory-shaped" so it gets the abstract message instead of the neither-form
+        // one
         for (var baseType = target; baseType is not null; baseType = baseType.BaseType)
         {
             if (baseType.ToDisplayString() == FactoryBaseName)
@@ -128,9 +125,9 @@ public sealed class FormatterAttributeTypeAnalyzer : DiagnosticAnalyzer
                 {
                     return "close every type argument of the factory inside the typeof";
                 }
-                // arity + accessibility only: private-ctor singletons and argument-count
-                // mismatches fail right here; the exact type binding is the generator's
-                // MsgPack013 where it consumes the attribute, and the runtime's elsewhere
+                // arity + accessibility only: private-ctor singletons and argument-count mismatches fail right here;
+                // the exact type binding is the generator's MsgPack013 where it consumes the attribute,
+                // and the runtime's elsewhere
                 return CheckConstructor(target, argumentCount, compilation);
             }
         }

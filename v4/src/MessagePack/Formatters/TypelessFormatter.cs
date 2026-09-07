@@ -13,22 +13,8 @@ namespace MessagePack.Formatters;
 // The v3-compatible blacklist style is in TypelessTypeLoader.LoadAnyType, which is Obsolete.
 // There is also TypelessLoader.AllowedTypes, a relatively safe whitelist style.
 
-// v3 Typeless wire compatibility (probed against MessagePack 3.1.8):
-// - Non-primitive values wrap in ext (type code 100) whose body is the concatenation of
-//   the type name (str token, full assembly-qualified name) and the value serialized by
-//   its concrete-type formatter. Nested object slots wrap recursively.
-// - Primitives are NOT wrapped; the wire format width IS the type tag: integers use the
-//   FORCED-width writers (int always int32, byte always uint8, ...), bool/float/double/
-//   string/byte[]/nil use their single natural forms. The reader maps the format family
-//   back to the exact CLR type.
-// - char/decimal/Guid/enum/TimeSpan/DateTimeOffset wrap with their STANDARD v3 payloads
-//   (identical to this library's builtin formatters), so the resolver serves them; only
-//   DateTime is special inside typeless: ToBinary as smallest int64 (Kind-preserving),
-//   not the timestamp ext.
 public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, object?>
 {
-    internal const sbyte ExtTypeCode = 100; // v3 TypelessFormatter's ext code
-
     // v3's MessagePackSerializerOptions.DisallowedTypes verbatim: the known BinaryFormatter-era deserialization gadgets.
     static readonly HashSet<string> DisallowedTypes = new(StringComparer.Ordinal)
     {
@@ -133,7 +119,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
                 throw new MessagePackSerializationException($"Typeless body for '{type.FullName}' exceeds the ext32 length limit.");
             }
 
-            buffer.Advance(UnsafeWriteExtHeader(ref buffer.GetReference(MaxExtHeaderLength), ExtTypeCode, (int)bodyLength));
+            buffer.Advance(UnsafeWriteExtHeader(ref buffer.GetReference(MaxExtHeaderLength), ThisLibraryExtensionTypeCodes.TypelessFormatter, (int)bodyLength));
             buffer.Advance(UnsafeWriteRaw(ref buffer.GetReference(name.Length), name));
             while (segments.TryGetNext(out var segment))
             {
@@ -148,8 +134,9 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref object? value)
     {
-        if (buffer.TryReadExtHeader(ExtTypeCode, out _))
+        if (buffer.TryReadExtHeader(ThisLibraryExtensionTypeCodes.TypelessFormatter, out var declaredBodyLength))
         {
+            var bodyStart = buffer.BytesConsumed;
             var typeName = buffer.ReadString();
             if (typeName is null)
             {
@@ -159,6 +146,15 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
             state.Enter();
             value = serializer.Deserialize(ref buffer, ref state);
             state.Exit();
+
+            // the declared body length is the boundary a header-based skip (TryReadToken)
+            // would use; a parse consuming a different amount means the two disagree on
+            // where this ext ends (parser-differential message smuggling), so enforce equality
+            var consumed = buffer.BytesConsumed - bodyStart;
+            if (consumed != declaredBodyLength)
+            {
+                throw new MessagePackSerializationException($"Typeless ext declares a {declaredBodyLength} byte body but its content spans {consumed} bytes.");
+            }
             return;
         }
 
@@ -204,10 +200,20 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
         var serializer = type == typeof(DateTime)
             ? new DateTimeSerializer(typeName)
             : (TypelessSerializer)createSerializerMethod.MakeGenericMethod(type).Invoke(this, [typeName])!;
-        serializer = serializersByType.GetOrAdd(type, serializer);
-        serializersByName.TryAdd(typeName, serializer);
-        return serializer;
+        // the write side never seeds serializersByName: that cache is the read side's, and every entry in it
+        // has passed the type loader and the deny list. Seeding it here would let a type this process serialized
+        // deserialize without those checks (a shared resolver makes the read-side policy depend on cache state)
+        return serializersByType.GetOrAdd(type, serializer);
     }
+
+    // Bound on payload-spelling cache entries. Type.GetType is lenient about whitespace and
+    // version/culture spelling, so distinct spellings of ONE type are effectively unbounded
+    // and attacker-minted; without a cap each novel spelling would pin a permanent dictionary
+    // entry (memory-growth DoS, even through the AllowedTypes loader). Legit writers (this
+    // process included) use one stable spelling per type, so the cap only ever bites a
+    // spelling flood - which falls back to re-resolving per message: the attacker pays the
+    // parse, nothing accumulates.
+    const int MaxCachedTypeNameCount = 1024;
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     TypelessSerializer CreateSerializerForName(string typeName)
@@ -225,7 +231,10 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
         ThrowIfDisallowed(type);
 
         var serializer = GetSerializerByType(type);
-        serializersByName.TryAdd(typeName, serializer); // the payload spelling may differ from our own
+        if (serializersByName.Count < MaxCachedTypeNameCount)
+        {
+            serializersByName.TryAdd(typeName, serializer); // the payload spelling may differ from our own
+        }
         return serializer;
     }
 
@@ -345,6 +354,75 @@ internal static class TypelessMessages
     internal const string RequiresUnreferencedCode =
         "Typeless serialization loads types by payload-provided names and closes formatters over them via reflection; " +
         "trimming can remove those types silently. Typeless is incompatible with trimming and Native AOT.";
+}
+
+/// <summary>
+/// v3's ForceTypelessFormatter: routes an interface- or abstract-typed slot through the
+/// typeless formatter, so the concrete runtime type rides the payload and comes back on
+/// read. Boxes on write, casts on read. Initialize resolves the chain's object formatter —
+/// the typeless object factory, composed first — so the dispatcher caches, type loader and
+/// deny-list vetting are shared rather than duplicated.
+/// </summary>
+public sealed partial class ForceTypelessFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T?>
+{
+    IMessagePackFormatter<TWriteBuffer, TReadBuffer, object?> typeless = null!;
+
+    public void Initialize(MessagePackFormatterResolver resolver)
+    {
+        typeless = resolver.GetFormatter<TWriteBuffer, TReadBuffer, object?>();
+    }
+
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T? value)
+    {
+        typeless.Serialize(ref buffer, ref state, value);
+    }
+
+    public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref T? value)
+    {
+        object? boxed = null;
+        typeless.Deserialize(ref buffer, ref state, ref boxed);
+        value = (T?)boxed;
+    }
+}
+
+/// <summary>
+/// The tail half of typeless composition: claims interface and abstract static types with
+/// <see cref="ForceTypelessFormatter{TWriteBuffer, TReadBuffer, T}"/>. Compose it LAST —
+/// v3's TypelessObjectResolver sat at the end of its chain for the same reason: the
+/// collection interfaces (IList&lt;T&gt;, IDictionary&lt;K,V&gt;, ...) belong to BuiltIn's
+/// interface formatters and union roots to their generated formatters; only interfaces and
+/// abstract bases nothing else serves fall through to the typeless envelope.
+/// </summary>
+public sealed class ForceTypelessFormatterFactory : GenericFormatterFactoryBase
+{
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(TypelessMessages.RequiresUnreferencedCode)]
+    public ForceTypelessFormatterFactory()
+    {
+    }
+
+    protected override Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments)
+    {
+        typeArguments = [type];
+        constructorArguments = null;
+        return type.IsInterface || type.IsAbstract ? typeof(ForceTypelessFormatterFactory<>) : null;
+    }
+}
+
+public sealed partial class ForceTypelessFormatterFactory<T> : MessagePackFormatterFactory
+{
+    // one method, two signatures: net9+ overrides the base virtual (constraints
+    // inherited); downlevel has no base member, so the constraints are spelled out
+#if NET9_0_OR_GREATER
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+#else
+    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+        where TWriteBuffer : struct, IWriteBuffer
+        where TReadBuffer : struct, IReadBuffer
+#endif
+    {
+        return type == typeof(T) ? new ForceTypelessFormatter<TWriteBuffer, TReadBuffer, T>() : null;
+    }
 }
 
 /// <summary>

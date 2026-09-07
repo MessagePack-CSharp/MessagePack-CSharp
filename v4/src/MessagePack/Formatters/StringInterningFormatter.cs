@@ -20,7 +20,7 @@ public sealed partial class StringInterningFormatter<TWriteBuffer, TReadBuffer> 
 
     public StringInterningFormatter(HashSet<string> internedStrings)
     {
-#if NET
+#if NET9_0_OR_GREATER
         StringInterningFormatterFactory.ThrowIfAlternateLookupUnsupported(internedStrings);
 #endif
         this.internedStrings = internedStrings;
@@ -43,7 +43,7 @@ public sealed partial class StringInterningFormatter<TWriteBuffer, TReadBuffer> 
             return;
         }
 
-#if NET
+#if NET9_0_OR_GREATER
         var byteCount = buffer.ReadStringHeader();
         if (byteCount == 0)
         {
@@ -123,13 +123,13 @@ public sealed partial class StringInterningFormatterFactory : MessagePackFormatt
 
     public StringInterningFormatterFactory(HashSet<string> internedStrings)
     {
-#if NET
+#if NET9_0_OR_GREATER
         ThrowIfAlternateLookupUnsupported(internedStrings);
 #endif
         this.internedStrings = internedStrings;
     }
 
-#if NET
+#if NET9_0_OR_GREATER
     // fail fast at composition time instead of surfacing GetAlternateLookup's
     // InvalidOperationException from the middle of a deserialization
     internal static void ThrowIfAlternateLookupUnsupported(HashSet<string> internedStrings)

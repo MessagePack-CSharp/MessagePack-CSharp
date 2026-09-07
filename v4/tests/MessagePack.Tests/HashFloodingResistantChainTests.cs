@@ -77,10 +77,10 @@ public class HashFloodingResistantChainTests
     }
 
     [Fact]
-    public void OptionsExposeResolverPosture()
+    public void ResolverExposesPosture()
     {
-        Assert.True(MessagePackSerializerOptions.Default.HashFloodingResistant); // secure by default
-        Assert.False(trusted.HashFloodingResistant);
+        Assert.True(MessagePackSerializerOptions.Default.Resolver.HashFloodingResistant); // secure by default
+        Assert.False(trusted.Resolver.HashFloodingResistant);
     }
 
     [Fact]

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The instrumented side of the SharpFuzz split: sharpfuzz rewrites the IL of this
+       assembly (and MessagePack/MessagePack.LZ4/SerializerFoundation) for coverage
+       feedback, while the harness exe (MessagePack.Tests.Fuzz) must stay uninstrumented.
+       Holding the models here (not in the harness) matters: the source-generated
+       formatter bodies compile into whichever assembly declares the models, and they are
+       exactly the deserialize code the fuzzer should get coverage on. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- compile-linked from the Robustness suite so both stay in lockstep -->
+  <ItemGroup>
+    <Compile Include="..\MessagePack.Tests.Robustness\RobustnessModels.cs" Link="RobustnessModels.cs" />
+    <Compile Include="..\MessagePack.Tests.Robustness\RobustnessHarness.cs" Link="RobustnessHarness.cs" />
+    <Compile Include="..\MessagePack.Tests.Robustness\RobustnessTargets.cs" Link="RobustnessTargets.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.LZ4\MessagePack.LZ4.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="SerializerFoundation" />
+  </ItemGroup>
+
+</Project>

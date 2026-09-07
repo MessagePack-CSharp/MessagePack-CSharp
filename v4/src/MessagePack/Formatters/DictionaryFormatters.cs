@@ -90,11 +90,12 @@ public sealed class DictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
         // Duplicate map keys are rejected as data errors.
         // JSON RFC 8259: "names SHOULD be unique", MsgPack Spec: "keys SHOULD be unique"
         // so a duplicate is a bug or an attacker desynchronizing validators.
-#if NET
+#if NET9_0_OR_GREATER
         for (int i = 0; i < count; i++)
         {
             TKey k = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
+            MessagePackSerializationException.ThrowIfNullMapKey(k);
             ref var slot = ref CollectionsMarshal.GetValueRefOrAddDefault(result, k, out var exists);
             if (exists)
             {
@@ -110,6 +111,7 @@ public sealed class DictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
             TValue v = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
             vf.Deserialize(ref buffer, ref state, ref v);
+            MessagePackSerializationException.ThrowIfNullMapKey(k);
             result[k] = v;
         }
         // a duplicate key collapsed into one slot: reject (cheapest possible detection)
@@ -241,6 +243,7 @@ public sealed class InterfaceDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey
             TValue v = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
             vf.Deserialize(ref buffer, ref state, ref v);
+            MessagePackSerializationException.ThrowIfNullMapKey(k);
             result[k] = v;
         }
         // a duplicate key collapsed into one slot: reject (cheapest possible detection)
@@ -361,6 +364,7 @@ public sealed class InterfaceReadOnlyDictionaryFormatter<TWriteBuffer, TReadBuff
             TValue v = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
             vf.Deserialize(ref buffer, ref state, ref v);
+            MessagePackSerializationException.ThrowIfNullMapKey(k);
             result[k] = v;
         }
         // a duplicate key collapsed into one slot: reject (cheapest possible detection)
@@ -481,6 +485,7 @@ public sealed class ReadOnlyDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey,
             TValue v = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
             vf.Deserialize(ref buffer, ref state, ref v);
+            MessagePackSerializationException.ThrowIfNullMapKey(k);
             inner[k] = v;
         }
         // a duplicate key collapsed into one slot: reject (cheapest possible detection)
@@ -601,6 +606,7 @@ public sealed class SortedListFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
             TValue v = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
             vf.Deserialize(ref buffer, ref state, ref v);
+            MessagePackSerializationException.ThrowIfNullMapKey(k);
             result[k] = v;
         }
         // a duplicate key collapsed into one slot: reject (cheapest possible detection)
@@ -707,6 +713,7 @@ public sealed class SortedDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, T
             TValue v = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
             vf.Deserialize(ref buffer, ref state, ref v);
+            MessagePackSerializationException.ThrowIfNullMapKey(k);
             result[k] = v;
         }
         // a duplicate key collapsed into one slot: reject (cheapest possible detection)
@@ -828,6 +835,7 @@ public sealed class ConcurrentDictionaryFormatter<TWriteBuffer, TReadBuffer, TKe
             TValue v = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
             vf.Deserialize(ref buffer, ref state, ref v);
+            MessagePackSerializationException.ThrowIfNullMapKey(k);
             result[k] = v;
         }
         // a duplicate key collapsed into one slot: reject (cheapest possible detection)
@@ -953,6 +961,7 @@ public sealed class OrderedDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, 
             TValue v = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
             vf.Deserialize(ref buffer, ref state, ref v);
+            MessagePackSerializationException.ThrowIfNullMapKey(k);
             result[k] = v;
         }
         // a duplicate key collapsed into one slot: reject (cheapest possible detection)
@@ -993,7 +1002,7 @@ public sealed partial class OrderedDictionaryFormatterFactory<TKey, TValue> : Me
 
 #endif
 
-#if NET
+#if NET9_0_OR_GREATER
 
 // PriorityQueue is not a dictionary: elements may repeat, so the map format is out.
 // Wire format is an array of [element, priority] pairs.

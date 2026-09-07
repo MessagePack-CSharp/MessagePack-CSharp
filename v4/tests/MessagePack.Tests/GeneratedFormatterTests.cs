@@ -64,6 +64,40 @@ public class GeneratedFormatterTests
         AssertBytesAndRoundtrip<GenIntKeyPoco?>(null);
     }
 
+    // [NonSerialized] opts a field out in both tiers (the generator used to ignore it and
+    // ship the field, so state the type excluded surfaced on the wire)
+    [Fact]
+    public void NonSerializedField_IsExcludedInBothModes()
+    {
+        var keyed = new GenNonSerializedKeyed { Id = 7, Secret = 99 };
+        var keyedBytes = V4.Serialize(keyed);
+        Assert.Equal(Oracle.Serialize(keyed), keyedBytes);
+        Assert.Equal("[7]", V4.ConvertToJson(keyedBytes));
+        Assert.Equal(0, V4.Deserialize<GenNonSerializedKeyed>(keyedBytes)!.Secret);
+
+        var map = new GenNonSerializedMap { Id = 7, Secret = 99 };
+        var mapBytes = V4.Serialize(map);
+        Assert.Equal(Oracle.Serialize(map), mapBytes);
+        Assert.Equal("{\"Id\":7}", V4.ConvertToJson(mapBytes));
+        Assert.Equal(0, V4.Deserialize<GenNonSerializedMap>(mapBytes)!.Secret);
+    }
+
+    // members named after reserved keywords: the emitted references must carry the @ escape
+    // (the symbol's Name is bare, and the generated code used to fail to compile), while the
+    // map key stays the bare spelling
+    [Fact]
+    public void KeywordNamedMembers_CompileAndKeepBareMapKeys()
+    {
+        var keyed = new GenKeywordKeyed { @event = 1, @class = "c" };
+        AssertBytesAndRoundtrip(keyed);
+
+        var map = new GenKeywordMap { @event = 1, @class = "c" };
+        var bytes = V4.Serialize(map);
+        Assert.Equal(Oracle.Serialize(map), bytes);
+        Assert.Equal("{\"event\":1,\"class\":\"c\"}", V4.ConvertToJson(bytes));
+        Assert.Equal("c", V4.Deserialize<GenKeywordMap>(bytes)!.@class);
+    }
+
     [Fact]
     public void IntKey_HolesSerializeAsNil()
     {
@@ -304,6 +338,34 @@ public class GenIntKeyPoco
     [V3::MessagePack.Key(3)] public bool Flag { get; set; }
     [V3::MessagePack.Key(4)] public long Ticks { get; set; }
     [V3::MessagePack.IgnoreMember] public int Ignored { get; set; }
+}
+
+[V3::MessagePack.MessagePackObject]
+public class GenKeywordKeyed
+{
+    [V3::MessagePack.Key(0)] public int @event { get; set; }
+    [V3::MessagePack.Key(1)] public string? @class;
+}
+
+[V3::MessagePack.MessagePackObject(true)]
+public class GenKeywordMap
+{
+    public int @event { get; set; }
+    public string? @class;
+}
+
+[V3::MessagePack.MessagePackObject]
+public class GenNonSerializedKeyed
+{
+    [V3::MessagePack.Key(0)] public int Id;
+    [NonSerialized] public int Secret;
+}
+
+[V3::MessagePack.MessagePackObject(true)]
+public class GenNonSerializedMap
+{
+    public int Id;
+    [NonSerialized] public int Secret;
 }
 
 // same wire shape as GenIntKeyPoco plus two newer members

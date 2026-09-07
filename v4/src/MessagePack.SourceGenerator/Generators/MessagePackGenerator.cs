@@ -4,11 +4,11 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace MessagePack.SourceGenerator.Generators;
 
 /// <summary>
-/// Pipeline wiring only. Discovery is driven by ONE attribute — [MessagePackObject] —
-/// and each hit routes to exactly one shape: [UnionTag] present makes the type a union
-/// base (<see cref="UnionParser"/>), otherwise it is an object (<see cref="ObjectParser"/>).
-/// A [UnionTag] without [MessagePackObject] is invisible here by design; the standalone
-/// MsgPack103 analyzer surfaces that mistake. Both model streams combine into one factory +
+/// Pipeline wiring only. Discovery is driven by one attribute, [MessagePackObject],
+/// and each hit routes to exactly one shape: [UnionTag] present makes the type a union base
+/// (<see cref="UnionParser"/>), otherwise it is an object (<see cref="ObjectParser"/>).
+/// A [UnionTag] without [MessagePackObject] is invisible here by design;
+/// the standalone MsgPack103 analyzer surfaces that mistake. Both model streams combine into one factory +
 /// module-initializer registration file.
 /// </summary>
 [Generator(LanguageNames.CSharp)]
@@ -16,9 +16,9 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // ModuleInitializerAttribute polyfill decision: the registration file needs the
-        // attribute, netstandard2.x / .NET Framework targets do not have it in the BCL, and
-        // the compiler recognizes it purely by name (module cctors run on every runtime).
+        // ModuleInitializerAttribute polyfill decision: the registration file needs the attribute,
+        // netstandard2.x / .NET Framework targets do not have it in the BCL,
+        // and the compiler recognizes it purely by name (module cctors run on every runtime).
         var needsModuleInitializerPolyfill = context.CompilationProvider
             .Select(static (compilation, _) => compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.ModuleInitializerAttribute") is null);
 
@@ -56,14 +56,13 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
             }
         });
 
-        // TYPE-LEVEL [MessagePackFormatter]: bound at compile time so the generated factory
-        // constructs the attribute-directed formatter directly, and REGISTERED through the
-        // same module-initializer path as generated object formatters — the annotation is
-        // sugar over the registry tier, not a separate resolution channel (no runtime
-        // attribute tier exists). Precedence over a same-type generated object formatter is
-        // decided inside FactoryEmitter, mirroring v3's attribute-outranks-generated order.
-        // ForAttributeWithMetadataName matches the exact attribute class, so the generic
-        // MessagePackFormatterAttribute<TFactory> variant needs its own pipeline
+        // Type-level [MessagePackFormatter]: bound at compile time so the generated factory constructs the
+        // attribute-directed formatter directly, and registered through the same module-initializer path as generated
+        // object formatters, the annotation is sugar over the registry tier,
+        // not a separate resolution channel (no runtime attribute tier exists).
+        // Precedence over a same-type generated object formatter is decided inside FactoryEmitter,
+        // mirroring v3's attribute-outranks-generated order. ForAttributeWithMetadataName matches the exact attribute
+        // class, so the generic MessagePackFormatterAttribute<TFactory> variant needs its own pipeline
         var attributeResults = context.SyntaxProvider.ForAttributeWithMetadataName(
             "MessagePack.MessagePackFormatterAttribute",
             predicate: static (node, _) => node is BaseTypeDeclarationSyntax,
@@ -88,12 +87,11 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
             }
         });
 
-        // [MessagePackSerializable] root-factory classes (the JsonSerializerContext
-        // pattern): each declared root runs through the member-graph harvest, and the
-        // generated partial supplies the factory half plus module-initializer
-        // registrations — root-only shapes (Person[], List<Person>) resolve on AOT.
-        // Exact-name matching again forces one pipeline per attribute arity; results
-        // targeting the same class (both forms used) merge in the factory node.
+        // [MessagePackSerializable] root-factory classes (the JsonSerializerContext pattern): each declared root runs
+        // through the member-graph harvest, and the generated partial supplies the factory half plus module-initializer
+        // registrations, root-only shapes (Person[], List<Person>) resolve on AOT.
+        // Exact-name matching again forces one pipeline per attribute arity;
+        // results targeting the same class (both forms used) merge in the factory node.
         var serializableResults = context.SyntaxProvider.ForAttributeWithMetadataName(
             "MessagePack.MessagePackSerializableAttribute",
             predicate: static (node, _) => node is TypeDeclarationSyntax,
@@ -118,10 +116,9 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
             }
         });
 
-        // IMessagePackSurrogate implementations: the implementation IS the declaration, so
-        // the factory auto-registers each target through a statically closed
-        // SurrogateFormatter (an interface has no attribute for FAWMN — a cheap base-list
-        // syntax gate feeds the semantic transform instead)
+        // IMessagePackSurrogate implementations: the implementation is the declaration,
+        // so the factory auto-registers each target through a statically closed SurrogateFormatter (an interface has no
+        // attribute for FAWMN, a cheap base-list syntax gate feeds the semantic transform instead)
         var surrogateResults = context.SyntaxProvider.CreateSyntaxProvider(
                 predicate: static (node, _) => SurrogateParser.IsCandidate(node),
                 transform: static (ctx, cancellationToken) => SurrogateParser.Parse(ctx, cancellationToken))
@@ -136,9 +133,8 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
             }
         });
 
-        // duplicate-target detection is inherently cross-type: collected over the
-        // location-carrying sites, separate from the factory node (which must stay free of
-        // locations so line-shifting edits do not re-emit it)
+        // duplicate-target detection is inherently cross-type: collected over the location-carrying sites,
+        // separate from the factory node (which must stay free of locations so line-shifting edits do not re-emit it)
         var surrogateSites = surrogateResults
             .SelectMany(static (result, _) => result.Sites.AsArray())
             .Collect();
@@ -161,10 +157,9 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
             }
         });
 
-        // one factory + module-initializer registration over every generated formatter.
-        // Models only — deliberately NOT the whole parse results: diagnostics carry
-        // source locations, and collecting them would re-emit the factory on every
-        // line-shifting edit near a diagnosed type
+        // one factory + module-initializer registration over every generated formatter. Models only,
+        // deliberately not the whole parse results: diagnostics carry source locations,
+        // and collecting them would re-emit the factory on every line-shifting edit near a diagnosed type
         var models = results
             .Select(static (r, _) => (r.Object, r.Union))
             .Where(static pair => pair.Object is not null || pair.Union is not null)
@@ -198,8 +193,8 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
             var allModels = pair.Left.Left.Left.Left.Left;
             var attributes = pair.Left.Left.Left.Left.Right.AddRange(pair.Left.Left.Left.Right);
 
-            // a class using BOTH attribute forms produced one result per pipeline: merge
-            // per class, unioning the harvested sets (deduped by closed type name)
+            // a class using both attribute forms produced one result per pipeline: merge per class,
+            // unioning the harvested sets (deduped by closed type name)
             var serializables = pair.Left.Left.Right.Left.AddRange(pair.Left.Left.Right.Right)
                 .GroupBy(static m => m.FullTypeName, StringComparer.Ordinal)
                 .Select(static group => group.Count() == 1
@@ -223,12 +218,11 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
 
             if (allModels.Length > 0 || attributes.Length > 0 || surrogates.Length > 0 || serializables.Length > 0)
             {
-                // emitted ONLY alongside a registration file, so compilations that merely
-                // reference the generator (no [MessagePackObject]/[MessagePackFormatter]/
-                // [MessagePackSerializable] types) never receive the polyfill. A remaining
-                // collision is possible when a downlevel compilation ALSO gets the attribute
-                // from another polyfill generator (e.g. PolySharp, invisible to
-                // CompilationProvider): exclude one side there (PolySharp:
+                // emitted only alongside a registration file, so compilations that merely reference the generator (no
+                // [MessagePackObject]/[MessagePackFormatter]/[MessagePackSerializable] types)
+                // never receive the polyfill. A remaining collision is possible when a downlevel compilation also gets
+                // the attribute from another polyfill generator (e.g. PolySharp,
+                // invisible to CompilationProvider): exclude one side there (PolySharp:
                 // PolySharpExcludeGeneratedTypes).
                 if (pair.Right)
                 {

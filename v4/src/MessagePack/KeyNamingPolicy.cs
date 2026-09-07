@@ -4,50 +4,48 @@ using System.Globalization;
 namespace MessagePack;
 
 /// <summary>
-/// Member-name-to-key conversion for <see cref="MessagePackObjectAttribute"/> string-key maps.
-/// Each policy converts names exactly like its <c>System.Text.Json.JsonNamingPolicy</c> counterpart;
-/// an explicit <c>[Key("name")]</c> on a member always wins over the policy.
+/// Converts member names into the keys of a string-keyed <see cref="MessagePackObjectAttribute"/> map.
+/// Each policy produces the same result as the <c>System.Text.Json.JsonNamingPolicy</c> of the same name.
+/// An explicit <c>[Key("name")]</c> on a member always takes precedence over the policy.
 /// </summary>
 #if MESSAGEPACK_SOURCE_GENERATOR
-// the linked copy inside the analyzer assembly must not leak into consumers that reference
-// the generator project with ReferenceOutputAssembly=true (the analyzer tests do): a public
-// twin would make every MessagePack.KeyNamingPolicy use ambiguous (CS0433)
+// The linked copy inside the analyzer assembly must not leak into consumers that reference the generator project
+// with ReferenceOutputAssembly=true (the analyzer tests do). A public twin would make every MessagePack.KeyNamingPolicy
+// use ambiguous (CS0433).
 internal enum KeyNamingPolicy
 #else
 public enum KeyNamingPolicy
 #endif
 {
-    /// <summary>No conversion, the member name as-is — the <c>[MessagePackObject(true)]</c> behavior.</summary>
+    /// <summary>Uses the member name unchanged, which is what <c>[MessagePackObject(true)]</c> does.</summary>
     None = 0,
 
-    /// <summary>"TempCelsius" → "tempCelsius" (JsonNamingPolicy.CamelCase).</summary>
+    /// <summary>Converts "TempCelsius" to "tempCelsius", like <c>JsonNamingPolicy.CamelCase</c>.</summary>
     CamelCase,
 
-    /// <summary>"tempCelsius" → "TempCelsius", "XMLReader" → "XmlReader" (JsonNamingPolicy.PascalCase).</summary>
+    /// <summary>Converts "tempCelsius" to "TempCelsius" and "XMLReader" to "XmlReader", like <c>JsonNamingPolicy.PascalCase</c>.</summary>
     PascalCase,
 
-    /// <summary>"TempCelsius" → "temp_celsius" (JsonNamingPolicy.SnakeCaseLower).</summary>
+    /// <summary>Converts "TempCelsius" to "temp_celsius", like <c>JsonNamingPolicy.SnakeCaseLower</c>.</summary>
     SnakeCaseLower,
 
-    /// <summary>"TempCelsius" → "TEMP_CELSIUS" (JsonNamingPolicy.SnakeCaseUpper).</summary>
+    /// <summary>Converts "TempCelsius" to "TEMP_CELSIUS", like <c>JsonNamingPolicy.SnakeCaseUpper</c>.</summary>
     SnakeCaseUpper,
 
-    /// <summary>"TempCelsius" → "temp-celsius" (JsonNamingPolicy.KebabCaseLower).</summary>
+    /// <summary>Converts "TempCelsius" to "temp-celsius", like <c>JsonNamingPolicy.KebabCaseLower</c>.</summary>
     KebabCaseLower,
 
-    /// <summary>"TempCelsius" → "TEMP-CELSIUS" (JsonNamingPolicy.KebabCaseUpper).</summary>
+    /// <summary>Converts "TempCelsius" to "TEMP-CELSIUS", like <c>JsonNamingPolicy.KebabCaseUpper</c>.</summary>
     KebabCaseUpper,
 }
 
-// 1:1 port of System.Text.Json's JsonCamelCaseNamingPolicy.FixCasing and
-// JsonSeparatorNamingPolicy.ConvertNameCore (dotnet/runtime, MIT). Only the buffer management
-// is simplified (plain array growth instead of stackalloc/ArrayPool: conversion runs once per
-// type, at generation time or reflection table build); the character state machine is kept
-// verbatim because the contract is byte-identical output to JsonNamingPolicy, and
-// KeyNamingPolicyTests pins that against the real System.Text.Json as the oracle.
-// Compiled into BOTH MessagePack (runtime reflection tier) and MessagePack.SourceGenerator
-// (compile-time keys, linked source), so it must stay netstandard2.0-clean: no Span, no
-// modern BCL surface.
+// A 1:1 port of System.Text.Json's JsonCamelCaseNamingPolicy.FixCasing and JsonSeparatorNamingPolicy.ConvertNameCore
+// (dotnet/runtime, MIT). Only the buffer management is simplified to plain array growth instead of stackalloc/ArrayPool,
+// since conversion runs once per type, at generation time or reflection table build. The character state machine is kept
+// verbatim because the contract is byte-identical output to JsonNamingPolicy, and KeyNamingPolicyTests pins that
+// against the real System.Text.Json as the oracle.
+// Compiled into both MessagePack (runtime reflection tier) and MessagePack.SourceGenerator (compile-time keys, linked source),
+// so it must stay netstandard2.0-clean, with no Span and no modern BCL surface.
 internal static class KeyNamingPolicyConverter
 {
     public static string ConvertName(KeyNamingPolicy policy, string name) => policy switch
@@ -109,7 +107,7 @@ internal static class KeyNamingPolicyConverter
     {
         LowerCase,
         UpperCase,
-        PascalCase, // separator-less: word boundaries keep/uppercase their first letter, the rest lowercases
+        PascalCase, // no separator, word boundaries keep or uppercase their first letter and the rest lowercases
     }
 
     static string ConvertSeparator(string name, char? separator, WordCasing wordCasing)
@@ -145,8 +143,8 @@ internal static class KeyNamingPolicyConverter
                             break;
 
                         case SeparatorState.UppercaseLetter:
-                            // uppercase runs group together except a final letter followed by
-                            // lowercase: 'XMLReader' → 'xml_reader', but 'SHA512Hash' → 'sha512-hash'
+                            // uppercase runs group together except a final letter followed by lowercase,
+                            // so 'XMLReader' becomes 'xml_reader' but 'SHA512Hash' becomes 'sha512-hash'
                             if (i + 1 < name.Length && char.IsLower(name[i + 1]))
                             {
                                 isWordBoundary = true;
@@ -205,8 +203,8 @@ internal static class KeyNamingPolicyConverter
                     break;
 
                 default:
-                    // non-alphanumerics (the separator itself, surrogates, ...) pass through
-                    // as-is and reset the state: 'ABC???def' → 'abc???def' in snake_case
+                    // non-alphanumerics (the separator itself, surrogates, ...) pass through as-is and reset the state,
+                    // so 'ABC???def' becomes 'abc???def' in snake_case
                     Write(ref destination, ref charsWritten, current);
                     state = SeparatorState.NotStarted;
                     break;

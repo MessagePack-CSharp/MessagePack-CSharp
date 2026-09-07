@@ -101,17 +101,20 @@ public class ContractlessFormatterTests
     public class ReadOnlyMember
     {
         public int Id { get; set; }
-        public int Doubled => Id * 2; // getter-only: written to the payload, skipped on read
+        public int Doubled => Id * 2; // computed getter-only: not part of the payload at all (v3 rule)
     }
 
     [Fact]
-    public void GetterOnlyProperty_WrittenButNotRead()
+    public void GetterOnlyProperty_ExcludedFromPayload()
     {
+        // v3's inclusion rule: a member that is not writable, not an explicit contract and
+        // not consumed by the constructor does not serialize - computed properties stay
+        // untouched instead of round-tripping as dead payload
         var payload = MessagePackSerializer.Serialize(new ReadOnlyMember { Id = 5 }, options);
 
         var map = MessagePackSerializer.Deserialize<Dictionary<string, int>>(payload, options)!;
         Assert.Equal(5, map["Id"]);
-        Assert.Equal(10, map["Doubled"]);
+        Assert.False(map.ContainsKey("Doubled"));
 
         var result = MessagePackSerializer.Deserialize<ReadOnlyMember>(payload, options)!;
         Assert.Equal(5, result.Id);
@@ -438,14 +441,12 @@ public class ContractlessFormatterTests
         var value = new PrivateState();
         value.Fill(1, "s", 40);
 
+        // without allowPrivate the private setter does not count as writable, and a
+        // non-writable member outside the constructor does not serialize at all (v3 rule;
+        // oracle-verified: v3 writes {} for this shape)
         var map = MessagePackSerializer.Deserialize<Dictionary<string, object?>>(
             MessagePackSerializer.Serialize(value, options), options)!;
-        Assert.Equal(["Id"], map.Keys);
-
-        // and without allowPrivate the private setter is unusable on the way back
-        var back = MessagePackSerializer.Deserialize<PrivateState>(
-            MessagePackSerializer.Serialize(value, options), options)!;
-        Assert.Equal(0, back.Id);
+        Assert.Empty(map);
     }
 
     public class BaseSecret

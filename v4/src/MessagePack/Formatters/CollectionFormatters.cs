@@ -126,7 +126,7 @@ public sealed partial class ListFormatter<TWriteBuffer, TReadBuffer, T> : IMessa
 
         buffer.WriteArrayHeader(value.Count);
 
-#if NET
+#if NET9_0_OR_GREATER
         var span = CollectionsMarshal.AsSpan(value);
         for (int i = 0; i < span.Length; i++)
         {
@@ -158,7 +158,7 @@ public sealed partial class ListFormatter<TWriteBuffer, TReadBuffer, T> : IMessa
         var f = formatter;
         state.Enter();
 
-#if NET
+#if NET9_0_OR_GREATER
         var result = value ?? new List<T>(count);
         CollectionsMarshal.SetCount(result, count);
         var span = CollectionsMarshal.AsSpan(result);
@@ -713,7 +713,7 @@ public sealed partial class SortedSetFormatterFactory<T> : MessagePackFormatterF
     }
 }
 
-#if NET
+#if NET9_0_OR_GREATER
 
 public sealed partial class ReadOnlySetFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ReadOnlySet<T>?>
 {
@@ -2079,7 +2079,7 @@ public sealed partial class InterfaceSetFormatterFactory<T> : MessagePackFormatt
     }
 }
 
-#if NET
+#if NET9_0_OR_GREATER
 
 public sealed partial class InterfaceReadOnlySetFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IReadOnlySet<T>?>
 {

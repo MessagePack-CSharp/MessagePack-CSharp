@@ -99,7 +99,7 @@ namespace MessagePack
                 }
                 else
                 {
-                    // this method is called for ArrayPool.Return to determine whether to clear the array so allows false-negative
+                    // called by ArrayPool.Return to decide whether to clear the array, so a false negative is allowed
                     return true;
                 }
             }
@@ -151,7 +151,7 @@ namespace MessagePack
     }
 }
 
-#if !NET
+#if !NET9_0_OR_GREATER
 
 namespace System.Numerics
 {
@@ -208,7 +208,7 @@ namespace System.Text.Unicode
 
 namespace System.Collections.Generic
 {
-    // ReferenceEqualityComparer (net5.0+): the subset Dictionary needs
+    // ReferenceEqualityComparer (net5.0+), the subset Dictionary needs
     internal sealed class ReferenceEqualityComparer : IEqualityComparer<object?>
     {
         ReferenceEqualityComparer()
@@ -250,7 +250,7 @@ namespace System.Threading
 
 namespace System.Diagnostics.CodeAnalysis
 {
-    // NOT covered by PolySharp 1.16 — inert-but-compiling metadata downlevel (AOT analysis only ever runs on the net10.0 build)
+    // Not covered by PolySharp 1.16. Inert-but-compiling metadata downlevel (AOT analysis only ever runs on the net10.0 build).
 
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Constructor | AttributeTargets.Class, Inherited = false)]
     internal sealed class RequiresDynamicCodeAttribute(string message) : Attribute

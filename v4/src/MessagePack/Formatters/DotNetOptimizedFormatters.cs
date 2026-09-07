@@ -82,7 +82,7 @@ public sealed partial class DotNetOptimizedDecimalFormatter<TWriteBuffer, TReadB
     {
         var span = buffer.GetSpan(2 + 16);
         BinaryPrimitives.WriteUInt16LittleEndian(span, (16 << 8) | MessagePackCode.Bin8);
-#if NET
+#if NET9_0_OR_GREATER
         Span<int> bits = stackalloc int[4]; // [lo, mid, hi, flags]
         decimal.GetBits(value, bits);
 #else

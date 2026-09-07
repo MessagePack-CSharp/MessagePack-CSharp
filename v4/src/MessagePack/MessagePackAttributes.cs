@@ -1,61 +1,28 @@
 namespace MessagePack;
 
-// Drop-in equivalents of the MessagePack.Annotations attribute types.
-// Full names, constructor signatures, and property shapes are kept identical so that
-// models annotated for v3 compile against v4 unchanged, and both the source generator
-// and ReflectionObjectFormatter (which match attributes by full name) see no difference.
-//
-// Deliberate deviation #1: v3's UnionAttribute is renamed to UnionTagAttribute, and a
-// union base additionally requires [MessagePackObject]. C# 15 introduces a union feature
-// whose attribute vocabulary claims the "Union" name, and this library intends to
-// serialize those unions too — sharing the name would make both unusable side by side.
-// The rename also frees the constructor to take (caseType, tag) — JsonDerivedType's order,
-// and the reading order of the UnionTag<TCaseType>(tag) form. The discriminator is named
-// Tag (matching the attribute), not v3's Key: member keys ([Key]) and union discriminators
-// are different concepts, and different words keep them apart.
-// Migration is mechanical and compiler-guided: [Union] fails to compile, rename it to
-// [UnionTag], swap the two arguments (the int/Type mismatch makes the old order an error,
-// never a silent reinterpretation), and add [MessagePackObject] to the base (MsgPack103 errors
-// when it is missing).
-//
-// Deliberate deviation #2: v3's ExcludeFormatterFromSourceGeneratedResolverAttribute and
-// MessagePackKnownFormatterAttribute are DELETED. The generator never auto-collects
-// hand-written formatter classes into a resolver, so there is nothing to exclude from;
-// and in the factory architecture a formatter CLASS existing contributes nothing to
-// resolution by itself (coverage comes from registration or [MessagePackFormatter]),
-// so "a formatter type exists" is not a meaningful declaration any more. The surviving
-// declaration, v3's MessagePackAssumedFormattable, is renamed MessagePackKnownType —
-// "known" is the established serialization vocabulary ([KnownType] lineage) naming the
-// declarer's claim rather than the analyzer's leap of faith, and "formattable" leaked
-// plumbing vocabulary into an attribute users meet through the high-level API.
-// MIGRATION NOTE: KnownType takes the SERVED TYPE. A v3 [MessagePackKnownFormatter] is
-// not mechanically renameable — it took the formatter type; declare the types that
-// formatter serves instead.
-//
-// Deliberate deviation #3: the v3 string-name UnionTag constructor (assembly-qualified
-// name, resolved via Type.GetType) is deleted — v4 unions are source-generator-only, the
-// generator requires a symbol it can resolve, and the AQN string was both unusable there
-// and trimmer-hostile; migrate to typeof(...) or UnionTag<TCaseType>. A (string, int)
-// constructor EXISTS again with DIFFERENT semantics: the string names a TYPE PARAMETER of
-// a generic union root (typeof cannot express one), resolved at compile time by the
-// generator — a leftover v3 AQN string fails loudly there instead of misbehaving.
-
-/// <summary>Marks a type as serializable by the object formatters and the source generator. On an interface (or abstract class) it pairs with <see cref="UnionTagAttribute"/> to declare a polymorphic base.</summary>
+/// <summary>
+/// Marks a type as serializable by the object formatters and the source generator.
+/// On an interface or abstract class, combine it with <see cref="UnionTagAttribute"/> to declare a polymorphic base.
+/// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface, AllowMultiple = false, Inherited = true)]
 public class MessagePackObjectAttribute : Attribute
 {
-    /// <summary>Gets a value indicating whether members serialize as a map keyed by their names instead of a <see cref="KeyAttribute"/>-indexed array.</summary>
+    /// <summary>Whether members are written as a map keyed by their names instead of an array indexed by <see cref="KeyAttribute"/>.</summary>
     public bool KeyAsPropertyName { get; }
 
-    /// <summary>Gets the conversion applied to member names when <see cref="KeyAsPropertyName"/> is in effect.</summary>
+    /// <summary>Conversion applied to member names when <see cref="KeyAsPropertyName"/> is true.</summary>
     public KeyNamingPolicy KeyNamingPolicy { get; }
 
+    /// <summary>Serializes members as an array indexed by <see cref="KeyAttribute"/>, or as a map keyed by member name when <paramref name="keyAsPropertyName"/> is true.</summary>
     public MessagePackObjectAttribute(bool keyAsPropertyName = false)
     {
         this.KeyAsPropertyName = keyAsPropertyName;
     }
 
-    /// <summary>Serializes as a map keyed by member names converted through <paramref name="keyNamingPolicy"/>; an explicit <see cref="KeyAttribute"/> string key on a member wins over the policy.</summary>
+    /// <summary>
+    /// Serializes members as a map keyed by member names converted through <paramref name="keyNamingPolicy"/>.
+    /// An explicit string <see cref="KeyAttribute"/> on a member takes precedence over the policy.
+    /// </summary>
     public MessagePackObjectAttribute(KeyNamingPolicy keyNamingPolicy)
     {
         this.KeyAsPropertyName = true;
@@ -63,39 +30,40 @@ public class MessagePackObjectAttribute : Attribute
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether the source generator skips this type, leaving it to the runtime reflection formatters.
-    /// The serialization contract declared by this attribute stays in force and the wire format is identical between the two tiers; only the implementation moves from compile time to run time, trading generated-code performance and Native AOT support for the type.
-    /// This is the escape hatch for shapes the generated formatter cannot serve.
-    /// Not valid on union roots, where no runtime tier handles unions; the generator reports MsgPack011 there instead of leaving the root without any formatter.
+    /// Whether the source generator skips this type and leaves it to the runtime reflection formatters.
+    /// The serialized format is the same, but the type loses generated-code performance and Native AOT support.
+    /// Not allowed on union roots, which have no runtime formatter (MsgPack011).
     /// </summary>
     public bool SuppressSourceGeneration { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether non-public members participate in serialization.</summary>
+    /// <summary>Whether non-public members participate in serialization.</summary>
     public bool AllowPrivate { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether object identity is preserved for this type within one
-    /// (de)serialization: repeated references become back-references on the wire, which is what makes
-    /// circular object graphs serializable. Requires the source generator, a class with a parameterless
-    /// constructor, and members settable after construction; the type's wire format gains a
-    /// library-specific envelope that plain MessagePack readers do not understand.
+    /// Whether object identity is preserved within one serialization, so that repeated and circular references are written as back-references.
+    /// Requires the source generator, a class with a parameterless constructor, and members that can be set after construction.
+    /// The serialized format gains a library-specific envelope that other MessagePack readers do not understand.
     /// </summary>
     public bool AllowCircularReferences { get; set; }
 }
 
-/// <summary>Assigns the array index or map key of a member within a <see cref="MessagePackObjectAttribute"/> type.</summary>
+/// <summary>Assigns the array index or map key of a member in a <see cref="MessagePackObjectAttribute"/> type.</summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
 public class KeyAttribute : Attribute
 {
+    /// <summary>Array index of the member, or null when a string key was given.</summary>
     public int? IntKey { get; }
 
+    /// <summary>Map key of the member, or null when an integer key was given.</summary>
     public string? StringKey { get; }
 
+    /// <summary>Assigns the array index <paramref name="x"/>.</summary>
     public KeyAttribute(int x)
     {
         this.IntKey = x;
     }
 
+    /// <summary>Assigns the map key <paramref name="x"/>.</summary>
     public KeyAttribute(string x)
     {
         this.StringKey = x ?? throw new ArgumentNullException(nameof(x));
@@ -109,29 +77,23 @@ public class IgnoreMemberAttribute : Attribute
 }
 
 /// <summary>
-/// Assigns the wire-embedded integer tag (discriminator) to a case type of a polymorphic
-/// base or of a union. The annotated root must also carry <see cref="MessagePackObjectAttribute"/> —
-/// discovery is driven by that single attribute (analyzer MsgPack103 errors when it is missing).
+/// Assigns the integer tag that identifies one case type of a polymorphic base or of a union in the serialized data.
+/// The annotated root must also carry <see cref="MessagePackObjectAttribute"/>.
+/// On a struct it is accepted only for C# union declarations and <c>IUnion</c> implementations.
 /// </summary>
-/// <remarks>
-/// v3's UnionAttribute, renamed: C# 15's union feature claims the "Union" attribute name (see the file header).
-/// v3's SubType is likewise renamed to CaseType — still accurate for interface/abstract roots (a derived
-/// type is a case), and correct for unions, whose cases need not be subtypes of anything. The Struct target
-/// serves C# union declarations and hand-written <c>IUnion</c> structs — the source generator rejects
-/// [UnionTag] on any other struct.
-/// </remarks>
 [AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true, Inherited = false)]
 public class UnionTagAttribute : Attribute
 {
-    /// <summary>Gets the discriminator that identifies the case type on the wire.</summary>
+    /// <summary>Tag that identifies the case type in the serialized data.</summary>
     public int Tag { get; }
 
-    /// <summary>Gets the case type: a derived or implementing type of a polymorphic base, or a union case. Null for the type-parameter form.</summary>
+    /// <summary>Case type, which is a derived or implementing type of the base or a union case. Null for the type-parameter form.</summary>
     public Type? CaseType { get; }
 
-    /// <summary>Gets the name of the union root's type parameter serving as the case (generic unions, e.g. the T of <c>union Result&lt;T&gt;(T, Error)</c>). Null for the Type forms.</summary>
+    /// <summary>Name of the root's type parameter that serves as the case, for generic unions. Null for the <see cref="Type"/> forms.</summary>
     public string? CaseTypeParameter { get; }
 
+    /// <summary>Assigns <paramref name="tag"/> to <paramref name="caseType"/>.</summary>
     public UnionTagAttribute(Type caseType, int tag)
     {
         this.Tag = tag;
@@ -139,9 +101,8 @@ public class UnionTagAttribute : Attribute
     }
 
     /// <summary>
-    /// Tags a case that IS a type parameter of a generic union, named by that parameter
-    /// (<c>[UnionTag("T", 0)]</c>) — typeof cannot express one. Resolved by the source
-    /// generator at compile time; a name that is not a type parameter of the root is an error.
+    /// Assigns <paramref name="tag"/> to a case that is a type parameter of a generic union, named by that parameter, as in <c>[UnionTag("T", 0)]</c>.
+    /// The source generator resolves the name at compile time and reports a name that is not a type parameter of the root.
     /// </summary>
     public UnionTagAttribute(string caseTypeParameter, int tag)
     {
@@ -150,19 +111,23 @@ public class UnionTagAttribute : Attribute
     }
 }
 
-#if NET
+#if NET9_0_OR_GREATER
+
 /// <summary>
-/// The typed form of <see cref="UnionTagAttribute"/>. Generic attributes need a modern
-/// runtime, so this variant exists on the net8.0+ builds only.
+/// Assigns the integer tag that identifies one case type of a polymorphic base or of a union in the serialized data.
+/// The annotated root must also carry <see cref="MessagePackObjectAttribute"/>.
+/// On a struct it is accepted only for C# union declarations and <c>IUnion</c> implementations.
 /// </summary>
 [AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true, Inherited = false)]
 public sealed class UnionTagAttribute<TCaseType> : UnionTagAttribute
 {
+    /// <summary>Assigns <paramref name="tag"/> to <typeparamref name="TCaseType"/>.</summary>
     public UnionTagAttribute(int tag)
         : base(typeof(TCaseType), tag)
     {
     }
 }
+
 #endif
 
 /// <summary>Selects the constructor that deserialization uses when several are available.</summary>
@@ -172,82 +137,86 @@ public class SerializationConstructorAttribute : Attribute
 }
 
 /// <summary>
-/// Declares a serialization ROOT type on a partial factory class, the JsonSerializerContext
-/// pattern: the source generator fills in the class's other half (deriving
-/// <see cref="MessagePackFormatterFactory"/>) with static closed formatter constructions for
-/// the declared type and everything reachable inside it, and auto-registers them through a
-/// module initializer. This serves types that appear only as serialization roots and never as
-/// a member of a [MessagePackObject] type (e.g. <c>Person[]</c> or <c>List&lt;Person&gt;</c>
-/// passed straight to Serialize), which the member-graph harvest cannot see; without it the
-/// Native AOT chains fail to resolve such roots. The generated Instance can also be composed
-/// into an explicit factory chain for registry-free resolution.
+/// Declares a serialization root type on a partial class.
+/// The source generator completes the class as a <see cref="MessagePackFormatterFactory"/> covering the type and everything reachable from it, and registers it automatically.
+/// Use it for types passed directly to Serialize that never appear as a member of a <see cref="MessagePackObjectAttribute"/> type, such as <c>Person[]</c> or <c>List&lt;Person&gt;</c>.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
 public class MessagePackSerializableAttribute : Attribute
 {
+    /// <summary>Root type to generate formatters for.</summary>
     public Type Type { get; }
 
+    /// <summary>Declares <paramref name="type"/> as a serialization root.</summary>
     public MessagePackSerializableAttribute(Type type)
     {
         this.Type = type ?? throw new ArgumentNullException(nameof(type));
     }
 }
 
-#if NET
+#if NET9_0_OR_GREATER
+
 /// <summary>
-/// The typed form of <see cref="MessagePackSerializableAttribute"/>. Generic attributes need
-/// a modern runtime, so this variant exists on the net8.0+ builds only.
+/// Declares a serialization root type on a partial class.
+/// The source generator completes the class as a <see cref="MessagePackFormatterFactory"/> covering the type and everything reachable from it, and registers it automatically.
+/// Use it for types passed directly to Serialize that never appear as a member of a <see cref="MessagePackObjectAttribute"/> type, such as <c>Person[]</c> or <c>List&lt;Person&gt;</c>.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
 public sealed class MessagePackSerializableAttribute<T> : MessagePackSerializableAttribute
 {
+    /// <summary>Declares <typeparamref name="T"/> as a serialization root.</summary>
     public MessagePackSerializableAttribute()
         : base(typeof(T))
     {
     }
 }
+
 #endif
 
 /// <summary>
-/// Declares to the analyzer that a type is serializable through coverage it cannot see (a
-/// factory, runtime registration, or another assembly). Harvested from every referenced
-/// assembly, so a library declares its coverage once for all consumers.
+/// Tells the analyzer that a type is serializable through means it cannot see, such as a factory, runtime registration, or another assembly.
+/// Declarations in referenced assemblies are honored too, so a library declares its coverage once for every consumer.
 /// </summary>
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class MessagePackKnownTypeAttribute : Attribute
 {
+    /// <summary>Type declared as serializable.</summary>
     public Type Type { get; }
 
+    /// <summary>Declares <paramref name="knownType"/> as serializable.</summary>
     public MessagePackKnownTypeAttribute(Type knownType)
     {
         this.Type = knownType ?? throw new ArgumentNullException(nameof(knownType));
     }
 }
 
+// A type-level annotation is compiled by the source generator into the generated factory's registration and has no
+// runtime tier (a v3-compiled formatter is bound to v3's writer/reader and could not run here anyway), so an annotated
+// type whose assembly was built without the generator fails with a targeted message at the reflection tier.
+// MsgPack105 validates the type at compile time, MsgPack014 rejects open or inaccessible types.
+
 /// <summary>
 /// Overrides the formatter used for the annotated type or member.
-/// Point it at a concrete <see cref="MessagePackFormatterFactory"/> (arguments go to the
-/// factory's constructor), or at a formatter as an unbound generic over the buffer pair
-/// (<c>typeof(MyFormatter&lt;,&gt;)</c>). MsgPack105 validates the type at compile time; the
-/// <c>MessagePackFormatterAttribute&lt;TFactory&gt;</c> variant enforces the factory shape
-/// through its constraint instead.
-/// A type-level annotation is compiled by the source generator into the generated factory's
-/// registration (there is no runtime attribute tier — the argument shape changed from v3's
-/// instance type to a factory type, and an assembly must be compiled with the generator for
-/// the annotation to take effect). Closed, accessible types only; MsgPack014 flags the rest.
+/// Point it at a <see cref="MessagePackFormatterFactory"/>, whose constructor receives <see cref="Arguments"/>,
+/// or at a formatter type left open over the buffer pair, such as <c>typeof(MyFormatter&lt;,&gt;)</c>.
+/// A type-level annotation requires the source generator. A member-level annotation is honored by the reflection formatters as well.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Enum | AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
 public class MessagePackFormatterAttribute : Attribute
 {
+    /// <summary>Factory type, or open formatter type, that provides the formatter.</summary>
     public Type FactoryType { get; }
 
+    /// <summary>Constructor arguments passed to <see cref="FactoryType"/>, or null.</summary>
     public object?[]? Arguments { get; }
 
+    /// <summary>Uses <paramref name="factoryType"/> with its parameterless constructor.</summary>
     public MessagePackFormatterAttribute(Type factoryType)
     {
         this.FactoryType = factoryType ?? throw new ArgumentNullException(nameof(factoryType));
     }
 
+    /// <summary>Uses <paramref name="factoryType"/>, constructed with <paramref name="arguments"/>.</summary>
     public MessagePackFormatterAttribute(Type factoryType, params object?[]? arguments)
     {
         this.FactoryType = factoryType ?? throw new ArgumentNullException(nameof(factoryType));
@@ -255,21 +224,23 @@ public class MessagePackFormatterAttribute : Attribute
     }
 }
 
-#if NET
+#if NET9_0_OR_GREATER
+
 /// <summary>
-/// The typed form of <see cref="MessagePackFormatterAttribute"/>: the constraint makes
-/// "is this a factory" a compile error instead of a diagnostic. Generic attributes need a
-/// modern runtime, so this variant exists on the net8.0+ builds only.
+/// Typed form of <see cref="MessagePackFormatterAttribute"/>, whose constraint checks the factory type at compile time.
+/// Not available on the netstandard builds.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Enum | AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
 public sealed class MessagePackFormatterAttribute<TFactory> : MessagePackFormatterAttribute
     where TFactory : MessagePackFormatterFactory
 {
+    /// <summary>Uses <typeparamref name="TFactory"/> with its parameterless constructor.</summary>
     public MessagePackFormatterAttribute()
         : base(typeof(TFactory))
     {
     }
 
+    /// <summary>Uses <typeparamref name="TFactory"/>, constructed with <paramref name="arguments"/>.</summary>
     public MessagePackFormatterAttribute(params object?[]? arguments)
         : base(typeof(TFactory), arguments)
     {

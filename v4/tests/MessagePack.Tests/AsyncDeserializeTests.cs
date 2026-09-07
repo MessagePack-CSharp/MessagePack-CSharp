@@ -87,6 +87,7 @@ public class AsyncDeserializeTests
         [0xdd, 0x00, 0x00, 0x00, 0x01, 0xc0],                            // array32 [nil]
         [0xcd, 0x12, 0x34],                                              // uint16
         [0xcb, 1, 2, 3, 4, 5, 6, 7, 8],                                  // float64
+        [0xdc, 0x27, 0x10, .. Enumerable.Repeat((byte)1, 10_000)],       // array16 of 10k fixints: the vector bulk-skip lane, incl. its resume/straddle behavior
     ];
 
     public static IEnumerable<object[]> RawTokenData() => RawTokenCases.Select(c => new object[] { c });
@@ -122,6 +123,19 @@ public class AsyncDeserializeTests
     {
         var first = OraclePayload(new object?[] { 1, "two", 3.5 });
         var second = OraclePayload("second");
+        var scanner = new MessagePackBoundaryScanner();
+        Assert.True(scanner.TryFindEnd(new ReadOnlySequence<byte>([.. first, .. second])));
+        Assert.Equal(first.Length, scanner.Consumed);
+    }
+
+    [Fact]
+    public void Scanner_BulkFixintSkip_DoesNotOvershootIntoNextValue()
+    {
+        // array16(100) of fixints followed by more fixints: the 32-wide bulk skip runs
+        // 3 chunks (remaining 100 -> 4), the tail must fall back to scalar and stop at
+        // exactly the boundary even though the bytes beyond it would pass the vector test
+        byte[] first = [0xdc, 0x00, 0x64, .. Enumerable.Repeat((byte)1, 100)];
+        byte[] second = [.. Enumerable.Repeat((byte)1, 64)];
         var scanner = new MessagePackBoundaryScanner();
         Assert.True(scanner.TryFindEnd(new ReadOnlySequence<byte>([.. first, .. second])));
         Assert.Equal(first.Length, scanner.Consumed);
@@ -373,6 +387,52 @@ public class AsyncDeserializeTests
         }
         Assert.Equal([1, 2, 3], seen);
         Assert.Equal("tail", await MessagePackSerializer.DeserializeAsync<string>(reader, Options));
+    }
+
+    // breaking out of the enumeration leaves the iterator between a ReadAsync and its AdvanceTo; the reader must
+    // still be usable afterwards (it used to fail with "reading is already in progress") and the unread rest stays
+    [Theory]
+    [InlineData(int.MaxValue)]
+    [InlineData(2)]
+    public async Task DeserializeElementsAsync_BreakingOut_HandsTheReadBack(int chunkSize)
+    {
+        byte[] bytes = [.. MessagePackSerializer.Serialize(new[] { 1, 2, 3 }, Options), .. MessagePackSerializer.Serialize("tail", Options)];
+        var reader = Feed(bytes, chunkSize);
+
+        var first = -1;
+        await foreach (var element in MessagePackSerializer.DeserializeElementsAsync<int>(reader, Options))
+        {
+            first = element;
+            break;
+        }
+        Assert.Equal(1, first);
+
+        // the remaining elements are the next values on the reader
+        Assert.Equal(2, await MessagePackSerializer.DeserializeAsync<int>(reader, Options));
+        Assert.Equal(3, await MessagePackSerializer.DeserializeAsync<int>(reader, Options));
+        Assert.Equal("tail", await MessagePackSerializer.DeserializeAsync<string>(reader, Options));
+    }
+
+    [Theory]
+    [InlineData(int.MaxValue)]
+    [InlineData(2)]
+    public async Task DeserializeMessagesAsync_BreakingOut_HandsTheReadBack(int chunkSize)
+    {
+        var messages = new[] { "one", "two", "three" };
+        var bytes = messages.SelectMany(m => MessagePackSerializer.Serialize(m, Options)).ToArray();
+        var reader = Feed(bytes, chunkSize);
+
+        var seen = new List<string>();
+        await foreach (var message in MessagePackSerializer.DeserializeMessagesAsync<string>(reader, Options))
+        {
+            seen.Add(message);
+            if (seen.Count == 2)
+            {
+                break;
+            }
+        }
+        Assert.Equal(["one", "two"], seen);
+        Assert.Equal("three", await MessagePackSerializer.DeserializeAsync<string>(reader, Options));
     }
 
     [Fact]

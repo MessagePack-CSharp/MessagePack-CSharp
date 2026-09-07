@@ -31,6 +31,31 @@ using BenchmarkDotNet.Configs;
 // Nerdbank flips from best-of-the-rest (array) to last (map): the 1.3.84
 // object-as-array optimization does not cover its map mode, whose cost roughly
 // DOUBLES over array on both directions. v3 dynamic beats v3 source-gen on maps.
+//
+// MEASURED round 2 (Ryzen AI 9 HX 470, ShortRun, 5-way): adds ShapeShift.MsgPack
+// 0.1.1049-alpha on its DEFAULT contract, which is exactly this map wire (Setup asserts
+// map16(24) at the root; wire 3025 B = the 2877 B norm + the same 148 B value-encoding
+// delta as its array form: timestamp96 and enum-as-string). ns/op, vs V4:
+//   Serialize:   V4 652 | mpcs 1815 (2.8x) | mpcs source-gen 1955 (3.0x)
+//                | Nerdbank 2093 (3.2x) | ShapeShift map 6455 (9.9x)
+//   Deserialize: V4 1430 | mpcs 3515 (2.5x) | mpcs source-gen 3837 (2.7x)
+//                | Nerdbank 4659 (3.3x) | ShapeShift map 10928 (7.6x)
+// ShapeShift's map mode costs ~2.6-2.8x its OWN array contract (round 8 of
+// AnswerBenchmark: 2342/4173), a far steeper map tax than anyone else's, and its
+// allocation balloons to 15.13 KB serialize / 28.47 KB deserialize (the other rows are
+// payload-only 2.84 KB / graph-only 4.65 KB), so the property-name path is allocating
+// per-key scratch on top of the per-value indirection already seen in array form.
+//
+// MEASURED round 3 (i7-13700KF, ShortRun, 5-way, ShapeShift 0.1.1068-alpha; different
+// machine from round 2, compare ratios). ns/op, vs V4:
+//   Serialize:   V4 480 | mpcs 1379 (2.9x) | mpcs source-gen 1525 (3.2x)
+//                | Nerdbank 1632 (3.4x) | ShapeShift map 2397 (5.0x)
+//   Deserialize: V4 1136 | mpcs 2644 (2.3x) | mpcs source-gen 3040 (2.7x)
+//                | Nerdbank 3442 (3.0x) | ShapeShift map 6612 (5.8x)
+// The 1068 allocation work reached map mode too: serialize 15.13 -> 3.09 KB (payload is
+// 3.03 KB, so the per-key scratch is gone), deserialize 28.47 -> 14.08 KB. The map tax
+// over its own array contract shrank from ~2.7x to 1.5x serialize / 1.9x deserialize
+// (AnswerBenchmark round 9: 1560/3424), and the ratio to V4 from 9.9x/7.6x to 5.0x/5.8x.
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [CategoriesColumn]
 public class AnswerMapBenchmark
@@ -40,7 +65,12 @@ public class AnswerMapBenchmark
     byte[] mpcsPayload = default!;
     byte[] v4Payload = default!;
     byte[] nbPayload = default!;
+    byte[] ssPayload = default!;
     readonly Nerdbank.MessagePack.MessagePackSerializer nb = new() { SerializeDefaultValues = Nerdbank.MessagePack.SerializeDefaultValuesPolicy.Always };
+    // ShapeShift's DEFAULT contract is exactly this map wire (property-name keys), so the
+    // map twins need no ShapeShift attributes. Always is its library default too, pinned
+    // for the same reason as the Nerdbank row: every row must emit the same 24-key map.
+    readonly ShapeShift.MsgPack.MsgPackSerializer ssMsgPack = new() { SerializeDefaultValues = ShapeShift.SerializeDefaultValuesPolicy.Always };
 
     [GlobalSetup]
     public void Setup()
@@ -52,6 +82,9 @@ public class AnswerMapBenchmark
         mpcsPayload = V3::MessagePack.MessagePackSerializer.Serialize(answerMap);
         v4Payload = MessagePack.MessagePackSerializer.Serialize(answerMap);
         nbPayload = nb.Serialize(answerMap);
+        ssPayload = ssMsgPack.Serialize(answerMap);
+        // the map-form claim must hold: map16(24) at the root, not fixmap or array
+        if (ssPayload is not [0xde, 0x00, 0x18, ..]) throw new InvalidOperationException("verify failed: ShapeShift default contract did not produce map16(24)");
 
         // the map bridge itself must not have lost data: the map twin re-keyed through
         // the ARRAY oracle must reproduce the array payload exactly
@@ -68,6 +101,7 @@ public class AnswerMapBenchmark
         VerifyRoundtrip(MessagePack.MessagePackSerializer.Deserialize<AnswerMap>(v4Payload)!, "V4");
         VerifyRoundtrip(V3::MessagePack.MessagePackSerializer.Deserialize<AnswerMap>(mpcsPayload), "MessagePack-CSharp");
         VerifyRoundtrip(nb.Deserialize<AnswerMap>(new ReadOnlySequence<byte>(nbPayload))!, "Nerdbank");
+        VerifyRoundtrip(DeserializeShapeShiftMsgPackMap(), "ShapeShift.MsgPack map");
     }
 
     void VerifyRoundtrip(AnswerMap back, string label)
@@ -88,6 +122,11 @@ public class AnswerMapBenchmark
     [BenchmarkCategory("Serialize"), Benchmark]
     public byte[] SerializeNerdbank() => nb.Serialize(answerMap);
 
+    // "Map" in the name states the wire form explicitly (the array-contract counterpart
+    // lives in AnswerBenchmark as SerializeShapeShiftMsgPackArray)
+    [BenchmarkCategory("Serialize"), Benchmark]
+    public byte[] SerializeShapeShiftMsgPackMap() => ssMsgPack.Serialize(answerMap);
+
     [BenchmarkCategory("Deserialize"), Benchmark(Baseline = true)]
     public AnswerMap DeserializeV4() => MessagePack.MessagePackSerializer.Deserialize<AnswerMap>(v4Payload)!;
 
@@ -99,6 +138,9 @@ public class AnswerMapBenchmark
 
     [BenchmarkCategory("Deserialize"), Benchmark]
     public AnswerMap DeserializeNerdbank() => nb.Deserialize<AnswerMap>(nbPayload)!;
+
+    [BenchmarkCategory("Deserialize"), Benchmark]
+    public AnswerMap DeserializeShapeShiftMsgPackMap() => ssMsgPack.Deserialize<AnswerMap>(ssPayload)!;
 }
 
 #pragma warning disable IDE1006 // naming matches the Stack Overflow API wire format

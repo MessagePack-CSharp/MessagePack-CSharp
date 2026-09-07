@@ -1,14 +1,10 @@
-using SerializerFoundation;
-using System.Runtime.CompilerServices;
-
 namespace MessagePack.Formatters;
 
-// Enums serialize as their underlying integer value (MessagePack-CSharp compatible:
-// smallest-format signed/unsigned int per the underlying type's writer). One formatter
-// per underlying type so the hot path is a reinterpret + direct write with no per-call
-// switch; EnumFormatterFactory<T> picks the variant once at resolve time.
+// Enums serialize as their underlying integer value (v3 compatible: smallest-format signed/unsigned int per the underlying type's writer).
+// One formatter per underlying type so the hot path is a reinterpret + direct write with no per-call switch;
+// EnumFormatterFactory<T> picks the variant once at resolve time.
 
-public sealed class EnumByteFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
+public sealed class EnumByteFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>, IBuiltInEnumFormatter
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -35,7 +31,7 @@ public sealed class EnumByteFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePa
     }
 }
 
-public sealed class EnumSByteFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
+public sealed class EnumSByteFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>, IBuiltInEnumFormatter
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -62,7 +58,7 @@ public sealed class EnumSByteFormatter<TWriteBuffer, TReadBuffer, T> : IMessageP
     }
 }
 
-public sealed class EnumInt16Formatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
+public sealed class EnumInt16Formatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>, IBuiltInEnumFormatter
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -89,7 +85,7 @@ public sealed class EnumInt16Formatter<TWriteBuffer, TReadBuffer, T> : IMessageP
     }
 }
 
-public sealed class EnumUInt16Formatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
+public sealed class EnumUInt16Formatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>, IBuiltInEnumFormatter
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -116,7 +112,7 @@ public sealed class EnumUInt16Formatter<TWriteBuffer, TReadBuffer, T> : IMessage
     }
 }
 
-public sealed class EnumInt32Formatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
+public sealed class EnumInt32Formatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>, IBuiltInEnumFormatter
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -143,7 +139,7 @@ public sealed class EnumInt32Formatter<TWriteBuffer, TReadBuffer, T> : IMessageP
     }
 }
 
-public sealed class EnumUInt32Formatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
+public sealed class EnumUInt32Formatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>, IBuiltInEnumFormatter
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -170,7 +166,7 @@ public sealed class EnumUInt32Formatter<TWriteBuffer, TReadBuffer, T> : IMessage
     }
 }
 
-public sealed class EnumInt64Formatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
+public sealed class EnumInt64Formatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>, IBuiltInEnumFormatter
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -197,7 +193,7 @@ public sealed class EnumInt64Formatter<TWriteBuffer, TReadBuffer, T> : IMessageP
     }
 }
 
-public sealed class EnumUInt64Formatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>
+public sealed class EnumUInt64Formatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>, IBuiltInEnumFormatter
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct

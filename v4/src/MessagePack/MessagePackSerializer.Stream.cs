@@ -12,9 +12,7 @@ public static partial class MessagePackSerializer
     static readonly StreamPipeWriterOptions StreamWriterOptions = new(leaveOpen: true);
     static readonly StreamPipeReaderOptions StreamReaderOptions = new(leaveOpen: true);
 
-    /// <summary>
-    /// Serializes a value and writes the MessagePack binary to the stream synchronously.
-    /// </summary>
+    /// <summary>Serializes <paramref name="value"/> and writes the MessagePack bytes to <paramref name="stream"/> synchronously.</summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
     public static void Serialize<T>(Stream stream, T value)
@@ -77,9 +75,15 @@ public static partial class MessagePackSerializer
             {
 #if NETSTANDARD2_0
             var rented = ArrayPool<byte>.Shared.Rent(segment.Length);
-            segment.CopyTo(rented);
-            stream.Write(rented, 0, segment.Length);
-            ArrayPool<byte>.Shared.Return(rented);
+            try
+            {
+                segment.CopyTo(rented);
+                stream.Write(rented, 0, segment.Length);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
 #else
                 stream.Write(segment);
 #endif
@@ -88,10 +92,9 @@ public static partial class MessagePackSerializer
     }
 
     /// <summary>
-    /// Deserializes a value from the stream synchronously.
+    /// Deserializes a value from <paramref name="stream"/> synchronously.
     /// The stream is read to its end, bounded by <see cref="MessagePackSerializerOptions.MaxBufferedMessageSize"/>.
-    /// On a seekable stream without a MessageProcessor, the position is left just past the value
-    /// so trailing data stays readable.
+    /// On a seekable stream without a MessageProcessor, the position is left just past the value, so trailing data stays readable.
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
@@ -103,8 +106,8 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Deserialize{T}(Stream)"/>
     public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options)
     {
-        // exposable MemoryStream: deserialize straight over its buffer — no copy, no
-        // rent, no buffering cap (the data is already in memory, same as the span entry)
+        // An exposable MemoryStream deserializes straight over its buffer, with no copy, no rent and no buffering cap
+        // (the data is already in memory, same as the span entry).
         if (stream is MemoryStream memoryStream && memoryStream.TryGetBuffer(out var exposed))
         {
             return DeserializeFromMemoryStream<T>(memoryStream, exposed, options);
@@ -169,6 +172,8 @@ public static partial class MessagePackSerializer
         return value;
     }
 
+    // Reads the stream to its end into a pooled array whose OWNERSHIP passes to the caller: the caller returns it
+    // (Deserialize's finally). Only the paths that throw before returning, and so never hand it over, return it here.
     static byte[] ReadStreamToPooled(Stream stream, long maxMessageSize, out int length)
     {
         maxMessageSize = Math.Min(maxMessageSize, Array.MaxLength);
@@ -186,39 +191,50 @@ public static partial class MessagePackSerializer
 
         var rented = ArrayPool<byte>.Shared.Rent(initialSize);
         length = 0;
-        while (true)
+        try
         {
-            if (length == rented.Length)
+            while (true)
             {
-                if (length >= maxMessageSize)
+                if (length == rented.Length)
                 {
+                    if (length >= maxMessageSize)
+                    {
+                        // full at the cap: a message of exactly the cap is legal, so only a further
+                        // byte (not the pool array's capacity) proves the input is over it
+                        var over = stream.ReadByte() >= 0 ? length + 1 : length;
+                        if (over > maxMessageSize)
+                        {
+                            MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(over, maxMessageSize);
+                        }
+                        return rented;
+                    }
+                    var grown = ArrayPool<byte>.Shared.Rent((int)Math.Min((long)rented.Length * 2, Array.MaxLength));
+                    Array.Copy(rented, grown, length);
                     ArrayPool<byte>.Shared.Return(rented);
-                    MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(length + 1, maxMessageSize);
+                    rented = grown;
                 }
-                var grown = ArrayPool<byte>.Shared.Rent((int)Math.Min((long)rented.Length * 2, Array.MaxLength));
-                Array.Copy(rented, grown, length);
-                ArrayPool<byte>.Shared.Return(rented);
-                rented = grown;
-            }
 
-            var read = stream.Read(rented, length, rented.Length - length);
-            if (read == 0)
-            {
-                if (length > maxMessageSize)
+                var read = stream.Read(rented, length, rented.Length - length);
+                if (read == 0)
                 {
-                    ArrayPool<byte>.Shared.Return(rented);
-                    MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(length, maxMessageSize);
+                    if (length > maxMessageSize)
+                    {
+                        MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(length, maxMessageSize);
+                    }
+                    return rented;
                 }
-                return rented;
+                length += read;
             }
-            length += read;
+        }
+        catch
+        {
+            // the cap checks and a faulting Read alike: the array goes back to the pool
+            ArrayPool<byte>.Shared.Return(rented);
+            throw;
         }
     }
 
-    /// <summary>
-    /// Serializes a value and writes the MessagePack binary to the stream asynchronously.
-    /// The stream is flushed and left open.
-    /// </summary>
+    /// <summary>Serializes <paramref name="value"/> and writes the MessagePack bytes to <paramref name="stream"/> asynchronously. The stream is flushed and left open.</summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
     public static Task SerializeAsync<T>(Stream stream, T value, CancellationToken cancellationToken = default)
@@ -243,9 +259,9 @@ public static partial class MessagePackSerializer
     }
 
     /// <summary>
-    /// Deserializes a value from the stream asynchronously. The stream is left open.
-    /// Bytes read ahead past the value are discarded, so use the synchronous overload
-    /// on a seekable stream when trailing data matters.
+    /// Deserializes a value from <paramref name="stream"/> asynchronously and leaves it open.
+    /// On a seekable stream without a MessageProcessor, the position is left just past the value, so trailing data stays readable.
+    /// A non-seekable stream cannot give read-ahead back, so read consecutive values there with <see cref="DeserializeMessagesAsync{T}(Stream, CancellationToken)"/>.
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
@@ -257,9 +273,8 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="DeserializeAsync{T}(Stream, CancellationToken)"/>
     public static async ValueTask<T> DeserializeAsync<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
-        // exposable MemoryStream: skip the pipe entirely — completes synchronously, and
-        // unlike the pipe path the position lands exactly past the value, so trailing
-        // data stays readable
+        // An exposable MemoryStream skips the pipe entirely. It completes synchronously, and unlike the pipe path the
+        // position lands exactly past the value, so trailing data stays readable.
         if (stream is MemoryStream memoryStream && memoryStream.TryGetBuffer(out var exposed))
         {
             return DeserializeFromMemoryStream<T>(memoryStream, exposed, options);
@@ -268,7 +283,14 @@ public static partial class MessagePackSerializer
         var pipeReader = PipeReader.Create(stream, StreamReaderOptions);
         try
         {
-            return await DeserializeAsync<T>(pipeReader, options, cancellationToken).ConfigureAwait(false);
+            T value = await DeserializeAsync<T>(pipeReader, options, cancellationToken).ConfigureAwait(false);
+
+            // The pipe consumed exactly one value but pulled read-ahead from the stream. Whatever it still buffers is
+            // that over-read, so hand it back before Complete discards it. Same contract as the sync overload, including
+            // its envelope carve-out (with a MessageProcessor the envelope owns the whole message). TryRead never touches
+            // the stream, it only exposes already-buffered bytes.
+            HandBackReadAhead(stream, pipeReader, options);
+            return value;
         }
         finally
         {
@@ -393,7 +415,27 @@ public static partial class MessagePackSerializer
         }
         finally
         {
+            // a broken-out enumeration leaves the next messages buffered in the pipe: hand them back like the
+            // single-value overload before Complete discards them
+            HandBackReadAhead(stream, pipeReader, options);
             await pipeReader.CompleteAsync().ConfigureAwait(false);
+        }
+    }
+
+    // The pipe consumed exactly what the caller asked for but pulled read-ahead from the stream. Whatever it still
+    // buffers is that over-read, so hand it back before Complete discards it. Same contract as the sync overload,
+    // including its envelope carve-out (with a MessageProcessor the envelope owns the whole message). TryRead never
+    // touches the stream, it only exposes already-buffered bytes.
+    static void HandBackReadAhead(Stream stream, PipeReader pipeReader, MessagePackSerializerOptions options)
+    {
+        if (stream.CanSeek && options.MessageProcessor == null && pipeReader.TryRead(out var trailing))
+        {
+            var unread = trailing.Buffer.Length;
+            pipeReader.AdvanceTo(trailing.Buffer.End);
+            if (unread > 0)
+            {
+                stream.Seek(-unread, SeekOrigin.Current);
+            }
         }
     }
 
@@ -418,6 +460,9 @@ public static partial class MessagePackSerializer
         }
         finally
         {
+            // the array's contract is that bytes after it stay unconsumed; on a seekable stream that means the
+            // pipe's read-ahead (and, after a broken-out enumeration, the remaining elements) goes back to the stream
+            HandBackReadAhead(stream, pipeReader, options);
             await pipeReader.CompleteAsync().ConfigureAwait(false);
         }
     }

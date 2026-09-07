@@ -10,10 +10,9 @@ namespace MessagePack.CodeFixes;
 
 /// <summary>
 /// MsgPack103 (a [UnionTag] root without [MessagePackObject]): annotate the root.
-/// MsgPack101 (a serialized member's type has no resolvable formatter): annotate the
-/// OFFENDING type — handed over in the diagnostic's OffenderDocId property, since the
-/// diagnostic sits on the member and the offender may live in another document — with
-/// [MessagePackObject], and number its members with [Key] in the same edit.
+/// MsgPack101 (a serialized member's type has no resolvable formatter): annotate the offending type,
+/// handed over in the diagnostic's OffenderDocId property, since the diagnostic sits on the member and the offender may
+/// live in another document, with [MessagePackObject], and number its members with [Key] in the same edit.
 /// </summary>
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(AddMessagePackObjectCodeFixProvider))]
 [Shared]

@@ -40,6 +40,9 @@ if (args.Contains("--verify"))
     ok &= VerifyArrayDeserializeShape();
     ok &= VerifyCursorReadProbe();
     ok &= VerifyConstructionMapDeserialize();
+    ok &= VerifyElementGuardHoist();
+    ok &= VerifyFixedHeaderFuse();
+    ok &= VerifyEnumArray();
     Console.WriteLine(ok ? "all OK" : "FAILED");
     return ok ? 0 : 1;
 }
@@ -58,14 +61,22 @@ if (args.Contains("--answer-sizes"))
 {
     var b = new AnswerBenchmark();
     b.Setup();
-    Console.WriteLine($"msgpack (V4 == MessagePack-CSharp): {b.SerializeV4().Length} B");
-    Console.WriteLine($"msgpack (V4 DotNetOptimized):       {b.SerializeV4DotNetOptimized().Length} B");
-    Console.WriteLine($"msgpack (Nerdbank):                    {b.SerializeNerdbank().Length} B");
-    Console.WriteLine($"protobuf (protobuf-net):               {b.SerializeProtobufNet().Length} B");
-    Console.WriteLine($"Orleans (Microsoft.Orleans):           {b.SerializeOrleans().Length} B");
-    Console.WriteLine($"protobuf (Google.Protobuf):            {b.SerializeGoogleProtobuf().Length} B");
-    Console.WriteLine($"JSON (System.Text.Json):               {b.SerializeSystemTextJson().Length} B");
-    Console.WriteLine($"JSON (Newtonsoft.Json):                {b.SerializeNewtonsoftJson().Length} B");
+    Console.WriteLine($"msgpack array (V4 == MessagePack-CSharp): {b.SerializeV4().Length} B");
+    Console.WriteLine($"msgpack array (V4 DotNetOptimized):       {b.SerializeV4DotNetOptimized().Length} B");
+    Console.WriteLine($"msgpack array (Nerdbank):                 {b.SerializeNerdbank().Length} B");
+    Console.WriteLine($"msgpack array (ShapeShift.MsgPack):       {b.SerializeShapeShiftMsgPackArray().Length} B");
+    Console.WriteLine($"protobuf (protobuf-net):                  {b.SerializeProtobufNet().Length} B");
+    Console.WriteLine($"Orleans (Microsoft.Orleans):              {b.SerializeOrleans().Length} B");
+    Console.WriteLine($"protobuf (Google.Protobuf):               {b.SerializeGoogleProtobuf().Length} B");
+    Console.WriteLine($"JSON (System.Text.Json):                  {b.SerializeSystemTextJson().Length} B");
+    Console.WriteLine($"JSON (Newtonsoft.Json):                   {b.SerializeNewtonsoftJson().Length} B");
+    Console.WriteLine($"JSON (ShapeShift.Json):                   {b.SerializeShapeShiftJson().Length} B");
+    Console.WriteLine($"protobuf-style (ShapeShift.Protobuf):     {b.SerializeShapeShiftProtobuf().Length} B");
+    var m = new AnswerMapBenchmark();
+    m.Setup();
+    Console.WriteLine($"msgpack map (V4 == MessagePack-CSharp):   {m.SerializeV4().Length} B");
+    Console.WriteLine($"msgpack map (Nerdbank):                   {m.SerializeNerdbank().Length} B");
+    Console.WriteLine($"msgpack map (ShapeShift.MsgPack):         {m.SerializeShapeShiftMsgPackMap().Length} B");
     // fairness guard: the source graph must not share instances — Orleans' wire protocol
     // writes duplicate references as back-references (verified: rehydrates as shared
     // instances too), which would shrink its wire/allocations against copy-semantics
@@ -476,6 +487,38 @@ static bool VerifyCursorReadProbe()
     }
 }
 
+// every guard-hoisted serialize shape must be byte-identical to the checked public-API oracle
+// at chunk and header boundary element counts on both width distributions
+static bool VerifyElementGuardHoist()
+{
+    try
+    {
+        ElementGuardHoistBenchmark.VerifyCandidates();
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"NG ElementGuardHoist: {ex.Message}");
+        return false;
+    }
+}
+
+// every fused-header read shape must decode arity 0..6 and array16-coded payloads with
+// correct fields, stale-sentinel preservation, and full consumption
+static bool VerifyFixedHeaderFuse()
+{
+    try
+    {
+        FixedHeaderFuseBenchmark.VerifyCandidates();
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"NG FixedHeaderFuse: {ex.Message}");
+        return false;
+    }
+}
+
 // the map-key matcher candidates must agree with the linear SequenceEqual oracle on every generated distribution and on adversarial keys (NUL paddings, truncations, mutations, extensions), and the hint matcher must hit only its own slot
 static bool VerifyMapKeyMatch()
 {
@@ -560,6 +603,32 @@ static bool VerifyBoolSByteWidth()
             sbytes[i] = (sbyte)rand.Next(-32, 128);
         }
         ok &= BoolSByteWidthVerify.VerifyAll(bools, sbytes);
+    }
+    return ok;
+}
+
+// the enum array codec pun (EnumArrayFormatter) must match v3 and the per-element control
+// byte for byte at sizes around the 16/32/64-lane boundaries, on both distributions
+static bool VerifyEnumArray()
+{
+    var ok = true;
+    var perElement = new MessagePack.MessagePackSerializerOptions(new MessagePack.MessagePackFormatterResolver(
+        [new PerElementEnumArrayFactory(), MessagePack.BuiltInFormatterFactory.Instance, MessagePack.GenericFormatterFactory.Instance]));
+    foreach (var dist in new[] { "Small", "Mixed" })
+    {
+        foreach (var n in new[] { 0, 1, 15, 16, 17, 31, 32, 33, 63, 64, 65, 100, 1000 })
+        {
+            var bench = new EnumArrayFormatterBenchmark { N = n, Dist = dist };
+            try
+            {
+                bench.Setup(); // Setup verifies every candidate and throws on the first disagreement
+            }
+            catch (InvalidOperationException e)
+            {
+                Console.WriteLine($"EnumArray {dist} n={n}: {e.Message}");
+                ok = false;
+            }
+        }
     }
     return ok;
 }

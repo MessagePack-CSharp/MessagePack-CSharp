@@ -1,22 +1,12 @@
 using MessagePack;
 using MessagePack.Formatters;
 using SerializerFoundation;
+using SerializerFoundation.CodeAnalysis;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
-
-var person = new SandboxPerson
-{
-    Id = 1,
-    Name = "Yamaoka",
-    Tags = ["msgpack", "sandbox"],
-};
-
-SandboxPerson[] array = [person];
-var bytes = MessagePackSerializer.Serialize(array, MessagePackSerializerOptions.DefaultAot);
-Console.WriteLine($"person  : {Convert.ToHexString(bytes)}");
-
+Console.WriteLine("foo");
 
 
 
@@ -51,14 +41,14 @@ public struct UserIdSurrogate : IMessagePackSurrogate<UserId, UserIdSurrogate>
         this.Realm = realm;
     }
 
-    public static UserIdSurrogate ToSurrogate(UserId value)
+    public UserIdSurrogate ToSurrogate(UserId value)
     {
         return new UserIdSurrogate(value.Value, value.Realm);
     }
 
-    public static UserId FromSurrogate(UserIdSurrogate surrogate)
+    public UserId ToTarget()
     {
-        return new UserId(surrogate.Value, surrogate.Realm);
+        return new UserId(this.Value, this.Realm);
     }
 }
 
@@ -142,7 +132,7 @@ public class MyTakoYaki
 [MessagePackObject(true)]
 public class MyTakoYaki2
 {
-    public int MyProperty { get; set; }
+    public string? MyProperty { get; set; }
     public required string? HogeHogege { get; set; }
 }
 
@@ -286,4 +276,100 @@ namespace Huga
         [Key(2)]
         public int MyProperty3 { get; set; }
     }
+
+
+    public class Moge
+    {
+    }
+
+    public abstract class FooHoge
+    {
+        [RequireOverride]
+        public virtual void Nano()
+        {
+        }
+    }
+
+
+
+    public partial class MyTakoyakiXFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, TakoyakiX>
+    {
+        IMessagePackFormatter<TWriteBuffer, TReadBuffer, int> intFormatter = default!;
+
+        public void Initialize(MessagePackFormatterResolver resolver)
+        {
+            intFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, int>();
+        }
+
+        public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, TakoyakiX value)
+        {
+            buffer.WriteArrayHeader(3);
+            state.Enter();
+
+
+
+
+
+            state.Exit();
+        }
+
+
+
+
+
+
+        public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref TakoyakiX value)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+
+
+    [MessagePackObject]
+    [UnionTag<HogeZ1>(0)]
+    public closed class TakoyakiZ
+    {
+    }
+
+    [MessagePackObject]
+    public class HogeZ1 : TakoyakiZ
+    {
+    }
+
+    //[MessagePackObject]
+    //public class HogeZ2 : TakoyakiZ
+    //{
+    //}
+
+
+
+
+    public struct MyBuffer : IWriteBuffer
+    {
+        public long BytesWritten => throw new NotImplementedException();
+
+        public void Advance(int bytesWritten)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Flush()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Span<byte> GetSpan(int sizeHint = 0)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
 }
+
+

@@ -159,6 +159,101 @@ public class ReflectionObjectFormatterTests
         Assert.Equal(0, current.Ticks);
     }
 
+    // ---- tier parity on inheritance (2026-08-30) --------------------------------------
+    // The generated and reflection formatters must emit the SAME bytes for the same type;
+    // inheritance is where they can silently drift (member order, shadowing, overrides).
+    // The reflection tier's order is the oracle-proven v3 wire: base declarations first
+    // (properties then fields per level), then a stable [DataMember(Order)] sort - the
+    // generator mirrors it in ObjectParser. Contractless `new` shadowing stays EXCLUDED:
+    // there the tiers diverge as v3's own did (dynamic qualified the colliding key,
+    // mpc demanded an explicit re-key; v4's generator errors MsgPack003).
+
+    [Fact]
+    public void Inherited_StringKey_SameWireOrder_BothTiers()
+    {
+        AssertReflectionMatchesGenerated(new GenTierDerivedString { BaseProp = 1, BaseField = "bf", DerivedProp = 2, DerivedField = "df" });
+
+        // explicit-key wire order is KIND-major (oracle-probed v3): every property
+        // base-first, then every field base-first - NOT per-level grouping
+        Assert.Equal(
+            """{"bp":0,"dp":0,"bf":null,"df":null}""",
+            V4.ConvertToJson(V4.Serialize(new GenTierDerivedString())));
+    }
+
+    [Fact]
+    public void Inherited_IntKey_KeysSplitAcrossLevels_BothTiers()
+    {
+        AssertReflectionMatchesGenerated(new GenTierDerivedInt { BaseId = 10, DerivedId = 20 });
+    }
+
+    [Fact]
+    public void Shadowed_IntKey_EveryDeclarationSerializes_BothTiers()
+    {
+        var value = new GenTierShadowIntDerived { Value = 2 };
+        ((GenTierShadowIntBase)value).Value = 1;
+        AssertReflectionMatchesGenerated(value);
+
+        var back = V4.Deserialize<GenTierShadowIntDerived>(V4.Serialize(value, reflectionOptions))!;
+        Assert.Equal(2, back.Value);
+        Assert.Equal(1, ((GenTierShadowIntBase)back).Value);
+    }
+
+    [Fact]
+    public void Shadowed_ExplicitStringKeys_SameWireOrder_BothTiers()
+    {
+        var value = new GenTierShadowStringDerived { Tag = "derived" };
+        ((GenTierShadowStringBase)value).Tag = "base";
+        AssertReflectionMatchesGenerated(value);
+    }
+
+    [Fact]
+    public void Override_OneSlot_KeyInheritedFromBaseDeclaration_BothTiers()
+    {
+        AssertReflectionMatchesGenerated(new GenTierOverrideBase { Name = "x" });
+        AssertReflectionMatchesGenerated(new GenTierOverrideDerived { Name = "y" });
+        Assert.Equal(0x91, V4.Serialize(new GenTierOverrideDerived { Name = "z" })[0]); // fixarray(1)
+    }
+
+    [Fact]
+    public void MapMode_ShadowedField_QualifiedKey_BothTiers()
+    {
+        // the non-basemost declaration's default map key is "{DeclaringType.FullName}.{Name}"
+        // (raw, never policy-shaped) - v3's rule, oracle-compared
+        var value = new GenTierMapShadowFieldDerived { Val = "derived" };
+        ((GenTierMapShadowFieldBase)value).Val = "base";
+        AssertReflectionMatchesGenerated(value);
+        Assert.Equal(
+            """{"Val":"base","MessagePack.Tests.GenTierMapShadowFieldDerived.Val":"derived"}""",
+            V4.ConvertToJson(V4.Serialize(value)));
+    }
+
+    [Fact]
+    public void MapMode_ShadowedProperty_QualifiedKey_TiersAgree()
+    {
+        // ratified deviation, so no oracle comparison: v3's dynamic resolver silently
+        // DROPPED a property shadowed by another property (a GetRuntimeProperties
+        // flattening artifact - shadowed fields it qualified and kept, and its mpc kept
+        // both too); v4 treats every declaration uniformly on both tiers
+        var value = new GenTierMapShadowPropDerived { Tag = "derived" };
+        ((GenTierMapShadowPropBase)value).Tag = "base";
+        Assert.Equal(V4.Serialize(value), V4.Serialize(value, reflectionOptions));
+
+        var back = V4.Deserialize<GenTierMapShadowPropDerived>(V4.Serialize(value))!;
+        Assert.Equal("derived", back.Tag);
+        Assert.Equal("base", ((GenTierMapShadowPropBase)back).Tag);
+    }
+
+    [Fact]
+    public void DataMemberOrder_ReordersTheMap_BothTiers()
+    {
+        AssertReflectionMatchesGenerated(new GenTierDataMemberOrderPoco { A = 1, B = 2, C = 3 });
+
+        // Order 1 -> Order 2 -> no attribute (int.MaxValue)
+        Assert.Equal(
+            """{"B":0,"A":0,"C":0}""",
+            V4.ConvertToJson(V4.Serialize(new GenTierDataMemberOrderPoco())));
+    }
+
     [Fact]
     public void AttributedRecord_ConstructsThroughTheArgumentPath()
     {
@@ -358,4 +453,101 @@ public record ReflectionRecordPerson<TUnused>([property: V3::MessagePack.Key(0)]
 public class ReflectionGenericHolder<TUnused>
 {
     [V3::MessagePack.Key(0)] public int Value { get; set; }
+}
+
+// ---- tier-parity inheritance types (generated formatter AND reflection serve these; the
+// tests byte-compare the two against each other and the v3 oracle) ----------------------
+
+[V3::MessagePack.MessagePackObject]
+public class GenTierBaseString
+{
+    [V3::MessagePack.Key("bp")] public int BaseProp { get; set; }
+    [V3::MessagePack.Key("bf")] public string? BaseField;
+}
+
+[V3::MessagePack.MessagePackObject]
+public class GenTierDerivedString : GenTierBaseString
+{
+    [V3::MessagePack.Key("dp")] public int DerivedProp { get; set; }
+    [V3::MessagePack.Key("df")] public string? DerivedField;
+}
+
+[V3::MessagePack.MessagePackObject]
+public class GenTierBaseInt
+{
+    [V3::MessagePack.Key(0)] public int BaseId { get; set; }
+}
+
+[V3::MessagePack.MessagePackObject]
+public class GenTierDerivedInt : GenTierBaseInt
+{
+    [V3::MessagePack.Key(1)] public int DerivedId { get; set; }
+}
+
+[V3::MessagePack.MessagePackObject]
+public class GenTierShadowIntBase
+{
+    [V3::MessagePack.Key(0)] public int Value { get; set; }
+}
+
+[V3::MessagePack.MessagePackObject]
+public class GenTierShadowIntDerived : GenTierShadowIntBase
+{
+    [V3::MessagePack.Key(1)] public new int Value { get; set; }
+}
+
+[V3::MessagePack.MessagePackObject]
+public class GenTierShadowStringBase
+{
+    [V3::MessagePack.Key("t")] public string? Tag { get; set; }
+}
+
+[V3::MessagePack.MessagePackObject]
+public class GenTierShadowStringDerived : GenTierShadowStringBase
+{
+    [V3::MessagePack.Key("t2")] public new string? Tag { get; set; }
+}
+
+[V3::MessagePack.MessagePackObject]
+public class GenTierOverrideBase
+{
+    [V3::MessagePack.Key(0)] public virtual string? Name { get; set; }
+}
+
+[V3::MessagePack.MessagePackObject]
+public class GenTierOverrideDerived : GenTierOverrideBase
+{
+    public override string? Name { get; set; }
+}
+
+[V3::MessagePack.MessagePackObject(true)]
+public class GenTierMapShadowFieldBase
+{
+    public string? Val;
+}
+
+[V3::MessagePack.MessagePackObject(true)]
+public class GenTierMapShadowFieldDerived : GenTierMapShadowFieldBase
+{
+    public new string? Val;
+}
+
+[V3::MessagePack.MessagePackObject(true)]
+public class GenTierMapShadowPropBase
+{
+    public string? Tag { get; set; }
+}
+
+[V3::MessagePack.MessagePackObject(true)]
+public class GenTierMapShadowPropDerived : GenTierMapShadowPropBase
+{
+    public new string? Tag { get; set; }
+}
+
+[V3::MessagePack.MessagePackObject(true)]
+public class GenTierDataMemberOrderPoco
+{
+    [System.Runtime.Serialization.DataMember(Order = 2)] public int A { get; set; }
+    [System.Runtime.Serialization.DataMember(Order = 1)] public int B { get; set; }
+    public int C { get; set; }
 }

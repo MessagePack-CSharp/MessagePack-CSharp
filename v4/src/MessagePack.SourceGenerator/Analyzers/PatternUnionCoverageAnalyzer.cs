@@ -5,14 +5,13 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace MessagePack.SourceGenerator.Analyzers;
 
 /// <summary>
-/// A pattern union enumerates its complete case universe in its own creation members (the
-/// spec defines the case types as the parameter types of the single-parameter constructors,
-/// or of the provider's static Create methods), so a [UnionTag]-tagged union with an
-/// untagged case is knowably incomplete: serializing that case throws at runtime. MsgPack107
-/// reports each untagged case on the root as an error (a deliberately unserialized case
-/// can #pragma-suppress). An object-typed creation parameter is a catch-all, not a case
-/// declaration, and demands nothing — coverage of what flows through it stays a runtime
-/// concern. The closed-hierarchy counterpart is MsgPack106.
+/// A pattern union enumerates its complete case universe in its own creation members (the spec defines the case types
+/// as the parameter types of the single-parameter constructors, or of the provider's static Create methods),
+/// so a [UnionTag]-tagged union with an untagged case is knowably incomplete: serializing that case throws at runtime.
+/// MsgPack107 reports each untagged case on the root as an error (a deliberately unserialized case can
+/// #pragma-suppress). An object-typed creation parameter is a catch-all, not a case declaration,
+/// and demands nothing, coverage of what flows through it stays a runtime concern.
+/// The closed-hierarchy counterpart is MsgPack106.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class PatternUnionCoverageAnalyzer : DiagnosticAnalyzer
@@ -26,7 +25,7 @@ public sealed class PatternUnionCoverageAnalyzer : DiagnosticAnalyzer
         "MessagePack.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "A union declaration (or a hand-written [Union]-pattern type) lists its complete case set in its creation members. A case without a [UnionTag] entry cannot ride the wire — serialization throws when it holds that case — so the missing tag is detectable at compile time.");
+        description: "A union declaration (or a hand-written [Union]-pattern type) lists its complete case set in its creation members. A case without a [UnionTag] entry cannot be serialized (serialization throws when it holds that case), so the missing tag is detectable at compile time.");
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
@@ -76,10 +75,10 @@ public sealed class PatternUnionCoverageAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    // the spec's case universe: parameter types of the union creation members — the
-    // single-parameter constructors, or the provider's static Create methods. An object
-    // parameter (catch-all) and the union type itself are not cases; a type parameter IS
-    // one (taggable by name since the ("T", tag) form exists).
+    // the spec's case universe: parameter types of the union creation members, the single-parameter constructors,
+    // or the provider's static Create methods. An object parameter (catch-all)
+    // and the union type itself are not cases; a type parameter is one (taggable by name since the ("T", tag)
+    // form exists).
     static IEnumerable<ITypeSymbol> DeclaredCases(INamedTypeSymbol type)
     {
         var seen = new HashSet<ISymbol>(SymbolEqualityComparer.Default);

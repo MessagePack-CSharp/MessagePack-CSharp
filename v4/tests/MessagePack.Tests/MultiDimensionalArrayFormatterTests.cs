@@ -91,4 +91,54 @@ public class MultiDimensionalArrayFormatterTests
         var back = MessagePackSerializer.Deserialize<int[][]>(AssertOracle(value))!;
         Assert.Equal(value, back);
     }
+
+    [Fact]
+    public void OverflowingDimensionProduct_ThrowsSerializationException()
+    {
+        // len0 * len1 overflows int (2^16 * 2^16 == 2^32); the dimension-product check must
+        // report a format error, not let a raw OverflowException escape the exception contract.
+        var writer = new System.Buffers.ArrayBufferWriter<byte>();
+        var w = new V3::MessagePack.MessagePackWriter(writer);
+        w.WriteArrayHeader(3);
+        w.Write(1 << 16);
+        w.Write(1 << 16);
+        w.WriteArrayHeader(0); // any count: the product can never match, and must not throw OverflowException
+        w.Flush();
+
+        Assert.Throws<MessagePackSerializationException>(
+            () => MessagePackSerializer.Deserialize<int[,]>(writer.WrittenSpan.ToArray()));
+    }
+
+    [Fact]
+    public void OverflowingProductWithZeroDimension_RejectedAsUnconstructible()
+    {
+        // T[70000, 70000, 0] declares zero elements, but the runtime itself refuses to
+        // construct an array whose dimension product overruns its limit ("Array dimensions
+        // exceeded supported range"), so the write side could never have produced this shape.
+        // It must fail as a format error, not reach `new T[...]` and throw a raw OOM.
+        var writer = new System.Buffers.ArrayBufferWriter<byte>();
+        var w = new V3::MessagePack.MessagePackWriter(writer);
+        w.WriteArrayHeader(4);
+        w.Write(70000);
+        w.Write(70000);
+        w.Write(0);
+        w.WriteArrayHeader(0);
+        w.Flush();
+
+        Assert.Throws<MessagePackSerializationException>(
+            () => MessagePackSerializer.Deserialize<int[,,]>(writer.WrittenSpan.ToArray()));
+    }
+
+    [Fact]
+    public void GenuineZeroDimension_Roundtrips()
+    {
+        // a real empty array with a zero dimension (small other dims) still round-trips
+        foreach (var value in new[] { new int[0, 3], new int[3, 0] })
+        {
+            var back = MessagePackSerializer.Deserialize<int[,]>(MessagePackSerializer.Serialize(value))!;
+            Assert.Equal(value.GetLength(0), back.GetLength(0));
+            Assert.Equal(value.GetLength(1), back.GetLength(1));
+            Assert.Equal(0, back.Length);
+        }
+    }
 }

@@ -113,6 +113,53 @@ using System.Buffers;
 //   reflection path's 2996), Google.Protobuf +4% both (proto presence is a bitfield,
 //   not Nullable<T>). Ratios vs V4: mpcs 2.65x/1.83x, Nerdbank 2.42x/1.95x,
 //   Google.Protobuf 2.54x/1.16x. The nullable restoration WIDENS V4's lead everywhere.
+//
+// MEASURED round 8 (Ryzen AI 9 HX 470, ShortRun, 13-way): adds ShapeShift 0.1.1049-alpha
+// (the PolyType-based multi-format layer by Nerdbank.MessagePack's author), msgpack riding
+// the [MsgPackArrayContract]/[MsgPackKey] positional contract (same array-of-fields game
+// as the other msgpack rows), JSON via SerializeToUtf8Bytes/Deserialize(span) like STJ.
+// Wire: ShapeShift msgpack 1806 B vs the msgpack norm 1658, and the payload confirms the
+// positional contract took effect (starts DC 00 18 = array16(24), same as V4). The +148 B
+// is exactly value encoding: 8 DateTimes as timestamp96 (C7 0C FF, 15 B) vs V4/mpcs
+// timestamp32 (D6 FF, 6 B) = +72, enums as strings ("registered" etc.) vs 1-byte fixint
+// = +76. ShapeShift JSON 3631 B between Json.NET 3546 and STJ 3688. ns/op, vs V4:
+//   Serialize:   V4 504 | Nerdbank 1244 (2.5x) | Google.Protobuf 1340 | mpcs 1413
+//                | Orleans 1574 | mpcs source-gen 1645 | protobuf-net 2085
+//                | ShapeShift.MsgPack 2342 (4.6x) | STJ 3634 | STJ source-gen 4055
+//                | ShapeShift.Json 7425 (14.7x) | Json.NET 7554
+//   Deserialize: V4 916 | Google.Protobuf 1409 | mpcs 2141 (2.3x) | Nerdbank 2234
+//                | Orleans 2487 | protobuf-net 2504 | mpcs source-gen 2989
+//                | ShapeShift.MsgPack 4173 (4.6x) | STJ source-gen 6260 | STJ 6505
+//                | ShapeShift.Json 12300 (13.4x) | Json.NET 13625
+// The alloc column is the tell: ShapeShift.MsgPack serializes with 6.99 KB of allocation
+// against the 1.65 KB payload (every other msgpack row is payload-only) and deserializes
+// at 8.91 KB vs the 4.65 KB object graph; the JSON side is 9.86/28.39 KB. The
+// format-agnostic layer pays per-value indirection and scratch allocation for its
+// multi-format reuse, matching the announcement's own framing ("performance is not the
+// pitch yet"): ShapeShift.MsgPack trails its format-native sibling Nerdbank ~1.9x in both
+// directions, ShapeShift.Json trails System.Text.Json ~2x in both.
+//
+// MEASURED round 9 (i7-13700KF, ShortRun, 14-way): ShapeShift 0.1.1068-alpha ("reduce
+// allocations" release) plus its new ShapeShift.Protobuf package. Different machine from
+// round 8, so compare ratios to V4, not ns. Protobuf row: the package ships no field-number
+// attribute (ProtobufSerializer/Encoder/Decoder only, a "protobuf-style" encoding of the
+// shared token stream), so it rides the default contract and puts property names on the
+// wire: 3481 B, JSON-sized, not the 1717 B of the two real protobuf rows. ns/op, vs V4:
+//   Serialize:   V4 398 | Nerdbank 942 (2.4x) | Google.Protobuf 978 | mpcs 1043
+//                | mpcs source-gen 1333 | Orleans 1339 | ShapeShift.MsgPack 1560 (3.9x)
+//                | protobuf-net 1781 | STJ 3142 | ShapeShift.Json 3305 (8.3x)
+//                | STJ source-gen 3420 | ShapeShift.Protobuf 5054 (12.7x) | Json.NET 6075
+//   Deserialize: V4 880 | Google.Protobuf 981 | mpcs 1643 (1.9x) | Orleans 1694
+//                | Nerdbank 1758 | protobuf-net 2002 | mpcs source-gen 2050
+//                | ShapeShift.MsgPack 3424 (3.9x) | STJ source-gen 5285 | STJ 5392
+//                | ShapeShift.Protobuf 6481 (7.4x) | ShapeShift.Json 7790 (8.9x) | Json.NET 10508
+// The allocation release landed on the serialize side: ShapeShift.MsgPack 6.99 -> 1.90 KB
+// (now near payload-only), ShapeShift.Json 9.86 -> 3.81 KB; deserialize is unchanged
+// (8.91 KB msgpack, 14 KB JSON vs the 4.65 KB graph). Ratios followed: msgpack 4.6x ->
+// 3.9x both ways, JSON 14.7x -> 8.3x serialize / 13.4x -> 8.9x deserialize. ShapeShift.Json
+// now beats STJ source-gen on serialize and sits between the two STJ rows. Protobuf is the
+// outlier: 21.88 KB serialize allocation (13x the payload) and 12.55 KB deserialize, slower
+// than its own JSON sibling on serialize — a first-cut encoder, not a wire-native path.
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [CategoriesColumn]
 public class AnswerBenchmark
@@ -132,8 +179,22 @@ public class AnswerBenchmark
     byte[] orleansPayload = default!;
     byte[] newtonsoftPayload = default!;
     byte[] gpbPayload = default!;
+    byte[] ssMsgPackPayload = default!;
+    byte[] ssJsonPayload = default!;
+    byte[] ssProtobufPayload = default!;
     AnswerProto.Answer protoAnswer = default!; // Google.Protobuf serializes only its generated types (see answer.proto)
     readonly Nerdbank.MessagePack.MessagePackSerializer nb = new();
+    // ShapeShift (PolyType-based, same author as Nerdbank.MessagePack; alpha): one shape
+    // graph feeds both format packages. The msgpack side rides the [MsgPackArrayContract]
+    // + [MsgPackKey] positional contract so it plays the same array-of-fields game as the
+    // other msgpack entries; the JSON side uses the default map contract (property names),
+    // same as the other JSON entries.
+    readonly ShapeShift.MsgPack.MsgPackSerializer ssMsgPack = new();
+    readonly ShapeShift.Json.JsonSerializer ssJson = new();
+    // ShapeShift.Protobuf (new in 0.1.1068): a "protobuf-style" binary encoding of the same
+    // token stream; no field-number attributes exist in the package, so the row measures
+    // the library's default contract on the shared graph
+    readonly ShapeShift.Protobuf.ProtobufSerializer ssProtobuf = new();
     // the .NET-to-.NET tier: only DateTime is re-mapped on this graph (8 members —
     // 5 on Answer, 1 per Comment), Guid/decimal/DateTimeOffset/BitArray do not appear
     static readonly MessagePack.MessagePackSerializerOptions dno =
@@ -158,6 +219,11 @@ public class AnswerBenchmark
         newtonsoftPayload = SerializeNewtonsoftJson();
         protoAnswer = AnswerProtoMap.ToProto(answer);
         gpbPayload = SerializeGoogleProtobuf();
+        ssMsgPackPayload = SerializeShapeShiftMsgPackArray();
+        ssJsonPayload = SerializeShapeShiftJson();
+        ssProtobufPayload = SerializeShapeShiftProtobuf();
+        // the wire-form claim in the row name must hold: array16(24), not a map header
+        if (ssMsgPackPayload is not [0xdc, 0x00, 0x18, ..]) throw new InvalidOperationException("verify failed: ShapeShift positional contract did not produce array16(24)");
 
         // the source-gen twin roundtrips the oracle payload through v3's GENERATED
         // resolver; byte identity proves the generated formatters are live and correct
@@ -181,6 +247,9 @@ public class AnswerBenchmark
         VerifyRoundtrip(DeserializeOrleans(), "Orleans");
         VerifyRoundtrip(DeserializeNewtonsoftJson(), "Newtonsoft.Json");
         VerifyRoundtrip(AnswerProtoMap.ToPoco(DeserializeGoogleProtobuf()), "Google.Protobuf");
+        VerifyRoundtrip(DeserializeShapeShiftMsgPackArray(), "ShapeShift.MsgPack");
+        VerifyRoundtrip(DeserializeShapeShiftJson(), "ShapeShift.Json");
+        VerifyRoundtrip(DeserializeShapeShiftProtobuf(), "ShapeShift.Protobuf");
     }
 
     void VerifyRoundtrip(Answer back, string label)
@@ -234,6 +303,18 @@ public class AnswerBenchmark
     [BenchmarkCategory("Serialize"), Benchmark]
     public byte[] SerializeGoogleProtobuf() => Google.Protobuf.MessageExtensions.ToByteArray(protoAnswer);
 
+    // "Array" in the name states the wire form explicitly: this row rides the
+    // [MsgPackArrayContract] positional contract like every other msgpack row in this
+    // class; ShapeShift's default map contract is measured in AnswerMapBenchmark.
+    [BenchmarkCategory("Serialize"), Benchmark]
+    public byte[] SerializeShapeShiftMsgPackArray() => ssMsgPack.Serialize(answer);
+
+    [BenchmarkCategory("Serialize"), Benchmark]
+    public byte[] SerializeShapeShiftJson() => ssJson.SerializeToUtf8Bytes(answer);
+
+    [BenchmarkCategory("Serialize"), Benchmark]
+    public byte[] SerializeShapeShiftProtobuf() => ssProtobuf.Serialize(answer);
+
     [BenchmarkCategory("Deserialize"), Benchmark(Baseline = true)]
     public Answer DeserializeV4() => MessagePack.MessagePackSerializer.Deserialize<Answer>(v4Payload)!;
 
@@ -266,6 +347,15 @@ public class AnswerBenchmark
 
     [BenchmarkCategory("Deserialize"), Benchmark]
     public AnswerProto.Answer DeserializeGoogleProtobuf() => AnswerProto.Answer.Parser.ParseFrom(gpbPayload);
+
+    [BenchmarkCategory("Deserialize"), Benchmark]
+    public Answer DeserializeShapeShiftMsgPackArray() => ssMsgPack.Deserialize<Answer>(ssMsgPackPayload)!;
+
+    [BenchmarkCategory("Deserialize"), Benchmark]
+    public Answer DeserializeShapeShiftJson() => ssJson.Deserialize<Answer>((ReadOnlySpan<byte>)ssJsonPayload)!;
+
+    [BenchmarkCategory("Deserialize"), Benchmark]
+    public Answer DeserializeShapeShiftProtobuf() => ssProtobuf.Deserialize<Answer>(ssProtobufPayload)!;
 
     internal static Answer CreateAnswer()
     {
@@ -387,58 +477,59 @@ public class AnswerBenchmark
 // Unspecified value assumes local time); Timestamp reads back as Kind.Utc.
 [V3::MessagePack.MessagePackObject]
 [PolyType.GenerateShape]
+[ShapeShift.MsgPack.MsgPackArrayContract]
 [ProtoBuf.ProtoContract]
 [Orleans.GenerateSerializer]
 [ProtoBuf.CompatibilityLevel(ProtoBuf.CompatibilityLevel.Level240)]
 public partial class Answer
 {
-    [V3::MessagePack.Key(0), Nerdbank.MessagePack.Key(0), ProtoBuf.ProtoMember(1), Orleans.Id(0)]
+    [V3::MessagePack.Key(0), Nerdbank.MessagePack.Key(0), ShapeShift.MsgPack.MsgPackKey(0), ProtoBuf.ProtoMember(1), Orleans.Id(0)]
     public int? question_id { get; set; }
-    [V3::MessagePack.Key(1), Nerdbank.MessagePack.Key(1), ProtoBuf.ProtoMember(2), Orleans.Id(1)]
+    [V3::MessagePack.Key(1), Nerdbank.MessagePack.Key(1), ShapeShift.MsgPack.MsgPackKey(1), ProtoBuf.ProtoMember(2), Orleans.Id(1)]
     public int? answer_id { get; set; }
-    [V3::MessagePack.Key(2), Nerdbank.MessagePack.Key(2), ProtoBuf.ProtoMember(3), Orleans.Id(2)]
+    [V3::MessagePack.Key(2), Nerdbank.MessagePack.Key(2), ShapeShift.MsgPack.MsgPackKey(2), ProtoBuf.ProtoMember(3), Orleans.Id(2)]
     public DateTime? locked_date { get; set; }
-    [V3::MessagePack.Key(3), Nerdbank.MessagePack.Key(3), ProtoBuf.ProtoMember(4), Orleans.Id(3)]
+    [V3::MessagePack.Key(3), Nerdbank.MessagePack.Key(3), ShapeShift.MsgPack.MsgPackKey(3), ProtoBuf.ProtoMember(4), Orleans.Id(3)]
     public DateTime? creation_date { get; set; }
-    [V3::MessagePack.Key(4), Nerdbank.MessagePack.Key(4), ProtoBuf.ProtoMember(5), Orleans.Id(4)]
+    [V3::MessagePack.Key(4), Nerdbank.MessagePack.Key(4), ShapeShift.MsgPack.MsgPackKey(4), ProtoBuf.ProtoMember(5), Orleans.Id(4)]
     public DateTime? last_edit_date { get; set; }
-    [V3::MessagePack.Key(5), Nerdbank.MessagePack.Key(5), ProtoBuf.ProtoMember(6), Orleans.Id(5)]
+    [V3::MessagePack.Key(5), Nerdbank.MessagePack.Key(5), ShapeShift.MsgPack.MsgPackKey(5), ProtoBuf.ProtoMember(6), Orleans.Id(5)]
     public DateTime? last_activity_date { get; set; }
-    [V3::MessagePack.Key(6), Nerdbank.MessagePack.Key(6), ProtoBuf.ProtoMember(7), Orleans.Id(6)]
+    [V3::MessagePack.Key(6), Nerdbank.MessagePack.Key(6), ShapeShift.MsgPack.MsgPackKey(6), ProtoBuf.ProtoMember(7), Orleans.Id(6)]
     public int? score { get; set; }
-    [V3::MessagePack.Key(7), Nerdbank.MessagePack.Key(7), ProtoBuf.ProtoMember(8), Orleans.Id(7)]
+    [V3::MessagePack.Key(7), Nerdbank.MessagePack.Key(7), ShapeShift.MsgPack.MsgPackKey(7), ProtoBuf.ProtoMember(8), Orleans.Id(7)]
     public DateTime? community_owned_date { get; set; }
-    [V3::MessagePack.Key(8), Nerdbank.MessagePack.Key(8), ProtoBuf.ProtoMember(9), Orleans.Id(8)]
+    [V3::MessagePack.Key(8), Nerdbank.MessagePack.Key(8), ShapeShift.MsgPack.MsgPackKey(8), ProtoBuf.ProtoMember(9), Orleans.Id(8)]
     public bool? is_accepted { get; set; }
-    [V3::MessagePack.Key(9), Nerdbank.MessagePack.Key(9), ProtoBuf.ProtoMember(10), Orleans.Id(9)]
+    [V3::MessagePack.Key(9), Nerdbank.MessagePack.Key(9), ShapeShift.MsgPack.MsgPackKey(9), ProtoBuf.ProtoMember(10), Orleans.Id(9)]
     public string? body { get; set; }
-    [V3::MessagePack.Key(10), Nerdbank.MessagePack.Key(10), ProtoBuf.ProtoMember(11), Orleans.Id(10)]
+    [V3::MessagePack.Key(10), Nerdbank.MessagePack.Key(10), ShapeShift.MsgPack.MsgPackKey(10), ProtoBuf.ProtoMember(11), Orleans.Id(10)]
     public ShallowUser? owner { get; set; }
-    [V3::MessagePack.Key(11), Nerdbank.MessagePack.Key(11), ProtoBuf.ProtoMember(12), Orleans.Id(11)]
+    [V3::MessagePack.Key(11), Nerdbank.MessagePack.Key(11), ShapeShift.MsgPack.MsgPackKey(11), ProtoBuf.ProtoMember(12), Orleans.Id(11)]
     public string? title { get; set; }
-    [V3::MessagePack.Key(12), Nerdbank.MessagePack.Key(12), ProtoBuf.ProtoMember(13), Orleans.Id(12)]
+    [V3::MessagePack.Key(12), Nerdbank.MessagePack.Key(12), ShapeShift.MsgPack.MsgPackKey(12), ProtoBuf.ProtoMember(13), Orleans.Id(12)]
     public int? up_vote_count { get; set; }
-    [V3::MessagePack.Key(13), Nerdbank.MessagePack.Key(13), ProtoBuf.ProtoMember(14), Orleans.Id(13)]
+    [V3::MessagePack.Key(13), Nerdbank.MessagePack.Key(13), ShapeShift.MsgPack.MsgPackKey(13), ProtoBuf.ProtoMember(14), Orleans.Id(13)]
     public int? down_vote_count { get; set; }
-    [V3::MessagePack.Key(14), Nerdbank.MessagePack.Key(14), ProtoBuf.ProtoMember(15), Orleans.Id(14)]
+    [V3::MessagePack.Key(14), Nerdbank.MessagePack.Key(14), ShapeShift.MsgPack.MsgPackKey(14), ProtoBuf.ProtoMember(15), Orleans.Id(14)]
     public List<Comment>? comments { get; set; }
-    [V3::MessagePack.Key(15), Nerdbank.MessagePack.Key(15), ProtoBuf.ProtoMember(16), Orleans.Id(15)]
+    [V3::MessagePack.Key(15), Nerdbank.MessagePack.Key(15), ShapeShift.MsgPack.MsgPackKey(15), ProtoBuf.ProtoMember(16), Orleans.Id(15)]
     public string? link { get; set; }
-    [V3::MessagePack.Key(16), Nerdbank.MessagePack.Key(16), ProtoBuf.ProtoMember(17), Orleans.Id(16)]
+    [V3::MessagePack.Key(16), Nerdbank.MessagePack.Key(16), ShapeShift.MsgPack.MsgPackKey(16), ProtoBuf.ProtoMember(17), Orleans.Id(16)]
     public List<string>? tags { get; set; }
-    [V3::MessagePack.Key(17), Nerdbank.MessagePack.Key(17), ProtoBuf.ProtoMember(18), Orleans.Id(17)]
+    [V3::MessagePack.Key(17), Nerdbank.MessagePack.Key(17), ShapeShift.MsgPack.MsgPackKey(17), ProtoBuf.ProtoMember(18), Orleans.Id(17)]
     public bool? upvoted { get; set; }
-    [V3::MessagePack.Key(18), Nerdbank.MessagePack.Key(18), ProtoBuf.ProtoMember(19), Orleans.Id(18)]
+    [V3::MessagePack.Key(18), Nerdbank.MessagePack.Key(18), ShapeShift.MsgPack.MsgPackKey(18), ProtoBuf.ProtoMember(19), Orleans.Id(18)]
     public bool? downvoted { get; set; }
-    [V3::MessagePack.Key(19), Nerdbank.MessagePack.Key(19), ProtoBuf.ProtoMember(20), Orleans.Id(19)]
+    [V3::MessagePack.Key(19), Nerdbank.MessagePack.Key(19), ShapeShift.MsgPack.MsgPackKey(19), ProtoBuf.ProtoMember(20), Orleans.Id(19)]
     public bool? accepted { get; set; }
-    [V3::MessagePack.Key(20), Nerdbank.MessagePack.Key(20), ProtoBuf.ProtoMember(21), Orleans.Id(20)]
+    [V3::MessagePack.Key(20), Nerdbank.MessagePack.Key(20), ShapeShift.MsgPack.MsgPackKey(20), ProtoBuf.ProtoMember(21), Orleans.Id(20)]
     public ShallowUser? last_editor { get; set; }
-    [V3::MessagePack.Key(21), Nerdbank.MessagePack.Key(21), ProtoBuf.ProtoMember(22), Orleans.Id(21)]
+    [V3::MessagePack.Key(21), Nerdbank.MessagePack.Key(21), ShapeShift.MsgPack.MsgPackKey(21), ProtoBuf.ProtoMember(22), Orleans.Id(21)]
     public int? comment_count { get; set; }
-    [V3::MessagePack.Key(22), Nerdbank.MessagePack.Key(22), ProtoBuf.ProtoMember(23), Orleans.Id(22)]
+    [V3::MessagePack.Key(22), Nerdbank.MessagePack.Key(22), ShapeShift.MsgPack.MsgPackKey(22), ProtoBuf.ProtoMember(23), Orleans.Id(22)]
     public string? body_markdown { get; set; }
-    [V3::MessagePack.Key(23), Nerdbank.MessagePack.Key(23), ProtoBuf.ProtoMember(24), Orleans.Id(23)]
+    [V3::MessagePack.Key(23), Nerdbank.MessagePack.Key(23), ShapeShift.MsgPack.MsgPackKey(23), ProtoBuf.ProtoMember(24), Orleans.Id(23)]
     public string? share_link { get; set; }
 }
 
@@ -446,67 +537,70 @@ public partial class Answer
 [ProtoBuf.ProtoContract]
 [Orleans.GenerateSerializer]
 [ProtoBuf.CompatibilityLevel(ProtoBuf.CompatibilityLevel.Level240)]
+[ShapeShift.MsgPack.MsgPackArrayContract]
 public partial class Comment
 {
-    [V3::MessagePack.Key(0), Nerdbank.MessagePack.Key(0), ProtoBuf.ProtoMember(1), Orleans.Id(0)]
+    [V3::MessagePack.Key(0), Nerdbank.MessagePack.Key(0), ShapeShift.MsgPack.MsgPackKey(0), ProtoBuf.ProtoMember(1), Orleans.Id(0)]
     public int? comment_id { get; set; }
-    [V3::MessagePack.Key(1), Nerdbank.MessagePack.Key(1), ProtoBuf.ProtoMember(2), Orleans.Id(1)]
+    [V3::MessagePack.Key(1), Nerdbank.MessagePack.Key(1), ShapeShift.MsgPack.MsgPackKey(1), ProtoBuf.ProtoMember(2), Orleans.Id(1)]
     public int? post_id { get; set; }
-    [V3::MessagePack.Key(2), Nerdbank.MessagePack.Key(2), ProtoBuf.ProtoMember(3), Orleans.Id(2)]
+    [V3::MessagePack.Key(2), Nerdbank.MessagePack.Key(2), ShapeShift.MsgPack.MsgPackKey(2), ProtoBuf.ProtoMember(3), Orleans.Id(2)]
     public DateTime? creation_date { get; set; }
-    [V3::MessagePack.Key(3), Nerdbank.MessagePack.Key(3), ProtoBuf.ProtoMember(4), Orleans.Id(3)]
+    [V3::MessagePack.Key(3), Nerdbank.MessagePack.Key(3), ShapeShift.MsgPack.MsgPackKey(3), ProtoBuf.ProtoMember(4), Orleans.Id(3)]
     public PostType? post_type { get; set; }
-    [V3::MessagePack.Key(4), Nerdbank.MessagePack.Key(4), ProtoBuf.ProtoMember(5), Orleans.Id(4)]
+    [V3::MessagePack.Key(4), Nerdbank.MessagePack.Key(4), ShapeShift.MsgPack.MsgPackKey(4), ProtoBuf.ProtoMember(5), Orleans.Id(4)]
     public int? score { get; set; }
-    [V3::MessagePack.Key(5), Nerdbank.MessagePack.Key(5), ProtoBuf.ProtoMember(6), Orleans.Id(5)]
+    [V3::MessagePack.Key(5), Nerdbank.MessagePack.Key(5), ShapeShift.MsgPack.MsgPackKey(5), ProtoBuf.ProtoMember(6), Orleans.Id(5)]
     public bool? edited { get; set; }
-    [V3::MessagePack.Key(6), Nerdbank.MessagePack.Key(6), ProtoBuf.ProtoMember(7), Orleans.Id(6)]
+    [V3::MessagePack.Key(6), Nerdbank.MessagePack.Key(6), ShapeShift.MsgPack.MsgPackKey(6), ProtoBuf.ProtoMember(7), Orleans.Id(6)]
     public string? body { get; set; }
-    [V3::MessagePack.Key(7), Nerdbank.MessagePack.Key(7), ProtoBuf.ProtoMember(8), Orleans.Id(7)]
+    [V3::MessagePack.Key(7), Nerdbank.MessagePack.Key(7), ShapeShift.MsgPack.MsgPackKey(7), ProtoBuf.ProtoMember(8), Orleans.Id(7)]
     public ShallowUser? owner { get; set; }
-    [V3::MessagePack.Key(8), Nerdbank.MessagePack.Key(8), ProtoBuf.ProtoMember(9), Orleans.Id(8)]
+    [V3::MessagePack.Key(8), Nerdbank.MessagePack.Key(8), ShapeShift.MsgPack.MsgPackKey(8), ProtoBuf.ProtoMember(9), Orleans.Id(8)]
     public ShallowUser? reply_to_user { get; set; }
-    [V3::MessagePack.Key(9), Nerdbank.MessagePack.Key(9), ProtoBuf.ProtoMember(10), Orleans.Id(9)]
+    [V3::MessagePack.Key(9), Nerdbank.MessagePack.Key(9), ShapeShift.MsgPack.MsgPackKey(9), ProtoBuf.ProtoMember(10), Orleans.Id(9)]
     public string? link { get; set; }
-    [V3::MessagePack.Key(10), Nerdbank.MessagePack.Key(10), ProtoBuf.ProtoMember(11), Orleans.Id(10)]
+    [V3::MessagePack.Key(10), Nerdbank.MessagePack.Key(10), ShapeShift.MsgPack.MsgPackKey(10), ProtoBuf.ProtoMember(11), Orleans.Id(10)]
     public string? body_markdown { get; set; }
-    [V3::MessagePack.Key(11), Nerdbank.MessagePack.Key(11), ProtoBuf.ProtoMember(12), Orleans.Id(11)]
+    [V3::MessagePack.Key(11), Nerdbank.MessagePack.Key(11), ShapeShift.MsgPack.MsgPackKey(11), ProtoBuf.ProtoMember(12), Orleans.Id(11)]
     public bool? upvoted { get; set; }
 }
 
 [V3::MessagePack.MessagePackObject]
 [ProtoBuf.ProtoContract]
 [Orleans.GenerateSerializer]
+[ShapeShift.MsgPack.MsgPackArrayContract]
 public partial class ShallowUser
 {
-    [V3::MessagePack.Key(0), Nerdbank.MessagePack.Key(0), ProtoBuf.ProtoMember(1), Orleans.Id(0)]
+    [V3::MessagePack.Key(0), Nerdbank.MessagePack.Key(0), ShapeShift.MsgPack.MsgPackKey(0), ProtoBuf.ProtoMember(1), Orleans.Id(0)]
     public int? user_id { get; set; }
-    [V3::MessagePack.Key(1), Nerdbank.MessagePack.Key(1), ProtoBuf.ProtoMember(2), Orleans.Id(1)]
+    [V3::MessagePack.Key(1), Nerdbank.MessagePack.Key(1), ShapeShift.MsgPack.MsgPackKey(1), ProtoBuf.ProtoMember(2), Orleans.Id(1)]
     public string? display_name { get; set; }
-    [V3::MessagePack.Key(2), Nerdbank.MessagePack.Key(2), ProtoBuf.ProtoMember(3), Orleans.Id(2)]
+    [V3::MessagePack.Key(2), Nerdbank.MessagePack.Key(2), ShapeShift.MsgPack.MsgPackKey(2), ProtoBuf.ProtoMember(3), Orleans.Id(2)]
     public int? reputation { get; set; }
-    [V3::MessagePack.Key(3), Nerdbank.MessagePack.Key(3), ProtoBuf.ProtoMember(4), Orleans.Id(3)]
+    [V3::MessagePack.Key(3), Nerdbank.MessagePack.Key(3), ShapeShift.MsgPack.MsgPackKey(3), ProtoBuf.ProtoMember(4), Orleans.Id(3)]
     public UserType? user_type { get; set; }
-    [V3::MessagePack.Key(4), Nerdbank.MessagePack.Key(4), ProtoBuf.ProtoMember(5), Orleans.Id(4)]
+    [V3::MessagePack.Key(4), Nerdbank.MessagePack.Key(4), ShapeShift.MsgPack.MsgPackKey(4), ProtoBuf.ProtoMember(5), Orleans.Id(4)]
     public string? profile_image { get; set; }
-    [V3::MessagePack.Key(5), Nerdbank.MessagePack.Key(5), ProtoBuf.ProtoMember(6), Orleans.Id(5)]
+    [V3::MessagePack.Key(5), Nerdbank.MessagePack.Key(5), ShapeShift.MsgPack.MsgPackKey(5), ProtoBuf.ProtoMember(6), Orleans.Id(5)]
     public string? link { get; set; }
-    [V3::MessagePack.Key(6), Nerdbank.MessagePack.Key(6), ProtoBuf.ProtoMember(7), Orleans.Id(6)]
+    [V3::MessagePack.Key(6), Nerdbank.MessagePack.Key(6), ShapeShift.MsgPack.MsgPackKey(6), ProtoBuf.ProtoMember(7), Orleans.Id(6)]
     public int? accept_rate { get; set; }
-    [V3::MessagePack.Key(7), Nerdbank.MessagePack.Key(7), ProtoBuf.ProtoMember(8), Orleans.Id(7)]
+    [V3::MessagePack.Key(7), Nerdbank.MessagePack.Key(7), ShapeShift.MsgPack.MsgPackKey(7), ProtoBuf.ProtoMember(8), Orleans.Id(7)]
     public BadgeCount? badge_counts { get; set; }
 }
 
 [V3::MessagePack.MessagePackObject]
 [ProtoBuf.ProtoContract]
 [Orleans.GenerateSerializer]
+[ShapeShift.MsgPack.MsgPackArrayContract]
 public partial class BadgeCount
 {
-    [V3::MessagePack.Key(0), Nerdbank.MessagePack.Key(0), ProtoBuf.ProtoMember(1), Orleans.Id(0)]
+    [V3::MessagePack.Key(0), Nerdbank.MessagePack.Key(0), ShapeShift.MsgPack.MsgPackKey(0), ProtoBuf.ProtoMember(1), Orleans.Id(0)]
     public int? gold { get; set; }
-    [V3::MessagePack.Key(1), Nerdbank.MessagePack.Key(1), ProtoBuf.ProtoMember(2), Orleans.Id(1)]
+    [V3::MessagePack.Key(1), Nerdbank.MessagePack.Key(1), ShapeShift.MsgPack.MsgPackKey(1), ProtoBuf.ProtoMember(2), Orleans.Id(1)]
     public int? silver { get; set; }
-    [V3::MessagePack.Key(2), Nerdbank.MessagePack.Key(2), ProtoBuf.ProtoMember(3), Orleans.Id(2)]
+    [V3::MessagePack.Key(2), Nerdbank.MessagePack.Key(2), ShapeShift.MsgPack.MsgPackKey(2), ProtoBuf.ProtoMember(3), Orleans.Id(2)]
     public int? bronze { get; set; }
 }
 

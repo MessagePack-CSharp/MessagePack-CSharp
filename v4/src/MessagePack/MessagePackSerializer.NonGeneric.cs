@@ -18,8 +18,8 @@ public static partial class MessagePackSerializer
     static readonly ConcurrentDictionary<Type, NonGenericEntry> nonGenericEntries = new();
 
     /// <summary>
-    /// Serializes a value as the given runtime type; the value must be an instance of
-    /// that type (the non-generic counterpart of <see cref="Serialize{T}(T)"/>).
+    /// Serializes <paramref name="value"/> as <paramref name="type"/>, the non-generic form of <see cref="Serialize{T}(T)"/>.
+    /// The value must be an instance of that type.
     /// </summary>
     [RequiresDynamicCode(NonGenericRequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
@@ -54,10 +54,7 @@ public static partial class MessagePackSerializer
         entry.Serialize(output, value, options);
     }
 
-    /// <summary>
-    /// Deserializes one value of the given runtime type, returned boxed (the non-generic
-    /// counterpart of <see cref="Deserialize{T}(ReadOnlySpan{byte})"/>).
-    /// </summary>
+    /// <summary>Deserializes one value of <paramref name="type"/> and returns it boxed, the non-generic form of <see cref="Deserialize{T}(ReadOnlySpan{byte})"/>.</summary>
     [RequiresDynamicCode(NonGenericRequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
     public static object? Deserialize(Type type, ReadOnlySpan<byte> source)
@@ -152,9 +149,8 @@ public static partial class MessagePackSerializer
     }
 
     /// <summary>
-    /// Serializes a value as the given runtime type into the writer and flushes; the
-    /// value must be an instance of that type (the non-generic counterpart of
-    /// <see cref="SerializeAsync{T}(PipeWriter, T, CancellationToken)"/>).
+    /// Serializes <paramref name="value"/> as <paramref name="type"/> into the writer and flushes, the non-generic form of <see cref="SerializeAsync{T}(PipeWriter, T, CancellationToken)"/>.
+    /// The value must be an instance of that type.
     /// </summary>
     [RequiresDynamicCode(NonGenericRequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
@@ -172,11 +168,7 @@ public static partial class MessagePackSerializer
         return entry.SerializeAsync(pipeWriter, value, options, cancellationToken);
     }
 
-    /// <summary>
-    /// Deserializes one value of the given runtime type from the reader, returned boxed
-    /// (the non-generic counterpart of
-    /// <see cref="DeserializeAsync{T}(PipeReader, CancellationToken)"/>).
-    /// </summary>
+    /// <summary>Deserializes one value of <paramref name="type"/> from the reader and returns it boxed, the non-generic form of <see cref="DeserializeAsync{T}(PipeReader, CancellationToken)"/>.</summary>
     [RequiresDynamicCode(NonGenericRequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
     public static ValueTask<object?> DeserializeAsync(Type type, PipeReader pipeReader, CancellationToken cancellationToken = default)
@@ -191,9 +183,9 @@ public static partial class MessagePackSerializer
         return GetNonGenericEntry(type).DeserializeAsync(pipeReader, options, cancellationToken);
     }
 
-    // API misuse (a value that is not an instance of the declared type) throws Argument
-    // exceptions here, before any output is written; malformed DATA keeps throwing
-    // MessagePackSerializationException from the entries, per the exception policy.
+    // API misuse (a value that is not an instance of the declared type) throws ArgumentException here, before any
+    // output is written. Malformed data keeps throwing MessagePackSerializationException from the entries, per the
+    // exception policy.
     static void ValidateValue(Type type, object? value)
     {
         if (value is null)

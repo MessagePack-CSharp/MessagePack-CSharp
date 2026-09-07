@@ -13,7 +13,8 @@ public struct SandboxPoint
 // no #if here — the BufferConstraintsGenerator emits the other partial declaration with
 // `where T : struct, IWriteBuffer/IReadBuffer` plus `allows ref struct` on TFMs that can
 // express it. Bodies are intentionally no-ops: the sandbox exercises the constraint/TFM
-// surface, not serialization logic.
+// surface, not serialization logic (hence the untouched-buffer rule is switched off here).
+#pragma warning disable MsgPack114
 public sealed partial class SandboxPointFormatter<TWriteBuffer, TReadBuffer>
     : IMessagePackFormatter<TWriteBuffer, TReadBuffer, SandboxPoint>
 {
@@ -30,3 +31,4 @@ public sealed partial class SandboxPointFormatter<TWriteBuffer, TReadBuffer>
         value = default;
     }
 }
+#pragma warning restore MsgPack114

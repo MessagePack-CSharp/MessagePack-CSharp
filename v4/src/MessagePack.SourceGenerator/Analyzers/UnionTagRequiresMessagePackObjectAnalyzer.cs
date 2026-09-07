@@ -5,12 +5,11 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace MessagePack.SourceGenerator.Analyzers;
 
 /// <summary>
-/// Union discovery is driven by [MessagePackObject] alone: the generator's single
-/// ForAttributeWithMetadataName pipeline routes a [MessagePackObject] type with
-/// [UnionTag] attributes to the union parser, and never sees a type that carries only
-/// [UnionTag] — no formatter is generated and serialization fails at runtime with
-/// formatter-not-found. MsgPack103 turns that silent miss into a compile-time error: there
-/// is no situation where a lone [UnionTag] does something useful.
+/// Union discovery is driven by [MessagePackObject] alone: the generator's single ForAttributeWithMetadataName pipeline
+/// routes a [MessagePackObject] type with [UnionTag] attributes to the union parser,
+/// and never sees a type that carries only [UnionTag], no formatter is generated and serialization fails at runtime
+/// with formatter-not-found. MsgPack103 turns that silent miss into a compile-time error: there is no situation where a
+/// lone [UnionTag] does something useful.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class UnionTagRequiresMessagePackObjectAnalyzer : DiagnosticAnalyzer

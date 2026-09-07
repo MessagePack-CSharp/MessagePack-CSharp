@@ -4,16 +4,15 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace MessagePack.SourceGenerator;
 
 /// <summary>
-/// Discovers IMessagePackSurrogate&lt;TTarget, TSurrogate&gt; implementations: the implementation
-/// itself is the declaration ("TSurrogate is the wire stand-in for TTarget"), so the generated
-/// factory auto-registers the target with a statically closed SurrogateFormatter — no
-/// attribute on the target, which may be a third-party type the user cannot annotate.
-/// A target whose own declaration already claims it ([MessagePackObject] or type-level
-/// [MessagePackFormatter]) wins and the surrogate is skipped with MsgPack019; shapes the
-/// factory cannot close statically (open generics, inaccessible types) are skipped the
-/// same way, with explicit chain composition of SurrogateFormatterFactory as the fallback.
-/// Duplicate targets across the compilation are MsgPack018 errors, detected over the
-/// collected <see cref="SurrogateTargetSite"/>s.
+/// Discovers IMessagePackSurrogate&lt;TTarget, TSurrogate&gt; implementations: the implementation itself is the
+/// declaration ("TSurrogate is the wire stand-in for TTarget"), so the generated factory auto-registers the target with
+/// a statically closed SurrogateFormatter, no attribute on the target,
+/// which may be a third-party type the user cannot annotate. A target whose own declaration already claims it
+/// ([MessagePackObject] or type-level [MessagePackFormatter]) wins and the surrogate is skipped with MsgPack019;
+/// shapes the factory cannot close statically (open generics, inaccessible types) are skipped the same way,
+/// with explicit chain composition of SurrogateFormatterFactory as the fallback.
+/// Duplicate targets across the compilation are MsgPack018 errors, detected over the collected
+/// <see cref="SurrogateTargetSite"/>s.
 /// </summary>
 static class SurrogateParser
 {
@@ -60,17 +59,16 @@ static class SurrogateParser
         }
         if (type.TypeKind != TypeKind.Struct)
         {
-            // the interface's struct constraint makes a class implementation CS0453 at the
-            // user's declaration; skipping here keeps the error from cascading into
-            // generated code
+            // the interface's struct constraint makes a class implementation CS0453 at the user's declaration;
+            // skipping here keeps the error from cascading into generated code
             return null;
         }
 
         var targets = new List<INamedTypeSymbol>();
         foreach (var implemented in type.AllInterfaces)
         {
-            // only the self-shaped implementation declares an association: a type
-            // implementing IMessagePackSurrogate<TTarget, SomeOtherType> is not that surrogate
+            // only the self-shaped implementation declares an association: a type implementing
+            // IMessagePackSurrogate<TTarget, SomeOtherType> is not that surrogate
             if (implemented.OriginalDefinition is { MetadataName: "IMessagePackSurrogate`2" } definition
                 && definition.ContainingNamespace.ToDisplayString() == "MessagePack"
                 && SymbolEqualityComparer.Default.Equals(implemented.TypeArguments[1], type))

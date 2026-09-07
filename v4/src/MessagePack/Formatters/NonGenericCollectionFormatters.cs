@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace MessagePack.Formatters;
 
-// The non-generic collection, elements route through GetFormatter<object> - PrimitiveObjectFormatter by default.
+// The non-generic collection, elements route through GetFormatter<object>.
 
 public sealed partial class NonGenericInterfaceEnumerableFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IEnumerable?>
 {

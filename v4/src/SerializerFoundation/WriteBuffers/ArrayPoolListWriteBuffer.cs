@@ -186,9 +186,6 @@ public ref struct ArrayPoolListWriteBuffer : IWriteBuffer, IDisposable
         _ => Throws.InsufficientSpaceInBuffer<int>(),
     };
 
-    // iterator (PooledArrays/CompletedLengths and the segment view live in BufferSegments.cs,
-    // shared with the compatibility variant below)
-
     /// <summary>Borrowed zero-copy view of the written message; valid until the next write or Dispose.</summary>
     public BufferSegments GetWrittenSegments()
     {
@@ -197,13 +194,12 @@ public ref struct ArrayPoolListWriteBuffer : IWriteBuffer, IDisposable
     }
 }
 
-// implementation note: array-backed, so Memory is vendable and boxed instances double as the
-// interface-shaped staging buffer (interface calls mutate the box in place);
-// the ref-struct fast buffer cannot be boxed, so it stays IWriteBuffer-only
+// Boxed instances double as the interface-shaped staging buffer (interface calls mutate the box in place).
+// However, that needs to be handled carefully.
+// (The Analyzer will warn about this, so only disable it if you understand what it means)
 
 /// <summary>
 /// An <see cref="ArrayPoolListWriteBuffer"/> variant for target frameworks without <c>allows ref struct</c> support.
-/// Also usable as an <see cref="IBufferWriter{T}"/>.
 /// </summary>
 public struct CompatibleArrayPoolListWriteBuffer : IWriteBuffer, IDisposable, IBufferWriter<byte>
 {

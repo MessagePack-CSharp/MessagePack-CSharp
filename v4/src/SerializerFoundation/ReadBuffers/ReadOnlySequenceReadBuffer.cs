@@ -1,8 +1,8 @@
 namespace SerializerFoundation;
 
 // This type is frequently used because PipeReader and others return ReadOnlySequence<byte>.
-// Using Slice on ReadOnlySequence<byte> directly is slow, so the structure is designed
-// to prefer operating on a series of chunks (ReadOnlySpan<byte>).
+// Using Slice on ReadOnlySequence<byte> directly is slow,
+// so the structure is designed to prefer operating on a series of chunks (ReadOnlySpan<byte>).
 // Only at seams where the buffer space is not contiguous, we copy into a temporary buffer to create a contiguous buffer.
 //
 // Terminology used throughout:
@@ -25,8 +25,6 @@ public ref struct ReadOnlySequenceReadBuffer : IReadBuffer
     ReadOnlySpan<byte> currentSpan;   // full current window (segment or stitched temp)
 
     // Stitch destinations, in preference order: caller-provided scratch (stackalloc'd at the serializer entry, mirroring Serialize) for small windows.
-    // the fixed-size tokens need at most 15 bytes, so numeric straddles never touch the pool
-    // and a retained rented buffer for large ones (str/bin payloads), swapped only when it must grow and returned only at Dispose.
     readonly Span<byte> scratch;
     byte[]? tempBuffer;
 
@@ -82,12 +80,13 @@ public ref struct ReadOnlySequenceReadBuffer : IReadBuffer
     public bool TryGetSpan(int sizeHint, out ReadOnlySpan<byte> span)
     {
         var remaining = currentSpan.Length - currentConsumed;
-        if (remaining <= 0 || remaining < sizeHint)
+        // the unsigned compare routes a negative sizeHint through the slow path, which
+        // rejects it (ArgumentOutOfRange), so both paths honor the same contract
+        if (remaining <= 0 || (ulong)(uint)sizeHint > (ulong)remaining)
         {
-            // temps, not the caller's out: passing `span` by address to the NoInlining
-            // slow path would address-expose the inlined caller's local and pin the
-            // span to a stack slot on the fast path too (see the slow-call note at
-            // MessagePack's MessagePackPrimitives.TryReadInt32)
+            // temps, not the caller's out:
+            // passing `span` by address to the NoInlining slow path would address-expose the inlined caller's local
+            // and pin the span to a stack slot on the fast path too
             var slowFilled = TryGetSpanSlow(sizeHint, out var slowSpan);
             span = slowSpan;
             return slowFilled;
@@ -103,9 +102,8 @@ public ref struct ReadOnlySequenceReadBuffer : IReadBuffer
         return true;
     }
 
-    // Commit the fast-path consumption into the sequence, then reposition onto the
-    // next non-empty segment. Shared by both slow paths; returns the new whole-segment
-    // window, empty only when the data itself is exhausted.
+    // Commit the fast-path consumption into the sequence, then reposition onto the next non-empty segment.
+    // Shared by both slow paths; returns the new whole-segment window, empty only when the data itself is exhausted.
     [MethodImpl(MethodImplOptions.NoInlining)]
     ReadOnlySpan<byte> CommitAndReposition()
     {
@@ -230,11 +228,13 @@ public ref struct ReadOnlySequenceReadBuffer : IReadBuffer
         // crosses segments; the next GetSpan detects it via the signed remaining and commits)
         // but never past the end of the DATA: one unsigned compare against the total
         // remaining rejects negative and past-the-end alike — the write-side Advance shape
-        // with the bound widened from the window to the sequence — maintaining
+        // with the bound widened from the window to the sequence. The argument is widened
+        // by sign extension (not (uint)): the bound here is a long, so a zero-extended
+        // negative would slip past it once more than 2 GB remain — maintaining
         // 0 <= committedConsumed + currentConsumed <= length (which also keeps the long currentConsumed finite).
         // Truncation is detected by the extension layer BEFORE advancing (skips validate
         // against BytesRemaining), so it still surfaces there as the domain exception.
-        if ((ulong)(uint)bytesConsumed > (ulong)(length - committedConsumed - currentConsumed))
+        if ((ulong)(long)bytesConsumed > (ulong)(length - committedConsumed - currentConsumed))
         {
             Throws.AdvancedTooFar();
         }
@@ -305,12 +305,8 @@ public struct CompatibleReadOnlySequenceReadBuffer : IReadBuffer
     public bool TryGetSpan(int sizeHint, out ReadOnlySpan<byte> span)
     {
         var remaining = currentMemory.Length - currentConsumed;
-        if (remaining <= 0 || remaining < sizeHint)
+        if (remaining <= 0 || (ulong)(uint)sizeHint > (ulong)remaining) // see ReadOnlySequenceReadBuffer.TryGetSpan
         {
-            // temps, not the caller's out: passing `span` by address to the NoInlining
-            // slow path would address-expose the inlined caller's local and pin the
-            // span to a stack slot on the fast path too (see the slow-call note at
-            // MessagePack's MessagePackPrimitives.TryReadInt32)
             var slowFilled = TryGetSpanSlow(sizeHint, out var slowSpan);
             span = slowSpan;
             return slowFilled;
@@ -416,7 +412,7 @@ public struct CompatibleReadOnlySequenceReadBuffer : IReadBuffer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Advance(int bytesConsumed)
     {
-        if ((ulong)(uint)bytesConsumed > (ulong)(length - committedConsumed - currentConsumed))
+        if ((ulong)(long)bytesConsumed > (ulong)(length - committedConsumed - currentConsumed))
         {
             Throws.AdvancedTooFar();
         }

@@ -118,8 +118,8 @@ public class AotCustomList : System.Collections.ObjectModel.Collection<string>
 {
 }
 
-// IMessagePackSurrogate under ILC: the static abstract conversions are constrained calls
-// over a struct surrogate (direct, no reflection). No attribute on the target — the
+// IMessagePackSurrogate under ILC: the conversions are constrained instance calls over a
+// struct surrogate (direct, no reflection). No attribute on the target: the
 // interface implementation below is the declaration, auto-registered through the
 // generated factory's statically closed SurrogateFormatter construction
 public class AotUserId
@@ -144,9 +144,9 @@ public readonly record struct AotUserIdSurrogate(
     [property: Key(1)] string Realm)
     : IMessagePackSurrogate<AotUserId, AotUserIdSurrogate>
 {
-    public static AotUserIdSurrogate ToSurrogate(AotUserId value) => new(value.Value, value.Realm);
+    public AotUserIdSurrogate ToSurrogate(AotUserId value) => new(value.Value, value.Realm);
 
-    public static AotUserId FromSurrogate(AotUserIdSurrogate surrogate) => new(surrogate.Value, surrogate.Realm);
+    public AotUserId ToTarget() => new(Value, Realm);
 }
 
 // [MessagePackSerializable] roots: shapes that appear ONLY as serialization roots (never

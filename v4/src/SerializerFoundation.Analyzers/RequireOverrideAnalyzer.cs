@@ -24,7 +24,7 @@ public sealed class RequireOverrideAnalyzer : DiagnosticAnalyzer
         "SerializerFoundation.Design",
         DiagnosticSeverity.Error, // "require" means require: the bridge is never the intended path for new code
         isEnabledByDefault: true,
-        description: "A virtual member marked [RequireOverride] is conceptually abstract; it is virtual only so that assemblies compiled against TFMs where the member does not exist keep loading. Every non-abstract derived type compiled where the member is visible must override it (directly or through a base).");
+        description: "A virtual member marked [RequireOverride] is conceptually abstract; it is virtual only so that assemblies compiled against TFMs where the member does not exist keep loading. Every non-abstract derived type compiled where the member is visible must override it (directly or through a base). An intermediate override may carry the attribute again to require its own derived types to override once more.");
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
@@ -58,7 +58,12 @@ public sealed class RequireOverrideAnalyzer : DiagnosticAnalyzer
         {
             foreach (var member in baseType.GetMembers())
             {
-                if (member is not IMethodSymbol { IsVirtual: true } required || !HasRequireOverride(required, attribute))
+                // the original virtual, or a non-sealed override that re-applies the attribute: the attribute is not
+                // inherited, so an intermediate base that overrides the member and wants its own leaves to override
+                // again marks its override. A sealed override cannot be overridden and carries no requirement.
+                if (member is not IMethodSymbol { IsVirtual: true } and not IMethodSymbol { IsOverride: true, IsSealed: false } ||
+                    member is not IMethodSymbol required ||
+                    !HasRequireOverride(required, attribute))
                 {
                     continue;
                 }
