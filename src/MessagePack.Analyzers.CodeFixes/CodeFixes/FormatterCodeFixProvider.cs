@@ -123,10 +123,10 @@ public class FormatterCodeFixProvider : CodeFixProvider
 
         Document document = context.Document;
         document = document.WithSyntaxRoot(root);
-        return document;
+        return await LineEndingPreserver.NormalizeDocumentAsync(context.Document, document, ct).ConfigureAwait(false);
     }
 
-    private static Task<Document> AddPartialModifierAsync(Document document, SyntaxNode syntaxRoot, BaseTypeDeclarationSyntax typeDecl, Diagnostic diagnostic, CancellationToken cancellationToken)
+    private static async Task<Document> AddPartialModifierAsync(Document document, SyntaxNode syntaxRoot, BaseTypeDeclarationSyntax typeDecl, Diagnostic diagnostic, CancellationToken cancellationToken)
     {
         SyntaxNode? modifiedSyntax = syntaxRoot;
         if (TryAddPartialModifier(typeDecl, out BaseTypeDeclarationSyntax? modified))
@@ -143,15 +143,32 @@ public class FormatterCodeFixProvider : CodeFixProvider
             }
         }
 
-        document = document.WithSyntaxRoot(modifiedSyntax);
-        return Task.FromResult(document);
+        Document changedDocument = document.WithSyntaxRoot(modifiedSyntax);
+        return await LineEndingPreserver.NormalizeDocumentAsync(document, changedDocument, cancellationToken).ConfigureAwait(false);
     }
 
-    private static Task<Document> ExposeMemberInternally(Document document, SyntaxNode syntaxRoot, MemberDeclarationSyntax memberDecl, Diagnostic diagnostic, CancellationToken ct)
+    private static async Task<Document> ExposeMemberInternally(Document document, SyntaxNode syntaxRoot, MemberDeclarationSyntax memberDecl, Diagnostic diagnostic, CancellationToken ct)
     {
-        SyntaxNode? modifiedSyntax = syntaxRoot.ReplaceNode(memberDecl, memberDecl.WithModifiers(AddInternalVisibility(memberDecl.Modifiers)));
-        document = document.WithSyntaxRoot(modifiedSyntax);
-        return Task.FromResult(document);
+        SyntaxNode? modifiedSyntax = syntaxRoot.ReplaceNode(memberDecl, AddInternalVisibility(memberDecl));
+        Document changedDocument = document.WithSyntaxRoot(modifiedSyntax);
+        return await LineEndingPreserver.NormalizeDocumentAsync(document, changedDocument, ct).ConfigureAwait(false);
+    }
+
+    private static MemberDeclarationSyntax AddInternalVisibility(MemberDeclarationSyntax memberDecl)
+    {
+        if (memberDecl.Modifiers.Count == 0)
+        {
+            SyntaxToken firstToken = memberDecl.GetFirstToken();
+            SyntaxToken internalToken = SyntaxFactory.Token(SyntaxKind.InternalKeyword)
+                .WithLeadingTrivia(NormalizeLineEndingTrivia(firstToken.LeadingTrivia))
+                .WithTrailingTrivia(SyntaxFactory.Space);
+
+            MemberDeclarationSyntax withModifier = memberDecl.WithModifiers(memberDecl.Modifiers.Insert(0, internalToken));
+            SyntaxToken secondToken = withModifier.GetFirstToken().GetNextToken();
+            return withModifier.ReplaceToken(secondToken, secondToken.WithLeadingTrivia(default(SyntaxTriviaList)));
+        }
+
+        return memberDecl.WithModifiers(AddInternalVisibility(memberDecl.Modifiers));
     }
 
     private static SyntaxTokenList AddInternalVisibility(SyntaxTokenList modifiers)
@@ -187,10 +204,15 @@ public class FormatterCodeFixProvider : CodeFixProvider
         if (privateIndex != -1 && protectedIndex != -1)
         {
             // Upgrade private protected to internal.
-            SyntaxTokenList newModifiers = privateIndex < protectedIndex
-                ? modifiers.RemoveAt(protectedIndex).RemoveAt(privateIndex)
-                : modifiers.RemoveAt(privateIndex).RemoveAt(protectedIndex);
-            return newModifiers.Insert(0, internalKeywordToken);
+            int firstIndex = Math.Min(privateIndex, protectedIndex);
+            int secondIndex = Math.Max(privateIndex, protectedIndex);
+            SyntaxToken firstToken = modifiers[firstIndex];
+            SyntaxToken secondToken = modifiers[secondIndex];
+            SyntaxToken replacementToken = internalKeywordToken
+                .WithLeadingTrivia(NormalizeLineEndingTrivia(firstToken.LeadingTrivia))
+                .WithTrailingTrivia(NormalizeLineEndingTrivia(secondToken.TrailingTrivia));
+            SyntaxTokenList newModifiers = modifiers.RemoveAt(secondIndex).RemoveAt(firstIndex);
+            return newModifiers.Insert(firstIndex, replacementToken);
         }
 
         if (protectedIndex != -1)
@@ -205,10 +227,23 @@ public class FormatterCodeFixProvider : CodeFixProvider
         }
 
         // No visibility keywords exist. Add "internal".
-        return modifiers.Insert(0, internalKeywordToken);
+        return modifiers.Insert(0, internalKeywordToken.WithTrailingTrivia(SyntaxFactory.Space));
 
         SyntaxToken ReplaceModifier(SyntaxToken original) => internalKeywordToken.WithLeadingTrivia(original.LeadingTrivia).WithTrailingTrivia(original.TrailingTrivia);
         SyntaxTokenList ReplaceModifierInList(int index) => modifiers.Replace(modifiers[index], ReplaceModifier(modifiers[index]));
+    }
+
+    private static SyntaxTriviaList NormalizeLineEndingTrivia(SyntaxTriviaList trivia)
+    {
+        if (!trivia.Any(t => t.IsKind(SyntaxKind.EndOfLineTrivia) && t.ToFullString().Contains('\r')))
+        {
+            return trivia;
+        }
+
+        return SyntaxFactory.TriviaList(trivia.Select(t =>
+            t.IsKind(SyntaxKind.EndOfLineTrivia) && t.ToFullString().Contains('\r')
+                ? SyntaxFactory.EndOfLine("\n")
+                : t));
     }
 
     private static bool TryAddPartialModifier(BaseTypeDeclarationSyntax typeDeclaration, [NotNullWhen(true)] out BaseTypeDeclarationSyntax? modified)

@@ -6,7 +6,7 @@ using MsgPack = global::MessagePack;
 
 internal partial class HasPrivateSerializedMemberAndIsGenericNamed<T>
 		where T : struct
-{	internal sealed class HasPrivateSerializedMemberAndIsGenericNamedFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::HasPrivateSerializedMemberAndIsGenericNamed<T>>
+{	internal sealed class HasPrivateSerializedMemberAndIsGenericNamedFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::HasPrivateSerializedMemberAndIsGenericNamed<T>>, global::MessagePack.Formatters.IMessagePackFormatterDeserializeInto<global::HasPrivateSerializedMemberAndIsGenericNamed<T>>
 	{
 		// value
 		private static global::System.ReadOnlySpan<byte> GetSpan_value() => new byte[1 + 5] { 165, 118, 97, 108, 117, 101 };
@@ -55,6 +55,32 @@ internal partial class HasPrivateSerializedMemberAndIsGenericNamed<T>
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref global::MessagePack.MessagePackReader reader, global::HasPrivateSerializedMemberAndIsGenericNamed<T> value, global::MessagePack.MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadMapHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+				switch (stringKey.Length)
+				{
+					default:
+					FAIL:
+					  reader.Skip();
+					  continue;
+					case 5:
+					    if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 435761734006UL) { goto FAIL; }
+
+					    ____result.value = reader.ReadInt32();
+					    continue;
+
+				}
+			}
+			reader.Depth--;
 		}
 	}
 

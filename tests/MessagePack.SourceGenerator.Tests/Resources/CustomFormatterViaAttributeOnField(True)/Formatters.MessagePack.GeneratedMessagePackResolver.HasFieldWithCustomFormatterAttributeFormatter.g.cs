@@ -6,7 +6,7 @@ using MsgPack = global::MessagePack;
 
 namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
-	internal sealed class HasFieldWithCustomFormatterAttributeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::HasFieldWithCustomFormatterAttribute>
+	internal sealed class HasFieldWithCustomFormatterAttributeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::HasFieldWithCustomFormatterAttribute>, global::MessagePack.Formatters.IMessagePackFormatterDeserializeInto<global::HasFieldWithCustomFormatterAttribute>
 	{
 		private readonly global::UnserializableRecordFormatter __CustomValueCustomFormatter__ = new global::UnserializableRecordFormatter();
 		// CustomValue
@@ -56,6 +56,32 @@ internal partial class GeneratedMessagePackResolver {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref global::MessagePack.MessagePackReader reader, global::HasFieldWithCustomFormatterAttribute value, global::MessagePack.MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadMapHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+				switch (stringKey.Length)
+				{
+					default:
+					FAIL:
+					  reader.Skip();
+					  continue;
+					case 11:
+					    if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_CustomValue().Slice(1))) { goto FAIL; }
+
+					    ____result.CustomValue = MsgPack::Formatters.MessagePackFormatterExtensions.DeserializeInto<global::UnserializableRecord>(this.__CustomValueCustomFormatter__, ref reader, ____result.CustomValue, options);
+					    continue;
+
+				}
+			}
+			reader.Depth--;
 		}
 	}
 

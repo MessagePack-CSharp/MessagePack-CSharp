@@ -8,7 +8,7 @@ namespace MessagePack {
 internal partial class GeneratedMessagePackResolver {
 internal partial class NS2 {
 
-	internal sealed class MyTypeFormatter<T> : MsgPack::Formatters.IMessagePackFormatter<global::NS2.MyType<T>>
+	internal sealed class MyTypeFormatter<T> : MsgPack::Formatters.IMessagePackFormatter<global::NS2.MyType<T>>, MsgPack::Formatters.IMessagePackFormatterDeserializeInto<global::NS2.MyType<T>>
 	{
 
 		public void Serialize(ref MsgPack::MessagePackWriter writer, global::NS2.MyType<T> value, MsgPack::MessagePackSerializerOptions options)
@@ -19,9 +19,8 @@ internal partial class NS2 {
 				return;
 			}
 
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Foo, options);
+			MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<string>(ref writer, value.Foo, options);
 		}
 
 		public global::NS2.MyType<T> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -32,7 +31,6 @@ internal partial class NS2 {
 			}
 
 			options.Security.DepthStep(ref reader);
-			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			var length = reader.ReadArrayHeader();
 			var ____result = new global::NS2.MyType<T>();
 
@@ -41,7 +39,7 @@ internal partial class NS2 {
 				switch (i)
 				{
 					case 0:
-						____result.Foo = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+						____result.Foo = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<string>(ref reader, options);
 						break;
 					default:
 						reader.Skip();
@@ -51,6 +49,28 @@ internal partial class NS2 {
 
 			reader.Depth--;
 			return ____result;
+		}
+
+		public void Deserialize(ref MsgPack::MessagePackReader reader, global::NS2.MyType<T> value, MsgPack::MessagePackSerializerOptions options)
+		{
+			options.Security.DepthStep(ref reader);
+			var ____result = value;
+			var length = reader.ReadArrayHeader();
+
+			for (int i = 0; i < length; i++)
+			{
+				switch (i)
+				{
+					case 0:
+						____result.Foo = MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<string>(ref reader, ____result.Foo, options);
+						break;
+					default:
+						reader.Skip();
+						break;
+				}
+			}
+
+			reader.Depth--;
 		}
 	}
 }

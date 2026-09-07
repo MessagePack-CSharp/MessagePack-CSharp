@@ -220,7 +220,8 @@ public class MessagePackCodeFixProvider : CodeFixProvider
             documentEditor.AddAttribute(node, syntaxGenerator.Attribute("MessagePack.MessagePackObject"));
         }
 
-        return solutionEditor.GetChangedSolution();
+        Solution changedSolution = solutionEditor.GetChangedSolution();
+        return await LineEndingPreserver.NormalizeChangedDocumentsAsync(document.Project.Solution, changedSolution, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task<Solution> AddIgnoreMemberAttributeAsync(Document document, MemberDeclarationSyntax memberDecl, CancellationToken cancellationToken)
@@ -231,6 +232,7 @@ public class MessagePackCodeFixProvider : CodeFixProvider
 
         documentEditor.AddAttribute(memberDecl, syntaxGenerator.Attribute("MessagePack.IgnoreMemberAttribute"));
 
-        return solutionEditor.GetChangedSolution();
+        Solution changedSolution = solutionEditor.GetChangedSolution();
+        return await LineEndingPreserver.NormalizeChangedDocumentsAsync(document.Project.Solution, changedSolution, cancellationToken).ConfigureAwait(false);
     }
 }

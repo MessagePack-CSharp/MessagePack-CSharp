@@ -14,8 +14,27 @@ public record MemberSerializationInfo(
     string Name,
     string Type,
     string ShortTypeName,
-    FormatterDescriptor? CustomFormatter)
+    bool IsValueType,
+    bool CanDeserializeInto = false,
+    FormatterDescriptor? CustomFormatter = null)
 {
+    public MemberSerializationInfo(
+        bool isProperty,
+        bool isWritable,
+        bool isReadable,
+        bool isInitOnly,
+        bool isRequired,
+        int intKey,
+        string stringKey,
+        string name,
+        string type,
+        string shortTypeName,
+        bool isValueType,
+        FormatterDescriptor? customFormatter)
+        : this(isProperty, isWritable, isReadable, isInitOnly, isRequired, intKey, stringKey, name, type, shortTypeName, isValueType, CanDeserializeInto: false, customFormatter)
+    {
+    }
+
     private static readonly IReadOnlyCollection<string> PrimitiveTypes = new HashSet<string>(AnalyzerUtilities.PrimitiveTypes);
 
     public string LocalVariableName => $"__{this.UniqueIdentifier}__";
@@ -43,14 +62,22 @@ public record MemberSerializationInfo(
         }
         else
         {
-            return $"MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Serialize(ref writer, {memberRead}, options)";
+            string byRefModifier = !this.IsProperty && this.DeclaringType is null ? "in " : string.Empty;
+            return this.IsValueType
+                ? $"MsgPack::FormatterResolverExtensions.SerializeWithVerifyByRef<{this.Type}>(ref writer, {byRefModifier}{memberRead}, options)"
+                : $"MsgPack::FormatterResolverExtensions.SerializeWithVerifyByValue<{this.Type}>(ref writer, {memberRead}, options)";
         }
     }
 
-    public string GetDeserializeMethodString()
+    public string GetDeserializeMethodString(string? existingValueExpression = null)
     {
         if (CustomFormatter is not null)
         {
+            if (this.CanDeserializeInto && existingValueExpression is not null)
+            {
+                return $"MsgPack::Formatters.MessagePackFormatterExtensions.DeserializeInto<{this.Type}>(this.__{this.Name}CustomFormatter__, ref reader, {existingValueExpression}, options)";
+            }
+
             return $"this.__{this.Name}CustomFormatter__.Deserialize(ref reader, options)";
         }
         else if (PrimitiveTypes.Contains(this.Type))
@@ -66,7 +93,11 @@ public record MemberSerializationInfo(
         }
         else
         {
-            return $"MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Deserialize(ref reader, options)";
+            return this.IsValueType
+                ? $"MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByRef<{this.Type}>(ref reader, options)"
+                : existingValueExpression is null || !this.CanDeserializeInto
+                    ? $"MsgPack::FormatterResolverExtensions.DeserializeWithVerifyByValue<{this.Type}>(ref reader, options)"
+                    : $"MsgPack::FormatterResolverExtensions.DeserializeWithVerifyInto<{this.Type}>(ref reader, {existingValueExpression}, options)";
         }
     }
 

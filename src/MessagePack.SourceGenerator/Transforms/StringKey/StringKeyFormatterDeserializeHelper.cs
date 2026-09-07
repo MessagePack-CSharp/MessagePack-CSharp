@@ -8,7 +8,7 @@ namespace MessagePack.SourceGenerator.Transforms;
 
 internal static class StringKeyFormatterDeserializeHelper
 {
-    public static string Classify(ObjectSerializationInfo objectSerializationInfo, string indent, bool canOverwrite)
+    public static string Classify(ObjectSerializationInfo objectSerializationInfo, string indent, bool canOverwrite, string? reuseTargetObject = null)
     {
         var memberArray = objectSerializationInfo.Members;
         var buffer = new StringBuilder();
@@ -19,7 +19,7 @@ internal static class StringKeyFormatterDeserializeHelper
             keyLength += keyLength << 3 == binaryLength ? 0 : 1;
 
             buffer.Append(indent).Append("case ").Append(binaryLength).Append(":\r\n");
-            ClassifyRecursion(buffer, indent, 1, keyLength, memberInfoTuples, canOverwrite);
+            ClassifyRecursion(buffer, indent, 1, keyLength, memberInfoTuples, canOverwrite, reuseTargetObject);
         }
 
         return buffer.ToString();
@@ -38,7 +38,7 @@ internal static class StringKeyFormatterDeserializeHelper
         return false;
     }
 
-    private static void Assign(StringBuilder buffer, in MemberInfoTuple member, bool canOverwrite, string indent, string tab, int tabCount)
+    private static void Assign(StringBuilder buffer, in MemberInfoTuple member, bool canOverwrite, string indent, string tab, int tabCount, string? reuseTargetObject)
     {
         if (member.Info.IsWritable || member.IsConstructorParameter)
         {
@@ -60,7 +60,10 @@ internal static class StringKeyFormatterDeserializeHelper
                 buffer.Append("__").Append(member.Info.Name).Append("__ = ");
             }
 
-            buffer.Append(member.Info.GetDeserializeMethodString()).Append(";\r\n");
+            string? existingValueExpression = canOverwrite && reuseTargetObject is not null
+                ? member.Info.GetMemberAccess(reuseTargetObject)
+                : null;
+            buffer.Append(member.Info.GetDeserializeMethodString(existingValueExpression)).Append(";\r\n");
         }
         else
         {
@@ -68,7 +71,7 @@ internal static class StringKeyFormatterDeserializeHelper
         }
     }
 
-    private static void ClassifyRecursion(StringBuilder buffer, string indent, int tabCount, int keyLength, IEnumerable<MemberInfoTuple> memberCollection, bool canOverwrite)
+    private static void ClassifyRecursion(StringBuilder buffer, string indent, int tabCount, int keyLength, IEnumerable<MemberInfoTuple> memberCollection, bool canOverwrite, string? reuseTargetObject)
     {
         const string Tab = "    ";
         buffer.Append(indent);
@@ -81,7 +84,7 @@ internal static class StringKeyFormatterDeserializeHelper
         if (memberArray.Length == 1)
         {
             var member = memberArray[0];
-            EmbedOne(buffer, indent, tabCount, member, canOverwrite);
+            EmbedOne(buffer, indent, tabCount, member, canOverwrite, reuseTargetObject);
             return;
         }
 
@@ -118,7 +121,7 @@ internal static class StringKeyFormatterDeserializeHelper
                 }
 
                 var member = grouping.Single();
-                Assign(buffer, member, canOverwrite, indent, Tab, tabCount + 2);
+                Assign(buffer, member, canOverwrite, indent, Tab, tabCount + 2, reuseTargetObject);
                 buffer.Append(Tab + Tab).Append(indent);
                 for (var i = 0; i < tabCount; i++)
                 {
@@ -129,7 +132,7 @@ internal static class StringKeyFormatterDeserializeHelper
                 continue;
             }
 
-            ClassifyRecursion(buffer, indent + Tab, tabCount + 1, keyLength, grouping, canOverwrite);
+            ClassifyRecursion(buffer, indent + Tab, tabCount + 1, keyLength, grouping, canOverwrite, reuseTargetObject);
         }
 
         buffer.Append("\r\n").Append(indent);
@@ -141,7 +144,7 @@ internal static class StringKeyFormatterDeserializeHelper
         buffer.Append("}\r\n");
     }
 
-    private static void EmbedOne(StringBuilder buffer, string indent, int tabCount, in MemberInfoTuple member, bool canOverwrite)
+    private static void EmbedOne(StringBuilder buffer, string indent, int tabCount, in MemberInfoTuple member, bool canOverwrite, string? reuseTargetObject)
     {
         const string Tab = "    ";
         var binary = member.Binary.AsSpan((tabCount - 1) << 3);
@@ -171,7 +174,7 @@ internal static class StringKeyFormatterDeserializeHelper
             buffer.Append(Tab);
         }
 
-        Assign(buffer, member, canOverwrite, indent, Tab, tabCount);
+        Assign(buffer, member, canOverwrite, indent, Tab, tabCount, reuseTargetObject);
         buffer.Append(indent);
         for (var i = 0; i < tabCount; i++)
         {
