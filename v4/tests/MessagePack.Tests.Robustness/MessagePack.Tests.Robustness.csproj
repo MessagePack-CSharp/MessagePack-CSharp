@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- xunit v3+ test projects are self-hosting executables -->
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="4.0.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <!-- property-based generation with automatic shrinking + seed reproduction -->
+    <PackageReference Include="CsCheck" Version="4.8.0" />
+  </ItemGroup>
+
+  <!-- v3 oracle for the metamorphic layer (MetamorphicTests): the REAL v3.1.8 runtime
+       repacked as MessagePackV3 (tools/V3OracleRepack), aliased V3 so v4 keeps the default
+       MessagePack namespace. Only the built-in primitive/collection formatters are exercised
+       across the boundary - v3 and v4 can't both run their source generators in one
+       compilation (both own the MessagePack namespace), so annotated POCOs stay v4-only. -->
+  <ItemGroup>
+    <Reference Include="MessagePackV3" Aliases="V3">
+      <HintPath>..\..\tools\oracle\MessagePackV3.dll</HintPath>
+    </Reference>
+    <!-- v3 StandardResolver's AttributeFormatterResolver loads this at runtime the moment a
+         type routes through the full resolver chain (generic composition: int[][], Dictionary
+         etc.); without it v3.Serialize throws TypeInitializationException. Aliased V3 so it
+         never shadows v4's own annotations. -->
+    <PackageReference Include="MessagePack.Annotations" Version="3.1.8" Aliases="V3" />
+    <!-- the oracle's runtime dependency (string interning paths) -->
+    <PackageReference Include="Microsoft.NET.StringTools" Version="17.11.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.LZ4\MessagePack.LZ4.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="SerializerFoundation" />
+  </ItemGroup>
+
+</Project>

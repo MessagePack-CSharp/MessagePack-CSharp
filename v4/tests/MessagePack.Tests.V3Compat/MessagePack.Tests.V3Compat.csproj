@@ -1,0 +1,99 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- 13, NOT preview: C# 14's `field` keyword rebinds upstream patterns like
+         `public string Field => field;` (a property reading a private field named
+         "field") to the property's synthesized backing field, silently breaking the
+         ported tests' own semantics -->
+    <LangVersion>13</LangVersion>
+    <!-- xunit v3+ test projects are self-hosting executables -->
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- the ported v3.1.8 corpus is not nullable-annotated -->
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- test files under this project are verbatim copies of MessagePack-CSharp v3.1.8
+         tests/MessagePack.Tests (edited only where the v4 surface forces it, see
+         V3CompatShims/). Keeping them diffable against upstream matters more than this
+         repo's analyzer bar, so analyzers are off and upstream's warning noise is allowed. -->
+    <AnalysisLevel>none</AnalysisLevel>
+    <!-- upstream gates its dynamic-resolver behavior tests behind this symbol; v4 serves
+         those types through the runtime reflection tier, so the tests are live here -->
+    <DefineConstants>$(DefineConstants);DYNAMIC_GENERATION</DefineConstants>
+    <NoWarn>$(NoWarn);CS0618;CS0612;CS1998;CS0414;CS0169;CS0649;CS0067;CS8981;CS9113;IDE0005;xUnit1000;xUnit1013;xUnit1004;xUnit1051;xUnit2013</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- the REAL v3.1.8 runtime repacked as MessagePackV3 (tools/V3OracleRepack), same setup
+         as MessagePack.Tests: ported tests hand-author / pick apart wire payloads through
+         genuine v3 MessagePackWriter/Reader (aliased back to their v3 names in
+         V3CompatShims/V3OracleAliases.cs), so those bytes cross the v3<->v4 boundary for real -->
+    <Reference Include="MessagePackV3" Aliases="V3">
+      <HintPath>..\..\tools\oracle\MessagePackV3.dll</HintPath>
+    </Reference>
+    <PackageReference Include="MessagePack.Annotations" Version="3.1.8" Aliases="V3" />
+    <!-- the oracle's runtime dependency (string interning paths) -->
+    <PackageReference Include="Microsoft.NET.StringTools" Version="17.11.4" />
+    <!-- cross-library oracle used by the upstream suite (MessagePackBinaryTest etc.) -->
+    <PackageReference Include="MsgPack.Cli" Version="1.0.1" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.11.79" />
+    <PackageReference Include="Shouldly" Version="4.2.1" />
+    <PackageReference Include="xunit.v3" Version="4.0.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Shouldly" />
+    <Using Include="MessagePack" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.LZ4\MessagePack.LZ4.csproj" />
+  </ItemGroup>
+
+  <!-- Quarantine: files still written against v3-only surface. Excluded, kept in-tree
+       for later porting; each entry names the blocking API. -->
+  <ItemGroup>
+    <!-- MessagePackReader/MessagePackWriter structs (v4 reads/writes through IReadBuffer/IWriteBuffer extensions) -->
+    <Compile Remove="MessagePackReaderTests.cs" />
+    <Compile Remove="MessagePackReaderTests.ReadInt.cs" />
+    <Compile Remove="MessagePackReaderTests.ReadString.cs" />
+    <Compile Remove="MessagePackWriterTests.cs" />
+    <Compile Remove="MessagePackBinaryTest.cs" />
+    <!-- MessagePackStreamReader class (no v4 counterpart yet; async framing is 2-pass internal) -->
+    <Compile Remove="MessagePackStreamReaderTests.cs" />
+    <Compile Remove="MessagePackStreamReaderArrayTests.cs" />
+    <Compile Remove="MessagePackStreamReaderMapTests.cs" />
+    <!-- v3 MessagePackSecurity object model (v4: hash-flooding resistance is a resolver flag, depth is MaxDepth) -->
+    <Compile Remove="MessagePackSecurityTests.cs" />
+    <!-- v3 mutable-class MessagePackSerializerOptions object model (Clone/virtuals; v4 options are a sealed record) -->
+    <Compile Remove="MessagePackSerializerOptionsTests.cs" />
+    <!-- v3-style IMessagePackFormatter<T>/IFormatterResolver custom implementations (v4 formatter interface is buffer-generic) -->
+    <Compile Remove="SpecifiedFormatterResolverTest.cs" />
+    <Compile Remove="MessagePackFormatterPerFieldTest.cs" />
+    <Compile Remove="PrimitivelikeFormatterTest.cs" />
+    <Compile Remove="StringInterningTests.cs" />
+    <!-- v3 internal UnsafeMemory32/64 write helpers -->
+    <Compile Remove="UnsafeMemoryTest.cs" />
+    <!-- v3 internals: automata dictionary, byte-array string hash table, SipHash implementation -->
+    <Compile Remove="AutomataTests.cs" />
+    <Compile Remove="ByteArrayStringHashTableTest.cs" />
+    <Compile Remove="SipHashTests.cs" />
+    <!-- v3 dynamic-IL resolver assemblies vs AssemblyLoadContext; v4 has no runtime IL generation -->
+    <Compile Remove="AssemblyLoadContextTests.cs" />
+    <!-- authors old-spec payloads through v3's OldSpec WRITE mode; v4 deliberately has no
+         old-spec write support (read tolerance only - OldSpecBinaryCompatTests covers it) -->
+    <Compile Remove="OldSpecBinaryFormatterTest.cs" />
+    <!-- v3 formatter-level round-trips of NativeGuid/NativeDecimal via v3 writer/reader only; no v4 involvement -->
+    <Compile Remove="UnsafeFormattersTest.cs" />
+    <!-- needs ReactiveProperty + v3 MessagePack.ReactiveProperty extension package -->
+    <Compile Remove="ExtensionTests\ReactivePropertyTest.cs" />
+    <!-- needs v3 MessagePack.UnityShims package -->
+    <Compile Remove="ExtensionTests\UnityShimTest.cs" />
+  </ItemGroup>
+
+</Project>

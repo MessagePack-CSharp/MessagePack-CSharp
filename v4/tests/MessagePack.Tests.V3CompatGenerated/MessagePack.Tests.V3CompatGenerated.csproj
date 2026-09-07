@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- 13, NOT preview: same reason as MessagePack.Tests.V3Compat - C# 14's `field`
+         keyword rebinds upstream member-access patterns -->
+    <LangVersion>13</LangVersion>
+    <!-- xunit v3+ test projects are self-hosting executables -->
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- verbatim copies of MessagePack-CSharp v3.1.8's SourceGenerator.ExecutionTests +
+         MapModeExecutionTests (behavior tests over source-generated types - the generated
+         TEXT differs from v3 by design, the roundtrip semantics must not). Same editing
+         policy as MessagePack.Tests.V3Compat: V3COMPAT-EDIT markers, reasons on every
+         Compile Remove. UNLIKE V3Compat, the source generator runs here - that is the
+         point of this project. -->
+    <AnalysisLevel>none</AnalysisLevel>
+    <NoWarn>$(NoWarn);CS0618;CS1998;CS8981;xUnit1051;xUnit2013</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="4.0.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="MessagePack" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\src\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- Quarantine: v3 SG plumbing with no v4 counterpart -->
+  <ItemGroup>
+    <!-- v4 registers generated formatters via module initializer; there is no resolver declaration attribute -->
+    <Compile Remove="GeneratedMessagePackResolver.cs" />
+    <Compile Remove="MapMode\GeneratedMessagePackResolver.cs" />
+    <!-- v3's [CompositeResolver] source-generated resolver composition; v4 composes factory chains at runtime -->
+    <Compile Remove="GeneratedCompositeResolverTests.cs" />
+    <!-- ExcludeFormatterFromSourceGeneratedResolver is a ratified deletion (MessagePackAttributes.cs
+         deviation #2): the v4 generator never auto-collects hand-written formatter classes into a
+         resolver, so both the exclusion attribute and the collection it excludes from are gone -->
+    <Compile Remove="ExcludedCustomFormatter.cs" />
+  </ItemGroup>
+
+</Project>

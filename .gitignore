@@ -373,3 +373,5 @@ BenchmarkDotNet.Artifacts/
 src/MessagePack.UnityClient/.vsconfig
 
 *.lscache
+
+v4/tests/MessagePack.Tests.Fuzz/corpus/

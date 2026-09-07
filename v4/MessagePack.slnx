@@ -1,0 +1,43 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/sandbox/">
+    <Project Path="sandbox/DisassembleBenchmark/DisassembleBenchmark.csproj" />
+    <Project Path="sandbox/SandboxConsoleApp/SandboxConsoleApp.csproj" />
+    <Project Path="sandbox/StartupProbe/StartupProbe.csproj" />
+    <Project Path="sandbox/SandboxLibrary/SandboxLibrary.csproj" />
+    <Project Path="sandbox/V3GeneratedModels/V3GeneratedModels.csproj" />
+  </Folder>
+  <Folder Name="/sandbox/Compat/">
+    <Project Path="sandbox/CompatRepro/App/App.csproj" />
+    <Project Path="sandbox/CompatRepro/ThirdParty/ThirdParty.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/MessagePack.Annotations/MessagePack.Annotations.csproj" />
+    <Project Path="src/MessagePack.LZ4/MessagePack.LZ4.csproj" />
+    <Project Path="src/MessagePack.SourceGenerator.CodeFixes/MessagePack.SourceGenerator.CodeFixes.csproj" />
+    <Project Path="src/MessagePack.SourceGenerator/MessagePack.SourceGenerator.csproj" />
+    <Project Path="src/MessagePack/MessagePack.csproj" />
+    <Project Path="src/SerializerFoundation.Analyzers/SerializerFoundation.Analyzers.csproj" />
+    <Project Path="src/SerializerFoundation/SerializerFoundation.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/V3OracleRepack/V3OracleRepack.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MessagePack.AotCompatibilityTest/MessagePack.AotCompatibilityTest.csproj" />
+    <Project Path="tests/MessagePack.Tests.LazyModuleTypes/MessagePack.Tests.LazyModuleTypes.csproj" />
+    <Project Path="tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj" />
+    <Project Path="tests/MessagePack.Tests.Net9/MessagePack.Tests.Net9.csproj" />
+    <Project Path="tests/MessagePack.Tests.NetFx/MessagePack.Tests.NetFx.csproj" />
+    <Project Path="tests/MessagePack.Tests.V3Compat/MessagePack.Tests.V3Compat.csproj" />
+    <Project Path="tests/MessagePack.Tests.V3CompatGenerated/MessagePack.Tests.V3CompatGenerated.csproj" />
+    <Project Path="tests/MessagePack.Tests/MessagePack.Tests.csproj" />
+    <Project Path="tests/MessagePack.Tests.Robustness/MessagePack.Tests.Robustness.csproj" />
+    <Project Path="tests/MessagePack.Tests.Fuzz.Target/MessagePack.Tests.Fuzz.Target.csproj" />
+    <Project Path="tests/MessagePack.Tests.Fuzz/MessagePack.Tests.Fuzz.csproj" />
+  </Folder>
+</Solution>

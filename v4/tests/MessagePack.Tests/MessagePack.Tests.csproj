@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- C# union declarations (GeneratedUnionStructTests): compiler-only feature, works on
+         net10 with the IUnion/UnionAttribute polyfill in UnionPolyfill.cs -->
+    <LangVersion>preview</LangVersion>
+    <!-- xunit v3+ test projects are self-hosting executables -->
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- This project is an InternalsVisibleTo friend of the signed src assemblies, so it signs with the same key.
+         CS8002 (a signed assembly referencing unsigned packages) is harmless on every runtime this repo targets. -->
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\..\opensource.snk</AssemblyOriginatorKeyFile>
+    <NoWarn>$(NoWarn);CS8002</NoWarn>
+    <!-- the pointer-tier buffer tests pass stackalloc scratch via byte* -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <!-- v3 is the byte-compatibility oracle: the REAL MessagePack-CSharp 3.1.8 runtime,
+         repacked under the assembly name MessagePackV3 (tools/V3OracleRepack) so it can
+         coexist with this repo's MessagePack.dll in one process. Annotations keeps its
+         own package/assembly, so the attributes stay ONE identity for both serializers.
+         Both ride behind `extern alias V3`; the oracle runs on its dynamic resolvers. -->
+    <Reference Include="MessagePackV3" Aliases="V3">
+      <HintPath>..\..\tools\oracle\MessagePackV3.dll</HintPath>
+    </Reference>
+    <PackageReference Include="MessagePack.Annotations" Version="3.1.8" Aliases="V3" />
+    <!-- the oracle's runtime dependency (string interning paths) -->
+    <PackageReference Include="Microsoft.NET.StringTools" Version="17.11.4" />
+    <!-- KeyNamingPolicyTests' conversion oracle: JsonNamingPolicy.PascalCase is .NET 11 preview
+         surface, so the in-box .NET 10 System.Text.Json is not enough -->
+    <PackageReference Include="System.Text.Json" Version="11.0.0-preview.7.26381.103" />
+    <!-- pinned to the generator project's Roslyn floor so analyzer tests exercise the
+         same API surface that ships -->
+    <!-- the probe harness must BIND C# 14 extension members from MessagePack.dll metadata
+         (buffer.WriteString and friends), which needs a 5.x compiler; the analyzers
+         themselves keep their 4.8 floor and simply run on the newer host here -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+    <!-- code fix tests drive the fixers through a real AdhocWorkspace -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.0.0" />
+    <PackageReference Include="xunit.v3" Version="4.0.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.LZ4\MessagePack.LZ4.csproj" />
+    <!-- ReferenceOutputAssembly=true: analyzer unit tests instantiate the analyzer types
+         directly; the projects still run as analyzers on this project via OutputItemType -->
+    <ProjectReference Include="..\MessagePack.Tests.LazyModuleTypes\MessagePack.Tests.LazyModuleTypes.csproj" />
+    <ProjectReference Include="..\..\src\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+    <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+    <ProjectReference Include="..\..\src\MessagePack.SourceGenerator.CodeFixes\MessagePack.SourceGenerator.CodeFixes.csproj" ReferenceOutputAssembly="true" />
+  </ItemGroup>
+
+</Project>
