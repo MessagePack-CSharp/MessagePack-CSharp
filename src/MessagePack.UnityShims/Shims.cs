@@ -1,104 +1,38 @@
-﻿// Copyright (c) All contributors. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
+// Stand-ins for the UnityEngine value types, so code outside Unity (servers, tools, tests) can exchange the same
+// wire. Member names and constructors mirror UnityEngine exactly where the shared formatters touch them; the rest of
+// each type's Unity surface is deliberately absent. No MessagePack attributes: the formatters in
+// MessagePack.Unity/Runtime serve these types on both sides, so there is one wire definition.
+#nullable enable
+#pragma warning disable IDE1006 // Unity's lower-case member names
 using System;
-using MessagePack;
-
-#pragma warning disable SA1307 // Field should begin with upper-case letter
-#pragma warning disable SA1300 // Field should begin with upper-case letter
-#pragma warning disable IDE1006 // Field should begin with upper-case letter
-#pragma warning disable SA1401 // Fields should be private (we need fields rather than auto-properties for .NET Native compilation to work).
-#pragma warning disable SA1402 // File may only contain a single type
-#pragma warning disable SA1649 // type name matches file name
 
 namespace UnityEngine
 {
-    [MessagePackObject]
     public struct Vector2 : IEquatable<Vector2>
     {
-        [Key(0)]
         public float x;
-        [Key(1)]
         public float y;
 
-        private static readonly Vector2 ZeroVector = new(0.0f, 0.0f);
-        private static readonly Vector2 OneVector = new(1f, 1f);
-        private static readonly Vector2 UpVector = new(0.0f, 1f);
-        private static readonly Vector2 DownVector = new(0.0f, -1f);
-        private static readonly Vector2 LeftVector = new(-1f, 0.0f);
-        private static readonly Vector2 RightVector = new(1f, 0.0f);
-
-        [SerializationConstructor]
         public Vector2(float x, float y)
         {
             this.x = x;
             this.y = y;
         }
 
-        public override bool Equals(object other) => other is Vector2 other1 && this.Equals(other1);
-
-        public bool Equals(Vector2 other) => this.x == (double)other.x && this.y == (double)other.y;
-
-        public override int GetHashCode() => this.x.GetHashCode() ^ this.y.GetHashCode() << 2;
-
-        public static Vector2 zero = ZeroVector;
-
-        public static Vector2 one => OneVector;
-
-        public static Vector2 up => UpVector;
-
-        public static Vector2 down => DownVector;
-
-        public static Vector2 left => LeftVector;
-
-        public static Vector2 right => RightVector;
-
-        public static Vector2 operator +(Vector2 a, Vector2 b) => new(a.x + b.x, a.y + b.y);
-
-        public static Vector2 operator -(Vector2 a, Vector2 b) => new(a.x - b.x, a.y - b.y);
-
-        public static Vector2 operator *(Vector2 a, Vector2 b) => new(a.x * b.x, a.y * b.y);
-
-        public static Vector2 operator /(Vector2 a, Vector2 b) => new(a.x / b.x, a.y / b.y);
-
-        public static Vector2 operator -(Vector2 a) => new(-a.x, -a.y);
-
-        public static Vector2 operator *(Vector2 a, float d) => new(a.x * d, a.y * d);
-
-        public static Vector2 operator *(float d, Vector2 a) => new(a.x * d, a.y * d);
-
-        public static Vector2 operator /(Vector2 a, float d) => new(a.x / d, a.y / d);
-
-        public static bool operator ==(Vector2 lhs, Vector2 rhs)
-        {
-            float num1 = lhs.x - rhs.x;
-            float num2 = lhs.y - rhs.y;
-            return (num1 * (double)num1) + (num2 * (double)num2) < 9.9999994396249292E-11;
-        }
-
-        public static bool operator !=(Vector2 lhs, Vector2 rhs) => !(lhs == rhs);
+        public bool Equals(Vector2 other) => x == other.x && y == other.y;
+        public override bool Equals(object? obj) => obj is Vector2 other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(x, y);
+        public static bool operator ==(Vector2 left, Vector2 right) => left.Equals(right);
+        public static bool operator !=(Vector2 left, Vector2 right) => !left.Equals(right);
+        public override string ToString() => $"({x}, {y})";
     }
 
-    [MessagePackObject]
     public struct Vector3 : IEquatable<Vector3>
     {
-        [Key(0)]
         public float x;
-        [Key(1)]
         public float y;
-        [Key(2)]
         public float z;
 
-        private static readonly Vector3 ZeroVector = new(0.0f, 0.0f, 0.0f);
-        private static readonly Vector3 OneVector = new(1f, 1f, 1f);
-        private static readonly Vector3 UpVector = new(0.0f, 1f, 0.0f);
-        private static readonly Vector3 DownVector = new(0.0f, -1f, 0.0f);
-        private static readonly Vector3 LeftVector = new(-1f, 0.0f, 0.0f);
-        private static readonly Vector3 RightVector = new(1f, 0.0f, 0.0f);
-        private static readonly Vector3 ForwardVector = new(0.0f, 0.0f, 1f);
-        private static readonly Vector3 BackVector = new(0.0f, 0.0f, -1f);
-
-        [SerializationConstructor]
         public Vector3(float x, float y, float z)
         {
             this.x = x;
@@ -106,63 +40,21 @@ namespace UnityEngine
             this.z = z;
         }
 
-        public override bool Equals(object other) => other is Vector3 other1 && this.Equals(other1);
-
-        public bool Equals(Vector3 other) => this.x == (double)other.x && this.y == (double)other.y && this.z == (double)other.z;
-
-        public override int GetHashCode() => this.x.GetHashCode() ^ this.y.GetHashCode() << 2 ^ this.z.GetHashCode() >> 2;
-
-        public static Vector3 zero => ZeroVector;
-
-        public static Vector3 one => OneVector;
-
-        public static Vector3 forward => ForwardVector;
-
-        public static Vector3 back => BackVector;
-
-        public static Vector3 up => UpVector;
-
-        public static Vector3 down => DownVector;
-
-        public static Vector3 left => LeftVector;
-
-        public static Vector3 right => RightVector;
-
-        public static Vector3 operator +(Vector3 a, Vector3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z);
-
-        public static Vector3 operator -(Vector3 a, Vector3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
-
-        public static Vector3 operator -(Vector3 a) => new(-a.x, -a.y, -a.z);
-
-        public static Vector3 operator *(Vector3 a, float d) => new(a.x * d, a.y * d, a.z * d);
-
-        public static Vector3 operator *(float d, Vector3 a) => new(a.x * d, a.y * d, a.z * d);
-
-        public static Vector3 operator /(Vector3 a, float d) => new(a.x / d, a.y / d, a.z / d);
-
-        public static bool operator ==(Vector3 lhs, Vector3 rhs)
-        {
-            float num1 = lhs.x - rhs.x;
-            float num2 = lhs.y - rhs.y;
-            float num3 = lhs.z - rhs.z;
-            return (num1 * (double)num1) + (num2 * (double)num2) + (num3 * (double)num3) < 9.9999994396249292E-11;
-        }
-
-        public static bool operator !=(Vector3 lhs, Vector3 rhs) => !(lhs == rhs);
+        public bool Equals(Vector3 other) => x == other.x && y == other.y && z == other.z;
+        public override bool Equals(object? obj) => obj is Vector3 other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(x, y, z);
+        public static bool operator ==(Vector3 left, Vector3 right) => left.Equals(right);
+        public static bool operator !=(Vector3 left, Vector3 right) => !left.Equals(right);
+        public override string ToString() => $"({x}, {y}, {z})";
     }
 
-    [MessagePackObject]
     public struct Vector4 : IEquatable<Vector4>
     {
-        [Key(0)] public float x;
-        [Key(1)] public float y;
-        [Key(2)] public float z;
-        [Key(3)] public float w;
+        public float x;
+        public float y;
+        public float z;
+        public float w;
 
-        private static readonly Vector4 ZeroVector = new(0.0f, 0.0f, 0.0f, 0.0f);
-        private static readonly Vector4 OneVector = new(1f, 1f, 1f, 1f);
-
-        [SerializationConstructor]
         public Vector4(float x, float y, float z, float w)
         {
             this.x = x;
@@ -171,56 +63,20 @@ namespace UnityEngine
             this.w = w;
         }
 
-        public override bool Equals(object other) => other is Vector4 other1 && this.Equals(other1);
-
-        public bool Equals(Vector4 other) => this.x == (double)other.x && this.y == (double)other.y && this.z == (double)other.z && this.w == (double)other.w;
-
-        public override int GetHashCode() => this.x.GetHashCode() ^ this.y.GetHashCode() << 2 ^ this.z.GetHashCode() >> 2 ^ this.w.GetHashCode() >> 1;
-
-        public static Vector4 zero => ZeroVector;
-
-        public static Vector4 one = OneVector;
-
-        public static Vector4 operator +(Vector4 a, Vector4 b) => new(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
-
-        public static Vector4 operator -(Vector4 a, Vector4 b) => new(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w);
-
-        public static Vector4 operator -(Vector4 a) => new(-a.x, -a.y, -a.z, -a.w);
-
-        public static Vector4 operator *(Vector4 a, float d) => new(a.x * d, a.y * d, a.z * d, a.w * d);
-
-        public static Vector4 operator *(float d, Vector4 a) => new(a.x * d, a.y * d, a.z * d, a.w * d);
-
-        public static Vector4 operator /(Vector4 a, float d) => new(a.x / d, a.y / d, a.z / d, a.w / d);
-
-        public static bool operator ==(Vector4 lhs, Vector4 rhs)
-        {
-            float num1 = lhs.x - rhs.x;
-            float num2 = lhs.y - rhs.y;
-            float num3 = lhs.z - rhs.z;
-            float num4 = lhs.w - rhs.w;
-            return (num1 * (double)num1) + (num2 * (double)num2) + (num3 * (double)num3) +
-                (num4 * (double)num4) < 9.9999994396249292E-11;
-        }
-
-        public static bool operator !=(Vector4 lhs, Vector4 rhs) => !(lhs == rhs);
+        public bool Equals(Vector4 other) => x == other.x && y == other.y && z == other.z && w == other.w;
+        public override bool Equals(object? obj) => obj is Vector4 other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(x, y, z, w);
+        public static bool operator ==(Vector4 left, Vector4 right) => left.Equals(right);
+        public static bool operator !=(Vector4 left, Vector4 right) => !left.Equals(right);
     }
 
-    [MessagePackObject]
-    public struct Quaternion
+    public struct Quaternion : IEquatable<Quaternion>
     {
-        [Key(0)]
         public float x;
-        [Key(1)]
         public float y;
-        [Key(2)]
         public float z;
-        [Key(3)]
         public float w;
 
-        private static readonly Quaternion IdentityQuaternion = new(0.0f, 0.0f, 0.0f, 1f);
-
-        [SerializationConstructor]
         public Quaternion(float x, float y, float z, float w)
         {
             this.x = x;
@@ -229,27 +85,27 @@ namespace UnityEngine
             this.w = w;
         }
 
-        public static Quaternion identity => IdentityQuaternion;
+        public static Quaternion identity => new Quaternion(0f, 0f, 0f, 1f);
+
+        public bool Equals(Quaternion other) => x == other.x && y == other.y && z == other.z && w == other.w;
+        public override bool Equals(object? obj) => obj is Quaternion other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(x, y, z, w);
+        public static bool operator ==(Quaternion left, Quaternion right) => left.Equals(right);
+        public static bool operator !=(Quaternion left, Quaternion right) => !left.Equals(right);
     }
 
-    [MessagePackObject]
     public struct Color : IEquatable<Color>
     {
-        [Key(0)]
         public float r;
-        [Key(1)]
         public float g;
-        [Key(2)]
         public float b;
-        [Key(3)]
         public float a;
 
         public Color(float r, float g, float b)
-            : this(r, g, b, 1.0f)
+            : this(r, g, b, 1f)
         {
         }
 
-        [SerializationConstructor]
         public Color(float r, float g, float b, float a)
         {
             this.r = r;
@@ -258,284 +114,18 @@ namespace UnityEngine
             this.a = a;
         }
 
-        public override bool Equals(object other) => other is Color other1 && this.Equals(other1);
-
-        public override int GetHashCode() => this.r.GetHashCode() ^ this.g.GetHashCode() << 2 ^ this.b.GetHashCode() >> 2 ^ this.a.GetHashCode() >> 1;
-
-        public bool Equals(Color other) => this.r.Equals(other.r) && this.g.Equals(other.g) && this.b.Equals(other.b) && this.a.Equals(other.a);
-
-        public static Color operator +(Color a, Color b) => new(a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a);
-
-        public static Color operator -(Color a, Color b) => new(a.r - b.r, a.g - b.g, a.b - b.b, a.a - b.a);
-
-        public static Color operator *(Color a, Color b) => new(a.r * b.r, a.g * b.g, a.b * b.b, a.a * b.a);
-
-        public static Color operator *(Color a, float b) => new(a.r * b, a.g * b, a.b * b, a.a * b);
-
-        public static Color operator *(float b, Color a) => new(a.r * b, a.g * b, a.b * b, a.a * b);
-
-        public static Color operator /(Color a, float b) => new(a.r / b, a.g / b, a.b / b, a.a / b);
-
-        public static bool operator ==(Color lhs, Color rhs) => (Vector4)lhs == (Vector4)rhs;
-
-        public static bool operator !=(Color lhs, Color rhs) => !(lhs == rhs);
-
-        public static Color red => new(1f, 0.0f, 0.0f, 1f);
-
-        public static Color green => new(0.0f, 1f, 0.0f, 1f);
-
-        public static Color blue => new(0.0f, 0.0f, 1f, 1f);
-
-        public static Color white => new(1f, 1f, 1f, 1f);
-
-        public static Color black => new(0.0f, 0.0f, 0.0f, 1f);
-
-        public static Color yellow => new(1f, 0.921568632f, 0.0156862754f, 1f);
-
-        public static Color cyan => new(0.0f, 1f, 1f, 1f);
-
-        public static Color magenta => new(1f, 0.0f, 1f, 1f);
-
-        public static Color gray => new(0.5f, 0.5f, 0.5f, 1f);
-
-        public static Color clear => new(0.0f, 0.0f, 0.0f, 0.0f);
-
-        public static implicit operator Vector4(Color c) => new(c.r, c.g, c.b, c.a);
-
-        public static implicit operator Color(Vector4 v) => new(v.x, v.y, v.z, v.w);
+        public bool Equals(Color other) => r == other.r && g == other.g && b == other.b && a == other.a;
+        public override bool Equals(object? obj) => obj is Color other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(r, g, b, a);
+        public static bool operator ==(Color left, Color right) => left.Equals(right);
+        public static bool operator !=(Color left, Color right) => !left.Equals(right);
     }
 
-    [MessagePackObject]
-    public struct Bounds
+    public struct Color32 : IEquatable<Color32>
     {
-        [Key(0)]
-        public Vector3 center;
-
-        [IgnoreMember]
-        public Vector3 extents;
-
-        [Key(1)]
-        public Vector3 size
-        {
-            get
-            {
-                return this.extents * 2f;
-            }
-
-            set
-            {
-                this.extents = value * 0.5f;
-            }
-        }
-
-        [SerializationConstructor]
-        public Bounds(Vector3 center, Vector3 size)
-        {
-            this.center = center;
-            this.extents = size * 0.5f;
-        }
-    }
-
-    [MessagePackObject]
-    public struct Rect
-    {
-        [Key(0)]
-        public float x;
-
-        [Key(1)]
-        public float y;
-
-        [Key(2)]
-        public float width;
-
-        [Key(3)]
-        public float height;
-
-        [SerializationConstructor]
-        public Rect(float x, float y, float width, float height)
-        {
-            this.x = x;
-            this.y = y;
-            this.width = width;
-            this.height = height;
-        }
-
-        public Rect(Vector2 position, Vector2 size)
-        {
-            this.x = position.x;
-            this.y = position.y;
-            this.width = size.x;
-            this.height = size.y;
-        }
-
-        public Rect(Rect source)
-        {
-            this.x = source.x;
-            this.y = source.y;
-            this.width = source.width;
-            this.height = source.height;
-        }
-    }
-
-    // additional from 1.7.3.3
-    [MessagePackObject]
-    public sealed class AnimationCurve
-    {
-        [Key(0)]
-        public Keyframe[]? keys;
-
-        [IgnoreMember]
-        public int length
-        {
-            get { return this.keys?.Length ?? 0; }
-        }
-
-        [Key(1)]
-        public WrapMode postWrapMode;
-
-        [Key(2)]
-        public WrapMode preWrapMode;
-    }
-
-    [MessagePackObject]
-    public struct Keyframe
-    {
-        [Key(0)]
-        public float time;
-
-        [Key(1)]
-        public float value;
-
-        [Key(2)]
-        public float inTangent;
-
-        [Key(3)]
-        public float outTangent;
-
-        public Keyframe(float time, float value)
-        {
-            this.time = time;
-            this.value = value;
-            this.inTangent = 0f;
-            this.outTangent = 0f;
-        }
-
-        [SerializationConstructor]
-        public Keyframe(float time, float value, float inTangent, float outTangent)
-        {
-            this.time = time;
-            this.value = value;
-            this.inTangent = inTangent;
-            this.outTangent = outTangent;
-        }
-    }
-
-    public enum WrapMode
-    {
-        Once = 1,
-        Loop,
-        PingPong = 4,
-        Default = 0,
-        ClampForever = 8,
-        Clamp = 1,
-    }
-
-    [MessagePackObject]
-    public struct Matrix4x4
-    {
-        [Key(0)]
-        public float m00;
-        [Key(1)]
-        public float m10;
-        [Key(2)]
-        public float m20;
-        [Key(3)]
-        public float m30;
-        [Key(4)]
-        public float m01;
-        [Key(5)]
-        public float m11;
-        [Key(6)]
-        public float m21;
-        [Key(7)]
-        public float m31;
-        [Key(8)]
-        public float m02;
-        [Key(9)]
-        public float m12;
-        [Key(10)]
-        public float m22;
-        [Key(11)]
-        public float m32;
-        [Key(12)]
-        public float m03;
-        [Key(13)]
-        public float m13;
-        [Key(14)]
-        public float m23;
-        [Key(15)]
-        public float m33;
-    }
-
-    [MessagePackObject]
-    public sealed class Gradient
-    {
-        [Key(0)]
-        public GradientColorKey[]? colorKeys;
-
-        [Key(1)]
-        public GradientAlphaKey[]? alphaKeys;
-
-        [Key(2)]
-        public GradientMode mode;
-    }
-
-    [MessagePackObject]
-    public struct GradientColorKey
-    {
-        [Key(0)]
-        public Color color;
-        [Key(1)]
-        public float time;
-
-        public GradientColorKey(Color col, float time)
-        {
-            this.color = col;
-            this.time = time;
-        }
-    }
-
-    [MessagePackObject]
-    public struct GradientAlphaKey
-    {
-        [Key(0)]
-        public float alpha;
-        [Key(1)]
-        public float time;
-
-        public GradientAlphaKey(float alpha, float time)
-        {
-            this.alpha = alpha;
-            this.time = time;
-        }
-    }
-
-    public enum GradientMode
-    {
-        Blend,
-        Fixed,
-    }
-
-    [MessagePackObject]
-    public struct Color32
-    {
-        [Key(0)]
         public byte r;
-        [Key(1)]
         public byte g;
-        [Key(2)]
         public byte b;
-        [Key(3)]
         public byte a;
 
         public Color32(byte r, byte g, byte b, byte a)
@@ -545,23 +135,240 @@ namespace UnityEngine
             this.b = b;
             this.a = a;
         }
+
+        public bool Equals(Color32 other) => r == other.r && g == other.g && b == other.b && a == other.a;
+        public override bool Equals(object? obj) => obj is Color32 other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(r, g, b, a);
+        public static bool operator ==(Color32 left, Color32 right) => left.Equals(right);
+        public static bool operator !=(Color32 left, Color32 right) => !left.Equals(right);
     }
 
-    [MessagePackObject]
+    public struct Bounds : IEquatable<Bounds>
+    {
+        Vector3 m_Center;
+        Vector3 m_Extents;
+
+        public Bounds(Vector3 center, Vector3 size)
+        {
+            m_Center = center;
+            m_Extents = new Vector3(size.x * 0.5f, size.y * 0.5f, size.z * 0.5f);
+        }
+
+        public Vector3 center
+        {
+            get => m_Center;
+            set => m_Center = value;
+        }
+
+        public Vector3 size
+        {
+            get => new Vector3(m_Extents.x * 2f, m_Extents.y * 2f, m_Extents.z * 2f);
+            set => m_Extents = new Vector3(value.x * 0.5f, value.y * 0.5f, value.z * 0.5f);
+        }
+
+        public Vector3 extents
+        {
+            get => m_Extents;
+            set => m_Extents = value;
+        }
+
+        public bool Equals(Bounds other) => m_Center == other.m_Center && m_Extents == other.m_Extents;
+        public override bool Equals(object? obj) => obj is Bounds other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(m_Center, m_Extents);
+        public static bool operator ==(Bounds left, Bounds right) => left.Equals(right);
+        public static bool operator !=(Bounds left, Bounds right) => !left.Equals(right);
+    }
+
+    public struct Rect : IEquatable<Rect>
+    {
+        float m_XMin;
+        float m_YMin;
+        float m_Width;
+        float m_Height;
+
+        public Rect(float x, float y, float width, float height)
+        {
+            m_XMin = x;
+            m_YMin = y;
+            m_Width = width;
+            m_Height = height;
+        }
+
+        public float x { get => m_XMin; set => m_XMin = value; }
+        public float y { get => m_YMin; set => m_YMin = value; }
+        public float width { get => m_Width; set => m_Width = value; }
+        public float height { get => m_Height; set => m_Height = value; }
+
+        public bool Equals(Rect other) => m_XMin == other.m_XMin && m_YMin == other.m_YMin && m_Width == other.m_Width && m_Height == other.m_Height;
+        public override bool Equals(object? obj) => obj is Rect other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(m_XMin, m_YMin, m_Width, m_Height);
+        public static bool operator ==(Rect left, Rect right) => left.Equals(right);
+        public static bool operator !=(Rect left, Rect right) => !left.Equals(right);
+    }
+
+    public enum WrapMode
+    {
+        Once = 1,
+        Loop = 2,
+        PingPong = 4,
+        Default = 0,
+        ClampForever = 8,
+        Clamp = 1,
+    }
+
+    public struct Keyframe : IEquatable<Keyframe>
+    {
+        float m_Time;
+        float m_Value;
+        float m_InTangent;
+        float m_OutTangent;
+
+        public Keyframe(float time, float value)
+            : this(time, value, 0f, 0f)
+        {
+        }
+
+        public Keyframe(float time, float value, float inTangent, float outTangent)
+        {
+            m_Time = time;
+            m_Value = value;
+            m_InTangent = inTangent;
+            m_OutTangent = outTangent;
+        }
+
+        public float time { get => m_Time; set => m_Time = value; }
+        public float value { get => m_Value; set => m_Value = value; }
+        public float inTangent { get => m_InTangent; set => m_InTangent = value; }
+        public float outTangent { get => m_OutTangent; set => m_OutTangent = value; }
+
+        public bool Equals(Keyframe other) => m_Time == other.m_Time && m_Value == other.m_Value && m_InTangent == other.m_InTangent && m_OutTangent == other.m_OutTangent;
+        public override bool Equals(object? obj) => obj is Keyframe other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(m_Time, m_Value, m_InTangent, m_OutTangent);
+        public static bool operator ==(Keyframe left, Keyframe right) => left.Equals(right);
+        public static bool operator !=(Keyframe left, Keyframe right) => !left.Equals(right);
+    }
+
+    public sealed class AnimationCurve
+    {
+        Keyframe[] m_Keys;
+
+        public AnimationCurve()
+            : this(Array.Empty<Keyframe>())
+        {
+        }
+
+        public AnimationCurve(params Keyframe[] keys)
+        {
+            m_Keys = keys;
+        }
+
+        /// <summary>A copy of the keys, as in Unity.</summary>
+        public Keyframe[] keys
+        {
+            get => (Keyframe[])m_Keys.Clone();
+            set => m_Keys = value;
+        }
+
+        public int length => m_Keys.Length;
+        public WrapMode preWrapMode { get; set; }
+        public WrapMode postWrapMode { get; set; }
+    }
+
+    public struct Matrix4x4 : IEquatable<Matrix4x4>
+    {
+        public float m00;
+        public float m10;
+        public float m20;
+        public float m30;
+        public float m01;
+        public float m11;
+        public float m21;
+        public float m31;
+        public float m02;
+        public float m12;
+        public float m22;
+        public float m32;
+        public float m03;
+        public float m13;
+        public float m23;
+        public float m33;
+
+        public static Matrix4x4 identity
+        {
+            get
+            {
+                var m = default(Matrix4x4);
+                m.m00 = 1f;
+                m.m11 = 1f;
+                m.m22 = 1f;
+                m.m33 = 1f;
+                return m;
+            }
+        }
+
+        public bool Equals(Matrix4x4 o) =>
+            m00 == o.m00 && m10 == o.m10 && m20 == o.m20 && m30 == o.m30 &&
+            m01 == o.m01 && m11 == o.m11 && m21 == o.m21 && m31 == o.m31 &&
+            m02 == o.m02 && m12 == o.m12 && m22 == o.m22 && m32 == o.m32 &&
+            m03 == o.m03 && m13 == o.m13 && m23 == o.m23 && m33 == o.m33;
+        public override bool Equals(object? obj) => obj is Matrix4x4 other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(HashCode.Combine(m00, m10, m20, m30, m01, m11, m21, m31), HashCode.Combine(m02, m12, m22, m32, m03, m13, m23, m33));
+        public static bool operator ==(Matrix4x4 left, Matrix4x4 right) => left.Equals(right);
+        public static bool operator !=(Matrix4x4 left, Matrix4x4 right) => !left.Equals(right);
+    }
+
+    public enum GradientMode
+    {
+        Blend = 0,
+        Fixed = 1,
+        PerceptualBlend = 2,
+    }
+
+    public struct GradientColorKey : IEquatable<GradientColorKey>
+    {
+        public Color color;
+        public float time;
+
+        public GradientColorKey(Color col, float time)
+        {
+            color = col;
+            this.time = time;
+        }
+
+        public bool Equals(GradientColorKey other) => color == other.color && time == other.time;
+        public override bool Equals(object? obj) => obj is GradientColorKey other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(color, time);
+        public static bool operator ==(GradientColorKey left, GradientColorKey right) => left.Equals(right);
+        public static bool operator !=(GradientColorKey left, GradientColorKey right) => !left.Equals(right);
+    }
+
+    public struct GradientAlphaKey : IEquatable<GradientAlphaKey>
+    {
+        public float alpha;
+        public float time;
+
+        public GradientAlphaKey(float alpha, float time)
+        {
+            this.alpha = alpha;
+            this.time = time;
+        }
+
+        public bool Equals(GradientAlphaKey other) => alpha == other.alpha && time == other.time;
+        public override bool Equals(object? obj) => obj is GradientAlphaKey other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(alpha, time);
+        public static bool operator ==(GradientAlphaKey left, GradientAlphaKey right) => left.Equals(right);
+        public static bool operator !=(GradientAlphaKey left, GradientAlphaKey right) => !left.Equals(right);
+    }
+
+    public sealed class Gradient
+    {
+        public GradientColorKey[] colorKeys { get; set; } = Array.Empty<GradientColorKey>();
+        public GradientAlphaKey[] alphaKeys { get; set; } = Array.Empty<GradientAlphaKey>();
+        public GradientMode mode { get; set; }
+    }
+
     public sealed class RectOffset
     {
-        [Key(0)]
-        public int left;
-
-        [Key(1)]
-        public int right;
-
-        [Key(2)]
-        public int top;
-
-        [Key(3)]
-        public int bottom;
-
         public RectOffset()
         {
         }
@@ -573,62 +380,75 @@ namespace UnityEngine
             this.top = top;
             this.bottom = bottom;
         }
+
+        public int left { get; set; }
+        public int right { get; set; }
+        public int top { get; set; }
+        public int bottom { get; set; }
     }
 
-    [MessagePackObject]
-    public struct LayerMask
+    public struct LayerMask : IEquatable<LayerMask>
     {
-        [Key(0)]
-        public int value;
+        public int value { get; set; }
+
+        public static implicit operator int(LayerMask mask) => mask.value;
+        public static implicit operator LayerMask(int intVal) => new LayerMask { value = intVal };
+
+        public bool Equals(LayerMask other) => value == other.value;
+        public override bool Equals(object? obj) => obj is LayerMask other && Equals(other);
+        public override int GetHashCode() => value;
+        public static bool operator ==(LayerMask left, LayerMask right) => left.Equals(right);
+        public static bool operator !=(LayerMask left, LayerMask right) => !left.Equals(right);
     }
 
-    // from Unity2017.2
-    [MessagePackObject]
-    public struct Vector2Int
+    public struct Vector2Int : IEquatable<Vector2Int>
     {
-        [Key(0)]
-        public int x;
-        [Key(1)]
-        public int y;
+        int m_X;
+        int m_Y;
 
-        [SerializationConstructor]
         public Vector2Int(int x, int y)
         {
-            this.x = x;
-            this.y = y;
+            m_X = x;
+            m_Y = y;
         }
+
+        public int x { get => m_X; set => m_X = value; }
+        public int y { get => m_Y; set => m_Y = value; }
+
+        public bool Equals(Vector2Int other) => m_X == other.m_X && m_Y == other.m_Y;
+        public override bool Equals(object? obj) => obj is Vector2Int other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(m_X, m_Y);
+        public static bool operator ==(Vector2Int left, Vector2Int right) => left.Equals(right);
+        public static bool operator !=(Vector2Int left, Vector2Int right) => !left.Equals(right);
     }
 
-    [MessagePackObject]
-    public struct Vector3Int
+    public struct Vector3Int : IEquatable<Vector3Int>
     {
-        [Key(0)]
-        public int x;
-        [Key(1)]
-        public int y;
-        [Key(2)]
-        public int z;
+        int m_X;
+        int m_Y;
+        int m_Z;
 
-        [SerializationConstructor]
         public Vector3Int(int x, int y, int z)
         {
-            this.x = x;
-            this.y = y;
-            this.z = z;
+            m_X = x;
+            m_Y = y;
+            m_Z = z;
         }
 
-        public static Vector3Int operator *(Vector3Int a, int d)
-        {
-            return new Vector3Int(a.x * d, a.y * d, a.z * d);
-        }
+        public int x { get => m_X; set => m_X = value; }
+        public int y { get => m_Y; set => m_Y = value; }
+        public int z { get => m_Z; set => m_Z = value; }
+
+        public bool Equals(Vector3Int other) => m_X == other.m_X && m_Y == other.m_Y && m_Z == other.m_Z;
+        public override bool Equals(object? obj) => obj is Vector3Int other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(m_X, m_Y, m_Z);
+        public static bool operator ==(Vector3Int left, Vector3Int right) => left.Equals(right);
+        public static bool operator !=(Vector3Int left, Vector3Int right) => !left.Equals(right);
     }
 
-    [MessagePackObject]
-    public struct RangeInt
+    public struct RangeInt : IEquatable<RangeInt>
     {
-        [Key(0)]
         public int start;
-        [Key(1)]
         public int length;
 
         public RangeInt(int start, int length)
@@ -636,63 +456,59 @@ namespace UnityEngine
             this.start = start;
             this.length = length;
         }
+
+        public bool Equals(RangeInt other) => start == other.start && length == other.length;
+        public override bool Equals(object? obj) => obj is RangeInt other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(start, length);
+        public static bool operator ==(RangeInt left, RangeInt right) => left.Equals(right);
+        public static bool operator !=(RangeInt left, RangeInt right) => !left.Equals(right);
     }
 
-    [MessagePackObject]
-    public struct RectInt
+    public struct RectInt : IEquatable<RectInt>
     {
-        [Key(0)]
-        public int x;
+        int m_XMin;
+        int m_YMin;
+        int m_Width;
+        int m_Height;
 
-        [Key(1)]
-        public int y;
-
-        [Key(2)]
-        public int width;
-
-        [Key(3)]
-        public int height;
-
-        [SerializationConstructor]
-        public RectInt(int x, int y, int width, int height)
+        public RectInt(int xMin, int yMin, int width, int height)
         {
-            this.x = x;
-            this.y = y;
-            this.width = width;
-            this.height = height;
+            m_XMin = xMin;
+            m_YMin = yMin;
+            m_Width = width;
+            m_Height = height;
         }
 
-        public RectInt(Vector2Int position, Vector2Int size)
-        {
-            this.x = position.x;
-            this.y = position.y;
-            this.width = size.x;
-            this.height = size.y;
-        }
+        public int x { get => m_XMin; set => m_XMin = value; }
+        public int y { get => m_YMin; set => m_YMin = value; }
+        public int width { get => m_Width; set => m_Width = value; }
+        public int height { get => m_Height; set => m_Height = value; }
 
-        public RectInt(RectInt source)
-        {
-            this.x = source.x;
-            this.y = source.y;
-            this.width = source.width;
-            this.height = source.height;
-        }
+        public bool Equals(RectInt other) => m_XMin == other.m_XMin && m_YMin == other.m_YMin && m_Width == other.m_Width && m_Height == other.m_Height;
+        public override bool Equals(object? obj) => obj is RectInt other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(m_XMin, m_YMin, m_Width, m_Height);
+        public static bool operator ==(RectInt left, RectInt right) => left.Equals(right);
+        public static bool operator !=(RectInt left, RectInt right) => !left.Equals(right);
     }
 
-    [MessagePackObject]
-    public struct BoundsInt
+    public struct BoundsInt : IEquatable<BoundsInt>
     {
-        [Key(0)]
-        public Vector3Int position;
+        Vector3Int m_Position;
+        Vector3Int m_Size;
 
-        [Key(1)]
-        public Vector3Int size;
-
-        [SerializationConstructor]
         public BoundsInt(Vector3Int position, Vector3Int size)
         {
-            this.position = position;
-            this.size = size;
+            m_Position = position;
+            m_Size = size;
         }
+
+        public Vector3Int position { get => m_Position; set => m_Position = value; }
+        public Vector3Int size { get => m_Size; set => m_Size = value; }
+
+        public bool Equals(BoundsInt other) => m_Position == other.m_Position && m_Size == other.m_Size;
+        public override bool Equals(object? obj) => obj is BoundsInt other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(m_Position, m_Size);
+        public static bool operator ==(BoundsInt left, BoundsInt right) => left.Equals(right);
+        public static bool operator !=(BoundsInt left, BoundsInt right) => !left.Equals(right);
     }
 }

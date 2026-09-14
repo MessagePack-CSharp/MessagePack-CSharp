@@ -1,6 +1,0 @@
-<Project>
-  <Import Project="$([MSBuild]::GetPathOfFileAbove($(MSBuildThisFile), $(MSBuildThisFileDirectory)..))" />
-  <PropertyGroup>
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
-</Project>

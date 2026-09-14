@@ -1,104 +1,37 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- The assembly keeps the project name. CAUTION: v3's generator (from the
+         MessagePackAnalyzer package) is ALSO named MessagePack.SourceGenerator.dll and
+         same-named analyzer files get deduplicated by highest AssemblyVersion — never
+         reference that package in a project consuming this generator (no project does:
+         the v3 oracle is a repacked runtime dll, not the NuGet package). -->
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <AnalyzerLanguage>cs</AnalyzerLanguage>
-    <DebugType>embedded</DebugType>
-    <IsPackable>false</IsPackable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
-    <NoWarn>$(NoWarn);RS2007</NoWarn>
+    <!-- RS2008: analyzer release tracking files are packaging ceremony, not needed in the lab -->
+    <NoWarn>$(NoWarn);RS2008</NoWarn>
+    <!-- demotes the linked KeyNamingPolicy.cs types to internal (see that file) -->
+    <DefineConstants>$(DefineConstants);MESSAGEPACK_SOURCE_GENERATOR</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="AnalyzerReleases.Shipped.md" />
-    <None Remove="AnalyzerReleases.Unshipped.md" />
+    <!-- keep the floor low: the IDE loads generators with ITS OWN Roslyn, so targeting a
+         new Microsoft.CodeAnalysis breaks Visual Studio versions older than that Roslyn
+         while dotnet build keeps working. 4.3.1 is the floor Unity sets: Unity 2022.3 and
+         Unity 6 ship Roslyn 4.3, and a generator referencing a newer compiler is skipped
+         outright there (warning CS9057, verified on 6000.0.20 with the 4.8 build: no
+         generated source at all). ForAttributeWithMetadataName needs exactly 4.3.1. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
-    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+    <!-- shared source: compile-time key conversion must match the runtime reflection tier
+         exactly, so both compile the same file (an analyzer cannot reference MessagePack) -->
+    <Compile Include="..\MessagePack\KeyNamingPolicy.cs" Link="KeyNamingPolicy.cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="..\MessagePack\Internal\AutomataKeyGen.cs" LinkBase="MessagePack\Internal" />
-    <Compile Include="..\MessagePack\SafeBitConverter.cs" LinkBase="MessagePack" />
-    <Compile Include="..\MessagePack\MessagePackSerializationException.cs" LinkBase="MessagePack" />
-    <Compile Update="Transforms\CompositeResolverTemplate.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>CompositeResolverTemplate.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Transforms\EnumTemplate.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>EnumTemplate.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Transforms\FormatterTemplate.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>FormatterTemplate.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Transforms\ResolverTemplate.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>ResolverTemplate.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Transforms\StringKey\StringKeyFormatterTemplate.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>StringKeyFormatterTemplate.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Transforms\TemplatePartials.cs">
-      <DependentUpon>%(FileName).tt</DependentUpon>
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-    </Compile>
-    <Compile Update="Transforms\UnionTemplate.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>UnionTemplate.tt</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Transforms\CompositeResolverTemplate.tt">
-      <Generator>TextTemplatingFilePreprocessor</Generator>
-      <LastGenOutput>CompositeResolverTemplate.cs</LastGenOutput>
-    </None>
-    <None Update="Transforms\EnumTemplate.tt">
-      <LastGenOutput>EnumTemplate.cs</LastGenOutput>
-      <Generator>TextTemplatingFilePreprocessor</Generator>
-    </None>
-    <None Update="Transforms\FormatterTemplate.tt">
-      <LastGenOutput>FormatterTemplate.cs</LastGenOutput>
-      <Generator>TextTemplatingFilePreprocessor</Generator>
-    </None>
-    <None Update="Transforms\ResolverTemplate.tt">
-      <LastGenOutput>ResolverTemplate.cs</LastGenOutput>
-      <Generator>TextTemplatingFilePreprocessor</Generator>
-    </None>
-    <None Update="Transforms\StringKey\StringKeyFormatterTemplate.tt">
-      <LastGenOutput>StringKeyFormatterTemplate.cs</LastGenOutput>
-      <Generator>TextTemplatingFilePreprocessor</Generator>
-      <CustomToolNamespace>MessagePack.SourceGenerator.Transforms</CustomToolNamespace>
-    </None>
-    <None Update="Transforms\UnionTemplate.tt">
-      <LastGenOutput>UnionTemplate.cs</LastGenOutput>
-      <Generator>TextTemplatingFilePreprocessor</Generator>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" PrivateAssets="all" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-  </ItemGroup>
-
-  <Import Project="$(MSBuildProjectName).targets" />
 </Project>

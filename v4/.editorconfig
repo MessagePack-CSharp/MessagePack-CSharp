@@ -1,3 +1,0 @@
-root = true
-[*.cs]
-dotnet_diagnostic.IDE0011.severity = silent

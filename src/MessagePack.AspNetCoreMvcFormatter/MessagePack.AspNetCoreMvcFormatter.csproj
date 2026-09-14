@@ -1,25 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net8.0;net9.0</TargetFrameworks>
-    <Title>ASP.NET Core MVC Input/Output MessagePack formatter</Title>
-    <Description>ASP.NET Core MVC Input/Output MessagePack formatter.</Description>
-    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;aspnetcore;aspnetcoremvc</PackageTags>
-  </PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk">
 
-  <Choose>
-    <When Condition="'$(TargetFramework)'=='netstandard2.0'">
-      <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" />
-      </ItemGroup>
-    </When>
-    <Otherwise>
-      <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
-      </ItemGroup>
-    </Otherwise>
-  </Choose>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsAotCompatible>true</IsAotCompatible>
+		<Description>ASP.NET Core MVC input/output formatters for MessagePack (application/x-msgpack), the v4 counterpart of MessagePack.AspNetCoreMvcFormatter.</Description>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+		<ProjectReference Include="..\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
 </Project>

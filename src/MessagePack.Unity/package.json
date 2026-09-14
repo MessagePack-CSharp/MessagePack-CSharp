@@ -1,0 +1,10 @@
+{
+  "name": "com.messagepack-csharp.unity",
+  "version": "4.0.0-preview.1",
+  "displayName": "MessagePack for C# - Unity",
+  "description": "UnityEngine type formatters (Vector2/3/4, Quaternion, Color, Rect, Bounds, Matrix4x4, AnimationCurve, Gradient, ...) for MessagePack for C# v4, in the v3-compatible array wire form. The serializer core (MessagePack, SerializerFoundation and their dependencies, including the source generator) comes from NuGet, e.g. through NuGetForUnity.",
+  "unity": "2022.3",
+  "keywords": [ "MessagePack", "Serialization" ],
+  "author": { "name": "MessagePack-CSharp" },
+  "license": "MIT"
+}

@@ -1,6 +1,0 @@
-# Always check out .tt files with CRLF line endings so the code-behind file, which captures these, remains consistent with the .tt file.
-# LF line endings don't trigger T4's automatic empty line removal, so CRLF is preferable.
-*.tt eol=crlf
-
-# Even the T4-generated transform source can include line endings within C# strings, so we need to ensure that the .cs files are checked out with CRLF line endings too.
-*.cs eol=crlf

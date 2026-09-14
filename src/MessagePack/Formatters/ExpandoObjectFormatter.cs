@@ -1,83 +1,108 @@
-﻿// Copyright (c) All contributors. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-using System.Collections.Generic;
 using System.Dynamic;
 
-namespace MessagePack.Formatters
+namespace MessagePack.Formatters;
+
+// MsgPack104: the member-name map keys are protocol structure, not string values; the values themselves go through the resolver's object formatter.
+#pragma warning disable MsgPack104
+
+// The deprecation text lives OUTSIDE the [Obsolete] members so that referencing it
+// (annotations on non-obsolete members) does not itself trip CS0618.
+internal static class ExpandoObjectMessages
 {
-    public class ExpandoObjectFormatter : IMessagePackFormatter<ExpandoObject?>
+    internal const string Deprecated =
+        "ExpandoObject support exists for v3 compatibility only and is not part of any default chain: " +
+        "every deserialized member pays ExpandoObject's class-transition Add cost, so total cost grows " +
+        "quadratically with member count, which turns untrusted input into a CPU-amplification DoS vector. " +
+        "Prefer Dictionary<string, object?>, which reads the identical map wire form. To keep ExpandoObject, " +
+        "compose ExpandoObjectFormatterFactory into the chain and suppress this warning to accept the cost.";
+}
+
+// v3-compatible ExpandoObject support: a map of member name to value, values delegated
+// to the resolver's object formatter (so a typeless chain embeds concrete types and a
+// default chain writes primitive-object forms). Only the statically-requested root comes
+// back as ExpandoObject; nested maps deserialize per the object formatter's rules
+// (Dictionary<object, object?>), matching v3.
+//
+// Deliberately NOT in the default chain (and refused by the Generic/Reflection
+// catch-alls): the opt-in surface is ExpandoObjectFormatterFactory below.
+[Obsolete(ExpandoObjectMessages.Deprecated)]
+public sealed partial class ExpandoObjectFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ExpandoObject?>
+{
+    IMessagePackFormatter<TWriteBuffer, TReadBuffer, object?> valueFormatter = null!;
+
+    public void Initialize(MessagePackFormatterResolver resolver)
     {
-        internal const int MaximumUntrustedDataMemberCount = 1024;
+        valueFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, object?>();
+    }
 
-        public static readonly IMessagePackFormatter<ExpandoObject?> Instance = new ExpandoObjectFormatter();
-
-        private ExpandoObjectFormatter()
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ExpandoObject? value)
+    {
+        if (value == null)
         {
+            buffer.WriteNil();
+            return;
         }
 
-        public ExpandoObject? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        var members = (ICollection<KeyValuePair<string, object?>>)value;
+        state.Enter();
+        buffer.WriteMapHeader(members.Count);
+        foreach (var member in members)
         {
-            if (reader.TryReadNil())
-            {
-                return null;
-            }
+            buffer.WriteString(member.Key);
+            valueFormatter.Serialize(ref buffer, ref state, member.Value);
+        }
+        state.Exit();
+    }
 
-            var result = new ExpandoObject();
-            int count = reader.ReadMapHeader();
-            ThrowIfMapTooLargeForUntrustedData(count, options);
-            if (count > 0)
-            {
-                IFormatterResolver resolver = options.Resolver;
-                IMessagePackFormatter<string> keyFormatter = resolver.GetFormatterWithVerify<string>();
-                IMessagePackFormatter<object> valueFormatter = resolver.GetFormatterWithVerify<object>();
-                IDictionary<string, object?> dictionary = result;
-
-                options.Security.DepthStep(ref reader);
-                try
-                {
-                    for (int i = 0; i < count; i++)
-                    {
-                        string key = keyFormatter.Deserialize(ref reader, options);
-                        object value = valueFormatter.Deserialize(ref reader, options);
-                        dictionary.Add(key, value);
-                    }
-                }
-                finally
-                {
-                    reader.Depth--;
-                }
-            }
-
-            return result;
+    public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref ExpandoObject? value)
+    {
+        if (buffer.TryReadNil())
+        {
+            value = null;
+            return;
         }
 
-        internal static void ThrowIfMapTooLargeForUntrustedData(int count, MessagePackSerializerOptions options)
+        var count = buffer.ReadMapHeader();
+        var result = new ExpandoObject();
+        var members = (IDictionary<string, object?>)result;
+        state.Enter();
+        for (int i = 0; i < count; i++)
         {
-            if (options.Security.HashCollisionResistant && count > MaximumUntrustedDataMemberCount)
+            var key = buffer.ReadString();
+            if (key is null)
             {
-                throw new MessagePackSerializationException($"ExpandoObject map size exceeds the limit of {MaximumUntrustedDataMemberCount} entries allowed under untrusted data security mode.");
+                throw new MessagePackSerializationException("ExpandoObject member name must be a string, not nil.");
             }
+            object? memberValue = null;
+            valueFormatter.Deserialize(ref buffer, ref state, ref memberValue);
+            members[key] = memberValue;
         }
-
-        public void Serialize(ref MessagePackWriter writer, ExpandoObject? value, MessagePackSerializerOptions options)
+        // a duplicate member name collapsed into one slot: reject, same as the dictionary formatters
+        if (members.Count != count)
         {
-            if (value is null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            var dict = (IDictionary<string, object?>)value;
-            var keyFormatter = options.Resolver.GetFormatterWithVerify<string>();
-            var valueFormatter = options.Resolver.GetFormatterWithVerify<object?>();
-
-            writer.WriteMapHeader(dict.Count);
-            foreach (var item in dict)
-            {
-                keyFormatter.Serialize(ref writer, item.Key, options);
-                valueFormatter.Serialize(ref writer, item.Value, options);
-            }
+            MessagePackSerializationException.ThrowDuplicateMapKey();
         }
+        state.Exit();
+        value = result;
+    }
+}
+
+/// <summary>
+/// Serves <see cref="ExpandoObject"/>, which no default chain does (the [Obsolete] message
+/// carries the reasons). Compose it anywhere in a chain, nothing else claims the type:
+/// <c>MessagePackFormatterFactory.Combine(new ExpandoObjectFormatterFactory(), MessagePackFormatterFactory.Default)</c>.
+/// </summary>
+[Obsolete(ExpandoObjectMessages.Deprecated)]
+public sealed partial class ExpandoObjectFormatterFactory : MessagePackFormatterFactory
+{
+#if NET9_0_OR_GREATER
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+#else
+    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+        where TWriteBuffer : struct, IWriteBuffer
+        where TReadBuffer : struct, IReadBuffer
+#endif
+    {
+        return type == typeof(ExpandoObject) ? new ExpandoObjectFormatter<TWriteBuffer, TReadBuffer>() : null;
     }
 }

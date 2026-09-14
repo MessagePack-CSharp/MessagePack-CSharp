@@ -1,23 +1,35 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>MessagePack.Unity</RootNamespace>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net10.0;net11.0</TargetFrameworks>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
+		<RootNamespace>MessagePack.Unity</RootNamespace>
+		<Description>UnityEngine value-type shims (Vector2/3/4, Quaternion, Color, Rect, Bounds, Matrix4x4, AnimationCurve, Gradient, ...) with the same MessagePack formatters the MessagePack.Unity package uses inside Unity, so servers read and write the Unity wire.</Description>
+	</PropertyGroup>
 
-    <Title>MessagePack for C# Extension Support for Unity(add pseudo Vector type and fast Vectory[] extension formatter)</Title>
-    <Description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for Unity.</Description>
-    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity</PackageTags>
-  </PropertyGroup>
+	<!-- The formatter sources are shared with the Unity package (src/MessagePack.Unity/Runtime, the canonical copy,
+	     which the UPM layout must hold physically). Unity compiles them as C# 9, so the netstandard builds here pin
+	     that language level and are the compile gate; the modern TFMs build the same files at the latest level for the
+	     `allows ref struct` constraint path. -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'netstandard2.1'">
+		<LangVersion>9.0</LangVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters.cs"/>
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityResolver.cs"/>
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Extension\*.cs" LinkBase="Extension" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Include="..\MessagePack.Unity\Runtime\*.cs" LinkBase="Runtime" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
-  </ItemGroup>
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<PackageReference Include="System.Memory" Version="4.6.3" />
+		<PackageReference Include="Microsoft.Bcl.HashCode" Version="6.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+		<ProjectReference Include="..\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
 
 </Project>

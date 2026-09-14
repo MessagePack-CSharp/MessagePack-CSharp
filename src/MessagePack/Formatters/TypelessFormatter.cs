@@ -1,334 +1,460 @@
-﻿// Copyright (c) All contributors. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-using System;
-using System.Buffers;
-using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq.Expressions;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
-using MessagePack.Internal;
-using Nerdbank.Streams;
+using System.Text;
+using static MessagePack.MessagePackPrimitives;
 
-#pragma warning disable SA1402 // File may only contain a single type
-#pragma warning disable SA1649 // File name should match first type name
+namespace MessagePack.Formatters;
 
-namespace MessagePack.Formatters
+// MsgPack104: like PrimitiveObjectFormatter this is a self-contained mini-protocol (v3 parity); the embedded type name and runtime-typed string values are part of its wire form.
+#pragma warning disable MsgPack104
+
+// TypelessFormatter exists mainly for compatibility with v3.
+// The v3-compatible blacklist style is in TypelessTypeLoader.LoadAnyType, which is Obsolete.
+// There is also TypelessLoader.AllowedTypes, a relatively safe whitelist style.
+
+public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, object?>
 {
-    /// <summary>
-    /// Force serialize object as typeless.
-    /// </summary>
-    public sealed class ForceTypelessFormatter<T> : IMessagePackFormatter<T?>
+    // v3's MessagePackSerializerOptions.DisallowedTypes verbatim: the known BinaryFormatter-era deserialization gadgets.
+    static readonly HashSet<string> DisallowedTypes = new(StringComparer.Ordinal)
     {
-        public void Serialize(ref MessagePackWriter writer, T? value, MessagePackSerializerOptions options)
+        "Microsoft.VisualStudio.Text.Formatting.TextFormattingRunProperties",
+        "System.CodeDom.Compiler.CompilerResults",
+        "System.CodeDom.Compiler.TempFileCollection",
+        "System.Configuration.SettingsPropertyValue",
+        "System.Data.DataSet",
+        "System.Data.DataTable",
+        "System.Diagnostics.Process",
+        "System.Diagnostics.ProcessStartInfo",
+        "System.Drawing.Design.ToolboxItemContainer",
+        "System.IdentityModel.Tokens.SessionSecurityToken",
+        "System.Management.IWbemClassObjectFreeThreaded",
+        "System.Security.Claims.ClaimsIdentity",
+        "System.Security.Claims.ClaimsPrincipal",
+        "System.Security.Principal.WindowsIdentity",
+        "System.Security.Principal.WindowsPrincipal",
+        "System.Web.Security.RolePrincipal",
+        "System.Windows.Data.ObjectDataProvider",
+        "System.Windows.ResourceDictionary",
+        "System.Workflow.ComponentModel.Serialization.ActivitySurrogateSelector",
+    };
+
+    readonly TypeKeyHashTable<TypelessSerializer> serializersByType = new(); // TypeKeyHashTable: the serializer's add-only Type-keyed cache (open addressing, copy-on-write adds, lock-free reads), see TypeKeyTableBenchmark
+    readonly ConcurrentDictionary<string, TypelessSerializer> serializersByName = new();
+    readonly TypelessTypeLoader typeLoader;
+    readonly bool omitAssemblyVersion;
+    readonly PrimitiveObjectFormatter<TWriteBuffer, TReadBuffer> primitiveFallback = new();
+    MessagePackFormatterResolver resolver = null!;
+
+    // omitAssemblyVersion writes type names without Version/Culture/PublicKeyToken,
+    // falling back to the full name when the short one does not resolve.
+    // the v3 option of the same name.
+    public TypelessFormatter(TypelessTypeLoader typeLoader, bool omitAssemblyVersion = false)
+    {
+        ArgumentNullException.ThrowIfNull(typeLoader);
+        this.typeLoader = typeLoader;
+        this.omitAssemblyVersion = omitAssemblyVersion;
+    }
+
+    public void Initialize(MessagePackFormatterResolver resolver)
+    {
+        this.resolver = resolver;
+        primitiveFallback.Initialize(resolver);
+    }
+
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, object? value)
+    {
+        if (value is null)
         {
-            TypelessFormatter.Instance.Serialize(ref writer, (object?)value, options);
+            buffer.WriteNil();
+            return;
         }
 
-        public T? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        var type = value.GetType();
+        if (!type.IsEnum) // enums wrap; GetTypeCode would report the underlying integer
         {
-            return (T?)TypelessFormatter.Instance.Deserialize(ref reader, options);
+            switch (Type.GetTypeCode(type))
+            {
+                case TypeCode.Boolean: buffer.WriteBoolean((bool)value); return;
+                case TypeCode.SByte: buffer.WriteForcedInt8((sbyte)value); return;
+                case TypeCode.Byte: buffer.WriteForcedUInt8((byte)value); return;
+                case TypeCode.Int16: buffer.WriteForcedInt16((short)value); return;
+                case TypeCode.UInt16: buffer.WriteForcedUInt16((ushort)value); return;
+                case TypeCode.Int32: buffer.WriteForcedInt32((int)value); return;
+                case TypeCode.UInt32: buffer.WriteForcedUInt32((uint)value); return;
+                case TypeCode.Int64: buffer.WriteForcedInt64((long)value); return;
+                case TypeCode.UInt64: buffer.WriteForcedUInt64((ulong)value); return;
+                case TypeCode.Single: buffer.WriteSingle((float)value); return;
+                case TypeCode.Double: buffer.WriteDouble((double)value); return;
+                case TypeCode.String: buffer.WriteString((string)value); return;
+                    // Char, DateTime, Decimal fall through: v3 wraps them
+            }
+            if (type == typeof(byte[]))
+            {
+                buffer.WriteBinary((byte[])value);
+                return;
+            }
+        }
+
+        SerializeWrapped(ref buffer, ref state, value, type);
+    }
+
+    void SerializeWrapped(ref TWriteBuffer buffer, ref SerializeState state, object value, Type type)
+    {
+        var serializer = GetSerializerByType(type);
+
+        // the ext header carries the body length, so the value stages first
+        var staging = new CompatibleArrayPoolListWriteBuffer();
+        try
+        {
+            state.Enter();
+            serializer.Serialize(ref staging, ref state, value);
+            state.Exit();
+
+            var segments = staging.GetWrittenSegments();
+            var name = serializer.EncodedTypeName;
+            var bodyLength = name.Length + segments.Length;
+            if (bodyLength > int.MaxValue)
+            {
+                throw new MessagePackSerializationException($"Typeless body for '{type.FullName}' exceeds the ext32 length limit.");
+            }
+
+            buffer.Advance(UnsafeWriteExtHeader(ref buffer.GetReference(MaxExtHeaderLength), ThisLibraryExtensionTypeCodes.TypelessFormatter, (int)bodyLength));
+            buffer.Advance(UnsafeWriteRaw(ref buffer.GetReference(name.Length), name));
+            while (segments.TryGetNext(out var segment))
+            {
+                buffer.Advance(UnsafeWriteRaw(ref buffer.GetReference(segment.Length), segment));
+            }
+        }
+        finally
+        {
+            staging.Dispose();
         }
     }
 
-#pragma warning restore SA1649 // File name should match first type name
-
-    /// <summary>
-    /// For `object` field that holds derived from `object` value, ex: var arr = new object[] { 1, "a", new Model() };.
-    /// </summary>
-    public sealed class TypelessFormatter : IMessagePackFormatter<object?>
+    public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref object? value)
     {
-        private delegate void SerializeMethod(object dynamicContractlessFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
-
-        private delegate object DeserializeMethod(object dynamicContractlessFormatter, ref MessagePackReader reader, MessagePackSerializerOptions options);
-
-        /// <summary>
-        /// The singleton instance that can be used.
-        /// </summary>
-        public static readonly IMessagePackFormatter<object?> Instance = new TypelessFormatter();
-
-        private static readonly ThreadsafeTypeKeyHashTable<SerializeMethod> Serializers = new();
-        private static readonly ThreadsafeTypeKeyHashTable<DeserializeMethod> Deserializers = new();
-        private static readonly ThreadsafeTypeKeyHashTable<byte[]?> FullTypeNameCache = new();
-        private static readonly ThreadsafeTypeKeyHashTable<byte[]?> ShortenedTypeNameCache = new();
-        private static readonly AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type> TypeCache = new(new StringArraySegmentByteAscymmetricEqualityComparer());
-
-        private static readonly HashSet<Type> UseBuiltinTypes = new HashSet<Type>
+        if (buffer.TryReadExtHeader(ThisLibraryExtensionTypeCodes.TypelessFormatter, out var declaredBodyLength))
         {
-            typeof(Boolean),
-            ////typeof(Char),
-            typeof(SByte),
-            typeof(Byte),
-            typeof(Int16),
-            typeof(UInt16),
-            typeof(Int32),
-            typeof(UInt32),
-            typeof(Int64),
-            typeof(UInt64),
-            typeof(Single),
-            typeof(Double),
-            typeof(string),
-            typeof(byte[]),
+            var bodyStart = buffer.BytesConsumed;
+            var typeName = buffer.ReadString();
+            if (typeName is null)
+            {
+                throw new MessagePackSerializationException("Typeless payload carries a nil type name.");
+            }
+            var serializer = GetSerializerByName(typeName);
+            state.Enter();
+            value = serializer.Deserialize(ref buffer, ref state);
+            state.Exit();
 
-            // array should save their types.
-            ////typeof(Boolean[]),
-            ////typeof(Char[]),
-            ////typeof(SByte[]),
-            ////typeof(Int16[]),
-            ////typeof(UInt16[]),
-            ////typeof(Int32[]),
-            ////typeof(UInt32[]),
-            ////typeof(Int64[]),
-            ////typeof(UInt64[]),
-            ////typeof(Single[]),
-            ////typeof(Double[]),
-            ////typeof(string[]),
-
-            typeof(Boolean?),
-            ////typeof(Char?),
-            typeof(SByte?),
-            typeof(Byte?),
-            typeof(Int16?),
-            typeof(UInt16?),
-            typeof(Int32?),
-            typeof(UInt32?),
-            typeof(Int64?),
-            typeof(UInt64?),
-            typeof(Single?),
-            typeof(Double?),
-        };
-
-        ////ForceSizePrimitiveObjectResolver.Instance,
-        ////ContractlessStandardResolverAllowPrivate.Instance);
-
-        // mscorlib or System.Private.CoreLib
-        private static readonly bool IsMscorlib = typeof(int).AssemblyQualifiedName!.Contains("mscorlib");
-
-        static TypelessFormatter()
-        {
-            Serializers.TryAdd(typeof(object), _ => (object p1, ref MessagePackWriter p2, object p3, MessagePackSerializerOptions p4) => { });
-            Deserializers.TryAdd(typeof(object), _ => (object p1, ref MessagePackReader p2, MessagePackSerializerOptions p3) => new object());
+            // the declared body length is the boundary a header-based skip (TryReadToken)
+            // would use; a parse consuming a different amount means the two disagree on
+            // where this ext ends (parser-differential message smuggling), so enforce equality
+            var consumed = buffer.BytesConsumed - bodyStart;
+            if (consumed != declaredBodyLength)
+            {
+                throw new MessagePackSerializationException($"Typeless ext declares a {declaredBodyLength} byte body but its content spans {consumed} bytes.");
+            }
+            return;
         }
 
-        private string BuildTypeName(Type type, MessagePackSerializerOptions options)
+        primitiveFallback.Deserialize(ref buffer, ref state, ref value);
+    }
+
+    TypelessSerializer GetSerializerByType(Type type)
+    {
+        if (serializersByType.TryGetValue(type, out var slot))
         {
-            if (options.OmitAssemblyVersion)
-            {
-                string full = type.AssemblyQualifiedName!;
+            return slot;
+        }
+        return CreateSerializerForType(type);
+    }
 
-                var shortened = MessagePackSerializerOptions.AssemblyNameVersionSelectorRegex.Replace(full, string.Empty);
-                if (Type.GetType(shortened, false) == null)
-                {
-                    // if type cannot be found with shortened name - use full name
-                    shortened = full;
-                }
+    TypelessSerializer GetSerializerByName(string typeName)
+    {
+        if (serializersByName.TryGetValue(typeName, out var slot))
+        {
+            return slot;
+        }
+        return CreateSerializerForName(typeName);
+    }
 
-                return shortened;
-            }
-            else
+    static readonly MethodInfo createSerializerMethod = typeof(TypelessFormatter<TWriteBuffer, TReadBuffer>).GetMethod(nameof(CreateSerializer), BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "instances only exist behind TypelessFormatterFactory's RequiresDynamicCode gate; the caller has already opted into dynamic code")]
+    [UnconditionalSuppressMessage("Trimming", "IL2060", Justification = "CreateSerializer is a private member of this formatter, rooted by the typeof/nameof reference above; its type argument is the value's runtime type, which the caller roots")]
+    [UnconditionalSuppressMessage("Trimming", "IL2057", Justification = "the omitAssemblyVersion probe only verifies that the shortened spelling of an already-loaded type still resolves; gated behind TypelessFormatterFactory's RequiresUnreferencedCode annotation")]
+    TypelessSerializer CreateSerializerForType(Type type)
+    {
+        var typeName = type.AssemblyQualifiedName ?? type.FullName!;
+        if (omitAssemblyVersion)
+        {
+            // v3 rule: use the shortened spelling only when it still resolves
+            var shortened = TypelessTypeNames.SubtractFullNameRegex.Replace(typeName, string.Empty);
+            if (Type.GetType(shortened, throwOnError: false) != null)
             {
-                return type.AssemblyQualifiedName!;
+                typeName = shortened;
             }
         }
+        var serializer = type == typeof(DateTime)
+            ? new DateTimeSerializer(typeName)
+            : (TypelessSerializer)createSerializerMethod.MakeGenericMethod(type).Invoke(this, [typeName])!;
+        // the write side never seeds serializersByName: that cache is the read side's, and every entry in it
+        // has passed the type loader and the deny list. Seeding it here would let a type this process serialized
+        // deserialize without those checks (a shared resolver makes the read-side policy depend on cache state)
+        return serializersByType.GetOrAdd(type, serializer);
+    }
 
-        public void Serialize(ref MessagePackWriter writer, object? value, MessagePackSerializerOptions options)
+    // Bound on payload-spelling cache entries. Type.GetType is lenient about whitespace and
+    // version/culture spelling, so distinct spellings of ONE type are effectively unbounded
+    // and attacker-minted; without a cap each novel spelling would pin a permanent dictionary
+    // entry (memory-growth DoS, even through the AllowedTypes loader). Legit writers (this
+    // process included) use one stable spelling per type, so the cap only ever bites a
+    // spelling flood - which falls back to re-resolving per message: the attacker pays the
+    // parse, nothing accumulates.
+    const int MaxCachedTypeNameCount = 1024;
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    TypelessSerializer CreateSerializerForName(string typeName)
+    {
+        if (typeName.Length > 1024)
         {
-            if (value == null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            Type type = value.GetType();
-
-            var typeNameCache = options.OmitAssemblyVersion ? ShortenedTypeNameCache : FullTypeNameCache;
-            if (!typeNameCache.TryGetValue(type, out byte[]? typeName))
-            {
-                if (type.IsAnonymous() || UseBuiltinTypes.Contains(type))
-                {
-                    typeName = null;
-                }
-                else
-                {
-                    typeName = StringEncoding.UTF8.GetBytes(this.BuildTypeName(type, options));
-                }
-
-                typeNameCache.TryAdd(type, typeName);
-            }
-
-            if (typeName == null)
-            {
-                DynamicObjectTypeFallbackFormatter.Instance.Serialize(ref writer, value, options);
-                return;
-            }
-
-            var formatter = options.Resolver.GetFormatterDynamicWithVerify(type);
-
-            // don't use GetOrAdd for avoid closure capture.
-            if (!Serializers.TryGetValue(type, out SerializeMethod? serializeMethod))
-            {
-                // double check locking...
-                lock (Serializers)
-                {
-                    if (!Serializers.TryGetValue(type, out serializeMethod))
-                    {
-                        Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
-                        ParameterExpression param0 = Expression.Parameter(typeof(object), "formatter");
-                        ParameterExpression param1 = Expression.Parameter(typeof(MessagePackWriter).MakeByRefType(), "writer");
-                        ParameterExpression param2 = Expression.Parameter(typeof(object), "value");
-                        ParameterExpression param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
-
-                        MethodInfo serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) })!;
-
-                        MethodCallExpression body = Expression.Call(
-                            Expression.Convert(param0, formatterType),
-                            serializeMethodInfo,
-                            param1,
-                            type.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
-                            param3);
-
-                        serializeMethod = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3).Compile();
-
-                        Serializers.TryAdd(type, serializeMethod);
-                    }
-                }
-            }
-
-            // mark will be written at the end, when size is known
-            using (var scratchRental = options.SequencePool.Rent())
-            {
-                MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
-                scratchWriter.WriteString(typeName);
-                serializeMethod(formatter, ref scratchWriter, value, options);
-                scratchWriter.Flush();
-
-                // mark as extension with code 100
-                writer.WriteExtensionFormat(new ExtensionResult((sbyte)ReservedExtensionTypeCodes.TypelessFormatter, scratchRental.Value));
-            }
+            throw new MessagePackSerializationException($"Typeless type name is implausibly long ({typeName.Length} chars).");
         }
 
-        public object? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        var type = typeLoader.LoadType(typeName);
+        if (type is null)
         {
-            if (reader.TryReadNil())
+            throw new MessagePackSerializationException($"Can't load type '{typeName}'.");
+        }
+        ThrowIfDisallowed(type);
+
+        var serializer = GetSerializerByType(type);
+        if (serializersByName.Count < MaxCachedTypeNameCount)
+        {
+            serializersByName.TryAdd(typeName, serializer); // the payload spelling may differ from our own
+        }
+        return serializer;
+    }
+
+    // The deny list must see through wrappers. A gadget nested as Process[], Process[][],
+    // List<Process>, or Nullable<Process> resolves to a type whose OWN FullName is not on
+    // the list, and the array/generic formatter reconstructs the element WITHOUT re-entering
+    // typeless, so an outer-type-only check would let the gadget ride in. Walk element types
+    // and generic arguments so every component is vetted (v3 fixed the same gap for CVE-2026-48517).
+    static void ThrowIfDisallowed(Type type)
+    {
+        // depth-bounded, iterative: the 1024-char type-name cap already bounds the graph;
+        // the budget just makes the bound explicit rather than trusting the stack.
+        var pending = new Stack<Type>();
+        pending.Push(type);
+        var budget = 256;
+        while (pending.Count > 0)
+        {
+            var current = pending.Pop();
+            if (budget-- <= 0)
             {
-                return null;
+                throw new MessagePackSerializationException($"Typeless type '{type.FullName}' nests too deeply to vet against the deny list.");
             }
-
-            if (reader.NextMessagePackType == MessagePackType.Extension)
+            if (current.FullName is { } fullName && DisallowedTypes.Contains(fullName))
             {
-                MessagePackReader peekReader = reader.CreatePeekReader();
-                ExtensionHeader ext = peekReader.ReadExtensionFormatHeader();
-                if (ext.TypeCode == ReservedExtensionTypeCodes.TypelessFormatter)
+                throw new MessagePackSerializationException($"Deserialization of type '{fullName}' is disallowed: it is a known deserialization gadget (v3's default deny list).");
+            }
+            if (current.HasElementType && current.GetElementType() is { } element) // array, pointer, byref
+            {
+                pending.Push(element);
+            }
+            if (current.IsConstructedGenericType)
+            {
+                foreach (var argument in current.GetGenericArguments())
                 {
-                    reader = peekReader; // commit the experimental read made earlier.
-
-                    // it has type name serialized
-                    ReadOnlySequence<byte> typeName = reader.ReadStringSequence() ?? throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<object>();
-                    ArraySegment<byte> typeNameArraySegment;
-                    byte[]? rented = null;
-                    if (!typeName.IsSingleSegment || !MemoryMarshal.TryGetArray(typeName.First, out typeNameArraySegment))
-                    {
-                        rented = ArrayPool<byte>.Shared.Rent((int)typeName.Length);
-                        typeName.CopyTo(rented);
-                        typeNameArraySegment = new ArraySegment<byte>(rented, 0, (int)typeName.Length);
-                    }
-
-                    var result = this.DeserializeByTypeName(typeNameArraySegment, ref reader, options);
-
-                    if (rented != null)
-                    {
-                        ArrayPool<byte>.Shared.Return(rented);
-                    }
-
-                    return result;
+                    pending.Push(argument);
                 }
             }
+        }
+    }
 
-            // fallback
-            return DynamicObjectTypeFallbackFormatter.Instance.Deserialize(ref reader, options);
+    TypelessSerializer<T> CreateSerializer<T>(string typeName)
+    {
+        return new TypelessSerializer<T>(typeName, resolver);
+    }
+
+    abstract class TypelessSerializer
+    {
+        // the full str token (header + UTF-8 name), ready for raw emission
+        public readonly byte[] EncodedTypeName;
+
+        protected TypelessSerializer(string typeName)
+        {
+            var utf8 = Encoding.UTF8.GetBytes(typeName);
+            var token = new byte[MaxStrHeaderLength + utf8.Length];
+            TryWriteString(token, utf8, out var written);
+            EncodedTypeName = token.AsSpan(0, written).ToArray();
         }
 
-        /// <summary>
-        /// Does not support deserializing of anonymous types
-        /// Type should be covered by preceeding resolvers in complex/standard resolver.
-        /// </summary>
-        private object DeserializeByTypeName(ArraySegment<byte> typeName, ref MessagePackReader byteSequence, MessagePackSerializerOptions options)
+        public abstract void Serialize(ref CompatibleArrayPoolListWriteBuffer staging, ref SerializeState state, object value);
+        public abstract object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state);
+    }
+
+    sealed class TypelessSerializer<T> : TypelessSerializer
+    {
+        readonly IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T> writeFormatter;
+        readonly IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> readFormatter;
+
+        public TypelessSerializer(string typeName, MessagePackFormatterResolver resolver)
+            : base(typeName)
         {
-            Requires.Argument(typeName.Array is not null, nameof(typeName), "Array cannot be null.");
-
-            // try get type with assembly name, throw if not found
-            if (!TypeCache.TryGetValue(typeName, out Type? type))
-            {
-                var buffer = new byte[typeName.Count];
-                Buffer.BlockCopy(typeName.Array, typeName.Offset, buffer, 0, buffer.Length);
-                var str = StringEncoding.UTF8.GetString(buffer);
-                type = options.LoadType(str);
-                if (type == null)
-                {
-                    if (IsMscorlib && str.Contains("System.Private.CoreLib"))
-                    {
-                        str = str.Replace("System.Private.CoreLib", "mscorlib");
-                        type = Type.GetType(str, true); // throw
-                    }
-                    else if (!IsMscorlib && str.Contains("mscorlib"))
-                    {
-                        str = str.Replace("mscorlib", "System.Private.CoreLib");
-                        type = Type.GetType(str, true); // throw
-                    }
-                    else
-                    {
-                        type = Type.GetType(str, true); // re-throw
-                    }
-
-                    if (type is null)
-                    {
-                        throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<Type>();
-                    }
-                }
-
-                TypeCache.TryAdd(buffer, type);
-            }
-
-            options.ThrowIfDeserializingTypeIsDisallowed(type);
-
-            var formatter = options.Resolver.GetFormatterDynamicWithVerify(type);
-
-            if (!Deserializers.TryGetValue(type, out DeserializeMethod? deserializeMethod))
-            {
-                lock (Deserializers)
-                {
-                    if (!Deserializers.TryGetValue(type, out deserializeMethod))
-                    {
-                        Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
-                        ParameterExpression param0 = Expression.Parameter(typeof(object), "formatter");
-                        ParameterExpression param1 = Expression.Parameter(typeof(MessagePackReader).MakeByRefType(), "reader");
-                        ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
-
-                        MethodInfo deserializeMethodInfo = formatterType.GetRuntimeMethod("Deserialize", new[] { typeof(MessagePackReader).MakeByRefType(), typeof(MessagePackSerializerOptions) })!;
-
-                        MethodCallExpression deserialize = Expression.Call(
-                            Expression.Convert(param0, formatterType),
-                            deserializeMethodInfo,
-                            param1,
-                            param2);
-
-                        Expression body = deserialize;
-                        if (type.IsValueType)
-                        {
-                            body = Expression.Convert(deserialize, typeof(object));
-                        }
-
-                        deserializeMethod = Expression.Lambda<DeserializeMethod>(body, param0, param1, param2).Compile();
-
-                        Deserializers.TryAdd(type, deserializeMethod);
-                    }
-                }
-            }
-
-            return deserializeMethod(formatter, ref byteSequence, options);
+            writeFormatter = resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>();
+            readFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
         }
+
+        public override void Serialize(ref CompatibleArrayPoolListWriteBuffer staging, ref SerializeState state, object value)
+        {
+            writeFormatter.Serialize(ref staging, ref state, (T)value);
+        }
+
+        public override object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state)
+        {
+            T concrete = default!;
+            readFormatter.Deserialize(ref buffer, ref state, ref concrete);
+            return concrete;
+        }
+    }
+
+    // v3's typeless DateTime is ToBinary as smallest int64 (Kind-preserving), NOT the imestamp ext the standard formatter writes.
+    sealed class DateTimeSerializer : TypelessSerializer
+    {
+        public DateTimeSerializer(string typeName)
+            : base(typeName)
+        {
+        }
+
+        public override void Serialize(ref CompatibleArrayPoolListWriteBuffer staging, ref SerializeState state, object value)
+        {
+            staging.WriteInt64(((DateTime)value).ToBinary());
+        }
+
+        public override object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state)
+        {
+            return DateTime.FromBinary(buffer.ReadInt64());
+        }
+    }
+}
+
+// The gate/annotation texts live OUTSIDE the [Obsolete] member so that referencing them
+// (annotations on non-obsolete members) does not itself trip CS0618.
+internal static class TypelessMessages
+{
+    internal const string UntrustedData =
+        "LoadAnyType executes Type.GetType over payload-provided names, which can load assemblies and instantiate unexpected types. " +
+        "This exists for v3 compatibility with trusted data only; use TypelessTypeLoader.AllowedTypes (or Create) for anything less " +
+        "than fully trusted input, and suppress this warning to accept the risk.";
+
+    internal const string RequiresUnreferencedCode =
+        "Typeless serialization loads types by payload-provided names and closes formatters over them via reflection; " +
+        "trimming can remove those types silently. Typeless is incompatible with trimming and Native AOT.";
+}
+
+/// <summary>
+/// v3's ForceTypelessFormatter: routes an interface- or abstract-typed slot through the
+/// typeless formatter, so the concrete runtime type rides the payload and comes back on
+/// read. Boxes on write, casts on read. Initialize resolves the chain's object formatter —
+/// the typeless object factory, composed first — so the dispatcher caches, type loader and
+/// deny-list vetting are shared rather than duplicated.
+/// </summary>
+public sealed partial class ForceTypelessFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T?>
+{
+    IMessagePackFormatter<TWriteBuffer, TReadBuffer, object?> typeless = null!;
+
+    public void Initialize(MessagePackFormatterResolver resolver)
+    {
+        typeless = resolver.GetFormatter<TWriteBuffer, TReadBuffer, object?>();
+    }
+
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T? value)
+    {
+        typeless.Serialize(ref buffer, ref state, value);
+    }
+
+    public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref T? value)
+    {
+        object? boxed = null;
+        typeless.Deserialize(ref buffer, ref state, ref boxed);
+        value = (T?)boxed;
+    }
+}
+
+/// <summary>
+/// The tail half of typeless composition: claims interface and abstract static types with
+/// <see cref="ForceTypelessFormatter{TWriteBuffer, TReadBuffer, T}"/>. Compose it LAST —
+/// v3's TypelessObjectResolver sat at the end of its chain for the same reason: the
+/// collection interfaces (IList&lt;T&gt;, IDictionary&lt;K,V&gt;, ...) belong to BuiltIn's
+/// interface formatters and union roots to their generated formatters; only interfaces and
+/// abstract bases nothing else serves fall through to the typeless envelope.
+/// </summary>
+public sealed class ForceTypelessFormatterFactory : GenericFormatterFactoryBase
+{
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(TypelessMessages.RequiresUnreferencedCode)]
+    public ForceTypelessFormatterFactory()
+    {
+    }
+
+    protected override Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments)
+    {
+        typeArguments = [type];
+        constructorArguments = null;
+        return type.IsInterface || type.IsAbstract ? typeof(ForceTypelessFormatterFactory<>) : null;
+    }
+}
+
+public sealed partial class ForceTypelessFormatterFactory<T> : MessagePackFormatterFactory
+{
+    // one method, two signatures: net9+ overrides the base virtual (constraints
+    // inherited); downlevel has no base member, so the constraints are spelled out
+#if NET9_0_OR_GREATER
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+#else
+    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+        where TWriteBuffer : struct, IWriteBuffer
+        where TReadBuffer : struct, IReadBuffer
+#endif
+    {
+        return type == typeof(T) ? new ForceTypelessFormatter<TWriteBuffer, TReadBuffer, T>() : null;
+    }
+}
+
+/// <summary>
+/// Serves <see cref="object"/> with Typeless semantics: concrete type names embedded in the payload.
+/// Compose it FIRST (before the tiers that would claim object).
+/// </summary>
+public sealed partial class TypelessFormatterFactory : MessagePackFormatterFactory
+{
+    readonly TypelessTypeLoader typeLoader;
+    readonly bool omitAssemblyVersion;
+
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(TypelessMessages.RequiresUnreferencedCode)]
+    public TypelessFormatterFactory(TypelessTypeLoader typeLoader, bool omitAssemblyVersion = false)
+    {
+        ArgumentNullException.ThrowIfNull(typeLoader);
+        this.typeLoader = typeLoader;
+        this.omitAssemblyVersion = omitAssemblyVersion;
+    }
+
+#if NET9_0_OR_GREATER
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+#else
+    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+        where TWriteBuffer : struct, IWriteBuffer
+        where TReadBuffer : struct, IReadBuffer
+#endif
+    {
+        if (type == typeof(object))
+        {
+            return new TypelessFormatter<TWriteBuffer, TReadBuffer>(typeLoader, omitAssemblyVersion);
+        }
+        return null;
     }
 }

@@ -1,13 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project>
 
+  <!-- xUnit's style analyzers are noise for this repo (user decision); grow the list as
+       new rules start firing. $(NoWarn) accumulation keeps the SDK defaults (1701;1702). -->
   <PropertyGroup>
-    <NonShipping>true</NonShipping>
-    <IsTestProject>true</IsTestProject>
-    <IsPackable>false</IsPackable>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <NoWarn>$(NoWarn);xUnit1051;xUnit2013</NoWarn>
   </PropertyGroup>
-
-  <Import Project="$([MSBuild]::GetPathOfFileAbove($(MSBuildThisFile), $(MSBuildThisFileDirectory)..))" />
 
 </Project>

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- netstandard2.1 is the floor because NativeCompressions has no netstandard2.0 asset; the core starts at
+		     netstandard2.0 and this package follows as soon as NativeCompressions ships that target. -->
+		<TargetFrameworks>netstandard2.1;net10.0</TargetFrameworks>
+		<LangVersion>preview</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
+		<Description>LZ4 compression for MessagePack as a MessagePackMessageProcessor — v3-compatible Lz4Block (ext 99) and Lz4BlockArray (ext 98) envelopes, composed purely through options.</Description>
+	</PropertyGroup>
+
+	<!-- The netstandard2.1 asset is never loaded by .NET Framework (which stops at netstandard2.0), so the strong-name
+	     mismatch against the unsigned NativeCompressions assemblies (CS8002) cannot bite there; every other runtime ignores it. -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+		<NoWarn>$(NoWarn);CS8002</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Using Include="System.Buffers" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="NativeCompressions.LZ4" Version="0.6.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+		<ProjectReference Include="..\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+</Project>

@@ -1,7 +1,0 @@
-[*.tt]
-indent_size = 4
-indent_style = tab
-
-[*.cs]
-# RS1035: Do not use APIs banned for analyzers(such as Environment.NewLine)
-dotnet_diagnostic.RS1035.severity = suggestion

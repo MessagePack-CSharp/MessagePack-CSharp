@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- the uplevel twin of MessagePack.Tests.NetFx: exercises the net11.0 build of the
+         core, whose NET11_0_OR_GREATER surface (BFloat16, Decimal32/64/128, Complex<T>)
+         does not exist on the main net10 test project -->
+    <TargetFramework>net11.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="4.0.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+    <!-- the net11.0 build of MessagePack.Zstandard runs on the in-box System.IO.Compression codec; the same
+         test file the net10 project runs against NativeCompressions is linked in, so both codecs are pinned -->
+    <ProjectReference Include="..\..\src\MessagePack.Zstandard\MessagePack.Zstandard.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\MessagePack.Tests\ZstandardTests.cs" Link="ZstandardTests.cs" />
+    <Compile Include="..\MessagePack.Tests\ZstandardFrameTests.cs" Link="ZstandardFrameTests.cs" />
+  </ItemGroup>
+
+</Project>

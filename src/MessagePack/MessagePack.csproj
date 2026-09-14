@@ -1,115 +1,74 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net472</TargetFrameworks>
-    <NoWarn>$(NoWarn);CS0649</NoWarn>
-    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <DefineConstants Condition=" '$(TargetFramework)' == 'net8.0' or '$(TargetFramework)' == 'net9.0' or '$(TargetFramework)' == 'netstandard2.1' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+	<PropertyGroup>
+		<!-- Since net10.0 is defined as the minimum version where `allows ref struct` can be used, it must not be removed in the future. -->
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net10.0;net11.0</TargetFrameworks>
+		<LangVersion>preview</LangVersion>
+		
+		<!-- Unsafe Evolution is not mature yet, so we will not apply it. -->
+		<!--<Features>$(Features);updated-memory-safety-rules</Features>-->
+		
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<!--<AnalysisMode>Recommended</AnalysisMode>-->
+		<Description>Experimental maximum-speed MessagePack serializer core, built from disassembly/branch-counter-driven optimization of the primitive layer.</Description>
 
-    <Title>MessagePack for C#</Title>
-    <Description>Extremely Fast MessagePack(MsgPack) Serializer for C# (.NET Framework, .NET 6, Unity, Xamarin).</Description>
-    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
-    <AssemblyName>MessagePack</AssemblyName>
-  </PropertyGroup>
+		<PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
+		<IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
+		<!-- After library released, we should keep and validate api compatiblity -->
+		<!--<EnablePackageValidation>true</EnablePackageValidation>-->
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.StringTools" PrivateAssets="compile" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
-    <PackageReference Include="System.Collections.Immutable" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
-    <PackageReference Include="System.Collections.Immutable" />
-    <PackageReference Include="System.Reflection.Emit" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
-    <PackageReference Include="System.Collections.Immutable" />
-  </ItemGroup>
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<PackageReference Include="System.Memory" Version="4.6.3" />
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'netstandard2.1'">
+		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
+		<PackageReference Include="System.IO.Pipelines" Version="10.0.0" />
+		<PackageReference Include="System.Collections.Immutable" Version="10.0.0" />
+		<PackageReference Include="System.Text.Json" Version="10.0.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MessagePack.Annotations\MessagePack.Annotations.csproj" />
-    <!-- We don't consume the analyzers in this library itself,
-         but we reference the project to add a package dependency so users of this library will automatically get the analyzers. -->
-    <ProjectReference Include="..\MessagePack.Analyzers\MessagePack.Analyzers.csproj"
-                      PrivateAssets="none" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="PolySharp" Version="1.16.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="Formatters\ForceSizePrimitiveFormatter.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>ForceSizePrimitiveFormatter.cs</LastGenOutput>
-    </None>
-    <None Update="Formatters\PrimitiveFormatter.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>PrimitiveFormatter.cs</LastGenOutput>
-    </None>
-    <None Update="Formatters\TupleFormatter.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>TupleFormatter.cs</LastGenOutput>
-    </None>
-    <None Update="Formatters\ValueTupleFormatter.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>ValueTupleFormatter.cs</LastGenOutput>
-    </None>
-    <None Update="Internal\UnsafeMemory.tt">
-      <LastGenOutput>UnsafeMemory.cs</LastGenOutput>
-      <Generator>TextTemplatingFileGenerator</Generator>
-    </None>
-    <None Update="MessagePackPrimitives.Readers.Integers.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>MessagePackPrimitives.Readers.Integers.cs</LastGenOutput>
-    </None>
-    <None Update="MessagePackReader.Integers.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>MessagePackReader.Integers.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\SerializerFoundation\SerializerFoundation.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Formatters\ForceSizePrimitiveFormatter.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>ForceSizePrimitiveFormatter.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Formatters\PrimitiveFormatter.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>PrimitiveFormatter.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Formatters\TupleFormatter.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>TupleFormatter.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Formatters\ValueTupleFormatter.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>ValueTupleFormatter.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Internal\UnsafeMemory.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>UnsafeMemory.tt</DependentUpon>
-    </Compile>
-    <Compile Update="MessagePackPrimitives.Readers.Integers.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>MessagePackPrimitives.Readers.Integers.tt</DependentUpon>
-    </Compile>
-    <Compile Update="MessagePackReader.Integers.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>MessagePackReader.Integers.tt</DependentUpon>
-    </Compile>
-  </ItemGroup>
+	<!-- Analyzer -->
+	<ItemGroup>
+		<ProjectReference Include="..\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-  </ItemGroup>
+	<!-- The package ships the source generator (with its analyzers and code fixes) under analyzers/dotnet/cs, so a
+	     consumer gets generated formatters from the PackageReference alone; Unity picks the same folder up through
+	     NuGetForUnity (RoslynAnalyzer label). The generator dlls are netstandard2.0 and built before this project. -->
+	<ItemGroup>
+		<None Include="..\MessagePack.SourceGenerator\bin\$(Configuration)\netstandard2.0\MessagePack.SourceGenerator.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None Include="..\MessagePack.SourceGenerator.CodeFixes\bin\$(Configuration)\netstandard2.0\MessagePack.SourceGenerator.CodeFixes.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None Include="..\SerializerFoundation.Analyzers\bin\$(Configuration)\netstandard2.0\SerializerFoundation.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+	</ItemGroup>
+
+	<!-- Global Usings -->
+	<ItemGroup>
+		<Using Include="SerializerFoundation" />
+		<Using Include="System.Buffers" />
+		<Using Include="System.Runtime.CompilerServices" />
+		<Using Include="System.Runtime.InteropServices" />
+	</ItemGroup>
+
+	<!-- Internals Visible To -->
+	<ItemGroup>
+		<InternalsVisibleTo Include="MessagePack.Tests" Key="$(MessagePackPublicKey)" />
+		<InternalsVisibleTo Include="DisassembleBenchmark" Key="$(MessagePackPublicKey)" />
+	</ItemGroup>
 
 </Project>

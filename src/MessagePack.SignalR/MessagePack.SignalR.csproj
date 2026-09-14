@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsAotCompatible>true</IsAotCompatible>
+		<Description>SignalR "messagepack" hub protocol (server and client) on MessagePack v4, wire-compatible with Microsoft.AspNetCore.SignalR.Protocols.MessagePack and the JavaScript/Java MessagePack clients.</Description>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- the hub message model and IHubProtocol; a package rather than the shared framework so client-only
+		     applications (HubConnection in a console or desktop app) can reference this too -->
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Common" Version="10.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+		<ProjectReference Include="..\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+</Project>
