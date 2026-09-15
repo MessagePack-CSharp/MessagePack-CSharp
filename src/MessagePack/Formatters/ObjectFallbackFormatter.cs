@@ -97,16 +97,50 @@ public sealed partial class ObjectFallbackFormatter<TWriteBuffer, TReadBuffer> :
 
     sealed class Dispatcher<T> : Dispatcher
     {
-        readonly IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter;
+        readonly IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>? formatter;
+#if NET9_0_OR_GREATER
+        // a formatter that only exists over the Compatible pair (a netstandard-built library on net10): the typed entry
+        // points reroute to it, and this runtime-type dispatch stages through it the same way instead of failing
+        readonly IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>? compatibleFormatter;
+#endif
 
         public Dispatcher(MessagePackFormatterResolver resolver)
         {
+#if NET9_0_OR_GREATER
+            if (!resolver.TryGetFormatter<TWriteBuffer, TReadBuffer, T>(out var acquired))
+            {
+                compatibleFormatter = resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>();
+                return;
+            }
+            formatter = acquired;
+#else
             formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+#endif
         }
 
         public override void Serialize(ref TWriteBuffer buffer, ref SerializeState state, object value)
         {
-            formatter.Serialize(ref buffer, ref state, (T)value);
+            if (formatter is not null)
+            {
+                formatter.Serialize(ref buffer, ref state, (T)value);
+                return;
+            }
+#if NET9_0_OR_GREATER
+            var staging = new CompatibleArrayPoolListWriteBuffer();
+            try
+            {
+                compatibleFormatter!.Serialize(ref staging, ref state, (T)value);
+                var segments = staging.GetWrittenSegments();
+                while (segments.TryGetNext(out var segment))
+                {
+                    buffer.Advance(MessagePackPrimitives.UnsafeWriteRaw(ref buffer.GetReference(segment.Length), segment));
+                }
+            }
+            finally
+            {
+                staging.Dispose();
+            }
+#endif
         }
     }
 }

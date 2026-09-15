@@ -111,6 +111,88 @@ public class ZstandardFrameTests
     }
 
     [Fact]
+    public void Levels_AllRoundtrip_AndHigherLevelsAreNotLarger()
+    {
+        var big = BigCompressible();
+        int? previous = null;
+        foreach (var level in new[] { 1, 3, 9, 19 })
+        {
+            var options = V4Options.Default.WithZstandardFrame(level);
+            var framed = V4.Serialize(big, options);
+            Assert.Equal(big, V4.Deserialize<int[]>(framed, options));
+            // the read side does not depend on the level the frame was written at
+            Assert.Equal(big, V4.Deserialize<int[]>(framed, Options));
+            if (previous is { } p)
+            {
+                Assert.True(framed.Length <= p, $"level {level} produced {framed.Length} bytes, more than the previous level's {p}");
+            }
+            previous = framed.Length;
+        }
+    }
+
+    [Fact]
+    public void Incompressible_IsStillAFrame()
+    {
+        // large random bin: zstd stores it as raw blocks (a few bytes of block headers over the input); the frame is
+        // written anyway, there is no content-dependent switch
+        var rand = new Random(42);
+        var blob = new byte[100_000];
+        rand.NextBytes(blob);
+        var plain = V4.Serialize(blob, V4Options.Default);
+        var framed = V4.Serialize(blob, Options);
+        Assert.Equal(Magic, framed.AsSpan(0, 4).ToArray());
+        Assert.True(framed.Length > plain.Length);
+        Assert.Equal(plain, OracleDecompress(framed, plain.Length));
+        Assert.Equal(blob, V4.Deserialize<byte[]>(framed, Options));
+    }
+
+    [Fact]
+    public void BufferWriterEntry_MatchesArrayEntry()
+    {
+        var big = BigCompressible();
+        var expected = V4.Serialize(big, Options);
+        var writer = new ArrayBufferWriter<byte>();
+        V4.Serialize(writer, big, Options);
+        Assert.True(writer.WrittenSpan.SequenceEqual(expected));
+    }
+
+    [Fact]
+    public void SequenceEntry_ReadsAtEverySplit()
+    {
+        // small-but-compressed payload so the every-position split stays cheap
+        var text = new string('x', 300);
+        var framed = V4.Serialize(text, Options);
+        for (int splitAt = 1; splitAt < framed.Length; splitAt++)
+        {
+            Assert.Equal(text, V4.Deserialize<string>(Split(framed, splitAt), Options));
+        }
+    }
+
+    [Fact]
+    public void CorruptFrame_ThrowsSanctioned()
+    {
+        var text = new string('x', 300);
+        var framed = V4.Serialize(text, Options);
+        // clobber the frame past its header (magic, descriptor, content size, first block header)
+        var corrupt = (byte[])framed.Clone();
+        for (int i = 16; i < corrupt.Length - 4; i++) corrupt[i] ^= 0x5a;
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<string>(corrupt, Options));
+        // and the processor stays usable afterwards (no pooled buffer was leaked or double-returned, no poisoned
+        // cached context)
+        Assert.Equal(text, V4.Deserialize<string>(framed, Options));
+    }
+
+    [Fact]
+    public void TruncatedFrame_Rejected()
+    {
+        var text = new string('x', 300);
+        var framed = V4.Serialize(text, Options);
+        var truncated = framed.AsSpan(0, framed.Length - 8).ToArray();
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<string>(truncated, Options));
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<string>(Split(truncated, 10), Options));
+    }
+
+    [Fact]
     public void ForeignFrame_WithoutContentSize_IsRead()
     {
         var big = BigCompressible();
@@ -198,7 +280,7 @@ public class ZstandardFrameTests
         var second = V4.Serialize(new[] { 1, 2, 3 }, Options);
         var message = Concat(SkippableFrame(37), first);
         var bytes = Concat(message, second);
-        var processor = ZstandardCompression.Frame;
+        var processor = new ZstandardFrameProcessor();
         for (var available = 1; available <= bytes.Length; available++)
         {
             var found = processor.TryFindMessageEnd(Segmented(bytes, available, 64), out var length);

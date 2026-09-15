@@ -1281,7 +1281,9 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 buffer.Skip();
                 return;
             }
-            TMember member = default!;
+            // populate contract (shared with the generated formatters): the member formatter receives the current value so a
+            // nested object can be populated in place instead of replaced
+            TMember member = getter(obj);
             formatter.Deserialize(ref buffer, ref state, ref member);
             if (ValidateNull && member is null)
             {
@@ -1352,7 +1354,9 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 buffer.Skip();
                 return;
             }
-            TMember member = default!;
+            // populate contract (shared with the generated formatters): the member formatter receives the current value so a
+            // nested object can be populated in place instead of replaced
+            TMember member = getter(ref obj);
             formatter.Deserialize(ref buffer, ref state, ref member);
             if (ValidateNull && member is null)
             {
@@ -1589,7 +1593,9 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 buffer.Skip();
                 return;
             }
-            TMember member = default!;
+            // populate contract (shared with the generated formatters): the member formatter receives the current value so a
+            // nested object can be populated in place instead of replaced
+            TMember member = (TMember)field.GetValue(obj)!;
             formatter.Deserialize(ref buffer, ref state, ref member);
             if (ValidateNull && member is null)
             {
@@ -1696,7 +1702,9 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 buffer.Skip();
                 return;
             }
-            TMember member = default!;
+            // populate contract (shared with the generated formatters): the member formatter receives the current value so a
+            // nested object can be populated in place instead of replaced
+            TMember member = getter(ref obj);
             formatter.Deserialize(ref buffer, ref state, ref member);
             if (ValidateNull && member is null)
             {

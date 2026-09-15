@@ -6,8 +6,10 @@
 	     This package exists so that
 	       * a csproj that references MessagePack.Annotations keeps compiling after a version bump
 	         (the types type-forward to MessagePack, and the dependency pulls the generator in),
-	       * MessagePack.Annotations 3.x and MessagePack 4.x never coexist in one graph
-	         (NuGet lifts the 3.x reference to this version instead of leaving two identities of every attribute and CS0433 at each usage site),
+	       * MessagePack.Annotations 3.x and MessagePack 4.x do not coexist in one graph once the consumer references this version
+	         (MessagePack itself cannot depend on the shim, that would be a cycle, so NuGet does not lift a transitive 3.x reference by
+	         itself: a project that references MessagePack 4.x next to a v3-built library must reference MessagePack.Annotations 4.x
+	         explicitly, otherwise both assemblies define every attribute and each usage site is CS0433),
 	       * assemblies compiled against v3 keep loading. Their attribute references name this assembly, the forwarders resolve them
 	         to MessagePack, and the v3-only attributes that v4 renamed or deleted still exist here in their v3 shape,
 	         as compile-time [Obsolete] errors that spell out the migration, loadable at runtime so the reflection tier can read them.

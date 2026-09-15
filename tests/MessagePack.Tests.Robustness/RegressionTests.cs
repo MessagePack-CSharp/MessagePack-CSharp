@@ -1,6 +1,8 @@
 using MessagePack;
 using Xunit;
 
+#pragma warning disable CS0618 // v3 LZ4 envelopes are obsolete for new data; they are the subject here
+
 namespace MessagePack.Tests.Robustness;
 
 // Deterministic regression cases for contract breaks the randomized/coverage-guided passes

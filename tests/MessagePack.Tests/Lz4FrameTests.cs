@@ -206,7 +206,7 @@ public class Lz4FrameTests
         var second = V4.Serialize(new[] { 1, 2, 3 }, Options);
         var message = Concat(SkippableFrame(37), first);
         var bytes = Concat(message, second);
-        var processor = Lz4Compression.Frame;
+        var processor = new Lz4FrameProcessor();
         for (var available = 1; available <= bytes.Length; available++)
         {
             var found = processor.TryFindMessageEnd(Segmented(bytes, available, 64), out var length);

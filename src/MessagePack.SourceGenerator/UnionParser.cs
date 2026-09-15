@@ -212,8 +212,8 @@ static class UnionParser
         var seenCaseTypes = new HashSet<string>();
         var valid = true;
         var useNonBoxing = isPatternUnion;
-        // enum / Nullable / BCL-collection case types ride the same AOT harvesting as object members (the generic
-        // dictionary stays empty: generic case types are gated above)
+        // enum / Nullable / BCL-collection case types ride the same AOT harvesting as object members; a pattern union
+        // may also hold a closed generic [MessagePackObject] case, which the generic dictionary carries to the factory
         var harvestedGenerics = new Dictionary<string, HarvestedGenericModel>();
         var harvestedBuiltIns = new Dictionary<string, HarvestedBuiltInModel>();
 
@@ -299,6 +299,7 @@ static class UnionParser
                 ? "global::MessagePack.Generated." + formatterName + "<" + new string(',', type.TypeParameters.Length + 1) + ">"
                 : "",
             Cases: new EquatableArray<UnionCaseModel>([.. cases]),
+            HarvestedGenerics: new EquatableArray<HarvestedGenericModel>([.. harvestedGenerics.Values.OrderBy(static h => h.ClosedTypeName, StringComparer.Ordinal)]),
             HarvestedBuiltIns: new EquatableArray<HarvestedBuiltInModel>([.. harvestedBuiltIns.Values.OrderBy(static h => h.ClosedTypeName, StringComparer.Ordinal)]));
         return new UnionParseResult(model, new EquatableArray<DiagnosticInfo>([.. diagnostics]));
     }

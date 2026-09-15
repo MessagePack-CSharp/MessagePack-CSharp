@@ -53,7 +53,7 @@ public class BufferEntryTests
     {
         // the buffer-level entries never see the complete message, so options carrying a
         // MessageProcessor are rejected instead of silently skipping the envelope
-        var options = MessagePackSerializerOptions.Default.WithLz4Block();
+        var options = MessagePackSerializerOptions.Default.WithLz4Frame();
 
         // ref struct buffers cannot cross a lambda, so no Assert.Throws here
         var writeBuffer = new BufferWriterWriteBuffer(new ArrayBufferWriter<byte>());

@@ -4,6 +4,8 @@ using System.IO.Pipelines;
 using MessagePack;
 using Oracle = V3::MessagePack.MessagePackSerializer;
 
+#pragma warning disable CS0618 // v3 LZ4 envelopes are obsolete for new data; they are the subject here
+
 namespace MessagePack.Tests;
 
 // Async deserialization is 2-pass: MessagePackBoundaryScanner finds where one top-level

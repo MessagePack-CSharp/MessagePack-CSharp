@@ -100,6 +100,15 @@ public sealed partial class TwoDimensionalArrayFormatter<TWriteBuffer, TReadBuff
             ? value
             : new T[len0, len1];
 
+        // a zero-element array can still declare a huge non-zero dimension next to a zero one, which the loops below would
+        // walk in full: nothing to read, so skip them
+        if (count == 0)
+        {
+            value = result;
+            state.Exit();
+            return;
+        }
+
         var f = formatter;
 
         for (int x = 0; x < len0; x++)
@@ -206,6 +215,13 @@ public sealed partial class ThreeDimensionalArrayFormatter<TWriteBuffer, TReadBu
         var result = (value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1 && value.GetLength(2) == len2)
             ? value
             : new T[len0, len1, len2];
+
+        if (count == 0)
+        {
+            value = result;
+            state.Exit();
+            return;
+        }
 
         var f = formatter;
 
@@ -320,6 +336,13 @@ public sealed partial class FourDimensionalArrayFormatter<TWriteBuffer, TReadBuf
         var result = (value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1 && value.GetLength(2) == len2 && value.GetLength(3) == len3)
             ? value
             : new T[len0, len1, len2, len3];
+
+        if (count == 0)
+        {
+            value = result;
+            state.Exit();
+            return;
+        }
 
         var f = formatter;
 

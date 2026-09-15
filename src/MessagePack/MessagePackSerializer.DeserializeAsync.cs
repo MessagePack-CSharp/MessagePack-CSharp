@@ -146,6 +146,9 @@ public static partial class MessagePackSerializer
                     var position = 0L;
                     while (position < buffer.Length)
                     {
+                        // the token is otherwise only observed by ReadAsync: a consumer that cancels between elements
+                        // must not receive the rest of an already-buffered batch
+                        cancellationToken.ThrowIfCancellationRequested();
                         T value = default!;
                         var tail = buffer.Slice(position);
                         position += tail.IsSingleSegment
@@ -162,6 +165,7 @@ public static partial class MessagePackSerializer
                 var batchStart = 0L;
                 while (finder.TryFindEnd(buffer))
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var messageEnd = finder.Consumed;
                     if (messageEnd - batchStart > maxMessageSize)
                     {
@@ -269,6 +273,7 @@ public static partial class MessagePackSerializer
                     var position = 0L;
                     while (produced < count)
                     {
+                        cancellationToken.ThrowIfCancellationRequested();
                         if (position >= buffer.Length)
                         {
                             MessagePackSerializationException.ThrowAsyncArrayTruncated(count, produced);
@@ -290,6 +295,7 @@ public static partial class MessagePackSerializer
                 var batchStart = 0L;
                 while (produced < count && finder.TryFindEnd(buffer))
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var elementEnd = finder.Consumed;
                     if (elementEnd - batchStart > maxMessageSize)
                     {

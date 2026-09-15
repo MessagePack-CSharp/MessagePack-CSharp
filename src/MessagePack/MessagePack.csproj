@@ -46,6 +46,8 @@
 	<ItemGroup>
 		<ProjectReference Include="..\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<!-- build-order only: the code fix dll is packed below, so packing this project alone must build it first -->
+		<ProjectReference Include="..\MessagePack.SourceGenerator.CodeFixes\MessagePack.SourceGenerator.CodeFixes.csproj" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 	<!-- The package ships the source generator (with its analyzers and code fixes) under analyzers/dotnet/cs, so a

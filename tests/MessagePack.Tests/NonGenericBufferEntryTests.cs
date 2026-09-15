@@ -104,7 +104,7 @@ public class NonGenericBufferEntryTests
     [Fact]
     public void MessageProcessorOptions_AreRejected()
     {
-        var options = Options.WithLz4BlockArray();
+        var options = Options.WithLz4Frame();
         Assert.Throws<ArgumentException>(() =>
         {
             var buffer = new BufferWriterWriteBuffer(new ArrayBufferWriter<byte>());

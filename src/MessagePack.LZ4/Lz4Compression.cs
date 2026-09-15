@@ -9,55 +9,55 @@ using static MessagePack.MessagePackPrimitives;
 namespace MessagePack;
 
 /// <summary>
-/// v3-compatible LZ4 envelopes as <see cref="MessagePackMessageProcessor"/>s:
-/// Block = whole message as one LZ4 block inside ext 99, BlockArray = one LZ4 block per
-/// pooled write segment inside ext 98 (zero-copy on the uncompressed side — the
-/// serializer's segments map 1:1 to blocks). Reading is transparent for BOTH codes and
-/// passes non-enveloped messages through, matching MessagePack-CSharp semantics.
-/// Messages smaller than <see cref="Lz4MessageProcessor.CompressionThreshold"/> are
-/// written without an envelope (compression of tiny messages is a pure loss). Above the
-/// threshold the envelope is ALWAYS written, even when LZ4 leaves the payload larger
-/// (incompressible data costs ~0.4% literal overhead plus the header) — v3 parity:
-/// whether the envelope appears depends only on the size threshold, never on the data
-/// content. Readers on either side handle raw sub-threshold messages transparently.
-/// Codec: NativeCompressions.LZ4 (native lz4 binding). Compressed bytes are
-/// format-compatible with, but not byte-identical to, MessagePack-CSharp's K4os output —
-/// the cross-read tests in Lz4Tests are the compatibility contract.
+/// LZ4 as <see cref="MessagePackMessageProcessor"/>s, one instance per options (the processors are cheap to create
+/// and hold no shared state). <see cref="Lz4FrameProcessor"/> (<see cref="WithLz4Frame(MessagePackSerializerOptions)"/>)
+/// is the format for new data: every message as one standard LZ4 frame, the container the lz4 tool and every LZ4
+/// implementation read.
+/// <see cref="Lz4BlockProcessor"/> and <see cref="Lz4BlockArrayProcessor"/> are the MessagePack-CSharp v3 wire
+/// formats, kept (obsolete, still fully supported) for data shared with v3: Block = whole message as one LZ4 block
+/// inside ext 99, BlockArray = one LZ4 block per pooled write segment inside ext 98 (zero-copy on the uncompressed
+/// side — the serializer's segments map 1:1 to blocks). Reading is transparent for BOTH codes and passes
+/// non-enveloped messages through, matching v3 semantics. Messages smaller than
+/// <see cref="Lz4MessageProcessor.CompressionThreshold"/> are written without an envelope (compression of tiny
+/// messages is a pure loss). Above the threshold the envelope is ALWAYS written, even when LZ4 leaves the payload
+/// larger (incompressible data costs ~0.4% literal overhead plus the header) — v3 parity: whether the envelope
+/// appears depends only on the size threshold, never on the data content.
+/// Migration: a Block reader does not read frames and a Frame reader does not read v3 envelopes (nor the raw
+/// sub-threshold messages a Block writer emits), so a fleet with v3 or Block peers keeps writing Block until every
+/// peer reads Frame, and a Block-written cache is re-encoded, not re-labelled. The obsolete warning steers new data
+/// to Frame; it is not a removal schedule.
+/// Codec: NativeCompressions.LZ4 (native lz4 binding). Block/BlockArray bytes are format-compatible with, but not
+/// byte-identical to, v3's K4os output — the cross-read tests in Lz4Tests are the compatibility contract.
 /// </summary>
-public static class Lz4Compression
-{
-    public static MessagePackMessageProcessor Block { get; } = new Lz4BlockProcessor();
-    public static MessagePackMessageProcessor BlockArray { get; } = new Lz4BlockArrayProcessor();
-
-    /// <summary>Every message as one standard LZ4 frame with no MessagePack envelope, see <see cref="Lz4FrameProcessor"/>.</summary>
-    public static MessagePackMessageProcessor Frame { get; } = new Lz4FrameProcessor();
-}
-
 public static class Lz4MessagePackOptionsExtensions
 {
-    /// <summary>Options writing ext 99 (whole-message block); shares this instance's resolver.</summary>
-    public static MessagePackSerializerOptions WithLz4Block(this MessagePackSerializerOptions options)
-        => options with { MessageProcessor = Lz4Compression.Block };
-
-    /// <summary>Options writing ext 99 with a custom decompression-bomb cap (see <see cref="Lz4MessageProcessor.MaxDecompressedSize"/>).</summary>
-    public static MessagePackSerializerOptions WithLz4Block(this MessagePackSerializerOptions options, long maxDecompressedSize)
-        => options with { MessageProcessor = new Lz4BlockProcessor(maxDecompressedSize) };
-
-    /// <summary>Options writing ext 98 with a custom decompression-bomb cap (see <see cref="Lz4MessageProcessor.MaxDecompressedSize"/>).</summary>
-    public static MessagePackSerializerOptions WithLz4BlockArray(this MessagePackSerializerOptions options, long maxDecompressedSize)
-        => options with { MessageProcessor = new Lz4BlockArrayProcessor(maxDecompressedSize) };
-
-    /// <summary>Options writing ext 98 (block per segment); shares this instance's resolver.</summary>
-    /// <summary>Options writing every message as one standard LZ4 frame with no MessagePack envelope, see <see cref="Lz4FrameProcessor"/>.</summary>
+    /// <summary>Options writing every message as one standard LZ4 frame at the default decompression cap, see <see cref="Lz4FrameProcessor"/>.</summary>
     public static MessagePackSerializerOptions WithLz4Frame(this MessagePackSerializerOptions options)
-        => options with { MessageProcessor = Lz4Compression.Frame };
+        => options with { MessageProcessor = new Lz4FrameProcessor() };
 
     /// <summary>Options writing LZ4 frames with a custom decompression-bomb cap (see <see cref="Lz4FrameProcessor.MaxDecompressedSize"/>).</summary>
     public static MessagePackSerializerOptions WithLz4Frame(this MessagePackSerializerOptions options, long maxDecompressedSize)
         => options with { MessageProcessor = new Lz4FrameProcessor(maxDecompressedSize) };
 
+    /// <summary>Options writing the v3 ext 99 envelope (whole-message block); shares this instance's resolver.</summary>
+    [Obsolete("v3 wire format (ext 99). Use WithLz4Frame for new data; Block stays for data shared with MessagePack-CSharp v3 readers and writers.")]
+    public static MessagePackSerializerOptions WithLz4Block(this MessagePackSerializerOptions options)
+        => options with { MessageProcessor = new Lz4BlockProcessor() };
+
+    /// <summary>Options writing the v3 ext 99 envelope with a custom decompression-bomb cap (see <see cref="Lz4MessageProcessor.MaxDecompressedSize"/>).</summary>
+    [Obsolete("v3 wire format (ext 99). Use WithLz4Frame for new data; Block stays for data shared with MessagePack-CSharp v3 readers and writers.")]
+    public static MessagePackSerializerOptions WithLz4Block(this MessagePackSerializerOptions options, long maxDecompressedSize)
+        => options with { MessageProcessor = new Lz4BlockProcessor(maxDecompressedSize) };
+
+    /// <summary>Options writing the v3 ext 98 envelope (block per segment); shares this instance's resolver.</summary>
+    [Obsolete("v3 wire format (ext 98). Use WithLz4Frame for new data; BlockArray stays for data shared with MessagePack-CSharp v3 readers and writers.")]
     public static MessagePackSerializerOptions WithLz4BlockArray(this MessagePackSerializerOptions options)
-        => options with { MessageProcessor = Lz4Compression.BlockArray };
+        => options with { MessageProcessor = new Lz4BlockArrayProcessor() };
+
+    /// <summary>Options writing the v3 ext 98 envelope with a custom decompression-bomb cap (see <see cref="Lz4MessageProcessor.MaxDecompressedSize"/>).</summary>
+    [Obsolete("v3 wire format (ext 98). Use WithLz4Frame for new data; BlockArray stays for data shared with MessagePack-CSharp v3 readers and writers.")]
+    public static MessagePackSerializerOptions WithLz4BlockArray(this MessagePackSerializerOptions options, long maxDecompressedSize)
+        => options with { MessageProcessor = new Lz4BlockArrayProcessor(maxDecompressedSize) };
 }
 
 public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
@@ -348,7 +348,8 @@ public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
     }
 }
 
-/// <summary>Whole message as a single LZ4 block: ext 99 { int32 uncompressedLength, lz4 }.</summary>
+/// <summary>Whole message as a single LZ4 block: ext 99 { int32 uncompressedLength, lz4 }, the MessagePack-CSharp v3 format.</summary>
+[Obsolete("v3 wire format (ext 99). Use WithLz4Frame for new data; Block stays for data shared with MessagePack-CSharp v3 readers and writers.")]
 public sealed class Lz4BlockProcessor : Lz4MessageProcessor
 {
     public Lz4BlockProcessor()
@@ -449,7 +450,8 @@ public sealed class Lz4BlockProcessor : Lz4MessageProcessor
     }
 }
 
-/// <summary>One LZ4 block per write segment: [array n+1][ext 98: sizes][bin lz4]...</summary>
+/// <summary>One LZ4 block per write segment: [array n+1][ext 98: sizes][bin lz4]..., the MessagePack-CSharp v3 format.</summary>
+[Obsolete("v3 wire format (ext 98). Use WithLz4Frame for new data; BlockArray stays for data shared with MessagePack-CSharp v3 readers and writers.")]
 public sealed class Lz4BlockArrayProcessor : Lz4MessageProcessor
 {
     public Lz4BlockArrayProcessor()

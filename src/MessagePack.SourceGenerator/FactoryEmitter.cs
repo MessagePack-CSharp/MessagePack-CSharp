@@ -59,6 +59,7 @@ static class FactoryEmitter
         }
         var harvestedInstantiations = ordered
             .SelectMany(static m => m.HarvestedGenerics)
+            .Concat(orderedUnions.SelectMany(static m => m.HarvestedGenerics))
             .GroupBy(static h => h.ClosedTypeName, StringComparer.Ordinal)
             .Select(static g => g.First())
             .Where(h => genericByOpen.ContainsKey(h.OpenTypeOf))
@@ -176,10 +177,12 @@ static class FactoryEmitter
                 writer.Line("// (MakeGenericType throws TypeLoadException for ref struct arguments);");
                 writer.Line("// declining here surfaces the resolver's actionable formatter-not-found");
                 writer.Line("// error instead of a reflection crash");
+                writer.Line("#if NET5_0_OR_GREATER"); // RuntimeFeature.IsDynamicCodeSupported is missing on netstandard2.0 and .NET Framework
                 using (writer.Block("if (!global::System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported)"))
                 {
                     writer.Line("return null;");
                 }
+                writer.Line("#endif");
                 writer.Line("var valueArguments = closedValueType.GetGenericArguments();");
                 writer.Line("var arguments = new global::System.Type[valueArguments.Length + 2];");
                 writer.Line("arguments[0] = writeBufferType;");

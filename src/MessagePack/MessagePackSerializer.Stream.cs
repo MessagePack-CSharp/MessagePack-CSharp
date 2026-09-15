@@ -274,9 +274,11 @@ public static partial class MessagePackSerializer
     public static async ValueTask<T> DeserializeAsync<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
         // An exposable MemoryStream skips the pipe entirely. It completes synchronously, and unlike the pipe path the
-        // position lands exactly past the value, so trailing data stays readable.
+        // position lands exactly past the value, so trailing data stays readable. The pipe path observes the token in
+        // ReadAsync; this one has no await, so it checks up front (as v3 did) to keep the two consistent.
         if (stream is MemoryStream memoryStream && memoryStream.TryGetBuffer(out var exposed))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return DeserializeFromMemoryStream<T>(memoryStream, exposed, options);
         }
 

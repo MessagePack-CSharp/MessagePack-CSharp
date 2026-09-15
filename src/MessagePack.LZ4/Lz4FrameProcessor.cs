@@ -8,12 +8,12 @@ namespace MessagePack;
 /// The LZ4 Frame format as a <see cref="MessagePackMessageProcessor"/>: every message is one standard LZ4 frame, the
 /// container the lz4 tool and every LZ4 implementation read, with no MessagePack envelope around it. A stream of
 /// messages is a concatenation of frames, which those tools decode as one stream.
-/// Unlike the ext envelopes there is no size threshold and no passthrough: every message is a frame, and input that
-/// is not one is rejected. Set through <see cref="Lz4MessagePackOptionsExtensions.WithLz4Frame()"/>.
+/// Unlike the v3 ext envelopes there is no size threshold and no passthrough: every message is a frame, and input
+/// that is not one is rejected. Set through <see cref="Lz4MessagePackOptionsExtensions.WithLz4Frame()"/>.
 /// </summary>
 public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
 {
-    /// <summary>Default cap on the decompressed size of one message, the same 64MB as the ext envelopes.</summary>
+    /// <summary>Default cap on the decompressed size of one message, the same 64MB as the v3 ext envelopes.</summary>
     public const long DefaultMaxDecompressedSize = Lz4MessageProcessor.DefaultMaxDecompressedSize;
 
     /// <summary>
@@ -324,7 +324,7 @@ static class Lz4FrameWalker
                     length = offset + 8;
                     return false;
                 }
-                offset += 8 + BinaryPrimitives.ReadUInt32LittleEndian(scratch);
+                offset += 8L + BinaryPrimitives.ReadUInt32LittleEndian(scratch); // 8L: int + uint is uint and wraps at 0xFFFFFFF8
                 continue;
             }
             if (magic == LegacyMagic)

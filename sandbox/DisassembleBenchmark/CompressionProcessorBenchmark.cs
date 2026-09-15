@@ -1,13 +1,15 @@
 extern alias V3;
+#pragma warning disable CS0618 // the v3 LZ4 envelopes are benchmarked alongside the frames
+
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using MessagePack;
 
 // The MessageProcessor compression tiers side by side on the byte[] entry: none, LZ4 Block (ext 99),
-// LZ4 BlockArray (ext 98), Zstandard (ext 96) at levels 1 / 3 (zstd default) / 9. Two payloads:
+// LZ4 BlockArray (ext 98), Zstandard frame at levels 1 / 3 (zstd default) / 9. Two payloads:
 //   Answer = the realistic nested poco from AnswerBenchmark (1658 B raw, string-heavy, short)
 //   Ints   = int[100_000] with a period-100 pattern (~300KB raw, highly compressible, the shape
-//            where compression pays; matches Lz4Tests/ZstandardTests' BigCompressible)
+//            where compression pays; matches Lz4Tests/ZstandardFrameTests' BigCompressible)
 // Setup prints the wire size of every tier and verifies each roundtrip (Answer through the v3
 // oracle re-serialize, Ints by sequence equality).
 //
@@ -50,9 +52,9 @@ public class CompressionProcessorBenchmark
     static readonly MessagePackSerializerOptions none = MessagePackSerializerOptions.Default;
     static readonly MessagePackSerializerOptions lz4Block = MessagePackSerializerOptions.Default.WithLz4Block();
     static readonly MessagePackSerializerOptions lz4BlockArray = MessagePackSerializerOptions.Default.WithLz4BlockArray();
-    static readonly MessagePackSerializerOptions zstd1 = MessagePackSerializerOptions.Default.WithZstandardEnvelope(1);
-    static readonly MessagePackSerializerOptions zstd3 = MessagePackSerializerOptions.Default.WithZstandardEnvelope(3);
-    static readonly MessagePackSerializerOptions zstd9 = MessagePackSerializerOptions.Default.WithZstandardEnvelope(9);
+    static readonly MessagePackSerializerOptions zstd1 = MessagePackSerializerOptions.Default.WithZstandardFrame(1);
+    static readonly MessagePackSerializerOptions zstd3 = MessagePackSerializerOptions.Default.WithZstandardFrame(3);
+    static readonly MessagePackSerializerOptions zstd9 = MessagePackSerializerOptions.Default.WithZstandardFrame(9);
 
     Answer answer = default!;
     int[] ints = default!;

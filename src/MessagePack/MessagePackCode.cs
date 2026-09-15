@@ -174,9 +174,6 @@ public static class ThisLibraryExtensionTypeCodes
     /// <summary>Circular-reference back-reference; payload = raw big-endian id in the smallest of 1/2/4 bytes.</summary>
     public const sbyte CircularReference = 97;
 
-    /// <summary>Whole message as one Zstandard frame (MessagePack.Zstandard); payload = int32 uncompressed length, then the frame.</summary>
-    public const sbyte Zstandard = 96;
-
     /// <summary>Whole message framed by its length (<see cref="FramingProcessor"/>); always the ext32 form, payload = the message verbatim.</summary>
     public const sbyte Framing = 95;
 }

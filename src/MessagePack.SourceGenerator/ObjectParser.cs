@@ -681,11 +681,17 @@ static class ObjectParser
 
     const string MessagePackObjectAttributeName = "MessagePack.MessagePackObjectAttribute";
 
-    internal static void HarvestSerializedType(ITypeSymbol type, Compilation compilation, Dictionary<string, HarvestedGenericModel> userGenerics, Dictionary<string, HarvestedBuiltInModel> builtIns)
+    // closureDepth: how many closed user-generic member graphs the walk is already inside. A closed instantiation
+    // harvests its own members under substitution (Box<string>.Items: List<T> => List<string>), and a self-nesting shape
+    // (Node<T> { Node<List<T>> Next }) would produce a new closed type at every level, so the walk stops at a depth no
+    // real model reaches.
+    const int MaxClosureDepth = 8;
+
+    internal static void HarvestSerializedType(ITypeSymbol type, Compilation compilation, Dictionary<string, HarvestedGenericModel> userGenerics, Dictionary<string, HarvestedBuiltInModel> builtIns, int closureDepth = 0)
     {
         if (type is IArrayTypeSymbol array)
         {
-            HarvestSerializedType(array.ElementType, compilation, userGenerics, builtIns);
+            HarvestSerializedType(array.ElementType, compilation, userGenerics, builtIns, closureDepth);
             HarvestArray(array, compilation, builtIns);
             return;
         }
@@ -723,12 +729,12 @@ static class ObjectParser
         {
             // a non-generic collection shape (ArrayList, a Collection<T> subclass, ...)
             // still rides the catch-all tier at runtime, so it needs the same static registration
-            HarvestCollectionCatchAll(named, compilation, userGenerics, builtIns);
+            HarvestCollectionCatchAll(named, compilation, userGenerics, builtIns, closureDepth);
             return;
         }
         foreach (var argument in named.TypeArguments)
         {
-            HarvestSerializedType(argument, compilation, userGenerics, builtIns);
+            HarvestSerializedType(argument, compilation, userGenerics, builtIns, closureDepth);
         }
         // only fully closed, factory-visible instantiations: open members of a generic container flow type parameters,
         // and a private nested type cannot be typeof'ed from the generated factory
@@ -810,16 +816,67 @@ static class ObjectParser
         if (!SymbolEqualityComparer.Default.Equals(named.OriginalDefinition.ContainingAssembly, compilation.Assembly)
             || !HasMessagePackObjectAttribute(named.OriginalDefinition))
         {
-            HarvestCollectionCatchAll(named, compilation, userGenerics, builtIns);
+            HarvestCollectionCatchAll(named, compilation, userGenerics, builtIns, closureDepth);
             return;
         }
         var closedTypeName = named.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        if (!userGenerics.ContainsKey(closedTypeName))
+        if (userGenerics.ContainsKey(closedTypeName))
         {
-            userGenerics.Add(closedTypeName, new HarvestedGenericModel(
-                OpenTypeOf: StripTypeArguments(named.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)) + "<" + new string(',', named.TypeArguments.Length - 1) + ">",
-                ClosedTypeName: closedTypeName,
-                TypeArguments: new EquatableArray<string>([.. named.TypeArguments.Select(static a => a.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))])));
+            return;
+        }
+        userGenerics.Add(closedTypeName, new HarvestedGenericModel(
+            OpenTypeOf: StripTypeArguments(named.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)) + "<" + new string(',', named.TypeArguments.Length - 1) + ">",
+            ClosedTypeName: closedTypeName,
+            TypeArguments: new EquatableArray<string>([.. named.TypeArguments.Select(static a => a.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))])));
+
+        // The definition's own harvest drops every member type that mentions a type parameter (List<T>), so the closed
+        // graph below it (List<string>, Box<int> for Box<T> { Box<int> Inner }) is reachable only through this closed
+        // form: walk its members with the type arguments substituted, the way the generated formatter resolves them.
+        if (closureDepth >= MaxClosureDepth)
+        {
+            return;
+        }
+        foreach (var memberType in ClosedSerializedMemberTypes(named))
+        {
+            HarvestSerializedType(memberType, compilation, userGenerics, builtIns, closureDepth + 1);
+        }
+    }
+
+    // the serialized member types of a closed generic [MessagePackObject] instantiation, substituted. The same public
+    // instance property/field sweep the model parse uses (AllowPrivate is not supported on generic types), minus the
+    // opted-out members; a member that the parse would refuse for another reason still harvests, which only adds a
+    // registration the formatter never asks for.
+    static IEnumerable<ITypeSymbol> ClosedSerializedMemberTypes(INamedTypeSymbol closed)
+    {
+        for (var current = closed; current is not null && current.SpecialType != SpecialType.System_Object && current.SpecialType != SpecialType.System_ValueType; current = current.BaseType)
+        {
+            foreach (var member in current.GetMembers())
+            {
+                switch (member)
+                {
+                    case IPropertySymbol { IsStatic: false, IsIndexer: false, IsImplicitlyDeclared: false, DeclaredAccessibility: Accessibility.Public } property
+                        when property.GetMethod is { DeclaredAccessibility: Accessibility.Public } && !IsOptedOut(property):
+                        yield return property.Type;
+                        break;
+                    case IFieldSymbol { IsStatic: false, IsConst: false, IsImplicitlyDeclared: false, DeclaredAccessibility: Accessibility.Public } field
+                        when !HasAttribute(field, NonSerializedAttributeName) && !IsOptedOut(field):
+                        yield return field.Type;
+                        break;
+                }
+            }
+        }
+
+        static bool IsOptedOut(ISymbol symbol)
+        {
+            foreach (var attribute in MemberAttributes(symbol))
+            {
+                var attributeName = attribute.AttributeClass?.ToDisplayString();
+                if (attributeName == IgnoreMemberAttributeName || attributeName == IgnoreDataMemberAttributeName)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -1033,7 +1090,7 @@ static class ObjectParser
     // construct-from-intermediate formatters (IReadOnlyDictionary<K,V>, IEnumerable<T>);
     // types another tier claims (SpecialType scalars, [MessagePackObject],
     // type-level [MessagePackFormatter], ExpandoObject) stay off the registry
-    static void HarvestCollectionCatchAll(INamedTypeSymbol named, Compilation compilation, Dictionary<string, HarvestedGenericModel> userGenerics, Dictionary<string, HarvestedBuiltInModel> builtIns)
+    static void HarvestCollectionCatchAll(INamedTypeSymbol named, Compilation compilation, Dictionary<string, HarvestedGenericModel> userGenerics, Dictionary<string, HarvestedBuiltInModel> builtIns, int closureDepth = 0)
     {
         if (named.TypeKind != TypeKind.Class || named.IsAbstract || named.SpecialType != SpecialType.None)
         {
@@ -1109,7 +1166,7 @@ static class ObjectParser
             ];
             if (HasCollectionAcceptingConstructor(named, acceptable, compilation))
             {
-                EmitCollectionHarvest(named, compilation, userGenerics, builtIns, closedTypeName, readOnlyDictionaryInterface.TypeArguments, "GenericReadOnlyDictionaryFormatter");
+                EmitCollectionHarvest(named, compilation, userGenerics, builtIns, closedTypeName, readOnlyDictionaryInterface.TypeArguments, "GenericReadOnlyDictionaryFormatter", closureDepth);
                 return;
             }
         }
@@ -1118,7 +1175,8 @@ static class ObjectParser
             EmitCollectionHarvest(
                 named, compilation, userGenerics, builtIns, closedTypeName,
                 (dictionaryInterface ?? collectionInterface)!.TypeArguments,
-                dictionaryInterface is not null ? "GenericDictionaryFormatter" : "GenericCollectionFormatter");
+                dictionaryInterface is not null ? "GenericDictionaryFormatter" : "GenericCollectionFormatter",
+                closureDepth);
             return;
         }
         if (hasDefaultConstructor && nonGenericList)
@@ -1137,14 +1195,14 @@ static class ObjectParser
             {
                 if (HasCollectionAcceptingConstructor(named, [iface], compilation))
                 {
-                    EmitCollectionHarvest(named, compilation, userGenerics, builtIns, closedTypeName, iface.TypeArguments, "GenericEnumerableFormatter");
+                    EmitCollectionHarvest(named, compilation, userGenerics, builtIns, closedTypeName, iface.TypeArguments, "GenericEnumerableFormatter", closureDepth);
                     return;
                 }
             }
         }
     }
 
-    static void EmitCollectionHarvest(INamedTypeSymbol named, Compilation compilation, Dictionary<string, HarvestedGenericModel> userGenerics, Dictionary<string, HarvestedBuiltInModel> builtIns, string closedTypeName, System.Collections.Immutable.ImmutableArray<ITypeSymbol> arguments, string formatterName)
+    static void EmitCollectionHarvest(INamedTypeSymbol named, Compilation compilation, Dictionary<string, HarvestedGenericModel> userGenerics, Dictionary<string, HarvestedBuiltInModel> builtIns, string closedTypeName, System.Collections.Immutable.ImmutableArray<ITypeSymbol> arguments, string formatterName, int closureDepth)
     {
         if (!arguments.All(a => IsAccessibleToGeneratedCode(a, compilation)))
         {
@@ -1157,7 +1215,7 @@ static class ObjectParser
         builtIns.Add(closedTypeName, new HarvestedBuiltInModel(closedTypeName, construction));
         foreach (var argument in arguments)
         {
-            HarvestSerializedType(argument, compilation, userGenerics, builtIns);
+            HarvestSerializedType(argument, compilation, userGenerics, builtIns, closureDepth);
         }
     }
 
@@ -1743,11 +1801,14 @@ static class ObjectParser
             {
                 continue;
             }
+            // Direct emits `value.OnBeforeSerialize()`, which binds by C# member lookup on the serialized type, not
+            // by interface mapping: a derived class hiding an inherited implementation with `new` would receive the
+            // call instead of the implementation. Direct is only safe when both agree.
             var style = type.FindImplementationForInterfaceMember(method) is IMethodSymbol
             {
                 MethodKind: MethodKind.Ordinary,
                 DeclaredAccessibility: Accessibility.Public,
-            } implementation && implementation.Name == method.Name
+            } implementation && implementation.Name == method.Name && DirectCallBinds(type, implementation)
                 ? CallbackStyle.Direct
                 : CallbackStyle.Cast;
             if (method.Name == "OnBeforeSerialize")
@@ -1760,6 +1821,24 @@ static class ObjectParser
             }
         }
         return (onBefore, onAfter);
+    }
+
+    // C# member lookup stops at the nearest type in the hierarchy that declares the name; a direct call binds only to
+    // the interface implementation when that type is the implementation's own declarer and nothing else there hides it
+    static bool DirectCallBinds(INamedTypeSymbol type, IMethodSymbol implementation)
+    {
+        for (var current = type; current is not null; current = current.BaseType)
+        {
+            var members = current.GetMembers(implementation.Name);
+            if (members.Length == 0)
+            {
+                continue;
+            }
+            return SymbolEqualityComparer.Default.Equals(current, implementation.ContainingType)
+                && members.Length == 1
+                && SymbolEqualityComparer.Default.Equals(members[0], implementation);
+        }
+        return false;
     }
 
     internal static bool IsPartialChain(INamedTypeSymbol type)

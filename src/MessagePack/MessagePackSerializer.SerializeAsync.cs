@@ -126,6 +126,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="SerializeElementsAsync{T}(PipeWriter, IAsyncEnumerable{T}, long, CancellationToken)"/>
     public static async Task SerializeElementsAsync<T>(PipeWriter pipeWriter, IAsyncEnumerable<T> source, long count, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ThrowIfElementsHiddenByContainer(options);
         WriteArrayHeader(pipeWriter, count);
         var enumerator = source.GetAsyncEnumerator(cancellationToken);
         await using (enumerator.ConfigureAwait(false))
@@ -197,6 +198,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="SerializeElementsAsync{T}(PipeWriter, IAsyncEnumerable{T}, long, CancellationToken)"/>
     public static async Task SerializeElementsAsync<T>(PipeWriter pipeWriter, IEnumerable<T> source, long count, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ThrowIfElementsHiddenByContainer(options);
         WriteArrayHeader(pipeWriter, count);
         var produced = 0L;
         foreach (var value in source)
@@ -218,6 +220,17 @@ public static partial class MessagePackSerializer
         }
 
         await FlushAsync(pipeWriter, cancellationToken).ConfigureAwait(false);
+    }
+
+    // A container-format processor (raw LZ4/Zstandard frames) wraps every message it is given: the elements would each
+    // become their own frame behind a bare array header, which DeserializeElementsAsync rejects as unreadable. Refuse
+    // before the header goes out, so the pipe never carries data nothing can read back.
+    static void ThrowIfElementsHiddenByContainer(MessagePackSerializerOptions options)
+    {
+        if (options.MessageProcessor is { DefinesMessageBoundaries: true })
+        {
+            throw new NotSupportedException("SerializeElementsAsync writes a MessagePack array header followed by its elements straight onto the pipe, which a container-format MessageProcessor cannot wrap as one message; serialize the whole collection instead.");
+        }
     }
 
     static void WriteArrayHeader(PipeWriter pipeWriter, long count)

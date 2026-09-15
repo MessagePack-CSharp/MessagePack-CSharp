@@ -259,6 +259,9 @@ public sealed record UnionModel(
     string OpenTypeOf,
     string OpenFormatterTypeOf,
     EquatableArray<UnionCaseModel> Cases,
+    // closed instantiations of this compilation's generic [MessagePackObject] types among the case types (pattern
+    // unions accept generic cases): registered statically like object members, the Native AOT route
+    EquatableArray<HarvestedGenericModel> HarvestedGenerics,
     // enum / Nullable case types need the same AOT harvesting as object members
     EquatableArray<HarvestedBuiltInModel> HarvestedBuiltIns);
 

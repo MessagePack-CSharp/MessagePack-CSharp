@@ -144,7 +144,9 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
             }
             var serializer = GetSerializerByName(typeName);
             state.Enter();
-            value = serializer.Deserialize(ref buffer, ref state);
+            // what the declared body has left after the type name: the value's own extent, which a Compatible-only
+            // formatter needs to know up front (it reads a copy of exactly those bytes)
+            value = serializer.Deserialize(ref buffer, ref state, declaredBodyLength - (buffer.BytesConsumed - bodyStart));
             state.Exit();
 
             // the declared body length is the boundary a header-based skip (TryReadToken)
@@ -294,19 +296,25 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
         }
 
         public abstract void Serialize(ref CompatibleArrayPoolListWriteBuffer staging, ref SerializeState state, object value);
-        public abstract object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state);
+        public abstract object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state, long bodyRemaining);
     }
 
     sealed class TypelessSerializer<T> : TypelessSerializer
     {
         readonly IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T> writeFormatter;
-        readonly IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> readFormatter;
+        // null when the formatter only exists over the Compatible pair (a netstandard-built library on net10); the read
+        // side then runs writeFormatter's pair over a copy of the value, see DeserializeCompatible
+        readonly IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>? readFormatter;
 
         public TypelessSerializer(string typeName, MessagePackFormatterResolver resolver)
             : base(typeName)
         {
             writeFormatter = resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>();
+#if NET9_0_OR_GREATER
+            readFormatter = resolver.TryGetFormatter<TWriteBuffer, TReadBuffer, T>(out var acquired) ? acquired : null;
+#else
             readFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+#endif
         }
 
         public override void Serialize(ref CompatibleArrayPoolListWriteBuffer staging, ref SerializeState state, object value)
@@ -314,12 +322,70 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
             writeFormatter.Serialize(ref staging, ref state, (T)value);
         }
 
-        public override object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state)
+        public override object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state, long bodyRemaining)
         {
             T concrete = default!;
-            readFormatter.Deserialize(ref buffer, ref state, ref concrete);
+            if (readFormatter is not null)
+            {
+                readFormatter.Deserialize(ref buffer, ref state, ref concrete);
+                return concrete;
+            }
+#if NET9_0_OR_GREATER
+            DeserializeCompatible(ref buffer, ref state, bodyRemaining, ref concrete);
+#endif
             return concrete;
         }
+
+#if NET9_0_OR_GREATER
+        // the ext header bounds the value (bodyRemaining bytes), so the Compatible pair can read it from a fixed
+        // window: the unread span when the buffer is contiguous there, a pooled copy otherwise. The outer body-length
+        // check still runs on what the formatter actually consumed.
+        unsafe void DeserializeCompatible(ref TReadBuffer buffer, ref DeserializeState state, long bodyRemaining, ref T value)
+        {
+            if (bodyRemaining < 0 || bodyRemaining > buffer.BytesRemaining)
+            {
+                throw new MessagePackSerializationException("Typeless ext declares a body longer than the data that follows it.");
+            }
+            var length = (int)bodyRemaining;
+            byte[]? rented = null;
+            ReadOnlySpan<byte> source;
+            if (buffer.TryGetSpan(length, out var contiguous))
+            {
+                source = contiguous.Slice(0, length);
+            }
+            else
+            {
+                rented = ArrayPool<byte>.Shared.Rent(length);
+                buffer.CopyTo(rented.AsSpan(0, length));
+                source = rented.AsSpan(0, length);
+            }
+            try
+            {
+                long consumed;
+                fixed (byte* pointer = source)
+                {
+                    var compatible = new CompatibleReadOnlySpanReadBuffer(pointer, length);
+                    try
+                    {
+                        writeFormatter.Deserialize(ref compatible, ref state, ref value);
+                        consumed = compatible.BytesConsumed;
+                    }
+                    finally
+                    {
+                        compatible.Dispose();
+                    }
+                }
+                buffer.Advance((int)consumed);
+            }
+            finally
+            {
+                if (rented is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(rented);
+                }
+            }
+        }
+#endif
     }
 
     // v3's typeless DateTime is ToBinary as smallest int64 (Kind-preserving), NOT the imestamp ext the standard formatter writes.
@@ -335,7 +401,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
             staging.WriteInt64(((DateTime)value).ToBinary());
         }
 
-        public override object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state)
+        public override object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state, long bodyRemaining)
         {
             return DateTime.FromBinary(buffer.ReadInt64());
         }

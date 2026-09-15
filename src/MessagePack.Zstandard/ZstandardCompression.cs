@@ -1,6 +1,5 @@
 using System.Buffers.Binary;
 using SerializerFoundation;
-using static MessagePack.MessagePackPrimitives;
 #if NET11_0_OR_GREATER
 using FrameEncoder = System.IO.Compression.ZstandardEncoder;
 using FrameDecoder = System.IO.Compression.ZstandardDecoder;
@@ -15,40 +14,11 @@ using FrameDecoder = NativeCompressions.ZstandardDecoder;
 
 namespace MessagePack;
 
-/// <summary>
-/// Zstandard as a <see cref="MessagePackMessageProcessor"/>, in two shapes. <see cref="Envelope"/> wraps the whole message
-/// as one Zstandard frame inside ext 96 { int32 uncompressedLength, frame }, passes non-enveloped messages through and
-/// leaves messages under a size threshold uncompressed. <see cref="Frame"/> writes every message as one standard
-/// Zstandard frame with nothing around it, the container the zstd tool and every Zstandard implementation read.
-/// Codec: the in-box System.IO.Compression.ZstandardEncoder/Decoder on .NET 11, NativeCompressions.Zstandard on .NET 10;
-/// both are libzstd, and the frame is a standard Zstandard frame either way.
-/// </summary>
-public static class ZstandardCompression
-{
-    /// <summary>Every message as one Zstandard frame inside a MessagePack ext 96 envelope at the default compression level (3) and decompression cap, see <see cref="ZstandardEnvelopeProcessor"/>.</summary>
-    public static MessagePackMessageProcessor Envelope { get; } = new ZstandardEnvelopeProcessor();
-
-    /// <summary>Every message as one standard Zstandard frame with no MessagePack envelope, see <see cref="ZstandardFrameProcessor"/>.</summary>
-    public static MessagePackMessageProcessor Frame { get; } = new ZstandardFrameProcessor();
-}
-
 public static class ZstandardMessagePackOptionsExtensions
 {
-    /// <summary>Options writing ext 96 at the default compression level; shares this instance's resolver.</summary>
-    public static MessagePackSerializerOptions WithZstandardEnvelope(this MessagePackSerializerOptions options)
-        => options with { MessageProcessor = ZstandardCompression.Envelope };
-
-    /// <summary>Options writing ext 96 at <paramref name="compressionLevel"/> (1 = fastest, 3 = zstd default, 19 = slowest, 22 with ultra).</summary>
-    public static MessagePackSerializerOptions WithZstandardEnvelope(this MessagePackSerializerOptions options, int compressionLevel)
-        => options with { MessageProcessor = new ZstandardEnvelopeProcessor(compressionLevel) };
-
-    /// <summary>Options writing ext 96 at <paramref name="compressionLevel"/> with a custom decompression-bomb cap (see <see cref="ZstandardEnvelopeProcessor.MaxDecompressedSize"/>).</summary>
-    public static MessagePackSerializerOptions WithZstandardEnvelope(this MessagePackSerializerOptions options, int compressionLevel, long maxDecompressedSize)
-        => options with { MessageProcessor = new ZstandardEnvelopeProcessor(compressionLevel, maxDecompressedSize) };
-
-    /// <summary>Options writing every message as one standard Zstandard frame with no MessagePack envelope, see <see cref="ZstandardFrameProcessor"/>.</summary>
+    /// <summary>Options writing every message as one standard Zstandard frame at the default compression level (3) and decompression cap, see <see cref="ZstandardFrameProcessor"/>.</summary>
     public static MessagePackSerializerOptions WithZstandardFrame(this MessagePackSerializerOptions options)
-        => options with { MessageProcessor = ZstandardCompression.Frame };
+        => options with { MessageProcessor = new ZstandardFrameProcessor() };
 
     /// <summary>Options writing Zstandard frames at <paramref name="compressionLevel"/> (1 = fastest, 3 = zstd default, 19 = slowest, 22 with ultra).</summary>
     public static MessagePackSerializerOptions WithZstandardFrame(this MessagePackSerializerOptions options, int compressionLevel)
@@ -60,22 +30,21 @@ public static class ZstandardMessagePackOptionsExtensions
 }
 
 /// <summary>
-/// Whole message as a single Zstandard frame: ext 96 { int32 uncompressedLength, frame }. Reading passes non-enveloped
-/// messages through, so a reader configured with the processor accepts plain messages as well. Messages smaller than
-/// <see cref="CompressionThreshold"/> are written without an envelope; above it the envelope is always written, whether
-/// or not the frame came out smaller (same rule as MessagePack.LZ4: the envelope depends only on the size threshold,
-/// never on the data content).
+/// Every message as one standard Zstandard frame with nothing around it: the container the zstd tool and every
+/// Zstandard implementation read, and a stream of messages is a concatenation of frames, which those tools decode as
+/// one stream. There is no size threshold and no passthrough: every message is a frame, and input that is not one is
+/// rejected. Set through <see cref="ZstandardMessagePackOptionsExtensions.WithZstandardFrame(MessagePackSerializerOptions)"/>.
+/// Codec: the in-box System.IO.Compression.ZstandardEncoder/Decoder on .NET 11, NativeCompressions.Zstandard on .NET 10;
+/// both are libzstd, and the frame is a standard Zstandard frame either way. Each instance keeps its own cached codec
+/// contexts (created on first use), so a processor lives as long as the options that hold it.
 /// </summary>
-public sealed class ZstandardEnvelopeProcessor : MessagePackMessageProcessor
+public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
 {
-    /// <summary>Messages below this many bytes are written without an envelope.</summary>
-    public const int CompressionThreshold = 64;
-
     /// <summary>zstd's own default level (3): the speed/ratio balance the reference CLI ships with.</summary>
     public const int DefaultCompressionLevel = 3;
 
     /// <summary>
-    /// Default cap on the declared decompressed size of one message: 64MB, matching MessagePack.LZ4 and
+    /// Default cap on the decompressed size of one message: 64MB, matching MessagePack.LZ4 and
     /// <see cref="MessagePackSerializerOptions.MaxBufferedMessageSize"/>'s default.
     /// </summary>
     public const long DefaultMaxDecompressedSize = 64 * 1024 * 1024;
@@ -84,187 +53,10 @@ public sealed class ZstandardEnvelopeProcessor : MessagePackMessageProcessor
     public int CompressionLevel { get; }
 
     /// <summary>
-    /// Cap on the declared decompressed size of one message; a payload declaring more is rejected before any
-    /// allocation (decompression-bomb guard, CWE-409). Unlike LZ4 there is no per-byte expansion bound to check
-    /// against: a Zstandard RLE block turns a handful of bytes into 128KB legitimately, so the cap is the guard.
-    /// </summary>
-    public long MaxDecompressedSize { get; }
-
-    readonly ZstandardCodec codec;
-
-    public ZstandardEnvelopeProcessor()
-        : this(DefaultCompressionLevel, DefaultMaxDecompressedSize)
-    {
-    }
-
-    /// <param name="compressionLevel">The zstd compression level (1 = fastest, 3 = zstd default, 19 = slowest, 22 with ultra).</param>
-    public ZstandardEnvelopeProcessor(int compressionLevel)
-        : this(compressionLevel, DefaultMaxDecompressedSize)
-    {
-    }
-
-    /// <param name="compressionLevel">The zstd compression level (1 = fastest, 3 = zstd default, 19 = slowest, 22 with ultra).</param>
-    /// <param name="maxDecompressedSize">Cap on the declared decompressed size of one message (decompression-bomb guard); the default is <see cref="DefaultMaxDecompressedSize"/>.</param>
-    public ZstandardEnvelopeProcessor(int compressionLevel, long maxDecompressedSize)
-    {
-        if (maxDecompressedSize <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(maxDecompressedSize));
-        }
-        CompressionLevel = compressionLevel;
-        MaxDecompressedSize = maxDecompressedSize;
-        codec = new ZstandardCodec(compressionLevel);
-    }
-
-    // ---- write side ----
-
-    // The frame is compressed straight into the output buffer behind a fixed-width header: ext32 + forced int32 is
-    // always 11 bytes, so the header slot is known before the frame length is, and nothing is staged or flattened
-    // (the codec streams the message segment by segment). ext32 costs at most 3 bytes over the smallest width, and
-    // every reader accepts any ext width.
-    const int HeaderLength = 6 /* ext32 header */ + 5 /* forced int32 length prefix */;
-
-    public override bool TryEncode(ref BufferSegments message, IBufferWriter<byte> output)
-    {
-        if (message.Length < CompressionThreshold)
-        {
-            return false;
-        }
-        var messageLength = checked((int)message.Length);
-        var destination = output.GetSpan(HeaderLength + FrameCodec.MaxCompressedLength(messageLength));
-        output.Advance(EncodeCore(message, messageLength, destination));
-        return true;
-    }
-
-#if NET9_0_OR_GREATER
-    public override bool TryEncode<TWriteBuffer>(ref BufferSegments message, ref TWriteBuffer output)
-    {
-        if (message.Length < CompressionThreshold)
-        {
-            return false;
-        }
-        var messageLength = checked((int)message.Length);
-        var destination = output.GetSpan(HeaderLength + FrameCodec.MaxCompressedLength(messageLength));
-        output.Advance(EncodeCore(message, messageLength, destination));
-        return true;
-    }
-#endif
-
-    int EncodeCore(BufferSegments message, int messageLength, Span<byte> destination)
-    {
-        var frameLength = codec.CompressFrame(message, messageLength, destination.Slice(HeaderLength));
-        destination[0] = MessagePackCode.Ext32;
-        BinaryPrimitives.WriteUInt32BigEndian(destination.Slice(1), (uint)(5 + frameLength));
-        destination[5] = unchecked((byte)ThisLibraryExtensionTypeCodes.Zstandard);
-        UnsafeWriteForcedInt32(ref destination[6], messageLength);
-        return HeaderLength + frameLength;
-    }
-
-    // ---- read side ----
-
-    public override bool TryDecode(ReadOnlySpan<byte> source, out DecodedMessage message)
-    {
-        message = default;
-
-        // ext 96: [0xd2 uncompressedLength][zstd frame]
-        if (TryReadExtHeader(source, out var typeCode, out var dataLength, out var tokenSize) != DecodeResult.Success)
-        {
-            return false; // not an ext at all: a plain message
-        }
-        if (typeCode != ThisLibraryExtensionTypeCodes.Zstandard)
-        {
-            return false; // user-data ext, or another processor's envelope: not ours
-        }
-        if (dataLength > source.Length - tokenSize)
-        {
-            ZstandardThrows.InvalidEnvelope(); // header claims more payload than the message holds
-        }
-        var data = source.Slice(tokenSize, dataLength);
-        if (TryReadInt32(data, out var uncompressedLength, out var intSize) != DecodeResult.Success || uncompressedLength < 0)
-        {
-            ZstandardThrows.InvalidEnvelope();
-        }
-        if (uncompressedLength > MaxDecompressedSize)
-        {
-            ZstandardThrows.DeclaredLengthExceedsMaximum(uncompressedLength, MaxDecompressedSize);
-        }
-        var frame = data.Slice(intSize);
-        // a frame that carries its own content size must agree with the envelope; the envelope's number is the one
-        // the buffer is sized from, so a disagreement is corruption, not a preference
-        if (FrameCodec.TryGetContentSize(frame, out var frameContentSize) && frameContentSize != uncompressedLength)
-        {
-            ZstandardThrows.InvalidEnvelope();
-        }
-
-        var rented = ArrayPool<byte>.Shared.Rent(uncompressedLength);
-        var decoded = codec.DecompressFrame(frame, rented.AsSpan(0, uncompressedLength));
-        if (decoded != uncompressedLength)
-        {
-            // return before throwing: no DecodedMessage owner exists yet to release this
-            ArrayPool<byte>.Shared.Return(rented);
-            ZstandardThrows.InvalidEnvelope();
-        }
-        message = new DecodedMessage(new ReadOnlySequence<byte>(rented, 0, uncompressedLength), new ZstandardRentedOwner(rented));
-        return true;
-    }
-
-    public override bool TryDecode(in ReadOnlySequence<byte> source, out DecodedMessage message)
-    {
-        if (source.IsSingleSegment)
-        {
-            return TryDecode(source.FirstSpan, out message);
-        }
-
-        // identify non-envelopes from a stitched header prefix first: passthrough input must never pay a
-        // whole-message flatten just to be recognized
-        Span<byte> prefix = stackalloc byte[MaxExtHeaderLength];
-        var prefixLength = (int)Math.Min(source.Length, MaxExtHeaderLength);
-        source.Slice(0, prefixLength).CopyTo(prefix);
-        if (TryReadExtHeader(prefix.Slice(0, prefixLength), out var typeCode, out _, out _) != DecodeResult.Success
-            || typeCode != ThisLibraryExtensionTypeCodes.Zstandard)
-        {
-            message = default;
-            return false;
-        }
-
-        // our envelope: flatten and reuse the span logic (the frame must be contiguous for the decoder anyway)
-        var length = checked((int)source.Length);
-        var flat = ArrayPool<byte>.Shared.Rent(length);
-        try
-        {
-            source.CopyTo(flat);
-            return TryDecode(flat.AsSpan(0, length), out message);
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(flat);
-        }
-    }
-
-    // ext32 header: a prefix this long always yields a definitive envelope verdict, and a shorter prefix is the whole message
-    const int MaxExtHeaderLength = 6;
-}
-
-/// <summary>
-/// Every message as one standard Zstandard frame with nothing around it: the container the zstd tool and every
-/// Zstandard implementation read, and a stream of messages is a concatenation of frames, which those tools decode as
-/// one stream. Unlike the ext envelope there is no size threshold and no passthrough: every message is a frame, and
-/// input that is not one is rejected. Set through <see cref="ZstandardMessagePackOptionsExtensions.WithZstandardFrame(MessagePackSerializerOptions)"/>.
-/// </summary>
-public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
-{
-    /// <summary>zstd's own default level (3).</summary>
-    public const int DefaultCompressionLevel = ZstandardEnvelopeProcessor.DefaultCompressionLevel;
-
-    /// <summary>Default cap on the decompressed size of one message, the same 64MB as the ext envelope.</summary>
-    public const long DefaultMaxDecompressedSize = ZstandardEnvelopeProcessor.DefaultMaxDecompressedSize;
-
-    /// <summary>The zstd compression level frames are written at.</summary>
-    public int CompressionLevel { get; }
-
-    /// <summary>
     /// Cap on the decompressed size of one message (decompression-bomb guard, CWE-409). A frame that carries its content
     /// size is rejected from the header; one that does not is decompressed into a buffer that never grows past the cap.
+    /// Unlike LZ4 there is no per-byte expansion bound to check against: a Zstandard RLE block turns a handful of bytes
+    /// into 128KB legitimately, so the cap is the guard.
     /// </summary>
     public long MaxDecompressedSize { get; }
 
@@ -337,7 +129,7 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
             if (written != expected)
             {
                 ArrayPool<byte>.Shared.Return(rented);
-                ZstandardThrows.InvalidEnvelope();
+                ZstandardThrows.InvalidFrame();
             }
         }
         else
@@ -376,7 +168,7 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
     public override bool TryFindMessageEnd(in ReadOnlySequence<byte> buffer, out long length) => ZstandardFrameWalker.TryFindEnd(in buffer, out length);
 }
 
-// The codec behind both processors: cached contexts and the one-frame compress / decompress calls.
+// The codec behind the processor: cached contexts and the one-frame compress / decompress calls.
 // A zstd compression/decompression context costs microseconds to create and free, a large share of the whole encode of
 // a small message (measured on the 1.6KB Answer graph, CompressionProcessorBenchmark: one-shot Compress/Decompress
 // 6.7/4.4 us, cached contexts 5.1/3.0 us, LZ4 1.5/1.1 us for a 15% larger wire), so each processor keeps one encoder
@@ -422,9 +214,9 @@ sealed class ZstandardCodec(int compressionLevel)
 
     // One complete frame from the message through the cached encoder, streamed segment by segment so the message is
     // never flattened; the encoder is told the content size first so the frame header carries it (readers size their
-    // buffers from it and the envelope cross-checks it). The destination is MaxCompressedLength-sized for the whole
-    // message, so anything but a finished frame that consumed every byte is a codec fault, and a call that makes no
-    // progress against it is reported instead of spun on.
+    // buffers from it). The destination is MaxCompressedLength-sized for the whole message, so anything but a finished
+    // frame that consumed every byte is a codec fault, and a call that makes no progress against it is reported
+    // instead of spun on.
     public int CompressFrame(BufferSegments message, int messageLength, Span<byte> destination)
     {
         var box = RentEncoder();
@@ -434,7 +226,7 @@ sealed class ZstandardCodec(int compressionLevel)
             var written = CompressSegments(box.Encoder, message, messageLength, destination);
             if (written <= 0)
             {
-                ZstandardThrows.InvalidEnvelope();
+                ZstandardThrows.InvalidFrame();
             }
             ReturnEncoder(box);
             return written;
@@ -460,7 +252,7 @@ sealed class ZstandardCodec(int compressionLevel)
             remaining -= segment.Length;
             if (remaining < 0)
             {
-                ZstandardThrows.InvalidEnvelope(); // the segments hold more than the declared message
+                ZstandardThrows.InvalidFrame(); // the segments hold more than the declared message
             }
             // the last non-empty segment ends the frame; the iterator may still yield empty segments after it, and
             // feeding the encoder again would open a second frame
@@ -471,7 +263,7 @@ sealed class ZstandardCodec(int compressionLevel)
         {
             if (remaining != 0)
             {
-                ZstandardThrows.InvalidEnvelope(); // the segments hold less than the declared message
+                ZstandardThrows.InvalidFrame(); // the segments hold less than the declared message
             }
             written += CompressSegment(encoder, ReadOnlySpan<byte>.Empty, destination.Slice(written), isFinalBlock: true); // the empty message
         }
@@ -488,7 +280,7 @@ sealed class ZstandardCodec(int compressionLevel)
             segment = segment.Slice(consumed);
             if (status == OperationStatus.InvalidData)
             {
-                ZstandardThrows.InvalidEnvelope();
+                ZstandardThrows.InvalidFrame();
             }
             if (isFinalBlock ? (status == OperationStatus.Done && segment.IsEmpty) : segment.IsEmpty)
             {
@@ -496,7 +288,7 @@ sealed class ZstandardCodec(int compressionLevel)
             }
             if (consumed == 0 && produced == 0)
             {
-                ZstandardThrows.InvalidEnvelope(); // no progress against a bound-sized destination
+                ZstandardThrows.InvalidFrame(); // no progress against a bound-sized destination
             }
         }
     }
@@ -553,7 +345,7 @@ sealed class ZstandardCodec(int compressionLevel)
                 }
                 if (written >= cap)
                 {
-                    ArrayPool<byte>.Shared.Return(rented);
+                    // the catch below returns the buffer; returning it here too would hand the same array to the pool twice
                     ZstandardThrows.DeclaredLengthExceedsMaximum(written + 1L, maxDecompressedSize);
                 }
                 var grown = ArrayPool<byte>.Shared.Rent((int)Math.Min((long)rented.Length * 2, cap));
@@ -576,7 +368,7 @@ sealed class ZstandardCodec(int compressionLevel)
         }
         ArrayPool<byte>.Shared.Return(rented);
         box.Decoder.Dispose();
-        ZstandardThrows.InvalidEnvelope();
+        ZstandardThrows.InvalidFrame();
         throw null!; // unreachable, the throw helper does not return
     }
 }
@@ -633,7 +425,7 @@ static class ZstandardFrameWalker
             }
             if (source.Length < 8 || (uint)(source.Length - 8) < BinaryPrimitives.ReadUInt32LittleEndian(source.Slice(4)))
             {
-                ZstandardThrows.InvalidEnvelope();
+                ZstandardThrows.InvalidFrame();
             }
             source = source.Slice(8 + (int)BinaryPrimitives.ReadUInt32LittleEndian(source.Slice(4)));
         }
@@ -659,7 +451,7 @@ static class ZstandardFrameWalker
                     length = offset + 8;
                     return false;
                 }
-                offset += 8 + BinaryPrimitives.ReadUInt32LittleEndian(scratch);
+                offset += 8L + BinaryPrimitives.ReadUInt32LittleEndian(scratch); // 8L: int + uint is uint and wraps at 0xFFFFFFF8
                 continue;
             }
             if (magic != FrameMagic)
@@ -933,7 +725,7 @@ static class ZstandardThrows
 {
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    public static void InvalidEnvelope() => throw new MessagePackSerializationException("Invalid Zstandard envelope.");
+    public static void InvalidFrame() => throw new MessagePackSerializationException("Invalid Zstandard frame.");
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     [System.Diagnostics.CodeAnalysis.DoesNotReturn]
@@ -941,5 +733,5 @@ static class ZstandardThrows
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    public static void DeclaredLengthExceedsMaximum(long declared, long maxDecompressedSize) => throw new MessagePackSerializationException($"Zstandard envelope declares a {declared} byte decompressed length, which exceeds the configured maximum (MaxDecompressedSize {maxDecompressedSize})");
+    public static void DeclaredLengthExceedsMaximum(long declared, long maxDecompressedSize) => throw new MessagePackSerializationException($"Zstandard frame declares a {declared} byte decompressed length, which exceeds the configured maximum (MaxDecompressedSize {maxDecompressedSize})");
 }
