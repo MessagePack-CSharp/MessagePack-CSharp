@@ -23,7 +23,7 @@ public sealed partial class KeyValuePairFormatter<TWriteBuffer, TReadBuffer, TKe
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref KeyValuePair<TKey, TValue> value)
     {
-        if (buffer.ReadArrayHeader() != 2)
+        if (buffer.ReadArrayHeader(ref state) != 2)
         {
             throw new MessagePackSerializationException("Invalid KeyValuePair format.");
         }

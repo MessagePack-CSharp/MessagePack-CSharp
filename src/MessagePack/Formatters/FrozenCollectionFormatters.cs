@@ -63,14 +63,14 @@ public sealed class FrozenDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, T
             return;
         }
 
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
+        state.Enter();
 
         // stage in a Dictionary (bomb-guarded count) and freeze once
         var staging = new Dictionary<TKey, TValue>(count, comparer);
 
         var kf = keyFormatter;
         var vf = valueFormatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -170,7 +170,8 @@ public sealed partial class FrozenSetFormatter<TWriteBuffer, TReadBuffer, T> : I
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
 
 #if NETSTANDARD2_0
         var staging = new HashSet<T>(comparer); // no capacity ctor on ns2.0
@@ -179,7 +180,6 @@ public sealed partial class FrozenSetFormatter<TWriteBuffer, TReadBuffer, T> : I
 #endif
 
         var f = formatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {

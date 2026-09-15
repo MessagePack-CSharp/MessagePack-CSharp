@@ -45,18 +45,18 @@ public sealed partial class ImmutableArrayFormatter<TWriteBuffer, TReadBuffer, T
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         if (count == 0)
         {
             value = ImmutableArray<T>.Empty;
             return;
         }
+        state.Enter();
 
         var array = new T[count];
 
         var f = formatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -128,7 +128,7 @@ public sealed partial class ImmutableListFormatter<TWriteBuffer, TReadBuffer, T>
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         var builder = ImmutableList.CreateBuilder<T>();
 
         var f = formatter;
@@ -212,7 +212,7 @@ public sealed partial class ImmutableHashSetFormatter<TWriteBuffer, TReadBuffer,
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         var builder = ImmutableHashSet.CreateBuilder<T>(comparer);
 
         var f = formatter;
@@ -298,7 +298,7 @@ public sealed partial class ImmutableSortedSetFormatter<TWriteBuffer, TReadBuffe
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         var builder = ImmutableSortedSet.CreateBuilder<T>();
 
         var f = formatter;
@@ -373,11 +373,12 @@ public sealed partial class ImmutableQueueFormatter<TWriteBuffer, TReadBuffer, T
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
+
         var temp = new T[count];
 
         var f = formatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -446,7 +447,7 @@ public sealed partial class ImmutableStackFormatter<TWriteBuffer, TReadBuffer, T
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         var f = formatter;
         state.Enter();
@@ -547,7 +548,7 @@ public sealed class ImmutableDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey
             return;
         }
 
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
         var builder = comparer == null
             ? ImmutableDictionary.CreateBuilder<TKey, TValue>()
             : ImmutableDictionary.CreateBuilder<TKey, TValue>(comparer);
@@ -657,7 +658,7 @@ public sealed class ImmutableSortedDictionaryFormatter<TWriteBuffer, TReadBuffer
             return;
         }
 
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
         var builder = ImmutableSortedDictionary.CreateBuilder<TKey, TValue>();
 
         var kf = keyFormatter;
@@ -744,7 +745,7 @@ public sealed partial class InterfaceImmutableListFormatter<TWriteBuffer, TReadB
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         var builder = ImmutableList.CreateBuilder<T>();
 
         var f = formatter;
@@ -828,7 +829,7 @@ public sealed partial class InterfaceImmutableSetFormatter<TWriteBuffer, TReadBu
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         var builder = ImmutableHashSet.CreateBuilder<T>(comparer);
 
         var f = formatter;
@@ -914,11 +915,12 @@ public sealed partial class InterfaceImmutableQueueFormatter<TWriteBuffer, TRead
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
+
         var temp = new T[count];
 
         var f = formatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -986,7 +988,7 @@ public sealed partial class InterfaceImmutableStackFormatter<TWriteBuffer, TRead
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         var f = formatter;
         state.Enter();
@@ -1081,7 +1083,7 @@ public sealed class InterfaceImmutableDictionaryFormatter<TWriteBuffer, TReadBuf
             return;
         }
 
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
         var builder = comparer == null
             ? ImmutableDictionary.CreateBuilder<TKey, TValue>()
             : ImmutableDictionary.CreateBuilder<TKey, TValue>(comparer);

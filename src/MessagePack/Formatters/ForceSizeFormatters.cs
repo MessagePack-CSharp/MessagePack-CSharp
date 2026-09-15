@@ -382,7 +382,7 @@ public sealed partial class ForceSByteBlockArrayFormatter<TWriteBuffer, TReadBuf
             value = null;
             return;
         }
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         if (count == 0)
         {
             value = [];
@@ -429,7 +429,7 @@ public sealed partial class ForceInt16BlockArrayFormatter<TWriteBuffer, TReadBuf
             value = null;
             return;
         }
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         if (count == 0)
         {
             value = [];
@@ -472,7 +472,7 @@ public sealed partial class ForceUInt16BlockArrayFormatter<TWriteBuffer, TReadBu
             value = null;
             return;
         }
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         if (count == 0)
         {
             value = [];
@@ -515,7 +515,7 @@ public sealed partial class ForceInt32BlockArrayFormatter<TWriteBuffer, TReadBuf
             value = null;
             return;
         }
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         if (count == 0)
         {
             value = [];
@@ -558,7 +558,7 @@ public sealed partial class ForceUInt32BlockArrayFormatter<TWriteBuffer, TReadBu
             value = null;
             return;
         }
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         if (count == 0)
         {
             value = [];
@@ -601,7 +601,7 @@ public sealed partial class ForceInt64BlockArrayFormatter<TWriteBuffer, TReadBuf
             value = null;
             return;
         }
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         if (count == 0)
         {
             value = [];
@@ -644,7 +644,7 @@ public sealed partial class ForceUInt64BlockArrayFormatter<TWriteBuffer, TReadBu
             value = null;
             return;
         }
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         if (count == 0)
         {
             value = [];

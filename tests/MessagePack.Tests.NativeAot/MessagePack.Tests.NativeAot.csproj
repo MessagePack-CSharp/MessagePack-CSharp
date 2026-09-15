@@ -14,7 +14,7 @@
 		     the produced exe for the real Native AOT verification. The publish must complete
 		     with zero IL warnings from our assemblies. -->
 		<PublishAot>true</PublishAot>
-		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
 		<InvariantGlobalization>true</InvariantGlobalization>
 	</PropertyGroup>
 

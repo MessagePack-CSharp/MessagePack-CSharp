@@ -14,9 +14,8 @@ on:
 
 jobs:
   cleanup:
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # auto generated token
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions: {}
     timeout-minutes: 5
     outputs:
       branch-deleted: ${{ steps.check-branch.outputs.deletable }}
@@ -25,30 +24,34 @@ jobs:
         id: check-branch
         run: |
           # Check if the branch is the default branch
-          if [[ "$(gh api /repos/${{ github.repository }} | jq -r '.default_branch')" == "${{ inputs.branch }}" ]]; then
-            echo "Branch is default, you cannot delete this branch. branch: ${{ inputs.branch }}"
+          if [[ "$(gh api /repos/${{ github.repository }} | jq -r '.default_branch')" == "${BRANCH}" ]]; then
+            echo "Branch is default, you cannot delete this branch. branch: ${BRANCH}"
             exit 1
           fi
 
           # Check if the branch is created by github-actions[bot]
-          if gh api /repos/${{ github.repository }}/branches | jq -r '.[].name' | grep "${{ inputs.branch }}" >/dev/null; then
-            echo "branch exists. branch: ${{ inputs.branch }}"
+          if gh api /repos/${{ github.repository }}/branches | jq -r '.[].name' | grep "${BRANCH}" >/dev/null; then
+            echo "branch exists. branch: ${BRANCH}"
 
             # Check info of the branch
-            gh api /repos/${{ github.repository }}/branches/${{ inputs.branch }} | jq
+            gh api /repos/${{ github.repository }}/branches/${BRANCH} | jq
 
-            if [[ "$(gh api /repos/${{ github.repository }}/branches/${{ inputs.branch }} | jq -r '.commit.author.login')" != "github-actions[bot]" ]]; then
-              echo "Branch is not created by github-actions[bot], you cannot delete this branch. branch: ${{ inputs.branch }}"
+            if [[ "$(gh api /repos/${{ github.repository }}/branches/${BRANCH} | jq -r '.commit.author.login')" != "github-actions[bot]" ]]; then
+              echo "Branch is not created by github-actions[bot], you cannot delete this branch. branch: ${BRANCH}"
               exit 1
             fi
 
             branch_deletable=true
           else
-            echo "branch not exists. branch: ${{ inputs.branch }}"
+            echo "branch not exists. branch: ${BRANCH}"
             branch_deletable=false
           fi
 
           echo "deletable=${branch_deletable}" | tee -a "${GITHUB_OUTPUT}"
+        env:
+          BRANCH: ${{ inputs.branch }}
       - name: Delete branch
         if: ${{ steps.check-branch.outputs.deletable == 'true' }}
-        run: gh api -X DELETE /repos/${{ github.repository }}/git/refs/heads/${{ inputs.branch }}
+        run: gh api -X DELETE /repos/${{ github.repository }}/git/refs/heads/${BRANCH}
+        env:
+          BRANCH: ${{ inputs.branch }}

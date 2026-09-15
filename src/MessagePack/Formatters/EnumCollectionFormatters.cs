@@ -133,17 +133,17 @@ public sealed class EnumArrayFormatter<TWriteBuffer, TReadBuffer, TEnum, TUnderl
             fallback.Deserialize(ref buffer, ref state, ref value);
             return;
         }
-        DeserializeElements(ref buffer, ref value);
+        DeserializeElements(ref buffer, ref state, ref value);
     }
 
-    static void DeserializeElements(ref TReadBuffer buffer, ref TEnum[]? value)
+    static void DeserializeElements(ref TReadBuffer buffer, ref DeserializeState state, ref TEnum[]? value)
     {
         if (buffer.TryReadNil())
         {
             value = null;
             return;
         }
-        int count = buffer.ReadArrayHeader(); // count is bomb-guarded by ReadArrayHeader
+        int count = buffer.ReadArrayHeader(ref state); // count is bomb-guarded by ReadArrayHeader
         if (count == 0)
         {
             value = [];
@@ -248,10 +248,10 @@ public sealed class EnumListFormatter<TWriteBuffer, TReadBuffer, TEnum, TUnderly
             fallback.Deserialize(ref buffer, ref state, ref value);
             return;
         }
-        DeserializeElements(ref buffer, ref value);
+        DeserializeElements(ref buffer, ref state, ref value);
     }
 
-    static void DeserializeElements(ref TReadBuffer buffer, ref List<TEnum>? value)
+    static void DeserializeElements(ref TReadBuffer buffer, ref DeserializeState state, ref List<TEnum>? value)
     {
         if (buffer.TryReadNil())
         {
@@ -260,7 +260,7 @@ public sealed class EnumListFormatter<TWriteBuffer, TReadBuffer, TEnum, TUnderly
         }
 
         // ReadArrayHeader validates the claimed count against BytesRemaining.
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         var result = value ?? new List<TEnum>(count);
         CollectionsMarshal.SetCount(result, count);
         EnumElementCodec.Read(ref buffer, MemoryMarshal.Cast<TEnum, TUnderlying>(CollectionsMarshal.AsSpan(result)));

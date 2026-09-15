@@ -65,7 +65,8 @@ public sealed class DictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
         }
 
         // ReadMapHeader validates the claimed count against BytesRemaining.
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
+        state.Enter();
 
         // Populate contract
         Dictionary<TKey, TValue> result;
@@ -85,7 +86,6 @@ public sealed class DictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
 
         var kf = keyFormatter;
         var vf = valueFormatter;
-        state.Enter();
 
         // Duplicate map keys are rejected as data errors.
         // JSON RFC 8259: "names SHOULD be unique", MsgPack Spec: "keys SHOULD be unique"
@@ -220,7 +220,8 @@ public sealed class InterfaceDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey
             return;
         }
 
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
+        state.Enter();
 
         IDictionary<TKey, TValue> result;
         if (value != null && !value.IsReadOnly)
@@ -235,7 +236,6 @@ public sealed class InterfaceDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey
 
         var kf = keyFormatter;
         var vf = valueFormatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -349,14 +349,14 @@ public sealed class InterfaceReadOnlyDictionaryFormatter<TWriteBuffer, TReadBuff
             return;
         }
 
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
+        state.Enter();
 
         // the interface is read-only: always materialize fresh
         var result = new Dictionary<TKey, TValue>(count, comparer);
 
         var kf = keyFormatter;
         var vf = valueFormatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -470,14 +470,14 @@ public sealed class ReadOnlyDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey,
             return;
         }
 
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
+        state.Enter();
 
         // the wrapper is immutable: always materialize a fresh inner dictionary
         var inner = new Dictionary<TKey, TValue>(count, comparer);
 
         var kf = keyFormatter;
         var vf = valueFormatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -583,7 +583,8 @@ public sealed class SortedListFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
             return;
         }
 
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
+        state.Enter();
 
         SortedList<TKey, TValue> result;
         if (value != null)
@@ -598,7 +599,6 @@ public sealed class SortedListFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
 
         var kf = keyFormatter;
         var vf = valueFormatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -690,7 +690,7 @@ public sealed class SortedDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, T
             return;
         }
 
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
 
         SortedDictionary<TKey, TValue> result;
         if (value != null)
@@ -809,7 +809,7 @@ public sealed class ConcurrentDictionaryFormatter<TWriteBuffer, TReadBuffer, TKe
             return;
         }
 
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
 
         ConcurrentDictionary<TKey, TValue> result;
         if (value != null)
@@ -937,7 +937,8 @@ public sealed class OrderedDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, 
             return;
         }
 
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
+        state.Enter();
 
         OrderedDictionary<TKey, TValue> result;
         if (value != null)
@@ -953,7 +954,6 @@ public sealed class OrderedDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, 
 
         var kf = keyFormatter;
         var vf = valueFormatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -1060,7 +1060,8 @@ public sealed class PriorityQueueFormatter<TWriteBuffer, TReadBuffer, TElement, 
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
 
         PriorityQueue<TElement, TPriority> result;
         if (value != null)
@@ -1076,11 +1077,10 @@ public sealed class PriorityQueueFormatter<TWriteBuffer, TReadBuffer, TElement, 
 
         var ef = elementFormatter;
         var pf = priorityFormatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
-            var pairLength = buffer.ReadArrayHeader();
+            var pairLength = buffer.ReadArrayHeader(ref state);
             if (pairLength != 2)
             {
                 throw new MessagePackSerializationException($"Invalid PriorityQueue entry: expected [element, priority] pair (fixarray2), got array of length {pairLength}.");

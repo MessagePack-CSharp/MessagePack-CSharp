@@ -13,10 +13,11 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\..\opensource.snk</AssemblyOriginatorKeyFile>
     <NoWarn>$(NoWarn);CS8002</NoWarn>
-    <!-- MsgPack113 (container formatter without state.Enter): the hand-written formatter
-         candidates here are dispatch-shape experiments whose numbers are already recorded;
-         they leave the depth contract out on purpose and must not be retrofitted -->
-    <NoWarn>$(NoWarn);MsgPack113</NoWarn>
+    <!-- MsgPack113 (container formatter without state.Enter) / MsgPack115 (header read without charging the
+         declared-element budget): the hand-written formatter candidates here are dispatch-shape experiments
+         whose numbers are already recorded; they leave the depth and budget contracts out on purpose and
+         must not be retrofitted -->
+    <NoWarn>$(NoWarn);MsgPack113;MsgPack115</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

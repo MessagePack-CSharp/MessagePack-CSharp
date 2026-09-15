@@ -108,11 +108,12 @@ public sealed partial class NonGenericInterfaceDictionaryFormatter<TWriteBuffer,
             value = null;
             return;
         }
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
+        state.Enter();
+
         var dictionary = comparer == null
             ? new Dictionary<object, object?>(count)
             : new Dictionary<object, object?>(count, comparer);
-        state.Enter();
         for (int i = 0; i < count; i++)
         {
             object? key = null;
@@ -156,7 +157,7 @@ public sealed class NonGenericListFormatter<TWriteBuffer, TReadBuffer, T> : IMes
             value = null;
             return;
         }
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         var list = new T();
         state.Enter();
         for (int i = 0; i < count; i++)
@@ -200,7 +201,7 @@ public sealed class NonGenericDictionaryFormatter<TWriteBuffer, TReadBuffer, T> 
             value = null;
             return;
         }
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
         var dictionary = new T(); // the concrete type owns its comparer (e.g. Hashtable)
         state.Enter();
         for (int i = 0; i < count; i++)
@@ -319,13 +320,14 @@ file static class NonGenericCollectionFormatterHelper
         {
             return null;
         }
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         if (count == 0)
         {
             return Array.Empty<object?>();
         }
-        var array = new object?[count];
         state.Enter();
+
+        var array = new object?[count];
         for (int i = 0; i < array.Length; i++)
         {
             formatter.Deserialize(ref buffer, ref state, ref array[i]);

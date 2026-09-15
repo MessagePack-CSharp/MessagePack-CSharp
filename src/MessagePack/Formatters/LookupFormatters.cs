@@ -102,7 +102,7 @@ public sealed class InterfaceGroupingFormatter<TWriteBuffer, TReadBuffer, TKey, 
             return;
         }
 
-        var header = buffer.ReadArrayHeader();
+        var header = buffer.ReadArrayHeader(ref state);
         if (header != 2)
         {
             throw new MessagePackSerializationException($"Invalid Grouping format: expected a 2-element array, got {header}.");
@@ -196,13 +196,14 @@ public sealed class InterfaceLookupFormatter<TWriteBuffer, TReadBuffer, TKey, TE
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
+
         var map = new Dictionary<TKey, Grouping<TKey, TElement>>(count, comparer);
         Grouping<TKey, TElement>? first = null;
         Grouping<TKey, TElement>? last = null;
 
         var gf = groupingFormatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {

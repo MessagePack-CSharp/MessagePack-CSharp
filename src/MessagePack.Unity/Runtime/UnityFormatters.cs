@@ -105,6 +105,7 @@ namespace MessagePack.Unity
         // buffer, which only matters once TReadBuffer may itself be a ref struct (net9+); Unity's C# 9 never sees it.
         public static void ReadSingles<TReadBuffer>(
             ref TReadBuffer buffer,
+            ref DeserializeState state,
 #if NET9_0_OR_GREATER
             scoped
 #endif
@@ -118,7 +119,7 @@ namespace MessagePack.Unity
             {
                 ThrowNilForStruct();
             }
-            var count = buffer.ReadArrayHeader();
+            var count = buffer.ReadArrayHeader(ref state);
             for (var i = 0; i < count; i++)
             {
                 if (i < values.Length)
@@ -134,6 +135,7 @@ namespace MessagePack.Unity
 
         public static void ReadInt32s<TReadBuffer>(
             ref TReadBuffer buffer,
+            ref DeserializeState state,
 #if NET9_0_OR_GREATER
             scoped
 #endif
@@ -147,7 +149,7 @@ namespace MessagePack.Unity
             {
                 ThrowNilForStruct();
             }
-            var count = buffer.ReadArrayHeader();
+            var count = buffer.ReadArrayHeader(ref state);
             for (var i = 0; i < count; i++)
             {
                 if (i < values.Length)
@@ -163,13 +165,13 @@ namespace MessagePack.Unity
 
         // the element count of a nested array, or -1 for nil; extra elements past what the caller reads must be
         // skipped by the caller (see SkipRest)
-        public static int ReadNestedArrayHeader<TReadBuffer>(ref TReadBuffer buffer)
+        public static int ReadNestedArrayHeader<TReadBuffer>(ref TReadBuffer buffer, ref DeserializeState state)
             where TReadBuffer : struct, IReadBuffer
 #if NET9_0_OR_GREATER
             , allows ref struct
 #endif
         {
-            return buffer.TryReadNil() ? -1 : buffer.ReadArrayHeader();
+            return buffer.TryReadNil() ? -1 : buffer.ReadArrayHeader(ref state);
         }
 
         public static void SkipRest<TReadBuffer>(ref TReadBuffer buffer, int count, int consumed)
@@ -219,7 +221,7 @@ namespace MessagePack.Unity
                 return;
             }
             Span<float> v = stackalloc float[2];
-            UnityCodec.ReadSingles(ref buffer, v);
+            UnityCodec.ReadSingles(ref buffer, ref state, v);
             value = new Vector2(v[0], v[1]);
         }
     }
@@ -252,7 +254,7 @@ namespace MessagePack.Unity
                 return;
             }
             Span<float> v = stackalloc float[3];
-            UnityCodec.ReadSingles(ref buffer, v);
+            UnityCodec.ReadSingles(ref buffer, ref state, v);
             value = new Vector3(v[0], v[1], v[2]);
         }
     }
@@ -285,7 +287,7 @@ namespace MessagePack.Unity
                 return;
             }
             Span<float> v = stackalloc float[4];
-            UnityCodec.ReadSingles(ref buffer, v);
+            UnityCodec.ReadSingles(ref buffer, ref state, v);
             value = new Vector4(v[0], v[1], v[2], v[3]);
         }
     }
@@ -318,7 +320,7 @@ namespace MessagePack.Unity
                 return;
             }
             Span<float> v = stackalloc float[4];
-            UnityCodec.ReadSingles(ref buffer, v);
+            UnityCodec.ReadSingles(ref buffer, ref state, v);
             value = new Quaternion(v[0], v[1], v[2], v[3]);
         }
     }
@@ -351,7 +353,7 @@ namespace MessagePack.Unity
                 return;
             }
             Span<float> v = stackalloc float[4];
-            UnityCodec.ReadSingles(ref buffer, v);
+            UnityCodec.ReadSingles(ref buffer, ref state, v);
             value = new Color(v[0], v[1], v[2], v[3]);
         }
     }
@@ -384,7 +386,7 @@ namespace MessagePack.Unity
                 return;
             }
             Span<float> v = stackalloc float[4];
-            UnityCodec.ReadSingles(ref buffer, v);
+            UnityCodec.ReadSingles(ref buffer, ref state, v);
             value = new Rect(v[0], v[1], v[2], v[3]);
         }
     }
@@ -417,7 +419,7 @@ namespace MessagePack.Unity
                 return;
             }
             Span<float> v = stackalloc float[4];
-            UnityCodec.ReadSingles(ref buffer, v);
+            UnityCodec.ReadSingles(ref buffer, ref state, v);
             value = new Keyframe(v[0], v[1], v[2], v[3]);
         }
     }
@@ -452,19 +454,19 @@ namespace MessagePack.Unity
             {
                 UnityCodec.ThrowNilForStruct();
             }
-            var count = buffer.ReadArrayHeader();
+            var count = buffer.ReadArrayHeader(ref state);
             var center = default(Vector3);
             var size = default(Vector3);
-            if (count > 0) center = ReadVector3(ref buffer);
-            if (count > 1) size = ReadVector3(ref buffer);
+            if (count > 0) center = ReadVector3(ref buffer, ref state);
+            if (count > 1) size = ReadVector3(ref buffer, ref state);
             UnityCodec.SkipRest(ref buffer, count, 2);
             value = new Bounds(center, size);
         }
 
-        static Vector3 ReadVector3(ref TReadBuffer buffer)
+        static Vector3 ReadVector3(ref TReadBuffer buffer, ref DeserializeState state)
         {
             Span<float> v = stackalloc float[3];
-            UnityCodec.ReadSingles(ref buffer, v);
+            UnityCodec.ReadSingles(ref buffer, ref state, v);
             return new Vector3(v[0], v[1], v[2]);
         }
     }
@@ -526,7 +528,7 @@ namespace MessagePack.Unity
             }
             else
             {
-                UnityCodec.ReadSingles(ref buffer, v);
+                UnityCodec.ReadSingles(ref buffer, ref state, v);
             }
             var m = default(Matrix4x4);
             AssignColumnMajor(ref m, v);
@@ -588,7 +590,7 @@ namespace MessagePack.Unity
             {
                 UnityCodec.ThrowNilForStruct();
             }
-            var count = buffer.ReadArrayHeader();
+            var count = buffer.ReadArrayHeader(ref state);
             byte r = 0, g = 0, b = 0, a = 0;
             if (count > 0) r = buffer.ReadByte();
             if (count > 1) g = buffer.ReadByte();
@@ -623,7 +625,7 @@ namespace MessagePack.Unity
         public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref LayerMask value)
         {
             Span<int> v = stackalloc int[1];
-            UnityCodec.ReadInt32s(ref buffer, v);
+            UnityCodec.ReadInt32s(ref buffer, ref state, v);
             var mask = default(LayerMask);
             mask.value = v[0];
             value = mask;
@@ -655,7 +657,7 @@ namespace MessagePack.Unity
         public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Vector2Int value)
         {
             Span<int> v = stackalloc int[2];
-            UnityCodec.ReadInt32s(ref buffer, v);
+            UnityCodec.ReadInt32s(ref buffer, ref state, v);
             value = new Vector2Int(v[0], v[1]);
         }
     }
@@ -686,7 +688,7 @@ namespace MessagePack.Unity
         public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Vector3Int value)
         {
             Span<int> v = stackalloc int[3];
-            UnityCodec.ReadInt32s(ref buffer, v);
+            UnityCodec.ReadInt32s(ref buffer, ref state, v);
             value = new Vector3Int(v[0], v[1], v[2]);
         }
     }
@@ -716,7 +718,7 @@ namespace MessagePack.Unity
         public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref RangeInt value)
         {
             Span<int> v = stackalloc int[2];
-            UnityCodec.ReadInt32s(ref buffer, v);
+            UnityCodec.ReadInt32s(ref buffer, ref state, v);
             value = new RangeInt(v[0], v[1]);
         }
     }
@@ -748,7 +750,7 @@ namespace MessagePack.Unity
         public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref RectInt value)
         {
             Span<int> v = stackalloc int[4];
-            UnityCodec.ReadInt32s(ref buffer, v);
+            UnityCodec.ReadInt32s(ref buffer, ref state, v);
             value = new RectInt(v[0], v[1], v[2], v[3]);
         }
     }
@@ -781,11 +783,11 @@ namespace MessagePack.Unity
             {
                 UnityCodec.ThrowNilForStruct();
             }
-            var count = buffer.ReadArrayHeader();
+            var count = buffer.ReadArrayHeader(ref state);
             var position = default(Vector3Int);
             var size = default(Vector3Int);
-            if (count > 0) position = ReadVector3Int(ref buffer);
-            if (count > 1) size = ReadVector3Int(ref buffer);
+            if (count > 0) position = ReadVector3Int(ref buffer, ref state);
+            if (count > 1) size = ReadVector3Int(ref buffer, ref state);
             UnityCodec.SkipRest(ref buffer, count, 2);
             value = new BoundsInt(position, size);
         }
@@ -798,10 +800,10 @@ namespace MessagePack.Unity
             buffer.WriteInt32(v.z);
         }
 
-        static Vector3Int ReadVector3Int(ref TReadBuffer buffer)
+        static Vector3Int ReadVector3Int(ref TReadBuffer buffer, ref DeserializeState state)
         {
             Span<int> v = stackalloc int[3];
-            UnityCodec.ReadInt32s(ref buffer, v);
+            UnityCodec.ReadInt32s(ref buffer, ref state, v);
             return new Vector3Int(v[0], v[1], v[2]);
         }
     }
@@ -835,13 +837,13 @@ namespace MessagePack.Unity
             {
                 UnityCodec.ThrowNilForStruct();
             }
-            var count = buffer.ReadArrayHeader();
+            var count = buffer.ReadArrayHeader(ref state);
             var color = default(Color);
             var time = 0f;
             if (count > 0)
             {
                 Span<float> v = stackalloc float[4];
-                UnityCodec.ReadSingles(ref buffer, v);
+                UnityCodec.ReadSingles(ref buffer, ref state, v);
                 color = new Color(v[0], v[1], v[2], v[3]);
             }
             if (count > 1) time = buffer.ReadSingle();
@@ -878,7 +880,7 @@ namespace MessagePack.Unity
                 return;
             }
             Span<float> v = stackalloc float[2];
-            UnityCodec.ReadSingles(ref buffer, v);
+            UnityCodec.ReadSingles(ref buffer, ref state, v);
             value = new GradientAlphaKey(v[0], v[1]);
         }
     }
@@ -931,13 +933,13 @@ namespace MessagePack.Unity
                 value = null;
                 return;
             }
-            var count = buffer.ReadArrayHeader();
+            var count = buffer.ReadArrayHeader(ref state);
             Keyframe[]? keys = null;
             var postWrapMode = default(WrapMode);
             var preWrapMode = default(WrapMode);
             if (count > 0)
             {
-                var keyCount = UnityCodec.ReadNestedArrayHeader(ref buffer);
+                var keyCount = UnityCodec.ReadNestedArrayHeader(ref buffer, ref state);
                 if (keyCount >= 0)
                 {
                     keys = new Keyframe[keyCount];
@@ -945,7 +947,7 @@ namespace MessagePack.Unity
                     for (var i = 0; i < keyCount; i++)
                     {
                         v.Clear();
-                        UnityCodec.ReadSingles(ref buffer, v);
+                        UnityCodec.ReadSingles(ref buffer, ref state, v);
                         keys[i] = new Keyframe(v[0], v[1], v[2], v[3]);
                     }
                 }
@@ -1024,13 +1026,13 @@ namespace MessagePack.Unity
                 value = null;
                 return;
             }
-            var count = buffer.ReadArrayHeader();
+            var count = buffer.ReadArrayHeader(ref state);
             GradientColorKey[]? colorKeys = null;
             GradientAlphaKey[]? alphaKeys = null;
             var mode = default(GradientMode);
             if (count > 0)
             {
-                var n = UnityCodec.ReadNestedArrayHeader(ref buffer);
+                var n = UnityCodec.ReadNestedArrayHeader(ref buffer, ref state);
                 if (n >= 0)
                 {
                     colorKeys = new GradientColorKey[n];
@@ -1041,13 +1043,13 @@ namespace MessagePack.Unity
                         {
                             UnityCodec.ThrowNilForStruct();
                         }
-                        var keyCount = buffer.ReadArrayHeader();
+                        var keyCount = buffer.ReadArrayHeader(ref state);
                         var color = default(Color);
                         var time = 0f;
                         if (keyCount > 0)
                         {
                             v.Clear();
-                            UnityCodec.ReadSingles(ref buffer, v);
+                            UnityCodec.ReadSingles(ref buffer, ref state, v);
                             color = new Color(v[0], v[1], v[2], v[3]);
                         }
                         if (keyCount > 1) time = buffer.ReadSingle();
@@ -1058,7 +1060,7 @@ namespace MessagePack.Unity
             }
             if (count > 1)
             {
-                var n = UnityCodec.ReadNestedArrayHeader(ref buffer);
+                var n = UnityCodec.ReadNestedArrayHeader(ref buffer, ref state);
                 if (n >= 0)
                 {
                     alphaKeys = new GradientAlphaKey[n];
@@ -1066,7 +1068,7 @@ namespace MessagePack.Unity
                     for (var i = 0; i < n; i++)
                     {
                         v.Clear();
-                        UnityCodec.ReadSingles(ref buffer, v);
+                        UnityCodec.ReadSingles(ref buffer, ref state, v);
                         alphaKeys[i] = new GradientAlphaKey(v[0], v[1]);
                     }
                 }
@@ -1117,7 +1119,7 @@ namespace MessagePack.Unity
                 value = null;
                 return;
             }
-            var count = buffer.ReadArrayHeader();
+            var count = buffer.ReadArrayHeader(ref state);
             int left = 0, right = 0, top = 0, bottom = 0;
             if (count > 0) left = buffer.ReadInt32();
             if (count > 1) right = buffer.ReadInt32();

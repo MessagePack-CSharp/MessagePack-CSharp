@@ -103,7 +103,7 @@ public sealed partial class DateTimeOffsetFormatter<TWriteBuffer, TReadBuffer> :
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref DateTimeOffset value)
     {
-        if (buffer.ReadArrayHeader() != 2)
+        if (buffer.ReadArrayHeader(ref state) != 2)
         {
             throw new MessagePackSerializationException("Invalid DateTimeOffset format.");
         }
@@ -330,7 +330,7 @@ public sealed partial class BitArrayFormatter<TWriteBuffer, TReadBuffer> : IMess
     {
         // dual-format: also accepts the DotNetOptimized packed form, so a default-
         // configured peer can read packed data (the forms are type-tag distinguishable)
-        value = BitArrayCodec.Read(ref buffer);
+        value = BitArrayCodec.Read(ref buffer, ref state);
     }
 }
 
@@ -445,7 +445,7 @@ public sealed partial class RangeFormatter<TWriteBuffer, TReadBuffer> : IMessage
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Range value)
     {
-        if (buffer.ReadArrayHeader() != 2)
+        if (buffer.ReadArrayHeader(ref state) != 2)
         {
             throw new MessagePackSerializationException("Invalid Range format.");
         }

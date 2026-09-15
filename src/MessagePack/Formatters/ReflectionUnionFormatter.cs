@@ -82,7 +82,7 @@ public sealed partial class ReflectionUnionFormatter<TWriteBuffer, TReadBuffer, 
             return;
         }
         state.Enter();
-        if (buffer.ReadArrayHeader() != 2)
+        if (buffer.ReadArrayHeader(ref state) != 2)
         {
             throw new MessagePackSerializationException("Invalid Union data was detected.");
         }

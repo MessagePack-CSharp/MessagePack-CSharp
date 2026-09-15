@@ -246,7 +246,7 @@ public sealed partial class DotNetOptimizedDateTimeOffsetFormatter<TWriteBuffer,
         else
         {
             // foreign smallest-format encodings and seam-straddling windows
-            if (buffer.ReadArrayHeader() != 2)
+            if (buffer.ReadArrayHeader(ref state) != 2)
             {
                 throw new MessagePackSerializationException("Invalid DateTimeOffset format.");
             }
@@ -313,7 +313,7 @@ public sealed partial class PackedBitArrayFormatter<TWriteBuffer, TReadBuffer> :
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref BitArray? value)
     {
-        value = BitArrayCodec.Read(ref buffer);
+        value = BitArrayCodec.Read(ref buffer, ref state);
     }
 }
 
@@ -323,7 +323,7 @@ public sealed partial class PackedBitArrayFormatter<TWriteBuffer, TReadBuffer> :
 // because the legacy form's elements are always booleans
 static class BitArrayCodec
 {
-    internal static BitArray? Read<TReadBuffer>(ref TReadBuffer buffer)
+    internal static BitArray? Read<TReadBuffer>(ref TReadBuffer buffer, ref DeserializeState state)
         where TReadBuffer : struct, IReadBuffer
 #if NET9_0_OR_GREATER
         , allows ref struct
@@ -335,7 +335,7 @@ static class BitArrayCodec
         }
 
         // ReadArrayHeader validates the claimed count against BytesRemaining
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         if (count != 0 && buffer.TryPeek(out var code) &&
             code != MessagePackCode.False && code != MessagePackCode.True)
         {

@@ -44,7 +44,7 @@ public sealed class GenericCollectionFormatter<TWriteBuffer, TReadBuffer, TEleme
             value = null;
             return;
         }
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         var result = new TCollection();
         var f = formatter;
         state.Enter();
@@ -103,7 +103,7 @@ public sealed class GenericDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, 
             value = null;
             return;
         }
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
         var result = new TDictionary(); // the concrete type owns its comparer
         state.Enter();
         for (int i = 0; i < count; i++)
@@ -208,10 +208,11 @@ public sealed class GenericEnumerableFormatter<TWriteBuffer, TReadBuffer, TEleme
             value = default;
             return;
         }
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
+
         var items = new TElement[count];
         var f = formatter;
-        state.Enter();
         for (int i = 0; i < count; i++)
         {
             f.Deserialize(ref buffer, ref state, ref items[i]);
@@ -280,7 +281,7 @@ public sealed class GenericReadOnlyDictionaryFormatter<TWriteBuffer, TReadBuffer
             value = default;
             return;
         }
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
         var intermediate = new Dictionary<TKey, TValue>(comparer);
         state.Enter();
         for (int i = 0; i < count; i++)

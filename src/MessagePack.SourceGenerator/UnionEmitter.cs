@@ -174,7 +174,7 @@ static class UnionEmitter
                 writer.Line("return;");
             }
             writer.Line("state.Enter();");
-            using (writer.Block("if (buffer.ReadArrayHeader() != 2)"))
+            using (writer.Block("if (buffer.ReadArrayHeader(ref state) != 2)"))
             {
                 writer.Line("throw new MessagePackSerializationException(\"Invalid Union data was detected.\");");
             }

@@ -53,7 +53,7 @@ public sealed partial class ArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMess
         }
 
         // ReadArrayHeader validates the claimed count against BytesRemaining.
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         // empty fast path
         if (count == 0)
@@ -61,6 +61,7 @@ public sealed partial class ArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMess
             value = [];
             return;
         }
+        state.Enter();
 
         // Populate contract: reuse the incoming array only when the length matches exactly, otherwise allocate fresh.
         // A covariant incoming array (U[] behind T[]) is rejected by AsSpan below — spec'd, rare case.
@@ -69,7 +70,6 @@ public sealed partial class ArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMess
             : new T[count]; // don't use GC.AllocateUninitializedArray<T>(count) because it would be a returning uninitialized memory via `ref span[i]`
 
         var f = formatter;
-        state.Enter(); // enter depth-check
 
         // AsSpan pays the array covariance check once
         // a win only for generic T[], non-generic exact-typed loops should index directly
@@ -153,7 +153,7 @@ public sealed partial class ListFormatter<TWriteBuffer, TReadBuffer, T> : IMessa
         }
 
         // ReadArrayHeader validates the claimed count against BytesRemaining.
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         var f = formatter;
         state.Enter();
@@ -267,7 +267,7 @@ public sealed partial class LinkedListFormatter<TWriteBuffer, TReadBuffer, T> : 
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         LinkedList<T> result;
         if (value != null)
@@ -353,7 +353,8 @@ public sealed partial class QueueFormatter<TWriteBuffer, TReadBuffer, T> : IMess
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
 
         Queue<T> result;
         if (value != null)
@@ -367,7 +368,6 @@ public sealed partial class QueueFormatter<TWriteBuffer, TReadBuffer, T> : IMess
         }
 
         var f = formatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -439,7 +439,7 @@ public sealed partial class StackFormatter<TWriteBuffer, TReadBuffer, T> : IMess
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         var f = formatter;
         state.Enter();
@@ -542,7 +542,8 @@ public sealed partial class HashSetFormatter<TWriteBuffer, TReadBuffer, T> : IMe
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
 
         HashSet<T> result;
         if (value != null)
@@ -561,7 +562,6 @@ public sealed partial class HashSetFormatter<TWriteBuffer, TReadBuffer, T> : IMe
         }
 
         var f = formatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -652,7 +652,7 @@ public sealed partial class SortedSetFormatter<TWriteBuffer, TReadBuffer, T> : I
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         SortedSet<T> result;
         if (value != null)
@@ -764,11 +764,12 @@ public sealed partial class ReadOnlySetFormatter<TWriteBuffer, TReadBuffer, T> :
         }
 
         // no populate-reuse: the wrapper is read-only, so a fresh backing set every time
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
+
         var set = new HashSet<T>(count, comparer);
 
         var f = formatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -855,7 +856,7 @@ public sealed partial class ReadOnlyCollectionFormatter<TWriteBuffer, TReadBuffe
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         var f = formatter;
         state.Enter();
@@ -932,7 +933,7 @@ public sealed partial class ObservableCollectionFormatter<TWriteBuffer, TReadBuf
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         // populate reuse keeps the instance's event subscriptions alive — Clear and
         // per-Add change notifications firing IS the point of the type
@@ -1021,7 +1022,7 @@ public sealed partial class ReadOnlyObservableCollectionFormatter<TWriteBuffer, 
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         var f = formatter;
         state.Enter();
@@ -1105,7 +1106,8 @@ public sealed partial class ArraySegmentFormatter<TWriteBuffer, TReadBuffer, T> 
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
 
         // Populate contract: overwrite the incoming view's backing store in place only on
         // an exact length match, otherwise a fresh zero-offset segment
@@ -1123,7 +1125,6 @@ public sealed partial class ArraySegmentFormatter<TWriteBuffer, TReadBuffer, T> 
         }
 
         var f = formatter;
-        state.Enter();
 
         // AsSpan pays the covariance check once (throws on covariant reuse — spec'd, same as ArrayFormatter populate)
         var span = array.AsSpan(offset, count);
@@ -1191,14 +1192,14 @@ public sealed partial class MemoryFormatter<TWriteBuffer, TReadBuffer, T> : IMes
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
 
         // exact-length reuse writes through to the caller's backing store (array or
         // MemoryManager) — the ArrayFormatter populate rule applied to a view
         var result = value.Length == count ? value : new T[count];
 
         var f = formatter;
-        state.Enter();
 
         var span = result.Span;
         for (int i = 0; i < span.Length; i++)
@@ -1264,7 +1265,7 @@ public sealed partial class ReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, T
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         var f = formatter;
         state.Enter();
@@ -1344,7 +1345,7 @@ public sealed partial class ConcurrentQueueFormatter<TWriteBuffer, TReadBuffer, 
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         var f = formatter;
         state.Enter();
@@ -1420,7 +1421,7 @@ public sealed partial class ConcurrentStackFormatter<TWriteBuffer, TReadBuffer, 
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         var f = formatter;
         state.Enter();
@@ -1496,7 +1497,7 @@ public sealed partial class ConcurrentBagFormatter<TWriteBuffer, TReadBuffer, T>
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         var f = formatter;
         state.Enter();
@@ -1588,7 +1589,7 @@ public sealed partial class InterfaceEnumerableFormatter<TWriteBuffer, TReadBuff
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         if (count == 0)
         {
@@ -1669,7 +1670,8 @@ public sealed partial class InterfaceCollectionFormatter<TWriteBuffer, TReadBuff
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
 
         ICollection<T> result;
         if (value != null && !value.IsReadOnly)
@@ -1683,7 +1685,6 @@ public sealed partial class InterfaceCollectionFormatter<TWriteBuffer, TReadBuff
         }
 
         var f = formatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -1756,7 +1757,8 @@ public sealed partial class InterfaceListFormatter<TWriteBuffer, TReadBuffer, T>
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
 
         IList<T> result;
         if (value != null && !value.IsReadOnly)
@@ -1770,7 +1772,6 @@ public sealed partial class InterfaceListFormatter<TWriteBuffer, TReadBuffer, T>
         }
 
         var f = formatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -1842,7 +1843,7 @@ public sealed partial class InterfaceReadOnlyCollectionFormatter<TWriteBuffer, T
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         if (count == 0)
         {
@@ -1924,7 +1925,7 @@ public sealed partial class InterfaceReadOnlyListFormatter<TWriteBuffer, TReadBu
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         if (count == 0)
         {
@@ -2015,7 +2016,8 @@ public sealed partial class InterfaceSetFormatter<TWriteBuffer, TReadBuffer, T> 
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
+        state.Enter();
 
         ISet<T> result;
         if (value != null && !value.IsReadOnly)
@@ -2033,7 +2035,6 @@ public sealed partial class InterfaceSetFormatter<TWriteBuffer, TReadBuffer, T> 
         }
 
         var f = formatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {
@@ -2129,7 +2130,7 @@ public sealed partial class InterfaceReadOnlySetFormatter<TWriteBuffer, TReadBuf
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         var f = formatter;
         state.Enter();
@@ -2214,18 +2215,18 @@ public sealed partial class ReadOnlySequenceFormatter<TWriteBuffer, TReadBuffer,
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         if (count == 0)
         {
             value = default;
             return;
         }
+        state.Enter();
 
         var array = new T[count];
 
         var f = formatter;
-        state.Enter();
 
         for (int i = 0; i < count; i++)
         {

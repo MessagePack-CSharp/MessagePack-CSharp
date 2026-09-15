@@ -93,7 +93,7 @@ public static partial class MessagePackSerializer
         {
             ThrowMessageProcessorNotApplicable();
         }
-        var state = new DeserializeState(options.MaxDepth);
+        var state = new DeserializeState(options.MaxDepth, buffer.BytesRemaining);
         options.Resolver.GetFormatter<ArrayPoolListWriteBuffer, TReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
     }
 
@@ -165,7 +165,7 @@ public static partial class MessagePackSerializer
         var buffer = new ReadOnlySpanReadBuffer(source);
         try
         {
-            var state = new DeserializeState(options.MaxDepth);
+            var state = new DeserializeState(options.MaxDepth, buffer.BytesRemaining);
             formatter.Deserialize(ref buffer, ref state, ref value);
             return buffer.BytesConsumed;
         }
@@ -184,7 +184,7 @@ public static partial class MessagePackSerializer
                 var buffer = new CompatibleReadOnlySpanReadBuffer(pointer, source.Length);
                 try
                 {
-                    var state = new DeserializeState(options.MaxDepth);
+                    var state = new DeserializeState(options.MaxDepth, buffer.BytesRemaining);
                     options.Resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
                     return buffer.BytesConsumed;
                 }
@@ -210,7 +210,7 @@ public static partial class MessagePackSerializer
         var buffer = new ReadOnlySequenceReadBuffer(source, scratch);
         try
         {
-            var state = new DeserializeState(options.MaxDepth);
+            var state = new DeserializeState(options.MaxDepth, buffer.BytesRemaining);
             formatter.Deserialize(ref buffer, ref state, ref value);
             return buffer.BytesConsumed;
         }
@@ -227,7 +227,7 @@ public static partial class MessagePackSerializer
             var buffer = new CompatibleReadOnlySequenceReadBuffer(in source);
             try
             {
-                var state = new DeserializeState(options.MaxDepth);
+                var state = new DeserializeState(options.MaxDepth, buffer.BytesRemaining);
                 options.Resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySequenceReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
                 return buffer.BytesConsumed;
             }

@@ -922,7 +922,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             return;
         }
 
-        var count = arrayFormat ? buffer.ReadArrayHeader() : buffer.ReadMapHeader();
+        var count = arrayFormat ? buffer.ReadArrayHeader(ref state) : buffer.ReadMapHeader(ref state);
 
         // Argument-state path for fresh instances of constructor-matched types.
         // A class instance supplied by the caller keeps populate semantics (structs have no identity to preserve,

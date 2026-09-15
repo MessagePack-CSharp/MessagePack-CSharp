@@ -4,21 +4,26 @@ on:
   workflow_dispatch:
   push:
     branches:
-    - master
-    - develop
+      - master
+      - develop
+      - v4
   pull_request:
     branches:
-    - master
-    - develop
+      - master
+      - develop
+      - v4
 
 jobs:
   build-dotnet:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     timeout-minutes: 15
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
-    - uses: ./.github/actions/setup-dotnet
-    - run: dotnet build -c Release -t:build,pack
-    - run: dotnet test -c Release --no-build
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+      - uses: ./.github/actions/setup-dotnet
+      - run: dotnet build -c Release -t:build,pack
+      - run: dotnet test -c Release --no-build

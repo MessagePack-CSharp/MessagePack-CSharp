@@ -102,13 +102,13 @@ public sealed partial class ComplexFormatter<TWriteBuffer, TReadBuffer> : IMessa
             buffer.Advance(19);
             return;
         }
-        DeserializeSlow(ref buffer, ref value);
+        DeserializeSlow(ref buffer, ref state, ref value);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    static void DeserializeSlow(ref TReadBuffer buffer, ref Complex value)
+    static void DeserializeSlow(ref TReadBuffer buffer, ref DeserializeState state, ref Complex value)
     {
-        if (buffer.ReadArrayHeader() != 2)
+        if (buffer.ReadArrayHeader(ref state) != 2)
         {
             throw new MessagePackSerializationException("Invalid Complex format.");
         }
@@ -149,13 +149,13 @@ public sealed partial class Vector2Formatter<TWriteBuffer, TReadBuffer> : IMessa
             buffer.Advance(11);
             return;
         }
-        DeserializeSlow(ref buffer, ref value);
+        DeserializeSlow(ref buffer, ref state, ref value);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    static void DeserializeSlow(ref TReadBuffer buffer, ref Vector2 value)
+    static void DeserializeSlow(ref TReadBuffer buffer, ref DeserializeState state, ref Vector2 value)
     {
-        if (buffer.ReadArrayHeader() != 2)
+        if (buffer.ReadArrayHeader(ref state) != 2)
         {
             throw new MessagePackSerializationException("Invalid Vector2 data.");
         }
@@ -197,13 +197,13 @@ public sealed partial class Vector3Formatter<TWriteBuffer, TReadBuffer> : IMessa
             buffer.Advance(16);
             return;
         }
-        DeserializeSlow(ref buffer, ref value);
+        DeserializeSlow(ref buffer, ref state, ref value);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    static void DeserializeSlow(ref TReadBuffer buffer, ref Vector3 value)
+    static void DeserializeSlow(ref TReadBuffer buffer, ref DeserializeState state, ref Vector3 value)
     {
-        if (buffer.ReadArrayHeader() != 3)
+        if (buffer.ReadArrayHeader(ref state) != 3)
         {
             throw new MessagePackSerializationException("Invalid Vector3 data.");
         }
@@ -248,13 +248,13 @@ public sealed partial class Vector4Formatter<TWriteBuffer, TReadBuffer> : IMessa
             buffer.Advance(21);
             return;
         }
-        DeserializeSlow(ref buffer, ref value);
+        DeserializeSlow(ref buffer, ref state, ref value);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    static void DeserializeSlow(ref TReadBuffer buffer, ref Vector4 value)
+    static void DeserializeSlow(ref TReadBuffer buffer, ref DeserializeState state, ref Vector4 value)
     {
-        if (buffer.ReadArrayHeader() != 4)
+        if (buffer.ReadArrayHeader(ref state) != 4)
         {
             throw new MessagePackSerializationException("Invalid Vector4 data.");
         }
@@ -298,13 +298,13 @@ public sealed partial class QuaternionFormatter<TWriteBuffer, TReadBuffer> : IMe
             buffer.Advance(21);
             return;
         }
-        DeserializeSlow(ref buffer, ref value);
+        DeserializeSlow(ref buffer, ref state, ref value);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    static void DeserializeSlow(ref TReadBuffer buffer, ref Quaternion value)
+    static void DeserializeSlow(ref TReadBuffer buffer, ref DeserializeState state, ref Quaternion value)
     {
-        if (buffer.ReadArrayHeader() != 4)
+        if (buffer.ReadArrayHeader(ref state) != 4)
         {
             throw new MessagePackSerializationException("Invalid Quaternion data.");
         }
@@ -348,13 +348,13 @@ public sealed partial class PlaneFormatter<TWriteBuffer, TReadBuffer> : IMessage
             buffer.Advance(21);
             return;
         }
-        DeserializeSlow(ref buffer, ref value);
+        DeserializeSlow(ref buffer, ref state, ref value);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    static void DeserializeSlow(ref TReadBuffer buffer, ref Plane value)
+    static void DeserializeSlow(ref TReadBuffer buffer, ref DeserializeState state, ref Plane value)
     {
-        if (buffer.ReadArrayHeader() != 4)
+        if (buffer.ReadArrayHeader(ref state) != 4)
         {
             throw new MessagePackSerializationException("Invalid Plane data.");
         }
@@ -402,13 +402,13 @@ public sealed partial class Matrix3x2Formatter<TWriteBuffer, TReadBuffer> : IMes
             buffer.Advance(31);
             return;
         }
-        DeserializeSlow(ref buffer, ref value);
+        DeserializeSlow(ref buffer, ref state, ref value);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    static void DeserializeSlow(ref TReadBuffer buffer, ref Matrix3x2 value)
+    static void DeserializeSlow(ref TReadBuffer buffer, ref DeserializeState state, ref Matrix3x2 value)
     {
-        if (buffer.ReadArrayHeader() != 6)
+        if (buffer.ReadArrayHeader(ref state) != 6)
         {
             throw new MessagePackSerializationException("Invalid Matrix3x2 data.");
         }
@@ -474,13 +474,13 @@ public sealed partial class Matrix4x4Formatter<TWriteBuffer, TReadBuffer> : IMes
             buffer.Advance(83);
             return;
         }
-        DeserializeSlow(ref buffer, ref value);
+        DeserializeSlow(ref buffer, ref state, ref value);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    static void DeserializeSlow(ref TReadBuffer buffer, ref Matrix4x4 value)
+    static void DeserializeSlow(ref TReadBuffer buffer, ref DeserializeState state, ref Matrix4x4 value)
     {
-        if (buffer.ReadArrayHeader() != 16)
+        if (buffer.ReadArrayHeader(ref state) != 16)
         {
             throw new MessagePackSerializationException("Invalid Matrix4x4 data.");
         }
@@ -654,7 +654,7 @@ public sealed class ComplexFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePac
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Complex<T> value)
     {
-        if (buffer.ReadArrayHeader() != 2)
+        if (buffer.ReadArrayHeader(ref state) != 2)
         {
             throw new MessagePackSerializationException("Invalid Complex format.");
         }

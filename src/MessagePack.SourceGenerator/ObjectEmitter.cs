@@ -427,7 +427,7 @@ static class ObjectEmitter
                         writer.Line("return;");
                     }
                     writer.Line();
-                    writer.Line("var envelopeCount = buffer.ReadArrayHeader();");
+                    writer.Line("var envelopeCount = buffer.ReadArrayHeader(ref state);");
                     using (writer.Block("if (envelopeCount != 2)"))
                     {
                         writer.Line($"throw new MessagePackSerializationException(\"Deserializing '{model.FullTypeName}' expected the circular-reference envelope [id, body] (a 2-element array) but the array header claims \" + envelopeCount + \" elements\");");
@@ -675,7 +675,7 @@ static class ObjectEmitter
         }
         if (!model.IsStringKey)
         {
-            writer.Line("var count = buffer.ReadArrayHeader();");
+            writer.Line("var count = buffer.ReadArrayHeader(ref state);");
             using (writer.Block("for (int i = 0; i < count; i++)"))
             using (writer.Block("switch (i)"))
             {
@@ -724,7 +724,7 @@ static class ObjectEmitter
             return;
         }
 
-        writer.Line("var count = buffer.ReadMapHeader();");
+        writer.Line("var count = buffer.ReadMapHeader(ref state);");
         // duplicate map keys are data errors (same policy as the dictionary formatters);
         // the member index is a compile-time constant, so the common
         // <=64-member case is a constant bitmask test and or. The wide tier (>64)

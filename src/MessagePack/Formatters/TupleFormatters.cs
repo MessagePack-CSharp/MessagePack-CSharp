@@ -33,7 +33,7 @@ public sealed partial class TupleFormatter<TWriteBuffer, TReadBuffer, T1> : IMes
             value = null;
             return;
         }
-        if (buffer.ReadArrayHeader() != 1)
+        if (buffer.ReadArrayHeader(ref state) != 1)
         {
             throw new MessagePackSerializationException("Invalid Tuple count");
         }
@@ -94,7 +94,7 @@ public sealed partial class TupleFormatter<TWriteBuffer, TReadBuffer, T1, T2> : 
             value = null;
             return;
         }
-        if (buffer.ReadArrayHeader() != 2)
+        if (buffer.ReadArrayHeader(ref state) != 2)
         {
             throw new MessagePackSerializationException("Invalid Tuple count");
         }
@@ -157,7 +157,7 @@ public sealed partial class TupleFormatter<TWriteBuffer, TReadBuffer, T1, T2, T3
             value = null;
             return;
         }
-        if (buffer.ReadArrayHeader() != 3)
+        if (buffer.ReadArrayHeader(ref state) != 3)
         {
             throw new MessagePackSerializationException("Invalid Tuple count");
         }
@@ -225,7 +225,7 @@ public sealed partial class TupleFormatter<TWriteBuffer, TReadBuffer, T1, T2, T3
             value = null;
             return;
         }
-        if (buffer.ReadArrayHeader() != 4)
+        if (buffer.ReadArrayHeader(ref state) != 4)
         {
             throw new MessagePackSerializationException("Invalid Tuple count");
         }
@@ -298,7 +298,7 @@ public sealed partial class TupleFormatter<TWriteBuffer, TReadBuffer, T1, T2, T3
             value = null;
             return;
         }
-        if (buffer.ReadArrayHeader() != 5)
+        if (buffer.ReadArrayHeader(ref state) != 5)
         {
             throw new MessagePackSerializationException("Invalid Tuple count");
         }
@@ -376,7 +376,7 @@ public sealed partial class TupleFormatter<TWriteBuffer, TReadBuffer, T1, T2, T3
             value = null;
             return;
         }
-        if (buffer.ReadArrayHeader() != 6)
+        if (buffer.ReadArrayHeader(ref state) != 6)
         {
             throw new MessagePackSerializationException("Invalid Tuple count");
         }
@@ -459,7 +459,7 @@ public sealed partial class TupleFormatter<TWriteBuffer, TReadBuffer, T1, T2, T3
             value = null;
             return;
         }
-        if (buffer.ReadArrayHeader() != 7)
+        if (buffer.ReadArrayHeader(ref state) != 7)
         {
             throw new MessagePackSerializationException("Invalid Tuple count");
         }
@@ -558,7 +558,7 @@ public sealed class TupleFormatter<TWriteBuffer, TReadBuffer, T1, T2, T3, T4, T5
             value = null;
             return;
         }
-        if (buffer.ReadArrayHeader() != 8)
+        if (buffer.ReadArrayHeader(ref state) != 8)
         {
             throw new MessagePackSerializationException("Invalid Tuple count");
         }

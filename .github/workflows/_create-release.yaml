@@ -48,7 +48,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # auto generated token
       GH_REPO: ${{ github.repository }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Validate inputs - unitypackage
@@ -58,14 +58,15 @@ jobs:
           echo "Validation error! 'inputs.release-asset-path' cannot be blank when 'inputs.release-upload' is true."
           exit 1
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
+          persist-credentials: false
           ref: ${{ inputs.commit-id }}
       - uses: ./.github/actions/setup-dotnet
 
       # Download(All) Artifacts to $GITHUB_WORKSPACE
       - name: download artifacts
-        uses: actions/download-artifact@v8 # must sync with actions/upload-artifact@v7 in build-release
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1 # must sync with actions/upload-artifact@v7 in build-release
         with:
           name: nuget
           path: ./nuget
@@ -94,7 +95,9 @@ jobs:
               echo "Specified asset not found. path: ${asset_path}"
               exit 1
             fi
-          done <<< "${{ inputs.release-asset-path }}"
+          done <<< "${RELEASE_ASSET_PATH}"
+        env:
+          RELEASE_ASSET_PATH: ${{ inputs.release-asset-path }}
       - name: Validate package exists in artifact - NuGet
         if: ${{ inputs.nuget-push }}
         run: |
@@ -108,26 +111,35 @@ jobs:
                 exit 1
               fi
             fi
-          done <<< "${{ inputs.nuget-path }}"
+          done <<< "${NUGET_PATH}"
 
+        env:
+          NUGET_PATH: ${{ inputs.nuget-path }}
       # Create Releases
       - name: Create Tag
         run: |
-          git tag ${{ inputs.tag }}
-          git push origin ${{ inputs.tag }}
+          gh auth setup-git
+          git tag ${TAG}
+          git push origin ${TAG}
+        env:
+          TAG: ${{ inputs.tag }}
       - name: Create Release
-        run: gh release create ${{ inputs.tag }} --draft --verify-tag --title "${{ inputs.tag }}" --generate-notes
+        run: gh release create ${TAG} --draft --verify-tag --title "${TAG}" --generate-notes
+        env:
+          TAG: ${{ inputs.tag }}
       - name: Wait and Verify Release Name is expected
         run: |
           sleep 5s
           actual=$(gh api --paginate /repos/${{ github.repository }}/releases?per_page=100 --jq '.[] | select(.tag_name == "${{ inputs.tag }}") | .name')
-          expected="${{ inputs.tag }}"
+          expected="${TAG}"
           if [[ "$actual" != "$expected" ]]; then
             echo "Release name is not as expected. expected: $expected, actual: $actual"
             exit 1
           else
             echo "Release name is expected! expected: $expected, actual: $actual"
           fi
+        env:
+          TAG: ${{ inputs.tag }}
       - name: Upload asset files to release
         run: |
           while read -r asset_path; do
@@ -136,13 +148,16 @@ jobs:
             # shellcheck disable=SC2086
             if [[ "$asset_path" == *\** || "$asset_path" == *\?* ]]; then
               for file in ${asset_path}; do
-                gh release upload ${{ inputs.tag }} "${file}"
+                gh release upload ${TAG} "${file}"
               done
               continue
             fi
             # is it a file?
-            gh release upload ${{ inputs.tag }} "${asset_path}"
-          done <<< "${{ inputs.release-asset-path }}"
+            gh release upload ${TAG} "${asset_path}"
+          done <<< "${RELEASE_ASSET_PATH}"
+        env:
+          TAG: ${{ inputs.tag }}
+          RELEASE_ASSET_PATH: ${{ inputs.release-asset-path }}
         if: ${{ inputs.release-upload }}
 
       - name: NuGet login (OIDC)
@@ -175,7 +190,9 @@ jobs:
       - name: Clean up. Wait 60s and delete release if dry-run or failure. (dry-run=${{ inputs.dry-run }}})
         if: ${{ inputs.dry-run || failure() }}
         run: |
-          if gh release list | grep Draft | grep ${{ inputs.tag }}; then
+          if gh release list | grep Draft | grep ${TAG}; then
             sleep 60
-            gh release delete ${{ inputs.tag }} --yes --cleanup-tag
+            gh release delete ${TAG} --yes --cleanup-tag
           fi
+        env:
+          TAG: ${{ inputs.tag }}

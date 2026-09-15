@@ -21,9 +21,11 @@ jobs:
   # for unity. need update package.json from tag
   update-packagejson:
     uses: ./.github/workflows/_update-packagejson.yaml
+    permissions:
+      contents: write
     with:
       file-path: |
-        ./src/MessagePack.UnityClient/Assets/Scripts/MessagePack/package.json
+        ./src/MessagePack.Unity/package.json
       tag: ${{ inputs.tag }}
       dry-run: ${{ inputs.dry-run }}
       push-tag: true
@@ -31,31 +33,37 @@ jobs:
   # for dotnet. Build nuget package
   build-dotnet:
     needs: [update-packagejson]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     timeout-minutes: 10
     steps:
       - run: echo ${{ needs.update-packagejson.outputs.sha }}
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
+          persist-credentials: false
           ref: ${{ needs.update-packagejson.outputs.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/setup-dotnet
       # pack nuget
       - run: dotnet build -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }}
-      - run: dotnet test -c Release --no-build
-      - run: dotnet pack -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish
+      # - run: dotnet test -c Release --no-build
+      - run: dotnet pack -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
       - name: upload artifacts
-        uses: actions/upload-artifact@v7 # must sync with actions/download-artifact@v8 in create-release
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 # must sync with actions/download-artifact@v8 in create-release
         with:
           name: nuget
           path: ./publish/
-          if-no-files-found: 'error' # default 'warn'
+          if-no-files-found: "error" # default 'warn'
           retention-days: 1 # expire in 1 day
 
   # create release and upload nuget
   create-release:
     needs: [update-packagejson, build-dotnet]
     uses: ./.github/workflows/_create-release.yaml
+    permissions:
+      contents: write
+      id-token: write
     with:
       commit-id: ${{ needs.update-packagejson.outputs.sha }}
       dry-run: ${{ inputs.dry-run }}
@@ -69,8 +77,10 @@ jobs:
 
   # delete dry-run created git branch
   cleanup:
-    if: ${{ needs.update-packagejson.outputs.is-branch-created == 'true' }}
+    if: ${{ always() && needs.update-packagejson.outputs.is-branch-created == 'true' }}
     needs: [update-packagejson, create-release]
     uses: ./.github/workflows/_clean-packagejson-branch.yaml
+    permissions:
+      contents: write
     with:
       branch: ${{ needs.update-packagejson.outputs.branch-name }}

@@ -41,7 +41,7 @@ internal sealed class PrimitiveArrayFormatter<TWriteBuffer, TReadBuffer, T, TCod
             value = null;
             return;
         }
-        int count = buffer.ReadArrayHeader(); // count is bomb-guarded by ReadArrayHeader
+        int count = buffer.ReadArrayHeader(ref state); // count is bomb-guarded by ReadArrayHeader
 
         // empty fast path (the shared Array.Empty singleton, same as ArrayFormatter)
         if (count == 0)
@@ -101,7 +101,7 @@ internal sealed class PrimitiveListFormatter<TWriteBuffer, TReadBuffer, T, TCode
         }
 
         // ReadArrayHeader validates the claimed count against BytesRemaining.
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         var result = value ?? new List<T>(count);
         CollectionsMarshal.SetCount(result, count);
         var span = CollectionsMarshal.AsSpan(result);
@@ -146,7 +146,7 @@ internal sealed class PrimitiveMemoryFormatter<TWriteBuffer, TReadBuffer, T, TCo
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         // exact-length reuse writes through to the caller's backing store (array or
         // MemoryManager) — the ArrayFormatter populate rule applied to a view
@@ -191,7 +191,7 @@ internal sealed class PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         // read-only view: no write-through possible, always a fresh backing array
         var array = GC.AllocateUninitializedArray<T>(count); // the codec writes every element
@@ -240,7 +240,7 @@ internal sealed class PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, 
             return;
         }
 
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         // Populate contract: overwrite the incoming view's backing store in place only on
         // an exact length match, otherwise a fresh zero-offset segment

@@ -218,7 +218,10 @@ public static class ReadBufferExtensions
 
         #region headers(array, map, string, bin), binary
 
-        /// <summary>Reads an array header and returns the element count. A count larger than the remaining data throws.</summary>
+        /// <summary>
+        /// Reads an array header and returns the element count. A count larger than the remaining data throws.
+        /// Formatters use <see cref="ReadArrayHeader(ref DeserializeState)"/>, which also charges the message-wide declared-element budget.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadArrayHeader()
         {
@@ -242,7 +245,10 @@ public static class ReadBufferExtensions
             return count;
         }
 
-        /// <summary>Reads a map header and returns the entry count. A count larger than the remaining data throws.</summary>
+        /// <summary>
+        /// Reads a map header and returns the entry count. A count larger than the remaining data throws.
+        /// Formatters use <see cref="ReadMapHeader(ref DeserializeState)"/>, which also charges the message-wide declared-element budget.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadMapHeader()
         {
@@ -261,6 +267,32 @@ public static class ReadBufferExtensions
             {
                 MessagePackSerializationException.ThrowImplausibleCollectionHeader("map", count, buffer.BytesRemaining);
             }
+            return count;
+        }
+
+        /// <summary>
+        /// Reads an array header and returns the element count, charging it against the declared-element budget of <paramref name="state"/>.
+        /// Formatters read their headers through this overload: a count larger than the remaining data throws, and so does a
+        /// count that, together with the counts every enclosing container has already declared, exceeds the bytes of the message.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int ReadArrayHeader(ref DeserializeState state)
+        {
+            var count = buffer.ReadArrayHeader();
+            state.ChargeDeclaredElements("array", count, (uint)count);
+            return count;
+        }
+
+        /// <summary>
+        /// Reads a map header and returns the entry count, charging two elements per entry against the declared-element budget of <paramref name="state"/>.
+        /// Formatters read their headers through this overload: a count larger than the remaining data throws, and so does a
+        /// count that, together with the counts every enclosing container has already declared, exceeds the bytes of the message.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int ReadMapHeader(ref DeserializeState state)
+        {
+            var count = buffer.ReadMapHeader();
+            state.ChargeDeclaredElements("map", count, 2L * (uint)count);
             return count;
         }
 

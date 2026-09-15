@@ -71,6 +71,9 @@ public class MessagePackSerializationException : Exception
     internal static Exception ThrowImplausibleCollectionHeader(string kind, int count, long bytesRemaining) => throw new MessagePackSerializationException($"The {kind} header claims {(uint)count} elements, which cannot fit in the {bytesRemaining} remaining payload bytes");
 
     [DoesNotReturn]
+    internal static Exception ThrowDeclaredElementsExceedMessage(string kind, int count, long remainingBudget) => throw new MessagePackSerializationException($"The {kind} header claims {(uint)count} elements, but the containers enclosing it have already declared all but {remainingBudget} of the elements the message has bytes for");
+
+    [DoesNotReturn]
     internal static Exception ThrowImplausiblePayloadHeader(string kind, int byteCount, long bytesRemaining) => throw new MessagePackSerializationException($"The {kind} header claims a {(uint)byteCount} byte payload, which cannot fit in the {bytesRemaining} remaining bytes");
 
     [DoesNotReturn]

@@ -33,7 +33,7 @@ public sealed partial class ByteArrayFormatter<TWriteBuffer, TReadBuffer> : IMes
         if (buffer.TryPeek(out var code) &&
             ((code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MinFixArray + MessagePackRange.MaxFixArrayCount) || code == MessagePackCode.Array16 || code == MessagePackCode.Array32))
         {
-            var count = buffer.ReadArrayHeader();
+            var count = buffer.ReadArrayHeader(ref state);
             if (count == 0)
             {
                 value = []; // the singleton empty array, same as v3

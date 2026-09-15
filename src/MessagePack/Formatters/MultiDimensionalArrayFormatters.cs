@@ -80,7 +80,7 @@ public sealed partial class TwoDimensionalArrayFormatter<TWriteBuffer, TReadBuff
             return;
         }
 
-        var header = buffer.ReadArrayHeader();
+        var header = buffer.ReadArrayHeader(ref state);
         if (header != 3)
         {
             throw new MessagePackSerializationException($"Invalid T[,] format: expected a 3-element array, got {header}.");
@@ -88,11 +88,12 @@ public sealed partial class TwoDimensionalArrayFormatter<TWriteBuffer, TReadBuff
 
         var len0 = buffer.ReadInt32();
         var len1 = buffer.ReadInt32();
-        var count = buffer.ReadArrayHeader(); // bomb-guarded against BytesRemaining
+        var count = buffer.ReadArrayHeader(ref state); // bomb-guarded against BytesRemaining
         if (len0 < 0 || len1 < 0 || !DimensionProduct.Matches(count, len0, len1))
         {
             throw new MessagePackSerializationException($"Invalid T[,] format: {len0}x{len1} does not match {count} elements.");
         }
+        state.Enter();
 
         // Populate contract: reuse only when every dimension matches
         var result = (value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1)
@@ -100,7 +101,6 @@ public sealed partial class TwoDimensionalArrayFormatter<TWriteBuffer, TReadBuff
             : new T[len0, len1];
 
         var f = formatter;
-        state.Enter();
 
         for (int x = 0; x < len0; x++)
         {
@@ -187,7 +187,7 @@ public sealed partial class ThreeDimensionalArrayFormatter<TWriteBuffer, TReadBu
             return;
         }
 
-        var header = buffer.ReadArrayHeader();
+        var header = buffer.ReadArrayHeader(ref state);
         if (header != 4)
         {
             throw new MessagePackSerializationException($"Invalid T[,,] format: expected a 4-element array, got {header}.");
@@ -196,18 +196,18 @@ public sealed partial class ThreeDimensionalArrayFormatter<TWriteBuffer, TReadBu
         var len0 = buffer.ReadInt32();
         var len1 = buffer.ReadInt32();
         var len2 = buffer.ReadInt32();
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         if (len0 < 0 || len1 < 0 || len2 < 0 || !DimensionProduct.Matches(count, len0, len1, len2))
         {
             throw new MessagePackSerializationException($"Invalid T[,,] format: {len0}x{len1}x{len2} does not match {count} elements.");
         }
+        state.Enter();
 
         var result = (value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1 && value.GetLength(2) == len2)
             ? value
             : new T[len0, len1, len2];
 
         var f = formatter;
-        state.Enter();
 
         for (int x = 0; x < len0; x++)
         {
@@ -300,7 +300,7 @@ public sealed partial class FourDimensionalArrayFormatter<TWriteBuffer, TReadBuf
             return;
         }
 
-        var header = buffer.ReadArrayHeader();
+        var header = buffer.ReadArrayHeader(ref state);
         if (header != 5)
         {
             throw new MessagePackSerializationException($"Invalid T[,,,] format: expected a 5-element array, got {header}.");
@@ -310,18 +310,18 @@ public sealed partial class FourDimensionalArrayFormatter<TWriteBuffer, TReadBuf
         var len1 = buffer.ReadInt32();
         var len2 = buffer.ReadInt32();
         var len3 = buffer.ReadInt32();
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
         if (len0 < 0 || len1 < 0 || len2 < 0 || len3 < 0 || !DimensionProduct.Matches(count, len0, len1, len2, len3))
         {
             throw new MessagePackSerializationException($"Invalid T[,,,] format: {len0}x{len1}x{len2}x{len3} does not match {count} elements.");
         }
+        state.Enter();
 
         var result = (value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1 && value.GetLength(2) == len2 && value.GetLength(3) == len3)
             ? value
             : new T[len0, len1, len2, len3];
 
         var f = formatter;
-        state.Enter();
 
         for (int x = 0; x < len0; x++)
         {

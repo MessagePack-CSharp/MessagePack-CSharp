@@ -194,13 +194,14 @@ public sealed partial class PrimitiveObjectFormatter<TWriteBuffer, TReadBuffer> 
 
     object?[] DeserializeArray(ref TReadBuffer buffer, ref DeserializeState state)
     {
-        var length = buffer.ReadArrayHeader();
+        var length = buffer.ReadArrayHeader(ref state);
         if (length == 0)
         {
             return Array.Empty<object?>();
         }
-        var array = new object?[length];
         state.Enter();
+
+        var array = new object?[length];
         for (int i = 0; i < array.Length; i++)
         {
             Deserialize(ref buffer, ref state, ref array[i]);
@@ -211,11 +212,12 @@ public sealed partial class PrimitiveObjectFormatter<TWriteBuffer, TReadBuffer> 
 
     Dictionary<object, object?> DeserializeMap(ref TReadBuffer buffer, ref DeserializeState state)
     {
-        var length = buffer.ReadMapHeader();
+        var length = buffer.ReadMapHeader(ref state);
+        state.Enter();
+
         var dictionary = comparer == null
             ? new Dictionary<object, object?>(length)
             : new Dictionary<object, object?>(length, comparer);
-        state.Enter();
         for (int i = 0; i < length; i++)
         {
             object? key = null;

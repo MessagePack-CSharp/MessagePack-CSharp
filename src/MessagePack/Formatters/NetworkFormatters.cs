@@ -64,7 +64,7 @@ public sealed partial class IPEndPointFormatter<TWriteBuffer, TReadBuffer> : IMe
             value = null;
             return;
         }
-        if (buffer.ReadArrayHeader() != 2)
+        if (buffer.ReadArrayHeader(ref state) != 2)
         {
             throw new MessagePackSerializationException("Invalid IPEndPoint format.");
         }

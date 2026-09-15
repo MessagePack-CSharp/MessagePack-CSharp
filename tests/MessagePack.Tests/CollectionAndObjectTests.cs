@@ -475,7 +475,7 @@ public sealed class PersonFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFor
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Person value)
     {
-        var count = buffer.ReadArrayHeader();
+        var count = buffer.ReadArrayHeader(ref state);
 
         if (value == null)
         {

@@ -100,10 +100,53 @@ public struct DeserializeState
     // Same countdown scheme as SerializeState.
     int remainingDepth;
 
-    /// <summary>Creates state with the given depth limit. Zero means unlimited.</summary>
+    // Declared-element budget, counting down from the message length.
+    // Every array element, map key and map value is a distinct msgpack value that occupies at least one byte of
+    // the message, and no two of them share a byte, so the sum of the counts declared by every array/map header
+    // in the message can never exceed the message length. ReadArrayHeader/ReadMapHeader(ref state) charge each
+    // header's count here, so the first header that pushes the sum past the length is provably a lie and throws
+    // before anyone preallocates from it.
+    // The per-header guard in ReadBufferExtensions (count <= BytesRemaining) cannot see this on its own:
+    // nested headers all measure the same tail of the message, so 500 headers can each claim the whole tail
+    // and pass, while their preallocations sum to 500 times the message.
+    long remainingDeclaredElements;
+
+    /// <summary>
+    /// Creates state with the given depth limit and no declared-element budget. Zero means unlimited.
+    /// Prefer <see cref="DeserializeState(int, long)"/> when the length of the message is known.
+    /// </summary>
     public DeserializeState(int maxDepth)
+        : this(maxDepth, long.MaxValue)
+    {
+    }
+
+    /// <summary>
+    /// Creates state with the given depth limit (zero means unlimited) and a declared-element budget of
+    /// <paramref name="messageLength"/>, the number of bytes the message occupies.
+    /// <see cref="ReadBufferExtensions.ReadArrayHeader{TReadBuffer}(ref TReadBuffer, ref DeserializeState)"/> and
+    /// <see cref="ReadBufferExtensions.ReadMapHeader{TReadBuffer}(ref TReadBuffer, ref DeserializeState)"/> charge every
+    /// declared element against it, so a message whose headers claim more elements than it has bytes is rejected
+    /// before the formatters allocate for the claim.
+    /// </summary>
+    public DeserializeState(int maxDepth, long messageLength)
     {
         this.remainingDepth = maxDepth == 0 ? 0 : maxDepth + 1; // 0 is unlimited
+        this.remainingDeclaredElements = messageLength;
+    }
+
+    /// <summary>
+    /// Charges <paramref name="charge"/> declared elements (a map charges two per entry) against the budget.
+    /// Throws when the message has declared more elements than it has bytes.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ChargeDeclaredElements(string kind, int count, long charge)
+    {
+        var remaining = remainingDeclaredElements - charge;
+        if (remaining < 0)
+        {
+            MessagePackSerializationException.ThrowDeclaredElementsExceedMessage(kind, count, remainingDeclaredElements);
+        }
+        remainingDeclaredElements = remaining;
     }
 
     /// <summary>Enters one nesting level before calling another formatter. Throws when the depth limit is exceeded.</summary>

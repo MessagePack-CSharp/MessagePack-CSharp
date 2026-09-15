@@ -36,7 +36,8 @@ on:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions: {}
     timeout-minutes: 5
     outputs:
       tag: ${{ steps.trim.outputs.tag }}
@@ -44,22 +45,28 @@ jobs:
     steps:
       - name: tag must begin with v
         run: |
-          input_tag="${{ inputs.tag }}"
+          input_tag="${TAG}"
           if [[ "$input_tag" != v* ]]; then
             echo "Tag must begin with v. Current tag: $input_tag"
             exit 1
           fi
+        env:
+          TAG: ${{ inputs.tag }}
       - name: Set version without "v" prefix
         id: trim
         run: |
-          input_tag="${{ inputs.tag }}"
+          input_tag="${TAG}"
           normalized_tag="${input_tag:1}"
           echo "normalized_tag=$normalized_tag" | tee -a "$GITHUB_OUTPUT"
-          echo "tag=${{ inputs.tag }}" | tee -a "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" | tee -a "$GITHUB_OUTPUT"
 
+        env:
+          TAG: ${{ inputs.tag }}
   update-packagejson:
     needs: [validate]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     timeout-minutes: 5
     outputs:
       sha: ${{ steps.commit.outputs.sha }}
@@ -69,9 +76,13 @@ jobs:
       - name: Configure Output variables
         id: configure
         run: |
-          echo "branch-name=test-release/${{ inputs.tag }}" | tee -a "$GITHUB_OUTPUT"
+          echo "branch-name=test-release/${TAG}" | tee -a "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v5
+        env:
+          TAG: ${{ inputs.tag }}
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
 
       # package.json
       # "version": 1.2.3 -> "version": 2.0.0
@@ -127,8 +138,10 @@ jobs:
                 echo "Success. Path: $file_path, Expected: $expected, Actual: $actual"
               fi
             echo "::endgroup::"
-          done <<< "${{ inputs.file-path }}"
+          done <<< "${FILE_PATH}"
 
+        env:
+          FILE_PATH: ${{ inputs.file-path }}
       - name: Check update on git
         id: check_update
         run: git diff --exit-code || echo "changed=1" | tee -a "$GITHUB_OUTPUT"
@@ -141,26 +154,31 @@ jobs:
             git config --local user.name "github-actions[bot]"
             git commit -m "feat: Update package.json to ${{ needs.validate.outputs.normalized_tag }}" -m "Commit by [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" -a
             echo "sha=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
-            echo "is-branch-created=${{ inputs.dry-run }}" | tee -a "$GITHUB_OUTPUT"
+            echo "is-branch-created=${DRY_RUN}" | tee -a "$GITHUB_OUTPUT"
           else
             echo "sha=" | tee -a "$GITHUB_OUTPUT"
             echo "is-branch-created=false" | tee -a "$GITHUB_OUTPUT"
           fi
 
+        env:
+          DRY_RUN: ${{ inputs.dry-run }}
       - name: Create Tag
         if: ${{ steps.check_update.outputs.changed == '1' && inputs.push-tag }}
-        run: git tag ${{ inputs.tag }}
+        run: git tag ${TAG}
 
-      - name: Push changes
+        env:
+          TAG: ${{ inputs.tag }}
+      - name: Push changes to triggered branch
         if: ${{ !inputs.dry-run && steps.check_update.outputs.changed == '1' }}
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c # v1.3.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }} # auto generated token
           tags: ${{ inputs.push-tag }}
+          branch: ${{ github.ref_name }}
 
       - name: Push changes (dry-run)
         if: ${{ inputs.dry-run && steps.check_update.outputs.changed == '1' }}
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c # v1.3.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }} # auto generated token
           branch: "refs/heads/${{ steps.configure.outputs.branch-name }}"

@@ -62,7 +62,7 @@ public sealed partial class ExpandoObjectFormatter<TWriteBuffer, TReadBuffer> : 
             return;
         }
 
-        var count = buffer.ReadMapHeader();
+        var count = buffer.ReadMapHeader(ref state);
         var result = new ExpandoObject();
         var members = (IDictionary<string, object?>)result;
         state.Enter();
