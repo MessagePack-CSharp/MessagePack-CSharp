@@ -1,3 +1,23 @@
 root = true
+
+# Don't use tabs for indentation.
+[*]
+indent_style = space
+
+# (Please don't specify an indent_size here; that has too many unintended consequences.)
+
+[*.{yaml,yml}]
+indent_size = 2
+indent_style = space
+
+# JSON files
+[*.json]
+indent_size = 2
+indent_style = space
+
+[*.ps1]
+indent_style = space
+indent_size = 4
+
 [*.cs]
 dotnet_diagnostic.IDE0011.severity = silent
