@@ -117,13 +117,11 @@ internal static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
                     .Replace('(', '_')
                     .Replace(')', '_');
 
-                foreach (var resourceName in typeof(Test).Assembly.GetManifestResourceNames())
+                foreach (var resourceName in typeof(Test).Assembly.GetManifestResourceNames()
+                    .Where(name => name.StartsWith(expectedPrefix, StringComparison.Ordinal))
+                    .OrderByDescending(name => name.EndsWith(".MessagePack.GeneratedMessagePackResolver.g.cs", StringComparison.Ordinal))
+                    .ThenBy(name => name, StringComparer.Ordinal))
                 {
-                    if (!resourceName.StartsWith(expectedPrefix))
-                    {
-                        continue;
-                    }
-
                     using var resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
                     if (resourceStream is null)
                     {
