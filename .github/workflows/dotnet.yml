@@ -24,5 +24,5 @@ jobs:
       with:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
     - uses: ./.github/actions/setup-dotnet
-    - run: dotnet build -c Release -t:build,pack
+    - run: dotnet build -c Release -t:build,pack -warnaserror
     - run: dotnet test -c Release --no-build
