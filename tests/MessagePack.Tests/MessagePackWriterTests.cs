@@ -155,7 +155,10 @@ namespace MessagePack.Tests
         public void Write_ByteArray_OldSpec_AvoidsStr8(int length)
         {
             byte[] value = new byte[length];
-            Array.Fill(value, (byte)'A');
+            for (int i = 0; i < value.Length; i++)
+            {
+                value[i] = (byte)'A';
+            }
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence) { OldSpec = true };
