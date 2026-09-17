@@ -4,8 +4,6 @@
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 
-#pragma warning disable CS8669 // We may leak nullable annotations into generated code.
-
 using MsgPack = global::MessagePack;
 
 <# using (this.EmitNestingTypesAndNamespaces(this.Write)) { #>
@@ -73,7 +71,7 @@ using MsgPack = global::MessagePack;
 			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 <# } #>
 			var length = reader.ReadArrayHeader();
-<# if (Info.MustDeserializeFieldsFirst) { 
+<# if (Info.MustDeserializeFieldsFirst) {
 	foreach (var member in Info.Members) { #>
 			var <#= member.LocalVariableName #> = default(<#= member.Type #>);
 <#	}

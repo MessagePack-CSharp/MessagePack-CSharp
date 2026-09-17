@@ -454,7 +454,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
         /// <remarks>
-        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
+        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is fixstr, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead (never <see cref="MessagePackCode.Str8"/>, which is not defined in the old spec).
         /// </remarks>
         public void Write(scoped ReadOnlySpan<byte> src)
         {
@@ -473,7 +473,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
         /// <remarks>
-        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
+        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is fixstr, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead (never <see cref="MessagePackCode.Str8"/>, which is not defined in the old spec).
         /// </remarks>
         public void Write(in ReadOnlySequence<byte> src)
         {
@@ -498,7 +498,7 @@ namespace MessagePack
         /// Alternatively a single call to <see cref="Write(ReadOnlySpan{byte})"/> or <see cref="Write(in ReadOnlySequence{byte})"/> will take care of the header and content in one call.
         /// </para>
         /// <para>
-        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
+        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is fixstr, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead (never <see cref="MessagePackCode.Str8"/>, which is not defined in the old spec).
         /// </para>
         /// </remarks>
         public void WriteBinHeader(int length)
@@ -559,15 +559,34 @@ namespace MessagePack
         /// </summary>
         /// <param name="byteCount">The number of bytes in the string that will follow this header.</param>
         /// <remarks>
+        /// <para>
         /// The caller should use <see cref="WriteRaw(in ReadOnlySequence{byte})"/> or <see cref="WriteRaw(ReadOnlySpan{byte})"/>
         /// after calling this method to actually write the content.
         /// Alternatively a single call to <see cref="WriteString(ReadOnlySpan{byte})"/> or <see cref="WriteString(in ReadOnlySequence{byte})"/> will take care of the header and content in one call.
+        /// </para>
+        /// <para>
+        /// When <see cref="OldSpec"/> is <see langword="true"/>, <see cref="MessagePackCode.Str8"/> is never used because it is not defined in the old spec;
+        /// lengths that would otherwise use str8 are encoded with <see cref="MessagePackCode.Str16"/> instead.
+        /// </para>
         /// </remarks>
         public void WriteStringHeader(int byteCount)
         {
             // When we write the header, we'll ask for all the space we need for the payload as well
             // as that may help ensure we only allocate a buffer once.
             Span<byte> span = this.writer.GetSpan(byteCount + 5);
+
+            // The old msgpack spec does not define str8 (0xd9). Use str16 for lengths 32-255 when OldSpec is set.
+            // This matches WriteString_PostEncoding and keeps binary-as-string (WriteBinHeader) legacy-compatible.
+            if (this.OldSpec && byteCount > MessagePackRange.MaxFixStringLength && byteCount <= byte.MaxValue)
+            {
+                span[0] = MessagePackCode.Str16;
+                span[1] = 0;
+                span[2] = unchecked((byte)byteCount);
+
+                this.writer.Advance(3);
+                return;
+            }
+
             AssumesTrue(MessagePackPrimitives.TryWriteStringHeader(span, (uint)byteCount, out int written));
             this.writer.Advance(written);
         }
@@ -591,10 +610,17 @@ namespace MessagePack
             }
 
             ref byte buffer = ref this.WriteString_PrepareSpan(value.Length, out int bufferSize, out int useOffset);
-            fixed (char* pValue = value)
             fixed (byte* pBuffer = &buffer)
             {
-                int byteCount = StringEncoding.UTF8.GetBytes(pValue, value.Length, pBuffer + useOffset, bufferSize);
+                int byteCount;
+#if SPAN_BUILTIN
+                byteCount = StringEncoding.UTF8.GetBytes(value.AsSpan(), new Span<byte>(pBuffer + useOffset, bufferSize - useOffset));
+#else
+                fixed (char* pValue = value)
+                {
+                    byteCount = StringEncoding.UTF8.GetBytes(pValue, value.Length, pBuffer + useOffset, bufferSize - useOffset);
+                }
+#endif
                 this.WriteString_PostEncoding(pBuffer, useOffset, byteCount);
             }
         }
@@ -610,10 +636,17 @@ namespace MessagePack
         public unsafe void Write(scoped ReadOnlySpan<char> value)
         {
             ref byte buffer = ref this.WriteString_PrepareSpan(value.Length, out int bufferSize, out int useOffset);
-            fixed (char* pValue = value)
             fixed (byte* pBuffer = &buffer)
             {
-                int byteCount = StringEncoding.UTF8.GetBytes(pValue, value.Length, pBuffer + useOffset, bufferSize);
+                int byteCount;
+#if SPAN_BUILTIN
+                byteCount = StringEncoding.UTF8.GetBytes(value, new Span<byte>(pBuffer + useOffset, bufferSize - useOffset));
+#else
+                fixed (char* pValue = value)
+                {
+                    byteCount = StringEncoding.UTF8.GetBytes(pValue, value.Length, pBuffer + useOffset, bufferSize - useOffset);
+                }
+#endif
                 this.WriteString_PostEncoding(pBuffer, useOffset, byteCount);
             }
         }
