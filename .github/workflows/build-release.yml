@@ -40,9 +40,11 @@ jobs:
           ref: ${{ needs.update-packagejson.outputs.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/setup-dotnet
-      # pack nuget
+      # The source generator snapshot tests load a project reference rather than the version-stamped analyzer.
+      - run: dotnet test -c Release
+      - run: git clean -fdx
+      # Pack NuGet with the requested release version.
       - run: dotnet build -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }}
-      - run: dotnet test -c Release --no-build
       - run: dotnet pack -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish
       - name: upload artifacts
         uses: actions/upload-artifact@v7 # must sync with actions/download-artifact@v8 in create-release
