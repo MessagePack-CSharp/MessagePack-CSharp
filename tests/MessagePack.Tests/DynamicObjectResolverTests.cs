@@ -248,6 +248,83 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void DefaultValueStringCamelKeyClassWithoutExplicitConstructorTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteMapHeader(0);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueStringCamelKeyClassWithoutExplicitConstructor>(seq);
+            Assert.Equal(DefaultValueStringCamelKeyClassWithoutExplicitConstructor.Prop1Constant, instance.Prop1);
+            Assert.Equal(DefaultValueStringCamelKeyClassWithoutExplicitConstructor.Prop2Constant, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueStringCamelKeyClassWithExplicitConstructorTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteMapHeader(1);
+            writer.Write(nameof(DefaultValueStringCamelKeyClassWithExplicitConstructor.Prop1));
+            writer.Write(-1);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueStringCamelKeyClassWithExplicitConstructor>(seq);
+            Assert.Equal(-1, instance.Prop1);
+            Assert.Equal(DefaultValueStringCamelKeyClassWithExplicitConstructor.Prop2Constant, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueStringCamelKeyClassWithExplicitConstructorSetPropertyTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteMapHeader(2);
+            writer.Write(nameof(DefaultValueStringCamelKeyClassWithExplicitConstructor.Prop1));
+            writer.Write(-1);
+            writer.Write(nameof(DefaultValueStringCamelKeyClassWithExplicitConstructor.Prop2));
+            writer.Write(int.MaxValue);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueStringCamelKeyClassWithExplicitConstructor>(seq);
+            Assert.Equal(-1, instance.Prop1);
+            Assert.Equal(int.MaxValue, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueStringCamelKeyStructWithExplicitConstructorTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteMapHeader(1);
+            writer.Write(nameof(DefaultValueStringCamelKeyStructWithExplicitConstructor.Prop1));
+            writer.Write(-1);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueStringCamelKeyStructWithExplicitConstructor>(seq);
+            Assert.Equal(-1, instance.Prop1);
+            Assert.Equal(DefaultValueStringCamelKeyStructWithExplicitConstructor.Prop2Constant, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueStringCamelKeyStructWithExplicitConstructorSetPropertyTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteMapHeader(2);
+            writer.Write(nameof(DefaultValueStringCamelKeyStructWithExplicitConstructor.Prop1));
+            writer.Write(-1);
+            writer.Write(nameof(DefaultValueStringCamelKeyStructWithExplicitConstructor.Prop2));
+            writer.Write(int.MinValue);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueStringCamelKeyStructWithExplicitConstructor>(seq);
+            Assert.Equal(-1, instance.Prop1);
+            Assert.Equal(int.MinValue, instance.Prop2);
+        }
+
+        [Fact]
         public void DefaultValueIntKeyClassWithoutExplicitConstructorTest()
         {
             var seq = new Sequence<byte>();
@@ -518,6 +595,49 @@ namespace MessagePack.Tests
             public int Prop2 { get; set; }
 
             public DefaultValueStringKeyStructWithExplicitConstructor(int prop1)
+            {
+                Prop1 = prop1;
+                Prop2 = Prop2Constant;
+            }
+        }
+
+        [MessagePackObject(KeyPolicy.ImplicitCamelCasePropertyNames)]
+        public class DefaultValueStringCamelKeyClassWithoutExplicitConstructor
+        {
+            public const int Prop1Constant = 102;
+            public const int Prop2Constant = 2223;
+
+            public int Prop1 { get; set; } = Prop1Constant;
+
+            public int Prop2 { get; set; } = Prop2Constant;
+        }
+
+        [MessagePackObject(KeyPolicy.ImplicitCamelCasePropertyNames)]
+        public class DefaultValueStringCamelKeyClassWithExplicitConstructor
+        {
+            public const int Prop2Constant = 211;
+
+            public int Prop1 { get; set; }
+
+            public int Prop2 { get; set; }
+
+            public DefaultValueStringCamelKeyClassWithExplicitConstructor(int prop1)
+            {
+                Prop1 = prop1;
+                Prop2 = Prop2Constant;
+            }
+        }
+
+        [MessagePackObject(KeyPolicy.ImplicitCamelCasePropertyNames)]
+        public struct DefaultValueStringCamelKeyStructWithExplicitConstructor
+        {
+            public const int Prop2Constant = 123;
+
+            public int Prop1 { get; set; }
+
+            public int Prop2 { get; set; }
+
+            public DefaultValueStringCamelKeyStructWithExplicitConstructor(int prop1)
             {
                 Prop1 = prop1;
                 Prop2 = Prop2Constant;
