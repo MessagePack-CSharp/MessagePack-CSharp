@@ -15,8 +15,14 @@ namespace MessagePack
 #endif
     public class MessagePackSerializerOptions
     {
+        private const RegexOptions CompiledNonBacktracking = RegexOptions.Compiled
+#if NET8_0_OR_GREATER
+            | RegexOptions.NonBacktracking
+#endif
+            ;
+
         // see:http://msdn.microsoft.com/en-us/library/w3f99sx1.aspx
-        internal static readonly Regex AssemblyNameVersionSelectorRegex = new(@", Version=\d+\.\d+\.\d+\.\d+, Culture=[\w-]+, PublicKeyToken=(?:null|[a-f0-9]{16})", RegexOptions.Compiled);
+        internal static readonly Regex AssemblyNameVersionSelectorRegex = new(@", Version=\d+\.\d+\.\d+\.\d+, Culture=[\w-]+, PublicKeyToken=(?:null|[a-f0-9]{16})", CompiledNonBacktracking);
 
         /// <summary>
         /// A collection of known dangerous types that are not expected in a typical MessagePack stream,
