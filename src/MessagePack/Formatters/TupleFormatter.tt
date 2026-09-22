@@ -12,6 +12,7 @@
 
 using System;
 using System.Buffers;
+using MessagePack.Internal;
 
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
@@ -24,6 +25,7 @@ namespace MessagePack.Formatters
     var t = "Tuple<" + ts + ">";
 #>
 
+    [Preserve]
     public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>?>
 <# if (i == 8) { #>
         where TRest : notnull

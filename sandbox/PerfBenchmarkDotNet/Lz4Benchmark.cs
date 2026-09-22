@@ -53,7 +53,3 @@ namespace PerfBenchmarkDotNet
         public StringKeySerializerTarget2[] DeserializeLz4BlockArray() => MessagePackSerializer.Deserialize<StringKeySerializerTarget2[]>(binLz4ContiguousBlock, lz4ContiguousBlockOptions);
     }
 }
-
-#pragma warning restore SA1200 // Using directives should be placed correctly
-#pragma warning restore SA1403 // File may only contain a single namespace
-

@@ -1,10 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <ItemGroup>
     <!-- ignore compilation temp files and unity generated .meta files -->
     <None Remove="**/bin/**;**/obj/**;**/*.meta" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)AssemblyInfo.cs" />
+    <!-- ignore compilation temp files and unity generated .meta files -->
+    <None Remove="**/bin/**;**/obj/**;**/*.meta" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)AssemblyInfo.cs" Condition=" '$(Language)'=='C#' " />
+    <Compile Include="$(MSBuildThisFileDirectory)AssemblyInfo.vb" Condition=" '$(Language)'=='VB' " />
   </ItemGroup>
 
   <Import Project="$([MSBuild]::GetPathOfFileAbove($(MSBuildThisFile), $(MSBuildThisFileDirectory)..))" />

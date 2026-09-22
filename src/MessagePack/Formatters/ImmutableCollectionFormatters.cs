@@ -6,11 +6,14 @@
 using System;
 using System.Buffers;
 using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 using MessagePack.Formatters;
 
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
+// namespace is wrong, but for compatibility, keep it.
+// https://github.com/MessagePack-CSharp/MessagePack-CSharp/issues/2089
 namespace MessagePack.ImmutableCollection
 {
     // Immutablearray<T>.Enumerator is 'not' IEnumerator<T>, can't use abstraction layer.
@@ -53,13 +56,13 @@ namespace MessagePack.ImmutableCollection
                 }
 
                 IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
-                ImmutableArray<T>.Builder builder = ImmutableArray.CreateBuilder<T>(len);
+                T[] array = new T[len];
                 options.Security.DepthStep(ref reader);
                 try
                 {
                     for (int i = 0; i < len; i++)
                     {
-                        builder.Add(formatter.Deserialize(ref reader, options));
+                        array[i] = formatter.Deserialize(ref reader, options);
                     }
                 }
                 finally
@@ -67,7 +70,12 @@ namespace MessagePack.ImmutableCollection
                     reader.Depth--;
                 }
 
-                return builder.MoveToImmutable();
+                // Unity IL2CPP sometimes failes on ImmutableCollectionsMarshal.AsImmutableArray(array) so netstandard version degrade it.
+#if NETSTANDARD2_0 || NETSTANDARD2_1
+                return ImmutableArray.Create(array);
+#else
+                return ImmutableCollectionsMarshal.AsImmutableArray(array);
+#endif
             }
         }
     }

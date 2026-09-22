@@ -23,10 +23,10 @@ namespace MessagePack.Experimental.Tests
         {
             var array = Array.Empty<SByte>();
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<SByte[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(0, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(0));
         }
 
         [Test]
@@ -34,9 +34,9 @@ namespace MessagePack.Experimental.Tests
         {
             var array = default(SByte[]);
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<SByte[]>(encoded, options);
-            Assert.IsNull(decoded);
+            Assert.That(decoded, Is.Null);
         }
 
         [TestCase(1)]
@@ -49,13 +49,13 @@ namespace MessagePack.Experimental.Tests
         {
             var array = new SByte[length];
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<SByte[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 
@@ -74,13 +74,13 @@ namespace MessagePack.Experimental.Tests
             }
 
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<SByte[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 
@@ -97,13 +97,13 @@ namespace MessagePack.Experimental.Tests
             r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
 
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<SByte[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 
@@ -112,10 +112,10 @@ namespace MessagePack.Experimental.Tests
         {
             var array = Array.Empty<Int16>();
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Int16[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(0, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(0));
         }
 
         [Test]
@@ -123,9 +123,9 @@ namespace MessagePack.Experimental.Tests
         {
             var array = default(Int16[]);
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Int16[]>(encoded, options);
-            Assert.IsNull(decoded);
+            Assert.That(decoded, Is.Null);
         }
 
         [TestCase(1)]
@@ -138,13 +138,13 @@ namespace MessagePack.Experimental.Tests
         {
             var array = new Int16[length];
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Int16[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 
@@ -163,13 +163,13 @@ namespace MessagePack.Experimental.Tests
             }
 
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Int16[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 
@@ -186,13 +186,13 @@ namespace MessagePack.Experimental.Tests
             r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
 
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Int16[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 
@@ -201,10 +201,10 @@ namespace MessagePack.Experimental.Tests
         {
             var array = Array.Empty<Int32>();
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Int32[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(0, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(0));
         }
 
         [Test]
@@ -212,9 +212,9 @@ namespace MessagePack.Experimental.Tests
         {
             var array = default(Int32[]);
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Int32[]>(encoded, options);
-            Assert.IsNull(decoded);
+            Assert.That(decoded, Is.Null);
         }
 
         [TestCase(1)]
@@ -227,13 +227,13 @@ namespace MessagePack.Experimental.Tests
         {
             var array = new Int32[length];
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Int32[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 
@@ -252,13 +252,13 @@ namespace MessagePack.Experimental.Tests
             }
 
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Int32[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 
@@ -275,13 +275,13 @@ namespace MessagePack.Experimental.Tests
             r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
 
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Int32[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 
@@ -290,10 +290,10 @@ namespace MessagePack.Experimental.Tests
         {
             var array = Array.Empty<Single>();
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Single[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(0, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(0));
         }
 
         [Test]
@@ -301,9 +301,9 @@ namespace MessagePack.Experimental.Tests
         {
             var array = default(Single[]);
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Single[]>(encoded, options);
-            Assert.IsNull(decoded);
+            Assert.That(decoded, Is.Null);
         }
 
         [TestCase(1)]
@@ -316,13 +316,13 @@ namespace MessagePack.Experimental.Tests
         {
             var array = new Single[length];
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Single[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 
@@ -341,13 +341,13 @@ namespace MessagePack.Experimental.Tests
             }
 
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Single[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 
@@ -356,10 +356,10 @@ namespace MessagePack.Experimental.Tests
         {
             var array = Array.Empty<Boolean>();
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Boolean[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(0, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(0));
         }
 
         [Test]
@@ -367,9 +367,9 @@ namespace MessagePack.Experimental.Tests
         {
             var array = default(Boolean[]);
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Boolean[]>(encoded, options);
-            Assert.IsNull(decoded);
+            Assert.That(decoded, Is.Null);
         }
 
         [TestCase(1)]
@@ -382,13 +382,13 @@ namespace MessagePack.Experimental.Tests
         {
             var array = new Boolean[length];
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<Boolean[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
     }

@@ -36,7 +36,7 @@ if (!(Test-Path $DotNetInstallScriptRoot)) { New-Item -ItemType Directory -Path 
 $DotNetInstallScriptRoot = Resolve-Path $DotNetInstallScriptRoot
 
 # Look up actual required .NET SDK version from global.json
-$sdkVersion = & "$PSScriptRoot/../azure-pipelines/variables/DotNetSdkVersion.ps1"
+$sdkVersion = & "$PSScriptRoot/DotNetSdkVersion.ps1"
 
 If ($IncludeX86 -and ($IsMacOS -or $IsLinux)) {
     Write-Verbose "Ignoring -IncludeX86 switch because 32-bit runtimes are only supported on Windows."
@@ -49,6 +49,7 @@ $arch = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture
 if (!$arch) { # Windows Powershell leaves this blank
     $arch = 'x64'
     if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { $arch = 'ARM64' }
+    if (${env:ProgramFiles(Arm)}) { $arch = 'ARM64' }
 }
 
 # Search for all .NET runtime versions referenced from MSBuild projects and arrange to install them.
@@ -143,6 +144,14 @@ Function Get-InstallerExe(
         if ($release.$sku.version -eq $Version) {
             $filesElement = $release.$sku.files
         }
+        if (!$filesElement -and ($sku -eq 'sdk') -and $release.sdks) {
+            foreach ($sdk in $release.sdks) {
+                if ($sdk.version -eq $Version) {
+                    $filesElement = $sdk.files
+                    break
+                }
+            }
+        }
 
         if ($filesElement) {
             foreach ($file in $filesElement) {
@@ -161,7 +170,7 @@ Function Get-InstallerExe(
     if ($url) {
         Get-FileFromWeb -Uri $url -OutDir $DotNetInstallScriptRoot
     } else {
-        Write-Error "Unable to find release of $sku v$Version"
+        throw "Unable to find release of $sku v$Version"
     }
 }
 

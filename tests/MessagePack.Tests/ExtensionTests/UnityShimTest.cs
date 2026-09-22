@@ -99,7 +99,7 @@ namespace MessagePack.Tests.ExtensionTests
         public void BlitRejectsByteLengthThatExceedsExtensionBody()
         {
             MessagePackSerializerOptions options = MessagePackSerializerOptions.Standard.WithResolver(new WithUnityBlitResolver());
-            byte[] payload = { 0xC7, 0x06, unchecked((byte)ThisLibraryExtensionTypeCodes.UnityInt), 0xCE, 0x00, 0x00, 0x00, 0x08, 0xC3 };
+            byte[] payload = { 0xC7, 0x06, unchecked((byte)ReservedExtensionTypeCodes.UnityInt), 0xCE, 0x00, 0x00, 0x00, 0x08, 0xC3 };
 
             var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<int[]>(payload, options));
             var inner = Assert.IsType<MessagePackSerializationException>(ex.InnerException);

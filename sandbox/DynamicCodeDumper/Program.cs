@@ -80,10 +80,10 @@ namespace DynamicCodeDumper
             }
             finally
             {
-                AssemblyBuilder a1 = DynamicObjectResolver.Instance.Save();
-                AssemblyBuilder a2 = DynamicUnionResolver.Instance.Save();
-                AssemblyBuilder a3 = DynamicEnumResolver.Instance.Save();
-                AssemblyBuilder a4 = DynamicContractlessObjectResolver.Instance.Save();
+                AssemblyBuilder? a1 = DynamicObjectResolver.Instance.Save();
+                AssemblyBuilder? a2 = DynamicUnionResolver.Instance.Save();
+                AssemblyBuilder? a3 = DynamicEnumResolver.Instance.Save();
+                AssemblyBuilder? a4 = DynamicContractlessObjectResolver.Instance.Save();
                 ////var a5 = AutomataKeyGen.Save();
 
                 ////Verify(a5);
@@ -466,4 +466,14 @@ namespace DynamicCodeDumper
     ////        throw new NotImplementedException();
     ////    }
     ////}
+}
+
+
+#pragma warning disable
+
+namespace MessagePack.Internal
+{
+    internal sealed class PreserveAttribute : System.Attribute
+    {
+    }
 }

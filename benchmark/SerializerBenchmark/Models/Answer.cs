@@ -5,9 +5,8 @@
 #pragma warning disable IDE1006
 #pragma warning disable SA1516
 
-extern alias oldmsgpack;
 extern alias newmsgpack;
-
+extern alias oldmsgpack;
 using System;
 using System.Collections.Generic;
 using ProtoBuf;

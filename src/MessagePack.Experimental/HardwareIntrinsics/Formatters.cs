@@ -107,7 +107,7 @@ namespace MessagePack.Formatters
                     }
                 }
 
-            ProcessEach:
+ProcessEach:
                 while (inputIterator != inputEnd)
                 {
                     writer.Write(*inputIterator++);
@@ -234,7 +234,7 @@ namespace MessagePack.Formatters
                     }
                 }
 
-            ProcessEach:
+ProcessEach:
                 while (inputIterator != inputEnd)
                 {
                     writer.Write(*inputIterator++);
@@ -363,7 +363,7 @@ namespace MessagePack.Formatters
                     }
                 }
 
-            ProcessEach:
+ProcessEach:
                 while (inputIterator != inputEnd)
                 {
                     writer.Write(*inputIterator++);
@@ -422,7 +422,7 @@ namespace MessagePack.Formatters
                         }
                     }
 
-                ProcessEach:
+ProcessEach:
                     while (inputIterator != inputEnd)
                     {
                         // Encode float as Big Endian
@@ -525,7 +525,7 @@ namespace MessagePack.Formatters
                         }
                     }
 
-                ProcessEach:
+ProcessEach:
                     while (inputIterator != inputEnd)
                     {
                         *outputIterator++ = MessagePackCode.Float64;
@@ -651,7 +651,7 @@ namespace MessagePack.Formatters
                         }
                     }
 
-                ProcessEach:
+ProcessEach:
                     while (inputIterator != inputEnd)
                     {
                         *outputIterator++ = *inputIterator++ ? MessagePackCode.True : MessagePackCode.False;
@@ -749,7 +749,7 @@ namespace MessagePack.Formatters
                             }
                         }
 
-                    ProcessEach:
+ProcessEach:
                         while (inputIterator != inputEnd)
                         {
                             switch (*inputIterator++)

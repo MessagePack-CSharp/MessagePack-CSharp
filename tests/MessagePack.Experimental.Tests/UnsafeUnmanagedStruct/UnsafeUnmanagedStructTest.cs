@@ -28,7 +28,7 @@ namespace MessagePack.Experimental.Tests
             var original = Array.Empty<Matrix4x4>();
             var binary = MessagePackSerializer.Serialize(original, options);
             var decoded = MessagePackSerializer.Deserialize<Matrix4x4[]>(binary, options);
-            Assert.AreSame(original, decoded);
+            Assert.That(decoded, Is.SameAs(original));
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace MessagePack.Experimental.Tests
         {
             var binary = MessagePackSerializer.Serialize(default(Matrix4x4[]), options);
             var decoded = MessagePackSerializer.Deserialize<Matrix4x4[]>(binary, options);
-            Assert.IsNull(decoded);
+            Assert.That(decoded, Is.Null);
         }
 
         [TestCase(1)]
@@ -49,11 +49,11 @@ namespace MessagePack.Experimental.Tests
             var original = new Matrix4x4[length];
             var binary = MessagePackSerializer.Serialize(original, options);
             var decoded = MessagePackSerializer.Deserialize<Matrix4x4[]>(binary, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             foreach (var x4 in decoded)
             {
-                Assert.IsTrue(x4.Equals(default(Matrix4x4)));
+                Assert.That(x4.Equals(default(Matrix4x4)));
             }
         }
 
@@ -87,11 +87,11 @@ namespace MessagePack.Experimental.Tests
 
             var binary = MessagePackSerializer.Serialize(original, options);
             var decoded = MessagePackSerializer.Deserialize<Matrix4x4[]>(binary, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < decoded.Length; index++)
             {
-                Assert.IsTrue(decoded[index] == original[index]);
+                Assert.That(decoded[index] == original[index]);
             }
         }
 
@@ -101,7 +101,7 @@ namespace MessagePack.Experimental.Tests
             var original = new Matrix4x4((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble());
             var binary = MessagePackSerializer.Serialize(original, options);
             var decoded = MessagePackSerializer.Deserialize<Matrix4x4>(binary, options);
-            Assert.IsTrue(original == decoded);
+            Assert.That(original == decoded);
         }
     }
 }

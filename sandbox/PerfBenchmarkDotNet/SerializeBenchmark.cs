@@ -22,7 +22,7 @@ namespace PerfBenchmarkDotNet
     {
         private static MsgPack.Serialization.SerializationContext mapContext = new MsgPack.Serialization.SerializationContext { SerializationMethod = SerializationMethod.Map };
         private static MsgPack.Serialization.SerializationContext arrayContext = new MsgPack.Serialization.SerializationContext { SerializationMethod = SerializationMethod.Array };
-        private static JsonSerializer jsonSerialzier = new JsonSerializer();
+        private static JsonSerializer jsonSerializer = new JsonSerializer();
         private static Hyperion.Serializer hyperionSerializer = new Hyperion.Serializer();
         private static newmsgpack::MessagePack.IFormatterResolver mpcGenFormatterResolver = new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedAutomata());
         private static newmsgpack::MessagePack.IFormatterResolver mpcGenDictFormatterResolver = new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedDictionary());
@@ -59,6 +59,7 @@ namespace PerfBenchmarkDotNet
             return newmsgpack.MessagePack.MessagePackSerializer.Typeless.Serialize(stringData);
         }
 
+#if MsgPackCli
         [Benchmark]
         public byte[] MsgPackCliMap()
         {
@@ -70,7 +71,9 @@ namespace PerfBenchmarkDotNet
         {
             return arrayContext.GetSerializer<IntKeySerializerTarget>().PackSingleObject(intData);
         }
+#endif
 
+#if Protobuf
         [Benchmark]
         public byte[] ProtobufNet()
         {
@@ -80,7 +83,9 @@ namespace PerfBenchmarkDotNet
                 return ms.ToArray();
             }
         }
+#endif
 
+#if Hyperion
         [Benchmark]
         public byte[] Hyperion()
         {
@@ -90,13 +95,17 @@ namespace PerfBenchmarkDotNet
                 return ms.ToArray();
             }
         }
+#endif
 
+#if ZeroFormatter
         [Benchmark]
         public byte[] ZeroFormatter()
         {
             return ZeroFormatterSerializer.Serialize(intData);
         }
+#endif
 
+#if NewtonsoftJson
         [Benchmark]
         public byte[] JsonNetString()
         {
@@ -111,13 +120,15 @@ namespace PerfBenchmarkDotNet
                 using (var sr = new StreamWriter(ms, Encoding.UTF8))
                 using (var jr = new JsonTextWriter(sr))
                 {
-                    jsonSerialzier.Serialize(jr, intData);
+                    jsonSerializer.Serialize(jr, intData);
                 }
 
                 return ms.ToArray();
             }
         }
+#endif
 
+#if Jil
         [Benchmark]
         public byte[] JilString()
         {
@@ -137,6 +148,7 @@ namespace PerfBenchmarkDotNet
                 return ms.ToArray();
             }
         }
+#endif
     }
 }
 

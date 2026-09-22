@@ -44,10 +44,10 @@ foreach (var type in types)
         {
             var array = Array.Empty<<#= name #>>();
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<<#= name #>[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(0, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(0));
         }
 
         [Test]
@@ -55,9 +55,9 @@ foreach (var type in types)
         {
             var array = default(<#= name #>[]);
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<<#= name #>[]>(encoded, options);
-            Assert.IsNull(decoded);
+            Assert.That(decoded, Is.Null);
         }
 
         [TestCase(1)]
@@ -70,13 +70,13 @@ foreach (var type in types)
         {
             var array = new <#= name #>[length];
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<<#= name #>[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 <#
@@ -99,13 +99,13 @@ foreach (var type in types)
             }
 
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<<#= name #>[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 <#
@@ -129,13 +129,13 @@ foreach (var type in types)
             r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
 
             var encoded = MessagePackSerializer.Serialize(array, options);
-            Assert.IsNotNull(encoded);
+            Assert.That(encoded, Is.Not.Null);
             var decoded = MessagePackSerializer.Deserialize<<#= name #>[]>(encoded, options);
-            Assert.IsNotNull(decoded);
-            Assert.AreEqual(length, decoded.Length);
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded.Length, Is.EqualTo(length));
             for (var index = 0; index < array.Length; index++)
             {
-                Assert.AreEqual(array[index], decoded[index]);
+                Assert.That(decoded[index], Is.EqualTo(array[index]));
             }
         }
 <#

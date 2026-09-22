@@ -1,0 +1,17 @@
+{
+    "name": "MessagePack.Unity",
+    "references": [
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "MessagePack.dll",
+        "MessagePack.Annotations.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

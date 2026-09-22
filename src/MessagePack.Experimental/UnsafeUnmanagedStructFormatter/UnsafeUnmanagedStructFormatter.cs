@@ -45,7 +45,7 @@ namespace MessagePack.Formatters
             var sequence = reader.ReadRaw(sizeof(T));
             if (sequence.IsSingleSegment)
             {
-                return Unsafe.As<byte, T>(ref Unsafe.AsRef(sequence.FirstSpan[0]));
+                return Unsafe.As<byte, T>(ref Unsafe.AsRef(in sequence.FirstSpan[0]));
             }
 
             T answer;
