@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
@@ -180,7 +180,7 @@ namespace MessagePack.Tests
             }
 
             [IgnoreMember]
-            public string Field => field;
+            public string Field => this.field;
         }
 
 #if DYNAMIC_GENERATION
