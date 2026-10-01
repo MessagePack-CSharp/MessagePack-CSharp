@@ -659,12 +659,22 @@ _last_literals:
                                 }
 
                                 len = *src_p++;
+                                if (len > dst_end - dst_p - length)
+                                {
+                                    goto _output_error;
+                                }
+
                                 length += len;
                             }
                             while (len == 255);
                         }
 
                         // copy literals
+                        if (length > dst_end - dst_p)
+                        {
+                            goto _output_error;
+                        }
+
                         dst_cpy = dst_p + length;
 
                         if (dst_cpy > dst_COPYLENGTH)
@@ -724,12 +734,22 @@ _last_literals:
                                 }
 
                                 len = *src_p++;
+                                if (len > dst_LASTLITERALS - dst_p - MINMATCH - length)
+                                {
+                                    goto _output_error;
+                                }
+
                                 length += len;
                             }
                             while (len == 255);
                         }
 
                         // copy repeated sequence
+                        if (length > dst_LASTLITERALS - dst_p - MINMATCH)
+                        {
+                            goto _output_error;
+                        }
+
                         if ((dst_p - dst_ref) < STEPSIZE_64)
                         {
                             var dec64 = dec64table[dst_p - dst_ref];
