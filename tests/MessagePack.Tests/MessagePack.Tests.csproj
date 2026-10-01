@@ -59,7 +59,6 @@
     <!-- ReferenceOutputAssembly=true: analyzer unit tests instantiate the analyzer types
          directly; the projects still run as analyzers on this project via OutputItemType -->
     <ProjectReference Include="..\MessagePack.Tests.LazyModuleTypes\MessagePack.Tests.LazyModuleTypes.csproj" />
-    <ProjectReference Include="..\..\src\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator.CodeFixes\MessagePack.SourceGenerator.CodeFixes.csproj" ReferenceOutputAssembly="true" />
   </ItemGroup>

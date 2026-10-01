@@ -112,7 +112,7 @@ static class ObjectEmitter
                         // the Type-based compat overload downlevel
                         var fieldType = $"IMessagePackFormatter<TWriteBuffer, TReadBuffer, {member.TypeName}>";
                         var mismatch = $"throw new global::System.InvalidOperationException(\"[MessagePackFormatter] factory did not create a formatter for '{typeOfExpr}' ({model.FullTypeName}.{member.Name}).\")";
-                        writer.Line("#if NET10_0_OR_GREATER");
+                        writer.Line("#if NET9_0_OR_GREATER");
                         writer.Line($"f{member.Id} = {factoryNew}.CreateFormatter<TWriteBuffer, TReadBuffer>(typeof({typeOfExpr})) as {fieldType} ?? {mismatch};");
                         writer.Line("#else");
                         writer.Line($"f{member.Id} = {factoryNew}.CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), typeof({typeOfExpr})) as {fieldType} ?? {mismatch};");
@@ -167,11 +167,11 @@ static class ObjectEmitter
     internal static void EmitBufferConstraints(CodeWriter writer)
     {
         writer.Line("where TWriteBuffer : struct, IWriteBuffer");
-        writer.Line("#if NET10_0_OR_GREATER");
+        writer.Line("#if NET9_0_OR_GREATER");
         writer.Line(", allows ref struct");
         writer.Line("#endif");
         writer.Line("where TReadBuffer : struct, IReadBuffer");
-        writer.Line("#if NET10_0_OR_GREATER");
+        writer.Line("#if NET9_0_OR_GREATER");
         writer.Line(", allows ref struct");
         writer.Line("#endif");
     }

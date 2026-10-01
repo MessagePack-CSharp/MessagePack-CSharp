@@ -30,7 +30,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
-		<ProjectReference Include="..\..\src\SerializerFoundation\SerializerFoundation.csproj" />
 		<ProjectReference Include="..\..\src\MessagePack.LZ4\MessagePack.LZ4.csproj" />
 		<ProjectReference Include="..\..\src\MessagePack.SignalR\MessagePack.SignalR.csproj" />
 		<ProjectReference Include="..\..\src\MessagePack.AspNetCoreMvcFormatter\MessagePack.AspNetCoreMvcFormatter.csproj" />

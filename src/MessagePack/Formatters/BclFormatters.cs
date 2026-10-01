@@ -238,10 +238,10 @@ public sealed partial class VersionFormatter<TWriteBuffer, TReadBuffer> : IMessa
 #endif
     }
 
-#if NET9_0_OR_GREATER
+#if NET10_0_OR_GREATER
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Version? value)
     {
-        // Version is IUtf8SpanParsable on net: parse the payload without the intermediate string
+        // Version is IUtf8SpanParsable from .NET 10: parse the payload without the intermediate string
         if (buffer.TryReadNil())
         {
             value = null;

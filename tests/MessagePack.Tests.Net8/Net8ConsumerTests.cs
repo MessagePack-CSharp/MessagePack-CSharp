@@ -1,22 +1,18 @@
 using System.Runtime.Versioning;
 using MessagePack;
 
-namespace MessagePack.Tests.Net9;
+namespace MessagePack.Tests.Net8;
 
-// The generated formatters of this assembly compile against the net9.0 core and are served
-// over the ref struct buffer pair.
-public class Net9ConsumerTests
+// The generated formatters of this assembly compile against the netstandard2.1 core and
+// are served through its compat (Type-based) factory dispatch.
+public class Net8ConsumerTests
 {
     [Fact]
-    public void CoreIsTheNet9Asset()
+    public void CoreIsTheNetStandard21Asset()
     {
         var target = typeof(MessagePackSerializer).Assembly.GetCustomAttributes(typeof(TargetFrameworkAttribute), false)
             .OfType<TargetFrameworkAttribute>().Single().FrameworkName;
-        Assert.Equal(".NETCoreApp,Version=v9.0", target);
-
-        var foundation = typeof(SerializerFoundation.IWriteBuffer).Assembly.GetCustomAttributes(typeof(TargetFrameworkAttribute), false)
-            .OfType<TargetFrameworkAttribute>().Single().FrameworkName;
-        Assert.Equal(".NETCoreApp,Version=v9.0", foundation);
+        Assert.Equal(".NETStandard,Version=v2.1", target);
     }
 
     [Fact]
@@ -31,8 +27,8 @@ public class Net9ConsumerTests
         Assert.Equal(1.5, back.Nested!.Score);
         Assert.Equal([true, false], back.Nested.Flags!);
 
-        // the generated formatter, not the reflection fallback, serves the type over the ref struct pair
-        var formatter = MessagePackSerializerOptions.Default.Resolver.GetFormatter<SerializerFoundation.ArrayPoolListWriteBuffer, SerializerFoundation.ReadOnlySpanReadBuffer, KeyedPoco>();
+        // the generated formatter, not the reflection fallback, serves the type
+        var formatter = MessagePackSerializerOptions.Default.Resolver.GetFormatter<SerializerFoundation.CompatibleArrayPoolListWriteBuffer, SerializerFoundation.CompatibleReadOnlySpanReadBuffer, KeyedPoco>();
         Assert.Contains("KeyedPocoFormatter", formatter.GetType().Name);
     }
 
@@ -42,22 +38,6 @@ public class Net9ConsumerTests
         var bytes = MessagePackSerializer.Serialize(new MapPoco { Score = 2.5, Flags = [true] });
         Assert.Equal("{\"Score\":2.5,\"Flags\":[true]}", MessagePackSerializer.ConvertToJson(bytes));
         Assert.Equal(2.5, MessagePackSerializer.Deserialize<MapPoco>(bytes)!.Score);
-    }
-
-    [Fact]
-    public void JsonConversion_Roundtrips()
-    {
-        // JsonElement.Parse comes from the System.Text.Json package on this TFM, not from the in-box assembly
-        var bytes = MessagePackSerializer.ConvertFromJson("{\"Score\":2.5,\"Flags\":[true]}");
-        Assert.Equal(2.5, MessagePackSerializer.Deserialize<MapPoco>(bytes)!.Score);
-    }
-
-    [Fact]
-    public void Version_Roundtrips()
-    {
-        // the UTF-8 Version parse is .NET 10 API, so this TFM takes the string-based branch
-        var version = new Version(1, 2, 3, 4);
-        Assert.Equal(version, MessagePackSerializer.Deserialize<Version>(MessagePackSerializer.Serialize(version)));
     }
 
     [Fact]

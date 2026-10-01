@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<!-- netstandard2.1 is the floor because NativeCompressions has no netstandard2.0 asset; the core starts at
 		     netstandard2.0 and this package follows as soon as NativeCompressions ships that target. -->
-		<TargetFrameworks>netstandard2.1;net10.0</TargetFrameworks>
+		<TargetFrameworks>netstandard2.1;net9.0</TargetFrameworks>
 		<LangVersion>preview</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -27,7 +27,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\MessagePack\MessagePack.csproj" />
-		<ProjectReference Include="..\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 

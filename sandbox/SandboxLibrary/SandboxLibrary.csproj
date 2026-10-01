@@ -19,7 +19,6 @@
 
 	<ItemGroup>
 		<!-- the analyzer under test, wired the same way a NuGet consumer would get it -->
-		<ProjectReference Include="..\..\src\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<!-- the core multi-targets the same TFM set, so every pass compiles against the
          real surface (the former Stubs/ tier is gone) -->

@@ -40,13 +40,13 @@ static class AnalyzerTestHost
         return [.. references];
     }
 
-    // NET10_0_OR_GREATER matches the test project's own compilation: probes exercise the
+    // NET9_0_OR_GREATER matches the test project's own compilation: probes exercise the
     // same #if branches of generated code that the real build takes
     public static CSharpCompilation CreateCompilation(string source, string assemblyName = "AnalyzerProbe")
     {
         var parseOptions = CSharpParseOptions.Default
             .WithLanguageVersion(LanguageVersion.Latest)
-            .WithPreprocessorSymbols("NET10_0_OR_GREATER");
+            .WithPreprocessorSymbols("NET9_0_OR_GREATER");
         return CSharpCompilation.Create(
             assemblyName,
             [CSharpSyntaxTree.ParseText(source, parseOptions)],

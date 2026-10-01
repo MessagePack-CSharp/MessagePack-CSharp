@@ -32,6 +32,8 @@ public class HubProtocolOptionsTests
     {
         public override bool TryEncode(ref BufferSegments message, IBufferWriter<byte> output) => throw new NotSupportedException();
 
+        public override bool TryEncode<TWriteBuffer>(ref BufferSegments message, ref TWriteBuffer output) => throw new NotSupportedException();
+
         public override bool TryDecode(ReadOnlySpan<byte> source, out DecodedMessage message) => throw new NotSupportedException();
 
         public override bool TryDecode(in ReadOnlySequence<byte> source, out DecodedMessage message) => throw new NotSupportedException();

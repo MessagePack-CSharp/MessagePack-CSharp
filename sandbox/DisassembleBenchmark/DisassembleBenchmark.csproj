@@ -66,7 +66,6 @@
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
     <ProjectReference Include="..\..\src\MessagePack.LZ4\MessagePack.LZ4.csproj" />
     <ProjectReference Include="..\..\src\MessagePack.Zstandard\MessagePack.Zstandard.csproj" />
-    <ProjectReference Include="..\..\src\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <!-- IDE-only: lights up the code fixes for the analyzer diagnostics (the compiler skips it) -->
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator.CodeFixes\MessagePack.SourceGenerator.CodeFixes.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />

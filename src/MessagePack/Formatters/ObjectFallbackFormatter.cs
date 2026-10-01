@@ -99,7 +99,7 @@ public sealed partial class ObjectFallbackFormatter<TWriteBuffer, TReadBuffer> :
     {
         readonly IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>? formatter;
 #if NET9_0_OR_GREATER
-        // a formatter that only exists over the Compatible pair (a netstandard-built library on net10): the typed entry
+        // a formatter that only exists over the Compatible pair (a netstandard-built library on net9+): the typed entry
         // points reroute to it, and this runtime-type dispatch stages through it the same way instead of failing
         readonly IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>? compatibleFormatter;
 #endif

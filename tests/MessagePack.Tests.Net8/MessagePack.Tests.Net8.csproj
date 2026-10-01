@@ -1,11 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- net9.0 is the core's first modern target: a net9.0 consumer resolves the net9.0
-         asset and rides the ref struct buffers. The main test project runs that same asset
-         on the .NET 10 runtime, so this project is what executes it on the .NET 9 runtime
-         itself, with the C# 13 a net9.0 project gets by default. -->
-    <TargetFramework>net9.0</TargetFramework>
+    <!-- a net8.0 consumer resolves the netstandard2.1 core (the fast tier starts at
+         net9.0), so this is the modern-runtime TFM where the generator's NET9_0_OR_GREATER
+         gates must NOT fire: the emitted code has to compile against the compat surface
+         (no allows-ref-struct constraints, no generic CreateFormatter override) and run
+         through the Type-based dispatch. A pre-release review (2026-09-04) found this
+         build broken with CS9244/CS0115; this project keeps it in the matrix. -->
+    <TargetFramework>net8.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <LangVersion>13</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>

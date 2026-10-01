@@ -267,7 +267,7 @@ namespace System.Threading
 
 namespace System.Diagnostics.CodeAnalysis
 {
-    // Not covered by PolySharp 1.16. Inert-but-compiling metadata downlevel (AOT analysis only ever runs on the net10.0 build).
+    // Not covered by PolySharp 1.16. Inert-but-compiling metadata downlevel (AOT analysis only ever runs on the net9.0+ builds).
 
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Constructor | AttributeTargets.Class, Inherited = false)]
     internal sealed class RequiresDynamicCodeAttribute(string message) : Attribute

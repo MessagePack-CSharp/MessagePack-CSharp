@@ -124,7 +124,7 @@ public sealed class MessagePackFormatterResolver
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
         where TReadBuffer : struct, IReadBuffer, allows ref struct
     {
-        // On net10, a formatter provided by a netstandard2.0-built library only works over the Compatible buffers.
+        // On net9+, a formatter provided by a netstandard2.0-built library only works over the Compatible buffers.
         // Returning false tells the caller to re-acquire via GetFormatter over the Compatible buffer pair.
         // The sentinel ledger keeps that per-call detection lock-free.
         var compat = compatRequiredTable;
@@ -359,7 +359,7 @@ internal sealed partial class CompatiblePairRequiredFormatter<TWriteBuffer, TRea
     InvalidOperationException Error()
     {
         return new InvalidOperationException(
-            $"Type '{typeof(T).FullName}' in {factoryType} can only be served over the Compatible (non-ref-struct) buffer pair (requested TWriteBuffer: {typeof(TWriteBuffer).FullName}, TReadBuffer: {typeof(TReadBuffer).FullName}): its formatter comes from a library compiled against a netstandard build of MessagePack. Serialize through the MessagePackSerializer entry points (which reroute automatically), or resolve with the Compatible buffer types directly. Multi-target that library with net10.0 for full speed.");
+            $"Type '{typeof(T).FullName}' in {factoryType} can only be served over the Compatible (non-ref-struct) buffer pair (requested TWriteBuffer: {typeof(TWriteBuffer).FullName}, TReadBuffer: {typeof(TReadBuffer).FullName}): its formatter comes from a library compiled against a netstandard build of MessagePack. Serialize through the MessagePackSerializer entry points (which reroute automatically), or resolve with the Compatible buffer types directly. Multi-target that library with net9.0 for full speed.");
     }
 }
 
@@ -394,7 +394,7 @@ internal sealed partial class MissingMessagePackFormatter<TWriteBuffer, TReadBuf
         if (servableByCompatiblePair)
         {
             // only reachable when ThrowOnLegacyFormatter is enabled
-            message += " The factory can create this formatter for the Compatible (non-ref-struct) buffer pair: it is likely provided by a library compiled against a netstandard build of MessagePack, which cannot serve ref struct buffer pairs. Multi-target that library with net10.0 for full speed, or serialize through the MessagePackSerializer entry points (with ThrowOnLegacyFormatter off) to run it over the compatibility path.";
+            message += " The factory can create this formatter for the Compatible (non-ref-struct) buffer pair: it is likely provided by a library compiled against a netstandard build of MessagePack, which cannot serve ref struct buffer pairs. Multi-target that library with net9.0 for full speed, or serialize through the MessagePackSerializer entry points (with ThrowOnLegacyFormatter off) to run it over the compatibility path.";
         }
         else if (typeof(T).IsArray || typeof(T).IsConstructedGenericType)
         {

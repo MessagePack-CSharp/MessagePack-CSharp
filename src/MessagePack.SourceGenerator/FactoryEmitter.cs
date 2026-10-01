@@ -105,7 +105,7 @@ static class FactoryEmitter
             {
                 if (model.Custom.FactoryNew is { } factoryNew)
                 {
-                    writer.Line("#if NET10_0_OR_GREATER");
+                    writer.Line("#if NET9_0_OR_GREATER");
                     writer.Line($"if (type == typeof({model.FullTypeName})) return {factoryNew}.CreateFormatter<TWriteBuffer, TReadBuffer>(type);");
                     writer.Line("#else");
                     writer.Line($"if (type == typeof({model.FullTypeName})) return {factoryNew}.CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), type);");
@@ -251,11 +251,9 @@ static class FactoryEmitter
 
     static void AppendGenericCreateFormatterSignature(CodeWriter writer)
     {
-        writer.Line("// one method, two signatures: net10+ overrides the base virtual (constraints");
+        writer.Line("// one method, two signatures: net9+ overrides the base virtual (constraints");
         writer.Line("// inherited); downlevel has no base member, so the constraints are spelled out.");
-        writer.Line("// the gate is the core package's own tier line (net10.0 is its first modern target;");
-        writer.Line("// a net9.0 consumer resolves the netstandard2.1 core), not the language's allows-ref-struct floor");
-        writer.Line("#if NET10_0_OR_GREATER");
+        writer.Line("#if NET9_0_OR_GREATER");
         writer.Line("public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(global::System.Type type)");
         writer.Line("#else");
         writer.Line("public object? CreateFormatter<TWriteBuffer, TReadBuffer>(global::System.Type type)");

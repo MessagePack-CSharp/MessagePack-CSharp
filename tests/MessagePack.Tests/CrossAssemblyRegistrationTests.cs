@@ -101,7 +101,7 @@ public class CrossAssemblyRegistrationTests
 
     static byte[] Compile(string assemblyName, string source, params MetadataReference[] additionalReferences)
     {
-        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest).WithPreprocessorSymbols("NET10_0_OR_GREATER");
+        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest).WithPreprocessorSymbols("NET9_0_OR_GREATER");
         var compilation = CSharpCompilation.Create(
             assemblyName,
             [CSharpSyntaxTree.ParseText(source, parseOptions)],

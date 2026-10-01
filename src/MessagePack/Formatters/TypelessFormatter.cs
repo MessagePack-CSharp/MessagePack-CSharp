@@ -302,7 +302,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
     sealed class TypelessSerializer<T> : TypelessSerializer
     {
         readonly IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T> writeFormatter;
-        // null when the formatter only exists over the Compatible pair (a netstandard-built library on net10); the read
+        // null when the formatter only exists over the Compatible pair (a netstandard-built library on net9+); the read
         // side then runs writeFormatter's pair over a copy of the value, see DeserializeCompatible
         readonly IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>? readFormatter;
 

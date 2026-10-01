@@ -1,8 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<!-- Since net10.0 is defined as the minimum version where `allows ref struct` can be used, it must not be removed in the future. -->
-		<TargetFrameworks>netstandard2.0;netstandard2.1;net10.0;net11.0</TargetFrameworks>
+		<!-- net9.0 is where `allows ref struct` starts (C# 13 and the .NET 9 runtime), so it is the first modern target and
+		     must not be removed in the future. It matches SerializerFoundation's own tier line (NET9_0_OR_GREATER).
+		     net10.0 and net11.0 exist for the BCL APIs gated by NET10_0_OR_GREATER / NET11_0_OR_GREATER; the public surface is the same as net9.0's. -->
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net9.0;net10.0;net11.0</TargetFrameworks>
 		<LangVersion>preview</LangVersion>
 		
 		<!-- Unsafe Evolution is not mature yet, so we will not apply it. -->
@@ -30,6 +32,10 @@
 		<PackageReference Include="System.Collections.Immutable" Version="10.0.0" />
 		<PackageReference Include="System.Text.Json" Version="10.0.0" />
 	</ItemGroup>
+	<!-- ConvertFromJson uses JsonElement.Parse, which the in-box .NET 9 System.Text.Json does not have -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+		<PackageReference Include="System.Text.Json" Version="10.0.0" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="PolySharp" Version="1.16.0">
@@ -38,13 +44,14 @@
 		</PackageReference>
 	</ItemGroup>
 
+	<!-- The SerializerFoundation package carries its own analyzers (SF001-SF003) under analyzers/dotnet/cs.
+	     PrivateAssets=none lets them flow to MessagePack consumers too; the default would keep them private to this project. -->
 	<ItemGroup>
-		<ProjectReference Include="..\SerializerFoundation\SerializerFoundation.csproj" />
+		<PackageReference Include="SerializerFoundation" Version="1.0.0" PrivateAssets="none" />
 	</ItemGroup>
 
 	<!-- Analyzer -->
 	<ItemGroup>
-		<ProjectReference Include="..\SerializerFoundation.Analyzers\SerializerFoundation.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<!-- build-order only: the code fix dll is packed below, so packing this project alone must build it first -->
 		<ProjectReference Include="..\MessagePack.SourceGenerator.CodeFixes\MessagePack.SourceGenerator.CodeFixes.csproj" ReferenceOutputAssembly="false" />
@@ -56,7 +63,6 @@
 	<ItemGroup>
 		<None Include="..\MessagePack.SourceGenerator\bin\$(Configuration)\netstandard2.0\MessagePack.SourceGenerator.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 		<None Include="..\MessagePack.SourceGenerator.CodeFixes\bin\$(Configuration)\netstandard2.0\MessagePack.SourceGenerator.CodeFixes.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-		<None Include="..\SerializerFoundation.Analyzers\bin\$(Configuration)\netstandard2.0\SerializerFoundation.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 	</ItemGroup>
 
 	<!-- Global Usings -->

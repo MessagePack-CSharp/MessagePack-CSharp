@@ -36,7 +36,7 @@ internal static class BufferPairs
         writer.Line("public override object? CreateFormatter(global::System.Type writeBufferType, global::System.Type readBufferType, global::System.Type valueType)");
         using (writer.OpenScope())
         {
-            writer.Line("#if NET10_0_OR_GREATER");
+            writer.Line("#if NET9_0_OR_GREATER");
             writer.Line("// the resolver takes the generic member on this TFM; only probes and composite");
             writer.Line("// passthroughs land here, and \"not mine\" must not abort their chain. the pair");
             writer.Line("// dispatch is omitted so AOT binaries do not carry formatter x pair instantiations");

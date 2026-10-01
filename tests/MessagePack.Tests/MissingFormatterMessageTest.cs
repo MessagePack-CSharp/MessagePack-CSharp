@@ -68,7 +68,7 @@ public class MissingFormatterMessageTest
         Assert.Contains(nameof(FallbackOnlyFactory), message);
         Assert.Contains(nameof(ArrayPoolListWriteBuffer), message);
         Assert.Contains(nameof(ReadOnlySpanReadBuffer), message);
-        Assert.Contains("net10.0", message);
+        Assert.Contains("net9.0", message);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class MissingFormatterMessageTest
         var message = CaptureSerializeMessage(formatter);
         Assert.Contains(nameof(ArrayPoolListWriteBuffer), message);
         Assert.Contains(nameof(ReadOnlySpanReadBuffer), message);
-        Assert.DoesNotContain("net10.0", message);
+        Assert.DoesNotContain("net9.0", message);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class MissingFormatterMessageTest
         Assert.NotNull(caught);
         Assert.Contains(nameof(CompatibleArrayPoolListWriteBuffer), caught.Message);
         Assert.Contains(nameof(CompatibleReadOnlySpanReadBuffer), caught.Message);
-        Assert.DoesNotContain("net10.0", caught.Message);
+        Assert.DoesNotContain("net9.0", caught.Message);
     }
 
     static string CaptureSerializeMessage(IMessagePackFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, MissingProbeValue> formatter)

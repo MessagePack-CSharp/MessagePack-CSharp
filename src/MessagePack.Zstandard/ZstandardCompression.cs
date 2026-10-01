@@ -34,7 +34,7 @@ public static class ZstandardMessagePackOptionsExtensions
 /// Zstandard implementation read, and a stream of messages is a concatenation of frames, which those tools decode as
 /// one stream. There is no size threshold and no passthrough: every message is a frame, and input that is not one is
 /// rejected. Set through <see cref="ZstandardMessagePackOptionsExtensions.WithZstandardFrame(MessagePackSerializerOptions)"/>.
-/// Codec: the in-box System.IO.Compression.ZstandardEncoder/Decoder on .NET 11, NativeCompressions.Zstandard on .NET 10;
+/// Codec: the in-box System.IO.Compression.ZstandardEncoder/Decoder on .NET 11, NativeCompressions.Zstandard before that;
 /// both are libzstd, and the frame is a standard Zstandard frame either way. Each instance keeps its own cached codec
 /// contexts (created on first use), so a processor lives as long as the options that hold it.
 /// </summary>

@@ -10,7 +10,7 @@ public struct RoutedValue
 
 // A formatter with the DOWNLEVEL generic shape: no `allows ref struct` on the buffer
 // type parameters — exactly what a netstandard-compiled formatter library presents after
-// assembly unification on net10. It can only close over the Compatible buffers.
+// assembly unification on net9+. It can only close over the Compatible buffers.
 // The nested int formatter exercises resolution INSIDE the compatibility graph.
 sealed class RoutedValueFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, RoutedValue>
     where TWriteBuffer : struct, IWriteBuffer
@@ -167,7 +167,7 @@ public class CompatibilityFallbackRoutingTests
 
         var ex = Assert.Throws<InvalidOperationException>(
             () => MessagePackSerializer.Serialize(new RoutedValue { X = 1 }, options));
-        Assert.Contains("net10.0", ex.Message);
+        Assert.Contains("net9.0", ex.Message);
         Assert.Empty(fallbackTypes);
     }
 #endif
