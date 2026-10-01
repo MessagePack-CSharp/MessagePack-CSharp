@@ -830,6 +830,8 @@ Regardless of which LZ4 option is set at the deserialization, both methods can b
 
 LZ4 compression support is using Milosz Krajewski's [lz4net](https://github.com/MiloszKrajewski/lz4net) code with some modifications.
 
+Malformed LZ4 literal and match lengths are rejected with `MessagePackSerializationException` before they can overflow or exceed the declared output buffer. When deserializing untrusted compressed data, use `MessagePackSecurity.UntrustedData` to limit the declared decompressed size, and enforce an appropriate incoming message-size limit in your application.
+
 ## <a name="comparison"></a>Comparison with protobuf, JSON, ZeroFormatter
 
 [protobuf-net](https://github.com/mgravell/protobuf-net) is major, widely used binary-format library on .NET. I love protobuf-net and respect their great work. But when you use protobuf-net as a general purpose serialization format, you may encounter an annoying issue.
