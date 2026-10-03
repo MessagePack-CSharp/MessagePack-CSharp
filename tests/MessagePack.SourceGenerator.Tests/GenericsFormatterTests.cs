@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using VerifyCS = CSharpSourceGeneratorVerifier<MessagePack.SourceGenerator.MessagePackGenerator>;
 
@@ -511,6 +512,67 @@ namespace TempProject
                     ["DefiningProject"] = { Sources = { defineSource } },
                 },
                 AdditionalProjectReferences = { "DefiningProject" },
+            },
+        }.RunAsync();
+    }
+
+    /// <summary>
+    /// Asserts that the generator does not crash on a closed generic <em>value type</em> (a struct) that is
+    /// defined in a referenced assembly. Regression test for
+    /// https://github.com/MessagePack-CSharp/MessagePack-CSharp/issues/2283.
+    /// </summary>
+    [Fact]
+    public async Task Generics_Defined_In_ReferencedProject_Struct()
+    {
+        // The bug this guards against (#2283) only reproduces when the generic value type is loaded from
+        // *compiled metadata*, i.e. its members have no syntax in the consuming compilation. A same-solution
+        // AdditionalProjects reference (as used by Generics_Defined_In_ReferencedProject above) still exposes
+        // source symbols with real DeclaringSyntaxReferences, so it would not have caught this. Instead, compile
+        // a tiny library to IL first and reference the resulting assembly, exactly as a NuGet package or a built
+        // ProjectReference would be referenced.
+        string librarySource = """
+using MessagePack;
+
+namespace TempProject
+{
+    [MessagePackObject]
+    public partial record struct Item<T>([property: Key(0)] string Key);
+}
+""";
+
+        ImmutableArray<MetadataReference> frameworkReferences = await ReferencesHelper.DefaultTargetFrameworkReferences.ResolveAsync(LanguageNames.CSharp, CancellationToken.None);
+        CSharpCompilation libraryCompilation = CSharpCompilation.Create(
+            "TempProject.Lib",
+            new[] { CSharpSyntaxTree.ParseText(librarySource, new CSharpParseOptions(LanguageVersion.CSharp10)) },
+            frameworkReferences.Concat(ReferencesHelper.GetReferences(ReferencesSet.MessagePack)),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        using MemoryStream libraryStream = new();
+        Microsoft.CodeAnalysis.Emit.EmitResult emitResult = libraryCompilation.Emit(libraryStream);
+        Assert.True(emitResult.Success, string.Join(Environment.NewLine, emitResult.Diagnostics));
+        libraryStream.Position = 0;
+        MetadataReference libraryReference = MetadataReference.CreateFromStream(libraryStream);
+
+        string usageSource = """
+using MessagePack;
+
+namespace TempProject
+{
+    [MessagePackObject]
+    public sealed partial record Cmd([property: Key(0)] string Scope)
+    {
+        [Key(1)]
+        public Item<int> Member { get; init; }
+    }
+}
+""";
+        await new VerifyCS.Test
+        {
+            LanguageVersion = LanguageVersion.CSharp10,
+            TestState =
+            {
+                Sources = { usageSource },
+                AdditionalReferences = { libraryReference },
             },
         }.RunAsync();
     }
