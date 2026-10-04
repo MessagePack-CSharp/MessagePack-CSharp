@@ -12,11 +12,6 @@ namespace MessagePack
     public class MessagePackObjectAttribute : Attribute
     {
         /// <summary>
-        /// Gets a value indicating whether to automatically serialize all internal and public fields and properties using their property name as the key in a map.
-        /// </summary>
-        public bool KeyAsPropertyName { get; }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackObjectAttribute"/> class.
         /// </summary>
         /// <param name="keyAsPropertyName">
@@ -25,8 +20,22 @@ namespace MessagePack
         /// </param>
         public MessagePackObjectAttribute(bool keyAsPropertyName = false)
         {
-            this.KeyAsPropertyName = keyAsPropertyName;
+            this.KeyPolicy = keyAsPropertyName ? KeyPolicy.ImplicitPropertyNames : KeyPolicy.Explicit;
         }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MessagePackObjectAttribute"/> class.
+        /// </summary>
+        /// <param name="keyPolicy">The policy to apply for members to be serialized.</param>
+        public MessagePackObjectAttribute(KeyPolicy keyPolicy)
+        {
+            this.KeyPolicy = keyPolicy;
+        }
+
+        /// <summary>
+        /// Gets the policy to apply for which properties and fields are serialized and how they are named in a map or indexed into an array.
+        /// </summary>
+        public KeyPolicy KeyPolicy { get; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the source generator should <em>not</em>
