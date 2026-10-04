@@ -1,0 +1,28 @@
+{
+    "name": "MessagePack.Unity.Mathematics",
+    "rootNamespace": "",
+    "references": [
+        "MessagePack.Unity",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "MessagePack.dll",
+        "MessagePack.Annotations.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "MESSAGEPACK_UNITY_MATHEMATICS_SUPPORT"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.mathematics",
+            "expression": "",
+            "define": "MESSAGEPACK_UNITY_MATHEMATICS_SUPPORT"
+        }
+    ],
+    "noEngineReferences": false
+}
