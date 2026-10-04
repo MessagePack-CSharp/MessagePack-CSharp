@@ -243,6 +243,15 @@ public class MessagePackSecurityTests
     }
 
     [Fact]
+    public void EqualityComparer_NonReflectiveFactory_RejectsInvalidTypes()
+    {
+        var security = new NonGenericCustomSecurity();
+        Assert.Throws<ArgumentNullException>(() => security.GetComparer(null));
+        Assert.Throws<TypeAccessException>(() => security.GetComparer(typeof(decimal)));
+        Assert.Throws<TypeAccessException>(() => security.GetComparer(typeof(ArbitraryType)));
+    }
+
+    [Fact]
     public void EqualityComparer_ObjectFallback_NonGenericPreservesRejection()
     {
         var security = MessagePackSecurity.UntrustedData;
@@ -376,6 +385,8 @@ public class MessagePackSecurityTests
             : base(UntrustedData)
         {
         }
+
+        internal IEqualityComparer GetComparer(Type type) => this.GetHashCollisionResistantEqualityComparer(type);
 
         protected override IEqualityComparer GetHashCollisionResistantEqualityComparer() => (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<string>();
     }
