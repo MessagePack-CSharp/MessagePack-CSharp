@@ -97,6 +97,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Analyzers", "sr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CollectionsMarshalBenchmark", "benchmark\CollectionsMarshalBenchmark\CollectionsMarshalBenchmark.csproj", "{9A31C44C-9C51-4D41-B8E5-2864245F877E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Security.NativeAotTests", "tests\MessagePack.Security.NativeAotTests\MessagePack.Security.NativeAotTests.csproj", "{35A99350-791A-4288-AFB1-554DCD87DE8B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -215,6 +217,10 @@ Global
 		{9A31C44C-9C51-4D41-B8E5-2864245F877E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9A31C44C-9C51-4D41-B8E5-2864245F877E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9A31C44C-9C51-4D41-B8E5-2864245F877E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35A99350-791A-4288-AFB1-554DCD87DE8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35A99350-791A-4288-AFB1-554DCD87DE8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35A99350-791A-4288-AFB1-554DCD87DE8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35A99350-791A-4288-AFB1-554DCD87DE8B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -248,6 +254,7 @@ Global
 		{7A6CB600-2393-468F-9952-84EC624D57BD} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{EB77463C-9D06-4AAE-84F0-470988D30DA0} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{9A31C44C-9C51-4D41-B8E5-2864245F877E} = {51A614B0-E583-4DD2-AC7D-6A65634582E0}
+		{35A99350-791A-4288-AFB1-554DCD87DE8B} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B3911209-2DBF-47F8-98F6-BBC0EDFE63DE}

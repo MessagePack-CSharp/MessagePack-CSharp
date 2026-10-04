@@ -679,6 +679,55 @@ You should also avoid the Typeless serializer/formatters/resolvers for untrusted
 
 The `UntrustedData` mode merely hardens against some common attacks, but is no fully secure solution in itself.
 
+### Non-reflective object comparers for NativeAOT
+
+Applications can explicitly opt into a non-reflective object-key comparer when using collision-resistant security:
+
+```xml
+<ItemGroup>
+  <RuntimeHostConfigurationOption
+      Include="MessagePack.Security.UseNonReflectiveObjectComparer"
+      Value="true"
+      Trim="true" />
+</ItemGroup>
+```
+
+This switch is **off by default**. Without it, existing behavior is unchanged, including generic comparer overrides in JIT applications and NativeAOT applications that already make the required native instantiations available.
+The switch does not enable `UntrustedData` for you or disable any of its protections; continue to configure `MessagePackSecurity.UntrustedData` when deserializing untrusted data.
+
+This is an **application-wide publish-time choice**, not a per-instance setting.
+The annotated `net9.0` library asset and a .NET 9 or later NativeAOT toolchain are required to eliminate the legacy reflection-based comparer.
+Consuming an older library asset, or merely calling `AppContext.SetSwitch` at runtime, does not provide that elimination guarantee.
+Configure the setting before MessagePack initializes; toggling it after initialization or reversing a trimmed switch at runtime is unsupported.
+This addresses the object comparer's reflection path, not every potential NativeAOT warning in the library.
+
+The opt-in comparer retains keyed hashing for primitive values, `Guid`, `DateTime`, and `DateTimeOffset`, including normalization of equivalent values.
+It also retains keyed hashing for boxed enums using the full width and signedness of their underlying integer.
+Null and exact `object` keys retain their existing semantics, and unsupported key types are rejected.
+Primitive generic comparer overrides still participate, with results cached per runtime type.
+
+**Migration for custom security subclasses:** opt-in object hashing does not dynamically discover generic comparer overrides for arbitrary custom types or enum-specific overrides.
+Connect these through the new non-generic overload using statically known types:
+
+```csharp
+protected override System.Collections.IEqualityComparer
+    GetHashCollisionResistantEqualityComparer(Type type)
+{
+    return type == typeof(MyKey)
+        ? (System.Collections.IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<MyKey>()
+        : base.GetHashCollisionResistantEqualityComparer(type);
+}
+```
+
+Here, `MyKey` already has a collision-resistant comparer supplied by the subclass's generic override.
+Use the same pattern for an enum-specific comparer.
+The returned comparer must implement non-generic `IEqualityComparer`, as the legacy object fallback also requires.
+Custom comparer authors remain responsible for collision resistance and equality consistency.
+Typed generic calls, the parameterless non-generic factory, and the `Clone` extension point are unchanged.
+All consumers within an application that enables the switch must accept this explicit custom/boxed-enum contract.
+
+See the [security NativeAOT tests](tests/MessagePack.Security.NativeAotTests/README.md) for the compatibility and native compilation checks.
+
 ## Performance
 
 Benchmarks comparing MessagePack For C# to other serializers were run on `Windows 10 Pro x64 Intel Core i7-6700K 4.00GHz, 32GB RAM`. Benchmark code is [available here](https://github.com/neuecc/ZeroFormatter/tree/master/sandbox/PerformanceComparison) - and their [version info](https://github.com/neuecc/ZeroFormatter/blob/bc63cb925d/sandbox/PerformanceComparison/packages.config).

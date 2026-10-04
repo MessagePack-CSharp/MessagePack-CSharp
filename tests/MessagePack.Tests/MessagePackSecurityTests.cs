@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using MessagePack;
@@ -157,6 +158,109 @@ public class MessagePackSecurityTests
         Assert.NotNull(security.GetEqualityComparer<object>());
     }
 
+    [Fact]
+    public void EqualityComparer_ObjectFallback_MatchesTypedHash()
+    {
+        var security = MessagePackSecurity.UntrustedData;
+        AssertObjectHash(security, true);
+        AssertObjectHash(security, 'x');
+        AssertObjectHash(security, sbyte.MinValue);
+        AssertObjectHash(security, byte.MaxValue);
+        AssertObjectHash(security, short.MinValue);
+        AssertObjectHash(security, ushort.MaxValue);
+        AssertObjectHash(security, int.MinValue);
+        AssertObjectHash(security, uint.MaxValue);
+        AssertObjectHash(security, long.MinValue);
+        AssertObjectHash(security, ulong.MaxValue);
+        AssertObjectHash(security, Guid.Parse("b1575f42-57b7-4ea7-9971-122850196ffc"));
+        AssertObjectHash(security, "a string key");
+        AssertObjectHash(security, 1.25f);
+        AssertObjectHash(security, float.NaN);
+        AssertObjectHash(security, -0.0f);
+        AssertObjectHash(security, 1.25d);
+        AssertObjectHash(security, double.NaN);
+        AssertObjectHash(security, -0.0d);
+        AssertObjectHash(security, new DateTime(2024, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+        AssertObjectHash(security, new DateTimeOffset(2024, 1, 2, 3, 4, 5, TimeSpan.FromHours(2)));
+        AssertObjectHash(security, (SomeInt8Enum)sbyte.MinValue);
+        AssertObjectHash(security, (SomeUInt8Enum)byte.MaxValue);
+        AssertObjectHash(security, (SomeInt16Enum)short.MinValue);
+        AssertObjectHash(security, (SomeUInt16Enum)ushort.MaxValue);
+        AssertObjectHash(security, (SomeInt32Enum)int.MinValue);
+        AssertObjectHash(security, (SomeUInt32Enum)uint.MaxValue);
+        AssertObjectHash(security, (SomeInt64Enum)long.MinValue);
+        AssertObjectHash(security, (SomeUInt64Enum)ulong.MaxValue);
+    }
+
+    [Fact]
+    public void EqualityComparer_ObjectFallback_EquivalentRepresentations()
+    {
+        var comparer = MessagePackSecurity.UntrustedData.GetEqualityComparer<object>();
+        Assert.Equal(comparer.GetHashCode(0.0f), comparer.GetHashCode(-0.0f));
+        Assert.Equal(comparer.GetHashCode(0.0d), comparer.GetHashCode(-0.0d));
+        var utc = new DateTime(2024, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        Assert.Equal(comparer.GetHashCode(utc), comparer.GetHashCode(DateTime.SpecifyKind(utc, DateTimeKind.Local)));
+        var instant = new DateTimeOffset(utc);
+        Assert.Equal(comparer.GetHashCode(instant), comparer.GetHashCode(instant.ToOffset(TimeSpan.FromHours(2))));
+    }
+
+    [Fact]
+    public void EqualityComparer_ObjectFallback_UsesGenericOverrides()
+    {
+        var security = new CustomSecurity();
+        AssertObjectHash(security, "a string key");
+        AssertObjectHash(security, 17);
+        AssertObjectHash(security, (SomeInt64Enum)0x100000001);
+        AssertObjectHash(security, new CustomKey("a custom key"));
+
+        var comparer = security.GetEqualityComparer<object>();
+        int calls = security.FactoryCalls[typeof(CustomKey)];
+        comparer.GetHashCode(new CustomKey("another custom key"));
+        Assert.Equal(calls, security.FactoryCalls[typeof(CustomKey)]);
+    }
+
+    [Fact]
+    public void EqualityComparer_ObjectFallback_CloneUsesItsOwnOverrides()
+    {
+        var security = new CustomSecurity();
+        var key = new CustomKey("a custom key");
+        int originalHash = security.GetEqualityComparer<object>().GetHashCode(key);
+        var clone = Assert.IsType<CustomSecurity>(security.WithMaximumObjectGraphDepth(37));
+        Assert.True(clone.HashCollisionResistant);
+        Assert.Equal(security.MaximumDecompressedSize, clone.MaximumDecompressedSize);
+        AssertObjectHash(clone, key);
+        Assert.NotEqual(originalHash, clone.GetEqualityComparer<object>().GetHashCode(key));
+        Assert.Equal(originalHash, security.GetEqualityComparer<object>().GetHashCode(key));
+    }
+
+    [Fact]
+    public void EqualityComparer_NonGenericOverride_IsIndependent()
+    {
+        var security = new NonGenericCustomSecurity();
+        Assert.Same(MessagePackSecurity.UntrustedData.GetEqualityComparer<string>(), security.GetEqualityComparer());
+        Assert.NotSame(security.GetEqualityComparer(), security.GetEqualityComparer<object>());
+        Assert.Equal(security.GetEqualityComparer<string>().GetHashCode("a string key"), security.GetEqualityComparer().GetHashCode("a string key"));
+    }
+
+    [Fact]
+    public void EqualityComparer_ObjectFallback_NonGenericPreservesRejection()
+    {
+        var security = MessagePackSecurity.UntrustedData;
+        Assert.Equal(0, security.GetEqualityComparer().GetHashCode(null));
+        foreach (object key in new object[] { 1m, new Version(1, 2), new byte[] { 1, 2 } })
+        {
+            Assert.Throws<TypeAccessException>(() => security.GetEqualityComparer().GetHashCode(key));
+            Assert.Throws<TypeAccessException>(() => security.GetEqualityComparer<object>().GetHashCode(key));
+        }
+    }
+
+    private static void AssertObjectHash<T>(MessagePackSecurity security, T value)
+    {
+        int expected = security.GetEqualityComparer<T>().GetHashCode(value);
+        Assert.Equal(expected, security.GetEqualityComparer<object>().GetHashCode(value));
+        Assert.Equal(expected, security.GetEqualityComparer().GetHashCode(value));
+    }
+
     /// <summary>
     /// Verifies that arbitrary other types not known to be hash safe will be rejected.
     /// </summary>
@@ -206,6 +310,74 @@ public class MessagePackSecurityTests
     [DataContract]
     public class ArbitraryType
     {
+    }
+
+    private sealed class CustomKey
+    {
+        internal CustomKey(string value) => this.Value = value;
+
+        internal string Value { get; }
+    }
+
+    private sealed class CustomSecurity : MessagePackSecurity
+    {
+        internal CustomSecurity()
+            : base(UntrustedData)
+        {
+        }
+
+        private CustomSecurity(CustomSecurity template)
+            : base(template)
+        {
+        }
+
+        internal Dictionary<Type, int> FactoryCalls { get; } = new Dictionary<Type, int>();
+
+        protected override IEqualityComparer<T> GetHashCollisionResistantEqualityComparer<T>()
+        {
+            this.FactoryCalls.TryGetValue(typeof(T), out int calls);
+            this.FactoryCalls[typeof(T)] = calls + 1;
+            if (typeof(T) == typeof(object))
+            {
+                return base.GetHashCollisionResistantEqualityComparer<T>();
+            }
+
+            if (typeof(T) == typeof(CustomKey))
+            {
+                var strings = base.GetHashCollisionResistantEqualityComparer<string>();
+                return new CustomComparer<T>(value => strings.GetHashCode(((CustomKey)(object)value).Value) ^ this.MaximumObjectGraphDepth);
+            }
+
+            var comparer = base.GetHashCollisionResistantEqualityComparer<T>();
+            return new CustomComparer<T>(value => comparer.GetHashCode(value) ^ this.MaximumObjectGraphDepth);
+        }
+
+        protected override MessagePackSecurity Clone() => new CustomSecurity(this);
+    }
+
+    private sealed class CustomComparer<T> : IEqualityComparer<T>, IEqualityComparer
+    {
+        private readonly Func<T, int> hash;
+
+        internal CustomComparer(Func<T, int> hash) => this.hash = hash;
+
+        public bool Equals(T x, T y) => EqualityComparer<T>.Default.Equals(x, y);
+
+        public int GetHashCode(T value) => this.hash(value);
+
+        bool IEqualityComparer.Equals(object x, object y) => ((IEqualityComparer)EqualityComparer<T>.Default).Equals(x, y);
+
+        int IEqualityComparer.GetHashCode(object value) => this.GetHashCode((T)value);
+    }
+
+    private sealed class NonGenericCustomSecurity : MessagePackSecurity
+    {
+        internal NonGenericCustomSecurity()
+            : base(UntrustedData)
+        {
+        }
+
+        protected override IEqualityComparer GetHashCollisionResistantEqualityComparer() => (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<string>();
     }
 
     public enum SomeInt8Enum : sbyte
