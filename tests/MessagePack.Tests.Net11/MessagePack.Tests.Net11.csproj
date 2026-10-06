@@ -29,7 +29,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\MessagePack.Tests\ZstandardTests.cs" Link="ZstandardTests.cs" />
     <Compile Include="..\MessagePack.Tests\ZstandardFrameTests.cs" Link="ZstandardFrameTests.cs" />
   </ItemGroup>
 

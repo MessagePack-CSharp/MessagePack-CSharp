@@ -4,13 +4,14 @@
 		<!-- net11.0 uses the in-box System.IO.Compression.ZstandardEncoder/Decoder (no package dependency);
 		     the other targets have no Zstandard in the BCL and bind NativeCompressions.Zstandard instead. Both wrap
 		     libzstd, so the frames are interchangeable and the processor code is shared but for a small shim. -->
-		<!-- netstandard2.1 is the floor because NativeCompressions has no netstandard2.0 asset; the core starts at
-		     netstandard2.0 and this package follows as soon as NativeCompressions ships that target. -->
+		<!-- netstandard2.1 is the floor although NativeCompressions 1.0.0 ships a netstandard2.0 asset: that asset
+		     would be the one .NET Framework loads, and this assembly is strong-named while NativeCompressions is not,
+		     which .NET Framework refuses at load time (a strong-named assembly may only reference strong-named ones).
+		     The core starts at netstandard2.0; this package follows once NativeCompressions is strong-named. -->
 		<TargetFrameworks>netstandard2.1;net9.0;net11.0</TargetFrameworks>
 		<LangVersion>preview</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
 		<Description>Zstandard compression for MessagePack as a MessagePackMessageProcessor — ext 96 envelope or standard Zstandard frames, composed purely through options. Uses the BCL codec on .NET 11 and NativeCompressions.Zstandard below.</Description>
 	</PropertyGroup>
@@ -26,7 +27,7 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' != 'net11.0'">
-		<PackageReference Include="NativeCompressions.Zstandard" Version="0.6.1" />
+		<PackageReference Include="NativeCompressions.Zstandard" Version="1.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

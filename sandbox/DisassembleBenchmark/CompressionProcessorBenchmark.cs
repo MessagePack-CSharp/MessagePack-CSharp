@@ -43,8 +43,9 @@ using MessagePack;
 // 6345 (L3), Ints 14402 -> 14829 (L1) / 15522 -> 15488 (L3), wire +2..3 B for the ext32 width. An
 // intermediate build that still flattened multi-segment messages on this tier measured the same
 // (5188 / 6360 / 14075 / 14197), so the copies were never the cost: zstd's own per-frame work is.
-// On this tier the encoder is the InteropZstandardEncoder stand-in over ZstandardNativeMethods
-// (NativeCompressions 0.6.1 has no SetSourceLength); the net11 BCL codec runs the same code.
+// On this tier the encoder was the InteropZstandardEncoder stand-in over ZstandardNativeMethods
+// (NativeCompressions 0.6.1 had no SetSourceLength; 1.0.0 does, and the stand-in is gone); the net11
+// BCL codec runs the same code.
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [CategoriesColumn]
 public class CompressionProcessorBenchmark

@@ -84,7 +84,8 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
                 offset += segment.Length;
             }
             var options = new LZ4CompressionOptions { ContentSize = (ulong)messageLength };
-            var rented = ArrayPool<byte>.Shared.Rent(FrameBound(messageLength));
+            // LZ4F_compressFrameBound: the one-shot frame compress refuses a smaller destination outright
+            var rented = ArrayPool<byte>.Shared.Rent(LZ4.GetMaxCompressedLength(messageLength, in options));
             try
             {
                 var length = LZ4.Compress(flat.AsSpan(0, messageLength), rented, in options);
@@ -105,12 +106,6 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
             ArrayPool<byte>.Shared.Return(flat);
         }
     }
-
-    // LZ4F_compressFrameBound for the default 64KB blocks, computed here because the binding's
-    // GetMaxCompressedLength(int, in options) recurses without end and its nuint twin answers five times the input
-    // (NativeCompressions.LZ4 0.6.1). liblz4 stores a block that does not shrink uncompressed, so a frame is at most
-    // the 19-byte header, the input, 8 bytes per block (size + optional checksum) and the 8-byte end mark + checksum.
-    static int FrameBound(int messageLength) => checked(19 + messageLength + 8 * (messageLength / 65536 + 1) + 8);
 
     // ---- read side ----
 
@@ -207,7 +202,9 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
                 }
                 if (status != OperationStatus.DestinationTooSmall)
                 {
-                    Lz4Throws.InvalidEnvelope(); // the whole frame is present: needing more data means it is corrupt
+                    // the whole frame is present: needing more data means it is corrupt, and the decoder reports
+                    // malformed input as InvalidData rather than throwing
+                    Lz4Throws.InvalidEnvelope();
                 }
                 if (written >= cap)
                 {
@@ -218,12 +215,6 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
                 ArrayPool<byte>.Shared.Return(rented);
                 rented = grown;
             }
-        }
-        catch (LZ4Exception)
-        {
-            ArrayPool<byte>.Shared.Return(rented);
-            Lz4Throws.InvalidEnvelope();
-            throw;
         }
         catch
         {

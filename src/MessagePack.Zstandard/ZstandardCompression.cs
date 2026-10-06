@@ -4,11 +4,8 @@ using SerializerFoundation;
 using FrameEncoder = System.IO.Compression.ZstandardEncoder;
 using FrameDecoder = System.IO.Compression.ZstandardDecoder;
 #else
-using System.Runtime.InteropServices;
 using NativeCompressions;
-using NativeCompressions.Interop;
-using static NativeCompressions.Interop.ZstandardNativeMethods;
-using FrameEncoder = MessagePack.InteropZstandardEncoder;
+using FrameEncoder = NativeCompressions.ZstandardEncoder;
 using FrameDecoder = NativeCompressions.ZstandardDecoder;
 #endif
 
@@ -302,17 +299,9 @@ sealed class ZstandardCodec(int compressionLevel)
         {
             var status = box.Decoder.Decompress(frame, destination, out var consumed, out var written);
             ReturnDecoder(box);
-            // the BCL decoder reports malformed input as InvalidData; the caller throws after returning the buffer
+            // both decoders report malformed input as InvalidData; the caller throws after returning the buffer
             return status == OperationStatus.Done && consumed == frame.Length ? written : -1;
         }
-#if !NET11_0_OR_GREATER
-        catch (ZstandardException)
-        {
-            // the native binding throws on malformed input instead; same outcome as InvalidData above
-            box.Decoder.Dispose();
-            return -1;
-        }
-#endif
         catch
         {
             box.Decoder.Dispose();
@@ -354,12 +343,6 @@ sealed class ZstandardCodec(int compressionLevel)
                 rented = grown;
             }
         }
-#if !NET11_0_OR_GREATER
-        catch (ZstandardException)
-        {
-            // the native binding throws on malformed input; the fall-through below turns it into the data error
-        }
-#endif
         catch
         {
             ArrayPool<byte>.Shared.Return(rented);
@@ -629,97 +612,6 @@ static class FrameCodec
     }
 #endif
 }
-
-#if !NET11_0_OR_GREATER
-// Stand-in for NativeCompressions.ZstandardEncoder until the binding exposes SetSourceLength (ZSTD_CCtx_setPledgedSrcSize),
-// which the frame codec needs so a message streamed segment by segment still gets its content size into the frame
-// header. The same three calls over the binding's raw interop, under the BCL ZstandardEncoder's names, so once the
-// binding has the member the FrameEncoder alias points back at it and this class goes. Not thread-safe; ZstandardCodec
-// hands out one per call.
-sealed unsafe class InteropZstandardEncoder : IDisposable
-{
-    ZSTD_CCtx_s* context;
-
-    public InteropZstandardEncoder(int compressionLevel)
-    {
-        context = ZSTD_createCCtx();
-        if (context == null)
-        {
-            throw new OutOfMemoryException("ZSTD_createCCtx failed.");
-        }
-        try
-        {
-            ThrowIfError(ZSTD_CCtx_setParameter(context, ZSTD_cParameter.ZSTD_c_compressionLevel, compressionLevel));
-        }
-        catch
-        {
-            Dispose();
-            throw;
-        }
-    }
-
-    ~InteropZstandardEncoder() => Free();
-
-    // the pledge holds for the frame that the next Compress opens; Reset clears it with the session
-    public void SetSourceLength(long length) => ThrowIfError(ZSTD_CCtx_setPledgedSrcSize(Context, (ulong)length));
-
-    public OperationStatus Compress(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesConsumed, out int bytesWritten, bool isFinalBlock)
-    {
-        var endOperation = isFinalBlock ? ZSTD_EndDirective.ZSTD_e_end : ZSTD_EndDirective.ZSTD_e_continue;
-        fixed (byte* sourcePointer = source)
-        fixed (byte* destinationPointer = destination)
-        {
-            var input = new ZSTD_inBuffer_s { src = sourcePointer, size = (nuint)source.Length, pos = 0 };
-            var output = new ZSTD_outBuffer_s { dst = destinationPointer, size = (nuint)destination.Length, pos = 0 };
-            // the return value is what the final call still has to flush from the context (0 = the frame is complete),
-            // or an error code; a continue call may leave input buffered in the context, which is not an error
-            var remaining = ZSTD_compressStream2(Context, &output, &input, endOperation);
-            GC.KeepAlive(this); // the finalizer must not free the context under the native call
-            if (ZSTD_isError(remaining) != 0)
-            {
-                bytesConsumed = 0;
-                bytesWritten = 0;
-                return OperationStatus.InvalidData;
-            }
-            bytesConsumed = (int)input.pos;
-            bytesWritten = (int)output.pos;
-            if (bytesConsumed != source.Length || (isFinalBlock && remaining != 0))
-            {
-                return OperationStatus.DestinationTooSmall;
-            }
-            return OperationStatus.Done;
-        }
-    }
-
-    public void Reset() => ThrowIfError(ZSTD_CCtx_reset(Context, ZSTD_ResetDirective.ZSTD_reset_session_only));
-
-    ZSTD_CCtx_s* Context => context != null ? context : throw new ObjectDisposedException(nameof(InteropZstandardEncoder));
-
-    public void Dispose()
-    {
-        Free();
-        GC.SuppressFinalize(this);
-    }
-
-    void Free()
-    {
-        var freeing = context;
-        if (freeing != null)
-        {
-            context = null;
-            ZSTD_freeCCtx(freeing);
-        }
-    }
-
-    static void ThrowIfError(nuint code)
-    {
-        if (ZSTD_isError(code) != 0)
-        {
-            throw new InvalidOperationException("zstd: " + Marshal.PtrToStringUTF8((IntPtr)ZSTD_getErrorName(code)));
-        }
-    }
-}
-#endif
 
 static class ZstandardThrows
 {

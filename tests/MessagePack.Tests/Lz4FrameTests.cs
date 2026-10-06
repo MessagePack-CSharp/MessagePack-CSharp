@@ -1,7 +1,6 @@
 using System.Buffers;
 using System.Buffers.Binary;
 using System.IO.Pipelines;
-using System.Numerics;
 using MessagePack;
 using NativeCompressions;
 using Xunit;
@@ -127,7 +126,7 @@ public class Lz4FrameTests
         // the claimed bytes are waited for
         var frame = V4.Serialize(new[] { 1, 2, 3 }, Options);
         Assert.True(LZ4.TryGetFrameInfo(frame, out var info));
-        Assert.Equal(BlockSizeId.Max64KB, info.BlockSizeID);
+        Assert.Equal(BlockSizeId.Max64KB, info.BlockSizeId);
         var headerLength = 4 + 2 + 8 + 1; // magic, FLG/BD, content size, header checksum
         var corrupt = (byte[])frame.Clone();
         corrupt[headerLength] = 0x00;
@@ -152,46 +151,16 @@ public class Lz4FrameTests
         });
     }
 
-    // The binding pledges the input length on every Compress, so a frame without a content size (the lz4 tool's
-    // default) is made by hand: clear the C.Size flag, drop the 8-byte field and recompute the header checksum (the
-    // second byte of xxHash32 over the descriptor). Block data and the content checksum are unchanged.
+    // a frame without a content size (the lz4 tool's default): the binding records the size only when the options
+    // carry one, so the default options leave the C.Size flag clear
     static byte[] CompressWithoutContentSize(byte[] plain)
     {
         var options = new LZ4CompressionOptions();
-        var destination = new byte[19 + plain.Length + 8 * (plain.Length / 65536 + 1) + 8];
+        var destination = new byte[LZ4.GetMaxCompressedLength(plain.Length, in options)];
         var length = LZ4.Compress(plain, destination, in options);
-        var sized = destination.AsSpan(0, length);
-        Assert.Equal(0x08, sized[4] & 0x08); // C.Size set
-        Assert.Equal(0, sized[4] & 0x01); // no dictionary id
-        var unsized = new byte[length - 8];
-        sized.Slice(0, 6).CopyTo(unsized);
-        unsized[4] &= unchecked((byte)~0x08);
-        unsized[6] = (byte)(XxHash32(unsized.AsSpan(4, 2)) >> 8);
-        sized.Slice(15).CopyTo(unsized.AsSpan(7)); // past magic(4) + FLG/BD(2) + content size(8) + HC(1)
+        var unsized = destination.AsSpan(0, length).ToArray();
+        Assert.Equal(0, unsized[4] & 0x08); // C.Size clear
         return unsized;
-    }
-
-    static uint XxHash32(ReadOnlySpan<byte> data)
-    {
-        const uint Prime1 = 2654435761, Prime2 = 2246822519, Prime3 = 3266489917, Prime4 = 668265263, Prime5 = 374761393;
-        var h = Prime5 + (uint)data.Length; // seed 0, input shorter than 16 bytes
-        var i = 0;
-        for (; i + 4 <= data.Length; i += 4)
-        {
-            h += BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(i)) * Prime3;
-            h = BitOperations.RotateLeft(h, 17) * Prime4;
-        }
-        for (; i < data.Length; i++)
-        {
-            h += data[i] * Prime5;
-            h = BitOperations.RotateLeft(h, 11) * Prime1;
-        }
-        h ^= h >> 15;
-        h *= Prime2;
-        h ^= h >> 13;
-        h *= Prime3;
-        h ^= h >> 16;
-        return h;
     }
 
     [Fact]

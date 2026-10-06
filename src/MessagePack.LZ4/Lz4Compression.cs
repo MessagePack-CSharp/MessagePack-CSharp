@@ -1,7 +1,3 @@
-// TODO: NativeCompressions.LZ4 is still incomplete
-// this is a provisional implementation.
-// I'll verify basic behavior first and then move on to finalizing the API, so this code is not yet at the stage to be evaluated.
-
 using NativeCompressions;
 using SerializerFoundation;
 using static MessagePack.MessagePackPrimitives;
