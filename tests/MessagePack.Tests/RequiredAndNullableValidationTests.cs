@@ -18,7 +18,7 @@ namespace MessagePack.Tests;
 public class RequiredAndNullableValidationTests
 {
     static MessagePackSerializerOptions Options(bool validateRequired = true, bool validateNull = false) => new(
-        new MessagePackFormatterResolver(MessagePackFormatterFactory.Default, validateRequiredMembers: validateRequired, validateNullableAnnotations: validateNull));
+        new MessagePackFormatterResolver(MessagePackFormatterFactory.Default) { ValidateRequiredMembers = validateRequired, ValidateNullableAnnotations = validateNull });
 
     // SourceGenerated tier deliberately omitted: the reflection tier claims these types
     static MessagePackSerializerOptions ReflectionOptions(bool validateRequired = true, bool validateNull = false) => new(
@@ -27,9 +27,7 @@ public class RequiredAndNullableValidationTests
                 BuiltInFormatterFactory.Instance,
                 GenericFormatterFactory.Instance,
                 new ReflectionFormatterFactory(annotatedOnly: true),
-            ],
-            validateRequiredMembers: validateRequired,
-            validateNullableAnnotations: validateNull));
+            ]) { ValidateRequiredMembers = validateRequired, ValidateNullableAnnotations = validateNull });
 
     // ---- required: presence ----
 
@@ -140,8 +138,7 @@ public class RequiredAndNullableValidationTests
         var contractless = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
             [BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance, new ReflectionFormatterFactory()]));
         var lenient = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
-            [BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance, new ReflectionFormatterFactory()],
-            validateRequiredMembers: false));
+            [BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance, new ReflectionFormatterFactory()]) { ValidateRequiredMembers = false });
 
         var old = V4.Serialize(new ContractlessReqPocoV0 { Id = 3 }, contractless);
         var ex = Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<ContractlessReqPoco>(old, contractless));

@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - run: echo ${{ needs.update-packagejson.outputs.sha }}
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -47,7 +47,7 @@ jobs:
       - uses: ./.github/actions/setup-dotnet
       # pack nuget
       - run: dotnet build -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }}
-      # - run: dotnet test -c Release --no-build
+      - run: dotnet test -c Release --no-build
       - run: dotnet pack -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
       - name: upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 # must sync with actions/download-artifact@v8 in create-release

@@ -28,6 +28,11 @@ static class AttributeFormatterParser
             diagnostics.Add(new DiagnosticInfo(Diagnostics.TypeLevelFormatterNotGenerated, $"'{typeName}': type-level [MessagePackFormatter] is not generated for generic types (the registration cannot be pre-closed); register the factory in the resolver chain instead.", typeLocation));
             return Empty(diagnostics);
         }
+        if (ObjectParser.IsFileLocal(type))
+        {
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.TypeLevelFormatterNotGenerated, $"'{typeName}': type-level [MessagePackFormatter] cannot be registered for a file-local type (generated code in another file cannot name it); register the factory in the resolver chain instead.", typeLocation));
+            return Empty(diagnostics);
+        }
         for (var accessible = type; accessible is not null; accessible = accessible.ContainingType)
         {
             if (accessible.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal))

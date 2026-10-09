@@ -4,59 +4,10 @@ using static MessagePack.MessagePackPrimitives;
 
 namespace MessagePack;
 
-/// <summary>
-/// LZ4 as <see cref="MessagePackMessageProcessor"/>s, one instance per options (the processors are cheap to create
-/// and hold no shared state). <see cref="Lz4FrameProcessor"/> (<see cref="WithLz4Frame(MessagePackSerializerOptions)"/>)
-/// is the format for new data: every message as one standard LZ4 frame, the container the lz4 tool and every LZ4
-/// implementation read.
-/// <see cref="Lz4BlockProcessor"/> and <see cref="Lz4BlockArrayProcessor"/> are the MessagePack-CSharp v3 wire
-/// formats, kept (obsolete, still fully supported) for data shared with v3: Block = whole message as one LZ4 block
-/// inside ext 99, BlockArray = one LZ4 block per pooled write segment inside ext 98 (zero-copy on the uncompressed
-/// side — the serializer's segments map 1:1 to blocks). Reading is transparent for BOTH codes and passes
-/// non-enveloped messages through, matching v3 semantics. Messages smaller than
-/// <see cref="Lz4MessageProcessor.CompressionThreshold"/> are written without an envelope (compression of tiny
-/// messages is a pure loss). Above the threshold the envelope is ALWAYS written, even when LZ4 leaves the payload
-/// larger (incompressible data costs ~0.4% literal overhead plus the header) — v3 parity: whether the envelope
-/// appears depends only on the size threshold, never on the data content.
-/// Migration: a Block reader does not read frames and a Frame reader does not read v3 envelopes (nor the raw
-/// sub-threshold messages a Block writer emits), so a fleet with v3 or Block peers keeps writing Block until every
-/// peer reads Frame, and a Block-written cache is re-encoded, not re-labelled. The obsolete warning steers new data
-/// to Frame; it is not a removal schedule.
-/// Codec: NativeCompressions.LZ4 (native lz4 binding). Block/BlockArray bytes are format-compatible with, but not
-/// byte-identical to, v3's K4os output — the cross-read tests in Lz4Tests are the compatibility contract.
-/// </summary>
-public static class Lz4MessagePackOptionsExtensions
-{
-    /// <summary>Options writing every message as one standard LZ4 frame at the default decompression cap, see <see cref="Lz4FrameProcessor"/>.</summary>
-    public static MessagePackSerializerOptions WithLz4Frame(this MessagePackSerializerOptions options)
-        => options with { MessageProcessor = new Lz4FrameProcessor() };
-
-    /// <summary>Options writing LZ4 frames with a custom decompression-bomb cap (see <see cref="Lz4FrameProcessor.MaxDecompressedSize"/>).</summary>
-    public static MessagePackSerializerOptions WithLz4Frame(this MessagePackSerializerOptions options, long maxDecompressedSize)
-        => options with { MessageProcessor = new Lz4FrameProcessor(maxDecompressedSize) };
-
-    /// <summary>Options writing the v3 ext 99 envelope (whole-message block); shares this instance's resolver.</summary>
-    [Obsolete("v3 wire format (ext 99). Use WithLz4Frame for new data; Block stays for data shared with MessagePack-CSharp v3 readers and writers.")]
-    public static MessagePackSerializerOptions WithLz4Block(this MessagePackSerializerOptions options)
-        => options with { MessageProcessor = new Lz4BlockProcessor() };
-
-    /// <summary>Options writing the v3 ext 99 envelope with a custom decompression-bomb cap (see <see cref="Lz4MessageProcessor.MaxDecompressedSize"/>).</summary>
-    [Obsolete("v3 wire format (ext 99). Use WithLz4Frame for new data; Block stays for data shared with MessagePack-CSharp v3 readers and writers.")]
-    public static MessagePackSerializerOptions WithLz4Block(this MessagePackSerializerOptions options, long maxDecompressedSize)
-        => options with { MessageProcessor = new Lz4BlockProcessor(maxDecompressedSize) };
-
-    /// <summary>Options writing the v3 ext 98 envelope (block per segment); shares this instance's resolver.</summary>
-    [Obsolete("v3 wire format (ext 98). Use WithLz4Frame for new data; BlockArray stays for data shared with MessagePack-CSharp v3 readers and writers.")]
-    public static MessagePackSerializerOptions WithLz4BlockArray(this MessagePackSerializerOptions options)
-        => options with { MessageProcessor = new Lz4BlockArrayProcessor() };
-
-    /// <summary>Options writing the v3 ext 98 envelope with a custom decompression-bomb cap (see <see cref="Lz4MessageProcessor.MaxDecompressedSize"/>).</summary>
-    [Obsolete("v3 wire format (ext 98). Use WithLz4Frame for new data; BlockArray stays for data shared with MessagePack-CSharp v3 readers and writers.")]
-    public static MessagePackSerializerOptions WithLz4BlockArray(this MessagePackSerializerOptions options, long maxDecompressedSize)
-        => options with { MessageProcessor = new Lz4BlockArrayProcessor(maxDecompressedSize) };
-}
-
-public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
+// The shared half of the two v3 envelope processors: both transparently read BOTH codes (and pass non-enveloped
+// messages through, as v3 did), and both guard the declared lengths the same way. Internal so that the only public
+// LZ4 types are Lz4FrameProcessor and the two obsolete v3 envelopes.
+internal static class Lz4BlockEnvelope
 {
     /// <summary>Messages below this many bytes are written without an envelope.</summary>
     public const int CompressionThreshold = 64;
@@ -64,7 +15,6 @@ public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
     /// <summary>
     /// Default cap on the declared decompressed size of one message: 64MB, matching v3's
     /// MessagePackSecurity.UntrustedData default and <see cref="MessagePackSerializerOptions.MaxBufferedMessageSize"/>'s default.
-    /// Construct a processor with a different value to raise or tighten it.
     /// </summary>
     public const long DefaultMaxDecompressedSize = 64 * 1024 * 1024;
 
@@ -74,36 +24,30 @@ public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
     // str/bin/ext allocation-bomb guard in ReadBufferExtensions.
     const long MaxExpansionPerCompressedByte = 255;
 
-    /// <summary>
-    /// Gets the cap on the total declared decompressed size of one message; a payload
-    /// declaring more is rejected before any allocation (decompression-bomb guard, CWE-409).
-    /// </summary>
-    public long MaxDecompressedSize { get; }
-
-    private protected Lz4MessageProcessor(long maxDecompressedSize)
+    public static long ValidateMaxDecompressedSize(long maxDecompressedSize)
     {
         if (maxDecompressedSize <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(maxDecompressedSize));
         }
-        MaxDecompressedSize = maxDecompressedSize;
+        return maxDecompressedSize;
     }
 
-    private protected void GuardDeclaredLength(int declaredLength, int compressedLength, long totalDeclared)
+    static void GuardDeclaredLength(int declaredLength, int compressedLength, long totalDeclared, long maxDecompressedSize)
     {
         if (declaredLength > compressedLength * MaxExpansionPerCompressedByte)
         {
             Lz4Throws.ImplausibleDeclaredLength(declaredLength, compressedLength);
         }
-        if (totalDeclared > MaxDecompressedSize)
+        if (totalDeclared > maxDecompressedSize)
         {
-            Lz4Throws.DeclaredLengthExceedsMaximum(totalDeclared, MaxDecompressedSize);
+            Lz4Throws.DeclaredLengthExceedsMaximum(totalDeclared, maxDecompressedSize);
         }
     }
 
     // ---- shared read side: both processors transparently read both codes ----
 
-    public sealed override bool TryDecode(ReadOnlySpan<byte> source, out DecodedMessage message)
+    public static bool TryDecode(ReadOnlySpan<byte> source, long maxDecompressedSize, out DecodedMessage message)
     {
 
         message = default;
@@ -125,7 +69,7 @@ public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
                 Lz4Throws.InvalidEnvelope();
             }
             var lz4 = data.Slice(intSize);
-            GuardDeclaredLength(uncompressedLength, lz4.Length, uncompressedLength);
+            GuardDeclaredLength(uncompressedLength, lz4.Length, uncompressedLength, maxDecompressedSize);
             message = new DecodedMessage(DecodeBlock(lz4, uncompressedLength, out var rented), new RentedSingleOwner(rented));
             return true;
         }
@@ -174,7 +118,7 @@ public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
                         Lz4Throws.InvalidEnvelope();
                     }
                     totalDeclared += uncompressedLength;
-                    GuardDeclaredLength(uncompressedLength, binLength, totalDeclared);
+                    GuardDeclaredLength(uncompressedLength, binLength, totalDeclared, maxDecompressedSize);
                     var memory = DecodeBlockMemory(blocks.Slice(binSize, binLength), uncompressedLength, out rentedBlocks[i]);
                     blocks = blocks.Slice(binSize + binLength);
 
@@ -202,11 +146,11 @@ public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
         return false;
     }
 
-    public sealed override bool TryDecode(in ReadOnlySequence<byte> source, out DecodedMessage message)
+    public static bool TryDecode(in ReadOnlySequence<byte> source, long maxDecompressedSize, out DecodedMessage message)
     {
         if (source.IsSingleSegment)
         {
-            return TryDecode(source.FirstSpan, out message);
+            return TryDecode(source.FirstSpan, maxDecompressedSize, out message);
         }
 
         // identify non-envelopes from a stitched header prefix first: passthrough input
@@ -228,7 +172,7 @@ public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
         try
         {
             source.CopyTo(flat);
-            return TryDecode(flat.AsSpan(0, length), out message);
+            return TryDecode(flat.AsSpan(0, length), maxDecompressedSize, out message);
         }
         finally
         {
@@ -344,20 +288,48 @@ public abstract class Lz4MessageProcessor : MessagePackMessageProcessor
     }
 }
 
-/// <summary>Whole message as a single LZ4 block: ext 99 { int32 uncompressedLength, lz4 }, the MessagePack-CSharp v3 format.</summary>
+/// <summary>
+/// Whole message as a single LZ4 block: ext 99 { int32 uncompressedLength, lz4 }, the MessagePack-CSharp v3 format.
+/// Reads both v3 envelopes (ext 99 and ext 98) and passes non-enveloped messages through; messages below
+/// <see cref="CompressionThreshold"/> bytes are written bare. Neither this nor <see cref="Lz4FrameProcessor"/> reads what the other writes.
+/// </summary>
 [Obsolete("v3 wire format (ext 99). Use WithLz4Frame for new data; Block stays for data shared with MessagePack-CSharp v3 readers and writers.")]
-public sealed class Lz4BlockProcessor : Lz4MessageProcessor
+public sealed class Lz4BlockProcessor : MessagePackMessageProcessor
 {
+    /// <summary>Messages below this many bytes are written without an envelope.</summary>
+    public const int CompressionThreshold = Lz4BlockEnvelope.CompressionThreshold;
+
+    /// <summary>
+    /// Default cap on the declared decompressed size of one message: 64MB, matching v3's
+    /// MessagePackSecurity.UntrustedData default and <see cref="MessagePackSerializerOptions.MaxBufferedMessageSize"/>'s default.
+    /// Construct a processor with a different value to raise or tighten it.
+    /// </summary>
+    public const long DefaultMaxDecompressedSize = Lz4BlockEnvelope.DefaultMaxDecompressedSize;
+
+    /// <summary>
+    /// Gets the cap on the total declared decompressed size of one message; a payload
+    /// declaring more is rejected before any allocation (decompression-bomb guard, CWE-409).
+    /// </summary>
+    public long MaxDecompressedSize { get; }
+
     public Lz4BlockProcessor()
-        : base(DefaultMaxDecompressedSize)
+        : this(DefaultMaxDecompressedSize)
     {
     }
 
-    /// <param name="maxDecompressedSize">Cap on the declared decompressed size of one message (decompression-bomb guard); the default is <see cref="Lz4MessageProcessor.DefaultMaxDecompressedSize"/>.</param>
+    /// <param name="maxDecompressedSize">Cap on the declared decompressed size of one message (decompression-bomb guard); the default is <see cref="DefaultMaxDecompressedSize"/>.</param>
     public Lz4BlockProcessor(long maxDecompressedSize)
-        : base(maxDecompressedSize)
     {
+        MaxDecompressedSize = Lz4BlockEnvelope.ValidateMaxDecompressedSize(maxDecompressedSize);
     }
+
+    /// <inheritdoc/>
+    public override bool TryDecode(ReadOnlySpan<byte> source, out DecodedMessage message)
+        => Lz4BlockEnvelope.TryDecode(source, MaxDecompressedSize, out message);
+
+    /// <inheritdoc/>
+    public override bool TryDecode(in ReadOnlySequence<byte> source, out DecodedMessage message)
+        => Lz4BlockEnvelope.TryDecode(in source, MaxDecompressedSize, out message);
 
     public override bool TryEncode(ref BufferSegments message, IBufferWriter<byte> output)
     {
@@ -365,7 +337,7 @@ public sealed class Lz4BlockProcessor : Lz4MessageProcessor
         {
             return false;
         }
-        var (rented, start, length) = EncodeCore(message, checked((int)message.Length));
+        var (rented, start, length) = EncodeCore(ref message, checked((int)message.Length));
         try
         {
             output.Write(rented.AsSpan(start, length));
@@ -384,7 +356,7 @@ public sealed class Lz4BlockProcessor : Lz4MessageProcessor
         {
             return false;
         }
-        var (rented, start, length) = EncodeCore(message, checked((int)message.Length));
+        var (rented, start, length) = EncodeCore(ref message, checked((int)message.Length));
         try
         {
             rented.AsSpan(start, length).CopyTo(output.GetSpan(length));
@@ -400,7 +372,7 @@ public sealed class Lz4BlockProcessor : Lz4MessageProcessor
 
     const int MaxHeaderLength = 6 /* ext header */ + 5 /* forced int32 length prefix */;
 
-    static (byte[] Rented, int Start, int Length) EncodeCore(BufferSegments message, int messageLength)
+    static (byte[] Rented, int Start, int Length) EncodeCore(ref BufferSegments message, int messageLength)
     {
         // a single block needs the uncompressed message contiguous; flatten segments into
         // a rented buffer (inherent to the whole-message mode, BlockArray avoids it)
@@ -446,20 +418,48 @@ public sealed class Lz4BlockProcessor : Lz4MessageProcessor
     }
 }
 
-/// <summary>One LZ4 block per write segment: [array n+1][ext 98: sizes][bin lz4]..., the MessagePack-CSharp v3 format.</summary>
+/// <summary>
+/// One LZ4 block per write segment: [array n+1][ext 98: sizes][bin lz4]..., the MessagePack-CSharp v3 format.
+/// Reads both v3 envelopes (ext 99 and ext 98) and passes non-enveloped messages through; messages below
+/// <see cref="CompressionThreshold"/> bytes are written bare. Neither this nor <see cref="Lz4FrameProcessor"/> reads what the other writes.
+/// </summary>
 [Obsolete("v3 wire format (ext 98). Use WithLz4Frame for new data; BlockArray stays for data shared with MessagePack-CSharp v3 readers and writers.")]
-public sealed class Lz4BlockArrayProcessor : Lz4MessageProcessor
+public sealed class Lz4BlockArrayProcessor : MessagePackMessageProcessor
 {
+    /// <summary>Messages below this many bytes are written without an envelope.</summary>
+    public const int CompressionThreshold = Lz4BlockEnvelope.CompressionThreshold;
+
+    /// <summary>
+    /// Default cap on the declared decompressed size of one message: 64MB, matching v3's
+    /// MessagePackSecurity.UntrustedData default and <see cref="MessagePackSerializerOptions.MaxBufferedMessageSize"/>'s default.
+    /// Construct a processor with a different value to raise or tighten it.
+    /// </summary>
+    public const long DefaultMaxDecompressedSize = Lz4BlockEnvelope.DefaultMaxDecompressedSize;
+
+    /// <summary>
+    /// Gets the cap on the total declared decompressed size of one message; a payload
+    /// declaring more is rejected before any allocation (decompression-bomb guard, CWE-409).
+    /// </summary>
+    public long MaxDecompressedSize { get; }
+
     public Lz4BlockArrayProcessor()
-        : base(DefaultMaxDecompressedSize)
+        : this(DefaultMaxDecompressedSize)
     {
     }
 
-    /// <param name="maxDecompressedSize">Cap on the total declared decompressed size of one message (decompression-bomb guard); the default is <see cref="Lz4MessageProcessor.DefaultMaxDecompressedSize"/>.</param>
+    /// <param name="maxDecompressedSize">Cap on the total declared decompressed size of one message (decompression-bomb guard); the default is <see cref="DefaultMaxDecompressedSize"/>.</param>
     public Lz4BlockArrayProcessor(long maxDecompressedSize)
-        : base(maxDecompressedSize)
     {
+        MaxDecompressedSize = Lz4BlockEnvelope.ValidateMaxDecompressedSize(maxDecompressedSize);
     }
+
+    /// <inheritdoc/>
+    public override bool TryDecode(ReadOnlySpan<byte> source, out DecodedMessage message)
+        => Lz4BlockEnvelope.TryDecode(source, MaxDecompressedSize, out message);
+
+    /// <inheritdoc/>
+    public override bool TryDecode(in ReadOnlySequence<byte> source, out DecodedMessage message)
+        => Lz4BlockEnvelope.TryDecode(in source, MaxDecompressedSize, out message);
 
     public override bool TryEncode(ref BufferSegments message, IBufferWriter<byte> output)
     {
@@ -467,7 +467,7 @@ public sealed class Lz4BlockArrayProcessor : Lz4MessageProcessor
         {
             return false;
         }
-        var (rented, written) = EncodeCore(message);
+        var (rented, written) = EncodeCore(ref message);
         try
         {
             output.Write(rented.AsSpan(0, written));
@@ -486,7 +486,7 @@ public sealed class Lz4BlockArrayProcessor : Lz4MessageProcessor
         {
             return false;
         }
-        var (rented, written) = EncodeCore(message);
+        var (rented, written) = EncodeCore(ref message);
         try
         {
             rented.AsSpan(0, written).CopyTo(output.GetSpan(written));
@@ -500,18 +500,16 @@ public sealed class Lz4BlockArrayProcessor : Lz4MessageProcessor
     }
 #endif
 
-    static (byte[] Rented, int Written) EncodeCore(BufferSegments message)
+    static (byte[] Rented, int Written) EncodeCore(ref BufferSegments message)
     {
-        // pass 1: count segments and total worst-case size (segments are at most 17)
-        var counting = message;
-        var blockCount = 0;
-        long maxTotal = 0;
-        while (counting.TryGetNext(out var segment))
-        {
-            blockCount++;
-            maxTotal += 5 /* bin32 header */ + LZ4.Block.GetMaxCompressedLength(segment.Length);
-        }
-        maxTotal += MaxArrayHeaderLength + 6 /* ext header */ + 5L * blockCount /* forced int32 sizes */;
+        // the array and ext headers and the rented size depend on the segment count, which the view reports up front.
+        // LZ4_COMPRESSBOUND is linear plus a constant (n + n/255 + 16), so the sum of the per-block bounds is at most
+        // the bound of the whole message plus that constant (GetMaxCompressedLength(0)) once per extra block
+        var blockCount = message.SegmentCount;
+        var messageLength = checked((int)message.Length);
+        long maxTotal = MaxArrayHeaderLength + 6 /* ext header */ + 5L * blockCount /* forced int32 sizes */
+            + 5L * blockCount /* bin32 headers */ + LZ4.Block.GetMaxCompressedLength(messageLength)
+            + (long)LZ4.Block.GetMaxCompressedLength(0) * Math.Max(blockCount - 1, 0);
 
         var rented = ArrayPool<byte>.Shared.Rent(checked((int)maxTotal));
         try
@@ -519,18 +517,18 @@ public sealed class Lz4BlockArrayProcessor : Lz4MessageProcessor
             var span = rented.AsSpan();
             var offset = 0;
 
-            // [array n+1][ext 98 { int32 sizes... }]
+            // [array n+1][ext 98 { int32 sizes... }]: the sizes are forced int32, so each entry has a fixed slot
+            // and is filled from the compress loop below instead of a walk of its own
             offset += UnsafeWriteArrayHeader(ref span[0], blockCount + 1);
             offset += UnsafeWriteExtHeader(ref span[offset], ThisLibraryExtensionTypeCodes.Lz4BlockArray, 5 * blockCount);
-            var sizing = message;
-            while (sizing.TryGetNext(out var segment))
-            {
-                offset += UnsafeWriteForcedInt32(ref span[offset], segment.Length);
-            }
+            var sizes = offset;
+            offset += 5 * blockCount;
 
             // [bin lz4block]...
             while (message.TryGetNext(out var segment))
             {
+                UnsafeWriteForcedInt32(ref span[sizes], segment.Length);
+                sizes += 5;
                 var lz4Length = LZ4.Block.Compress(segment, span.Slice(offset + 5));
                 if (lz4Length <= 0) // native LZ4_compress_default reports failure as 0
                 {
@@ -554,23 +552,4 @@ public sealed class Lz4BlockArrayProcessor : Lz4MessageProcessor
             throw;
         }
     }
-}
-
-static class Lz4Throws
-{
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    public static void InvalidEnvelope() => throw new MessagePackSerializationException("Invalid LZ4 envelope.");
-
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    public static void NotAFrame() => throw new MessagePackSerializationException("The message is not an LZ4 frame; the LZ4 frame processor accepts nothing else.");
-
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    public static void ImplausibleDeclaredLength(int declaredLength, int compressedLength) => throw new MessagePackSerializationException($"LZ4 envelope declares a {(uint)declaredLength} byte decompressed length, which {compressedLength} compressed bytes cannot produce (LZ4 expands at most 255:1)");
-
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    public static void DeclaredLengthExceedsMaximum(long totalDeclared, long maxDecompressedSize) => throw new MessagePackSerializationException($"LZ4 envelope declares a {totalDeclared} byte decompressed length, which exceeds the configured maximum (MaxDecompressedSize {maxDecompressedSize})");
 }

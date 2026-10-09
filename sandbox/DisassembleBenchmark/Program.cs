@@ -91,11 +91,13 @@ if (args.Contains("--answer-sizes"))
     Console.WriteLine($"JSON (Newtonsoft.Json):                   {b.SerializeNewtonsoftJson().Length} B");
     Console.WriteLine($"JSON (ShapeShift.Json):                   {b.SerializeShapeShiftJson().Length} B");
     Console.WriteLine($"protobuf-style (ShapeShift.Protobuf):     {b.SerializeShapeShiftProtobuf().Length} B");
+    Console.WriteLine($"BCS (BcsSharp):                           {b.SerializeBcsSharp().Length} B");
     var m = new AnswerMapBenchmark();
     m.Setup();
     Console.WriteLine($"msgpack map (V4 == MessagePack-CSharp):   {m.SerializeV4().Length} B");
     Console.WriteLine($"msgpack map (Nerdbank):                   {m.SerializeNerdbank().Length} B");
     Console.WriteLine($"msgpack map (ShapeShift.MsgPack):         {m.SerializeShapeShiftMsgPackMap().Length} B");
+    Console.WriteLine($"msgpack map (RE:Dox):                     {m.SerializeREDoxMsgPackMap().Length} B");
     // fairness guard: the source graph must not share instances — Orleans' wire protocol
     // writes duplicate references as back-references (verified: rehydrates as shared
     // instances too), which would shrink its wire/allocations against copy-semantics

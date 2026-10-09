@@ -230,7 +230,7 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
         {
             foreach (var member in current.GetMembers())
             {
-                if (member is IPropertySymbol { IsStatic: false, IsIndexer: false, IsImplicitlyDeclared: false } property
+                if (member is IPropertySymbol { IsStatic: false, IsIndexer: false, IsImplicitlyDeclared: false, ExplicitInterfaceImplementations.Length: 0 } property
                     && property.GetMethod is { } getter
                     && (allowPrivate || (property.DeclaredAccessibility == Accessibility.Public && getter.DeclaredAccessibility == Accessibility.Public)))
                 {
@@ -239,8 +239,12 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                     {
                         root = (IPropertySymbol)overridden.OriginalDefinition;
                     }
+                    // map-by-name mode leaves a non-writable member out unless a constructor parameter consumes it
+                    // (ObjectParser's FilterNonContractSlots rule): a computed getter-only property is never serialized
+                    var writable = property.SetMethod is { } setter && (allowPrivate || setter.DeclaredAccessibility == Accessibility.Public);
                     if (seenOverrideRoots.Add(root)
                         && Participates(property, keyAsPropertyName)
+                        && (!keyAsPropertyName || writable || IsConsumedByAConstructor(type, property.Name, allowPrivate))
                         && !ObjectParser.IsUnknownMembersType(property.Type))
                     {
                         yield return (property, property.Type);
@@ -255,6 +259,7 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                 // fields never override, so every declaration is its own storage
                 if (member is IFieldSymbol { IsStatic: false, IsConst: false, IsImplicitlyDeclared: false } field
                     && (allowPrivate || field.DeclaredAccessibility == Accessibility.Public)
+                    && !ObjectParser.HasAttribute(field, "System.NonSerializedAttribute") // opted out in every mode
                     && Participates(field, keyAsPropertyName)
                     && !ObjectParser.IsUnknownMembersType(field.Type))
                 {
@@ -262,6 +267,28 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                 }
             }
         }
+    }
+
+    // the parser binds constructor parameters to members by name (ordinal-ignore-case); any constructor with such a
+    // parameter can keep a getter-only member in the map
+    static bool IsConsumedByAConstructor(INamedTypeSymbol type, string memberName, bool allowPrivate)
+    {
+        foreach (var constructor in type.InstanceConstructors)
+        {
+            // the parser matches accessible constructors only (public / internal, or any under AllowPrivate)
+            if (!allowPrivate && constructor.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal))
+            {
+                continue;
+            }
+            foreach (var parameter in constructor.Parameters)
+            {
+                if (string.Equals(parameter.Name, memberName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     static bool Participates(ISymbol member, bool keyAsPropertyName)
@@ -272,11 +299,11 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
         foreach (var attribute in ObjectParser.MemberAttributes(member))
         {
             var name = attribute.AttributeClass?.ToDisplayString();
-            if (name == IgnoreMemberAttributeName || name == IgnoreDataMemberAttributeName)
+            if (ObjectParser.IsIgnoreAttribute(attribute.AttributeClass))
             {
                 return false;
             }
-            if (name == KeyAttributeName)
+            if (ObjectParser.IsKeyAttribute(attribute.AttributeClass))
             {
                 hasKey = true;
             }
@@ -337,6 +364,17 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
 
     sealed class Registry
     {
+
+        const int MaxDepth = 8; // ObjectParser.MaxClosureDepth
+
+        // the registry is shared across the analyzer's concurrent callbacks (memo is concurrent); the walk is
+
+        // synchronous per thread, so its depth is per thread
+
+        [ThreadStatic]
+
+        static int depth;
+
         // patterns indexed by the served named type's original definition; array patterns (T[], T[,], ...)
         // keyed by rank instead
         readonly Dictionary<INamedTypeSymbol, List<ITypeSymbol>> namedPatterns = new(SymbolEqualityComparer.Default);
@@ -529,7 +567,23 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
             // optimistic seed breaks cycles (a self-referencing annotated type is fine)
             memo[type] = true;
 
-            var result = ComputeNamedSerializable(type, ref offender);
+            // a self-expanding shape (class C<T> : List<C<T[]>> opens C<int>, C<int[]>, C<int[][]>, ...) is never
+            // the same type twice, so the memo cannot stop it: past the generator's own closure depth the rest is
+            // taken as serializable, the same bound the harvest applies
+            if (depth >= MaxDepth)
+            {
+                return true;
+            }
+            depth++;
+            bool result;
+            try
+            {
+                result = ComputeNamedSerializable(type, ref offender);
+            }
+            finally
+            {
+                depth--;
+            }
             memo[type] = result;
             return result;
         }

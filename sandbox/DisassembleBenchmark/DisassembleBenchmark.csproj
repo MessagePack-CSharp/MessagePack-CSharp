@@ -3,7 +3,11 @@
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- net11.0 (was net10.0 through AnswerBenchmark round 9): BcsSharp ships a net11.0-only
+         package. Every other dependency is a net10.0 (or older) package running forward on the
+         newer runtime, so rounds measured before the switch are not ns-comparable with later
+         ones; compare ratios to V4 across rounds as usual. -->
+    <TargetFramework>net11.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <!-- required so the dynamically-loaded HardwareCounters diagnoser assembly is copied to output -->
@@ -21,8 +25,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
+    <!-- 0.16.0-preview.2: the first BDN that recognizes a .NET 11 host (0.15.8 throws "GetRuntimeVersion not implemented for NotRecognized" at validation) -->
+    <PackageReference Include="BenchmarkDotNet" Version="0.16.0-preview.2" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.16.0-preview.2" />
     <PackageReference Include="Google.Protobuf" Version="3.35.1" />
     <PackageReference Include="Grpc.Tools" Version="2.83.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -39,12 +44,18 @@
     <!-- the oracle's runtime dependency (string interning paths); 18.x because
          ShapeShift.MsgPack's transitive floor is 18.0.2 (17.x would be a downgrade) -->
     <PackageReference Include="Microsoft.NET.StringTools" Version="18.0.2" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+    <!-- 5.6.0 is BenchmarkDotNet 0.16.0-preview.2's floor (NU1605 otherwise) -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" />
+    <!-- Orleans 10.2.2 pins Workspaces.Common 5.0.0 (= Common 5.0.0); lifted to the same 5.6.0 train so the graph is consistent (NU1608 otherwise) -->
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="5.6.0" />
     <PackageReference Include="Microsoft.Orleans.CodeGenerator" Version="10.2.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Orleans.Serialization" Version="10.2.2" />
+    <!-- BuildServiceProvider for the standalone Orleans Serializer; flowed transitively through
+         BenchmarkDotNet 0.15.8, no longer through 0.16 -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
     <PackageReference Include="Nerdbank.MessagePack" Version="1.3.85" />
     <!-- PolyType-based multi-format serializer (same author as Nerdbank.MessagePack;
          alpha, net10.0-only). The MsgPack, Json and Protobuf format packages share one
@@ -53,6 +64,15 @@
     <PackageReference Include="ShapeShift.MsgPack" Version="0.1.1068-alpha" />
     <PackageReference Include="ShapeShift.Json" Version="0.1.1068-alpha" />
     <PackageReference Include="ShapeShift.Protobuf" Version="0.1.1068-alpha" />
+    <!-- CAPCOM RE:Dox: token-DOM structured data engine (parse to a token DOM, then bind);
+         its msgpack side is map-form only (property-name keys, no positional contract,
+         net10.0-only), so it is measured in AnswerMapBenchmark -->
+    <PackageReference Include="CAPCOM.REDox.MessagePack" Version="1.0.1" />
+    <!-- Binary Canonical Serialization (the Sui/Move wire format: positional, untagged, no null,
+         byte-compatible with Rust's bcs crate). Reflection + compiled expression trees, no source
+         generator; net11.0-only (C# 15 `union` for Option<T>). Its row rides a pre-mapped twin
+         graph (AnswerBcs.cs) because BCS has no null reference and no timestamp type. -->
+    <PackageReference Include="BcsSharp" Version="0.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="protobuf-net" Version="3.2.56" />
     <PackageReference Include="System.Numerics.Tensors" Version="10.0.9" />

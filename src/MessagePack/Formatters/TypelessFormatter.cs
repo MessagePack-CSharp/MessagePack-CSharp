@@ -70,7 +70,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
             return;
         }
 
-        var type = value.GetType();
+        var type = RuntimeTypeView.Normalize(value.GetType()); // a frozen collection's internal implementation names its public base
         if (!type.IsEnum) // enums wrap; GetTypeCode would report the underlying integer
         {
             switch (Type.GetTypeCode(type))
@@ -201,7 +201,9 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
         }
         var serializer = type == typeof(DateTime)
             ? new DateTimeSerializer(typeName)
-            : (TypelessSerializer)createSerializerMethod.MakeGenericMethod(type).Invoke(this, [typeName])!;
+            : type == typeof(object)
+                ? new ObjectSerializer(typeName) // the object formatter is this one: resolving it would recurse
+                : (TypelessSerializer)createSerializerMethod.MakeGenericMethod(type).Invoke(this, [typeName])!;
         // the write side never seeds serializersByName: that cache is the read side's, and every entry in it
         // has passed the type loader and the deny list. Seeding it here would let a type this process serialized
         // deserialize without those checks (a shared resolver makes the read-side policy depend on cache state)
@@ -220,11 +222,8 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
     [MethodImpl(MethodImplOptions.NoInlining)]
     TypelessSerializer CreateSerializerForName(string typeName)
     {
-        if (typeName.Length > 1024)
-        {
-            throw new MessagePackSerializationException($"Typeless type name is implausibly long ({typeName.Length} chars).");
-        }
-
+        // (the length cap that guards Type.GetType parsing lives in the LoadAnyType loader: an allow list looks the
+        // name up in a dictionary, and a registered type's name is as long as it is)
         var type = typeLoader.LoadType(typeName);
         if (type is null)
         {
@@ -280,6 +279,23 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
     TypelessSerializer<T> CreateSerializer<T>(string typeName)
     {
         return new TypelessSerializer<T>(typeName, resolver);
+    }
+
+    // `new object()` has no state: v3 wrote the ext with the type name and nothing after it, and reads one back
+    sealed class ObjectSerializer(string typeName) : TypelessSerializer(typeName)
+    {
+        public override void Serialize(ref CompatibleArrayPoolListWriteBuffer staging, ref SerializeState state, object value)
+        {
+        }
+
+        public override object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state, long bodyRemaining)
+        {
+            if (bodyRemaining != 0)
+            {
+                throw new MessagePackSerializationException($"Typeless 'System.Object' carries {bodyRemaining} bytes of body; a bare object has none.");
+            }
+            return new object();
+        }
     }
 
     abstract class TypelessSerializer
@@ -451,30 +467,6 @@ public sealed partial class ForceTypelessFormatter<TWriteBuffer, TReadBuffer, T>
     }
 }
 
-/// <summary>
-/// The tail half of typeless composition: claims interface and abstract static types with
-/// <see cref="ForceTypelessFormatter{TWriteBuffer, TReadBuffer, T}"/>. Compose it LAST —
-/// v3's TypelessObjectResolver sat at the end of its chain for the same reason: the
-/// collection interfaces (IList&lt;T&gt;, IDictionary&lt;K,V&gt;, ...) belong to BuiltIn's
-/// interface formatters and union roots to their generated formatters; only interfaces and
-/// abstract bases nothing else serves fall through to the typeless envelope.
-/// </summary>
-public sealed class ForceTypelessFormatterFactory : GenericFormatterFactoryBase
-{
-    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
-    [RequiresUnreferencedCode(TypelessMessages.RequiresUnreferencedCode)]
-    public ForceTypelessFormatterFactory()
-    {
-    }
-
-    protected override Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments)
-    {
-        typeArguments = [type];
-        constructorArguments = null;
-        return type.IsInterface || type.IsAbstract ? typeof(ForceTypelessFormatterFactory<>) : null;
-    }
-}
-
 public sealed partial class ForceTypelessFormatterFactory<T> : MessagePackFormatterFactory
 {
     // one method, two signatures: net9+ overrides the base virtual (constraints
@@ -488,39 +480,5 @@ public sealed partial class ForceTypelessFormatterFactory<T> : MessagePackFormat
 #endif
     {
         return type == typeof(T) ? new ForceTypelessFormatter<TWriteBuffer, TReadBuffer, T>() : null;
-    }
-}
-
-/// <summary>
-/// Serves <see cref="object"/> with Typeless semantics: concrete type names embedded in the payload.
-/// Compose it FIRST (before the tiers that would claim object).
-/// </summary>
-public sealed partial class TypelessFormatterFactory : MessagePackFormatterFactory
-{
-    readonly TypelessTypeLoader typeLoader;
-    readonly bool omitAssemblyVersion;
-
-    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
-    [RequiresUnreferencedCode(TypelessMessages.RequiresUnreferencedCode)]
-    public TypelessFormatterFactory(TypelessTypeLoader typeLoader, bool omitAssemblyVersion = false)
-    {
-        ArgumentNullException.ThrowIfNull(typeLoader);
-        this.typeLoader = typeLoader;
-        this.omitAssemblyVersion = omitAssemblyVersion;
-    }
-
-#if NET9_0_OR_GREATER
-    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-#else
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, IWriteBuffer
-        where TReadBuffer : struct, IReadBuffer
-#endif
-    {
-        if (type == typeof(object))
-        {
-            return new TypelessFormatter<TWriteBuffer, TReadBuffer>(typeLoader, omitAssemblyVersion);
-        }
-        return null;
     }
 }

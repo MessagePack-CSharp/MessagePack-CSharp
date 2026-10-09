@@ -78,6 +78,10 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
     MemberSlot[] slots = null!;
     byte[][] encodedKeys = null!; // UTF-8 wire keys, parallel to slots (map modes only)
+    // v3's spelling of a key qualified by a GENERIC declaring type: the closed FullName with assembly-qualified type
+    // arguments ("Ns.Middle`1[[System.Int32, System.Private.CoreLib, ...]].X"), accepted on read next to the
+    // definition spelling both v4 tiers write; null where a slot has no such alias (map modes only)
+    byte[]?[] legacyKeys = [];
     bool arrayFormat;             // [Key(int)] (or an empty annotated type): array wire form
     int[] arraySlotByKey = [];    // wire index -> slot index, -1 = key hole (array mode only)
     ConstructionMode mode;
@@ -118,6 +122,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             {
                 specialized.ConstructorParameterIndex = slots[i].ConstructorParameterIndex;
                 specialized.MemberName = slots[i].MemberName;
+                specialized.DeclaringType = slots[i].DeclaringType;
                 specialized.IsRequired = slots[i].IsRequired;
                 specialized.ValidateNull = slots[i].ValidateNull;
                 slots[i] = specialized;
@@ -256,7 +261,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         {
             if (!namesInBaseOrder.Add(perLevelCandidates[i].Member.Name))
             {
-                perLevelCandidates[i] = perLevelCandidates[i] with { KeyName = $"{perLevelCandidates[i].Member.DeclaringType!.FullName}.{perLevelCandidates[i].Member.Name}" };
+                perLevelCandidates[i] = perLevelCandidates[i] with { KeyName = $"{QualifierName(perLevelCandidates[i].Member.DeclaringType!)}.{perLevelCandidates[i].Member.Name}" };
             }
         }
 
@@ -270,6 +275,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         {
             if (candidate.MemberType == typeof(MessagePackUnknownMembers))
             {
+                var attributes = GetMemberAttributes(candidate.Member);
+                if (FindAttribute(attributes, MessagePackAttributeNames.IgnoreMember) is not null
+                    || FindAttribute(attributes, MessagePackAttributeNames.IgnoreDataMember) is not null)
+                {
+                    continue; // opted out, as the generator treats it: no capture to lose
+                }
                 // capture/replay lives only in the source-generated formatter;
                 // serving the type here would silently drop the retention the member exists to provide
                 throw new NotSupportedException($"'{typeof(T).FullName}.{candidate.Member.Name}' declares a MessagePackUnknownMembers member, which requires the source-generated formatter; the reflection tier does not capture unknown members.");
@@ -291,6 +302,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             BuildContractlessTable(perLevelCandidates);
         }
     }
+
+    // the declaring type's name as the generator spells it (ObjectParser.ReflectionFullName: "Ns.Outer+Inner`1"): a
+    // closed generic base (Middle<int>) is named by its definition, because the closed FullName embeds the type
+    // arguments' assembly-qualified names, which differ between runtimes and from what the generator can know
+    static string QualifierName(Type declaringType) =>
+        (declaringType.IsGenericType && !declaringType.IsGenericTypeDefinition ? declaringType.GetGenericTypeDefinition() : declaringType).FullName!;
 
     void BuildContractlessTable(List<MemberCandidate> candidates)
     {
@@ -325,6 +342,27 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         encodedKeys = keys;
         SelectConstructor(names, keyNames: null); // contractless keys are the member names themselves
         FilterNonContractSlots(keepWithoutConstructor);
+        BuildLegacyKeys();
+    }
+
+    // see legacyKeys: a qualified key (not the member's plain name) whose declaring type is a closed generic also
+    // answers to the closed FullName spelling v3 wrote on this runtime
+    void BuildLegacyKeys()
+    {
+        var keys = encodedKeys;
+        var legacy = new byte[]?[keys.Length];
+        var any = false;
+        for (int i = 0; i < keys.Length; i++)
+        {
+            var slot = slots[i];
+            if (slot.DeclaringType is { IsGenericType: true, IsGenericTypeDefinition: false } declaringType
+                && !keys[i].AsSpan().SequenceEqual(Encoding.UTF8.GetBytes(slot.MemberName)))
+            {
+                legacy[i] = Encoding.UTF8.GetBytes($"{declaringType.FullName}.{slot.MemberName}");
+                any = true;
+            }
+        }
+        legacyKeys = any ? legacy : [];
     }
 
     void BuildAttributedTable(List<MemberCandidate> candidates, List<MemberCandidate> perLevelCandidates, object objectAttribute)
@@ -349,8 +387,18 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         var hasIntKey = false;
         var hasStringKey = keyAsPropertyName;
 
+        // explicit keys enumerate both ends of an override chain (v3 did): the most derived declaration carries the
+        // contract (its own attributes first, the chain's behind them, see GetMemberAttributes), so the base
+        // declaration of a chain that has a more derived candidate is not registered on its own, or a derived
+        // [IgnoreMember] (or custom formatter) would be undone by the base [Key] resurrecting the member
+        var superseded = SupersededByOverride(candidates);
+
         foreach (var candidate in candidates)
         {
+            if (superseded.Contains(candidate.Member))
+            {
+                continue;
+            }
             var name = candidate.Member.Name;
             // includes contract attributes declared on a base virtual (see GetMemberAttributes)
             var attributes = GetMemberAttributes(candidate.Member);
@@ -462,9 +510,16 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         var seenStringKeys = new Dictionary<string, MemberCandidate>();
         var hasIntKey = false;
         var hasStringKey = false;
+        // the most derived declaration of an override chain carries the contract (see the [Key] table): a base
+        // [DataMember] must not resurrect a member the override excluded with [IgnoreDataMember] / [IgnoreMember]
+        var superseded = SupersededByOverride(candidates);
 
         foreach (var candidate in candidates)
         {
+            if (superseded.Contains(candidate.Member))
+            {
+                continue;
+            }
             var name = candidate.Member.Name;
             // includes contract attributes declared on a base virtual (see GetMemberAttributes)
             var attributes = GetMemberAttributes(candidate.Member);
@@ -558,6 +613,10 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
 
         SelectConstructor([.. names], hasStringKey ? [.. memberStringKeys] : null);
+        if (hasStringKey)
+        {
+            BuildLegacyKeys();
+        }
     }
 
     // duck-typed like the [MessagePackObject] property reads: the attribute is matched by full name,
@@ -587,6 +646,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     static void ApplyMemberMetadata(MemberSlot slot, in MemberCandidate candidate)
     {
         slot.MemberName = candidate.Member.Name;
+        slot.DeclaringType = candidate.Member.DeclaringType;
         // the C# required modifier surfaces as a compiler-embedded attribute,
         // matched by name like the rest of the contract; constructor-parameter required-ness is added in
         // SelectConstructor once the deserialization constructor is known includes contract attributes declared on a
@@ -616,6 +676,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     {
         if (slot.CustomFormatter is { } custom)
         {
+            if (custom is MessagePackFormatterFactory memberFactory)
+            {
+                // the attribute named a factory: created through the resolver, which treats it like one of the chain
+                // (a netstandard-built factory reroutes the graph to the Compatible buffers instead of failing here)
+                return resolver.CreateFormatterWith<TWriteBuffer, TReadBuffer, TMember>(memberFactory);
+            }
             if (custom is not IMessagePackFormatter<TWriteBuffer, TReadBuffer, TMember> typed)
             {
                 throw new MessagePackSerializationException($"[MessagePackFormatter] on '{typeof(T).FullName}.{slot.MemberName}' produced '{custom.GetType().FullName}', which is not an IMessagePackFormatter for '{typeof(TMember).FullName}'.");
@@ -661,13 +727,22 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
         var filteredSlots = new MemberSlot[keep.Count];
         var filteredKeys = new byte[keep.Count][];
+        var filteredLegacy = legacyKeys.Length == slots.Length ? new byte[]?[keep.Count] : null;
         for (int i = 0; i < keep.Count; i++)
         {
             filteredSlots[i] = slots[keep[i]];
             filteredKeys[i] = encodedKeys[keep[i]];
+            if (filteredLegacy is not null)
+            {
+                filteredLegacy[i] = legacyKeys[keep[i]];
+            }
         }
         slots = filteredSlots;
         encodedKeys = filteredKeys;
+        if (filteredLegacy is not null)
+        {
+            legacyKeys = filteredLegacy; // stays parallel to the slots
+        }
     }
 
     // A property override inherits its base declaration's contract attributes.
@@ -688,9 +763,14 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         var result = new List<object>(property.GetCustomAttributes(inherit: false));
         var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+        var root = getMethod.GetBaseDefinition();
         for (var current = property.DeclaringType?.BaseType; current is not null && current != typeof(object); current = current.BaseType)
         {
-            if (current.GetProperty(property.Name, flags) is { } baseProperty)
+            // the same name on a base level is only part of this chain when it is the overridden declaration (its
+            // getter shares the root definition): a `new virtual` of the same name is another slot with its own contract
+            if (current.GetProperty(property.Name, flags) is { } baseProperty
+                && baseProperty.GetGetMethod(nonPublic: true) is { } baseGetter
+                && baseGetter.GetBaseDefinition() == root)
             {
                 result.AddRange(baseProperty.GetCustomAttributes(inherit: false));
             }
@@ -702,6 +782,35 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     // override chain; when the derived one's key lands on the already-added base declaration of the same name and that
     // declaration is overridable, it is the same storage seen twice and the later arrival is skipped.
     // Anything else on a taken key is a genuine duplicate and throws.
+    // the base declarations of every override chain that has a more derived declaration among the candidates
+    static HashSet<MemberInfo> SupersededByOverride(List<MemberCandidate> candidates)
+    {
+        var superseded = new HashSet<MemberInfo>();
+        var mostDerived = new Dictionary<MethodInfo, PropertyInfo>();
+        foreach (var candidate in candidates)
+        {
+            if (candidate.Member is not PropertyInfo property || property.GetMethod is not { IsVirtual: true } getter)
+            {
+                continue;
+            }
+            var root = getter.GetBaseDefinition();
+            if (!mostDerived.TryGetValue(root, out var current))
+            {
+                mostDerived[root] = property;
+            }
+            else if (current.DeclaringType!.IsAssignableFrom(property.DeclaringType!))
+            {
+                superseded.Add(current);
+                mostDerived[root] = property;
+            }
+            else
+            {
+                superseded.Add(property);
+            }
+        }
+        return superseded;
+    }
+
     static bool IsQuietOverrideCollapse(MemberCandidate added, MemberCandidate later)
     {
         return added.Member is PropertyInfo existing && later.Member is PropertyInfo
@@ -798,7 +907,9 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 {
                     slotIndex = FindParameterSlot(memberNames, parameters[i]);
                 }
-                if (slotIndex < 0)
+                // an already-claimed member (two parameters differing only by case) would leave the second argument
+                // overwriting the first's binding and the member's value lost: reject the candidate, as the generator does
+                if (slotIndex < 0 || Array.IndexOf(slotIndices, slotIndex, 0, i) >= 0)
                 {
                     matched = false;
                     break;
@@ -810,8 +921,10 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 continue;
             }
 
-            if (parameters.Length == 0)
+            if (parameters.Length == 0 && !(attributed is not null && typeof(T).IsValueType))
             {
+                // (a struct's explicit parameterless [SerializationConstructor] is an initializer the author asked
+                // for: the populate path would assign into the caller's value without ever running it)
                 mode = ConstructionMode.Populate;
                 return;
             }
@@ -849,17 +962,42 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
     int FindParameterSlot(string?[] names, ParameterInfo parameter)
     {
+        var found = -1;
         for (int s = 0; s < names.Length; s++)
         {
             if (names[s] is { } name
                 && string.Equals(name, parameter.Name, StringComparison.OrdinalIgnoreCase)
-                && parameter.ParameterType.IsAssignableFrom(slots[s].MemberType))
+                && parameter.ParameterType.IsAssignableFrom(slots[s].MemberType)
+                && !IsHiddenSlot(s))
             {
-                return s;
+                // the same name on several levels (a `new` member): the most derived declaration is what the
+                // constructor's own type means by that name (the generator's rule: a shadowed base never binds, in
+                // the key pass or the name pass)
+                if (found < 0 || IsMoreDerived(slots[s].DeclaringType, slots[found].DeclaringType))
+                {
+                    found = s;
+                }
             }
         }
-        return -1;
+        return found;
     }
+
+    // a slot whose member name is declared again on a more derived level (its key may be the plain one while the
+    // hider's is qualified, which is exactly how the key pass used to pick the hidden base storage)
+    bool IsHiddenSlot(int s)
+    {
+        for (int t = 0; t < slots.Length; t++)
+        {
+            if (t != s && slots[t].MemberName == slots[s].MemberName && IsMoreDerived(slots[t].DeclaringType, slots[s].DeclaringType))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static bool IsMoreDerived(Type? candidate, Type? current)
+        => candidate is not null && current is not null && candidate != current && current.IsAssignableFrom(candidate);
 
     /// <inheritdoc/>
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T value)
@@ -924,10 +1062,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         var count = arrayFormat ? buffer.ReadArrayHeader(ref state) : buffer.ReadMapHeader(ref state);
 
-        // Argument-state path for fresh instances of constructor-matched types.
-        // A class instance supplied by the caller keeps populate semantics (structs have no identity to preserve,
-        // so they always reconstruct).
-        if (mode == ConstructionMode.Arguments && (value is null || typeof(T).IsValueType))
+        // Argument-state path for constructor-matched types: always a fresh instance, whatever the caller or the
+        // owning member holds. An existing instance cannot take a constructor-bound member, so "populating" it would
+        // silently keep that member's old value (a parent's `Child = new Child(0)` initializer surviving a read of
+        // Child(42)); the rule is a collection's: refill in place what can be refilled, construct anew what cannot.
+        // The generated formatter does the same.
+        if (mode == ConstructionMode.Arguments)
         {
             DeserializeWithArguments(ref buffer, ref state, ref value, count);
             return;
@@ -1086,6 +1226,18 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 break;
             }
         }
+        if (slotIndex < 0)
+        {
+            var legacy = legacyKeys;
+            for (int i = 0; i < legacy.Length; i++)
+            {
+                if (legacy[i] is { } alias && key.SequenceEqual(alias))
+                {
+                    slotIndex = i;
+                    break;
+                }
+            }
+        }
         buffer.Advance(keyLength);
         return slotIndex;
     }
@@ -1211,6 +1363,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     {
         public int ConstructorParameterIndex = -1;
         public string MemberName = "";
+        public Type? DeclaringType; // the declaration's type: a `new` member and the one it hides share MemberName
         public bool IsRequired;    // required modifier, or a no-default constructor parameter
         public bool ValidateNull;  // non-nullable annotated and the resolver enforces the annotation
         public object? CustomFormatter; // [MessagePackFormatter] instance, overrides resolver resolution

@@ -12,10 +12,15 @@ namespace MessagePack.Formatters;
 /// </summary>
 public sealed partial class PrimitiveObjectFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, object?>
 {
+    IMessagePackFormatter<TWriteBuffer, TReadBuffer, object?> element = null!;
     IEqualityComparer<object>? comparer;
 
     public void Initialize(MessagePackFormatterResolver resolver)
     {
+        // the chain's object formatter (this one, or Typeless when it is enabled): an element written through the
+        // resolver (a Typeless ext inside a plain object[]) must be read by the same formatter, not by this one's
+        // primitive-only switch
+        element = resolver.GetFormatter<TWriteBuffer, TReadBuffer, object?>();
         if (resolver.HashFloodingResistant)
         {
             comparer = HashFloodingResistantEqualityComparer.Get<object>();
@@ -202,9 +207,10 @@ public sealed partial class PrimitiveObjectFormatter<TWriteBuffer, TReadBuffer> 
         state.Enter();
 
         var array = new object?[length];
+        var f = element;
         for (int i = 0; i < array.Length; i++)
         {
-            Deserialize(ref buffer, ref state, ref array[i]);
+            f.Deserialize(ref buffer, ref state, ref array[i]);
         }
         state.Exit();
         return array;
@@ -222,8 +228,8 @@ public sealed partial class PrimitiveObjectFormatter<TWriteBuffer, TReadBuffer> 
         {
             object? key = null;
             object? val = null;
-            Deserialize(ref buffer, ref state, ref key);
-            Deserialize(ref buffer, ref state, ref val);
+            element.Deserialize(ref buffer, ref state, ref key);
+            element.Deserialize(ref buffer, ref state, ref val);
             try
             {
                 dictionary.Add(key!, val); // nil or duplicate keys are data errors, wrapped below

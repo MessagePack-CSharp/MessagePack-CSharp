@@ -116,6 +116,10 @@ internal struct MessagePackBoundaryScanner
                     remaining += childValueCount - 1;
                     pending = payloadLength;
                     offset += tokenSize;
+                    if (remaining == 0 && pending == 0)
+                    {
+                        return true; // the stitched token ended the value (an empty bin / str / array / map): the next bytes belong to the next message
+                    }
                     straddled = true;
                     break; // re-slice from the new offset: the payload (if any) is skipped by the next ScanSpan
                 }

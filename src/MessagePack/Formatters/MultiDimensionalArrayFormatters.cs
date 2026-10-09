@@ -9,13 +9,69 @@ namespace MessagePack.Formatters;
 // The element count must equal the product of the dimension lengths.
 static class DimensionProduct
 {
+    // A cheap pre-filter, not the authority. It mirrors CoreCLR's rule for what it will construct (probed on
+    // .NET 11): every dimension at most Array.MaxLength (0x7FFFFFC7) and the running product, taken left to right, at
+    // most uint.MaxValue, a zero dimension zeroing it. So int[50000, 50000, 0] and int[2147483591, 0] exist there
+    // and read back, while int[70000, 70000, 0] and int[2147483647, 0] do not and are rejected here as a format error
+    // before `new T[...]`. The rule is an implementation detail that differs per runtime (Native AOT refuses an
+    // intermediate product above int.MaxValue, Mono and IL2CPP have their own), so whatever passes here is still
+    // constructed through New, which turns the runtime's own refusal into the same format error.
+    const long MaxDimension = 0x7FFFFFC7;
+
+    // `new T[...]` for dimensions the pre-filter accepted: a runtime that refuses the shape throws OutOfMemoryException
+    // (or an overflow / range error) synchronously for the request itself, before any memory is used, and that is a
+    // data error here, not a memory condition. Only element-free shapes can reach this with large dimensions (a shape
+    // with elements is bounded by the message's element and byte budgets first).
+    public static T[,] New<T>(int len0, int len1)
+    {
+        try
+        {
+            return new T[len0, len1];
+        }
+        catch (Exception e) when (e is OutOfMemoryException or OverflowException or ArgumentOutOfRangeException)
+        {
+            throw Unconstructible(e, len0, len1);
+        }
+    }
+
+    public static T[,,] New<T>(int len0, int len1, int len2)
+    {
+        try
+        {
+            return new T[len0, len1, len2];
+        }
+        catch (Exception e) when (e is OutOfMemoryException or OverflowException or ArgumentOutOfRangeException)
+        {
+            throw Unconstructible(e, len0, len1, len2);
+        }
+    }
+
+    public static T[,,,] New<T>(int len0, int len1, int len2, int len3)
+    {
+        try
+        {
+            return new T[len0, len1, len2, len3];
+        }
+        catch (Exception e) when (e is OutOfMemoryException or OverflowException or ArgumentOutOfRangeException)
+        {
+            throw Unconstructible(e, len0, len1, len2, len3);
+        }
+    }
+
+    static MessagePackSerializationException Unconstructible(Exception inner, params int[] lengths)
+        => new($"Invalid multi-dimensional array format: this runtime cannot construct an array of dimensions {string.Join("x", lengths)} ({inner.GetType().Name}).", inner);
+
     static bool Matches(int count, ReadOnlySpan<int> lengths)
     {
         long product = 1;
         foreach (var length in lengths)
         {
+            if (length < 0 || length > MaxDimension)
+            {
+                return false;
+            }
             product *= length;
-            if (product > int.MaxValue)
+            if (product > uint.MaxValue)
             {
                 return false;
             }
@@ -51,7 +107,9 @@ public sealed partial class TwoDimensionalArrayFormatter<TWriteBuffer, TReadBuff
         }
 
         var len0 = value.GetLength(0);
+        var lb0 = value.GetLowerBound(0); // a COM / Excel array can start at 1; the wire carries lengths only, and the loops add the bound to an offset so an upper bound of int.MaxValue cannot overflow
         var len1 = value.GetLength(1);
+        var lb1 = value.GetLowerBound(1); // a COM / Excel array can start at 1; the wire carries lengths only, and the loops add the bound to an offset so an upper bound of int.MaxValue cannot overflow
 
         var f = formatter;
         state.Enter();
@@ -61,11 +119,19 @@ public sealed partial class TwoDimensionalArrayFormatter<TWriteBuffer, TReadBuff
         buffer.WriteInt32(len1);
         buffer.WriteArrayHeader(value.Length);
 
+        // an empty array can still have huge non-zero dimensions next to a zero one ([2147483591, 0, []] reads
+        // instantly), which the loops below would walk in full: nothing to write, so skip them
+        if (value.Length == 0)
+        {
+            state.Exit();
+            return;
+        }
+
         for (int x = 0; x < len0; x++)
         {
             for (int y = 0; y < len1; y++)
             {
-                f.Serialize(ref buffer, ref state, value[x, y]);
+                f.Serialize(ref buffer, ref state, value[lb0 + x, lb1 + y]);
             }
         }
 
@@ -95,10 +161,33 @@ public sealed partial class TwoDimensionalArrayFormatter<TWriteBuffer, TReadBuff
         }
         state.Enter();
 
-        // Populate contract: reuse only when every dimension matches
-        var result = (value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1)
-            ? value
-            : new T[len0, len1];
+        // Populate contract: reuse only when every dimension matches (then nothing is allocated and the elements are
+        // read into in place below)
+        var reusable = value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1;
+
+        // a fresh array whose count passes the byte guards can still claim more memory than its bytes justify (see
+        // PresizeCapacity): read the elements through a growing flat array first, then place them, so the allocation
+        // follows the bytes
+        if (!reusable && ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining) < count)
+        {
+            var flat = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, formatter, count);
+            var placed = DimensionProduct.New<T>(len0, len1);
+            var k = 0;
+            for (int x = 0; x < len0; x++)
+            {
+                for (int y = 0; y < len1; y++)
+                {
+                    placed[x, y] = flat[k++];
+                }
+            }
+            value = placed;
+            state.Exit();
+            return;
+        }
+
+        var result = reusable ? value! : DimensionProduct.New<T>(len0, len1);
+        var lb0 = result.GetLowerBound(0); // a reused array keeps its own lower bounds (a fresh one is zero-based)
+        var lb1 = result.GetLowerBound(1); // a reused array keeps its own lower bounds (a fresh one is zero-based)
 
         // a zero-element array can still declare a huge non-zero dimension next to a zero one, which the loops below would
         // walk in full: nothing to read, so skip them
@@ -115,7 +204,7 @@ public sealed partial class TwoDimensionalArrayFormatter<TWriteBuffer, TReadBuff
         {
             for (int y = 0; y < len1; y++)
             {
-                f.Deserialize(ref buffer, ref state, ref result[x, y]);
+                f.Deserialize(ref buffer, ref state, ref result[lb0 + x, lb1 + y]);
             }
         }
 
@@ -162,8 +251,11 @@ public sealed partial class ThreeDimensionalArrayFormatter<TWriteBuffer, TReadBu
         }
 
         var len0 = value.GetLength(0);
+        var lb0 = value.GetLowerBound(0); // a COM / Excel array can start at 1; the wire carries lengths only, and the loops add the bound to an offset so an upper bound of int.MaxValue cannot overflow
         var len1 = value.GetLength(1);
+        var lb1 = value.GetLowerBound(1); // a COM / Excel array can start at 1; the wire carries lengths only, and the loops add the bound to an offset so an upper bound of int.MaxValue cannot overflow
         var len2 = value.GetLength(2);
+        var lb2 = value.GetLowerBound(2); // a COM / Excel array can start at 1; the wire carries lengths only, and the loops add the bound to an offset so an upper bound of int.MaxValue cannot overflow
 
         var f = formatter;
         state.Enter();
@@ -174,13 +266,21 @@ public sealed partial class ThreeDimensionalArrayFormatter<TWriteBuffer, TReadBu
         buffer.WriteInt32(len2);
         buffer.WriteArrayHeader(value.Length);
 
+        // an empty array can still have huge non-zero dimensions next to a zero one ([2147483591, 0, []] reads
+        // instantly), which the loops below would walk in full: nothing to write, so skip them
+        if (value.Length == 0)
+        {
+            state.Exit();
+            return;
+        }
+
         for (int x = 0; x < len0; x++)
         {
             for (int y = 0; y < len1; y++)
             {
                 for (int z = 0; z < len2; z++)
                 {
-                    f.Serialize(ref buffer, ref state, value[x, y, z]);
+                    f.Serialize(ref buffer, ref state, value[lb0 + x, lb1 + y, lb2 + z]);
                 }
             }
         }
@@ -212,9 +312,37 @@ public sealed partial class ThreeDimensionalArrayFormatter<TWriteBuffer, TReadBu
         }
         state.Enter();
 
-        var result = (value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1 && value.GetLength(2) == len2)
-            ? value
-            : new T[len0, len1, len2];
+        // Populate contract: reuse only when every dimension matches (then nothing is allocated and the elements are
+        // read into in place below)
+        var reusable = value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1 && value.GetLength(2) == len2;
+
+        // a fresh array whose count passes the byte guards can still claim more memory than its bytes justify (see
+        // PresizeCapacity): read the elements through a growing flat array first, then place them, so the allocation
+        // follows the bytes
+        if (!reusable && ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining) < count)
+        {
+            var flat = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, formatter, count);
+            var placed = DimensionProduct.New<T>(len0, len1, len2);
+            var k = 0;
+            for (int x = 0; x < len0; x++)
+            {
+                for (int y = 0; y < len1; y++)
+                {
+                    for (int z = 0; z < len2; z++)
+                    {
+                        placed[x, y, z] = flat[k++];
+                    }
+                }
+            }
+            value = placed;
+            state.Exit();
+            return;
+        }
+
+        var result = reusable ? value! : DimensionProduct.New<T>(len0, len1, len2);
+        var lb0 = result.GetLowerBound(0); // a reused array keeps its own lower bounds (a fresh one is zero-based)
+        var lb1 = result.GetLowerBound(1); // a reused array keeps its own lower bounds (a fresh one is zero-based)
+        var lb2 = result.GetLowerBound(2); // a reused array keeps its own lower bounds (a fresh one is zero-based)
 
         if (count == 0)
         {
@@ -231,7 +359,7 @@ public sealed partial class ThreeDimensionalArrayFormatter<TWriteBuffer, TReadBu
             {
                 for (int z = 0; z < len2; z++)
                 {
-                    f.Deserialize(ref buffer, ref state, ref result[x, y, z]);
+                    f.Deserialize(ref buffer, ref state, ref result[lb0 + x, lb1 + y, lb2 + z]);
                 }
             }
         }
@@ -277,9 +405,13 @@ public sealed partial class FourDimensionalArrayFormatter<TWriteBuffer, TReadBuf
         }
 
         var len0 = value.GetLength(0);
+        var lb0 = value.GetLowerBound(0); // a COM / Excel array can start at 1; the wire carries lengths only, and the loops add the bound to an offset so an upper bound of int.MaxValue cannot overflow
         var len1 = value.GetLength(1);
+        var lb1 = value.GetLowerBound(1); // a COM / Excel array can start at 1; the wire carries lengths only, and the loops add the bound to an offset so an upper bound of int.MaxValue cannot overflow
         var len2 = value.GetLength(2);
+        var lb2 = value.GetLowerBound(2); // a COM / Excel array can start at 1; the wire carries lengths only, and the loops add the bound to an offset so an upper bound of int.MaxValue cannot overflow
         var len3 = value.GetLength(3);
+        var lb3 = value.GetLowerBound(3); // a COM / Excel array can start at 1; the wire carries lengths only, and the loops add the bound to an offset so an upper bound of int.MaxValue cannot overflow
 
         var f = formatter;
         state.Enter();
@@ -291,6 +423,14 @@ public sealed partial class FourDimensionalArrayFormatter<TWriteBuffer, TReadBuf
         buffer.WriteInt32(len3);
         buffer.WriteArrayHeader(value.Length);
 
+        // an empty array can still have huge non-zero dimensions next to a zero one ([2147483591, 0, []] reads
+        // instantly), which the loops below would walk in full: nothing to write, so skip them
+        if (value.Length == 0)
+        {
+            state.Exit();
+            return;
+        }
+
         for (int x = 0; x < len0; x++)
         {
             for (int y = 0; y < len1; y++)
@@ -299,7 +439,7 @@ public sealed partial class FourDimensionalArrayFormatter<TWriteBuffer, TReadBuf
                 {
                     for (int w = 0; w < len3; w++)
                     {
-                        f.Serialize(ref buffer, ref state, value[x, y, z, w]);
+                        f.Serialize(ref buffer, ref state, value[lb0 + x, lb1 + y, lb2 + z, lb3 + w]);
                     }
                 }
             }
@@ -333,9 +473,41 @@ public sealed partial class FourDimensionalArrayFormatter<TWriteBuffer, TReadBuf
         }
         state.Enter();
 
-        var result = (value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1 && value.GetLength(2) == len2 && value.GetLength(3) == len3)
-            ? value
-            : new T[len0, len1, len2, len3];
+        // Populate contract: reuse only when every dimension matches (then nothing is allocated and the elements are
+        // read into in place below)
+        var reusable = value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1 && value.GetLength(2) == len2 && value.GetLength(3) == len3;
+
+        // a fresh array whose count passes the byte guards can still claim more memory than its bytes justify (see
+        // PresizeCapacity): read the elements through a growing flat array first, then place them, so the allocation
+        // follows the bytes
+        if (!reusable && ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining) < count)
+        {
+            var flat = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, formatter, count);
+            var placed = DimensionProduct.New<T>(len0, len1, len2, len3);
+            var k = 0;
+            for (int x = 0; x < len0; x++)
+            {
+                for (int y = 0; y < len1; y++)
+                {
+                    for (int z = 0; z < len2; z++)
+                    {
+                        for (int w = 0; w < len3; w++)
+                        {
+                            placed[x, y, z, w] = flat[k++];
+                        }
+                    }
+                }
+            }
+            value = placed;
+            state.Exit();
+            return;
+        }
+
+        var result = reusable ? value! : DimensionProduct.New<T>(len0, len1, len2, len3);
+        var lb0 = result.GetLowerBound(0); // a reused array keeps its own lower bounds (a fresh one is zero-based)
+        var lb1 = result.GetLowerBound(1); // a reused array keeps its own lower bounds (a fresh one is zero-based)
+        var lb2 = result.GetLowerBound(2); // a reused array keeps its own lower bounds (a fresh one is zero-based)
+        var lb3 = result.GetLowerBound(3); // a reused array keeps its own lower bounds (a fresh one is zero-based)
 
         if (count == 0)
         {
@@ -354,7 +526,7 @@ public sealed partial class FourDimensionalArrayFormatter<TWriteBuffer, TReadBuf
                 {
                     for (int w = 0; w < len3; w++)
                     {
-                        f.Deserialize(ref buffer, ref state, ref result[x, y, z, w]);
+                        f.Deserialize(ref buffer, ref state, ref result[lb0 + x, lb1 + y, lb2 + z, lb3 + w]);
                     }
                 }
             }

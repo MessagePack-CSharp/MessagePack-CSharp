@@ -50,7 +50,8 @@ public static partial class MessagePackSerializer
             return;
         }
 
-        DeserializeSpanCore(ref value, source, options);
+        var state = new DeserializeState(options.MaxDepth, source.Length);
+        DeserializeSpanCore(ref value, source, options, ref state);
     }
 
 #if NET9_0_OR_GREATER
@@ -143,29 +144,36 @@ public static partial class MessagePackSerializer
             return;
         }
 
+        var state = new DeserializeState(options.MaxDepth, source.Length);
+        DeserializeSequenceOrSpan(ref value, in source, options, ref state);
+    }
+
+    // the cores take the state their caller built for exactly the bytes they are given (a single message), or, for
+    // an element stream, the one state of the whole array, re-budgeted per element by the stream (DeserializeElement)
+    static void DeserializeSequenceOrSpan<T>(ref T value, in ReadOnlySequence<byte> source, MessagePackSerializerOptions options, ref DeserializeState state)
+    {
         if (source.IsSingleSegment)
         {
-            DeserializeSpanCore(ref value, source.FirstSpan, options);
+            DeserializeSpanCore(ref value, source.FirstSpan, options, ref state);
         }
         else
         {
-            DeserializeSequenceCore(ref value, source, options);
+            DeserializeSequenceCore(ref value, source, options, ref state);
         }
     }
 
     // returns the bytes consumed by the value; the sync entry points ignore it, the async completed-reader fast path advances the PipeReader by it
-    static unsafe long DeserializeSpanCore<T>(ref T value, ReadOnlySpan<byte> source, MessagePackSerializerOptions options)
+    static unsafe long DeserializeSpanCore<T>(ref T value, ReadOnlySpan<byte> source, MessagePackSerializerOptions options, ref DeserializeState state)
     {
 #if NET9_0_OR_GREATER
         if (!options.Resolver.TryGetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>(out var formatter))
         {
-            return DeserializeSpanCompatible(ref value, source, options);
+            return DeserializeSpanCompatible(ref value, source, options, ref state);
         }
 
         var buffer = new ReadOnlySpanReadBuffer(source);
         try
         {
-            var state = new DeserializeState(options.MaxDepth, buffer.BytesRemaining);
             formatter.Deserialize(ref buffer, ref state, ref value);
             return buffer.BytesConsumed;
         }
@@ -174,7 +182,7 @@ public static partial class MessagePackSerializer
             buffer.Dispose();
         }
 
-        static long DeserializeSpanCompatible(ref T value, ReadOnlySpan<byte> source, MessagePackSerializerOptions options)
+        static long DeserializeSpanCompatible(ref T value, ReadOnlySpan<byte> source, MessagePackSerializerOptions options, ref DeserializeState state)
 #endif
         {
             // The Compatible read buffer reads through a fixed view of the caller's span, so the whole deserialization
@@ -184,7 +192,6 @@ public static partial class MessagePackSerializer
                 var buffer = new CompatibleReadOnlySpanReadBuffer(pointer, source.Length);
                 try
                 {
-                    var state = new DeserializeState(options.MaxDepth, buffer.BytesRemaining);
                     options.Resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
                     return buffer.BytesConsumed;
                 }
@@ -196,21 +203,20 @@ public static partial class MessagePackSerializer
         }
     }
 
-    /// <inheritdoc cref="DeserializeSpanCore{T}(ref T, ReadOnlySpan{byte}, MessagePackSerializerOptions)"/>
+    /// <inheritdoc cref="DeserializeSpanCore{T}(ref T, ReadOnlySpan{byte}, MessagePackSerializerOptions, ref DeserializeState)"/>
     [SkipLocalsInit]
-    static long DeserializeSequenceCore<T>(ref T value, in ReadOnlySequence<byte> source, MessagePackSerializerOptions options)
+    static long DeserializeSequenceCore<T>(ref T value, in ReadOnlySequence<byte> source, MessagePackSerializerOptions options, ref DeserializeState state)
     {
 #if NET9_0_OR_GREATER
         if (!options.Resolver.TryGetFormatter<ArrayPoolListWriteBuffer, ReadOnlySequenceReadBuffer, T>(out var formatter))
         {
-            return DeserializeSequenceCompatible(ref value, in source, options);
+            return DeserializeSequenceCompatible(ref value, in source, options, ref state);
         }
 
         Span<byte> scratch = stackalloc byte[DeserializeScratchSize];
         var buffer = new ReadOnlySequenceReadBuffer(source, scratch);
         try
         {
-            var state = new DeserializeState(options.MaxDepth, buffer.BytesRemaining);
             formatter.Deserialize(ref buffer, ref state, ref value);
             return buffer.BytesConsumed;
         }
@@ -219,7 +225,7 @@ public static partial class MessagePackSerializer
             buffer.Dispose();
         }
 
-        static long DeserializeSequenceCompatible(ref T value, in ReadOnlySequence<byte> source, MessagePackSerializerOptions options)
+        static long DeserializeSequenceCompatible(ref T value, in ReadOnlySequence<byte> source, MessagePackSerializerOptions options, ref DeserializeState state)
 #endif
         {
             // the Compatible tier windows each segment as ReadOnlyMemory (pin-free) and stitches through its rented temp,
@@ -227,7 +233,6 @@ public static partial class MessagePackSerializer
             var buffer = new CompatibleReadOnlySequenceReadBuffer(in source);
             try
             {
-                var state = new DeserializeState(options.MaxDepth, buffer.BytesRemaining);
                 options.Resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySequenceReadBuffer, T>().Deserialize(ref buffer, ref state, ref value);
                 return buffer.BytesConsumed;
             }
@@ -244,7 +249,9 @@ public static partial class MessagePackSerializer
         {
             case DecodedMessage.SourceSlice slice:
                 CheckSourceSlice(slice, source.Length);
-                DeserializeSpanCore(ref value, source.Slice(slice.Offset, slice.Length), options);
+                var sliced = source.Slice(slice.Offset, slice.Length);
+                var state = new DeserializeState(options.MaxDepth, sliced.Length);
+                DeserializeSpanCore(ref value, sliced, options, ref state);
                 break;
             case DecodedMessage.Buffer buffer:
                 DeserializeBuffer(ref value, in buffer, options);
@@ -261,14 +268,8 @@ public static partial class MessagePackSerializer
             case DecodedMessage.SourceSlice slice:
                 CheckSourceSlice(slice, source.Length);
                 var sliced = source.Slice(slice.Offset, slice.Length);
-                if (sliced.IsSingleSegment)
-                {
-                    DeserializeSpanCore(ref value, sliced.FirstSpan, options);
-                }
-                else
-                {
-                    DeserializeSequenceCore(ref value, sliced, options);
-                }
+                var state = new DeserializeState(options.MaxDepth, sliced.Length);
+                DeserializeSequenceOrSpan(ref value, in sliced, options, ref state);
                 break;
             case DecodedMessage.Buffer buffer:
                 DeserializeBuffer(ref value, in buffer, options);
@@ -281,14 +282,8 @@ public static partial class MessagePackSerializer
     static void DeserializeBuffer<T>(ref T value, in DecodedMessage.Buffer buffer, MessagePackSerializerOptions options)
     {
         var sequence = buffer.Sequence;
-        if (sequence.IsSingleSegment)
-        {
-            DeserializeSpanCore(ref value, sequence.FirstSpan, options);
-        }
-        else
-        {
-            DeserializeSequenceCore(ref value, sequence, options);
-        }
+        var state = new DeserializeState(options.MaxDepth, sequence.Length);
+        DeserializeSequenceOrSpan(ref value, in sequence, options, ref state);
     }
 
     // a slice outside the source is a processor bug, not a data error

@@ -160,6 +160,34 @@ using System.Buffers;
 // now beats STJ source-gen on serialize and sits between the two STJ rows. Protobuf is the
 // outlier: 21.88 KB serialize allocation (13x the payload) and 12.55 KB deserialize, slower
 // than its own JSON sibling on serialize — a first-cut encoder, not a wire-native path.
+//
+// MEASURED round 10 (i7-13700KF, ShortRun, 15-way; FIRST ROUND ON .NET 11 RC1 + BDN
+// 0.16.0-preview.2 — the project moved from net10.0 because BcsSharp 0.1.0 ships net11.0-only,
+// so compare ratios, not ns, with rounds 1-9): adds BcsSharp (Binary Canonical Serialization,
+// the Sui/Move wire; reflection + compiled expression trees, no source generator). It rides a
+// pre-mapped Option<T> twin (AnswerBcs.cs) like the Google.Protobuf row, because BCS has no
+// null — the shared POCO's null strings/reply_to_user cannot be expressed in place — and no
+// time type (DateTime registered as i64 UTC ticks). Wire 1795 B vs msgpack 1658: BCS integers
+// are fixed-width (i32 = 4 B + 1 B Option tag vs msgpack's 1-5 B value-sized ints) and the
+// i64 timestamp is 9 B vs timestamp32's 6. ns/op, vs V4:
+//   Serialize:   V4 431 | Nerdbank 1050 (2.4x) | Google.Protobuf 1059 | BcsSharp 1183 (2.75x)
+//                | mpcs 1222 | mpcs source-gen 1375 | Orleans 1456 | protobuf-net 1820
+//                | ShapeShift.MsgPack 1847 | STJ 3170 | ShapeShift.Json 3469
+//                | STJ source-gen 3470 | ShapeShift.Protobuf 5614 | Json.NET 5987
+//   Deserialize: V4 970 | V4 DotNetOptimized 929 | Google.Protobuf 1079 | BcsSharp 1584 (1.64x)
+//                | Nerdbank 1780 | mpcs 1822 | Orleans 1830 | protobuf-net 2129
+//                | mpcs source-gen 2133 | ShapeShift.MsgPack 3528 | STJ source-gen 5471
+//                | STJ 5502 | ShapeShift.Protobuf 6486 | ShapeShift.Json 7996 | Json.NET 10967
+// BcsSharp lands second-tier on both directions: serialize inside the Nerdbank/Google.Protobuf/
+// mpcs cluster, deserialize ahead of every msgpack competitor and behind only Google.Protobuf.
+// Allocation is payload-only (1.78 KB serialize, 4.67 KB deserialize = the twin graph), so the
+// reflection-built formatter is not paying scratch per value; the format itself helps it
+// (fixed-width ints need no length-first decode, one Option byte replaces nil checks) and
+// costs it 8% of wire. Its own README (BcsSharp.Benchmarks, same CPU, vs MessagePack-CSharp
+// 3.1.11) reports deserialize 1.5-1.7x faster than mpcs and serialize 1.1-1.3x slower; this
+// graph reproduces the deserialize side (1822 vs 1584 = 1.15x) and shows serialize level with
+// mpcs (1222 vs 1183) — the Nullable-heavy Jil shape is kinder to BCS's Option than to mpcs'
+// per-member NullableFormatter dispatch (see round 7).
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [CategoriesColumn]
 public class AnswerBenchmark
@@ -182,7 +210,10 @@ public class AnswerBenchmark
     byte[] ssMsgPackPayload = default!;
     byte[] ssJsonPayload = default!;
     byte[] ssProtobufPayload = default!;
+    byte[] bcsPayload = default!;
     AnswerProto.Answer protoAnswer = default!; // Google.Protobuf serializes only its generated types (see answer.proto)
+    // BcsSharp serializes only its own Option<T>-shaped twin: BCS has no null (see AnswerBcs.cs)
+    AnswerBcs answerBcs = default!;
     readonly Nerdbank.MessagePack.MessagePackSerializer nb = new();
     // ShapeShift (PolyType-based, same author as Nerdbank.MessagePack; alpha): one shape
     // graph feeds both format packages. The msgpack side rides the [MsgPackArrayContract]
@@ -222,6 +253,8 @@ public class AnswerBenchmark
         ssMsgPackPayload = SerializeShapeShiftMsgPackArray();
         ssJsonPayload = SerializeShapeShiftJson();
         ssProtobufPayload = SerializeShapeShiftProtobuf();
+        answerBcs = AnswerBcsMap.ToBcs(answer);
+        bcsPayload = SerializeBcsSharp();
         // the wire-form claim in the row name must hold: array16(24), not a map header
         if (ssMsgPackPayload is not [0xdc, 0x00, 0x18, ..]) throw new InvalidOperationException("verify failed: ShapeShift positional contract did not produce array16(24)");
 
@@ -250,6 +283,7 @@ public class AnswerBenchmark
         VerifyRoundtrip(DeserializeShapeShiftMsgPackArray(), "ShapeShift.MsgPack");
         VerifyRoundtrip(DeserializeShapeShiftJson(), "ShapeShift.Json");
         VerifyRoundtrip(DeserializeShapeShiftProtobuf(), "ShapeShift.Protobuf");
+        VerifyRoundtrip(AnswerBcsMap.ToPoco(DeserializeBcsSharp()), "BcsSharp");
     }
 
     void VerifyRoundtrip(Answer back, string label)
@@ -315,6 +349,11 @@ public class AnswerBenchmark
     [BenchmarkCategory("Serialize"), Benchmark]
     public byte[] SerializeShapeShiftProtobuf() => ssProtobuf.Serialize(answer);
 
+    // BCS (BcsSharp): measured on its pre-mapped Option<T> twin like the Google.Protobuf
+    // row; byte[] overload (rents a scratch buffer, copies out) to match the other rows
+    [BenchmarkCategory("Serialize"), Benchmark]
+    public byte[] SerializeBcsSharp() => BcsSharp.Core.BcsSerializer.Serialize(answerBcs);
+
     [BenchmarkCategory("Deserialize"), Benchmark(Baseline = true)]
     public Answer DeserializeV4() => MessagePack.MessagePackSerializer.Deserialize<Answer>(v4Payload)!;
 
@@ -356,6 +395,9 @@ public class AnswerBenchmark
 
     [BenchmarkCategory("Deserialize"), Benchmark]
     public Answer DeserializeShapeShiftProtobuf() => ssProtobuf.Deserialize<Answer>(ssProtobufPayload)!;
+
+    [BenchmarkCategory("Deserialize"), Benchmark]
+    public AnswerBcs DeserializeBcsSharp() => BcsSharp.Core.BcsSerializer.Deserialize<AnswerBcs>(bcsPayload);
 
     internal static Answer CreateAnswer()
     {

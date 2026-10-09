@@ -108,7 +108,15 @@ public sealed record MemberModel(
     // so this member is reached by casting the instance to its declarer,
     // and its emitted identifiers carry UniqueId instead of the (now ambiguous) name
     string? BaseCastType = null,
-    string? UniqueId = null)
+    string? UniqueId = null,
+    // map mode, a key qualified by a GENERIC declaring type: v3 wrote the closed FullName
+    // ("Ns.Middle`1[[System.Int32, <assembly>]].X"); its invariant prefix ("Ns.Middle`1[") and suffix ("].X") match
+    // that spelling on read next to the definition spelling the StringKey carries
+    string? LegacyKeyPrefix = null,
+    string? LegacyKeySuffix = null,
+    // declared `dynamic`: TypeName is object?, and the serialize side casts the member value to object so no call
+    // on it is a dynamic invocation
+    bool IsDynamic = false)
 {
     public string Id => this.UniqueId ?? this.Name;
 }
@@ -116,10 +124,16 @@ public sealed record MemberModel(
 // a closed instantiation of a generic [MessagePackObject] type reachable from a model's serialized members: the factory
 // emits a static closed construction for it, so Native AOT (which cannot MakeGenericType over the ref struct buffer
 // arguments) resolves it, and CoreCLR skips the Activator path
+/// <summary>A `required` member the generated `new` assigns without reading it: <see cref="Expression"/> is its constant initializer or `default!`.</summary>
+public sealed record RequiredDefaultModel(string Name, string Expression);
+
 public sealed record HarvestedGenericModel(
     string OpenTypeOf,
     string ClosedTypeName,
-    EquatableArray<string> TypeArguments);
+    EquatableArray<string> TypeArguments,
+    // the open generic formatter's name in MessagePack.Generated (the definition's sanitized name + "Formatter"), so a
+    // closure the generated factory cannot name (a private type argument) can still be constructed where it can be
+    string OpenFormatterName = "");
 
 // a built-in generic instantiation (an enum, Nullable<T>, or a BCL collection/wrapper closed form like List<string> or
 // string[]) reachable from the member graph: served at runtime by the RequiresDynamicCode GenericFormatterFactory tier,
@@ -159,7 +173,16 @@ public sealed record ObjectModel(
     // the settable member of type MessagePackUnknownMembers, when declared: the read loops capture unknown
     // keys/trailing elements into it and Serialize replays them, instead of the skip-only version tolerance.
     // Never part of Members, carries no key.
-    string? UnknownMembersName = null);
+    string? UnknownMembersName = null,
+    // the packet member is `required`: the populate path's `new` must list it (it is assigned after the read loop)
+    bool UnknownMembersRequired = false,
+    // `required` members the formatter never reads ([IgnoreMember]): every generated `new` must assign them (CS9035),
+    // so each carries the expression to assign: its constant initializer when it has one, else `default!`
+    EquatableArray<RequiredDefaultModel> RequiredDefaultedMembers = default,
+    // AllowPrivate: the closed built-in forms (a private nested enum, Nullable / array / List / Dictionary over it, ...)
+    // the generated factory cannot name; a factory nested in the partial type constructs and registers them so the
+    // source-generated-only chain resolves them
+    EquatableArray<HarvestedBuiltInModel> PrivateHarvestedBuiltIns = default);
 
 public sealed record ParseResult(
     ObjectModel? Model,

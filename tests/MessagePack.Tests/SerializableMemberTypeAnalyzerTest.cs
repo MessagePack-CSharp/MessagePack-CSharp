@@ -33,6 +33,52 @@ public class SerializableMemberTypeAnalyzerTest
         Assert.Contains("Holder.Value", diagnostic.GetMessage());
     }
 
+    // the analyzer looks only at what the generator serializes: a [NonSerialized] field and, in map-by-name mode,
+    // a getter-only member no constructor consumes are left out of the model and must not be reported
+    [Fact]
+    public async Task MembersTheGeneratorSkips_Silent()
+    {
+        var diagnostics = await RunAnalyzerAsync("""
+            using System;
+            using MessagePack;
+            [MessagePackObject(true)]
+            public class Holder
+            {
+                public int Id { get; set; }
+                [NonSerialized] public Action Handler;
+                public Action Computed => Handler;
+            }
+            """);
+        Assert.Empty(diagnostics.Select(static d => d.GetMessage()));
+
+        // while a getter-only member a constructor consumes is still part of the map, and is reported
+        var consumed = await RunAnalyzerAsync("""
+            using System;
+            using MessagePack;
+            [MessagePackObject(true)]
+            public class Holder
+            {
+                public Holder(Action computed) { Computed = computed; }
+                public Action Computed { get; }
+            }
+            """);
+        Assert.Single(consumed);
+
+        // a NON-public constructor is not matched by the parser (without AllowPrivate), so it keeps nothing in the map
+        var hidden = await RunAnalyzerAsync("""
+            using System;
+            using MessagePack;
+            [MessagePackObject(true)]
+            public class Holder
+            {
+                public Holder() { }
+                private Holder(Action computed) { Computed = computed; }
+                public Action Computed { get; }
+            }
+            """);
+        Assert.Empty(hidden.Select(static d => d.GetMessage()));
+    }
+
     [Fact]
     public async Task BuiltInAndCollectionMembers_Silent()
     {

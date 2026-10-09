@@ -1,4 +1,4 @@
-// The UnityEngine formatter factory and the options helper that puts it in front of the default chain.
+// The UnityEngine formatter factory and the chain helper that puts it in front of another factory.
 // Compiled both inside Unity (MessagePack.Unity) and in MessagePack.UnityShims; C# 9 only, see UnityFormatters.cs.
 #nullable enable
 using System;
@@ -48,18 +48,6 @@ namespace MessagePack.Unity
         public UnityFormatterFactory()
         {
         }
-
-        /// <summary>A resolver chain with this factory in front of <see cref="MessagePackFormatterFactory.Default"/>.</summary>
-#if NET9_0_OR_GREATER
-        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("The default chain ends in a reflection tier; use CreateResolver(MessagePackFormatterFactory) with an explicit tail for trimmed applications.")]
-        [System.Diagnostics.CodeAnalysis.RequiresDynamicCode("The default chain closes generic formatters at runtime; use CreateResolver(MessagePackFormatterFactory) with MessagePackFormatterFactory.DefaultAot for Native AOT.")]
-#endif
-        public static MessagePackFormatterResolver CreateResolver()
-            => CreateResolver(MessagePackFormatterFactory.Default);
-
-        /// <summary>A resolver chain with this factory in front of <paramref name="tail"/> (for example <see cref="MessagePackFormatterFactory.DefaultAot"/>).</summary>
-        public static MessagePackFormatterResolver CreateResolver(MessagePackFormatterFactory tail)
-            => new MessagePackFormatterResolver(new MessagePackFormatterFactory[] { Instance, tail });
 
         // One method, two signatures. net9+ overrides the base virtual (constraints inherited), while downlevel has no base
         // member, so the constraints are spelled out; the Type-based dispatch is generated for the partial type.
@@ -139,26 +127,17 @@ namespace MessagePack.Unity
         }
     }
 
-    public static class UnityMessagePackOptionsExtensions
+    /// <summary>
+    /// Chain composition for <see cref="UnityFormatterFactory"/>, the same shape as the core's
+    /// <see cref="MessagePackFormatterFactory.WithContractless"/>: the resolver and its settings stay the caller's.
+    /// </summary>
+    public static class UnityFormatterFactoryExtensions
     {
-        /// <summary>Options whose resolver chain starts with <see cref="UnityFormatterFactory"/> and ends in the default chain, keeping this instance's other settings.</summary>
-#if NET9_0_OR_GREATER
-        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("The default chain ends in a reflection tier; use WithUnity(MessagePackFormatterFactory) with an explicit tail for trimmed applications.")]
-        [System.Diagnostics.CodeAnalysis.RequiresDynamicCode("The default chain closes generic formatters at runtime; use WithUnity(MessagePackFormatterFactory) with MessagePackFormatterFactory.DefaultAot for Native AOT.")]
-#endif
-        public static MessagePackSerializerOptions WithUnity(this MessagePackSerializerOptions options)
-            => options.WithUnity(MessagePackFormatterFactory.Default);
-
-        /// <summary>Options whose resolver chain starts with <see cref="UnityFormatterFactory"/> and ends in <paramref name="tail"/>, keeping this instance's other settings.</summary>
-        public static MessagePackSerializerOptions WithUnity(this MessagePackSerializerOptions options, MessagePackFormatterFactory tail)
-        {
-            // the resolver is fixed at construction; the init-only settings carry over
-            return new MessagePackSerializerOptions(UnityFormatterFactory.CreateResolver(tail))
-            {
-                MessageProcessor = options.MessageProcessor,
-                MaxDepth = options.MaxDepth,
-                MaxBufferedMessageSize = options.MaxBufferedMessageSize,
-            };
-        }
+        /// <summary>
+        /// A chain with <see cref="UnityFormatterFactory"/> in front of <paramref name="tail"/>, e.g.
+        /// <c>MessagePackFormatterFactory.Default.WithUnity()</c>, or <c>DefaultAot.WithUnity()</c> under IL2CPP and Native AOT.
+        /// </summary>
+        public static MessagePackFormatterFactory WithUnity(this MessagePackFormatterFactory tail)
+            => MessagePackFormatterFactory.Combine(UnityFormatterFactory.Instance, tail);
     }
 }

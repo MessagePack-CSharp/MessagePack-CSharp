@@ -8,7 +8,7 @@ using BenchmarkDotNet.Configs;
 // with no [Key] attributes (its property-name map mode). This is where v4's string-key
 // automata and the pre-encoded key blobs earn their keep on a realistic payload; the
 // JSON serializers are inherently map-shaped and already measured in AnswerBenchmark.
-// protobuf/Orleans have no map mode and are out of scope here.
+// protobuf/Orleans/BCS have no map mode and are out of scope here.
 //
 // The map twins are bridged from AnswerBenchmark.CreateAnswer() through System.Text.Json
 // (attribute-neutral, deterministic: identical property names, UTC DateTimes survive via
@@ -56,6 +56,24 @@ using BenchmarkDotNet.Configs;
 // 3.03 KB, so the per-key scratch is gone), deserialize 28.47 -> 14.08 KB. The map tax
 // over its own array contract shrank from ~2.7x to 1.5x serialize / 1.9x deserialize
 // (AnswerBenchmark round 9: 1560/3424), and the ratio to V4 from 9.9x/7.6x to 5.0x/5.8x.
+//
+// MEASURED round 4 (i7-13700KF, ShortRun, 6-way): adds CAPCOM RE:Dox 1.0.1
+// (CAPCOM.REDox.MessagePack), CAPCOM's token-DOM structured data engine. Its msgpack
+// side is map-form only (no positional contract, so no AnswerBenchmark row), and its
+// defaults (nulls included, enums as integers, DateTime as timestamp ext)
+// produce the oracle's 2877 B map wire BYTE-FOR-BYTE (Setup asserts identity). ns/op, vs V4:
+//   Serialize:   V4 543 | mpcs 1549 (2.85x) | RE:Dox 1587 (2.92x) | mpcs source-gen 1727 (3.18x)
+//                | Nerdbank 1842 (3.40x) | ShapeShift map 2616 (4.82x)
+//   Deserialize: V4 1212 | mpcs 2807 (2.32x) | mpcs source-gen 3159 (2.61x)
+//                | RE:Dox 3530 (2.91x) | Nerdbank 3552 (2.93x) | ShapeShift map 6915 (5.71x)
+// RE:Dox ties v3 dynamic on serialize (inside the ShortRun tie band) and ties Nerdbank on
+// deserialize, where its two-pass design shows: Deserialize parses the bytes into a token
+// DOM first and binds the graph from it, yet allocation stays at the 4.65 KB graph (the DOM
+// comes from a cached instance) and serialize at 2.91 KB vs the 2.84 KB payload. The
+// smallest native code of the non-V4 rows (9.6 KB serialize / 15.6 KB deserialize vs
+// Nerdbank's 39 / 46 KB): the engine is a shared converter graph, not per-type generated
+// code, so there is less to inline. Its own README benchmarks it only against JSON
+// serializers; against msgpack-native libraries it lands mid-pack, 2.9x behind V4 both ways.
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [CategoriesColumn]
 public class AnswerMapBenchmark
@@ -66,11 +84,24 @@ public class AnswerMapBenchmark
     byte[] v4Payload = default!;
     byte[] nbPayload = default!;
     byte[] ssPayload = default!;
+    byte[] redoxPayload = default!;
     readonly Nerdbank.MessagePack.MessagePackSerializer nb = new() { SerializeDefaultValues = Nerdbank.MessagePack.SerializeDefaultValuesPolicy.Always };
     // ShapeShift's DEFAULT contract is exactly this map wire (property-name keys), so the
     // map twins need no ShapeShift attributes. Always is its library default too, pinned
     // for the same reason as the Nerdbank row: every row must emit the same 24-key map.
     readonly ShapeShift.MsgPack.MsgPackSerializer ssMsgPack = new() { SerializeDefaultValues = ShapeShift.SerializeDefaultValuesPolicy.Always };
+    // CAPCOM RE:Dox (CAPCOM.REDox.MessagePack): a token-DOM engine, not a direct
+    // reader/writer — Deserialize parses the bytes into a token DOM and then binds the
+    // object graph from it. Its msgpack side has no positional contract (map-form only,
+    // property-name keys), so it has no AnswerBenchmark row. Defaults are pinned
+    // explicitly for the same reason as the other rows: NullValueHandling.Include and
+    // DefaultValueHandling.Include are the library defaults, and every row must emit
+    // the same 24-key map (three members are genuinely nil).
+    static readonly REDox.SerializerSettings redoxSettings = new REDox.DoxSerializerSettings
+    {
+        NullValueHandling = REDox.Serialization.NullValueHandling.Include,
+        DefaultValueHandling = REDox.Serialization.DefaultValueHandling.Include,
+    };
 
     [GlobalSetup]
     public void Setup()
@@ -83,6 +114,10 @@ public class AnswerMapBenchmark
         v4Payload = MessagePack.MessagePackSerializer.Serialize(answerMap);
         nbPayload = nb.Serialize(answerMap);
         ssPayload = ssMsgPack.Serialize(answerMap);
+        redoxPayload = SerializeREDoxMsgPackMap();
+        // RE:Dox's defaults (nulls included, enums as integers, DateTime as timestamp ext)
+        // land on exactly the oracle's map wire, so the check is byte identity, not just map16(24)
+        if (!redoxPayload.AsSpan().SequenceEqual(mpcsPayload)) throw new InvalidOperationException($"verify failed: RE:Dox map bytes ({redoxPayload.Length}) != MessagePack-CSharp oracle ({mpcsPayload.Length})");
         // the map-form claim must hold: map16(24) at the root, not fixmap or array
         if (ssPayload is not [0xde, 0x00, 0x18, ..]) throw new InvalidOperationException("verify failed: ShapeShift default contract did not produce map16(24)");
 
@@ -102,6 +137,7 @@ public class AnswerMapBenchmark
         VerifyRoundtrip(V3::MessagePack.MessagePackSerializer.Deserialize<AnswerMap>(mpcsPayload), "MessagePack-CSharp");
         VerifyRoundtrip(nb.Deserialize<AnswerMap>(new ReadOnlySequence<byte>(nbPayload))!, "Nerdbank");
         VerifyRoundtrip(DeserializeShapeShiftMsgPackMap(), "ShapeShift.MsgPack map");
+        VerifyRoundtrip(DeserializeREDoxMsgPackMap(), "RE:Dox map");
     }
 
     void VerifyRoundtrip(AnswerMap back, string label)
@@ -127,6 +163,9 @@ public class AnswerMapBenchmark
     [BenchmarkCategory("Serialize"), Benchmark]
     public byte[] SerializeShapeShiftMsgPackMap() => ssMsgPack.Serialize(answerMap);
 
+    [BenchmarkCategory("Serialize"), Benchmark]
+    public byte[] SerializeREDoxMsgPackMap() => REDox.MessagePack.MessagePackSerializer.Serialize(answerMap, redoxSettings);
+
     [BenchmarkCategory("Deserialize"), Benchmark(Baseline = true)]
     public AnswerMap DeserializeV4() => MessagePack.MessagePackSerializer.Deserialize<AnswerMap>(v4Payload)!;
 
@@ -141,6 +180,9 @@ public class AnswerMapBenchmark
 
     [BenchmarkCategory("Deserialize"), Benchmark]
     public AnswerMap DeserializeShapeShiftMsgPackMap() => ssMsgPack.Deserialize<AnswerMap>(ssPayload)!;
+
+    [BenchmarkCategory("Deserialize"), Benchmark]
+    public AnswerMap DeserializeREDoxMsgPackMap() => REDox.MessagePack.MessagePackSerializer.Deserialize<AnswerMap>(redoxPayload, redoxSettings)!;
 }
 
 #pragma warning disable IDE1006 // naming matches the Stack Overflow API wire format

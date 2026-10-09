@@ -14,7 +14,8 @@
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<!--<AnalysisMode>Recommended</AnalysisMode>-->
-		<Description>Experimental maximum-speed MessagePack serializer core, built from disassembly/branch-counter-driven optimization of the primitive layer.</Description>
+		<IsPackable>true</IsPackable>
+		<Description>Extremely fast MessagePack (MsgPack) serializer for C#: source-generated formatters, Native AOT and trimming support, zero-copy buffers on .NET 9+, and wire compatibility with MessagePack for C# v3. Supports .NET Framework (netstandard2.0), .NET 9+ and Unity.</Description>
 
 		<PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
 		<IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
@@ -47,7 +48,7 @@
 	<!-- The SerializerFoundation package carries its own analyzers (SF001-SF003) under analyzers/dotnet/cs.
 	     PrivateAssets=none lets them flow to MessagePack consumers too; the default would keep them private to this project. -->
 	<ItemGroup>
-		<PackageReference Include="SerializerFoundation" Version="1.0.0" PrivateAssets="none" />
+		<PackageReference Include="SerializerFoundation" Version="1.1.0" PrivateAssets="none" />
 	</ItemGroup>
 
 	<!-- Analyzer -->

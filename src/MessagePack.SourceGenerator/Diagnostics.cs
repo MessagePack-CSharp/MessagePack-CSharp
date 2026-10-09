@@ -33,4 +33,5 @@ public static class Diagnostics
     public static readonly DiagnosticDescriptor InvalidUnknownMembersMember = Make("MsgPack020", "MessagePackUnknownMembers member is invalid", DiagnosticSeverity.Error);
     public static readonly DiagnosticDescriptor OverrideChangesKey = Make("MsgPack021", "Property override declares a different key than the declaration it overrides", DiagnosticSeverity.Error);
     public static readonly DiagnosticDescriptor SerializableRootRedundant = Make("MsgPack022", "MessagePackSerializable root contributes no registration", DiagnosticSeverity.Warning);
+    public static readonly DiagnosticDescriptor RequiredInitializerNotPreserved = Make("MsgPack023", "Initializer of an unread required member is not preserved", DiagnosticSeverity.Warning);
 }

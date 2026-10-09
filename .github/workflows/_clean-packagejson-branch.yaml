@@ -15,8 +15,11 @@ on:
 jobs:
   cleanup:
     runs-on: ubuntu-24.04
-    permissions: {}
+    permissions:
+      contents: write # deletes the branch the dry-run created
     timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }} # gh api needs a token even for the read calls
     outputs:
       branch-deleted: ${{ steps.check-branch.outputs.deletable }}
     steps:

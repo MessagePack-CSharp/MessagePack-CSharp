@@ -39,6 +39,25 @@ public sealed class FactoryBridgeGenerator : IIncrementalGenerator
         });
     }
 
+    /// <summary>
+    /// True when <paramref name="node"/> is the first partial declaration of <paramref name="symbol"/> (in source order)
+    /// that carries a base list. The syntax predicates admit only declarations with a base list, so this is the one
+    /// declaration per type that reaches the transform; a leading bare <c>partial class X { }</c> is not it.
+    /// </summary>
+    internal static bool IsFirstDeclarationWithBaseList(INamedTypeSymbol symbol, SyntaxNode node)
+    {
+        foreach (var reference in symbol.DeclaringSyntaxReferences)
+        {
+            if (reference.GetSyntax() is not TypeDeclarationSyntax { BaseList: not null } declaration
+                || !declaration.Modifiers.Any(SyntaxKind.PartialKeyword))
+            {
+                continue;
+            }
+            return reference.SyntaxTree == node.SyntaxTree && reference.Span == node.Span;
+        }
+        return false;
+    }
+
     static FactoryBridgeModel? Parse(GeneratorSyntaxContext context, CancellationToken cancellationToken)
     {
         if (context.SemanticModel.GetDeclaredSymbol((TypeDeclarationSyntax)context.Node, cancellationToken) is not INamedTypeSymbol symbol)
@@ -46,14 +65,10 @@ public sealed class FactoryBridgeGenerator : IIncrementalGenerator
             return null;
         }
 
-        // one model per type, not per partial declaration
-        var declarations = symbol.DeclaringSyntaxReferences;
-        if (declarations.Length == 0)
-        {
-            return null;
-        }
-        var first = declarations[0];
-        if (first.SyntaxTree != context.Node.SyntaxTree || first.Span != context.Node.Span)
+        // one model per type, not per partial declaration: the first partial declaration that carries a base list
+        // produces the output (the syntax predicate only admits those, so "first in source order" would drop a type
+        // whose leading declaration is a bare `partial class X { }`)
+        if (!IsFirstDeclarationWithBaseList(symbol, context.Node))
         {
             return null;
         }
@@ -104,8 +119,11 @@ public sealed class FactoryBridgeGenerator : IIncrementalGenerator
         var hintName = new StringBuilder();
         for (var parent = symbol.ContainingType; parent is not null; parent = parent.ContainingType)
         {
-            containingDeclarations.Insert(0, $"partial {TypeKeyword(parent)} {parent.Name}{TypeParameterList(parent)}");
-            hintName.Insert(0, parent.Name + ".");
+            containingDeclarations.Insert(0, $"partial {TypeKeyword(parent)} {ObjectParser.Identifier(parent.Name)}{TypeParameterList(parent)}");
+            // the arity keeps Outer.X and Outer<T>.X apart, and '+' (the metadata nesting separator, which no
+            // namespace can contain) keeps type Outer apart from namespace Outer_0; the same hint name would fail
+            // AddSource with CS8785
+            hintName.Insert(0, parent.Name + "_" + parent.Arity + "+");
         }
         if (symbol.ContainingNamespace is { IsGlobalNamespace: false } containingNamespace)
         {
@@ -116,14 +134,14 @@ public sealed class FactoryBridgeGenerator : IIncrementalGenerator
         var typeParameterNames = new string[symbol.Arity];
         for (var i = 0; i < symbol.Arity; i++)
         {
-            typeParameterNames[i] = symbol.TypeParameters[i].Name;
+            typeParameterNames[i] = ObjectParser.Identifier(symbol.TypeParameters[i].Name);
         }
 
         return new FactoryBridgeModel(
             symbol.ContainingNamespace is { IsGlobalNamespace: false } ns ? ns.ToDisplayString() : null,
             new EquatableArray<string>([.. containingDeclarations]),
             TypeKeyword(symbol),
-            symbol.Name,
+            ObjectParser.Identifier(symbol.Name), // a legal type name can be a keyword (`class @event`)
             new EquatableArray<string>(typeParameterNames),
             hintName.ToString());
     }
@@ -134,6 +152,7 @@ public sealed class FactoryBridgeGenerator : IIncrementalGenerator
             : type.TypeKind switch
             {
                 TypeKind.Struct => "struct",
+                TypeKind.Interface => "interface", // a nested factory / formatter inside a partial interface
                 _ => "class",
             };
 
@@ -146,7 +165,7 @@ public sealed class FactoryBridgeGenerator : IIncrementalGenerator
         var names = new string[type.Arity];
         for (var i = 0; i < type.Arity; i++)
         {
-            names[i] = type.TypeParameters[i].Name;
+            names[i] = ObjectParser.Identifier(type.TypeParameters[i].Name);
         }
         return $"<{string.Join(", ", names)}>";
     }

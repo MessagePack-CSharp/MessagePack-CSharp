@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 
 namespace MessagePack.Formatters;
 
@@ -32,19 +32,24 @@ sealed class Lookup<TKey, TElement> : ILookup<TKey, TElement>
     where TKey : notnull
 {
     readonly Dictionary<TKey, Grouping<TKey, TElement>> map;
+    // LINQ's Lookup holds one group under a null key (ToLookup(x => (string)null!)), which a Dictionary cannot
+    readonly Grouping<TKey, TElement>? nullKeyGrouping;
     readonly Grouping<TKey, TElement>? first;
 
-    public Lookup(Dictionary<TKey, Grouping<TKey, TElement>> map, Grouping<TKey, TElement>? first)
+    public Lookup(Dictionary<TKey, Grouping<TKey, TElement>> map, Grouping<TKey, TElement>? nullKeyGrouping, Grouping<TKey, TElement>? first)
     {
         this.map = map;
+        this.nullKeyGrouping = nullKeyGrouping;
         this.first = first;
     }
 
-    public IEnumerable<TElement> this[TKey key] => map.TryGetValue(key, out var grouping) ? grouping : [];
+    public IEnumerable<TElement> this[TKey key] => key is null
+        ? nullKeyGrouping ?? (IEnumerable<TElement>)[]
+        : map.TryGetValue(key, out var grouping) ? grouping : [];
 
-    public int Count => map.Count;
+    public int Count => map.Count + (nullKeyGrouping is null ? 0 : 1);
 
-    public bool Contains(TKey key) => map.ContainsKey(key);
+    public bool Contains(TKey key) => key is null ? nullKeyGrouping is not null : map.ContainsKey(key);
 
     public IEnumerator<IGrouping<TKey, TElement>> GetEnumerator()
     {
@@ -199,7 +204,8 @@ public sealed class InterfaceLookupFormatter<TWriteBuffer, TReadBuffer, TKey, TE
         var count = buffer.ReadArrayHeader(ref state);
         state.Enter();
 
-        var map = new Dictionary<TKey, Grouping<TKey, TElement>>(count, comparer);
+        var map = new Dictionary<TKey, Grouping<TKey, TElement>>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, Grouping<TKey, TElement>>>(count, buffer.BytesRemaining), comparer);
+        Grouping<TKey, TElement>? nullKeyGrouping = null;
         Grouping<TKey, TElement>? first = null;
         Grouping<TKey, TElement>? last = null;
 
@@ -219,13 +225,24 @@ public sealed class InterfaceLookupFormatter<TWriteBuffer, TReadBuffer, TKey, TE
             var grouping = deserialized as Grouping<TKey, TElement>
                 ?? new Grouping<TKey, TElement>(deserialized.Key, deserialized);
 
-            // a duplicate group key is a data error, the same rule as the dictionary family
-            // (a well-formed ILookup payload has unique group keys by construction)
-            if (map.TryGetValue(grouping.Key, out _))
+            // a duplicate group key is a data error, the same rule as the dictionary family (a well-formed ILookup
+            // payload has unique group keys by construction); a nil key is legal once, LINQ's Lookup has such a group
+            if (grouping.Key is null)
             {
-                MessagePackSerializationException.ThrowDuplicateMapKey();
+                if (nullKeyGrouping is not null)
+                {
+                    MessagePackSerializationException.ThrowDuplicateMapKey();
+                }
+                nullKeyGrouping = grouping;
             }
-            map[grouping.Key] = grouping;
+            else
+            {
+                if (map.TryGetValue(grouping.Key, out _))
+                {
+                    MessagePackSerializationException.ThrowDuplicateMapKey();
+                }
+                map[grouping.Key] = grouping;
+            }
             if (last == null)
             {
                 first = grouping;
@@ -237,7 +254,7 @@ public sealed class InterfaceLookupFormatter<TWriteBuffer, TReadBuffer, TKey, TE
             last = grouping;
         }
 
-        value = new Lookup<TKey, TElement>(map, first);
+        value = new Lookup<TKey, TElement>(map, nullKeyGrouping, first);
         state.Exit();
     }
 }

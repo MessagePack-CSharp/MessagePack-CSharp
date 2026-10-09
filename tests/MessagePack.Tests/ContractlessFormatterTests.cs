@@ -199,12 +199,14 @@ public class ContractlessFormatterTests
         var payload = MessagePackSerializer.Serialize(new NoDefaultConstructor(9), options);
         Assert.Equal(9, MessagePackSerializer.Deserialize<NoDefaultConstructor>(payload, options)!.Id);
 
-        // populate path still works: the caller supplies the instance
+        // a caller-supplied instance of a constructor-bound type is replaced by a fresh one (the type cannot be
+        // refilled in place), the generated formatter's rule too
         var target = new NoDefaultConstructor(0);
         var incoming = target;
         MessagePackSerializer.Deserialize(payload, ref incoming, options);
-        Assert.Same(target, incoming);
-        Assert.Equal(9, target.Id);
+        Assert.NotSame(target, incoming);
+        Assert.Equal(9, incoming.Id);
+        Assert.Equal(0, target.Id);
     }
 
     public class Unconstructable
@@ -268,7 +270,7 @@ public class ContractlessFormatterTests
         Assert.Contains("'Id'", ex.Message);
 
         var lenient = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
-            [MessagePackFormatterFactory.Default.WithContractless()], validateRequiredMembers: false));
+            [MessagePackFormatterFactory.Default.WithContractless()]) { ValidateRequiredMembers = false });
         var result = MessagePackSerializer.Deserialize<ImmutablePerson>(payload, lenient)!;
         Assert.Equal(0, result.Id); // absent parameter: default(int)
         Assert.Equal("only", result.Name);

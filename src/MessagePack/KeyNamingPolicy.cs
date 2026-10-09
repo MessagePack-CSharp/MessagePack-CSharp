@@ -4,7 +4,7 @@ using System.Globalization;
 namespace MessagePack;
 
 /// <summary>
-/// Converts member names into the keys of a string-keyed <see cref="MessagePackObjectAttribute"/> map.
+/// Converts member names into the keys of a string-keyed <c>[MessagePackObject]</c> map.
 /// Each policy produces the same result as the <c>System.Text.Json.JsonNamingPolicy</c> of the same name.
 /// An explicit <c>[Key("name")]</c> on a member always takes precedence over the policy.
 /// </summary>

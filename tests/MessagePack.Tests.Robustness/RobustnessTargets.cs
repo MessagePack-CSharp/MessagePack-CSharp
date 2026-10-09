@@ -25,10 +25,10 @@ public static class RobustnessTargets
         new MessagePackFormatterResolver([MessagePackFormatterFactory.Default.WithContractless()]));
 
     static readonly MessagePackSerializerOptions Lenient = new(
-        new MessagePackFormatterResolver([MessagePackFormatterFactory.Default], validateRequiredMembers: false));
+        new MessagePackFormatterResolver([MessagePackFormatterFactory.Default]) { ValidateRequiredMembers = false });
 
     static readonly MessagePackSerializerOptions Strict = new(
-        new MessagePackFormatterResolver([MessagePackFormatterFactory.Default], validateNullableAnnotations: true));
+        new MessagePackFormatterResolver([MessagePackFormatterFactory.Default]) { ValidateNullableAnnotations = true });
 
     // LZ4 decode is a distinct attack surface: the MessageProcessor.TryDecode path runs
     // before any formatter, so malformed block headers / decompression bombs must be

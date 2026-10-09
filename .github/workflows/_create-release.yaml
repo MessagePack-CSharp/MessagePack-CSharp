@@ -116,18 +116,42 @@ jobs:
         env:
           NUGET_PATH: ${{ inputs.nuget-path }}
       # Create Releases
+      # each step records what it created so the cleanup below deletes exactly that: a re-run that fails on an
+      # existing tag must leave the earlier draft release of the same tag alone
       - name: Create Tag
+        id: create-tag
+        if: ${{ !inputs.dry-run }}
         run: |
           gh auth setup-git
-          git tag ${TAG}
-          git push origin ${TAG}
+          # a tag that already exists on the remote (a re-run) is not this run's to create, nor to delete on failure,
+          # and the packages of this run must be the ones built from the commit it points at
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null; then
+            existing=$(git ls-remote --tags origin "refs/tags/${TAG}^{}" | cut -f1)
+            existing=${existing:-$(git ls-remote --tags origin "refs/tags/${TAG}" | cut -f1)}
+            if [[ "${existing}" != "$(git rev-parse HEAD)" ]]; then
+              echo "tag ${TAG} already exists on origin at ${existing}, but this run builds $(git rev-parse HEAD); a version is published from one commit only"
+              exit 1
+            fi
+            echo "tag ${TAG} already exists on origin at this commit; leaving it as it is"
+          else
+            git tag ${TAG}
+            git push origin ${TAG}
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          fi
         env:
           TAG: ${{ inputs.tag }}
       - name: Create Release
-        run: gh release create ${TAG} --draft --verify-tag --title "${TAG}" --generate-notes
+        id: create-release
+        if: ${{ !inputs.dry-run }}
+        # a SemVer pre-release tag (v4.0.0-preview.1) is a GitHub pre-release, so publishing the draft never lists it as the latest stable
+        run: |
+          if [[ "${TAG}" == *-* ]]; then prerelease="--prerelease"; else prerelease=""; fi
+          gh release create ${TAG} --draft --verify-tag --title "${TAG}" --generate-notes ${prerelease}
+          echo "created=true" >> "$GITHUB_OUTPUT"
         env:
           TAG: ${{ inputs.tag }}
       - name: Wait and Verify Release Name is expected
+        if: ${{ !inputs.dry-run }}
         run: |
           sleep 5s
           actual=$(gh api --paginate /repos/${{ github.repository }}/releases?per_page=100 --jq '.[] | select(.tag_name == "${{ inputs.tag }}") | .name')
@@ -158,7 +182,7 @@ jobs:
         env:
           TAG: ${{ inputs.tag }}
           RELEASE_ASSET_PATH: ${{ inputs.release-asset-path }}
-        if: ${{ inputs.release-upload }}
+        if: ${{ inputs.release-upload && !inputs.dry-run }}
 
       - name: NuGet login (OIDC)
         id: nuget-login
@@ -169,6 +193,7 @@ jobs:
 
       # Upload to NuGet
       - name: Upload to NuGet (DryRun=${{ inputs.dry-run }})
+        id: nuget-push
         if: ${{ inputs.nuget-push }}
         run: |
           while read -r nuget_path; do
@@ -182,17 +207,29 @@ jobs:
             if [[ "${{ inputs.dry-run }}" == "true" ]]; then
               echo "(dry run) dotnet nuget push \"${nuget_path}\" --skip-duplicate -s https://api.nuget.org/v3/index.json -k \"***\""
             else
+              # from the first push on, packages of this version may be public: the cleanup keeps the tag and release
+              echo "started=true" >> "$GITHUB_OUTPUT"
               dotnet nuget push "${nuget_path}" --skip-duplicate -s https://api.nuget.org/v3/index.json -k "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
             fi
           done <<< "${{ inputs.nuget-path }}"
 
       # Clean up
-      - name: Clean up. Wait 60s and delete release if dry-run or failure. (dry-run=${{ inputs.dry-run }}})
-        if: ${{ inputs.dry-run || failure() }}
+      # only what this run created is deleted (a dry run creates nothing; a run that failed before its tag or release
+      # existed created nothing either, and a pre-existing draft of the same tag is not ours to remove), and nothing is
+      # deleted once a package push has started: a published package pins the version to this commit, so the tag and
+      # the draft stay for the operator to finish by hand
+      - name: Clean up. Wait 60s and delete the release and tag this run created when it failed. (dry-run=${{ inputs.dry-run }})
+        if: ${{ failure() && !inputs.dry-run && steps.nuget-push.outputs.started != 'true' && (steps.create-release.outputs.created == 'true' || steps.create-tag.outputs.created == 'true') }}
         run: |
-          if gh release list | grep Draft | grep ${TAG}; then
-            sleep 60
-            gh release delete ${TAG} --yes --cleanup-tag
+          sleep 60
+          if [[ "${RELEASE_CREATED}" == "true" ]]; then
+            gh release delete ${TAG} --yes
+          fi
+          # the tag is deleted only when this run pushed it (a release created on a pre-existing tag leaves that tag)
+          if [[ "${TAG_CREATED}" == "true" ]]; then
+            git push --delete origin ${TAG}
           fi
         env:
           TAG: ${{ inputs.tag }}
+          RELEASE_CREATED: ${{ steps.create-release.outputs.created }}
+          TAG_CREATED: ${{ steps.create-tag.outputs.created }}

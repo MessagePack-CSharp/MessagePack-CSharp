@@ -113,15 +113,21 @@ public class ReviewFindingsRegressionTests
 
     static void AssertZeroElementArrayIsCheap<T>(byte[] payload, int rank) where T : class
     {
-        var stopwatch = Stopwatch.StartNew();
-        var result = V4.Deserialize<T>(payload)!;
-        stopwatch.Stop();
-        var array = (Array)(object)result;
+        // the walk took about 1.7 seconds before the early return; nothing is read now. Best of three, so that one
+        // run stalled by a loaded CI machine cannot fail the test while a 2^31-iteration walk still does
+        var best = long.MaxValue;
+        Array array = null!;
+        for (int run = 0; run < 3; run++)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            array = (Array)(object)V4.Deserialize<T>(payload)!;
+            stopwatch.Stop();
+            best = Math.Min(best, stopwatch.ElapsedMilliseconds);
+        }
         Assert.Equal(rank, array.Rank);
         Assert.Equal(0, array.Length);
         Assert.Equal(0x7FFFFFC7, array.GetLength(0));
-        // the walk took about 1.7 seconds before the early return; nothing is read now
-        Assert.True(stopwatch.ElapsedMilliseconds < 500, $"{rank}D zero-element array took {stopwatch.ElapsedMilliseconds} ms");
+        Assert.True(best < 500, $"{rank}D zero-element array took {best} ms at best");
     }
 
     [Fact]

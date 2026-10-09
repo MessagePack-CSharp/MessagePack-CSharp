@@ -95,9 +95,9 @@ public sealed class MessagePackOutputFormatter : OutputFormatter
         var writer = context.HttpContext.Response.BodyWriter;
         if (context.Object == null)
         {
-            var span = writer.GetSpan(1);
-            span[0] = MessagePackCode.Nil;
-            writer.Advance(1);
+            // nil, but through the serializer so that a MessageProcessor (LZ4 / Zstandard frame) wraps it like every
+            // other response body; a raw 0xC0 would be unreadable to a client configured with the same options
+            MessagePackSerializer.Serialize(writer, Nil.Default, options);
         }
         else
         {

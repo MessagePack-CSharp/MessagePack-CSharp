@@ -64,39 +64,38 @@ public sealed class MessagePackFormatterResolver
     object?[] compatRequiredTable = [];
 
     /// <summary>Whether formatters that build hash-based collections such as Dictionary and HashSet use an equality comparer resistant to hash-flooding attacks.</summary>
-    public bool HashFloodingResistant { get; }
+    public bool HashFloodingResistant { get; init; } = true;
 
     /// <summary>Whether a formatter built without ref struct buffer support makes serialization throw instead of falling back to the compatible buffers.</summary>
-    public bool ThrowOnLegacyFormatter { get; }
+    public bool ThrowOnLegacyFormatter { get; init; }
 
     /// <summary>
     /// Whether deserialization fails when the payload carries no value for a required member, meaning one declared with the C# <c>required</c> modifier or a constructor parameter without a default value.
     /// Turn it off to accept such payloads, for example data written by an older schema; the member then keeps its default.
     /// </summary>
-    public bool ValidateRequiredMembers { get; }
+    public bool ValidateRequiredMembers { get; init; } = true;
 
     /// <summary>
     /// Whether deserialization fails when the payload assigns nil to a member declared as a non-nullable reference type.
     /// Off by default. Only directly declared member types are checked; generic type arguments and collection elements are not, since their nullability is erased at runtime.
     /// </summary>
-    public bool ValidateNullableAnnotations { get; }
+    public bool ValidateNullableAnnotations { get; init; }
 
     /// <summary>Raised with the root type when serialization fell back to the compatible buffers because a formatter built without ref struct buffer support was involved.</summary>
     public event Action<Type>? CompatibilityFallback;
 
-    /// <summary>Creates a resolver over <paramref name="factory"/>. The settings are fixed for the lifetime of the resolver.</summary>
-    public MessagePackFormatterResolver(MessagePackFormatterFactory factory, bool hashFloodingResistant = true, bool throwOnLegacyFormatter = false, bool validateRequiredMembers = true, bool validateNullableAnnotations = false)
+    /// <summary>
+    /// Creates a resolver over <paramref name="factory"/>. The settings (<see cref="HashFloodingResistant"/> and the other init-only
+    /// properties) are chosen in the object initializer and fixed for the lifetime of the resolver, since the cached formatters capture them.
+    /// </summary>
+    public MessagePackFormatterResolver(MessagePackFormatterFactory factory)
     {
         this.factory = factory;
-        this.HashFloodingResistant = hashFloodingResistant;
-        this.ThrowOnLegacyFormatter = throwOnLegacyFormatter;
-        this.ValidateRequiredMembers = validateRequiredMembers;
-        this.ValidateNullableAnnotations = validateNullableAnnotations;
     }
 
     /// <summary>Creates a resolver over <paramref name="factories"/> combined into one chain, where the first factory that serves a type wins.</summary>
-    public MessagePackFormatterResolver(MessagePackFormatterFactory[] factories, bool hashFloodingResistant = true, bool throwOnLegacyFormatter = false, bool validateRequiredMembers = true, bool validateNullableAnnotations = false)
-        : this(MessagePackFormatterFactory.Combine(factories), hashFloodingResistant, throwOnLegacyFormatter, validateRequiredMembers, validateNullableAnnotations)
+    public MessagePackFormatterResolver(MessagePackFormatterFactory[] factories)
+        : this(MessagePackFormatterFactory.Combine(factories))
     {
     }
 
@@ -234,7 +233,7 @@ public sealed class MessagePackFormatterResolver
                 {
                     // a legacy-TFM formatter can return null here yet still be creatable over the Compatible pair,
                     // so check for that
-                    var servableByCompatiblePair = CanCreateCompatiblePair(typeof(TWriteBuffer), typeof(TReadBuffer), typeof(T));
+                    var servableByCompatiblePair = CanCreateCompatiblePair(factory, typeof(TWriteBuffer), typeof(TReadBuffer), typeof(T));
                     if (servableByCompatiblePair && !ThrowOnLegacyFormatter)
                     {
                         construction.FoundLegacyFormatter = true;
@@ -276,10 +275,68 @@ public sealed class MessagePackFormatterResolver
         }
     }
 
-    // Asks the factory whether a type that could not be created for the requested (ref struct) pair can be created
+    /// <summary>
+    /// Creates, and initializes, the formatter a member-level <c>[MessagePackFormatter]</c> factory provides for
+    /// <typeparamref name="T"/>. Called from a formatter's <c>Initialize</c> (the generated and the reflection
+    /// formatters do), it treats the factory like one of the chain: a factory that serves the type only over the
+    /// Compatible (non-ref-struct) buffers, one compiled against a netstandard build of MessagePack, makes the whole
+    /// object graph under construction reroute to those buffers, as a chain factory's formatter would, unless
+    /// <see cref="ThrowOnLegacyFormatter"/> turns that into an error.
+    /// </summary>
+    public IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> CreateFormatterWith<TWriteBuffer, TReadBuffer, T>(MessagePackFormatterFactory factory)
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        ArgumentNullException.ThrowIfNull(factory);
+#if NET9_0_OR_GREATER
+        var created = factory.CreateFormatter<TWriteBuffer, TReadBuffer>(typeof(T));
+#else
+        var created = factory.CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), typeof(T));
+#endif
+        if (created is not null)
+        {
+            if (created is not IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter)
+            {
+                throw new InvalidOperationException($"The [MessagePackFormatter] factory '{factory.GetType().FullName}' asked for type '{typeof(T).FullName}' created '{created.GetType().FullName}', which is not an IMessagePackFormatter for that type.");
+            }
+            formatter.Initialize(this);
+            return formatter;
+        }
+
+        if (CanCreateCompatiblePair(factory, typeof(TWriteBuffer), typeof(TReadBuffer), typeof(T)))
+        {
+            if (ThrowOnLegacyFormatter)
+            {
+                throw new MessagePackSerializationException($"The [MessagePackFormatter] factory '{factory.GetType().FullName}' can create a formatter for '{typeof(T).FullName}' only over the Compatible (non-ref-struct) buffer pair (requested TWriteBuffer: {typeof(TWriteBuffer).FullName}, TReadBuffer: {typeof(TReadBuffer).FullName}): it is likely provided by a library compiled against a netstandard build of MessagePack, and ThrowOnLegacyFormatter is enabled. Multi-target that library with net9.0 for full speed, or turn ThrowOnLegacyFormatter off to run the object graph over the compatibility path.");
+            }
+            lock (gate)
+            {
+                if (construction.IsConstructing)
+                {
+                    // the graph is discarded when control returns to the root, which is then marked CompatiblePairRequired
+                    // and re-resolved over the Compatible pair, where this same Initialize runs again and the factory's
+                    // Type-based member serves it; this placeholder is never used
+                    construction.FoundLegacyFormatter = true;
+                    return new CompatiblePairRequiredFormatter<TWriteBuffer, TReadBuffer, T>(factory.GetType());
+                }
+            }
+            // outside a graph construction (Initialize called by hand) there is no root to reroute
+            throw new MessagePackSerializationException($"The [MessagePackFormatter] factory '{factory.GetType().FullName}' can create a formatter for '{typeof(T).FullName}' only over the Compatible (non-ref-struct) buffer pair, and this formatter is being initialized outside the resolver, which cannot reroute it. Resolve the owning type through MessagePackFormatterResolver.GetFormatter instead.");
+        }
+
+        throw new MessagePackSerializationException($"The [MessagePackFormatter] factory '{factory.GetType().FullName}' did not create a formatter for '{typeof(T).FullName}'.");
+    }
+
+    // Asks a factory whether a type that could not be created for the requested (ref struct) pair can be created
     // over the Compatible pair. For example, a formatter from a netstandard2.0-built library cannot serve ref struct
     // pairs but can serve Compatible ones.
-    bool CanCreateCompatiblePair(Type writeBufferType, Type readBufferType, Type valueType)
+    static bool CanCreateCompatiblePair(MessagePackFormatterFactory factory, Type writeBufferType, Type readBufferType, Type valueType)
     {
 #if NETSTANDARD2_0
         // ns2.0 has no Type.IsByRefLike, but it can never request a ref struct pair either, so there is nothing

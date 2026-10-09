@@ -1629,7 +1629,7 @@ internal readonly struct UInt16ElementCodec : IElementCodec<ushort>
 
 /// <summary>uint32 element core: the <see cref="Int32ElementCodec"/> superlanes with
 /// unsigned zones (fixint = 0..127, wide = above 65535). The wide code is a constant
-/// 0xce, so the VBMI weave reuses the shared <see cref="WeaveTables"/> with a
+/// 0xce, so the VBMI weave reuses the shared <c>WeaveTables</c> with a
 /// code-filled second source, the AVX2/SSSE3 weaves OR a constant code vector, and the
 /// decode gates validate a single code pattern.</summary>
 internal readonly struct UInt32ElementCodec : IElementCodec<uint>

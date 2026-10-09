@@ -27,3 +27,18 @@ jobs:
       - uses: ./.github/actions/setup-dotnet
       - run: dotnet build -c Release -t:build,pack
       - run: dotnet test -c Release --no-build
+
+  # The netstandard2.0 assets of MessagePack, MessagePack.LZ4 and MessagePack.Zstandard are what .NET Framework loads,
+  # and the net48 test project is the only thing that executes them; it is Windows-only (IsTestProject is false
+  # elsewhere), so the Linux job above never runs it.
+  test-netfx:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-dotnet
+      - run: dotnet test tests/MessagePack.Tests.NetFx/MessagePack.Tests.NetFx.csproj -c Release

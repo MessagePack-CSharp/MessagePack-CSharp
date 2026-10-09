@@ -57,16 +57,16 @@ public class KeyAttribute : Attribute
     /// <summary>Map key of the member, or null when an integer key was given.</summary>
     public string? StringKey { get; }
 
-    /// <summary>Assigns the array index <paramref name="x"/>.</summary>
-    public KeyAttribute(int x)
+    /// <summary>Assigns the array index <paramref name="index"/>.</summary>
+    public KeyAttribute(int index)
     {
-        this.IntKey = x;
+        this.IntKey = index;
     }
 
-    /// <summary>Assigns the map key <paramref name="x"/>.</summary>
-    public KeyAttribute(string x)
+    /// <summary>Assigns the map key <paramref name="name"/>.</summary>
+    public KeyAttribute(string name)
     {
-        this.StringKey = x ?? throw new ArgumentNullException(nameof(x));
+        this.StringKey = name ?? throw new ArgumentNullException(nameof(name));
     }
 }
 

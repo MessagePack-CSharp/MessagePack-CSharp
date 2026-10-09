@@ -282,7 +282,7 @@ public class DeclaredElementBudgetTest
     {
         byte[] bytes = [0x92, 0x81, 0x90, 0xc0];
         var buffer = new ReadOnlySpanReadBuffer(bytes);
-        var state = new DeserializeState(maxDepth: 0);
+        var state = new DeserializeState(maxDepth: 0, messageLength: long.MaxValue);
         Assert.Equal(2, buffer.ReadArrayHeader(ref state));
         Assert.Equal(1, buffer.ReadMapHeader(ref state));
         Assert.Equal(0, buffer.ReadArrayHeader(ref state));

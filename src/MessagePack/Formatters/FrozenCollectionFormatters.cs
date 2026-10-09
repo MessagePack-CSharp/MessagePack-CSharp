@@ -67,7 +67,7 @@ public sealed class FrozenDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, T
         state.Enter();
 
         // stage in a Dictionary (bomb-guarded count) and freeze once
-        var staging = new Dictionary<TKey, TValue>(count, comparer);
+        var staging = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
 
         var kf = keyFormatter;
         var vf = valueFormatter;
@@ -78,6 +78,7 @@ public sealed class FrozenDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, T
             TValue v = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
             vf.Deserialize(ref buffer, ref state, ref v);
+            MessagePackSerializationException.ThrowIfNullMapKey(k);
             staging[k] = v;
         }
         // a duplicate key collapsed into one slot: reject (cheapest possible detection)
@@ -176,7 +177,7 @@ public sealed partial class FrozenSetFormatter<TWriteBuffer, TReadBuffer, T> : I
 #if NETSTANDARD2_0
         var staging = new HashSet<T>(comparer); // no capacity ctor on ns2.0
 #else
-        var staging = new HashSet<T>(count, comparer);
+        var staging = new HashSet<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining), comparer);
 #endif
 
         var f = formatter;

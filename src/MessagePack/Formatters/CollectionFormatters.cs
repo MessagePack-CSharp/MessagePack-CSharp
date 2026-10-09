@@ -63,20 +63,26 @@ public sealed partial class ArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMess
         }
         state.Enter();
 
-        // Populate contract: reuse the incoming array only when the length matches exactly, otherwise allocate fresh.
-        // A covariant incoming array (U[] behind T[]) is rejected by AsSpan below — spec'd, rare case.
-        var result = (value != null && value.Length == count)
-            ? value
-            : new T[count]; // don't use GC.AllocateUninitializedArray<T>(count) because it would be a returning uninitialized memory via `ref span[i]`
-
         var f = formatter;
 
-        // AsSpan pays the array covariance check once
-        // a win only for generic T[], non-generic exact-typed loops should index directly
-        var span = result.AsSpan();
-        for (int i = 0; i < span.Length; i++)
+        // Populate contract: reuse the incoming array only when the length matches exactly, otherwise allocate fresh.
+        // A covariant incoming array (U[] behind T[]) is rejected by AsSpan below — spec'd, rare case.
+        T[] result;
+        if (value != null && value.Length == count)
         {
-            f.Deserialize(ref buffer, ref state, ref span[i]);
+            result = value;
+            // AsSpan pays the array covariance check once
+            // a win only for generic T[], non-generic exact-typed loops should index directly
+            var span = result.AsSpan();
+            for (int i = 0; i < span.Length; i++)
+            {
+                f.Deserialize(ref buffer, ref state, ref span[i]);
+            }
+        }
+        else
+        {
+            // not GC.AllocateUninitializedArray: the elements are handed out by ref before they are written
+            result = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, f, count);
         }
 
         value = result;
@@ -159,18 +165,57 @@ public sealed partial class ListFormatter<TWriteBuffer, TReadBuffer, T> : IMessa
         state.Enter();
 
 #if NET9_0_OR_GREATER
-        var result = value ?? new List<T>(count);
-        CollectionsMarshal.SetCount(result, count);
-        var span = CollectionsMarshal.AsSpan(result);
-        for (int i = 0; i < span.Length; i++)
+        List<T> result;
+        var capacity = ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining);
+        if (capacity < count)
         {
-            f.Deserialize(ref buffer, ref state, ref span[i]);
+            // the header claims more memory than its bytes justify (see PresizeCapacity): grow while reading, with the
+            // same populate semantics as the SetCount/AsSpan path below (existing elements are read into in place,
+            // growth appended, the excess truncated), so the result does not depend on which path the bytes took
+            result = value ?? new List<T>(capacity);
+            if (result.Count > count)
+            {
+                result.RemoveRange(count, result.Count - count);
+            }
+            for (int i = 0; i < count; i++)
+            {
+                if (i < result.Count)
+                {
+                    var item = result[i];
+                    f.Deserialize(ref buffer, ref state, ref item);
+                    result[i] = item;
+                }
+                else
+                {
+                    T item = default!;
+                    f.Deserialize(ref buffer, ref state, ref item);
+                    result.Add(item);
+                }
+            }
+        }
+        else
+        {
+            result = value ?? new List<T>(count);
+            var previousCount = result.Count;
+            CollectionsMarshal.SetCount(result, count);
+            var span = CollectionsMarshal.AsSpan(result);
+            if (count > previousCount)
+            {
+                // SetCount re-exposes whatever the backing array still holds past the old Count (Clear and RemoveRange
+                // leave value-type elements in place), and an element is read INTO: the grown range starts fresh, as
+                // it does on the growing path and downlevel
+                span.Slice(previousCount).Clear();
+            }
+            for (int i = 0; i < span.Length; i++)
+            {
+                f.Deserialize(ref buffer, ref state, ref span[i]);
+            }
         }
 #else
         List<T> result;
         if (value == null)
         {
-            result = new List<T>(count); // count is bomb-guarded by ReadArrayHeader
+            result = new List<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining)); // the count is byte-guarded, the capacity sizeof-guarded
             for (int i = 0; i < count; i++)
             {
                 T item = default!;
@@ -364,7 +409,7 @@ public sealed partial class QueueFormatter<TWriteBuffer, TReadBuffer, T> : IMess
         }
         else
         {
-            result = new Queue<T>(count);
+            result = new Queue<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining));
         }
 
         var f = formatter;
@@ -448,11 +493,7 @@ public sealed partial class StackFormatter<TWriteBuffer, TReadBuffer, T> : IMess
         // payload must be buffered: fill a temp array REVERSED, then push in temp order
         // Since this is a low priority issue and the performance benefit is limited unless the Stack is very large,
         // we will not use ArrayPool.
-        var temp = new T[count];
-        for (int i = 0; i < count; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref temp[count - 1 - i]);
-        }
+        var temp = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArrayReversed(ref buffer, ref state, f, count);
 
         Stack<T> result;
         if (value != null)
@@ -546,9 +587,10 @@ public sealed partial class HashSetFormatter<TWriteBuffer, TReadBuffer, T> : IMe
         state.Enter();
 
         HashSet<T> result;
-        if (value != null)
+        if (value != null && !HashFloodingResistantEqualityComparer.ReplacesDefault(comparer, value.Comparer))
         {
-            // reuse keeps the instance's comparer — a fresh set could only get the default one
+            // reuse keeps a caller-chosen comparer; an instance on the default comparer is replaced above, or the
+            // flooding-resistant comparer would never reach a `= new()` member
             result = value;
             result.Clear();
         }
@@ -557,7 +599,7 @@ public sealed partial class HashSetFormatter<TWriteBuffer, TReadBuffer, T> : IMe
 #if NETSTANDARD2_0
             result = new HashSet<T>(comparer); // no capacity ctor on ns2.0
 #else
-            result = new HashSet<T>(count, comparer);
+            result = new HashSet<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining), comparer);
 #endif
         }
 
@@ -669,11 +711,20 @@ public sealed partial class SortedSetFormatter<TWriteBuffer, TReadBuffer, T> : I
         var f = formatter;
         state.Enter();
 
-        for (int i = 0; i < count; i++)
+        try
         {
-            T item = default!;
-            f.Deserialize(ref buffer, ref state, ref item);
-            result.Add(item);
+            for (int i = 0; i < count; i++)
+            {
+                T item = default!;
+                f.Deserialize(ref buffer, ref state, ref item);
+                result.Add(item);
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            // Comparer<T>.Default refuses to order values of different runtime types (an object-keyed collection fed mixed
+            // scalars): a data error, reported as one
+            throw new MessagePackSerializationException("Invalid SortedSet payload: an element is not comparable with the others.", ex);
         }
 
         value = result;
@@ -767,7 +818,7 @@ public sealed partial class ReadOnlySetFormatter<TWriteBuffer, TReadBuffer, T> :
         var count = buffer.ReadArrayHeader(ref state);
         state.Enter();
 
-        var set = new HashSet<T>(count, comparer);
+        var set = new HashSet<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining), comparer);
 
         var f = formatter;
 
@@ -862,12 +913,7 @@ public sealed partial class ReadOnlyCollectionFormatter<TWriteBuffer, TReadBuffe
         state.Enter();
 
         // immutable wrapper: populate cannot reuse — fill a fresh array and wrap it once
-        var array = new T[count];
-        var span = array.AsSpan();
-        for (int i = 0; i < span.Length; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref span[i]);
-        }
+        var array = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, f, count);
 
         value = new ReadOnlyCollection<T>(array);
         state.Exit();
@@ -1111,26 +1157,25 @@ public sealed partial class ArraySegmentFormatter<TWriteBuffer, TReadBuffer, T> 
 
         // Populate contract: overwrite the incoming view's backing store in place only on
         // an exact length match, otherwise a fresh zero-offset segment
+        var f = formatter;
+
         T[] array;
         int offset;
         if (value.Array != null && value.Count == count)
         {
             array = value.Array;
             offset = value.Offset;
+            // AsSpan pays the covariance check once (throws on covariant reuse — spec'd, same as ArrayFormatter populate)
+            var span = array.AsSpan(offset, count);
+            for (int i = 0; i < span.Length; i++)
+            {
+                f.Deserialize(ref buffer, ref state, ref span[i]);
+            }
         }
         else
         {
-            array = new T[count];
+            array = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, f, count);
             offset = 0;
-        }
-
-        var f = formatter;
-
-        // AsSpan pays the covariance check once (throws on covariant reuse — spec'd, same as ArrayFormatter populate)
-        var span = array.AsSpan(offset, count);
-        for (int i = 0; i < span.Length; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref span[i]);
         }
 
         value = new ArraySegment<T>(array, offset, count);
@@ -1197,17 +1242,20 @@ public sealed partial class MemoryFormatter<TWriteBuffer, TReadBuffer, T> : IMes
 
         // exact-length reuse writes through to the caller's backing store (array or
         // MemoryManager) — the ArrayFormatter populate rule applied to a view
-        var result = value.Length == count ? value : new T[count];
-
         var f = formatter;
 
-        var span = result.Span;
-        for (int i = 0; i < span.Length; i++)
+        if (value.Length == count)
         {
-            f.Deserialize(ref buffer, ref state, ref span[i]);
+            var span = value.Span;
+            for (int i = 0; i < span.Length; i++)
+            {
+                f.Deserialize(ref buffer, ref state, ref span[i]);
+            }
         }
-
-        value = result;
+        else
+        {
+            value = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, f, count);
+        }
         state.Exit();
     }
 }
@@ -1271,12 +1319,7 @@ public sealed partial class ReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, T
         state.Enter();
 
         // read-only view: no write-through possible, always a fresh backing array
-        var array = new T[count];
-        var span = array.AsSpan();
-        for (int i = 0; i < span.Length; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref span[i]);
-        }
+        var array = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, f, count);
 
         value = array;
         state.Exit();
@@ -1428,11 +1471,7 @@ public sealed partial class ConcurrentStackFormatter<TWriteBuffer, TReadBuffer, 
 
         // same reversed-temp shape as StackFormatter: the IEnumerable ctor pushes in
         // order, so temp[^1] (= stream head) ends on top
-        var temp = new T[count];
-        for (int i = 0; i < count; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref temp[count - 1 - i]);
-        }
+        var temp = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArrayReversed(ref buffer, ref state, f, count);
 
         value = new ConcurrentStack<T>(temp);
         state.Exit();
@@ -1600,12 +1639,7 @@ public sealed partial class InterfaceEnumerableFormatter<TWriteBuffer, TReadBuff
         var f = formatter;
         state.Enter();
 
-        var result = new T[count];
-        var span = result.AsSpan();
-        for (int i = 0; i < span.Length; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref span[i]);
-        }
+        var result = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, f, count);
 
         value = result;
         state.Exit();
@@ -1635,10 +1669,15 @@ public sealed partial class InterfaceEnumerableFormatterFactory<T> : MessagePack
 public sealed partial class InterfaceCollectionFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ICollection<T>?>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
+    IEqualityComparer<T>? comparer; // for a populate-reused HashSet (see HashSetFormatter)
 
     public void Initialize(MessagePackFormatterResolver resolver)
     {
         formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        if (resolver.HashFloodingResistant)
+        {
+            comparer = HashFloodingResistantEqualityComparer.Get<T>();
+        }
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ICollection<T>? value)
@@ -1674,14 +1713,20 @@ public sealed partial class InterfaceCollectionFormatter<TWriteBuffer, TReadBuff
         state.Enter();
 
         ICollection<T> result;
-        if (value != null && !value.IsReadOnly)
+        var hashSetOnDefaultComparer = value is HashSet<T> hashSet && HashFloodingResistantEqualityComparer.ReplacesDefault(comparer, hashSet.Comparer);
+        if (value != null && !value.IsReadOnly && !hashSetOnDefaultComparer)
         {
             result = value;
             result.Clear();
         }
+        else if (hashSetOnDefaultComparer)
+        {
+            // keep the caller's shape (a set), on the flooding-resistant comparer the chain promises
+            result = new HashSet<T>(comparer);
+        }
         else
         {
-            result = new List<T>(count); // count is bomb-guarded by ReadArrayHeader
+            result = new List<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining)); // the count is byte-guarded, the capacity sizeof-guarded
         }
 
         var f = formatter;
@@ -1768,7 +1813,7 @@ public sealed partial class InterfaceListFormatter<TWriteBuffer, TReadBuffer, T>
         }
         else
         {
-            result = new List<T>(count);
+            result = new List<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining));
         }
 
         var f = formatter;
@@ -1854,12 +1899,7 @@ public sealed partial class InterfaceReadOnlyCollectionFormatter<TWriteBuffer, T
         var f = formatter;
         state.Enter();
 
-        var result = new T[count];
-        var span = result.AsSpan();
-        for (int i = 0; i < span.Length; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref span[i]);
-        }
+        var result = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, f, count);
 
         value = result;
         state.Exit();
@@ -1936,12 +1976,7 @@ public sealed partial class InterfaceReadOnlyListFormatter<TWriteBuffer, TReadBu
         var f = formatter;
         state.Enter();
 
-        var result = new T[count];
-        var span = result.AsSpan();
-        for (int i = 0; i < span.Length; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref span[i]);
-        }
+        var result = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, f, count);
 
         value = result;
         state.Exit();
@@ -2020,9 +2055,9 @@ public sealed partial class InterfaceSetFormatter<TWriteBuffer, TReadBuffer, T> 
         state.Enter();
 
         ISet<T> result;
-        if (value != null && !value.IsReadOnly)
+        if (value != null && !value.IsReadOnly && !(value is HashSet<T> hashSet && HashFloodingResistantEqualityComparer.ReplacesDefault(comparer, hashSet.Comparer)))
         {
-            result = value; // reuse keeps the instance's comparer
+            result = value; // reuse keeps a caller-chosen comparer (a HashSet on the default one is replaced, see HashSetFormatter)
             result.Clear();
         }
         else
@@ -2030,7 +2065,7 @@ public sealed partial class InterfaceSetFormatter<TWriteBuffer, TReadBuffer, T> 
 #if NETSTANDARD2_0
             result = new HashSet<T>(comparer); // no capacity ctor on ns2.0
 #else
-            result = new HashSet<T>(count, comparer);
+            result = new HashSet<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining), comparer);
 #endif
         }
 
@@ -2135,7 +2170,7 @@ public sealed partial class InterfaceReadOnlySetFormatter<TWriteBuffer, TReadBuf
         var f = formatter;
         state.Enter();
 
-        var result = new HashSet<T>(count, comparer);
+        var result = new HashSet<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining), comparer);
         for (int i = 0; i < count; i++)
         {
             T item = default!;
@@ -2224,14 +2259,9 @@ public sealed partial class ReadOnlySequenceFormatter<TWriteBuffer, TReadBuffer,
         }
         state.Enter();
 
-        var array = new T[count];
-
         var f = formatter;
 
-        for (int i = 0; i < count; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref array[i]);
-        }
+        var array = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, f, count);
 
         value = new ReadOnlySequence<T>(array);
         state.Exit();

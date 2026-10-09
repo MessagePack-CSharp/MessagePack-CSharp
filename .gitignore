@@ -360,20 +360,10 @@ MigrationBackup/
 
 # Unity
 
-src/MessagePack.UnityClient/bin/*
-src/MessagePack.UnityClient/Library/*
-src/MessagePack.UnityClient/obj/*
-src/MessagePack.UnityClient/Temp/*
-src/MessagePack.UnityClient/UserSettings/*
-src/MessagePack.UnityClient/Assets/Packages/
-
 # BenchmarkDotNet results
 BenchmarkDotNet.Artifacts/
 
-src/MessagePack.UnityClient/.vsconfig
-
 *.lscache
 
-v4/tests/MessagePack.Tests.Fuzz/corpus/
-
 tests/MessagePack.Tests.Fuzz/corpus/
+tests/MessagePack.Tests.Fuzz/libfuzzer-dotnet-windows.exe

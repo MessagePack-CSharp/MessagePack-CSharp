@@ -59,9 +59,34 @@ public static partial class MessagePackSerializer
                 if (options.MessageProcessor == null && buffer.Length <= maxMessageSize)
                 {
                     T value = default!;
-                    var bytesConsumed = buffer.IsSingleSegment
-                        ? DeserializeSpanCore(ref value, buffer.FirstSpan, options)
-                        : DeserializeSequenceCore(ref value, in buffer, options);
+                    var state = new DeserializeState(options.MaxDepth, buffer.Length);
+                    long bytesConsumed;
+                    try
+                    {
+                        bytesConsumed = buffer.IsSingleSegment
+                            ? DeserializeSpanCore(ref value, buffer.FirstSpan, options, ref state)
+                            : DeserializeSequenceCore(ref value, in buffer, options, ref state);
+                    }
+                    catch
+                    {
+                        // the read must be released even when the parse throws (the reader is otherwise stuck in
+                        // "reading in progress"): the failed message is consumed when its boundary is known, as on the
+                        // framed path, and left in place otherwise (a boundary scan that throws on the malformed data
+                        // changes nothing: the parse error is the one to report)
+                        var consumed = buffer.Start;
+                        try
+                        {
+                            if (finder.TryFindEnd(buffer))
+                            {
+                                consumed = buffer.GetPosition(finder.Consumed);
+                            }
+                        }
+                        catch
+                        {
+                        }
+                        pipeReader.AdvanceTo(consumed, buffer.End);
+                        throw;
+                    }
                     pipeReader.AdvanceTo(buffer.GetPosition(bytesConsumed));
                     return value;
                 }
@@ -151,9 +176,10 @@ public static partial class MessagePackSerializer
                         cancellationToken.ThrowIfCancellationRequested();
                         T value = default!;
                         var tail = buffer.Slice(position);
+                        var state = new DeserializeState(options.MaxDepth, tail.Length); // every message its own state
                         position += tail.IsSingleSegment
-                            ? DeserializeSpanCore(ref value, tail.FirstSpan, options)
-                            : DeserializeSequenceCore(ref value, in tail, options);
+                            ? DeserializeSpanCore(ref value, tail.FirstSpan, options, ref state)
+                            : DeserializeSequenceCore(ref value, in tail, options, ref state);
                         consumed = position;
                         yield return value;
                     }
@@ -249,6 +275,10 @@ public static partial class MessagePackSerializer
         // batched like DeserializeMessagesAsync, plus: stops after count elements and leaves anything past the array unconsumed
         var maxMessageSize = options.MaxBufferedMessageSize;
         var finder = new MessageBoundaryFinder(options.MessageProcessor);
+        // one state for the whole array, as Deserialize<T[]> has: the elements are read in turn through it, Reset for
+        // each element's bytes, and the circular-reference identity table spans them, so the array wire of Serialize
+        // reads back element by element (and an element stream reads back as one array)
+        var state = new DeserializeState(options.MaxDepth, 0);
         var produced = 0L;
         // the same early-exit guard as DeserializeMessagesAsync: a broken-out enumeration leaves the read
         // advanced through the elements already yielded
@@ -280,9 +310,10 @@ public static partial class MessagePackSerializer
                         }
                         T value = default!;
                         var tail = buffer.Slice(position);
+                        state.Reset(options.MaxDepth, tail.Length);
                         position += tail.IsSingleSegment
-                            ? DeserializeSpanCore(ref value, tail.FirstSpan, options)
-                            : DeserializeSequenceCore(ref value, in tail, options);
+                            ? DeserializeSpanCore(ref value, tail.FirstSpan, options, ref state)
+                            : DeserializeSequenceCore(ref value, in tail, options, ref state);
                         produced++;
                         consumed = position;
                         yield return value;
@@ -306,7 +337,7 @@ public static partial class MessagePackSerializer
                     T value = default!;
                     try
                     {
-                        Deserialize(in element, ref value, options);
+                        DeserializeElement(in element, ref value, options, ref state);
                     }
                     catch
                     {
@@ -356,6 +387,42 @@ public static partial class MessagePackSerializer
         }
     }
 
+    // one element of an element stream: the array's state is Reset for the element's own bytes (the decoded ones
+    // when an envelope processor wraps each element) and keeps the circular-reference identity table across elements
+    static void DeserializeElement<T>(in ReadOnlySequence<byte> element, ref T value, MessagePackSerializerOptions options, ref DeserializeState state)
+    {
+        var processor = options.MessageProcessor;
+        if (processor != null && processor.TryDecode(in element, out var decoded))
+        {
+            try
+            {
+                switch (decoded)
+                {
+                    case DecodedMessage.SourceSlice slice:
+                        CheckSourceSlice(slice, element.Length);
+                        var sliced = element.Slice(slice.Offset, slice.Length);
+                        state.Reset(options.MaxDepth, sliced.Length);
+                        DeserializeSequenceOrSpan(ref value, in sliced, options, ref state);
+                        break;
+                    case DecodedMessage.Buffer buffer:
+                        state.Reset(options.MaxDepth, buffer.Sequence.Length);
+                        DeserializeSequenceOrSpan(ref value, buffer.Sequence, options, ref state);
+                        break;
+                    default:
+                        throw new InvalidOperationException("The message processor returned an empty DecodedMessage.");
+                }
+            }
+            finally
+            {
+                decoded.Dispose();
+            }
+            return;
+        }
+
+        state.Reset(options.MaxDepth, element.Length);
+        DeserializeSequenceOrSpan(ref value, in element, options, ref state);
+    }
+
     static async ValueTask<long> ReadArrayHeaderAsync(PipeReader pipeReader, CancellationToken cancellationToken)
     {
         while (true)
@@ -367,15 +434,28 @@ public static partial class MessagePackSerializer
                 throw new OperationCanceledException("The PipeReader read was canceled");
             }
 
-            if (TryReadArrayHeader(in buffer, out var count, out var headerSize))
+            long count;
+            int headerSize;
+            bool found;
+            try
+            {
+                found = TryReadArrayHeader(in buffer, out count, out headerSize);
+                if (!found && result.IsCompleted)
+                {
+                    MessagePackSerializationException.ThrowAsyncMessageTruncated();
+                }
+            }
+            catch
+            {
+                // a value that is not an array, or a truncated header: the read is released with nothing consumed and
+                // nothing examined, so the caller's next read returns the same data at once instead of waiting for more
+                pipeReader.AdvanceTo(buffer.Start);
+                throw;
+            }
+            if (found)
             {
                 pipeReader.AdvanceTo(buffer.GetPosition(headerSize));
                 return count;
-            }
-
-            if (result.IsCompleted)
-            {
-                MessagePackSerializationException.ThrowAsyncMessageTruncated();
             }
 
             pipeReader.AdvanceTo(buffer.Start, buffer.End);

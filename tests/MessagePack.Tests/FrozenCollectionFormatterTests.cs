@@ -55,7 +55,7 @@ public class FrozenCollectionFormatterTests
     public void Trusted_KeepsDefaultComparer()
     {
         var trusted = new MessagePackSerializerOptions(
-            new MessagePackFormatterResolver(MessagePackFormatterFactory.Default, hashFloodingResistant: false));
+            new MessagePackFormatterResolver(MessagePackFormatterFactory.Default) { HashFloodingResistant = false });
 
         var bytes = MessagePackSerializer.Serialize(NewSource().ToFrozenDictionary(), trusted);
         var dict = MessagePackSerializer.Deserialize<FrozenDictionary<int, string>>(bytes, trusted)!;

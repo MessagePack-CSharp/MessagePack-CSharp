@@ -74,8 +74,7 @@ public class CompatibilityFallbackRoutingTests
             MessagePackFormatterFactory.Combine(
                 new CompatiblePairOnlyFactory(),
                 BuiltInFormatterFactory.Instance,
-                GenericFormatterFactory.Instance),
-            throwOnLegacyFormatter: throwOnLegacyFormatter);
+                GenericFormatterFactory.Instance)) { ThrowOnLegacyFormatter = throwOnLegacyFormatter };
         var captured = new List<Type>();
         resolver.CompatibilityFallback += captured.Add;
         fallbackTypes = captured;

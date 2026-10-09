@@ -31,6 +31,11 @@ static class SerializableParser
             diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidSerializableFactory, $"'{typeName}': [MessagePackSerializable] requires the class (and every containing type) to be declared partial: the factory implementation is generated as the class's other half.", typeLocation));
             return Empty(diagnostics);
         }
+        if (ObjectParser.IsFileLocal(type))
+        {
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidSerializableFactory, $"'{typeName}': [MessagePackSerializable] cannot be used on a file-local class: the generated partial lives in another file and cannot be its other half.", typeLocation));
+            return Empty(diagnostics);
+        }
         for (var accessible = type; accessible is not null; accessible = accessible.ContainingType)
         {
             if (accessible.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal))
@@ -98,7 +103,7 @@ static class SerializableParser
         var fullTypeName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var model = new SerializableFactoryModel(
             FullTypeName: fullTypeName,
-            HintName: ObjectParser.Sanitize(fullTypeName),
+            HintName: ObjectParser.Sanitize(fullTypeName) + ".SerializableFactory", // distinct from a model named like it ("PersonFormatter" next to Person's formatter)
             Declarations: ObjectParser.BuildNestedDeclarations(type),
             HarvestedGenerics: new EquatableArray<HarvestedGenericModel>([.. harvestedGenerics.Values.OrderBy(static h => h.ClosedTypeName, StringComparer.Ordinal)]),
             HarvestedBuiltIns: new EquatableArray<HarvestedBuiltInModel>([.. harvestedBuiltIns.Values.OrderBy(static h => h.ClosedTypeName, StringComparer.Ordinal)]));

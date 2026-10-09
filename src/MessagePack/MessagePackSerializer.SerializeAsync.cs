@@ -49,7 +49,10 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="SerializeMessagesAsync{T}(PipeWriter, IAsyncEnumerable{T}, CancellationToken)"/>
     public static async Task SerializeMessagesAsync<T>(PipeWriter pipeWriter, IAsyncEnumerable<T> source, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
-        var enumerator = source.GetAsyncEnumerator(cancellationToken);
+        // the source gets a token this method can cancel: when the reader completes while a MoveNextAsync is in flight,
+        // nothing will ever consume what the source produces, so it is told to stop instead of being waited on
+        using var stop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var enumerator = source.GetAsyncEnumerator(stop.Token);
         await using (enumerator.ConfigureAwait(false))
         {
             while (true)
@@ -66,7 +69,7 @@ public static partial class MessagePackSerializer
                 {
                     // the source is about to suspend, so make everything written so far visible to the reader before
                     // waiting for more input
-                    var hasNext = await FlushWhilePendingAsync(pipeWriter, moveNext, cancellationToken).ConfigureAwait(false);
+                    var hasNext = await FlushWhilePendingAsync(pipeWriter, moveNext, stop).ConfigureAwait(false);
                     if (hasNext is null)
                     {
                         return;
@@ -128,7 +131,10 @@ public static partial class MessagePackSerializer
     {
         ThrowIfElementsHiddenByContainer(options);
         WriteArrayHeader(pipeWriter, count);
-        var enumerator = source.GetAsyncEnumerator(cancellationToken);
+        // one state for the whole array, as Serialize(array) has: circular-reference ids span the elements
+        var state = new SerializeState(options.MaxDepth);
+        using var stop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken); // see SerializeMessagesAsync
+        var enumerator = source.GetAsyncEnumerator(stop.Token);
         await using (enumerator.ConfigureAwait(false))
         {
             var produced = 0L;
@@ -142,7 +148,7 @@ public static partial class MessagePackSerializer
                 }
                 else
                 {
-                    var next = await FlushWhilePendingAsync(pipeWriter, moveNext, cancellationToken).ConfigureAwait(false);
+                    var next = await FlushWhilePendingAsync(pipeWriter, moveNext, stop).ConfigureAwait(false);
                     if (next is null)
                     {
                         return;
@@ -154,7 +160,7 @@ public static partial class MessagePackSerializer
                     MessagePackSerializationException.ThrowAsyncElementsMissing(count, produced);
                 }
 
-                Serialize(pipeWriter, enumerator.Current, options);
+                Serialize(pipeWriter, enumerator.Current, options, ref state);
                 produced++;
                 if (ShouldFlush(pipeWriter) && await FlushAsync(pipeWriter, cancellationToken).ConfigureAwait(false))
                 {
@@ -172,7 +178,7 @@ public static partial class MessagePackSerializer
             }
             else
             {
-                var next = await FlushWhilePendingAsync(pipeWriter, probe, cancellationToken).ConfigureAwait(false);
+                var next = await FlushWhilePendingAsync(pipeWriter, probe, stop).ConfigureAwait(false);
                 if (next is null)
                 {
                     return;
@@ -200,6 +206,7 @@ public static partial class MessagePackSerializer
     {
         ThrowIfElementsHiddenByContainer(options);
         WriteArrayHeader(pipeWriter, count);
+        var state = new SerializeState(options.MaxDepth); // see the IAsyncEnumerable overload
         var produced = 0L;
         foreach (var value in source)
         {
@@ -207,7 +214,7 @@ public static partial class MessagePackSerializer
             {
                 MessagePackSerializationException.ThrowAsyncElementsExceeded(count);
             }
-            Serialize(pipeWriter, value, options);
+            Serialize(pipeWriter, value, options, ref state);
             produced++;
             if (ShouldFlush(pipeWriter) && await FlushAsync(pipeWriter, cancellationToken).ConfigureAwait(false))
             {
@@ -265,16 +272,21 @@ public static partial class MessagePackSerializer
     // (reader gone, canceled, faulted), that MoveNextAsync is settled before control can reach the enumerator's
     // DisposeAsync: an async iterator refuses DisposeAsync mid-MoveNext with NotSupportedException, which would
     // otherwise replace the silent return or the flush's own exception. Returns null when the reader completed
-    // (the caller returns silently), else the MoveNextAsync result.
-    static async ValueTask<bool?> FlushWhilePendingAsync(PipeWriter pipeWriter, ValueTask<bool> moveNext, CancellationToken cancellationToken)
+    // (the caller returns silently), else the MoveNextAsync result. A completed reader cancels the source's token
+    // first: a source suspended on something that only its consumer would have unblocked would otherwise be waited
+    // on forever.
+    static async ValueTask<bool?> FlushWhilePendingAsync(PipeWriter pipeWriter, ValueTask<bool> moveNext, CancellationTokenSource stop)
     {
         bool readerCompleted;
         try
         {
-            readerCompleted = await FlushAsync(pipeWriter, cancellationToken).ConfigureAwait(false);
+            readerCompleted = await FlushAsync(pipeWriter, stop.Token).ConfigureAwait(false);
         }
         catch
         {
+            // the flush failed (a reader completed with an exception, a canceled flush): nothing will consume the
+            // source either, so it is stopped the same way before its MoveNextAsync is settled
+            stop.Cancel();
             try
             {
                 await moveNext.ConfigureAwait(false);
@@ -285,8 +297,20 @@ public static partial class MessagePackSerializer
             }
             throw;
         }
-        var hasNext = await moveNext.ConfigureAwait(false);
-        return readerCompleted ? null : hasNext;
+        if (readerCompleted)
+        {
+            stop.Cancel();
+            try
+            {
+                await moveNext.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // the source honoured the stop
+            }
+            return null;
+        }
+        return await moveNext.ConfigureAwait(false);
     }
 
     static async ValueTask<bool> FlushAsync(PipeWriter pipeWriter, CancellationToken cancellationToken)

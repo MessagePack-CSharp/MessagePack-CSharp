@@ -13,8 +13,36 @@ namespace MessagePack.Tests;
 // tier and the Default chain's tail serve them, the generator stays out), byte-checked
 // against the v3 oracle. One deliberate deviation: [IgnoreDataMember] is an [IgnoreMember]
 // alias in BOTH tiers now, ending v3's dynamic-vs-codegen inconsistency.
+// a base [DataMember] on a virtual, excluded by the override ([IgnoreDataMember]): the most derived declaration
+// carries the contract, as in the [Key] table
+[DataContract]
+public class ContractBase
+{
+    [DataMember] public virtual int V { get; set; }
+
+    [DataMember] public int Kept { get; set; }
+}
+
+[DataContract]
+public class ContractDerived : ContractBase
+{
+    [IgnoreDataMember] public override int V { get; set; }
+}
+
 public class DataContractTests
 {
+    [Fact]
+    public void OverrideExclusion_WinsOverTheBaseDataMember()
+    {
+        var bytes = V4.Serialize(new ContractDerived { V = 7, Kept = 3 }, reflectionOptions);
+        var map = V4.Deserialize<Dictionary<string, object?>>(bytes)!;
+        Assert.False(map.ContainsKey("V"));
+        Assert.Equal(3, Convert.ToInt32(map["Kept"]));
+        var back = V4.Deserialize<ContractDerived>(bytes, reflectionOptions)!;
+        Assert.Equal(0, back.V);
+        Assert.Equal(3, back.Kept);
+    }
+
     static readonly MessagePack.MessagePackSerializerOptions reflectionOptions = new(
         new MessagePackFormatterResolver(
         [

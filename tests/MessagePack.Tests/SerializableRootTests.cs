@@ -218,7 +218,7 @@ public class SerializableRootTests
             }
             """);
         Assert.DoesNotContain(result.Diagnostics, d => d.Severity == DiagnosticSeverity.Error);
-        var factory = Assert.Single(result.GeneratedTrees, t => t.FilePath.EndsWith("MergedRoots.g.cs"));
+        var factory = Assert.Single(result.GeneratedTrees, t => t.FilePath.EndsWith("MergedRoots.SerializableFactory.g.cs"));
         var text = factory.ToString();
         Assert.Contains("typeof(global::Model[])", text);
         Assert.Contains("typeof(global::System.Collections.Generic.List<global::Model>)", text);

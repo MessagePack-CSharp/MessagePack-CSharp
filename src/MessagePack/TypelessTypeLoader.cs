@@ -1,16 +1,29 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
+using MessagePack.Formatters;
 
-namespace MessagePack.Formatters;
+namespace MessagePack;
 
 internal static partial class TypelessTypeNames
 {
+    // the ", AssemblyName" that follows a type name (at the end, or before the `]` closing a generic argument) once
+    // Version/Culture/PublicKeyToken are gone: what is left is the namespace-qualified name alone
 #if NET9_0_OR_GREATER
-    // v3's exact pattern (bug-compat included: a hyphenated Culture would not match), so both sides shorten identically
-    [GeneratedRegex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled)]
+    [GeneratedRegex(@", [^,\[\]]+(?=\]|$)", RegexOptions.Compiled)]
+    internal static partial Regex SubtractAssemblyNamesRegex { get; }
+#else
+    internal static readonly Regex SubtractAssemblyNamesRegex = new(@", [^,\[\]]+(?=\]|$)", RegexOptions.Compiled);
+#endif
+
+#if NET9_0_OR_GREATER
+    // v3's pattern with the version dots escaped: v3 wrote `\d+.\d+` and the wildcard let a digit run match the
+    // separator, which backtracks cubically on a payload name such as "X, Version=111...1" (17 s for 1000 digits);
+    // with `\.` a digit can never stand in for the separator and the match is linear. Names v3 writes are always
+    // dotted, so both sides still shorten identically (a hyphenated Culture still does not match, as in v3).
+    [GeneratedRegex(@", Version=\d+\.\d+\.\d+\.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled)]
     internal static partial Regex SubtractFullNameRegex { get; }
 #else
-    internal static readonly Regex SubtractFullNameRegex = new(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
+    internal static readonly Regex SubtractFullNameRegex = new(@", Version=\d+\.\d+\.\d+\.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
 #endif
 }
 
@@ -55,6 +68,8 @@ public abstract class TypelessTypeLoader
 
     sealed class LoadAnyTypeLoader : TypelessTypeLoader
     {
+        const int MaxTypeNameLength = 1024;
+
         readonly bool allowAssemblyVersionMismatch;
 
         public LoadAnyTypeLoader(bool allowAssemblyVersionMismatch)
@@ -65,6 +80,12 @@ public abstract class TypelessTypeLoader
         [UnconditionalSuppressMessage("Trimming", "IL2057", Justification = "loading types by payload-provided names is this loader's contract; instances reach a formatter only through TypelessFormatterFactory, whose constructor carries RequiresUnreferencedCode (typeless is incompatible with trimming)")]
         public override Type? LoadType(string typeName)
         {
+            // Type.GetType parses the name (generic nesting, assembly qualification) at a cost that grows with it, and
+            // a payload picks the name: the cap bounds that work. An allow list has no such parse and no such cap.
+            if (typeName.Length > MaxTypeNameLength)
+            {
+                throw new MessagePackSerializationException($"Typeless type name is implausibly long ({typeName.Length} chars; LoadAnyType accepts up to {MaxTypeNameLength}).");
+            }
             try
             {
                 var type = Type.GetType(typeName, throwOnError: false);
@@ -90,13 +111,29 @@ public abstract class TypelessTypeLoader
 
         public AllowedTypesLoader(Type[] types)
         {
-            typesByName = new Dictionary<string, Type>(types.Length * 2, StringComparer.Ordinal);
+            typesByName = new Dictionary<string, Type>(types.Length * 3, StringComparer.Ordinal);
+            var ambiguous = new HashSet<string>(StringComparer.Ordinal);
             foreach (var type in types)
             {
                 var fullName = type.AssemblyQualifiedName ?? type.FullName
                     ?? throw new ArgumentException($"Type '{type}' has no name to match payload type names against.", nameof(types));
                 typesByName[fullName] = type;
-                typesByName[TypelessTypeNames.SubtractFullNameRegex.Replace(fullName, string.Empty)] = type;
+                var versionless = TypelessTypeNames.SubtractFullNameRegex.Replace(fullName, string.Empty);
+                typesByName[versionless] = type;
+                // the assembly-free spelling is shared when two registered types have the same namespace-qualified
+                // name in different assemblies: then it names neither (the exact spellings above still do)
+                var assemblyless = TypelessTypeNames.SubtractAssemblyNamesRegex.Replace(versionless, string.Empty);
+                if (ambiguous.Contains(assemblyless))
+                {
+                    continue;
+                }
+                if (typesByName.TryGetValue(assemblyless, out var other) && other != type)
+                {
+                    ambiguous.Add(assemblyless);
+                    typesByName.Remove(assemblyless);
+                    continue;
+                }
+                typesByName[assemblyless] = type;
             }
         }
 
@@ -106,9 +143,17 @@ public abstract class TypelessTypeLoader
             {
                 return type;
             }
-            // a payload written by another version of the assembly spells Version=...
-            // differently: shorten and compare version-insensitively
-            return typesByName.TryGetValue(TypelessTypeNames.SubtractFullNameRegex.Replace(typeName, string.Empty), out type) ? type : null;
+            // a payload written by another version of the assembly spells Version=... differently: shorten and
+            // compare version-insensitively
+            var versionless = TypelessTypeNames.SubtractFullNameRegex.Replace(typeName, string.Empty);
+            if (typesByName.TryGetValue(versionless, out type))
+            {
+                return type;
+            }
+            // and one written on another runtime names another assembly for the same type (System.Guid lives in
+            // mscorlib on .NET Framework, in System.Private.CoreLib here): compare by the namespace-qualified names
+            // alone. The list holds live types, so the match can only ever yield a type the caller registered.
+            return typesByName.TryGetValue(TypelessTypeNames.SubtractAssemblyNamesRegex.Replace(versionless, string.Empty), out type) ? type : null;
         }
     }
 

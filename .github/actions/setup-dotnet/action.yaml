@@ -14,9 +14,15 @@ runs:
   using: "composite"
   steps:
     # see: https://github.com/actions/setup-dotnet
+    # the SDK comes from global.json; the test projects also target net8.0 / net9.0 / net10.0, whose runtimes the
+    # image happens to preinstall today, so name them instead of relying on that
     - uses: actions/setup-dotnet@v5
       with:
         global-json-file: ${{ inputs.global-json-file }}
+        dotnet-version: |
+          8.0.x
+          9.0.x
+          10.0.x
 
     # see: https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-environment-variables
     # GitHub Actions Hosted Runner default environment contains some .NET Environment.

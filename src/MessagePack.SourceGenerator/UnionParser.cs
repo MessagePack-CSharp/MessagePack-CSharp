@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.CodeAnalysis;
 
 namespace MessagePack.SourceGenerator;
@@ -125,6 +126,19 @@ static class UnionParser
             return new UnionParseResult(null, new EquatableArray<DiagnosticInfo>([.. diagnostics]));
         }
 
+        foreach (var attribute in type.GetAttributes())
+        {
+            // as ObjectParser: the type-level registration matches the attribute class exactly, so a derived
+            // formatter attribute would be silently outranked by this union formatter
+            if (attribute.AttributeClass is { } attributeClass
+                && attributeClass.ToDisplayString() != ObjectParser.FormatterAttributeName
+                && !(attributeClass.IsGenericType && attributeClass.OriginalDefinition.ToDisplayString() == ObjectParser.FormatterAttributeName + "<TFactory>")
+                && ObjectParser.HasAttributeClass(attributeClass, ObjectParser.FormatterAttributeName))
+            {
+                diagnostics.Add(new DiagnosticInfo(Diagnostics.TypeLevelFormatterNotGenerated, $"'{typeName}': '[{attributeClass.Name}]' derives from MessagePackFormatterAttribute, which the type-level registration does not match (only [MessagePackFormatter] and [MessagePackFormatter<TFactory>] themselves are); the generated union formatter serves the type instead. Apply the base attribute directly, or register the factory in the resolver chain.", typeLocation));
+            }
+        }
+
         if (ObjectParser.ReadNamedBool(context.Attributes[0], "AllowCircularReferences"))
         {
             // a union root's wire is [tag, case]; nesting the identity envelope into that dispatch is an open design
@@ -180,6 +194,13 @@ static class UnionParser
             diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidUnion, $"'{typeName}': [UnionTag] is only supported on interfaces, abstract classes, and union types.", typeLocation));
             return Invalid(diagnostics);
         }
+        if (ObjectParser.IsNestedInGenericType(type))
+        {
+            // Outer<T>.Choice is generic through its container only (IsGenericType, Arity 0): there is no open
+            // formatter shape for it, so the parser refuses it as ObjectParser does instead of crashing the generator
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}' is skipped: types nested inside generic types are not supported yet.", typeLocation));
+            return Invalid(diagnostics);
+        }
         if (type.IsGenericType)
         {
             // generic roots exist for pattern unions only (union Result<T>(T,
@@ -191,12 +212,17 @@ static class UnionParser
             }
             foreach (var typeParameter in type.TypeParameters)
             {
-                if (typeParameter.Name is "TWriteBuffer" or "TReadBuffer")
+                if (ObjectParser.CollidesWithGeneratedCode(typeParameter.Name, context.SemanticModel.Compilation))
                 {
-                    diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidUnion, $"'{typeName}': a type parameter named '{typeParameter.Name}' collides with the generated formatter's buffer parameters.", typeLocation));
+                    diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidUnion, $"'{typeName}': a type parameter named '{typeParameter.Name}' would shadow a name the generated formatter uses (its buffer parameters, or a type of the MessagePack / SerializerFoundation namespaces); rename the type parameter.", typeLocation));
                     return Invalid(diagnostics);
                 }
             }
+        }
+        if (ObjectParser.IsFileLocal(type))
+        {
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.TypeNotAccessible, $"'{typeName}' is a file-local type, which generated code in another file cannot reach; make it internal or public.", typeLocation));
+            return Invalid(diagnostics);
         }
         for (var accessible = type; accessible is not null; accessible = accessible.ContainingType)
         {
@@ -273,7 +299,8 @@ static class UnionParser
                 // a type-parameter case gets no "?" suffix either: T? on an unconstrained parameter is only an
                 // annotation, and default(T) is the natural fresh value
                 IsValueType: caseType.IsValueType || caseType is ITypeParameterSymbol,
-                FieldName: "f" + ObjectParser.Sanitize(caseTypeName)));
+                // the tag keeps cases apart whose sanitized spellings coincide (int[][] / int[,,], List<int[]> / List<int>[])
+                FieldName: "f" + (tag < 0 ? "m" + (-(long)tag).ToString(CultureInfo.InvariantCulture) : tag.ToString(CultureInfo.InvariantCulture)) + "_" + ObjectParser.Sanitize(caseTypeName)));
         }
 
         if (!valid || cases.Count == 0)
@@ -283,6 +310,21 @@ static class UnionParser
 
         var fullTypeName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var formatterName = ObjectParser.Sanitize(fullTypeName) + "Formatter";
+        if (type.IsGenericType)
+        {
+            foreach (var typeParameter in type.TypeParameters)
+            {
+                foreach (var unionCase in cases)
+                {
+                    if (typeParameter.Name == unionCase.FieldName)
+                    {
+                        diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidUnion, $"'{typeName}': a type parameter named '{typeParameter.Name}' would shadow the generated formatter's field for a case; rename the type parameter.", typeLocation));
+                        return Invalid(diagnostics);
+                    }
+                }
+            }
+        }
+
         var model = new UnionModel(
             FullTypeName: fullTypeName,
             FormatterName: formatterName,

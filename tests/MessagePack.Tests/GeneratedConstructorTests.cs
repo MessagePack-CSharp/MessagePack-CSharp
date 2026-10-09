@@ -98,19 +98,20 @@ public class GeneratedConstructorTests
     }
 
     [Fact]
-    public void Populate_ExistingInstanceKeepsGetterOnlyMembersAndAssignsSettable()
+    public void Populate_ConstructionShapedInstanceIsReplaced()
     {
-        // ReflectionObjectFormatter's Arguments-mode rule, mirrored by the generated
-        // code: a caller-supplied class instance takes the populate path, where
-        // getter-only payloads are skipped and settable members are assigned
+        // a constructor-bound type cannot be refilled in place (its getter-only members are set at construction only),
+        // so a caller-supplied instance is replaced by a fresh one carrying every value of the wire, the rule a
+        // collection that cannot be cleared follows; the reflection tier does the same (ContractlessFormatterTests)
         var bytes = V4.Serialize(new GenCtorPoco(1, "wire") { Score = 3.5 });
         var target = new GenCtorPoco(999, "keep");
         var result = target;
         V4.Deserialize(bytes, ref result);
-        Assert.Same(target, result);
-        Assert.Equal(999, result.Id);       // getter-only: payload skipped
-        Assert.Equal("keep", result.Name);  // getter-only: payload skipped
-        Assert.Equal(3.5, result.Score);    // settable: assigned
+        Assert.NotSame(target, result);
+        Assert.Equal(1, result.Id);
+        Assert.Equal("wire", result.Name);
+        Assert.Equal(3.5, result.Score);
+        Assert.Equal(999, target.Id); // the caller's instance is untouched
     }
 
     // v3's DynamicObjectResolver bound a [Key("my_id")] member to a my_id parameter (issue #1016)

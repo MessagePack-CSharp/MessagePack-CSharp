@@ -270,6 +270,13 @@ public static partial class MessagePackSerializer
         {
             throw new ArgumentException($"The open generic type '{type}' cannot be serialized; close it over concrete type arguments first.", nameof(type));
         }
+        var view = RuntimeTypeView.Normalize(type);
+        if (view != type)
+        {
+            // Serialize(argument.GetType(), ...) on a frozen collection (a hub protocol's argument): the base's entry
+            // serves the implementation type too (the entry takes the value as object)
+            return nonGenericEntries.GetOrAdd(type, GetNonGenericEntry(view));
+        }
         entry = CreateBuiltInEntry(type) ?? CreateNonGenericEntryDynamically(type);
         return nonGenericEntries.GetOrAdd(type, entry);
     }
@@ -346,6 +353,101 @@ public static partial class MessagePackSerializer
         if (type == typeof(TimeSpan?)) return new NonGenericEntry<TimeSpan?>();
         if (type == typeof(Guid?)) return new NonGenericEntry<Guid?>();
         if (type == typeof(Nil?)) return new NonGenericEntry<Nil?>();
+        if (type == typeof(byte[])) return new NonGenericEntry<byte[]>();
+        // the primitive collections BuiltIn serves directly (and the generator leaves undeclared for that reason)
+        if (type == typeof(bool[])) return new NonGenericEntry<bool[]>();
+        if (type == typeof(sbyte[])) return new NonGenericEntry<sbyte[]>();
+        if (type == typeof(short[])) return new NonGenericEntry<short[]>();
+        if (type == typeof(ushort[])) return new NonGenericEntry<ushort[]>();
+        if (type == typeof(int[])) return new NonGenericEntry<int[]>();
+        if (type == typeof(uint[])) return new NonGenericEntry<uint[]>();
+        if (type == typeof(long[])) return new NonGenericEntry<long[]>();
+        if (type == typeof(ulong[])) return new NonGenericEntry<ulong[]>();
+        if (type == typeof(float[])) return new NonGenericEntry<float[]>();
+        if (type == typeof(double[])) return new NonGenericEntry<double[]>();
+        if (type == typeof(List<bool>)) return new NonGenericEntry<List<bool>>();
+        if (type == typeof(List<byte>)) return new NonGenericEntry<List<byte>>();
+        if (type == typeof(List<sbyte>)) return new NonGenericEntry<List<sbyte>>();
+        if (type == typeof(List<short>)) return new NonGenericEntry<List<short>>();
+        if (type == typeof(List<ushort>)) return new NonGenericEntry<List<ushort>>();
+        if (type == typeof(List<int>)) return new NonGenericEntry<List<int>>();
+        if (type == typeof(List<uint>)) return new NonGenericEntry<List<uint>>();
+        if (type == typeof(List<long>)) return new NonGenericEntry<List<long>>();
+        if (type == typeof(List<ulong>)) return new NonGenericEntry<List<ulong>>();
+        if (type == typeof(List<float>)) return new NonGenericEntry<List<float>>();
+        if (type == typeof(List<double>)) return new NonGenericEntry<List<double>>();
+        if (type == typeof(Memory<bool>)) return new NonGenericEntry<Memory<bool>>();
+        if (type == typeof(Memory<byte>)) return new NonGenericEntry<Memory<byte>>();
+        if (type == typeof(Memory<sbyte>)) return new NonGenericEntry<Memory<sbyte>>();
+        if (type == typeof(Memory<short>)) return new NonGenericEntry<Memory<short>>();
+        if (type == typeof(Memory<ushort>)) return new NonGenericEntry<Memory<ushort>>();
+        if (type == typeof(Memory<int>)) return new NonGenericEntry<Memory<int>>();
+        if (type == typeof(Memory<uint>)) return new NonGenericEntry<Memory<uint>>();
+        if (type == typeof(Memory<long>)) return new NonGenericEntry<Memory<long>>();
+        if (type == typeof(Memory<ulong>)) return new NonGenericEntry<Memory<ulong>>();
+        if (type == typeof(Memory<float>)) return new NonGenericEntry<Memory<float>>();
+        if (type == typeof(Memory<double>)) return new NonGenericEntry<Memory<double>>();
+        if (type == typeof(ReadOnlyMemory<bool>)) return new NonGenericEntry<ReadOnlyMemory<bool>>();
+        if (type == typeof(ReadOnlyMemory<byte>)) return new NonGenericEntry<ReadOnlyMemory<byte>>();
+        if (type == typeof(ReadOnlyMemory<sbyte>)) return new NonGenericEntry<ReadOnlyMemory<sbyte>>();
+        if (type == typeof(ReadOnlyMemory<short>)) return new NonGenericEntry<ReadOnlyMemory<short>>();
+        if (type == typeof(ReadOnlyMemory<ushort>)) return new NonGenericEntry<ReadOnlyMemory<ushort>>();
+        if (type == typeof(ReadOnlyMemory<int>)) return new NonGenericEntry<ReadOnlyMemory<int>>();
+        if (type == typeof(ReadOnlyMemory<uint>)) return new NonGenericEntry<ReadOnlyMemory<uint>>();
+        if (type == typeof(ReadOnlyMemory<long>)) return new NonGenericEntry<ReadOnlyMemory<long>>();
+        if (type == typeof(ReadOnlyMemory<ulong>)) return new NonGenericEntry<ReadOnlyMemory<ulong>>();
+        if (type == typeof(ReadOnlyMemory<float>)) return new NonGenericEntry<ReadOnlyMemory<float>>();
+        if (type == typeof(ReadOnlyMemory<double>)) return new NonGenericEntry<ReadOnlyMemory<double>>();
+        if (type == typeof(ArraySegment<bool>)) return new NonGenericEntry<ArraySegment<bool>>();
+        if (type == typeof(ArraySegment<byte>)) return new NonGenericEntry<ArraySegment<byte>>();
+        if (type == typeof(ArraySegment<sbyte>)) return new NonGenericEntry<ArraySegment<sbyte>>();
+        if (type == typeof(ArraySegment<short>)) return new NonGenericEntry<ArraySegment<short>>();
+        if (type == typeof(ArraySegment<ushort>)) return new NonGenericEntry<ArraySegment<ushort>>();
+        if (type == typeof(ArraySegment<int>)) return new NonGenericEntry<ArraySegment<int>>();
+        if (type == typeof(ArraySegment<uint>)) return new NonGenericEntry<ArraySegment<uint>>();
+        if (type == typeof(ArraySegment<long>)) return new NonGenericEntry<ArraySegment<long>>();
+        if (type == typeof(ArraySegment<ulong>)) return new NonGenericEntry<ArraySegment<ulong>>();
+        if (type == typeof(ArraySegment<float>)) return new NonGenericEntry<ArraySegment<float>>();
+        if (type == typeof(ArraySegment<double>)) return new NonGenericEntry<ArraySegment<double>>();
+        if (type == typeof(ReadOnlySequence<byte>)) return new NonGenericEntry<ReadOnlySequence<byte>>();
+        // the remaining built-in scalars and the non-generic views
+        if (type == typeof(object)) return new NonGenericEntry<object>();
+        if (type == typeof(System.Net.IPAddress)) return new NonGenericEntry<System.Net.IPAddress>();
+        if (type == typeof(System.Net.IPEndPoint)) return new NonGenericEntry<System.Net.IPEndPoint>();
+        if (type == typeof(System.Collections.IList)) return new NonGenericEntry<System.Collections.IList>();
+        if (type == typeof(System.Collections.IDictionary)) return new NonGenericEntry<System.Collections.IDictionary>();
+        if (type == typeof(System.Collections.ICollection)) return new NonGenericEntry<System.Collections.ICollection>();
+        if (type == typeof(System.Collections.IEnumerable)) return new NonGenericEntry<System.Collections.IEnumerable>();
+#if NET11_0_OR_GREATER
+        if (type == typeof(System.Numerics.BFloat16)) return new NonGenericEntry<System.Numerics.BFloat16>();
+        if (type == typeof(System.Numerics.Decimal32)) return new NonGenericEntry<System.Numerics.Decimal32>();
+        if (type == typeof(System.Numerics.Decimal64)) return new NonGenericEntry<System.Numerics.Decimal64>();
+        if (type == typeof(System.Numerics.Decimal128)) return new NonGenericEntry<System.Numerics.Decimal128>();
+        if (type == typeof(System.Numerics.BFloat16?)) return new NonGenericEntry<System.Numerics.BFloat16?>();
+        if (type == typeof(System.Numerics.Decimal32?)) return new NonGenericEntry<System.Numerics.Decimal32?>();
+        if (type == typeof(System.Numerics.Decimal64?)) return new NonGenericEntry<System.Numerics.Decimal64?>();
+        if (type == typeof(System.Numerics.Decimal128?)) return new NonGenericEntry<System.Numerics.Decimal128?>();
+#endif
+#if NET9_0_OR_GREATER
+        if (type == typeof(System.Runtime.InteropServices.NFloat)) return new NonGenericEntry<System.Runtime.InteropServices.NFloat>();
+        if (type == typeof(System.Runtime.InteropServices.NFloat?)) return new NonGenericEntry<System.Runtime.InteropServices.NFloat?>();
+        if (type == typeof(DateOnly)) return new NonGenericEntry<DateOnly>();
+        if (type == typeof(TimeOnly)) return new NonGenericEntry<TimeOnly>();
+        if (type == typeof(Half)) return new NonGenericEntry<Half>();
+        if (type == typeof(Int128)) return new NonGenericEntry<Int128>();
+        if (type == typeof(UInt128)) return new NonGenericEntry<UInt128>();
+        if (type == typeof(System.Text.Rune)) return new NonGenericEntry<System.Text.Rune>();
+        if (type == typeof(Index)) return new NonGenericEntry<Index>();
+        if (type == typeof(Range)) return new NonGenericEntry<Range>();
+        if (type == typeof(DateOnly?)) return new NonGenericEntry<DateOnly?>();
+        if (type == typeof(TimeOnly?)) return new NonGenericEntry<TimeOnly?>();
+        if (type == typeof(Half?)) return new NonGenericEntry<Half?>();
+        if (type == typeof(Int128?)) return new NonGenericEntry<Int128?>();
+        if (type == typeof(UInt128?)) return new NonGenericEntry<UInt128?>();
+        if (type == typeof(System.Text.Rune?)) return new NonGenericEntry<System.Text.Rune?>();
+        if (type == typeof(Index?)) return new NonGenericEntry<Index?>();
+        if (type == typeof(Range?)) return new NonGenericEntry<Range?>();
+#endif
         return null;
     }
 

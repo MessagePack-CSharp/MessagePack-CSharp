@@ -1,3 +1,4 @@
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -18,38 +19,13 @@ static class SurrogateParser
 {
     const string FormatterAttributeName = "MessagePack.MessagePackFormatterAttribute";
 
-    /// <summary>Cheap syntax gate: a base list mentioning IMessagePackSurrogate&lt;...&gt;.</summary>
-    public static bool IsCandidate(Microsoft.CodeAnalysis.SyntaxNode node)
-    {
-        if (node is not TypeDeclarationSyntax { BaseList.Types: var baseTypes })
-        {
-            return false;
-        }
-        foreach (var baseType in baseTypes)
-        {
-            var name = baseType.Type;
-            while (true)
-            {
-                if (name is QualifiedNameSyntax qualified)
-                {
-                    name = qualified.Right;
-                }
-                else if (name is AliasQualifiedNameSyntax aliasQualified)
-                {
-                    name = aliasQualified.Name;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            if (name is GenericNameSyntax { Identifier.ValueText: "IMessagePackSurrogate" })
-            {
-                return true;
-            }
-        }
-        return false;
-    }
+    /// <summary>
+    /// Cheap syntax gate: a struct declaration with a base list. The interface itself is matched semantically in
+    /// <see cref="Parse"/>, because its spelling in source can be anything (a <c>using</c> alias, a nested-interface
+    /// chain), and a name-based gate silently dropped those while the analyzer still saw the implementation.
+    /// </summary>
+    public static bool IsCandidate(Microsoft.CodeAnalysis.SyntaxNode node) => node is TypeDeclarationSyntax { BaseList.Types.Count: > 0 } declaration
+        && (declaration is StructDeclarationSyntax || (declaration is RecordDeclarationSyntax record && record.ClassOrStructKeyword.IsKind(SyntaxKind.StructKeyword)));
 
     public static SurrogateParseResult? Parse(GeneratorSyntaxContext context, CancellationToken cancellationToken)
     {

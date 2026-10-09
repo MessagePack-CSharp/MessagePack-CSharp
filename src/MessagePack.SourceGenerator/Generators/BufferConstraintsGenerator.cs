@@ -97,15 +97,10 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
             return null;
         }
 
-        // one model per type, not per partial declaration: only the first declaration in source order produces output
-        // (duplicate hint names would throw at AddSource)
-        var declarations = symbol.DeclaringSyntaxReferences;
-        if (declarations.Length == 0)
-        {
-            return null;
-        }
-        var first = declarations[0];
-        if (first.SyntaxTree != context.Node.SyntaxTree || first.Span != context.Node.Span)
+        // one model per type, not per partial declaration (duplicate hint names would throw at AddSource): the first
+        // partial declaration that carries a base list produces the output. The syntax predicate only admits those, so
+        // "first in source order" would drop a type whose leading declaration is a bare `partial class X<...> { }`.
+        if (!FactoryBridgeGenerator.IsFirstDeclarationWithBaseList(symbol, typeDeclaration))
         {
             return null;
         }
@@ -157,8 +152,11 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
         var hintName = new StringBuilder();
         for (var parent = symbol.ContainingType; parent is not null; parent = parent.ContainingType)
         {
-            containingDeclarations.Insert(0, $"partial {TypeKeyword(parent)} {parent.Name}{TypeParameterList(parent)}");
-            hintName.Insert(0, parent.Name + ".");
+            containingDeclarations.Insert(0, $"partial {TypeKeyword(parent)} {ObjectParser.Identifier(parent.Name)}{TypeParameterList(parent)}");
+            // the arity keeps Outer.X and Outer<T>.X apart, and '+' (the metadata nesting separator, which no
+            // namespace can contain) keeps type Outer apart from namespace Outer_0; the same hint name would fail
+            // AddSource with CS8785
+            hintName.Insert(0, parent.Name + "_" + parent.Arity + "+");
         }
         if (symbol.ContainingNamespace is { IsGlobalNamespace: false } containingNamespace)
         {
@@ -169,14 +167,14 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
         var typeParameterNames = new string[symbol.Arity];
         for (var i = 0; i < symbol.Arity; i++)
         {
-            typeParameterNames[i] = symbol.TypeParameters[i].Name;
+            typeParameterNames[i] = ObjectParser.Identifier(symbol.TypeParameters[i].Name);
         }
 
         return new BufferConstraintModel(
             symbol.ContainingNamespace is { IsGlobalNamespace: false } ns ? ns.ToDisplayString() : null,
             new EquatableArray<string>([.. containingDeclarations]),
             TypeKeyword(symbol),
-            symbol.Name,
+            ObjectParser.Identifier(symbol.Name), // a legal type name can be a keyword (`class @event`)
             new EquatableArray<string>(typeParameterNames),
             new EquatableArray<byte>(roles),
             hintName.ToString());
@@ -276,7 +274,7 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
         var names = new string[type.Arity];
         for (var i = 0; i < type.Arity; i++)
         {
-            names[i] = type.TypeParameters[i].Name;
+            names[i] = ObjectParser.Identifier(type.TypeParameters[i].Name);
         }
         return $"<{string.Join(", ", names)}>";
     }

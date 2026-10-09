@@ -23,6 +23,24 @@ namespace MessagePack;
 /// </summary>
 public static class ReadBufferExtensions
 {
+    // see PresizeCapacity: 8 keeps every type whose in-memory size is at most 8x its wire size (reference-type elements
+    // behind a 1-byte nil, long behind a 1-byte fixint) on the one-allocation path
+    const long PresizeBytesPerUnreadByte = 8;
+
+    /// <summary>
+    /// Gets the capacity to pre-size a collection of <typeparamref name="T"/> with, for a header that declared <paramref name="count"/> elements with <paramref name="bytesRemaining"/> bytes left to read.
+    /// The header guards bound the count by the bytes of the message, but the allocation is the count times the element size, so a
+    /// header can still claim far more memory than its bytes justify. The capacity is capped at 8 times the unread bytes; a formatter
+    /// that gets less than <paramref name="count"/> back grows its collection while reading, so the allocation follows the bytes
+    /// actually decoded. Data whose in-memory size is at most 8 times its wire size always gets <paramref name="count"/> back.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int PresizeCapacity<T>(int count, long bytesRemaining)
+    {
+        var budget = PresizeBytesPerUnreadByte * bytesRemaining;
+        return (long)count * Unsafe.SizeOf<T>() <= budget ? count : (int)(budget / Unsafe.SizeOf<T>());
+    }
+
     extension<TReadBuffer>(ref TReadBuffer buffer)
         where TReadBuffer : struct, IReadBuffer
 #if NET9_0_OR_GREATER
@@ -220,7 +238,7 @@ public static class ReadBufferExtensions
 
         /// <summary>
         /// Reads an array header and returns the element count. A count larger than the remaining data throws.
-        /// Formatters use <see cref="ReadArrayHeader(ref DeserializeState)"/>, which also charges the message-wide declared-element budget.
+        /// Formatters use <see cref="ReadArrayHeader{TReadBuffer}(ref TReadBuffer, ref DeserializeState)"/>, which also charges the message-wide declared-element budget.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadArrayHeader()
@@ -247,7 +265,7 @@ public static class ReadBufferExtensions
 
         /// <summary>
         /// Reads a map header and returns the entry count. A count larger than the remaining data throws.
-        /// Formatters use <see cref="ReadMapHeader(ref DeserializeState)"/>, which also charges the message-wide declared-element budget.
+        /// Formatters use <see cref="ReadMapHeader{TReadBuffer}(ref TReadBuffer, ref DeserializeState)"/>, which also charges the message-wide declared-element budget.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadMapHeader()

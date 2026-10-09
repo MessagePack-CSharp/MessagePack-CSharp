@@ -8,6 +8,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- the compression packages carry their native libraries as RID-specific runtime assets, which a .NET Framework
+         build only copies next to the executable when it names its RID (nothing else on the path must stand in) -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
@@ -26,6 +29,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+    <!-- the netstandard2.0 assets of the compression packages: .NET Framework is the runtime that loads them, and
+         the one that refuses a strong-named assembly referencing an unsigned one, so the load itself is the test -->
+    <ProjectReference Include="..\..\src\MessagePack.LZ4\MessagePack.LZ4.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.Zstandard\MessagePack.Zstandard.csproj" />
     <!-- the generator does not flow transitively through the MessagePack project
          reference; wire it here so [MessagePackObject] types in this project are
          source-generated (the reflection tier refuses MessagePackUnknownMembers) -->

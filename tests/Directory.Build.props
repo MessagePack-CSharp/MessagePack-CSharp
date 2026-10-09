@@ -1,5 +1,7 @@
 <Project>
 
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
   <!-- xUnit's style analyzers are noise for this repo (user decision); grow the list as
        new rules start firing. $(NoWarn) accumulation keeps the SDK defaults (1701;1702). -->
   <PropertyGroup>

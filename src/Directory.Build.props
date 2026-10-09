@@ -1,5 +1,14 @@
 <Project>
 
+	<Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+	<!-- Every shipped assembly ships its XML documentation; interface and base members carry the docs, so the
+	     implementing members are intentionally undocumented (CS1591). -->
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);CS1591</NoWarn>
+	</PropertyGroup>
+
 	<!-- Every shipped assembly is strong-name signed with the key v3 used (opensource.snk, PublicKeyToken b4a0369545f0a1be).
 	     This is a contract on the assembly identity, not a formality. Assemblies built against v3 reference
 	     "MessagePack, PublicKeyToken=b4a0369545f0a1be" and "MessagePack.Annotations, PublicKeyToken=b4a0369545f0a1be",

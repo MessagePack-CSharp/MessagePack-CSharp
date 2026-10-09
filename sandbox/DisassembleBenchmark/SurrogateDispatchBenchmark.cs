@@ -113,7 +113,7 @@ public class SurrogateDispatchBenchmark
         var buffer = new ReadOnlySpanReadBuffer(payload);
         try
         {
-            var state = new DeserializeState(64);
+            var state = new DeserializeState(64, payload.Length);
             SurAbTargetStatic? result = default;
             staticFormatter.Deserialize(ref buffer, ref state, ref result);
             return result!;
@@ -130,7 +130,7 @@ public class SurrogateDispatchBenchmark
         var buffer = new ReadOnlySpanReadBuffer(payload);
         try
         {
-            var state = new DeserializeState(64);
+            var state = new DeserializeState(64, payload.Length);
             SurAbTargetInstance? result = default;
             instanceFormatter.Deserialize(ref buffer, ref state, ref result);
             return result!;

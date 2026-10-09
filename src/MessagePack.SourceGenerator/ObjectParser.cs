@@ -64,6 +64,26 @@ static class ObjectParser
             return new ParseResult(null, new EquatableArray<DiagnosticInfo>([]));
         }
 
+        if (HasTypeLevelFormatterAttribute(type))
+        {
+            // the type-level registration serves the type (v3's AttributeFormatterResolver sat before the generated
+            // tier): no object model, and none of its shape rules (constructor binding, key checks) apply
+            return new ParseResult(null, new EquatableArray<DiagnosticInfo>([]));
+        }
+
+        foreach (var attribute in type.GetAttributes())
+        {
+            // the type-level registration pipeline matches the attribute class exactly (ForAttributeWithMetadataName,
+            // one pipeline per exact name); a derived attribute would be silently outranked by this object formatter
+            if (attribute.AttributeClass is { } attributeClass
+                && attributeClass.ToDisplayString() != FormatterAttributeName
+                && !(attributeClass.IsGenericType && attributeClass.OriginalDefinition.ToDisplayString() == FormatterAttributeName + "<TFactory>")
+                && HasAttributeClass(attributeClass, FormatterAttributeName))
+            {
+                diagnostics.Add(new DiagnosticInfo(Diagnostics.TypeLevelFormatterNotGenerated, $"'{typeName}': '[{attributeClass.Name}]' derives from MessagePackFormatterAttribute, which the type-level registration does not match (only [MessagePackFormatter] and [MessagePackFormatter<TFactory>] themselves are); the generated object formatter serves the type instead. Apply the base attribute directly, or register the factory in the resolver chain.", typeLocation));
+            }
+        }
+
         if (type.TypeKind is not (TypeKind.Class or TypeKind.Struct))
         {
             // interfaces land here only without [UnionTag] (the pipeline routes tagged ones to UnionParser),
@@ -92,6 +112,14 @@ static class ObjectParser
         }
 
         var allowPrivate = ReadNamedBool(objectAttribute, "AllowPrivate");
+
+        if (IsFileLocal(type))
+        {
+            // a `file` type is visible in its own source file only: neither the generated formatter nor the factory,
+            // which live in generated files, can name it (CS0400)
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.TypeNotAccessible, $"'{typeName}' is a file-local type, which generated code in another file cannot reach; make it internal or public.", typeLocation));
+            return Invalid(diagnostics);
+        }
 
         // the generated formatter lives in another namespace of the same assembly (AllowPrivate nests it inside the
         // type, but the factory still needs to reach it)
@@ -122,9 +150,9 @@ static class ObjectParser
             }
             foreach (var typeParameter in type.TypeParameters)
             {
-                if (typeParameter.Name is "TWriteBuffer" or "TReadBuffer")
+                if (CollidesWithGeneratedCode(typeParameter.Name, context.SemanticModel.Compilation))
                 {
-                    diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}' is skipped: a type parameter named '{typeParameter.Name}' collides with the generated formatter's buffer parameters.", typeLocation));
+                    diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}' is skipped: a type parameter named '{typeParameter.Name}' would shadow a name the generated formatter uses (its buffer parameters, or a type of the MessagePack / SerializerFoundation namespaces); rename the type parameter.", typeLocation));
                     return Invalid(diagnostics);
                 }
             }
@@ -174,6 +202,16 @@ static class ObjectParser
         {
             foreach (var member in current.GetMembers())
             {
+                if (member is IPropertySymbol { ExplicitInterfaceImplementations.Length: > 0 } explicitImplementation)
+                {
+                    // reachable only through the interface (a cast that boxes a struct and loses the write, and no
+                    // object-initializer route at all): not generated, and said so when it was annotated as a member
+                    if (HasAttribute(explicitImplementation, KeyAttributeName))
+                    {
+                        diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}.{explicitImplementation.Name}' is an explicit interface implementation, which the generated formatter does not serialize; expose the value through a regular member.", LocationInfo.From(explicitImplementation)));
+                    }
+                    continue;
+                }
                 if (member is IPropertySymbol { IsStatic: false, IsIndexer: false, IsImplicitlyDeclared: false } property
                     && property.GetMethod is { } getter
                     && (allowPrivate || (property.DeclaredAccessibility == Accessibility.Public && getter.DeclaredAccessibility == Accessibility.Public)))
@@ -237,6 +275,19 @@ static class ObjectParser
                 candidates[index] = candidates[index] with { QualifyMapKey = true };
             }
         }
+        // a base declaration hidden by a derived member that is not a candidate (a [NonSerialized] `new` field, a
+        // non-public `new` member the formatter can still see): `value.Name` binds the hider, so the base storage must
+        // be reached through its declarer or the hider's value is what gets serialized and the base one is lost
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            if (candidates[i].ShadowedBaseType is null && IsHiddenInDerivedType(type, candidates[i].Symbol, allowPrivate))
+            {
+                candidates[i] = candidates[i] with
+                {
+                    ShadowedBaseType = candidates[i].Symbol.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                };
+            }
+        }
 
         // v3 wire order, mirroring ReflectionObjectFormatter so both tiers emit the same map bytes - and v3 ordered the
         // two branches differently (oracle-probed): map-by-name enumerates per level (base level's properties then
@@ -256,6 +307,12 @@ static class ObjectParser
         var stringKeys = new HashSet<string>();
         var valid = true;
         string? unknownMembersName = null;
+        var unknownMembersRequired = false;
+        // string key -> v3's alias of a key qualified by a generic declaring type, as (prefix, suffix), see MemberModel
+        // (keyed by the key, which is unique, because the entry list is filtered before the models are built)
+        var legacyKeyByKey = new Dictionary<string, (string Prefix, string Suffix)>(StringComparer.Ordinal);
+        // `required` members opted out of serialization: never read, but every generated `new` must still assign them
+        var requiredDefaultedMembers = new List<RequiredDefaultModel>();
 
         foreach (var (symbol, memberType, setter, shadowedBaseType, qualifyMapKey) in candidates)
         {
@@ -263,6 +320,7 @@ static class ObjectParser
             string? stringKey = null;
             var ignored = false;
             var rekeyedOverride = false;
+            var unreadableDerivedKey = false;
             AttributeData? formatterAttribute = null;
 
             // MemberAttributes walks the override chain (an override without its own [Key] inherits the base virtual
@@ -273,13 +331,24 @@ static class ObjectParser
                 var attributeName = attribute.AttributeClass?.ToDisplayString();
                 // [IgnoreDataMember] is an alias for [IgnoreMember] in both tiers (v3's dynamic resolvers honored it
                 // but mpc did not, that inconsistency ends here)
-                if (attributeName == IgnoreMemberAttributeName || attributeName == IgnoreDataMemberAttributeName)
+                if (IsIgnoreAttribute(attribute.AttributeClass))
                 {
                     ignored = true;
                 }
-                else if (attributeName == KeyAttributeName && attribute.ConstructorArguments.Length > 0)
+                else if (IsKeyAttribute(attribute.AttributeClass))
                 {
-                    var argument = attribute.ConstructorArguments[0].Value;
+                    // a derived KeyAttribute (the attribute is not sealed, and the reflection tier reads the key off
+                    // the instance) is readable here only when the key is its first constructor argument
+                    var argument = attribute.ConstructorArguments.Length > 0 ? attribute.ConstructorArguments[0].Value : null;
+                    if (argument is not (int or string) || (attributeName != KeyAttributeName && !ForwardsKeyToBase(attribute)))
+                    {
+                        if (attributeName != KeyAttributeName)
+                        {
+                            diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}.{symbol.Name}': '[{attribute.AttributeClass!.Name}]' derives from KeyAttribute, and the generator can only read a derived key that is passed unchanged from the first constructor parameter to KeyAttribute's own constructor (`: base(key)`, declared in this compilation); the reflection tier serves the type as-is. Forward the key as it is, or apply [Key] directly.", LocationInfo.From(symbol)));
+                            unreadableDerivedKey = true;
+                        }
+                        continue;
+                    }
                     if (intKey is null && stringKey is null)
                     {
                         if (argument is int i)
@@ -318,7 +387,7 @@ static class ObjectParser
             {
                 continue;
             }
-            if (rekeyedOverride)
+            if (rekeyedOverride || unreadableDerivedKey)
             {
                 valid = false;
                 continue;
@@ -340,6 +409,15 @@ static class ObjectParser
             if (IsUnknownMembersType(memberType))
             {
                 var unknownLocation = LocationInfo.From(symbol);
+                if (shadowedBaseType is not null || IsHiddenInDerivedType(type, symbol, allowPrivate))
+                {
+                    // the generated code reaches the packet through `result.Name`, which binds the most derived
+                    // declaration of that name (a candidate or not: a [NonSerialized] `new` field hides it just the
+                    // same): a hidden base packet would be captured into, or fail to compile against, the wrong member
+                    diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidUnknownMembersMember, $"'{typeName}': the MessagePackUnknownMembers member '{symbol.ContainingType.ToDisplayString()}.{symbol.Name}' is hidden by a derived declaration of the same name, which generated code cannot reach; rename one of them.", unknownLocation));
+                    valid = false;
+                    continue;
+                }
                 if (intKey is not null || stringKey is not null)
                 {
                     diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidUnknownMembersMember, $"'{typeName}.{symbol.Name}': a MessagePackUnknownMembers member carries no [Key]; it captures whatever keys the declared members do not.", unknownLocation));
@@ -365,13 +443,14 @@ static class ObjectParser
                     continue;
                 }
                 unknownMembersName = symbol.Name;
+                unknownMembersRequired = IsRequiredMember(symbol);
                 continue;
             }
 
             CustomFormatterModel? custom = null;
             if (formatterAttribute is not null)
             {
-                if (!TryBuildCustomFormatter(formatterAttribute, memberType, $"{typeName}.{symbol.Name}", LocationInfo.From(symbol), context, diagnostics, out custom))
+                if (!TryBuildCustomFormatter(formatterAttribute, memberType, $"{typeName}.{symbol.Name}", LocationInfo.From(symbol), context, diagnostics, out custom, accessScope: allowPrivate ? type : null))
                 {
                     valid = false;
                     continue;
@@ -397,6 +476,13 @@ static class ObjectParser
                     stringKey = qualifyMapKey
                         ? ReflectionFullName(symbol.ContainingType) + "." + symbol.Name
                         : KeyNamingPolicyConverter.ConvertName(namingPolicy, symbol.Name);
+                    if (qualifyMapKey && symbol.ContainingType.IsGenericType)
+                    {
+                        // v3 spelled this qualifier as the closed FullName ("Ns.Middle`1[[System.Int32, <assembly>]].X"):
+                        // the type arguments' assembly identities are a runtime detail, so the alias is matched by
+                        // its invariant ends
+                        legacyKeyByKey[stringKey] = (ReflectionFullName(symbol.ContainingType) + "[", "]." + symbol.Name);
+                    }
                 }
                 else if (symbol.DeclaredAccessibility == Accessibility.Public
                     && (symbol is not IPropertySymbol { GetMethod: { } g } || g.DeclaredAccessibility == Accessibility.Public))
@@ -438,7 +524,7 @@ static class ObjectParser
                 hasStringKey = true;
             }
 
-            var requiredModifier = symbol is IPropertySymbol { IsRequired: true } or IFieldSymbol { IsRequired: true };
+            var requiredModifier = IsRequiredMember(symbol);
             if (shadowedBaseType is not null && (setter == SetterKind.Init || requiredModifier))
             {
                 // the construction shape reaches init-only and required members through the object initializer,
@@ -452,6 +538,27 @@ static class ObjectParser
             // or a field - under AllowPrivate even a readonly one (v3 counted those)
             var writable = setter != SetterKind.None || (allowPrivate && symbol is IFieldSymbol);
             entries.Add((symbol.Name, memberType, setter, intKey ?? -1, stringKey ?? "", requiredModifier, memberLocation, custom, shadowedBaseType, explicitKey, writable));
+        }
+
+        // every `required` member the formatter will not read, whatever excluded it ([IgnoreMember], [NonSerialized],
+        // an accessor the generated code cannot reach): the compiler demands it in each generated `new` all the same
+        var readNames = new HashSet<string>(entries.Select(static e => e.Name), StringComparer.Ordinal);
+        if (unknownMembersName is not null)
+        {
+            readNames.Add(unknownMembersName);
+        }
+        for (var current = type; current is not null && current.SpecialType != SpecialType.System_Object && current.SpecialType != SpecialType.System_ValueType; current = current.BaseType)
+        {
+            foreach (var member in current.GetMembers())
+            {
+                if (member is IPropertySymbol { IsStatic: false } or IFieldSymbol { IsStatic: false }
+                    && IsRequiredMember(member)
+                    && !readNames.Contains(member.Name)
+                    && !requiredDefaultedMembers.Any(r => r.Name == member.Name))
+                {
+                    requiredDefaultedMembers.Add(new RequiredDefaultModel(member.Name, RequiredDefaultExpression(member, context.SemanticModel.Compilation, typeName, diagnostics)));
+                }
+            }
         }
 
         if (hasIntKey && hasStringKey)
@@ -498,9 +605,10 @@ static class ObjectParser
         if (attributedConstructor is not null)
         {
             if (!IsConstructorAccessible(attributedConstructor, allowPrivate, parameterless: attributedConstructor.Parameters.Length == 0)
+                || !HasOnlyValueParameters(attributedConstructor)
                 || !TryMatchConstructor(context.SemanticModel.Compilation, attributedConstructor, entries, parameterIndexByEntry))
             {
-                diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidSerializationConstructor, $"'{typeName}': the [SerializationConstructor] constructor must be accessible and every parameter must match a serialized member by [Key] name or member name (case-insensitive) and assignable type.", LocationInfo.From(attributedConstructor) ?? typeLocation));
+                diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidSerializationConstructor, $"'{typeName}': the [SerializationConstructor] constructor must be accessible, take its parameters by value (no ref/out/in), and every parameter must match a serialized member by [Key] name or member name (case-insensitive) and assignable type.", LocationInfo.From(attributedConstructor) ?? typeLocation));
                 return Invalid(diagnostics);
             }
             constructorParameterCount = attributedConstructor.Parameters.Length;
@@ -510,7 +618,7 @@ static class ObjectParser
         {
             var matched = false;
             foreach (var constructor in type.InstanceConstructors
-                .Where(c => IsConstructorAccessible(c, allowPrivate, parameterless: c.Parameters.Length == 0))
+                .Where(c => IsConstructorAccessible(c, allowPrivate, parameterless: c.Parameters.Length == 0) && HasOnlyValueParameters(c))
                 .OrderByDescending(c => c.Parameters.Length))
             {
                 for (int i = 0; i < parameterIndexByEntry.Length; i++)
@@ -585,7 +693,10 @@ static class ObjectParser
             var (direct, directNullable) = entry.Custom is null ? ClassifyDirect(entry.Type) : (DirectKind.None, false);
             models.Add(new MemberModel(
                 Name: entry.Name,
-                TypeName: entry.Type.ToDisplayString(FullyQualifiedWithNullability),
+                // `dynamic` would make every formatter call on the member a dynamic invocation, which cannot take the
+                // ref struct buffers (CS1978): the formatter is object's, and the member is read and written as object
+                TypeName: entry.Type is IDynamicTypeSymbol ? "object?" : entry.Type.ToDisplayString(FullyQualifiedWithNullability),
+                IsDynamic: entry.Type is IDynamicTypeSymbol,
                 IntKey: entry.IntKey,
                 StringKey: entry.StringKey,
                 Direct: direct,
@@ -595,7 +706,10 @@ static class ObjectParser
                 ConstructorParameterTypeName: parameterIndexByEntry[i] >= 0
                     && selectedConstructor!.Parameters[parameterIndexByEntry[i]].Type is { } parameterType
                     && !SymbolEqualityComparer.Default.Equals(parameterType, entry.Type)
-                    ? parameterType.ToDisplayString(FullyQualifiedWithNullability)
+                    // a `dynamic` parameter takes an object argument: a `(dynamic)` cast would make the `new` a
+                    // dynamic invocation that re-resolves the overload at run time (and could pick a sibling
+                    // constructor over the [SerializationConstructor])
+                    ? (parameterType is IDynamicTypeSymbol ? "object?" : parameterType.ToDisplayString(FullyQualifiedWithNullability))
                     : null,
                 IsRequired: entry.RequiredModifier || requiredByConstructor,
                 HasRequiredModifier: entry.RequiredModifier,
@@ -604,13 +718,35 @@ static class ObjectParser
                     && entry.Type.TypeKind != TypeKind.TypeParameter,
                 CustomFormatter: entry.Custom,
                 BaseCastType: entry.ShadowedBaseType,
-                UniqueId: entry.ShadowedBaseType is null ? null : entry.Name + "_" + Sanitize(entry.ShadowedBaseType)));
+                UniqueId: entry.ShadowedBaseType is null ? null : entry.Name + "_" + Sanitize(entry.ShadowedBaseType),
+                LegacyKeyPrefix: legacyKeyByKey.TryGetValue(entry.StringKey, out var legacyKey) ? legacyKey.Prefix : null,
+                LegacyKeySuffix: legacyKeyByKey.TryGetValue(entry.StringKey, out legacyKey) ? legacyKey.Suffix : null));
+        }
+
+        // the generated identifiers (f/v_/has_ + Id) must be unique: a shadowed member's UniqueId (Name_Declarer)
+        // can spell another member's plain name (X hidden by `new X` next to a member named X_Ns_Base)
+        var usedIds = new HashSet<string>(StringComparer.Ordinal);
+        for (int i = 0; i < models.Count; i++)
+        {
+            var id = models[i].Id;
+            var unique = id;
+            var suffix = 2;
+            while (!usedIds.Add(unique))
+            {
+                unique = id + "_" + suffix++;
+            }
+            if (unique != id)
+            {
+                models[i] = models[i] with { UniqueId = unique };
+            }
         }
 
         // a class with required members cannot be `new T()`-ed by the populate path (CS9035): route it through the
         // construction shape, whose object initializer covers the required members.
-        // Structs never `new` on the populate path.
-        var useConstruction = constructorParameterCount > 0 || anyInit || (anyRequiredModifier && !type.IsValueType);
+        // Structs never `new` on the populate path, which is why a struct's explicit parameterless
+        // [SerializationConstructor] (an initializer the author asked for) takes the construction shape too.
+        var useConstruction = constructorParameterCount > 0 || anyInit || (anyRequiredModifier && !type.IsValueType)
+            || (attributedConstructor is not null && type.IsValueType);
 
         if (AllowCircularReferences && useConstruction)
         {
@@ -632,7 +768,56 @@ static class ObjectParser
         var compilation = context.SemanticModel.Compilation;
         foreach (var entry in entries)
         {
+            if (entry.Custom is not null)
+            {
+                continue; // the member's own [MessagePackFormatter] serves it; a default registration beside it is noise at best
+            }
             HarvestSerializedType(entry.Type, compilation, harvestedGenerics, harvestedBuiltIns);
+        }
+
+        // AllowPrivate: member types the generated factory cannot name (a private nested enum, alone or inside
+        // Nullable<>, arrays, List<>, Dictionary<,>, ...) are harvested again with the type itself as the
+        // accessibility scope; what that run adds is registered by a factory nested in the partial type (see
+        // ObjectEmitter), the one place that can spell those types
+        var privateHarvestedBuiltIns = new List<HarvestedBuiltInModel>();
+        if (allowPrivate)
+        {
+            var scopedGenerics = new Dictionary<string, HarvestedGenericModel>();
+            var scopedBuiltIns = new Dictionary<string, HarvestedBuiltInModel>();
+            privateAccessScope = type;
+            try
+            {
+                foreach (var entry in entries)
+                {
+                    if (entry.Custom is null)
+                    {
+                        HarvestSerializedType(entry.Type, compilation, scopedGenerics, scopedBuiltIns);
+                    }
+                }
+            }
+            finally
+            {
+                privateAccessScope = null;
+            }
+            foreach (var harvested in scopedBuiltIns)
+            {
+                if (!harvestedBuiltIns.ContainsKey(harvested.Key))
+                {
+                    privateHarvestedBuiltIns.Add(harvested.Value);
+                }
+            }
+            // a generic [MessagePackObject] of this compilation closed over a private type (Box<Mode>): its generated
+            // open formatter is internal to the assembly, so the nested factory can close it where the generated
+            // factory cannot name the argument
+            foreach (var harvested in scopedGenerics)
+            {
+                if (!harvestedGenerics.ContainsKey(harvested.Key) && harvested.Value.OpenFormatterName.Length > 0)
+                {
+                    privateHarvestedBuiltIns.Add(new HarvestedBuiltInModel(
+                        ClosedTypeName: harvested.Value.ClosedTypeName,
+                        FormatterConstruction: $"new global::MessagePack.Generated.{harvested.Value.OpenFormatterName}<TWriteBuffer, TReadBuffer, {string.Join(", ", harvested.Value.TypeArguments.AsArray())}>()"));
+                }
+            }
         }
 
         var fullTypeName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -652,6 +837,18 @@ static class ObjectParser
         var openFormatterTypeOf = type.IsGenericType
             ? formatterReference + "<" + new string(',', type.TypeParameters.Length + 1) + ">"
             : "";
+
+        if (type.IsGenericType)
+        {
+            foreach (var typeParameter in type.TypeParameters)
+            {
+                if (CollidesWithGeneratedSlot(typeParameter.Name, models.Select(static m => m.Id)))
+                {
+                    diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}' is skipped: a type parameter named '{typeParameter.Name}' would shadow the generated formatter's field or local for a member; rename the type parameter.", typeLocation));
+                    return Invalid(diagnostics);
+                }
+            }
+        }
 
         var model = new ObjectModel(
             FullTypeName: fullTypeName,
@@ -675,19 +872,210 @@ static class ObjectParser
             Members: new EquatableArray<MemberModel>([.. models]),
             HarvestedGenerics: new EquatableArray<HarvestedGenericModel>([.. harvestedGenerics.Values.OrderBy(static h => h.ClosedTypeName, StringComparer.Ordinal)]),
             HarvestedBuiltIns: new EquatableArray<HarvestedBuiltInModel>([.. harvestedBuiltIns.Values.OrderBy(static h => h.ClosedTypeName, StringComparer.Ordinal)]),
-            UnknownMembersName: unknownMembersName);
+            UnknownMembersName: unknownMembersName,
+            UnknownMembersRequired: unknownMembersRequired,
+            RequiredDefaultedMembers: new EquatableArray<RequiredDefaultModel>([.. requiredDefaultedMembers]),
+            PrivateHarvestedBuiltIns: new EquatableArray<HarvestedBuiltInModel>([.. privateHarvestedBuiltIns.OrderBy(static h => h.ClosedTypeName, StringComparer.Ordinal)]));
         return new ParseResult(model, new EquatableArray<DiagnosticInfo>([.. diagnostics]));
     }
 
     const string MessagePackObjectAttributeName = "MessagePack.MessagePackObjectAttribute";
 
-    // closureDepth: how many closed user-generic member graphs the walk is already inside. A closed instantiation
-    // harvests its own members under substitution (Box<string>.Items: List<T> => List<string>), and a self-nesting shape
-    // (Node<T> { Node<List<T>> Next }) would produce a new closed type at every level, so the walk stops at a depth no
-    // real model reaches.
-    const int MaxClosureDepth = 8;
+    // A finite type graph terminates on its own: every closed type is harvested once (the userGenerics / builtIns
+    // keys). What does not terminate is an expanding generic definition (the CLR's "infinitely expanding" shape: a
+    // cycle through type-argument positions with a step that nests the parameter in a constructed type, class
+    // C<T> : List<C<T[]>> opening C<int>, C<int[]>, C<int[][]>, ...; Node<T> { Node<List<T>> Next }). The walk stops
+    // a closed type of such a definition once it nests MaxClosureGrowth levels deeper than the type the walk started
+    // from, and nothing else: a finite graph, however deeply its own types nest (a 40-layer List<List<...>> member, a
+    // long chain of distinct generics A<int> -> B<int> -> ... -> Z<int>), is harvested to its end, which Native AOT
+    // (no dynamic fallback) depends on. closureDepth is informational only.
+    const int MaxClosureGrowth = 32;
+
+    // the nesting depth of the type the current walk started from (one top-level call per member type)
+    [ThreadStatic]
+    static int? harvestRootNesting;
+
+    // per walk: whether a generic definition is expanding, and the edges of the expansion graph
+    [ThreadStatic]
+    static Dictionary<INamedTypeSymbol, bool>? expandingDefinitions;
+
+    [ThreadStatic]
+    static Dictionary<INamedTypeSymbol, List<(int SourceIndex, INamedTypeSymbol Target, int TargetIndex, bool Nested)>>? expansionEdges;
+
+    // Expansion graph: node (D, i) is type parameter i of definition D; an edge (D, i) -> (E, k) exists when a type D
+    // closes under the walk (an open member type for a [MessagePackObject] of this compilation, the arguments of the
+    // collection view the catch-all serves a collection through) mentions E<...> with T_i in its k-th argument, nested when
+    // T_i sits inside a constructed type there (E<List<T>>, E<T[]>) rather than being the argument itself. D expands
+    // iff some (D, i) lies on a cycle with a nested edge: each round of the cycle then closes a strictly deeper type.
+    static bool IsExpandingDefinition(INamedTypeSymbol definition, Compilation compilation)
+    {
+        expandingDefinitions ??= new Dictionary<INamedTypeSymbol, bool>(SymbolEqualityComparer.Default);
+        if (expandingDefinitions.TryGetValue(definition, out var known))
+        {
+            return known;
+        }
+        var expanding = false;
+        for (var i = 0; i < definition.TypeParameters.Length && !expanding; i++)
+        {
+            var seen = new HashSet<(INamedTypeSymbol, int, bool)>();
+            var pending = new Stack<(INamedTypeSymbol Definition, int Index, bool NestedSeen)>();
+            pending.Push((definition, i, false));
+            while (pending.Count > 0 && !expanding)
+            {
+                var (current, index, nestedSeen) = pending.Pop();
+                foreach (var (sourceIndex, target, targetIndex, nested) in ExpansionEdges(current, compilation))
+                {
+                    if (sourceIndex != index)
+                    {
+                        continue;
+                    }
+                    var nextNested = nestedSeen || nested;
+                    if (nextNested && SymbolEqualityComparer.Default.Equals(target, definition) && targetIndex == i)
+                    {
+                        expanding = true;
+                        break;
+                    }
+                    if (seen.Add((target, targetIndex, nextNested)))
+                    {
+                        pending.Push((target, targetIndex, nextNested));
+                    }
+                }
+            }
+        }
+        expandingDefinitions[definition] = expanding;
+        return expanding;
+    }
+
+    static List<(int SourceIndex, INamedTypeSymbol Target, int TargetIndex, bool Nested)> ExpansionEdges(INamedTypeSymbol definition, Compilation compilation)
+    {
+        expansionEdges ??= new Dictionary<INamedTypeSymbol, List<(int, INamedTypeSymbol, int, bool)>>(SymbolEqualityComparer.Default);
+        if (expansionEdges.TryGetValue(definition, out var edges))
+        {
+            return edges;
+        }
+        edges = new List<(int, INamedTypeSymbol, int, bool)>();
+        expansionEdges[definition] = edges;
+        foreach (var open in OpenClosureTypes(definition, compilation))
+        {
+            CollectExpansionEdges(open, definition, edges);
+        }
+        return edges;
+    }
+
+    // what the walk closes under a definition's type arguments
+    static IEnumerable<ITypeSymbol> OpenClosureTypes(INamedTypeSymbol definition, Compilation compilation)
+    {
+        if (SymbolEqualityComparer.Default.Equals(definition.ContainingAssembly, compilation.Assembly) && HasMessagePackObjectAttribute(definition))
+        {
+            foreach (var member in ClosedSerializedMemberTypes(definition))
+            {
+                yield return member;
+            }
+            foreach (var caseType in ClosedUnionCaseTypes(definition))
+            {
+                yield return caseType;
+            }
+            yield break;
+        }
+        // a collection shape closes the type arguments of the view the catch-all serves it through (the same
+        // selection, asked of the open definition), and an unserved shape closes nothing
+        if (IsAccessibleToGeneratedCode(definition, compilation) && SelectCollectionShape(definition, compilation) is { } shape)
+        {
+            foreach (var argument in shape.Arguments)
+            {
+                yield return argument;
+            }
+        }
+    }
+
+    static void CollectExpansionEdges(ITypeSymbol term, INamedTypeSymbol source, List<(int, INamedTypeSymbol, int, bool)> edges)
+    {
+        switch (term)
+        {
+            case IArrayTypeSymbol array:
+                CollectExpansionEdges(array.ElementType, source, edges);
+                break;
+            case INamedTypeSymbol { IsGenericType: true } named:
+                var target = named.OriginalDefinition;
+                // BCL generics (List<T>, Dictionary<,>) are harvested by their arguments, never closed through their
+                // own members, so they are not nodes; everything else may be
+                var isNode = target.SpecialType == SpecialType.None && !target.ContainingNamespace.ToDisplayString().StartsWith("System", StringComparison.Ordinal);
+                for (var k = 0; k < named.TypeArguments.Length; k++)
+                {
+                    var argument = named.TypeArguments[k];
+                    if (isNode)
+                    {
+                        for (var i = 0; i < source.TypeParameters.Length; i++)
+                        {
+                            var parameter = source.TypeParameters[i];
+                            if (MentionsTypeParameter(argument, parameter))
+                            {
+                                edges.Add((i, target, k, !SymbolEqualityComparer.Default.Equals(argument, parameter)));
+                            }
+                        }
+                    }
+                    CollectExpansionEdges(argument, source, edges);
+                }
+                break;
+        }
+    }
+
+    static bool MentionsTypeParameter(ITypeSymbol term, ITypeParameterSymbol parameter) => term switch
+    {
+        ITypeParameterSymbol p => SymbolEqualityComparer.Default.Equals(p, parameter),
+        IArrayTypeSymbol array => MentionsTypeParameter(array.ElementType, parameter),
+        INamedTypeSymbol { IsGenericType: true } named => named.TypeArguments.Any(a => MentionsTypeParameter(a, parameter)),
+        _ => false,
+    };
+
+    static int TypeNestingDepth(ITypeSymbol type)
+    {
+        switch (type)
+        {
+            case IArrayTypeSymbol array:
+                return 1 + TypeNestingDepth(array.ElementType);
+            case INamedTypeSymbol { IsGenericType: true } named:
+                var deepest = 0;
+                foreach (var argument in named.TypeArguments)
+                {
+                    deepest = Math.Max(deepest, TypeNestingDepth(argument));
+                }
+                return 1 + deepest;
+            default:
+                return 0;
+        }
+    }
 
     internal static void HarvestSerializedType(ITypeSymbol type, Compilation compilation, Dictionary<string, HarvestedGenericModel> userGenerics, Dictionary<string, HarvestedBuiltInModel> builtIns, int closureDepth = 0)
+    {
+        var nesting = TypeNestingDepth(type);
+        var outermost = harvestRootNesting is null;
+        if (outermost)
+        {
+            harvestRootNesting = nesting;
+        }
+        try
+        {
+            if (nesting > harvestRootNesting + MaxClosureGrowth
+                && type is INamedTypeSymbol { IsGenericType: true } grown
+                && IsExpandingDefinition(grown.OriginalDefinition, compilation))
+            {
+                return; // an expanding definition's closures end here, see MaxClosureGrowth
+            }
+            HarvestSerializedTypeCore(type, compilation, userGenerics, builtIns, closureDepth);
+        }
+        finally
+        {
+            if (outermost)
+            {
+                harvestRootNesting = null;
+                expandingDefinitions = null;
+                expansionEdges = null;
+            }
+        }
+    }
+
+    static void HarvestSerializedTypeCore(ITypeSymbol type, Compilation compilation, Dictionary<string, HarvestedGenericModel> userGenerics, Dictionary<string, HarvestedBuiltInModel> builtIns, int closureDepth)
     {
         if (type is IArrayTypeSymbol array)
         {
@@ -814,8 +1202,11 @@ static class ObjectParser
         // user generics: only this compilation's [MessagePackObject] definitions,
         // another assembly's generated formatters are internal to it (its own compilation harvests)
         if (!SymbolEqualityComparer.Default.Equals(named.OriginalDefinition.ContainingAssembly, compilation.Assembly)
-            || !HasMessagePackObjectAttribute(named.OriginalDefinition))
+            || !HasMessagePackObjectAttribute(named.OriginalDefinition)
+            || IsNestedInGenericType(named))
         {
+            // (a type nested in a generic, Outer<int>.Inner, is generic through its container only: the parser
+            // refuses the shape (MsgPack005) and there is no open formatter to close, so it is not a user generic)
             HarvestCollectionCatchAll(named, compilation, userGenerics, builtIns, closureDepth);
             return;
         }
@@ -827,18 +1218,47 @@ static class ObjectParser
         userGenerics.Add(closedTypeName, new HarvestedGenericModel(
             OpenTypeOf: StripTypeArguments(named.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)) + "<" + new string(',', named.TypeArguments.Length - 1) + ">",
             ClosedTypeName: closedTypeName,
-            TypeArguments: new EquatableArray<string>([.. named.TypeArguments.Select(static a => a.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))])));
+            TypeArguments: new EquatableArray<string>([.. named.TypeArguments.Select(static a => a.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))]),
+            OpenFormatterName: GeneratedOpenFormatterName(named.OriginalDefinition)));
 
         // The definition's own harvest drops every member type that mentions a type parameter (List<T>), so the closed
         // graph below it (List<string>, Box<int> for Box<T> { Box<int> Inner }) is reachable only through this closed
         // form: walk its members with the type arguments substituted, the way the generated formatter resolves them.
-        if (closureDepth >= MaxClosureDepth)
-        {
-            return;
-        }
         foreach (var memberType in ClosedSerializedMemberTypes(named))
         {
             HarvestSerializedType(memberType, compilation, userGenerics, builtIns, closureDepth + 1);
+        }
+        // a closed generic union root (union Option<T>(None, Some<T>)): its cases are what it serializes, and the
+        // definition's parse drops every case that mentions a type parameter, so Some<int> is reachable only here
+        foreach (var caseType in ClosedUnionCaseTypes(named))
+        {
+            HarvestSerializedType(caseType, compilation, userGenerics, builtIns, closureDepth + 1);
+        }
+    }
+
+    // the [UnionTag] case types of a closed generic union root, substituted: the unbound typeof form resolves against
+    // the closed type's own creation members (already substituted), a type-parameter name against its type arguments
+    static IEnumerable<ITypeSymbol> ClosedUnionCaseTypes(INamedTypeSymbol closed)
+    {
+        foreach (var attribute in closed.GetAttributes())
+        {
+            if (!UnionParser.IsUnionTagAttribute(attribute.AttributeClass))
+            {
+                continue;
+            }
+            var caseType = UnionParser.ResolveCaseType(attribute, closed);
+            if (caseType is ITypeParameterSymbol parameter)
+            {
+                if (parameter.Ordinal >= closed.TypeArguments.Length)
+                {
+                    continue;
+                }
+                caseType = closed.TypeArguments[parameter.Ordinal];
+            }
+            if (caseType is not null)
+            {
+                yield return caseType;
+            }
         }
     }
 
@@ -870,8 +1290,7 @@ static class ObjectParser
         {
             foreach (var attribute in MemberAttributes(symbol))
             {
-                var attributeName = attribute.AttributeClass?.ToDisplayString();
-                if (attributeName == IgnoreMemberAttributeName || attributeName == IgnoreDataMemberAttributeName)
+                if (IsIgnoreAttribute(attribute.AttributeClass))
                 {
                     return true;
                 }
@@ -1092,28 +1511,51 @@ static class ObjectParser
     // type-level [MessagePackFormatter], ExpandoObject) stay off the registry
     static void HarvestCollectionCatchAll(INamedTypeSymbol named, Compilation compilation, Dictionary<string, HarvestedGenericModel> userGenerics, Dictionary<string, HarvestedBuiltInModel> builtIns, int closureDepth = 0)
     {
-        if (named.TypeKind != TypeKind.Class || named.IsAbstract || named.SpecialType != SpecialType.None)
-        {
-            return;
-        }
         if (ContainsTypeParameter(named) || !IsAccessibleToGeneratedCode(named, compilation))
         {
             return;
         }
-        if (HasMessagePackObjectAttribute(named.OriginalDefinition) || HasAttribute(named.OriginalDefinition, FormatterAttributeName))
-        {
-            return;
-        }
-        if (named.ToDisplayString() == "System.Dynamic.ExpandoObject")
-        {
-            return; // deliberately unserved by default (the deprecated quadratic-Add path)
-        }
-        var hasDefaultConstructor = named.InstanceConstructors.Any(static c => c.Parameters.Length == 0 && c.DeclaredAccessibility == Accessibility.Public);
         var closedTypeName = named.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         if (builtIns.ContainsKey(closedTypeName))
         {
             return;
         }
+        if (SelectCollectionShape(named, compilation) is not { } shape)
+        {
+            return;
+        }
+        if (shape.Arguments.IsEmpty)
+        {
+            // a non-generic view (IList / IDictionary): nothing of its own to close
+            builtIns.Add(closedTypeName, new HarvestedBuiltInModel(closedTypeName, $"new global::MessagePack.Formatters.{shape.FormatterName}<TWriteBuffer, TReadBuffer, {closedTypeName}>()"));
+            return;
+        }
+        EmitCollectionHarvest(named, compilation, userGenerics, builtIns, closedTypeName, shape.Arguments, shape.FormatterName, closureDepth);
+    }
+
+    // the collection view the catch-all serves a type through, and the type arguments it closes (empty for a
+    // non-generic view); null when the shape is not served. Usable on an open definition too: the expansion analysis
+    // asks exactly what the harvest would close under it
+    readonly record struct CollectionShape(System.Collections.Immutable.ImmutableArray<ITypeSymbol> Arguments, string FormatterName);
+
+    static CollectionShape? SelectCollectionShape(INamedTypeSymbol named, Compilation compilation)
+    {
+        if (named.TypeKind != TypeKind.Class || named.IsAbstract || named.SpecialType != SpecialType.None)
+        {
+            return null;
+        }
+        if (HasMessagePackObjectAttribute(named.OriginalDefinition) || HasAttribute(named.OriginalDefinition, FormatterAttributeName))
+        {
+            return null;
+        }
+        if (named.ToDisplayString() == "System.Dynamic.ExpandoObject")
+        {
+            return null; // deliberately unserved by default (the deprecated quadratic-Add path)
+        }
+        // the Add-based formatters construct through `new()`, which a type with `required` members refuses unless its
+        // parameterless constructor carries [SetsRequiredMembers] (CS9040 in the generated code otherwise)
+        var hasDefaultConstructor = named.InstanceConstructors.Any(c => c.Parameters.Length == 0 && c.DeclaredAccessibility == Accessibility.Public
+            && (!HasRequiredMembers(named) || HasAttribute(c, SetsRequiredMembersAttributeName)));
         INamedTypeSymbol? dictionaryInterface = null;
         INamedTypeSymbol? collectionInterface = null;
         INamedTypeSymbol? readOnlyDictionaryInterface = null;
@@ -1166,28 +1608,22 @@ static class ObjectParser
             ];
             if (HasCollectionAcceptingConstructor(named, acceptable, compilation))
             {
-                EmitCollectionHarvest(named, compilation, userGenerics, builtIns, closedTypeName, readOnlyDictionaryInterface.TypeArguments, "GenericReadOnlyDictionaryFormatter", closureDepth);
-                return;
+                return new CollectionShape(readOnlyDictionaryInterface.TypeArguments, "GenericReadOnlyDictionaryFormatter");
             }
         }
         if (hasDefaultConstructor && (dictionaryInterface is not null || collectionInterface is not null))
         {
-            EmitCollectionHarvest(
-                named, compilation, userGenerics, builtIns, closedTypeName,
+            return new CollectionShape(
                 (dictionaryInterface ?? collectionInterface)!.TypeArguments,
-                dictionaryInterface is not null ? "GenericDictionaryFormatter" : "GenericCollectionFormatter",
-                closureDepth);
-            return;
+                dictionaryInterface is not null ? "GenericDictionaryFormatter" : "GenericCollectionFormatter");
         }
         if (hasDefaultConstructor && nonGenericList)
         {
-            builtIns.Add(closedTypeName, new HarvestedBuiltInModel(closedTypeName, $"new global::MessagePack.Formatters.NonGenericListFormatter<TWriteBuffer, TReadBuffer, {closedTypeName}>()"));
-            return;
+            return new CollectionShape(System.Collections.Immutable.ImmutableArray<ITypeSymbol>.Empty, "NonGenericListFormatter");
         }
         if (hasDefaultConstructor && nonGenericDictionary)
         {
-            builtIns.Add(closedTypeName, new HarvestedBuiltInModel(closedTypeName, $"new global::MessagePack.Formatters.NonGenericDictionaryFormatter<TWriteBuffer, TReadBuffer, {closedTypeName}>()"));
-            return;
+            return new CollectionShape(System.Collections.Immutable.ImmutableArray<ITypeSymbol>.Empty, "NonGenericDictionaryFormatter");
         }
         if (enumerableInterfaces is not null)
         {
@@ -1195,11 +1631,11 @@ static class ObjectParser
             {
                 if (HasCollectionAcceptingConstructor(named, [iface], compilation))
                 {
-                    EmitCollectionHarvest(named, compilation, userGenerics, builtIns, closedTypeName, iface.TypeArguments, "GenericEnumerableFormatter", closureDepth);
-                    return;
+                    return new CollectionShape(iface.TypeArguments, "GenericEnumerableFormatter");
                 }
             }
         }
+        return null;
     }
 
     static void EmitCollectionHarvest(INamedTypeSymbol named, Compilation compilation, Dictionary<string, HarvestedGenericModel> userGenerics, Dictionary<string, HarvestedBuiltInModel> builtIns, string closedTypeName, System.Collections.Immutable.ImmutableArray<ITypeSymbol> arguments, string formatterName, int closureDepth)
@@ -1215,7 +1651,7 @@ static class ObjectParser
         builtIns.Add(closedTypeName, new HarvestedBuiltInModel(closedTypeName, construction));
         foreach (var argument in arguments)
         {
-            HarvestSerializedType(argument, compilation, userGenerics, builtIns, closureDepth);
+            HarvestSerializedType(argument, compilation, userGenerics, builtIns, closureDepth + 1);
         }
     }
 
@@ -1241,19 +1677,27 @@ static class ObjectParser
         return false;
     }
 
+    // the harvest's accessibility scope: the assembly (the generated factory lives in it), or, during the AllowPrivate
+    // second pass, the partial type whose nested factory registers what only it can name
+    [ThreadStatic]
+    static INamedTypeSymbol? privateAccessScope;
+
     internal static bool IsAccessibleToGeneratedCode(ITypeSymbol type, Compilation compilation) => type switch
     {
         IArrayTypeSymbol array => IsAccessibleToGeneratedCode(array.ElementType, compilation),
-        INamedTypeSymbol named => compilation.IsSymbolAccessibleWithin(named, compilation.Assembly)
+        INamedTypeSymbol named => (privateAccessScope is { } scope ? compilation.IsSymbolAccessibleWithin(named, scope) : compilation.IsSymbolAccessibleWithin(named, compilation.Assembly))
             && named.TypeArguments.All(argument => argument is ITypeParameterSymbol || IsAccessibleToGeneratedCode(argument, compilation)),
         _ => true,
     };
 
+    // a type nested in a generic (Outer<T>.Inner, Outer<T>.E) mentions T through its containing type, not its own
+    // arguments, so the walk climbs ContainingType too
     internal static bool ContainsTypeParameter(ITypeSymbol type) => type switch
     {
         ITypeParameterSymbol => true,
         IArrayTypeSymbol array => ContainsTypeParameter(array.ElementType),
-        INamedTypeSymbol named => named.TypeArguments.Any(ContainsTypeParameter),
+        INamedTypeSymbol named => named.TypeArguments.Any(ContainsTypeParameter)
+            || (named.ContainingType is { } containing && ContainsTypeParameter(containing)),
         _ => false,
     };
 
@@ -1291,6 +1735,386 @@ static class ObjectParser
     // a symbol's Name is the bare spelling, so every emitted identifier restores the escape.
     // Messages and map keys keep the bare name. (ToDisplayString with FullyQualifiedFormat escapes on its own;
     // this is for raw Names)
+    // The generated formatter is generic over the model's own type parameters, whose names it cannot change (the
+    // member types and where-clauses spell them): a name equal to one of its own buffer parameters, to a type the
+    // generated file imports unqualified (SerializerFoundation, MessagePack, System.Buffers.Binary,
+    // System.Runtime.CompilerServices) or to a static member of MessagePackPrimitives (used unqualified through
+    // `using static`) would shadow it inside the formatter and break the generated code.
+    internal static bool CollidesWithGeneratedCode(string name, Compilation compilation)
+    {
+        if (name is "TWriteBuffer" or "TReadBuffer" || GeneratedNames.Contains(name))
+        {
+            return true;
+        }
+        foreach (var namespaceName in GeneratedImports)
+        {
+            if (FindNamespace(compilation, namespaceName) is { } ns && ns.GetTypeMembers(name).Length > 0)
+            {
+                return true;
+            }
+        }
+        return compilation.GetTypeByMetadataName("MessagePack.MessagePackPrimitives") is { } primitives && primitives.GetMembers(name).Length > 0;
+    }
+
+    static readonly string[] GeneratedImports = ["SerializerFoundation", "MessagePack", "System.Buffers.Binary", "System.Runtime.CompilerServices"];
+
+    // members the generated formatter declares (a type parameter of the same name is CS0102) and the parameters and
+    // locals its methods use (CS0136 / a different meaning of the name)
+    static readonly HashSet<string> GeneratedNames = new(StringComparer.Ordinal)
+    {
+        "Initialize", "Serialize", "Deserialize", "DeserializePopulate", "DeserializeConstruct", "ThrowMissingRequiredMember", "ThrowNullValueForNonNullableMember",
+        "declaredKeysUtf8", "validateRequired", "validateNull", "MessagePackRegisterPrivateTypes", "MessagePackPrivateTypesFactory", "GeneratedMessagePackFormatter", "Instance",
+        "buffer", "state", "value", "resolver", "result", "constructed", "unknownMembers", "seenMembers", "heldValue", "length", "count", "key", "tag", "type", "i",
+        "arrayCount", "byteCount", "mapCount", "envelopeCount", "unknownReplayedCount", "circularReferenceId", "circularReferenceDefinitionId", "member", "runtimeType", "d", "w", "v",
+    };
+
+    // f{id}, has_{id}, v_{id}: the per-member formatter fields and locals (id = the member's name, or its
+    // shadow-qualified form), known only once the members are
+    internal static bool CollidesWithGeneratedSlot(string name, IEnumerable<string> memberIds)
+    {
+        foreach (var id in memberIds)
+        {
+            if (name == "f" + id || name == "v_" + id || name == "has_" + id)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static INamespaceSymbol? FindNamespace(Compilation compilation, string dottedName)
+    {
+        INamespaceSymbol current = compilation.GlobalNamespace;
+        foreach (var part in dottedName.Split('.'))
+        {
+            INamespaceSymbol? next = null;
+            foreach (var member in current.GetNamespaceMembers())
+            {
+                if (member.Name == part)
+                {
+                    next = member;
+                    break;
+                }
+            }
+            if (next is null)
+            {
+                return null;
+            }
+            current = next;
+        }
+        return current;
+    }
+
+    static bool IsRequiredMember(ISymbol symbol) => symbol is IPropertySymbol { IsRequired: true } or IFieldSymbol { IsRequired: true };
+
+    // The expression a generated `new` assigns to a `required` member it never reads. The object initializer
+    // overrides the member's own initializer, so a constant one is re-emitted as it is (the reflection tier, which
+    // runs the constructor and the initializers, keeps it too); anything else cannot be spelled here and is reported.
+    static string RequiredDefaultExpression(ISymbol member, Compilation compilation, string typeName, List<DiagnosticInfo> diagnostics)
+    {
+        if (member.DeclaringSyntaxReferences.Length == 0)
+        {
+            // declared in another assembly (a required member of a metadata base class): whether it has an initializer
+            // is not visible here, so the assignment is default and the author is told
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.RequiredInitializerNotPreserved, $"'{typeName}.{member.Name}' is a required member the generated formatter never reads, declared in another assembly, so the generator cannot see whether it has an initializer: the generated object initializer (which the compiler demands for every required member) assigns default. Use a parameterless constructor marked [SetsRequiredMembers] if the initializer matters.", LocationInfo.From(member)));
+            return "default!";
+        }
+        EqualsValueClauseSyntax? initializer = null;
+        foreach (var reference in member.DeclaringSyntaxReferences)
+        {
+            initializer = reference.GetSyntax() switch
+            {
+                PropertyDeclarationSyntax property => property.Initializer,
+                VariableDeclaratorSyntax variable => variable.Initializer,
+                _ => null,
+            };
+            if (initializer is not null)
+            {
+                break;
+            }
+        }
+        if (initializer is null)
+        {
+            return "default!";
+        }
+        var memberType = member is IPropertySymbol property1 ? property1.Type : ((IFieldSymbol)member).Type;
+        var semanticModel = compilation.GetSemanticModel(initializer.SyntaxTree);
+        var constant = semanticModel.GetConstantValue(initializer.Value);
+        // the constant's own type, not the member's: `object O = DayOfWeek.Friday` must stay a boxed enum, not (object)5
+        var constantType = semanticModel.GetTypeInfo(initializer.Value).Type ?? memberType;
+        if (constant.HasValue)
+        {
+            switch (constant.Value)
+            {
+                case null:
+                    return "default!";
+                case bool b:
+                    return b ? "true" : "false";
+                case string or char:
+                    return SymbolDisplay.FormatPrimitive(constant.Value, quoteStrings: true, useHexadecimalNumbers: false);
+                case float f:
+                    return float.IsNaN(f) ? "float.NaN" : float.IsPositiveInfinity(f) ? "float.PositiveInfinity" : float.IsNegativeInfinity(f) ? "float.NegativeInfinity" : f.ToString("R", CultureInfo.InvariantCulture) + "f";
+                case double d:
+                    return double.IsNaN(d) ? "double.NaN" : double.IsPositiveInfinity(d) ? "double.PositiveInfinity" : double.IsNegativeInfinity(d) ? "double.NegativeInfinity" : d.ToString("R", CultureInfo.InvariantCulture) + "d";
+                case decimal m:
+                    return m.ToString(CultureInfo.InvariantCulture) + "m";
+                default:
+                    // integers, and enums (whose constant is the underlying value): the constant's type names the target
+                    return $"({constantType.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}){SymbolDisplay.FormatPrimitive(constant.Value, quoteStrings: false, useHexadecimalNumbers: false)}";
+            }
+        }
+        diagnostics.Add(new DiagnosticInfo(Diagnostics.RequiredInitializerNotPreserved, $"'{typeName}.{member.Name}' is a required member the generated formatter never reads, and its initializer is not a compile-time constant: the generated object initializer (which the compiler demands for every required member) assigns default instead. Use a constant initializer, a parameterless constructor marked [SetsRequiredMembers], or drop `required`.", LocationInfo.From(member)));
+        return "default!";
+    }
+
+    // A derived KeyAttribute is readable at compile time only when its constructor hands its first parameter to
+    // KeyAttribute's constructor as it is (`: base(key)`, or a primary constructor `: KeyAttribute(key)`): the
+    // reflection tier reads the key the instance ends up with, which a transforming constructor
+    // (`: base("prefix_" + key)`) would make differ from the attribute argument the generator sees. Requires the
+    // attribute to derive from KeyAttribute directly and to be declared in this compilation (syntax is needed).
+    static bool ForwardsKeyToBase(AttributeData attribute)
+    {
+        if (attribute.AttributeClass is not { BaseType: { } baseType } attributeClass
+            || baseType.ToDisplayString() != KeyAttributeName
+            || attribute.AttributeConstructor is not { Parameters.Length: > 0 } constructor)
+        {
+            return false;
+        }
+        var parameterName = constructor.Parameters[0].Name;
+        foreach (var reference in constructor.DeclaringSyntaxReferences)
+        {
+            switch (reference.GetSyntax())
+            {
+                case ConstructorDeclarationSyntax { Initializer: { } initializer } declaration
+                    when initializer.ThisOrBaseKeyword.IsKind(SyntaxKind.BaseKeyword)
+                        && initializer.ArgumentList.Arguments.Count == 1
+                        && initializer.ArgumentList.Arguments[0].Expression is IdentifierNameSyntax { Identifier.ValueText: var forwarded }
+                        && forwarded == parameterName:
+                    return true;
+                case TypeDeclarationSyntax { BaseList.Types: var baseTypes }:
+                    // primary constructor (the constructor symbol's syntax is the type declaration itself): the base
+                    // type's own argument list is the base call
+                    foreach (var type in baseTypes)
+                    {
+                        if (type is PrimaryConstructorBaseTypeSyntax { ArgumentList.Arguments: { Count: 1 } arguments }
+                            && arguments[0].Expression is IdentifierNameSyntax { Identifier.ValueText: var primaryForwarded }
+                            && primaryForwarded == parameterName)
+                        {
+                            return true;
+                        }
+                    }
+                    return false;
+                default:
+                    return false;
+            }
+        }
+        return false; // declared elsewhere: nothing to inspect
+    }
+
+    // [Key] or an attribute derived from it (not sealed; the reflection tier reads IntKey / StringKey off any instance)
+    internal static bool IsKeyAttribute(INamedTypeSymbol? attributeClass)
+    {
+        for (var current = attributeClass; current is not null; current = current.BaseType)
+        {
+            if (current.ToDisplayString() == KeyAttributeName)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // [IgnoreMember] (or an attribute derived from it: the attribute is not sealed, and the reflection tier honours a
+    // derived one) and [IgnoreDataMember]
+    internal static bool IsIgnoreAttribute(INamedTypeSymbol? attributeClass)
+    {
+        for (var current = attributeClass; current is not null; current = current.BaseType)
+        {
+            var name = current.ToDisplayString();
+            if (name == IgnoreMemberAttributeName || name == IgnoreDataMemberAttributeName)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static bool HasRequiredMembers(INamedTypeSymbol type)
+    {
+        for (var current = type; current is not null && current.SpecialType != SpecialType.System_Object; current = current.BaseType)
+        {
+            foreach (var member in current.GetMembers())
+            {
+                if (IsRequiredMember(member))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // true when a type between the leaf and the member's declarer declares an instance field or property of the same
+    // name that the generated code can see, so that `value.Name` on the leaf binds that declaration rather than the
+    // member (C# member lookup skips inaccessible declarations, so only a reachable one hides)
+    static bool IsHiddenInDerivedType(INamedTypeSymbol leaf, ISymbol member, bool allowPrivate)
+    {
+        for (var derived = leaf; derived is not null && !SymbolEqualityComparer.Default.Equals(derived, member.ContainingType); derived = derived.BaseType)
+        {
+            foreach (var candidate in derived.GetMembers(member.Name))
+            {
+                // whatever the declaration is: a static member (CS0176) or a method (a method group) hides as surely
+                // as an instance field or property
+                if (candidate is IPropertySymbol or IFieldSymbol or IMethodSymbol { MethodKind: MethodKind.Ordinary } or IEventSymbol or INamedTypeSymbol
+                    && IsVisibleToGeneratedCode(candidate, leaf, allowPrivate))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // the generated formatter lives in the assembly (AllowPrivate: nested in the leaf type)
+    static bool IsVisibleToGeneratedCode(ISymbol member, INamedTypeSymbol leaf, bool allowPrivate) => member.DeclaredAccessibility switch
+    {
+        Accessibility.Public => true,
+        Accessibility.Internal or Accessibility.ProtectedOrInternal => SymbolEqualityComparer.Default.Equals(member.ContainingAssembly, leaf.ContainingAssembly),
+        Accessibility.Private => allowPrivate && SymbolEqualityComparer.Default.Equals(member.ContainingType, leaf),
+        _ => allowPrivate, // protected, private protected: reachable from the nested formatter through the leaf
+    };
+
+    // the generated call passes locals by value: a ref / out / in parameter would need the modifier at the call site
+    // (CS1620), so such a constructor is never the serialization constructor
+    static bool HasOnlyValueParameters(IMethodSymbol constructor)
+    {
+        foreach (var parameter in constructor.Parameters)
+        {
+            if (parameter.RefKind != RefKind.None)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // true when `type` is declared inside `container` (at any depth): the nested generated formatter and the partial
+    // type's own members can name it even when the rest of the assembly cannot
+    internal static bool HasAttributeClass(INamedTypeSymbol attributeClass, string fullName)
+    {
+        for (var current = attributeClass; current is not null; current = current.BaseType)
+        {
+            if (current.ToDisplayString() == fullName)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static bool IsNestedWithin(INamedTypeSymbol type, INamedTypeSymbol container)
+    {
+        for (var current = type.ContainingType; current is not null; current = current.ContainingType)
+        {
+            if (SymbolEqualityComparer.Default.Equals(current.OriginalDefinition, container.OriginalDefinition))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // The private-scope factory (ObjectEmitter's MessagePackPrivateTypesFactory) constructs a harvested closure's
+    // formatter by name, so the name is given only when this compilation generates that formatter: the generated
+    // factory matches harvested closures against the generated models, this is the same gate decided from the
+    // definition (a suppressed, AllowPrivate (unsupported on generics), inaccessible or file-local definition has
+    // no open formatter to close).
+    static string GeneratedOpenFormatterName(INamedTypeSymbol definition)
+    {
+        AttributeData? objectAttribute = null;
+        foreach (var attribute in definition.GetAttributes())
+        {
+            for (var attributeType = attribute.AttributeClass; attributeType is not null; attributeType = attributeType.BaseType)
+            {
+                if (attributeType.ToDisplayString() == MessagePackObjectAttributeName)
+                {
+                    objectAttribute = attribute;
+                    break;
+                }
+            }
+            if (objectAttribute is not null)
+            {
+                break;
+            }
+        }
+        if (objectAttribute is null
+            || ReadNamedBool(objectAttribute, "SuppressSourceGeneration")
+            || ReadNamedBool(objectAttribute, "AllowPrivate")
+            || HasTypeLevelFormatterAttribute(definition) // served by its attributed factory, no object formatter
+            || IsFileLocal(definition))
+        {
+            return "";
+        }
+        for (var accessible = definition; accessible is not null; accessible = accessible.ContainingType)
+        {
+            if (accessible.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal))
+            {
+                return "";
+            }
+        }
+        return Sanitize(definition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)) + "Formatter";
+    }
+
+    // [MessagePackFormatter(typeof(...))] or [MessagePackFormatter<TFactory>] on the type itself, the two exact forms
+    // the type-level registration pipeline matches
+    internal static bool HasTypeLevelFormatterAttribute(INamedTypeSymbol type)
+    {
+        foreach (var attribute in type.GetAttributes())
+        {
+            if (attribute.AttributeClass is { } attributeClass
+                && (attributeClass.ToDisplayString() == FormatterAttributeName
+                    || (attributeClass.IsGenericType && attributeClass.OriginalDefinition.ToDisplayString() == FormatterAttributeName + "<TFactory>")))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // `file class X` (C# 11): the modifier is read off the syntax, the symbol API of the referenced Roslyn predates it
+    internal static bool IsFileLocal(INamedTypeSymbol type)
+    {
+        for (var current = type; current is not null; current = current.ContainingType)
+        {
+            foreach (var reference in current.DeclaringSyntaxReferences)
+            {
+                if (reference.GetSyntax() is BaseTypeDeclarationSyntax declaration)
+                {
+                    foreach (var modifier in declaration.Modifiers)
+                    {
+                        if (modifier.ValueText == "file")
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    internal static bool IsNestedInGenericType(INamedTypeSymbol type)
+    {
+        for (var container = type.ContainingType; container is not null; container = container.ContainingType)
+        {
+            if (container.IsGenericType)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     internal static string Identifier(string name) =>
         SyntaxFacts.GetKeywordKind(name) != SyntaxKind.None ? "@" + name : name;
 
@@ -1436,10 +2260,17 @@ static class ObjectParser
         LocationInfo? location,
         GeneratorAttributeSyntaxContext context,
         List<DiagnosticInfo> diagnostics,
-        out CustomFormatterModel? custom)
+        out CustomFormatterModel? custom,
+        INamedTypeSymbol? accessScope = null)
     {
         custom = null;
         var member = subject;
+        if (memberType is IDynamicTypeSymbol)
+        {
+            // a `dynamic` member is object to the generated code (its formatter field is object's, and typeof(dynamic)
+            // is CS1962): the factory is asked for object, and a formatter is matched against object
+            memberType = context.SemanticModel.Compilation.GetSpecialType(SpecialType.System_Object);
+        }
 
         // two attribute shapes: the Type-based constructor (first argument is the factory type,
         // optional params array behind it) and MessagePackFormatterAttribute<TFactory> (the factory is the attribute's
@@ -1489,6 +2320,14 @@ static class ObjectParser
             }
         }
 
+        // the generated code constructs the type: from MessagePack.Generated (assembly scope), or from inside the
+        // partial type for AllowPrivate (accessScope), where a factory nested privately in the DTO is reachable
+        if (!compilation.IsSymbolAccessibleWithin(formatterType, accessScope is { } scope ? scope : compilation.Assembly))
+        {
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidFormatterAttribute, $"'{member}': '{formatterType.ToDisplayString()}' is not accessible to the generated formatter (CS0122); make it (and its containing types) public or internal, or set AllowPrivate = true on the containing [MessagePackObject] when it is nested in that type.", location));
+            return false;
+        }
+
         if (isFactory)
         {
             if (formatterType.IsUnboundGenericType || formatterType.IsAbstract)
@@ -1496,7 +2335,7 @@ static class ObjectParser
                 diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidFormatterAttribute, $"'{member}': '{formatterType.ToDisplayString()}' must be a concrete, fully constructed MessagePackFormatterFactory (close every type argument inside the typeof).", location));
                 return false;
             }
-            if (!TryBindConstructor(formatterType.InstanceConstructors, arguments, compilation, semanticModel, position, member, diagnostics, location, out var factoryArguments))
+            if (!TryBindConstructor(formatterType.InstanceConstructors, arguments, compilation, semanticModel, position, member, diagnostics, location, out var factoryArguments, accessScope))
             {
                 return false;
             }
@@ -1514,8 +2353,16 @@ static class ObjectParser
             if (implemented.OriginalDefinition is { MetadataName: "IMessagePackFormatter`3" } original
                 && original.ContainingNamespace.ToDisplayString() == "MessagePack")
             {
-                formatterInterface = implemented;
-                break;
+                // a formatter may implement the interface for several types: the one for the member's type is the
+                // match, the first one is the diagnostic's subject when none matches
+                if (formatterInterface is null || SymbolEqualityComparer.Default.Equals(implemented.TypeArguments[2], memberType))
+                {
+                    formatterInterface = implemented;
+                }
+                if (SymbolEqualityComparer.Default.Equals(implemented.TypeArguments[2], memberType))
+                {
+                    break;
+                }
             }
         }
         if (formatterInterface is null)
@@ -1541,7 +2388,12 @@ static class ObjectParser
             return false;
         }
 
-        if (!TryBindConstructor(definition.InstanceConstructors, arguments, compilation, semanticModel, position, member, diagnostics, location, out var formatterArguments))
+        if (LacksRefStructAllowance(definition, context, out var why))
+        {
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidFormatterAttribute, $"'{member}': '{formatterType.ToDisplayString()}' cannot be closed over the generated formatter's buffer types on this target because {why} (CS9244); specify a MessagePackFormatterFactory instead (the resolver reroutes a downlevel factory to the Compatible buffers), or multi-target the formatter library so its type parameters allow ref struct buffers.", location));
+            return false;
+        }
+        if (!TryBindConstructor(definition.InstanceConstructors, arguments, compilation, semanticModel, position, member, diagnostics, location, out var formatterArguments, accessScope))
         {
             return false;
         }
@@ -1550,6 +2402,61 @@ static class ObjectParser
             TypeOfExpr: null,
             FormatterNew: $"new {StripTypeArguments(definition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))}<TWriteBuffer, TReadBuffer>({formatterArguments})");
         return true;
+    }
+
+    // The generated formatter on a net9+ target passes its own buffer type parameters, which allow ref struct
+    // buffers, to the attributed formatter: that one's parameters must allow them too (CS9244 otherwise). The
+    // referenced Roslyn predates the constraint, so a declaration in this compilation is read off its syntax, and a
+    // referenced library is judged by its target framework (nothing before .NET 9 can declare the constraint).
+    static bool LacksRefStructAllowance(INamedTypeSymbol definition, GeneratorAttributeSyntaxContext context, out string reason)
+    {
+        reason = "";
+        if (!context.SemanticModel.SyntaxTree.Options.PreprocessorSymbolNames.Contains("NET9_0_OR_GREATER"))
+        {
+            return false; // a downlevel target closes downlevel formatters as they are
+        }
+        if (definition.DeclaringSyntaxReferences.Length > 0)
+        {
+            foreach (var typeParameter in definition.TypeParameters)
+            {
+                var allowed = false;
+                foreach (var reference in definition.DeclaringSyntaxReferences)
+                {
+                    if (reference.GetSyntax() is TypeDeclarationSyntax declaration)
+                    {
+                        foreach (var clause in declaration.ConstraintClauses)
+                        {
+                            if (clause.Name.Identifier.ValueText == typeParameter.Name && clause.ToString().Contains("allows ref struct"))
+                            {
+                                allowed = true;
+                            }
+                        }
+                    }
+                }
+                if (!allowed)
+                {
+                    reason = $"its type parameter '{typeParameter.Name}' has no `allows ref struct` constraint";
+                    return true;
+                }
+            }
+            return false;
+        }
+        foreach (var attribute in definition.ContainingAssembly.GetAttributes())
+        {
+            if (attribute.AttributeClass?.ToDisplayString() == "System.Runtime.Versioning.TargetFrameworkAttribute"
+                && attribute.ConstructorArguments.Length > 0
+                && attribute.ConstructorArguments[0].Value is string framework)
+            {
+                const string coreApp = ".NETCoreApp,Version=v";
+                if (framework.StartsWith(coreApp, StringComparison.Ordinal) && Version.TryParse(framework.Substring(coreApp.Length), out var version) && version.Major >= 9)
+                {
+                    return false;
+                }
+                reason = $"it is built for {framework}, whose type parameters cannot allow ref struct buffers";
+                return true;
+            }
+        }
+        return false;
     }
 
     static bool TryBindConstructor(
@@ -1561,10 +2468,11 @@ static class ObjectParser
         string member,
         List<DiagnosticInfo> diagnostics,
         LocationInfo? location,
-        out string rendered)
+        out string rendered,
+        INamedTypeSymbol? accessScope = null)
     {
         rendered = "";
-        var matches = new List<(int FilledDefaults, string Rendered)>();
+        var matches = new List<(int FilledDefaults, int Exact, string Rendered, ITypeSymbol[] Parameters)>();
         string? failure = null;
 
         foreach (var constructor in constructors)
@@ -1591,26 +2499,48 @@ static class ObjectParser
 
             var parts = new string[arguments.Length];
             var bound = true;
+            var exact = 0;
             for (int i = 0; i < arguments.Length && bound; i++)
             {
-                if (!TryRenderArgument(arguments[i], constructor.Parameters[i].Type, constructor.Parameters[i].Name, compilation, semanticModel, position, out parts[i], out var reason))
+                if (!TryRenderArgument(arguments[i], constructor.Parameters[i].Type, constructor.Parameters[i].Name, compilation, semanticModel, position, out parts[i], out var reason, accessScope))
                 {
                     bound = false;
                     failure ??= reason;
                 }
+                else if (arguments[i].Type is { } argumentType && SymbolEqualityComparer.Default.Equals(argumentType, constructor.Parameters[i].Type))
+                {
+                    exact++;
+                }
             }
             if (bound)
             {
-                matches.Add((constructor.Parameters.Length - arguments.Length, string.Join(", ", parts)));
+                matches.Add((constructor.Parameters.Length - arguments.Length, exact, string.Join(", ", parts), constructor.Parameters.Take(arguments.Length).Select(static p => p.Type).ToArray()));
             }
         }
 
-        // mirror C# overload preference: a candidate filling fewer defaults is better
+        // mirror C# overload preference: the conversions of the supplied arguments decide first (an exact parameter
+        // type beats a converting one: F(int) over F(long) for the literal 1; then the "better conversion target":
+        // a parameter type that converts implicitly to the other candidate's, long into double and not the reverse,
+        // is the better target), and only among conversion-equivalent candidates does the one filling fewer
+        // defaults win (F(int, bool = false) still beats F(long) for the literal 10)
         if (matches.Count > 0)
         {
-            var fewestDefaults = matches.Min(static m => m.FilledDefaults);
-            var winners = matches.Where(m => m.FilledDefaults == fewestDefaults).ToArray();
-            if (winners.Length == 1)
+            var mostExact = matches.Max(static m => m.Exact);
+            var winners = matches.Where(m => m.Exact == mostExact).ToList();
+            if (winners.Count > 1)
+            {
+                var best = winners.Where(candidate => winners.All(other => ReferenceEquals(other.Parameters, candidate.Parameters) || IsBetterCandidate(candidate.Parameters, other.Parameters, compilation))).ToList();
+                if (best.Count == 1)
+                {
+                    winners = best;
+                }
+            }
+            if (winners.Count > 1)
+            {
+                var fewestDefaults = winners.Min(static m => m.FilledDefaults);
+                winners = winners.Where(m => m.FilledDefaults == fewestDefaults).ToList();
+            }
+            if (winners.Count == 1)
             {
                 rendered = winners[0].Rendered;
                 return true;
@@ -1620,6 +2550,32 @@ static class ObjectParser
             ? $"'{member}': the [MessagePackFormatter] arguments do not bind to any accessible constructor taking {arguments.Length} argument(s).{(failure is null ? "" : " " + failure)}"
             : $"'{member}': the [MessagePackFormatter] arguments bind to more than one constructor; disambiguate the overloads.", location));
         return false;
+    }
+
+    // candidate A is better than B when every parameter of A is at least as good a conversion target as B's and one is
+    // strictly better (A's type converts implicitly to B's, B's not to A's): the "better conversion target" part of
+    // overload resolution for arguments of equal exactness
+    static bool IsBetterCandidate(ITypeSymbol[] a, ITypeSymbol[] b, Compilation compilation)
+    {
+        var strictlyBetter = false;
+        for (int i = 0; i < a.Length && i < b.Length; i++)
+        {
+            if (SymbolEqualityComparer.Default.Equals(a[i], b[i]))
+            {
+                continue;
+            }
+            var aToB = compilation.ClassifyConversion(a[i], b[i]).IsImplicit;
+            var bToA = compilation.ClassifyConversion(b[i], a[i]).IsImplicit;
+            if (aToB && !bToA)
+            {
+                strictlyBetter = true;
+            }
+            else if (bToA && !aToB)
+            {
+                return false;
+            }
+        }
+        return strictlyBetter;
     }
 
     // every rendered argument carries an explicit cast to the chosen parameter type,
@@ -1632,7 +2588,8 @@ static class ObjectParser
         SemanticModel? semanticModel,
         int position,
         out string rendered,
-        out string? failure)
+        out string? failure,
+        INamedTypeSymbol? accessScope = null)
     {
         rendered = "";
         failure = null;
@@ -1651,8 +2608,13 @@ static class ObjectParser
 
         switch (argument.Kind)
         {
-            case TypedConstantKind.Primitive when argument.Value is string text && targetType.SpecialType != SpecialType.System_String:
-                return TryRenderExpressionArgument(text, targetType, cast, compilation, semanticModel, position, out rendered, out failure);
+            // a string that the parameter cannot take as a string ("StringComparer.OrdinalIgnoreCase" for an
+            // IEqualityComparer<string>) is the expression form; one it can (an object parameter) is the string, as the
+            // reflection tier binds it
+            case TypedConstantKind.Primitive when argument.Value is string text
+                && targetType.SpecialType != SpecialType.System_String
+                && !(argument.Type is { } stringType && compilation.HasImplicitConversion(stringType, targetType)):
+                return TryRenderExpressionArgument(text, targetType, cast, compilation, semanticModel, position, out rendered, out failure, accessScope);
 
             case TypedConstantKind.Primitive:
             case TypedConstantKind.Enum:
@@ -1678,20 +2640,23 @@ static class ObjectParser
                 return true;
 
             case TypedConstantKind.Array:
-                if (targetType is not IArrayTypeSymbol arrayType)
+                // the parameter is the array type itself, or one the array converts to (IEnumerable<int>, object):
+                // the array keeps its own element type then
+                if ((targetType as IArrayTypeSymbol ?? argument.Type as IArrayTypeSymbol) is not { } arrayType
+                    || (argument.Type is { } attributeArrayType && !compilation.HasImplicitConversion(attributeArrayType, targetType)))
                 {
-                    failure = $"An array argument requires an array-typed parameter, but '{parameterName}' is {targetType.ToDisplayString()}.";
+                    failure = $"An array argument ({argument.Type?.ToDisplayString() ?? "?"}) does not convert to parameter '{parameterName}' ({targetType.ToDisplayString()}).";
                     return false;
                 }
                 var elements = new string[argument.Values.Length];
                 for (int i = 0; i < elements.Length; i++)
                 {
-                    if (!TryRenderArgument(argument.Values[i], arrayType.ElementType, parameterName, compilation, semanticModel, position, out elements[i], out failure))
+                    if (!TryRenderArgument(argument.Values[i], arrayType.ElementType, parameterName, compilation, semanticModel, position, out elements[i], out failure, accessScope))
                     {
                         return false;
                     }
                 }
-                rendered = $"new {arrayType.ElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}[] {{ {string.Join(", ", elements)} }}";
+                rendered = $"{cast}new {arrayType.ElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}[] {{ {string.Join(", ", elements)} }}";
                 return true;
 
             default:
@@ -1708,7 +2673,8 @@ static class ObjectParser
         SemanticModel? semanticModel,
         int position,
         out string rendered,
-        out string? failure)
+        out string? failure,
+        INamedTypeSymbol? accessScope = null)
     {
         rendered = "";
         if (semanticModel is null)
@@ -1743,8 +2709,15 @@ static class ObjectParser
             failure = $"\"{text}\" has type '{target.Type.ToDisplayString()}', which does not convert to '{targetType.ToDisplayString()}'.";
             return false;
         }
+        // the attribute site can name a private member of its own type; the generated formatter (in
+        // MessagePack.Generated, or nested in the type for AllowPrivate) must be able to as well
+        if (!compilation.IsSymbolAccessibleWithin(symbol!, accessScope is { } scope ? scope : compilation.Assembly))
+        {
+            failure = $"\"{text}\" is not accessible to the generated formatter (CS0122); make the member internal or public, or set AllowPrivate = true on the containing [MessagePackObject] when it is a member of that type.";
+            return false;
+        }
 
-        rendered = $"{cast}{target.Container.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.{symbol!.Name}";
+        rendered = $"{cast}{target.Container.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.{Identifier(symbol!.Name)}"; // Identifier: `Comparers.@default` stays escaped
         failure = null;
         return true;
     }
@@ -2066,12 +3039,12 @@ static class ObjectParser
     internal static string Sanitize(string fullTypeName)
     {
         var builder = new StringBuilder(fullTypeName.Length);
-        // drop the "global::" prefix, then flatten every separator to '_'.
-        // The encoding must be injective or two types share one generated name (a loud but cryptic CS0101 /
-        // duplicate-hint failure): a literal '_' doubles to "__" so identifier underscores (even runs)
-        // never alias separator underscores (single), and the space of ",
-        // " is dropped so a two-parameter list does not alias a doubled underscore either,
-        // Ns.A_B / Ns.A.B and Foo<T, U> / Foo<T_U> all stay distinct.
+        // drop the "global::" prefix, then encode: every separator (., <, >, ,, [, ], +, ...) becomes a single '_'
+        // and a literal '_' becomes "_0". The encoding must be injective or two types share one generated name (a
+        // loud but cryptic CS0101 / duplicate-hint failure): an identifier never starts with a digit, so an '_'
+        // followed by '0' can only be a literal underscore and any other '_' a separator, which keeps Ns.A_B / Ns.A.B,
+        // Foo<T, U> / Foo<T_U> and Ns._A / Ns_.A (the case "__" for a literal got wrong) all distinct. The space of
+        // ", " is dropped.
         var start = fullTypeName.StartsWith("global::", StringComparison.Ordinal) ? 8 : 0;
         for (int i = start; i < fullTypeName.Length; i++)
         {
@@ -2082,7 +3055,7 @@ static class ObjectParser
             }
             else if (c == '_')
             {
-                builder.Append("__");
+                builder.Append("_0");
             }
             else if (c != ' ')
             {

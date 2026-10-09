@@ -65,7 +65,7 @@ static class UnionEmitter
         {
             if (!model.IsStructRoot)
             {
-                using (writer.Block("if (value == null)"))
+                using (writer.Block("if (value is null)")) // `is null`, see ObjectEmitter
                 {
                     writer.Line("buffer.WriteNil();");
                     writer.Line("return;");
@@ -90,7 +90,7 @@ static class UnionEmitter
                     }
                     caseIndex++;
                 }
-                using (writer.Block($"else if ({access}.Value == null)"))
+                using (writer.Block($"else if ({access}.Value is null)"))
                 {
                     writer.Line("buffer.WriteNil();");
                 }
@@ -108,25 +108,28 @@ static class UnionEmitter
                 if (model.IsPatternUnion)
                 {
                     writer.Line($"var heldValue = {access}.Value;");
-                    using (writer.Block("if (heldValue == null)"))
+                    using (writer.Block("if (heldValue is null)"))
                     {
                         writer.Line("buffer.WriteNil();");
                         writer.Line("return;");
                     }
                 }
                 writer.Line("state.Enter();");
-                if (model.TypeParameterList.Length > 0)
+                if (model.TypeParameterList.Length > 0 || model.IsPatternUnion)
                 {
-                    // generic roots cannot dispatch on exact runtime type (a case may be a type parameter): `is`
-                    // matching in attribute order decides, so an instance assignable to several cases takes the first
-                    // tag
+                    // generic roots cannot dispatch on exact runtime type (a case may be a type parameter), and a
+                    // pattern union holds whatever is assignable to a case (an int[] in an IEnumerable<int> case):
+                    // `is` matching in attribute order decides, so an instance assignable to several cases takes the
+                    // first tag. Inheritance unions keep v3's exact runtime-type dispatch.
                     var caseIndex = 0;
                     var first = true;
                     foreach (var unionCase in model.Cases)
                     {
                         var keyword = first ? "if" : "else if";
                         first = false;
-                        using (writer.Block($"{keyword} ({heldValue} is {unionCase.TypeName} case{caseIndex})"))
+                        // a Nullable<T> case matches as T (CS8116 forbids `is T?`); the formatter takes the T? back
+                        var patternType = unionCase.IsValueType && unionCase.TypeName.EndsWith("?", StringComparison.Ordinal) ? unionCase.TypeName.Substring(0, unionCase.TypeName.Length - 1) : unionCase.TypeName;
+                        using (writer.Block($"{keyword} ({heldValue} is {patternType} case{caseIndex})"))
                         {
                             writer.Line("buffer.WriteArrayHeader(2);");
                             writer.Line($"buffer.WriteInt32({unionCase.Tag});");

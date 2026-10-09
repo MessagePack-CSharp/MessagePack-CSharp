@@ -39,7 +39,7 @@ public sealed class NullableFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePa
             value = null;
             return;
         }
-        T inner = default;
+        T inner = value.GetValueOrDefault(); // populate: an existing value keeps what the wire does not carry, as T itself does
         formatter.Deserialize(ref buffer, ref state, ref inner);
         value = inner;
     }

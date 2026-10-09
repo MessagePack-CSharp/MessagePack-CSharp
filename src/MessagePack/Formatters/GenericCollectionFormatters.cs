@@ -45,7 +45,18 @@ public sealed class GenericCollectionFormatter<TWriteBuffer, TReadBuffer, TEleme
             return;
         }
         var count = buffer.ReadArrayHeader(ref state);
-        var result = new TCollection();
+        // Populate contract: a mutable instance is refilled in place (whoever else holds it, and whatever a derived
+        // collection subscribed to it, keeps seeing it); a read-only one is replaced
+        TCollection result;
+        if (value is { IsReadOnly: false })
+        {
+            result = value;
+            result.Clear();
+        }
+        else
+        {
+            result = new TCollection();
+        }
         var f = formatter;
         state.Enter();
         for (int i = 0; i < count; i++)
@@ -104,7 +115,17 @@ public sealed class GenericDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, 
             return;
         }
         var count = buffer.ReadMapHeader(ref state);
-        var result = new TDictionary(); // the concrete type owns its comparer
+        // Populate contract: a mutable instance is refilled in place; the concrete type owns its comparer either way
+        TDictionary result;
+        if (value is { IsReadOnly: false })
+        {
+            result = value;
+            result.Clear();
+        }
+        else
+        {
+            result = new TDictionary();
+        }
         state.Enter();
         for (int i = 0; i < count; i++)
         {
@@ -210,13 +231,9 @@ public sealed class GenericEnumerableFormatter<TWriteBuffer, TReadBuffer, TEleme
         }
         var count = buffer.ReadArrayHeader(ref state);
         state.Enter();
-
-        var items = new TElement[count];
-        var f = formatter;
-        for (int i = 0; i < count; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref items[i]);
-        }
+        // the same presize cap as every array-backed collection: the header's count has passed the byte guards, but the
+        // allocation is count * sizeof(TElement), which CollectionReads bounds by the bytes actually present
+        var items = CollectionReads<TWriteBuffer, TReadBuffer, TElement>.ReadArray(ref buffer, ref state, formatter, count);
         state.Exit();
         value = (TCollection)Activator.CreateInstance(typeof(TCollection), items)!;
     }

@@ -110,7 +110,7 @@ public class AnswerBufferTierBenchmark
         var buffer = new ReadOnlySpanReadBuffer(payload);
         try
         {
-            var state = new DeserializeState(options.MaxDepth);
+            var state = new DeserializeState(options.MaxDepth, payload.Length);
             Answer result = default!;
             options.Resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, Answer>().Deserialize(ref buffer, ref state, ref result);
             return result;
@@ -129,7 +129,7 @@ public class AnswerBufferTierBenchmark
             var buffer = new CompatibleReadOnlySpanReadBuffer(pointer, payload.Length);
             try
             {
-                var state = new DeserializeState(options.MaxDepth);
+                var state = new DeserializeState(options.MaxDepth, payload.Length);
                 Answer result = default!;
                 options.Resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, Answer>().Deserialize(ref buffer, ref state, ref result);
                 return result;

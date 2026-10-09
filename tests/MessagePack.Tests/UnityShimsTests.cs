@@ -15,7 +15,7 @@ namespace MessagePack.Tests;
 // chain's generic tier for Nullable / array / List.
 public class UnityShimsTests
 {
-    static V4Options Options { get; } = V4Options.Default.WithUnity();
+    static V4Options Options { get; } = new V4Options(new MessagePackFormatterResolver(MessagePackFormatterFactory.Default.WithUnity()));
 
     static byte[] Float32(float value)
     {
@@ -248,7 +248,7 @@ public class UnityShimsTests
     public void DefaultOptions_DoNotServeUnityTypes()
     {
         // without the factory the types have no formatter (they are plain structs without [MessagePackObject]);
-        // WithUnity is the opt-in
+        // Default.WithUnity() on the factory chain is the opt-in
         Assert.ThrowsAny<Exception>(() => V4.Serialize(new Vector3(1f, 2f, 3f), V4Options.Default));
     }
 }

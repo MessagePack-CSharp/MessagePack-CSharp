@@ -133,7 +133,8 @@ public static partial class MessagePackSerializer
                 return value; // an envelope owns the whole message: no positional rewind
             }
 
-            var consumed = DeserializeSpanCore(ref value, source, options);
+            var state = new DeserializeState(options.MaxDepth, source.Length);
+            var consumed = DeserializeSpanCore(ref value, source, options, ref state);
             if (stream.CanSeek && consumed < length)
             {
                 stream.Seek(consumed - length, SeekOrigin.Current); // hand trailing bytes back
@@ -167,7 +168,8 @@ public static partial class MessagePackSerializer
             return value;
         }
 
-        var consumed = DeserializeSpanCore(ref value, source, options);
+        var state = new DeserializeState(options.MaxDepth, source.Length);
+        var consumed = DeserializeSpanCore(ref value, source, options, ref state);
         stream.Position = position + consumed;
         return value;
     }
@@ -419,7 +421,7 @@ public static partial class MessagePackSerializer
         {
             // a broken-out enumeration leaves the next messages buffered in the pipe: hand them back like the
             // single-value overload before Complete discards them
-            HandBackReadAhead(stream, pipeReader, options);
+            HandBackReadAhead(stream, pipeReader, options, wholeStreamIsOneMessage: false);
             await pipeReader.CompleteAsync().ConfigureAwait(false);
         }
     }
@@ -428,9 +430,12 @@ public static partial class MessagePackSerializer
     // buffers is that over-read, so hand it back before Complete discards it. Same contract as the sync overload,
     // including its envelope carve-out (with a MessageProcessor the envelope owns the whole message). TryRead never
     // touches the stream, it only exposes already-buffered bytes.
-    static void HandBackReadAhead(Stream stream, PipeReader pipeReader, MessagePackSerializerOptions options)
+    static void HandBackReadAhead(Stream stream, PipeReader pipeReader, MessagePackSerializerOptions options, bool wholeStreamIsOneMessage = true)
     {
-        if (stream.CanSeek && options.MessageProcessor == null && pipeReader.TryRead(out var trailing))
+        // the single-value overloads keep the envelope carve-out; the message and element streams consume exactly
+        // at message boundaries whatever the processor (the finder walks envelopes and container frames alike), so
+        // whatever the pipe still buffers is the next messages' bytes and goes back to the stream
+        if (stream.CanSeek && (options.MessageProcessor == null || !wholeStreamIsOneMessage) && pipeReader.TryRead(out var trailing))
         {
             var unread = trailing.Buffer.Length;
             pipeReader.AdvanceTo(trailing.Buffer.End);
@@ -464,7 +469,7 @@ public static partial class MessagePackSerializer
         {
             // the array's contract is that bytes after it stay unconsumed; on a seekable stream that means the
             // pipe's read-ahead (and, after a broken-out enumeration, the remaining elements) goes back to the stream
-            HandBackReadAhead(stream, pipeReader, options);
+            HandBackReadAhead(stream, pipeReader, options, wholeStreamIsOneMessage: false);
             await pipeReader.CompleteAsync().ConfigureAwait(false);
         }
     }

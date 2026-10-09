@@ -1,4 +1,4 @@
-﻿namespace MessagePack.Formatters;
+namespace MessagePack.Formatters;
 
 // bin-format views over byte payloads: PrimitiveFormatterFactory claims these BEFORE the
 // generic collection tier resolves Array<>/ArraySegment<>/Memory<>/ReadOnlyMemory<>/ReadOnlySequence<>,
@@ -39,7 +39,7 @@ public sealed partial class ByteArrayFormatter<TWriteBuffer, TReadBuffer> : IMes
                 value = []; // the singleton empty array, same as v3
                 return;
             }
-            var result = new byte[count];
+            var result = value is not null && value.Length == count ? value : new byte[count]; // populate: a same-length array is refilled
             for (int i = 0; i < count; i++)
             {
                 result[i] = buffer.ReadByte();
@@ -47,7 +47,26 @@ public sealed partial class ByteArrayFormatter<TWriteBuffer, TReadBuffer> : IMes
             value = result;
             return;
         }
-        value = buffer.ReadBinary();
+        // Populate contract, as the other array formatters: a same-length array is refilled in place
+        var byteCount = buffer.ReadBinHeader();
+        if (value is not null && value.Length == byteCount)
+        {
+            if (byteCount > 0)
+            {
+                buffer.CopyTo(value);
+                buffer.Advance(byteCount);
+            }
+            return;
+        }
+        if (byteCount == 0)
+        {
+            value = [];
+            return;
+        }
+        var fresh = GC.AllocateUninitializedArray<byte>(byteCount); // CopyTo writes every byte
+        buffer.CopyTo(fresh);
+        buffer.Advance(byteCount);
+        value = fresh;
     }
 }
 
@@ -69,7 +88,29 @@ public sealed partial class ByteArraySegmentFormatter<TWriteBuffer, TReadBuffer>
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref ArraySegment<byte> value)
     {
-        value = buffer.TryReadNil() ? default : new ArraySegment<byte>(buffer.ReadBinary());
+        if (buffer.TryReadNil())
+        {
+            value = default;
+            return;
+        }
+        // Populate contract: a same-length segment is refilled in place (the caller's backing array sees the bytes)
+        var byteCount = buffer.ReadBinHeader();
+        if (value.Array is not null && value.Count == byteCount)
+        {
+            if (byteCount > 0)
+            {
+                buffer.CopyTo(value.AsSpan());
+                buffer.Advance(byteCount);
+            }
+            return;
+        }
+        var fresh = byteCount == 0 ? [] : GC.AllocateUninitializedArray<byte>(byteCount);
+        if (byteCount > 0)
+        {
+            buffer.CopyTo(fresh);
+            buffer.Advance(byteCount);
+        }
+        value = new ArraySegment<byte>(fresh);
     }
 }
 
@@ -86,7 +127,29 @@ public sealed partial class ByteMemoryFormatter<TWriteBuffer, TReadBuffer> : IMe
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Memory<byte> value)
     {
-        value = buffer.TryReadNil() ? default : buffer.ReadBinary();
+        if (buffer.TryReadNil())
+        {
+            value = default;
+            return;
+        }
+        // Populate contract: a same-length memory is refilled in place (the caller's backing buffer sees the bytes)
+        var byteCount = buffer.ReadBinHeader();
+        if (value.Length == byteCount)
+        {
+            if (byteCount > 0)
+            {
+                buffer.CopyTo(value.Span);
+                buffer.Advance(byteCount);
+            }
+            return;
+        }
+        var fresh = byteCount == 0 ? [] : GC.AllocateUninitializedArray<byte>(byteCount);
+        if (byteCount > 0)
+        {
+            buffer.CopyTo(fresh);
+            buffer.Advance(byteCount);
+        }
+        value = fresh;
     }
 }
 

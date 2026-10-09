@@ -60,7 +60,7 @@ public sealed partial class ObjectFallbackFormatter<TWriteBuffer, TReadBuffer> :
             return;
         }
 
-        GetDispatcher(type).Serialize(ref buffer, ref state, value);
+        GetDispatcher(RuntimeTypeView.Normalize(type)).Serialize(ref buffer, ref state, value);
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref object? value)
@@ -142,21 +142,5 @@ public sealed partial class ObjectFallbackFormatter<TWriteBuffer, TReadBuffer> :
             }
 #endif
         }
-    }
-}
-
-public sealed partial class ObjectFallbackFormatterFactory : MessagePackFormatterFactory
-{
-    public static readonly ObjectFallbackFormatterFactory Instance = new();
-
-#if NET9_0_OR_GREATER
-    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-#else
-    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
-        where TWriteBuffer : struct, SerializerFoundation.IWriteBuffer
-        where TReadBuffer : struct, SerializerFoundation.IReadBuffer
-#endif
-    {
-        return type == typeof(object) ? new ObjectFallbackFormatter<TWriteBuffer, TReadBuffer>() : null;
     }
 }

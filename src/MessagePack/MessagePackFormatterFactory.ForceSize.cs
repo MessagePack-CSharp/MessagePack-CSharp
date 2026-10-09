@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using MessagePack.Formatters;
 
 namespace MessagePack;
@@ -7,15 +8,22 @@ namespace MessagePack;
 /// (int8/uint8 through int64/uint64) regardless of value, instead of the smallest format that fits.
 /// Reads stay lenient and accept any integer format.
 /// Covers the eight integer primitives, their nullable forms, and their arrays (byte[] stays bin).
-/// Not in any default chain: put it on a member with <see cref="MessagePackFormatterAttribute"/>,
-/// or compose <see cref="Instance"/> ahead of a default factory to force the width everywhere.
 /// </summary>
+/// <remarks>
+/// For use as the argument of <see cref="MessagePackFormatterAttribute"/> on a member only:
+/// <c>[MessagePackFormatter(typeof(ForceSizeFormatterFactory))] public int Value { get; set; }</c>. It is not a
+/// factory to compose into a resolver chain: the generated formatters write integer members directly (their own
+/// width codec, as v3's generated code did), the primitive-collection codecs on modern targets do the same, and only
+/// the reflection tier would consult the chain, so a chain placement would force the width on some paths and not on
+/// others. The member attribute reaches every path, through the generated and the reflection formatters alike.
+/// </remarks>
 public sealed partial class ForceSizeFormatterFactory : MessagePackFormatterFactory
 {
-    /// <summary>Shared instance.</summary>
-    public static readonly ForceSizeFormatterFactory Instance = new ForceSizeFormatterFactory();
-
-    /// <summary>Creates a new instance, for use with <see cref="MessagePackFormatterAttribute"/> on a single member. Chains use <see cref="Instance"/>.</summary>
+    /// <summary>
+    /// For <see cref="MessagePackFormatterAttribute"/> only: the generated and reflection formatters construct the
+    /// factory the attribute names. Not meant to be called, or composed into a chain, by hand (see the type remarks).
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public ForceSizeFormatterFactory()
     {
     }

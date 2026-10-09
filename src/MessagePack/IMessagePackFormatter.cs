@@ -112,11 +112,12 @@ public struct DeserializeState
     long remainingDeclaredElements;
 
     /// <summary>
-    /// Creates state with the given depth limit and no declared-element budget. Zero means unlimited.
-    /// Prefer <see cref="DeserializeState(int, long)"/> when the length of the message is known.
+    /// Not supported. A default <see cref="DeserializeState"/> has no declared-element budget, so the first array or map
+    /// header read through it throws. Use <see cref="DeserializeState(int, long)"/> with the length of the message.
     /// </summary>
-    public DeserializeState(int maxDepth)
-        : this(maxDepth, long.MaxValue)
+    [Obsolete("Use DeserializeState(int maxDepth, long messageLength); a default DeserializeState has a declared-element budget of zero.", error: true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public DeserializeState()
     {
     }
 
@@ -132,6 +133,16 @@ public struct DeserializeState
     {
         this.remainingDepth = maxDepth == 0 ? 0 : maxDepth + 1; // 0 is unlimited
         this.remainingDeclaredElements = messageLength;
+    }
+
+    // Resets the budgets for the next message, keeping the circular-reference identity table. Only an element stream
+    // uses it: DeserializeElementsAsync reads the elements of one array through one state, Reset for each element's
+    // bytes, so the ids span the elements as they do under Deserialize<T[]>. Every other reader builds its state for
+    // exactly the bytes it hands the formatter.
+    internal void Reset(int maxDepth, long messageLength)
+    {
+        remainingDepth = maxDepth == 0 ? 0 : maxDepth + 1;
+        remainingDeclaredElements = messageLength;
     }
 
     /// <summary>

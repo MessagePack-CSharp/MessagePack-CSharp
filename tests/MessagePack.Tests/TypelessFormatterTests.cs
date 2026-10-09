@@ -519,4 +519,17 @@ public class TypelessFormatterTests
         Assert.Equal(7, Assert.IsType<TypelessShape>(toV3.Iface).X);
         Assert.Equal(9, Assert.IsType<TypelessDerived>(toV3.Abstract).Y);
     }
+
+    // the Version/Culture/PublicKeyToken stripping regex runs on every payload type name that misses the allow
+    // list; v3's unescaped `\d+.\d+` backtracked cubically on a long digit run (17 s per message for 1000 digits),
+    // which made the "safe" loader a CPU sink for whoever controls the payload
+    [Fact]
+    public void AllowedTypes_LongVersionDigitRun_IsRefusedQuickly()
+    {
+        var loader = TypelessTypeLoader.AllowedTypes(typeof(TypelessPerson));
+        var hostile = "X, Version=" + new string('1', 1000);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        Assert.Null(loader.LoadType(hostile));
+        Assert.True(stopwatch.ElapsedMilliseconds < 2000, $"took {stopwatch.ElapsedMilliseconds} ms");
+    }
 }

@@ -205,6 +205,89 @@ public class AsyncDeserializeTests
         Assert.Equal("tail", await MessagePackSerializer.DeserializeAsync<string>(reader, Options));
     }
 
+    // a parse failure on the completed-reader fast path must still release the read: the next ReadAsync on the
+    // same reader works (and the failed message was consumed, as on the framed path)
+    [Fact]
+    public async Task DeserializeAsync_CompletedReader_ParseFailure_ReleasesTheRead()
+    {
+        byte[] bytes = [.. MessagePackSerializer.Serialize("text", Options), .. MessagePackSerializer.Serialize(5, Options)];
+        var reader = Feed(bytes);
+        await Task.Delay(50); // let the feed complete so the fast path is taken
+        await Assert.ThrowsAsync<MessagePackSerializationException>(async () => await MessagePackSerializer.DeserializeAsync<int>(reader, Options));
+        Assert.Equal(5, await MessagePackSerializer.DeserializeAsync<int>(reader, Options));
+    }
+
+    // the element stream's header read on a value that is not an array: the failure releases the read, so the
+    // caller's reader stays usable
+    [Fact]
+    public async Task DeserializeElementsAsync_NonArray_ReleasesTheRead()
+    {
+        byte[] bytes = [.. MessagePackSerializer.Serialize("text", Options), .. MessagePackSerializer.Serialize(5, Options)];
+        var reader = Feed(bytes);
+        await Assert.ThrowsAsync<MessagePackSerializationException>(async () =>
+        {
+            await foreach (var _ in MessagePackSerializer.DeserializeElementsAsync<int>(reader, Options))
+            {
+            }
+        });
+        Assert.Equal("text", await MessagePackSerializer.DeserializeAsync<string>(reader, Options)); // nothing was consumed
+        Assert.Equal(5, await MessagePackSerializer.DeserializeAsync<int>(reader, Options));
+
+        // with the writer still open: nothing was examined either, so the next read returns the same data at once
+        var open = Feed(MessagePackSerializer.Serialize("text", Options), complete: false);
+        await Task.Delay(50);
+        await Assert.ThrowsAsync<MessagePackSerializationException>(async () =>
+        {
+            await foreach (var _ in MessagePackSerializer.DeserializeElementsAsync<int>(open, Options))
+            {
+            }
+        });
+        Assert.Equal("text", await MessagePackSerializer.DeserializeAsync<string>(open, Options).AsTask().WaitAsync(TimeSpan.FromSeconds(10)));
+    }
+
+    // the elements of one array share the circular-reference identity tables (as under Serialize(array) /
+    // Deserialize<T[]>): the two wires are interchangeable, and an instance shared between elements stays one instance
+    [Theory]
+    [InlineData(int.MaxValue)]
+    [InlineData(3)]
+    public async Task ElementStreams_ShareCircularReferenceIdentityAcrossElements(int chunkSize)
+    {
+        var sharedNode = new CircularNode { Value = 1 };
+        var array = new[] { new CircularNode { Value = 0, Next = sharedNode }, new CircularNode { Value = 2, Next = sharedNode }, sharedNode };
+        var whole = MessagePackSerializer.Serialize(array, Options);
+
+        // the element stream writes exactly the array wire (the second and third occurrences are back-references)
+        var pipe = new Pipe();
+        await MessagePackSerializer.SerializeElementsAsync(pipe.Writer, array, array.Length, Options);
+        await pipe.Writer.CompleteAsync();
+        var streamed = await pipe.Reader.ReadAsync();
+        Assert.Equal(whole, streamed.Buffer.ToArray());
+        pipe.Reader.AdvanceTo(streamed.Buffer.End);
+
+        // and the array wire reads back element by element, with one shared instance
+        var elements = new List<CircularNode>();
+        await foreach (var element in MessagePackSerializer.DeserializeElementsAsync<CircularNode>(Feed(whole, chunkSize), Options))
+        {
+            elements.Add(element);
+        }
+        Assert.Equal(3, elements.Count);
+        Assert.Same(elements[0].Next, elements[1].Next);
+        Assert.Same(elements[0].Next, elements[2]);
+        Assert.Equal(1, elements[2].Value);
+
+        // the whole-array entry reads the element stream too (same bytes, so trivially), and a cycle inside one element still works
+        var cyclic = new CircularNode { Value = 7 };
+        cyclic.Next = cyclic;
+        var cyclicBytes = MessagePackSerializer.Serialize(new[] { cyclic, cyclic }, Options);
+        var back = new List<CircularNode>();
+        await foreach (var element in MessagePackSerializer.DeserializeElementsAsync<CircularNode>(Feed(cyclicBytes, chunkSize), Options))
+        {
+            back.Add(element);
+        }
+        Assert.Same(back[0], back[0].Next);
+        Assert.Same(back[0], back[1]);
+    }
+
     [Fact]
     public async Task DeserializeAsync_EmptyStream_Throws()
     {

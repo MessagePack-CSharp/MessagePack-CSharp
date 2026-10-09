@@ -81,6 +81,20 @@ public abstract class MessagePackMessageProcessor
     {
         throw new NotSupportedException("This processor's messages are MessagePack values; the serializer finds their boundaries itself.");
     }
+
+    /// <summary>
+    /// <see cref="TryFindMessageEnd(in ReadOnlySequence{byte}, out long)"/> with a walk position the serializer keeps
+    /// between reads of the same message: <paramref name="position"/> is 0 when a message starts, and on every later
+    /// read of that message (the buffer has grown at its end, never moved) it is whatever the processor left there.
+    /// A processor that stores how far it has walked and resumes from there makes a message's boundary search cost
+    /// its size once, instead of once per read (the frame processors do; a frame of many small blocks received in
+    /// small reads would otherwise re-walk its headers quadratically). The default ignores the position and walks
+    /// from the start.
+    /// </summary>
+    public virtual bool TryFindMessageEnd(in ReadOnlySequence<byte> buffer, ref long position, out long length)
+    {
+        return TryFindMessageEnd(in buffer, out length);
+    }
 }
 
 /// <summary>

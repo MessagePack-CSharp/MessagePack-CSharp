@@ -210,8 +210,8 @@ public static class WriteBufferExtensions
 
         /// <summary>
         /// Writes a bin header, as bin8, bin16 or bin32 for byteCount.
-        /// The caller then writes exactly byteCount payload bytes through <see cref="WriteRaw"/> or GetSpan and Advance.
-        /// Use <see cref="WriteBinary"/> when the payload is already a single span.
+        /// The caller then writes exactly byteCount payload bytes through <see cref="WriteRaw{TWriteBuffer}(ref TWriteBuffer, ReadOnlySpan{byte})"/> or GetSpan and Advance.
+        /// Use <see cref="WriteBinary{TWriteBuffer}(ref TWriteBuffer, ReadOnlySpan{byte})"/> when the payload is already a single span.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WriteBinHeader(int byteCount)
@@ -273,7 +273,7 @@ public static class WriteBufferExtensions
         }
 
         /// <summary>
-        /// The <see cref="ReadOnlySequence{T}"/> form of <see cref="WriteRaw(ReadOnlySpan{byte})"/>, copying each segment in turn.
+        /// The <see cref="ReadOnlySequence{T}"/> form of <see cref="WriteRaw{TWriteBuffer}(ref TWriteBuffer, ReadOnlySpan{byte})"/>, copying each segment in turn.
         /// The same contract applies to the sequence as a whole.
         /// </summary>
         public void WriteRaw(in ReadOnlySequence<byte> value)

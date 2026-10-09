@@ -99,6 +99,16 @@ public sealed class MessagePackUnknownMembers
         return count == 0 ? declaredCount : Math.Max(declaredCount, Entries[count - 1].Index + 1);
     }
 
+    // the entries are the raw MessagePack the capturing deserialization already unwrapped: the caller's options
+    // supply the resolver (and its settings), but a message processor (a compression frame) must not run again
+    static MessagePackSerializerOptions WithoutProcessor(MessagePackSerializerOptions? options)
+    {
+        // DefaultAot, not Default. Object deserialization is the builtin tier's PrimitiveObjectFormatter in both
+        // presets, and this one keeps the method clean for trimming/Native AOT (no reflection tail, no MakeGenericType tier).
+        options ??= MessagePackSerializerOptions.DefaultAot;
+        return options.MessageProcessor is null ? options : options with { MessageProcessor = null };
+    }
+
     /// <summary>
     /// Decodes the string-keyed members for inspection. Values are read the way <c>object</c> deserializes, so maps become dictionaries and arrays become object arrays.
     /// The result is a snapshot; serialization replays the raw bytes, not this view.
@@ -110,9 +120,7 @@ public sealed class MessagePackUnknownMembers
         {
             throw new InvalidOperationException("This packet holds trailing array elements keyed by index; use ToArrayDictionary.");
         }
-        // DefaultAot, not Default. Object deserialization is the builtin tier's PrimitiveObjectFormatter in both
-        // presets, and this one keeps the method clean for trimming/Native AOT (no reflection tail, no MakeGenericType tier).
-        options ??= MessagePackSerializerOptions.DefaultAot;
+        options = WithoutProcessor(options);
         var result = options.Resolver.HashFloodingResistant
             ? new Dictionary<string, object?>(Entries.Count, HashFloodingResistantEqualityComparer.Get<string>())
             : new Dictionary<string, object?>(Entries.Count);
@@ -133,7 +141,7 @@ public sealed class MessagePackUnknownMembers
         {
             throw new InvalidOperationException("This packet holds string-keyed members; use ToMapDictionary.");
         }
-        options ??= MessagePackSerializerOptions.DefaultAot;
+        options = WithoutProcessor(options);
         // No flooding-resistant comparer here, because the keys are loop-counter indices the capture assigned in
         // ascending order, not attacker-chosen values.
         var result = new Dictionary<int, object?>(Entries.Count);

@@ -346,7 +346,8 @@ static class BitArrayCodec
             }
             var bitLength = buffer.ReadInt32();
             var byteCount = buffer.ReadBinHeader();
-            if (bitLength < 0 || byteCount != (int)(((long)bitLength + 7) >> 3))
+            // BitArray(byte[]) takes at most int.MaxValue / 8 bytes, one short of what the top seven bitLength values need
+            if (bitLength < 0 || byteCount != (int)(((long)bitLength + 7) >> 3) || byteCount > int.MaxValue / 8)
             {
                 throw new MessagePackSerializationException("Invalid BitArray format.");
             }

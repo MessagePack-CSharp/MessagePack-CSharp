@@ -1,0 +1,29 @@
+<Project>
+	<PropertyGroup>
+		<!-- NuGet Packaging: nothing packs unless the project opts in with IsPackable=true (the shipped projects under src/) -->
+		<IsPackable>false</IsPackable>
+		<PackageVersion>$(Version)</PackageVersion>
+		<Authors>neuecc</Authors>
+		<Copyright>© Yoshifumi Kawai and contributors. All rights reserved.</Copyright>
+		<PackageProjectUrl>https://github.com/MessagePack-CSharp/MessagePack-CSharp</PackageProjectUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>$(PackageProjectUrl)</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<PackageTags>MsgPack MessagePack Serialization Formatter Serializer Unity</PackageTags>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<!-- A project that ships its own README.md (the Annotations shim) sets this to false -->
+		<PackRootReadme>true</PackRootReadme>
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(PackRootReadme)' == 'true'">
+		<None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<!-- The LICENSE text travels inside every shipped assembly as a manifest resource. Not required by anything; it
+	     keeps the attribution with the binary, and a Unity IL2CPP build lists the resource in its output, which lets
+	     tools such as SteamDB detect the library in shipped games. -->
+	<ItemGroup Condition="'$(IsPackable)' == 'true'">
+		<EmbeddedResource Include="$(MSBuildThisFileDirectory)LICENSE" />
+	</ItemGroup>
+</Project>

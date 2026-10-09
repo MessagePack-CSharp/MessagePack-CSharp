@@ -6,6 +6,7 @@
 		<Nullable>enable</Nullable>
 		<IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
 		<RootNamespace>MessagePack.Unity</RootNamespace>
+		<IsPackable>true</IsPackable>
 		<Description>UnityEngine value-type shims (Vector2/3/4, Quaternion, Color, Rect, Bounds, Matrix4x4, AnimationCurve, Gradient, ...) with the same MessagePack formatters the MessagePack.Unity package uses inside Unity, so servers read and write the Unity wire.</Description>
 	</PropertyGroup>
 
@@ -27,7 +28,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+		<!-- PrivateAssets="none": a ProjectReference packs as a dependency with exclude="Build,Analyzers" by default, which would
+		     keep MessagePack's source generator from a consumer that references only this package (same as the Annotations shim). -->
+		<ProjectReference Include="..\MessagePack\MessagePack.csproj" PrivateAssets="none" />
 		<ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 

@@ -132,7 +132,7 @@ public class HashFloodingResistantEqualityComparerTests
     {
         Assert.Null(HashFloodingResistantEqualityComparer.Get<CustomKey>());
         Assert.Null(HashFloodingResistantEqualityComparer.Get<byte[]>());
-        Assert.Null(HashFloodingResistantEqualityComparer.Get<decimal>());
+        Assert.Null(HashFloodingResistantEqualityComparer.Get<KeyValuePair<int, int>>());
         Assert.Null(HashFloodingResistantEqualityComparer.Get<Uri>());
     }
 

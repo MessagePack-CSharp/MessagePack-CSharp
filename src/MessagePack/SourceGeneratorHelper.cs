@@ -51,7 +51,16 @@ public static class SourceGeneratorHelper
         /// The map header written earlier must already include <see cref="MessagePackUnknownMembers.Count"/>.
         /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public void WriteUnknownStringKeyed(MessagePackUnknownMembers members)
+        public void WriteUnknownStringKeyed(MessagePackUnknownMembers members) => buffer.WriteUnknownStringKeyed(members, Array.Empty<byte[]>());
+
+        /// <summary>
+        /// The single-argument overload for a type whose declared keys are
+        /// <paramref name="declaredKeysUtf8"/>: a packet transplanted from another type can hold one of them, and
+        /// replaying it would write the key twice into a map the type's own reader rejects, so it fails loud instead
+        /// (the array form's rule for an entry at a declared index).
+        /// </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public void WriteUnknownStringKeyed(MessagePackUnknownMembers members, byte[][] declaredKeysUtf8)
         {
             // A packet is settable and therefore transplantable across types. An array-mode packet replayed into
             // a map would silently corrupt the output.
@@ -61,6 +70,13 @@ public static class SourceGeneratorHelper
             }
             foreach (var entry in members.Entries)
             {
+                foreach (var declared in declaredKeysUtf8)
+                {
+                    if (declared.AsSpan().SequenceEqual(entry.KeyUtf8))
+                    {
+                        throw new MessagePackSerializationException($"This MessagePackUnknownMembers packet holds the key \"{System.Text.Encoding.UTF8.GetString(declared)}\", which is a declared member of the type replaying it (a packet transplanted from another type); the map would carry the key twice.");
+                    }
+                }
                 buffer.WriteString(entry.KeyUtf8!);
                 buffer.WriteRaw(entry.Value);
             }

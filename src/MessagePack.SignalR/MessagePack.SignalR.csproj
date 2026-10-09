@@ -5,6 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsAotCompatible>true</IsAotCompatible>
+		<IsPackable>true</IsPackable>
 		<Description>SignalR "messagepack" hub protocol (server and client) on MessagePack v4, wire-compatible with Microsoft.AspNetCore.SignalR.Protocols.MessagePack and the JavaScript/Java MessagePack clients.</Description>
 	</PropertyGroup>
 
@@ -15,7 +16,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+		<!-- PrivateAssets="none": a ProjectReference packs as a dependency with exclude="Build,Analyzers" by default, which would
+		     keep MessagePack's source generator from a consumer that references only this package (same as the Annotations shim). -->
+		<ProjectReference Include="..\MessagePack\MessagePack.csproj" PrivateAssets="none" />
 		<ProjectReference Include="..\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 

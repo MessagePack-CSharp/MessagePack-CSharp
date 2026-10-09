@@ -19,6 +19,12 @@
       "commands": [
         "nbgv"
       ]
+    },
+    "sharpfuzz": {
+      "version": "2.3.0",
+      "commands": [
+        "sharpfuzz"
+      ]
     }
   }
 }

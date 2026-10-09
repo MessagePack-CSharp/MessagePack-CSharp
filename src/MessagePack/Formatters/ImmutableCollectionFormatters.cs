@@ -54,14 +54,9 @@ public sealed partial class ImmutableArrayFormatter<TWriteBuffer, TReadBuffer, T
         }
         state.Enter();
 
-        var array = new T[count];
-
         var f = formatter;
 
-        for (int i = 0; i < count; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref array[i]);
-        }
+        var array = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, f, count);
 
 #if NET9_0_OR_GREATER
         value = ImmutableCollectionsMarshal.AsImmutableArray(array); // zero-copy: array never escapes
@@ -304,11 +299,20 @@ public sealed partial class ImmutableSortedSetFormatter<TWriteBuffer, TReadBuffe
         var f = formatter;
         state.Enter();
 
-        for (int i = 0; i < count; i++)
+        try
         {
-            T item = default!;
-            f.Deserialize(ref buffer, ref state, ref item);
-            builder.Add(item);
+            for (int i = 0; i < count; i++)
+            {
+                T item = default!;
+                f.Deserialize(ref buffer, ref state, ref item);
+                builder.Add(item);
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            // Comparer<T>.Default refuses to order values of different runtime types (an object-keyed collection fed mixed
+            // scalars): a data error, reported as one
+            throw new MessagePackSerializationException("Invalid ImmutableSortedSet payload: an element is not comparable with the others.", ex);
         }
 
         value = builder.ToImmutable();
@@ -376,14 +380,9 @@ public sealed partial class ImmutableQueueFormatter<TWriteBuffer, TReadBuffer, T
         var count = buffer.ReadArrayHeader(ref state);
         state.Enter();
 
-        var temp = new T[count];
-
         var f = formatter;
 
-        for (int i = 0; i < count; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref temp[i]);
-        }
+        var temp = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, f, count);
 
         value = ImmutableQueue.CreateRange(temp); // enqueues in order: dequeue order = stream order
         state.Exit();
@@ -454,11 +453,7 @@ public sealed partial class ImmutableStackFormatter<TWriteBuffer, TReadBuffer, T
 
         // stream order is top-first, but a stack is rebuilt bottom-first: fill a temp
         // array REVERSED, then CreateRange pushes in temp order (see StackFormatter)
-        var temp = new T[count];
-        for (int i = 0; i < count; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref temp[count - 1 - i]);
-        }
+        var temp = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArrayReversed(ref buffer, ref state, f, count);
 
         value = ImmutableStack.CreateRange(temp); // temp[^1] (= stream head) ends on top
         state.Exit();
@@ -563,6 +558,7 @@ public sealed class ImmutableDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey
             TValue v = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
             vf.Deserialize(ref buffer, ref state, ref v);
+            MessagePackSerializationException.ThrowIfNullMapKey(k);
             builder[k] = v;
         }
         // a duplicate key collapsed into one slot: reject, matching DictionaryFormatter
@@ -665,13 +661,23 @@ public sealed class ImmutableSortedDictionaryFormatter<TWriteBuffer, TReadBuffer
         var vf = valueFormatter;
         state.Enter();
 
-        for (int i = 0; i < count; i++)
+        try
         {
-            TKey k = default!;
-            TValue v = default!;
-            kf.Deserialize(ref buffer, ref state, ref k);
-            vf.Deserialize(ref buffer, ref state, ref v);
-            builder[k] = v;
+            for (int i = 0; i < count; i++)
+            {
+                TKey k = default!;
+                TValue v = default!;
+                kf.Deserialize(ref buffer, ref state, ref k);
+                vf.Deserialize(ref buffer, ref state, ref v);
+                MessagePackSerializationException.ThrowIfNullMapKey(k);
+                builder[k] = v;
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            // Comparer<T>.Default refuses to order values of different runtime types (an object-keyed collection fed mixed
+            // scalars): a data error, reported as one
+            throw new MessagePackSerializationException("Invalid ImmutableSortedDictionary payload: an element is not comparable with the others.", ex);
         }
         // a duplicate key collapsed into one slot: reject, matching DictionaryFormatter
         if (builder.Count != count)
@@ -918,14 +924,9 @@ public sealed partial class InterfaceImmutableQueueFormatter<TWriteBuffer, TRead
         var count = buffer.ReadArrayHeader(ref state);
         state.Enter();
 
-        var temp = new T[count];
-
         var f = formatter;
 
-        for (int i = 0; i < count; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref temp[i]);
-        }
+        var temp = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArray(ref buffer, ref state, f, count);
 
         value = ImmutableQueue.CreateRange(temp);
         state.Exit();
@@ -993,11 +994,7 @@ public sealed partial class InterfaceImmutableStackFormatter<TWriteBuffer, TRead
         var f = formatter;
         state.Enter();
 
-        var temp = new T[count];
-        for (int i = 0; i < count; i++)
-        {
-            f.Deserialize(ref buffer, ref state, ref temp[count - 1 - i]);
-        }
+        var temp = CollectionReads<TWriteBuffer, TReadBuffer, T>.ReadArrayReversed(ref buffer, ref state, f, count);
 
         value = ImmutableStack.CreateRange(temp);
         state.Exit();
@@ -1098,6 +1095,7 @@ public sealed class InterfaceImmutableDictionaryFormatter<TWriteBuffer, TReadBuf
             TValue v = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
             vf.Deserialize(ref buffer, ref state, ref v);
+            MessagePackSerializationException.ThrowIfNullMapKey(k);
             builder[k] = v;
         }
         // a duplicate key collapsed into one slot: reject, matching DictionaryFormatter

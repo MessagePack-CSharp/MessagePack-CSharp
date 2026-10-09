@@ -187,8 +187,38 @@ internal sealed class CompositeFormatterFactory : MessagePackFormatterFactory
             {
                 return created;
             }
+            if (PairIsByRefLike<TWriteBuffer, TReadBuffer>.Value && ServesCompatiblePair(factory, type))
+            {
+                // this factory owns the type but can serve it only over the Compatible pair (a library compiled
+                // against a netstandard build of MessagePack): stop here, so the resolver reroutes to that pair through
+                // the same factory order, instead of a later factory taking the type with a different wire
+                return null;
+            }
         }
         return null;
+    }
+
+    // the probe behind the resolver's own compat detection (CanCreateCompatiblePair), applied per factory so that
+    // chain order decides which factory serves a type regardless of which pair it can serve it over
+    static bool ServesCompatiblePair(MessagePackFormatterFactory factory, Type type)
+    {
+        try
+        {
+#pragma warning disable CA2263 // the non-generic overload is the compat tier that downlevel-built factories override; that tier is exactly what this probes
+            return factory.CreateFormatter(typeof(CompatibleArrayPoolListWriteBuffer), typeof(CompatibleReadOnlySpanReadBuffer), type) != null;
+#pragma warning restore CA2263
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    static class PairIsByRefLike<TWriteBuffer, TReadBuffer>
+        where TWriteBuffer : struct, IWriteBuffer, allows ref struct
+        where TReadBuffer : struct, IReadBuffer, allows ref struct
+    {
+        public static readonly bool Value = typeof(TWriteBuffer).IsByRefLike || typeof(TReadBuffer).IsByRefLike;
     }
 #endif
 

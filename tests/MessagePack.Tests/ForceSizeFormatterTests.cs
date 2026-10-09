@@ -9,10 +9,11 @@ namespace MessagePack.Tests;
 // roundtripped through our reader (which stays lenient about integer formats).
 public partial class ForceSizeFormatterTests
 {
-    // the chain-composition consumption model: ForceSizeFormatterFactory is in no default
-    // chain, so it is placed ahead of Default to force every integer width in the graph
+    // wire parity of every force-size formatter with v3, checked through root values. The chain here is a test
+    // device only: the factory is attribute-only (see its remarks), and the supported consumption model is
+    // ForcedMembersPoco below
     static readonly MessagePackSerializerOptions options =
-        new(new MessagePackFormatterResolver([ForceSizeFormatterFactory.Instance, MessagePackFormatterFactory.Default]));
+        new(new MessagePackFormatterResolver([new ForceSizeFormatterFactory(), MessagePackFormatterFactory.Default]));
 
     static readonly V3::MessagePack.MessagePackSerializerOptions oracleOptions =
         V3::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(

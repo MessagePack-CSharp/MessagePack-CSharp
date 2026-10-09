@@ -66,6 +66,46 @@ static class ObjectEmitter
             {
                 containers.Add(writer.Block(declaration));
             }
+            if (model.PrivateHarvestedBuiltIns.Length > 0)
+            {
+                // the innermost declaration is the (non-generic) partial type itself: the one scope that can name its
+                // private nested types, so it carries the factory that constructs their formatters and the module
+                // initializer that registers them (the generated factory in MessagePack.Generated cannot)
+                writer.Line("sealed class MessagePackPrivateTypesFactory : global::MessagePack.MessagePackFormatterFactory");
+                using (writer.OpenScope())
+                {
+                    writer.Line("internal static readonly MessagePackPrivateTypesFactory Instance = new MessagePackPrivateTypesFactory();");
+                    writer.Line();
+                    writer.Line("#if NET9_0_OR_GREATER");
+                    writer.Line("public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(global::System.Type type)");
+                    writer.Line("#else");
+                    writer.Line("public object? CreateFormatter<TWriteBuffer, TReadBuffer>(global::System.Type type)");
+                    writer.Line("    where TWriteBuffer : struct, global::SerializerFoundation.IWriteBuffer");
+                    writer.Line("    where TReadBuffer : struct, global::SerializerFoundation.IReadBuffer");
+                    writer.Line("#endif");
+                    using (writer.OpenScope())
+                    {
+                        foreach (var harvested in model.PrivateHarvestedBuiltIns)
+                        {
+                            writer.Line($"if (type == typeof({harvested.ClosedTypeName})) return {harvested.FormatterConstruction};");
+                        }
+                        writer.Line("return null;");
+                    }
+                    writer.Line();
+                    BufferPairs.AppendCreateFormatterDispatch(writer);
+                }
+                writer.Line();
+                writer.Line("[global::System.Runtime.CompilerServices.ModuleInitializer]");
+                writer.Line("internal static void MessagePackRegisterPrivateTypes()");
+                using (writer.OpenScope())
+                {
+                    foreach (var harvested in model.PrivateHarvestedBuiltIns)
+                    {
+                        writer.Line($"global::MessagePack.SourceGeneratedFormatterFactory.Instance.RegisterHarvested<{harvested.ClosedTypeName}>(MessagePackPrivateTypesFactory.Instance);");
+                    }
+                }
+                writer.Line();
+            }
         }
         else
         {
@@ -100,24 +140,25 @@ static class ObjectEmitter
                 writer.Line("bool validateNull;");
             }
 
+            if (model.IsStringKey && model.UnknownMembersName is not null)
+            {
+                // the packet replay refuses a transplanted entry whose key this type declares (see WriteUnknownStringKeyed)
+                var keys = model.Members.AsArray().Select(static m => "new byte[] { " + string.Join(", ", Encoding.UTF8.GetBytes(m.StringKey).Select(static b => $"0x{b:x2}")) + " }");
+                writer.Line($"static readonly byte[][] declaredKeysUtf8 = new byte[][] {{ {string.Join(", ", keys)} }};");
+            }
+
             writer.Line();
             writer.Line("public void Initialize(MessagePackFormatterResolver resolver)");
             using (writer.OpenScope())
             {
                 foreach (var member in model.Members)
                 {
-                    if (member.CustomFormatter is { FactoryNew: { } factoryNew, TypeOfExpr: { } typeOfExpr })
+                    if (member.CustomFormatter is { FactoryNew: { } factoryNew })
                     {
-                        // mirror the resolver's factory invocation shape: generic overload on the modern surface,
-                        // the Type-based compat overload downlevel
-                        var fieldType = $"IMessagePackFormatter<TWriteBuffer, TReadBuffer, {member.TypeName}>";
-                        var mismatch = $"throw new global::System.InvalidOperationException(\"[MessagePackFormatter] factory did not create a formatter for '{typeOfExpr}' ({model.FullTypeName}.{member.Name}).\")";
-                        writer.Line("#if NET9_0_OR_GREATER");
-                        writer.Line($"f{member.Id} = {factoryNew}.CreateFormatter<TWriteBuffer, TReadBuffer>(typeof({typeOfExpr})) as {fieldType} ?? {mismatch};");
-                        writer.Line("#else");
-                        writer.Line($"f{member.Id} = {factoryNew}.CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), typeof({typeOfExpr})) as {fieldType} ?? {mismatch};");
-                        writer.Line("#endif");
-                        writer.Line($"f{member.Id}.Initialize(resolver);");
+                        // through the resolver: the factory is treated like one of the chain, so a factory serving the
+                        // member only over the Compatible buffers (a netstandard-built library) reroutes the whole graph
+                        // there instead of failing here (MessagePackFormatterResolver.CreateFormatterWith)
+                        writer.Line($"f{member.Id} = resolver.CreateFormatterWith<TWriteBuffer, TReadBuffer, {member.TypeName}>({factoryNew});");
                     }
                     else if (member.CustomFormatter is { FormatterNew: { } formatterNew })
                     {
@@ -182,7 +223,7 @@ static class ObjectEmitter
         using var body = writer.OpenScope();
         if (!model.IsValueType)
         {
-            using (writer.Block("if (value == null)"))
+            using (writer.Block("if (value is null)")) // `is null`: a user-defined == (TextValue, string) would make `== null` ambiguous (CS0034)
             {
                 writer.Line("buffer.WriteNil();");
                 writer.Line("return;");
@@ -340,7 +381,7 @@ static class ObjectEmitter
             using (writer.Block("if (unknownMembers is not null)"))
             {
                 writer.Line(model.IsStringKey
-                    ? "buffer.WriteUnknownStringKeyed(unknownMembers);"
+                    ? "buffer.WriteUnknownStringKeyed(unknownMembers, declaredKeysUtf8);"
                     : model.Members.Length < model.MaxIntKey + 1
                         ? $"buffer.WriteUnknownIntKeyed(unknownMembers, {model.MaxIntKey + 1}, unknownReplayedCount);"
                         : $"buffer.WriteUnknownIntKeyed(unknownMembers, {model.MaxIntKey + 1});");
@@ -361,7 +402,8 @@ static class ObjectEmitter
         if (member.Direct == DirectKind.None)
         {
             flush();
-            writer.Line($"f{member.Id}.Serialize(ref buffer, ref state, {MemberAccess(member, "value")});");
+            var valueAccess = member.IsDynamic ? $"(object?){MemberAccess(member, "value")}" : MemberAccess(member, "value");
+            writer.Line($"f{member.Id}.Serialize(ref buffer, ref state, {valueAccess});");
             return;
         }
 
@@ -436,7 +478,7 @@ static class ObjectEmitter
                 }
                 writer.Line(model.IsValueType
                     ? "var result = value;"
-                    : $"var result = value ?? new {model.FullTypeName}();");
+                    : $"var result = value ?? new {model.FullTypeName}(){RequiredDefaultsInitializer(model)};");
                 if (model.AllowCircularReferences)
                 {
                     // register-before-populate: back-references inside the members below (a cycle)
@@ -451,51 +493,16 @@ static class ObjectEmitter
                 EmitCallback(writer, model.OnAfterDeserialize, model, "result", "OnAfterDeserialize");
                 writer.Line("value = result;");
             }
-            else if (!model.IsValueType)
-            {
-                // construction shape, reference type: a caller-supplied instance keeps populate semantics,
-                // ReflectionObjectFormatter's Arguments-mode rule, with non-settable payloads skipped,
-                // so the type carries two read loops with different leaf programs.
-                // Each lives in its own NoInlining helper: the fresh path must not carry the populate automata in its
-                // compilation unit (an unexecuted sibling block in the same method measurably slows the executed loop,
-                // ArrayDeserializeShapeBenchmark round 1).
-                using (writer.Block("if (value is not null)"))
-                {
-                    writer.Line("DeserializePopulate(ref buffer, ref state, value);");
-                    writer.Line("return;");
-                }
-                writer.Line("value = DeserializeConstruct(ref buffer, ref state);");
-            }
             else
             {
-                // structs have no identity to preserve and always reconstruct
+                // construction shape (a constructor-bound, init-only or required member), and structs: always a fresh
+                // instance, whatever the caller or the owning member holds. An existing instance cannot take a
+                // constructor-bound or init-only member, so "populating" it would silently keep that member's old
+                // value (a parent's `Child = new Child(0)` initializer surviving a read of Child(42)); the rule is a
+                // collection's: refill in place what can be refilled, construct anew what cannot
+                // (ReflectionObjectFormatter's Arguments-mode rule is the same).
                 EmitConstructCore(writer, model);
                 writer.Line("value = constructed;");
-            }
-        }
-
-        if (model.UseConstruction && !model.IsValueType)
-        {
-            writer.Line();
-            writer.Line("[MethodImpl(MethodImplOptions.NoInlining)]");
-            writer.Line($"void DeserializePopulate(ref TReadBuffer buffer, ref DeserializeState state, {model.FullTypeName} result)");
-            using (writer.OpenScope())
-            {
-                writer.Line("state.Enter();");
-                writer.Line();
-                EmitReadLoop(writer, model, EmitPopulateRead);
-                EmitUnknownMembersAssign(writer, model);
-                writer.Line("state.Exit();");
-                EmitCallback(writer, model.OnAfterDeserialize, model, "result", "OnAfterDeserialize");
-            }
-
-            writer.Line();
-            writer.Line("[MethodImpl(MethodImplOptions.NoInlining)]");
-            writer.Line($"{model.FullTypeName} DeserializeConstruct(ref TReadBuffer buffer, ref DeserializeState state)");
-            using (writer.OpenScope())
-            {
-                EmitConstructCore(writer, model);
-                writer.Line("return constructed;");
             }
         }
     }
@@ -510,6 +517,10 @@ static class ObjectEmitter
             if (!IsSkippedOnConstruction(member))
             {
                 writer.Line($"{member.TypeName} v_{member.Id} = default!;");
+            }
+            if (IsAssignedWhenPresent(member))
+            {
+                writer.Line($"bool has_{member.Id} = false;");
             }
         }
         writer.Line("state.Enter();");
@@ -534,19 +545,25 @@ static class ObjectEmitter
                     initializers.Add($"{Identifier(member.Name)} = v_{member.Id}");
                 }
             }
+            else if (IsAssignedWhenPresent(member))
+            {
+                // a plain-set member the payload did not carry (an older writer's shorter array, a map without the
+                // key) keeps the value the constructor and its initializer gave it, the reflection tier's (and v3's)
+                // behaviour; the shadowed case goes through the declarer cast, see below
+                shadowedAssignments.Add($"if (has_{member.Id}) {MemberAccess(member, "constructed")} = v_{member.Id};");
+            }
             else if (member.Setter != SetterKind.None)
             {
-                if (member.BaseCastType is null)
-                {
-                    initializers.Add($"{Identifier(member.Name)} = v_{member.Id}");
-                }
-                else
-                {
-                    // the object initializer binds the derived declaration; the hidden base storage is assigned after
-                    // construction through the declarer cast (the parser rejects init-only/required shadowed members,
-                    // so plain set)
-                    shadowedAssignments.Add($"{MemberAccess(member, "constructed")} = v_{member.Id};");
-                }
+                // init-only and required members are reachable only through the object initializer, which cannot be
+                // conditional: an absent one is assigned its default
+                initializers.Add($"{Identifier(member.Name)} = v_{member.Id}");
+            }
+        }
+        foreach (var required in model.RequiredDefaultedMembers)
+        {
+            if (!model.ConstructorSetsRequiredMembers)
+            {
+                initializers.Add($"{Identifier(required.Name)} = {required.Expression}");
             }
         }
         if (model.UnknownMembersName is { } unknownName)
@@ -589,7 +606,32 @@ static class ObjectEmitter
     static bool IsSkippedOnConstruction(MemberModel member) =>
         member.Setter == SetterKind.None && member.ConstructorParameterIndex < 0;
 
+    // construction path: a plain-set member that is neither a constructor argument nor required is assigned after
+    // construction, and only when the payload carried it (init-only and required members need the object initializer)
+    static bool IsAssignedWhenPresent(MemberModel member) =>
+        member.Setter == SetterKind.Set && member.ConstructorParameterIndex < 0 && !member.HasRequiredModifier;
+
     static bool AnyRequired(ObjectModel model) => model.Members.AsArray().Any(static m => m.IsRequired);
+
+    // `required` members the formatter never reads ([IgnoreMember], or the MessagePackUnknownMembers packet, which is
+    // assigned after the read loop): the compiler still demands them in every `new` (CS9035), so they get their default
+    static string RequiredDefaultsInitializer(ObjectModel model)
+    {
+        if (model.ConstructorSetsRequiredMembers)
+        {
+            return ""; // the parameterless constructor carries [SetsRequiredMembers]: it set them, and they stay
+        }
+        var parts = new List<string>();
+        foreach (var required in model.RequiredDefaultedMembers)
+        {
+            parts.Add($"{Identifier(required.Name)} = {required.Expression}");
+        }
+        if (model.UnknownMembersRequired && model.UnknownMembersName is { } unknownName)
+        {
+            parts.Add($"{Identifier(unknownName)} = null");
+        }
+        return parts.Count == 0 ? "" : " { " + string.Join(", ", parts) + " }";
+    }
 
     // a member gets a null check only where its value is actually observed: through the setter on the populate path,
     // through the local on the construction path
@@ -603,9 +645,8 @@ static class ObjectEmitter
         ? model.Members.AsArray().Any(NeedsNullCheckOnLocal)
         : model.Members.AsArray().Any(NeedsNullCheckOnPopulate);
 
-    // populate path: assign through the setter; a member without one skips its payload (the reflection tier's
-    // relaxation for serialize-only members). Init-only members land here only via the caller-supplied-instance branch,
-    // where they are likewise unreachable and skipped.
+    // populate path (the parameterless-settable shape): assign through the setter; a member without one skips its
+    // payload (the reflection tier's relaxation for serialize-only members)
     static void EmitPopulateRead(CodeWriter writer, MemberModel member)
     {
         if (member.Setter != SetterKind.Set)
@@ -617,7 +658,7 @@ static class ObjectEmitter
         {
             using (writer.OpenScope())
             {
-                writer.Line($"var v = {MemberAccess(member, "result")};");
+                writer.Line($"{(member.IsDynamic ? "object?" : "var")} v = {MemberAccess(member, "result")};");
                 writer.Line($"f{member.Id}.Deserialize(ref buffer, ref state, ref v);");
                 if (NeedsNullCheckOnPopulate(member))
                 {
@@ -644,6 +685,10 @@ static class ObjectEmitter
             : member.DirectNullable
                 ? $"v_{member.Id} = buffer.TryReadNil() ? default({member.TypeName}) : buffer.{Reader(member.Direct)}();"
                 : $"v_{member.Id} = buffer.{Reader(member.Direct)}();");
+        if (IsAssignedWhenPresent(member))
+        {
+            writer.Line($"has_{member.Id} = true;");
+        }
         if (NeedsNullCheckOnLocal(member))
         {
             writer.Line($"if (validateNull && v_{member.Id} is null) {{ ThrowNullValueForNonNullableMember(\"{member.Name}\"); }}");
@@ -764,6 +809,7 @@ static class ObjectEmitter
 
             EmitStringKeyAutomata(writer, model, wideMemberTable, emitMemberRead);
             writer.Line();
+            EmitLegacyKeyAliases(writer, model, wideMemberTable, emitMemberRead);
             if (model.UnknownMembersName is not null)
             {
                 // key is still in place (pre-Advance): the capture copies it before the window can be recycled,
@@ -833,6 +879,27 @@ static class ObjectEmitter
                 writer.Indent();
                 EmitLengthBucket(writer, [.. bucket], bucket.Key, wideMemberTable, emitMemberRead);
                 writer.Unindent();
+            }
+        }
+    }
+
+    // v3's spelling of a key qualified by a generic declaring type (see MemberModel.LegacyKeyPrefix): matched by its
+    // invariant ends after the exact automata missed, before the key is treated as unknown
+    static void EmitLegacyKeyAliases(CodeWriter writer, ObjectModel model, bool wideMemberTable, Action<CodeWriter, MemberModel> emitMemberRead)
+    {
+        for (int index = 0; index < model.Members.Length; index++)
+        {
+            var member = model.Members[index];
+            if (member.LegacyKeyPrefix is null || member.LegacyKeySuffix is null)
+            {
+                continue;
+            }
+            var prefix = Encoding.UTF8.GetBytes(member.LegacyKeyPrefix);
+            var suffix = Encoding.UTF8.GetBytes(member.LegacyKeySuffix);
+            static string Bytes(byte[] utf8) => "new byte[] { " + string.Join(", ", utf8.Select(static b => $"0x{b:x2}")) + " }";
+            using (writer.Block($"if (byteCount > {prefix.Length + suffix.Length} && global::System.MemoryExtensions.StartsWith(key, {Bytes(prefix)}) && global::System.MemoryExtensions.EndsWith(key, {Bytes(suffix)})) // v3: \"{Escape(member.LegacyKeyPrefix)}...{Escape(member.LegacyKeySuffix)}\""))
+            {
+                EmitKeyLeaf(writer, member, index, wideMemberTable, emitMemberRead);
             }
         }
     }

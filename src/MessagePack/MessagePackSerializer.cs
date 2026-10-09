@@ -85,12 +85,20 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Serialize{T}(IBufferWriter{byte}, T)"/>
     public static void Serialize<T>(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options)
     {
+        var state = new SerializeState(options.MaxDepth);
+        Serialize(output, value, options, ref state);
+    }
+
+    // the state is the caller's: one message, or the elements of one array in turn (an element stream, whose
+    // circular-reference identity table then spans the elements as under Serialize(array))
+    internal static void Serialize<T>(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options, ref SerializeState state)
+    {
         var processor = options.MessageProcessor;
         if (processor != null)
         {
             // an envelope needs the complete message before the first output byte, so this path serializes into
             // the pooled segment buffer first
-            SerializeEncoded(output, value, options, processor);
+            SerializeEncoded(output, value, options, processor, ref state);
             return;
         }
 
@@ -99,14 +107,13 @@ public static partial class MessagePackSerializer
 #if NET9_0_OR_GREATER
         if (!options.Resolver.TryGetFormatter<BufferWriterWriteBuffer, ReadOnlySpanReadBuffer, T>(out var formatter))
         {
-            SerializeCompatible(output, value, options);
+            SerializeCompatible(output, value, options, ref state);
             return;
         }
 
         var buffer = new BufferWriterWriteBuffer(output);
         try
         {
-            var state = new SerializeState(options.MaxDepth);
             formatter.Serialize(ref buffer, ref state, value);
             buffer.Flush();
         }
@@ -115,13 +122,12 @@ public static partial class MessagePackSerializer
             buffer.Dispose();
         }
 
-        static void SerializeCompatible(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options)
+        static void SerializeCompatible(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options, ref SerializeState state)
 #endif
         {
             var buffer = new CompatibleBufferWriterWriteBuffer(output);
             try
             {
-                var state = new SerializeState(options.MaxDepth);
                 options.Resolver.GetFormatter<CompatibleBufferWriterWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
                 buffer.Flush();
             }
@@ -167,12 +173,12 @@ public static partial class MessagePackSerializer
 #endif
 
     [SkipLocalsInit]
-    static void SerializeEncoded<T>(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options, MessagePackMessageProcessor processor)
+    static void SerializeEncoded<T>(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options, MessagePackMessageProcessor processor, ref SerializeState state)
     {
 #if NET9_0_OR_GREATER
         if (!options.Resolver.TryGetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>(out var formatter))
         {
-            SerializeEncodedCompatible(output, value, options, processor);
+            SerializeEncodedCompatible(output, value, options, processor, ref state);
             return;
         }
 
@@ -180,7 +186,6 @@ public static partial class MessagePackSerializer
         var buffer = new ArrayPoolListWriteBuffer(scratch);
         try
         {
-            var state = new SerializeState(options.MaxDepth);
             formatter.Serialize(ref buffer, ref state, value);
             var segments = buffer.GetWrittenSegments();
             if (!processor.TryEncode(ref segments, output))
@@ -193,13 +198,12 @@ public static partial class MessagePackSerializer
             buffer.Dispose();
         }
 
-        static void SerializeEncodedCompatible(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options, MessagePackMessageProcessor processor)
+        static void SerializeEncodedCompatible(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options, MessagePackMessageProcessor processor, ref SerializeState state)
 #endif
         {
             var buffer = new CompatibleArrayPoolListWriteBuffer();
             try
             {
-                var state = new SerializeState(options.MaxDepth);
                 options.Resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
                 var segments = buffer.GetWrittenSegments();
                 if (!processor.TryEncode(ref segments, output))

@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Diagnostics.CodeAnalysis;
 using SerializerFoundation;
 
@@ -59,9 +60,9 @@ internal static class AttributeFormatterActivator
         {
             if (typeof(MessagePackFormatterFactory).IsAssignableFrom(formatterType))
             {
-                var factory = CreateFactory(formatterType, arguments, subject);
-                return factory.CreateFormatter<TWriteBuffer, TReadBuffer>(valueType)
-                    ?? throw DidNotCreate(formatterType, valueType, subject);
+                // the factory itself: ReflectionObjectFormatter creates its formatter through
+                // MessagePackFormatterResolver.CreateFormatterWith, which reroutes a downlevel one
+                return CreateFactory(formatterType, arguments, subject);
             }
             if (formatterType.IsGenericTypeDefinition && formatterType.GetGenericArguments().Length == 2)
             {
@@ -85,9 +86,7 @@ internal static class AttributeFormatterActivator
         {
             if (typeof(MessagePackFormatterFactory).IsAssignableFrom(formatterType))
             {
-                var factory = CreateFactory(formatterType, arguments, subject);
-                return factory.CreateFormatter(writeBufferType, readBufferType, valueType)
-                    ?? throw DidNotCreate(formatterType, valueType, subject);
+                return CreateFactory(formatterType, arguments, subject); // see the generic overload
             }
             if (formatterType.IsGenericTypeDefinition && formatterType.GetGenericArguments().Length == 2)
             {
@@ -109,9 +108,6 @@ internal static class AttributeFormatterActivator
         }
         return (MessagePackFormatterFactory)CreateInstance(formatterType, arguments, subject);
     }
-
-    static MessagePackSerializationException DidNotCreate(Type formatterType, Type valueType, string subject) =>
-        new($"[MessagePackFormatter] on '{subject}': '{formatterType}' did not create a formatter for '{valueType}'.");
 
     static MessagePackSerializationException NeitherForm(Type formatterType, string subject) =>
         LooksLikeV3Formatter(formatterType)
@@ -178,10 +174,174 @@ internal static class AttributeFormatterActivator
 
     internal const string AttributeFullName = "MessagePack.MessagePackFormatterAttribute";
 
+    // candidate A is better than B when every supplied argument converts at least as well to A's parameter as to B's
+    // and one strictly better: an exact type beats any conversion, and between two conversions the parameter type
+    // that converts implicitly to the other (long into double) is the better target, C#'s rule
+    static bool IsBetterCandidate(ParameterInfo[] a, ParameterInfo[] b, int argumentCount)
+    {
+        var strictlyBetter = false;
+        for (int i = 0; i < argumentCount; i++)
+        {
+            var ta = a[i].ParameterType;
+            var tb = b[i].ParameterType;
+            if (ta == tb)
+            {
+                continue;
+            }
+            var aToB = ConvertsImplicitly(ta, tb);
+            var bToA = ConvertsImplicitly(tb, ta);
+            if (aToB && !bToA)
+            {
+                strictlyBetter = true;
+            }
+            else if (bToA && !aToB)
+            {
+                return false;
+            }
+        }
+        return strictlyBetter;
+    }
+
+    // C#'s implicit numeric conversions (plus reference assignability)
+    static bool ConvertsImplicitly(Type from, Type to)
+    {
+        if (to.IsAssignableFrom(from))
+        {
+            return true;
+        }
+        var code = Type.GetTypeCode(from);
+        var target = Type.GetTypeCode(to);
+        if (!from.IsPrimitive && code != TypeCode.Decimal || !to.IsPrimitive && target != TypeCode.Decimal)
+        {
+            return false;
+        }
+        return code switch
+        {
+            TypeCode.SByte => target is TypeCode.Int16 or TypeCode.Int32 or TypeCode.Int64 or TypeCode.Single or TypeCode.Double or TypeCode.Decimal,
+            TypeCode.Byte => target is TypeCode.Int16 or TypeCode.UInt16 or TypeCode.Int32 or TypeCode.UInt32 or TypeCode.Int64 or TypeCode.UInt64 or TypeCode.Single or TypeCode.Double or TypeCode.Decimal,
+            TypeCode.Int16 => target is TypeCode.Int32 or TypeCode.Int64 or TypeCode.Single or TypeCode.Double or TypeCode.Decimal,
+            TypeCode.UInt16 => target is TypeCode.Int32 or TypeCode.UInt32 or TypeCode.Int64 or TypeCode.UInt64 or TypeCode.Single or TypeCode.Double or TypeCode.Decimal,
+            TypeCode.Int32 => target is TypeCode.Int64 or TypeCode.Single or TypeCode.Double or TypeCode.Decimal,
+            TypeCode.UInt32 => target is TypeCode.Int64 or TypeCode.UInt64 or TypeCode.Single or TypeCode.Double or TypeCode.Decimal,
+            TypeCode.Int64 => target is TypeCode.Single or TypeCode.Double or TypeCode.Decimal,
+            TypeCode.UInt64 => target is TypeCode.Single or TypeCode.Double or TypeCode.Decimal,
+            TypeCode.Char => target is TypeCode.UInt16 or TypeCode.Int32 or TypeCode.UInt32 or TypeCode.Int64 or TypeCode.UInt64 or TypeCode.Single or TypeCode.Double or TypeCode.Decimal,
+            TypeCode.Single => target is TypeCode.Double,
+            _ => false,
+        };
+    }
+
+    static bool BindsWithDefaults(ParameterInfo[] parameters, object?[] arguments)
+    {
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            if (i >= arguments.Length)
+            {
+                if (!parameters[i].IsOptional)
+                {
+                    return false;
+                }
+            }
+            else if (!Binds(arguments[i], parameters[i].ParameterType))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // an attribute argument is a literal of its own type (an int `10` for a long parameter): the compiler converts
+    // these at a normal call site, and the generator's expression form likewise, so the runtime binding does too
+    static bool Binds(object? argument, Type parameterType)
+    {
+        if (argument is null)
+        {
+            return !parameterType.IsValueType || Nullable.GetUnderlyingType(parameterType) is not null;
+        }
+        if (parameterType.IsInstanceOfType(argument))
+        {
+            return true;
+        }
+        var target = Nullable.GetUnderlyingType(parameterType) ?? parameterType;
+        if (target.IsEnum)
+        {
+            return argument is IConvertible && argument.GetType().IsPrimitive && argument is not bool && argument is not char;
+        }
+        // only the implicit conversions a call site would apply (int into long, never int into short: the generator
+        // binds the same way, and a narrowing conversion would silently overflow)
+        return ConvertsImplicitly(argument.GetType(), target);
+    }
+
+    static object? Coerce(object? argument, Type parameterType)
+    {
+        if (argument is null || parameterType.IsInstanceOfType(argument))
+        {
+            return argument;
+        }
+        var target = Nullable.GetUnderlyingType(parameterType) ?? parameterType;
+        return target.IsEnum
+            ? Enum.ToObject(target, argument)
+            : Convert.ChangeType(argument, target, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "the constructed type comes from a [MessagePackFormatter] attribute in user code, which roots its constructors; same RequiresUnreferencedCode gate")]
     [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "same [MessagePackFormatter]-rooted type as above; GetConstructors only runs on the failure path to build the error message")]
     static object CreateInstance(Type type, object?[] arguments, string subject)
     {
+        // the generator's overload choice, so that a member served through reflection takes the same constructor
+        // as one served by generated code: the supplied arguments' conversions decide first (an exact parameter type
+        // beats a converting one, then the better conversion target: long over double for an int), and only among
+        // conversion-equivalent candidates does the one filling fewer defaults win. Activator.CreateInstance would
+        // pick F(long) over F(int, bool = false) for the literal 10, and never consider the optional parameters.
+        List<(ConstructorInfo Constructor, ParameterInfo[] Parameters, int Exact)>? applicable = null;
+        foreach (var constructor in type.GetConstructors())
+        {
+            var parameters = constructor.GetParameters();
+            if (parameters.Length < arguments.Length || !BindsWithDefaults(parameters, arguments))
+            {
+                continue;
+            }
+            var exact = 0;
+            for (int i = 0; i < arguments.Length; i++)
+            {
+                if (arguments[i] is { } argument && argument.GetType() == parameters[i].ParameterType)
+                {
+                    exact++;
+                }
+            }
+            (applicable ??= new()).Add((constructor, parameters, exact));
+        }
+        if (applicable is not null)
+        {
+            var mostExact = applicable.Max(static a => a.Exact);
+            var winners = applicable.Where(a => a.Exact == mostExact).ToList();
+            if (winners.Count > 1)
+            {
+                var best = winners.Where(candidate => winners.All(other => ReferenceEquals(other.Constructor, candidate.Constructor) || IsBetterCandidate(candidate.Parameters, other.Parameters, arguments.Length))).ToList();
+                if (best.Count == 1)
+                {
+                    winners = best;
+                }
+            }
+            if (winners.Count > 1)
+            {
+                var fewestDefaults = winners.Min(a => a.Parameters.Length - arguments.Length);
+                winners = winners.Where(a => a.Parameters.Length - arguments.Length == fewestDefaults).ToList();
+            }
+            if (winners.Count == 1)
+            {
+                var (constructor, parameters, _) = winners[0];
+                var padded = new object?[parameters.Length];
+                for (int i = 0; i < padded.Length; i++)
+                {
+                    padded[i] = i < arguments.Length
+                        ? Coerce(arguments[i], parameters[i].ParameterType)
+                        : parameters[i].DefaultValue is DBNull ? Type.Missing : parameters[i].DefaultValue;
+                }
+                return constructor.Invoke(padded);
+            }
+            throw new MessagePackSerializationException($"[MessagePackFormatter] on '{subject}': the arguments bind to more than one constructor of '{type}'; disambiguate the overloads.");
+        }
         try
         {
             return Activator.CreateInstance(type, arguments)!;

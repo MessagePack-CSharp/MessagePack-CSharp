@@ -109,6 +109,19 @@ public class MultiDimensionalArrayFormatterTests
             () => MessagePackSerializer.Deserialize<int[,]>(writer.WrittenSpan.ToArray()));
     }
 
+    // the pre-filter mirrors CoreCLR; the allocation itself is the authority on every runtime (Native AOT refuses an
+    // intermediate product above int.MaxValue, Mono and IL2CPP have their own rules), and its refusal must surface
+    // as the same format error, not as the runtime's OutOfMemoryException. Exercised here through the helper with a
+    // shape this runtime refuses, since no shape the pre-filter passes is refused by CoreCLR.
+    [Fact]
+    public void RuntimeRefusingAShape_IsAFormatError()
+    {
+        var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePack.Formatters.DimensionProduct.New<int>(70000, 70000, 0));
+        Assert.IsAssignableFrom<Exception>(ex.InnerException);
+        Assert.Contains("70000x70000x0", ex.Message);
+        Assert.Equal(0, MessagePack.Formatters.DimensionProduct.New<int>(50000, 50000, 0).Length); // what CoreCLR constructs still is
+    }
+
     [Fact]
     public void OverflowingProductWithZeroDimension_RejectedAsUnconstructible()
     {

@@ -11,15 +11,8 @@ using System.Text.Json.Serialization;
 
 
 
-//MessagePackSerializer.Serialize<Plain>(new Plain { X = 123 });
-Serialize(new Plain { X = 123 });
+Console.WriteLine("a");
 
-Console.WriteLine("foo");
-
-static void Serialize<T>(T value)
-{
-    MessagePackSerializer.Serialize<T>(value);
-}
 
 
 public class Plain { public int X { get; set; } }

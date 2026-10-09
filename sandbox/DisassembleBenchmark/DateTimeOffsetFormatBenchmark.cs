@@ -174,7 +174,7 @@ public class DateTimeOffsetReadBenchmark
     public long DtoDefault()
     {
         var buffer = new ReadOnlySpanReadBuffer(defaultBytes);
-        var state = new DeserializeState(maxDepth);
+        var state = new DeserializeState(maxDepth, defaultBytes.Length);
         var f = defaultFormatter;
         long acc = 0;
         for (int i = 0; i < Count; i++)
@@ -190,7 +190,7 @@ public class DateTimeOffsetReadBenchmark
     public long DtoConstantShape()
     {
         var buffer = new ReadOnlySpanReadBuffer(constantBytes);
-        var state = new DeserializeState(maxDepth);
+        var state = new DeserializeState(maxDepth, constantBytes.Length);
         var f = constantFormatter;
         long acc = 0;
         for (int i = 0; i < Count; i++)
@@ -206,7 +206,7 @@ public class DateTimeOffsetReadBenchmark
     public long DateTimeTimestamp()
     {
         var buffer = new ReadOnlySpanReadBuffer(timestampBytes);
-        var state = new DeserializeState(maxDepth);
+        var state = new DeserializeState(maxDepth, timestampBytes.Length);
         var f = timestampFormatter;
         long acc = 0;
         for (int i = 0; i < Count; i++)
@@ -222,7 +222,7 @@ public class DateTimeOffsetReadBenchmark
     public long DateTimeToBinary()
     {
         var buffer = new ReadOnlySpanReadBuffer(toBinaryBytes);
-        var state = new DeserializeState(maxDepth);
+        var state = new DeserializeState(maxDepth, toBinaryBytes.Length);
         var f = toBinaryFormatter;
         long acc = 0;
         for (int i = 0; i < Count; i++)
@@ -277,7 +277,7 @@ static class DateTimeOffsetBenchData
         var constantBytes = SerializeAll(values, constantFormatter, maxDepth, values.Length * 16);
         var b1 = new ReadOnlySpanReadBuffer(defaultBytes);
         var b2 = new ReadOnlySpanReadBuffer(constantBytes);
-        var s = new DeserializeState(maxDepth);
+        var s = new DeserializeState(maxDepth, defaultBytes.Length + constantBytes.Length);
         for (int i = 0; i < values.Length; i++)
         {
             DateTimeOffset v1 = default, v2 = default;

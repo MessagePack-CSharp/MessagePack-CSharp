@@ -35,6 +35,7 @@
     <Project Path="tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj" />
     <Project Path="tests/MessagePack.Tests.Net8/MessagePack.Tests.Net8.csproj" />
     <Project Path="tests/MessagePack.Tests.Net9/MessagePack.Tests.Net9.csproj" />
+    <Project Path="tests/MessagePack.Tests.Net11/MessagePack.Tests.Net11.csproj" />
     <Project Path="tests/MessagePack.Tests.NetFx/MessagePack.Tests.NetFx.csproj" />
     <Project Path="tests/MessagePack.Tests.V3Compat/MessagePack.Tests.V3Compat.csproj" />
     <Project Path="tests/MessagePack.Tests.V3CompatGenerated/MessagePack.Tests.V3CompatGenerated.csproj" />

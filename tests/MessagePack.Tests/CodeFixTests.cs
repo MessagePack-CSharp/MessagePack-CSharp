@@ -68,6 +68,38 @@ public class CodeFixTests
         Assert.True(fixedSource.IndexOf("[Key(2)]") < fixedSource.IndexOf("Score"));
     }
 
+    // a key attribute derived from KeyAttribute counts: the next number follows it, and a derived string key keeps
+    // the type a map
+    [Fact]
+    public async Task AddKeyAttributes_SeeDerivedKeyAttributes()
+    {
+        var numbered = await ApplyFixAsync(new AddKeyAttributesCodeFixProvider(), analyzer: null, """
+            using MessagePack;
+            public sealed class MyKeyAttribute : KeyAttribute { public MyKeyAttribute(int key, string note) : base(key) { } }
+            [MessagePackObject]
+            public class Holder
+            {
+                [MyKey(3, "note")] public int Id { get; set; }
+                public string? Name { get; set; }
+            }
+            """, "MsgPack001");
+        Assert.Contains("[Key(4)]", numbered);
+        Assert.DoesNotContain("[Key(0)]", numbered);
+
+        var named = await ApplyFixAsync(new AddKeyAttributesCodeFixProvider(), analyzer: null, """
+            using MessagePack;
+            public sealed class MyKeyAttribute : KeyAttribute { public MyKeyAttribute(string key) : base(key) { } }
+            [MessagePackObject]
+            public class Holder
+            {
+                [MyKey("id")] public int Id { get; set; }
+                public string? Name { get; set; }
+            }
+            """, "MsgPack001");
+        Assert.Contains("[Key(\"Name\")]", named);
+        Assert.DoesNotContain("[Key(0)]", named);
+    }
+
     [Fact]
     public async Task AddMessagePackObject_ToUnionRoot()
     {

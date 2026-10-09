@@ -78,6 +78,27 @@ public sealed partial class NonGenericInterfaceListFormatter<TWriteBuffer, TRead
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref IList? value)
     {
+        // populate: a mutable, growable instance (an ArrayList) is refilled in place, as the concrete-type formatters
+        // do; a read-only or fixed-size one (an array behind the view) is replaced
+        if (value is { IsReadOnly: false, IsFixedSize: false } existing)
+        {
+            if (buffer.TryReadNil())
+            {
+                value = null;
+                return;
+            }
+            var count = buffer.ReadArrayHeader(ref state);
+            state.Enter();
+            existing.Clear();
+            for (int i = 0; i < count; i++)
+            {
+                object? element = null;
+                formatter.Deserialize(ref buffer, ref state, ref element);
+                existing.Add(element);
+            }
+            state.Exit();
+            return;
+        }
         value = NonGenericCollectionFormatterHelper.DeserializeObjectArray(formatter, ref buffer, ref state);
     }
 }
@@ -111,9 +132,21 @@ public sealed partial class NonGenericInterfaceDictionaryFormatter<TWriteBuffer,
         var count = buffer.ReadMapHeader(ref state);
         state.Enter();
 
-        var dictionary = comparer == null
-            ? new Dictionary<object, object?>(count)
-            : new Dictionary<object, object?>(count, comparer);
+        // populate: a mutable instance (a Hashtable, with its comparer) is refilled in place; a read-only one is
+        // replaced. (A flooding-resistant resolver replaces an instance on the default comparer only through the
+        // generic Dictionary<,> formatter; the non-generic view keeps whatever comparer the instance has.)
+        IDictionary dictionary;
+        if (value is { IsReadOnly: false, IsFixedSize: false } existing)
+        {
+            existing.Clear();
+            dictionary = existing;
+        }
+        else
+        {
+            dictionary = comparer == null
+                ? new Dictionary<object, object?>(count)
+                : new Dictionary<object, object?>(count, comparer);
+        }
         for (int i = 0; i < count; i++)
         {
             object? key = null;
@@ -158,7 +191,17 @@ public sealed class NonGenericListFormatter<TWriteBuffer, TReadBuffer, T> : IMes
             return;
         }
         var count = buffer.ReadArrayHeader(ref state);
-        var list = new T();
+        // Populate contract: a mutable, growable instance is refilled in place
+        T list;
+        if (value is { IsReadOnly: false, IsFixedSize: false })
+        {
+            list = value;
+            list.Clear();
+        }
+        else
+        {
+            list = new T();
+        }
         state.Enter();
         for (int i = 0; i < count; i++)
         {
@@ -202,7 +245,18 @@ public sealed class NonGenericDictionaryFormatter<TWriteBuffer, TReadBuffer, T> 
             return;
         }
         var count = buffer.ReadMapHeader(ref state);
-        var dictionary = new T(); // the concrete type owns its comparer (e.g. Hashtable)
+        // Populate contract: a mutable, growable instance is refilled in place; the concrete type owns its comparer
+        // either way (e.g. Hashtable)
+        T dictionary;
+        if (value is { IsReadOnly: false, IsFixedSize: false })
+        {
+            dictionary = value;
+            dictionary.Clear();
+        }
+        else
+        {
+            dictionary = new T();
+        }
         state.Enter();
         for (int i = 0; i < count; i++)
         {

@@ -70,18 +70,19 @@ public sealed class DictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
 
         // Populate contract
         Dictionary<TKey, TValue> result;
-        if (value != null)
+        if (value != null && !HashFloodingResistantEqualityComparer.ReplacesDefault(comparer, value.Comparer))
         {
-            // reuse keeps the instance's comparer
+            // reuse keeps a caller-chosen comparer; an instance on the default comparer is replaced above, or the
+            // flooding-resistant comparer would never reach a `= new()` member
             result = value;
             result.Clear();
 #if !NETSTANDARD2_0
-            result.EnsureCapacity(count);
+            result.EnsureCapacity(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining));
 #endif
         }
         else
         {
-            result = new Dictionary<TKey, TValue>(count, comparer);
+            result = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
         }
 
         var kf = keyFormatter;
@@ -224,14 +225,22 @@ public sealed class InterfaceDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey
         state.Enter();
 
         IDictionary<TKey, TValue> result;
-        if (value != null && !value.IsReadOnly)
+        var onDefaultComparer = value switch
         {
-            result = value; // reuse keeps the instance's comparer
+            Dictionary<TKey, TValue> dictionary => HashFloodingResistantEqualityComparer.ReplacesDefault(comparer, dictionary.Comparer),
+#if NET9_0_OR_GREATER
+            ConcurrentDictionary<TKey, TValue> concurrent => HashFloodingResistantEqualityComparer.ReplacesDefault(comparer, concurrent.Comparer),
+#endif
+            _ => false, // another implementation: its comparer is its own business
+        };
+        if (value != null && !value.IsReadOnly && !onDefaultComparer)
+        {
+            result = value; // reuse keeps a caller-chosen comparer (a Dictionary on the default one is replaced, see DictionaryFormatter)
             result.Clear();
         }
         else
         {
-            result = new Dictionary<TKey, TValue>(count, comparer);
+            result = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
         }
 
         var kf = keyFormatter;
@@ -353,7 +362,7 @@ public sealed class InterfaceReadOnlyDictionaryFormatter<TWriteBuffer, TReadBuff
         state.Enter();
 
         // the interface is read-only: always materialize fresh
-        var result = new Dictionary<TKey, TValue>(count, comparer);
+        var result = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
 
         var kf = keyFormatter;
         var vf = valueFormatter;
@@ -474,7 +483,7 @@ public sealed class ReadOnlyDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey,
         state.Enter();
 
         // the wrapper is immutable: always materialize a fresh inner dictionary
-        var inner = new Dictionary<TKey, TValue>(count, comparer);
+        var inner = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
 
         var kf = keyFormatter;
         var vf = valueFormatter;
@@ -594,7 +603,7 @@ public sealed class SortedListFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
         }
         else
         {
-            result = new SortedList<TKey, TValue>(count);
+            result = new SortedList<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining));
         }
 
         var kf = keyFormatter;
@@ -707,14 +716,23 @@ public sealed class SortedDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, T
         var vf = valueFormatter;
         state.Enter();
 
-        for (int i = 0; i < count; i++)
+        try
         {
-            TKey k = default!;
-            TValue v = default!;
-            kf.Deserialize(ref buffer, ref state, ref k);
-            vf.Deserialize(ref buffer, ref state, ref v);
-            MessagePackSerializationException.ThrowIfNullMapKey(k);
-            result[k] = v;
+            for (int i = 0; i < count; i++)
+            {
+                TKey k = default!;
+                TValue v = default!;
+                kf.Deserialize(ref buffer, ref state, ref k);
+                vf.Deserialize(ref buffer, ref state, ref v);
+                MessagePackSerializationException.ThrowIfNullMapKey(k);
+                result[k] = v;
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            // Comparer<T>.Default refuses to order values of different runtime types (an object-keyed collection fed mixed
+            // scalars): a data error, reported as one
+            throw new MessagePackSerializationException("Invalid SortedDictionary payload: an element is not comparable with the others.", ex);
         }
         // a duplicate key collapsed into one slot: reject (cheapest possible detection)
         if (result.Count != count)
@@ -812,9 +830,14 @@ public sealed class ConcurrentDictionaryFormatter<TWriteBuffer, TReadBuffer, TKe
         var count = buffer.ReadMapHeader(ref state);
 
         ConcurrentDictionary<TKey, TValue> result;
-        if (value != null)
+#if NET9_0_OR_GREATER
+        var reusable = value != null && !HashFloodingResistantEqualityComparer.ReplacesDefault(comparer, value.Comparer);
+#else
+        var reusable = value != null; // no Comparer property downlevel: the instance's comparer stays, whichever it is
+#endif
+        if (reusable)
         {
-            result = value; // reuse keeps the instance's comparer
+            result = value!; // reuse keeps a caller-chosen comparer (an instance on the default one is replaced, see DictionaryFormatter)
             result.Clear();
         }
         else
@@ -941,15 +964,15 @@ public sealed class OrderedDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, 
         state.Enter();
 
         OrderedDictionary<TKey, TValue> result;
-        if (value != null)
+        if (value != null && !HashFloodingResistantEqualityComparer.ReplacesDefault(comparer, value.Comparer))
         {
-            result = value; // reuse keeps the instance's comparer
+            result = value; // reuse keeps a caller-chosen comparer (an instance on the default one is replaced, see DictionaryFormatter)
             result.Clear();
-            result.EnsureCapacity(count);
+            result.EnsureCapacity(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining));
         }
         else
         {
-            result = new OrderedDictionary<TKey, TValue>(count, comparer);
+            result = new OrderedDictionary<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
         }
 
         var kf = keyFormatter;
@@ -1068,31 +1091,40 @@ public sealed class PriorityQueueFormatter<TWriteBuffer, TReadBuffer, TElement, 
         {
             result = value; // reuse keeps the instance's comparer
             result.Clear();
-            result.EnsureCapacity(count);
+            result.EnsureCapacity(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TElement, TPriority>>(count, buffer.BytesRemaining));
         }
         else
         {
-            result = new PriorityQueue<TElement, TPriority>(count);
+            result = new PriorityQueue<TElement, TPriority>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TElement, TPriority>>(count, buffer.BytesRemaining));
         }
 
         var ef = elementFormatter;
         var pf = priorityFormatter;
 
-        for (int i = 0; i < count; i++)
+        try
         {
-            var pairLength = buffer.ReadArrayHeader(ref state);
-            if (pairLength != 2)
+            for (int i = 0; i < count; i++)
             {
-                throw new MessagePackSerializationException($"Invalid PriorityQueue entry: expected [element, priority] pair (fixarray2), got array of length {pairLength}.");
+                var pairLength = buffer.ReadArrayHeader(ref state);
+                if (pairLength != 2)
+                {
+                    throw new MessagePackSerializationException($"Invalid PriorityQueue entry: expected [element, priority] pair (fixarray2), got array of length {pairLength}.");
+                }
+
+                TElement element = default!;
+                TPriority priority = default!;
+                ef.Deserialize(ref buffer, ref state, ref element);
+                pf.Deserialize(ref buffer, ref state, ref priority);
+
+                // Deserialize enqueues per item, NOT v3's temp-buffer + ctor bulk heapify
+                result.Enqueue(element, priority);
             }
-
-            TElement element = default!;
-            TPriority priority = default!;
-            ef.Deserialize(ref buffer, ref state, ref element);
-            pf.Deserialize(ref buffer, ref state, ref priority);
-
-            // Deserialize enqueues per item, NOT v3's temp-buffer + ctor bulk heapify
-            result.Enqueue(element, priority);
+        }
+        catch (ArgumentException ex)
+        {
+            // Comparer<T>.Default refuses to order values of different runtime types (an object-keyed collection fed mixed
+            // scalars): a data error, reported as one
+            throw new MessagePackSerializationException("Invalid PriorityQueue payload: an element is not comparable with the others.", ex);
         }
 
         value = result;

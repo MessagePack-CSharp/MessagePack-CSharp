@@ -106,7 +106,7 @@ static class FactoryEmitter
                 if (model.Custom.FactoryNew is { } factoryNew)
                 {
                     writer.Line("#if NET9_0_OR_GREATER");
-                    writer.Line($"if (type == typeof({model.FullTypeName})) return {factoryNew}.CreateFormatter<TWriteBuffer, TReadBuffer>(type);");
+                    writer.Line($"if (type == typeof({model.FullTypeName})) return ((global::MessagePack.MessagePackFormatterFactory){factoryNew}).CreateFormatter<TWriteBuffer, TReadBuffer>(type);"); // base-bound: see ObjectEmitter
                     writer.Line("#else");
                     writer.Line($"if (type == typeof({model.FullTypeName})) return {factoryNew}.CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), type);");
                     writer.Line("#endif");
@@ -194,8 +194,19 @@ static class FactoryEmitter
 
         writer.Line();
         // the Type-based member (the base class's only abstract one): dispatch the built-in buffer pairs into the
-        // generic method above
-        BufferPairs.AppendCreateFormatterDispatch(writer);
+        // generic method above. On the modern TFMs it still forwards a type-level attributed factory: that factory
+        // may be a netstandard build serving the Compatible pair only, and the resolver's probe for exactly that
+        // case arrives through this member
+        BufferPairs.AppendCreateFormatterDispatch(writer, writer =>
+        {
+            foreach (var model in orderedAttributes)
+            {
+                if (model.Custom.FactoryNew is { } factoryNew)
+                {
+                    writer.Line($"if (valueType == typeof({model.FullTypeName})) return ((global::MessagePack.MessagePackFormatterFactory){factoryNew}).CreateFormatter(writeBufferType, readBufferType, valueType);");
+                }
+            }
+        });
         factory.Dispose();
 
         writer.Line();

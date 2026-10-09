@@ -52,8 +52,8 @@ public sealed class IneffectiveAnnotationAnalyzer : DiagnosticAnalyzer
         foreach (var attribute in member.GetAttributes())
         {
             var name = attribute.AttributeClass?.ToDisplayString();
-            hasKey |= name == KeyAttributeName;
-            hasIgnore |= name == IgnoreMemberAttributeName || name == IgnoreDataMemberAttributeName;
+            hasKey |= ObjectParser.IsKeyAttribute(attribute.AttributeClass);
+            hasIgnore |= ObjectParser.IsIgnoreAttribute(attribute.AttributeClass);
         }
         if (!hasKey && !hasIgnore)
         {

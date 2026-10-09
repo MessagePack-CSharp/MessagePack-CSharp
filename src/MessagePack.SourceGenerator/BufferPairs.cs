@@ -31,7 +31,13 @@ internal static class BufferPairs
     /// CreateFormatter&lt;,&gt; on downlevel TFMs (unknown pairs return null,
     /// "not mine" chain semantics), unconditional null on modern TFMs (see the type comment).
     /// </summary>
-    public static void AppendCreateFormatterDispatch(CodeWriter writer)
+    /// <param name="writer">The generated factory's writer, positioned inside the class.</param>
+    /// <param name="modernPassthrough">
+    /// Lines emitted on the modern TFMs before the unconditional null: delegations to factories this one only
+    /// forwards to (a type-level [MessagePackFormatter] factory), so the resolver's Compatible-pair probe reaches a
+    /// netstandard-built one through here instead of a later factory taking the type with a different wire.
+    /// </param>
+    public static void AppendCreateFormatterDispatch(CodeWriter writer, Action<CodeWriter>? modernPassthrough = null)
     {
         writer.Line("public override object? CreateFormatter(global::System.Type writeBufferType, global::System.Type readBufferType, global::System.Type valueType)");
         using (writer.OpenScope())
@@ -40,6 +46,7 @@ internal static class BufferPairs
             writer.Line("// the resolver takes the generic member on this TFM; only probes and composite");
             writer.Line("// passthroughs land here, and \"not mine\" must not abort their chain. the pair");
             writer.Line("// dispatch is omitted so AOT binaries do not carry formatter x pair instantiations");
+            modernPassthrough?.Invoke(writer);
             writer.Line("return null;");
             writer.Line("#else");
             AppendTier(writer, FallbackTier);

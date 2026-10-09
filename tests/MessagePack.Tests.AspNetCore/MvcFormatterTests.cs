@@ -4,6 +4,8 @@ using MessagePack;
 using MessagePack.AspNetCoreMvcFormatter;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -98,6 +100,26 @@ public class MvcFormatterTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(MessagePackMediaTypes.XMsgPack, response.Content.Headers.ContentType!.MediaType);
         Assert.Equal(new byte[] { 0xc0 }, await response.Content.ReadAsByteArrayAsync());
+    }
+
+    // a null result wrote a raw 0xc0 regardless of options, so with a framing / compressing MessageProcessor the
+    // client configured with the same options could not read it; nil has to go through the processor like every body
+    [Fact]
+    public async Task NullResult_GoesThroughTheMessageProcessor()
+    {
+        var framed = MessagePackSerializerOptions.Default.WithFraming();
+        var formatter = new MessagePackOutputFormatter(framed);
+        var httpContext = new DefaultHttpContext();
+        var body = new MemoryStream();
+        httpContext.Response.Body = body;
+        var context = new OutputFormatterWriteContext(httpContext, static (stream, encoding) => new StreamWriter(stream, encoding), typeof(Person), null);
+
+        await formatter.WriteResponseBodyAsync(context);
+
+        var bytes = body.ToArray();
+        Assert.NotEqual(new byte[] { 0xc0 }, bytes);
+        Assert.Equal(MessagePackSerializer.Serialize(Nil.Default, framed), bytes);
+        Assert.Equal(Nil.Default, MessagePackSerializer.Deserialize<Nil>(bytes, framed));
     }
 
     [Fact]

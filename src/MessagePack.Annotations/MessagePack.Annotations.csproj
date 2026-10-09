@@ -19,8 +19,10 @@
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<IsPackable>true</IsPackable>
 		<Description>Migration shim for MessagePack v3 code: the attributes now live in the MessagePack package and this package type-forwards to it. Reference MessagePack directly in new projects.</Description>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<!-- this package explains itself with its own README, not the repository one -->
+		<PackRootReadme>false</PackRootReadme>
 		<!-- Binary compatibility with v3-built assemblies is a contract on the assembly identity, not just on the name.
 		     Their references read "MessagePack.Annotations, Version=3.1.8.0, PublicKeyToken=b4a0369545f0a1be", and the runtime binds
 		     only to an assembly carrying that public key (src/Directory.Build.props signs every src assembly with it) and a version

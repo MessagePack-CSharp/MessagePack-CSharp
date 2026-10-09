@@ -2,8 +2,9 @@ namespace MessagePack;
 
 // The async entries' pass 1 behind one surface: the MessagePack token scanner for plain messages and envelopes that are
 // MessagePack values, or the processor's own boundary walk for containers that are not (raw LZ4 / Zstandard frames).
-// Offsets are buffer-relative, like the scanner's; the processor walk restarts from the message start on every read,
-// which is cheap because a walk only touches block headers.
+// Offsets are buffer-relative, like the scanner's. The processor is handed its own walk position back on every read
+// of the same message (message-relative, so a Rebase does not touch it), so a frame processor resumes where it
+// stopped instead of re-walking the block headers it has already seen.
 struct MessageBoundaryFinder
 {
     MessagePackBoundaryScanner scanner;
@@ -11,6 +12,7 @@ struct MessageBoundaryFinder
     long start;
     long consumed;
     long minimum;
+    long position;
 
     public MessageBoundaryFinder(MessagePackMessageProcessor? processor)
     {
@@ -31,7 +33,7 @@ struct MessageBoundaryFinder
             return scanner.TryFindEnd(in buffer);
         }
         var message = buffer.Slice(start);
-        if (processor.TryFindMessageEnd(in message, out var length))
+        if (processor.TryFindMessageEnd(in message, ref position, out var length))
         {
             if (length < 0 || length > message.Length)
             {
@@ -55,6 +57,7 @@ struct MessageBoundaryFinder
         else
         {
             start = consumed;
+            position = 0;
         }
     }
 

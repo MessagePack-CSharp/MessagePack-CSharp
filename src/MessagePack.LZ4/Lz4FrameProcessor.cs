@@ -9,18 +9,30 @@ namespace MessagePack;
 /// container the lz4 tool and every LZ4 implementation read, with no MessagePack envelope around it. A stream of
 /// messages is a concatenation of frames, which those tools decode as one stream.
 /// Unlike the v3 ext envelopes there is no size threshold and no passthrough: every message is a frame, and input
-/// that is not one is rejected. Set through <see cref="Lz4MessagePackOptionsExtensions.WithLz4Frame()"/>.
+/// that is not one is rejected. Set through <see cref="Lz4MessagePackOptionsExtensions.WithLz4Frame(MessagePackSerializerOptions)"/>.
 /// </summary>
 public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
 {
     /// <summary>Default cap on the decompressed size of one message, the same 64MB as the v3 ext envelopes.</summary>
-    public const long DefaultMaxDecompressedSize = Lz4MessageProcessor.DefaultMaxDecompressedSize;
+    public const long DefaultMaxDecompressedSize = Lz4BlockEnvelope.DefaultMaxDecompressedSize;
 
     /// <summary>
     /// Cap on the decompressed size of one message (decompression-bomb guard, CWE-409). A frame that declares its content
     /// size is rejected from the header; one that does not is decompressed into a buffer that never grows past the cap.
     /// </summary>
     public long MaxDecompressedSize { get; }
+
+    /// <summary>
+    /// The dictionary every frame is compressed with and decompressed through (raw content: bytes typical of the
+    /// messages, which the codec matches against), empty for none. See the constructor for the contract.
+    /// </summary>
+    public ReadOnlyMemory<byte> Dictionary { get; }
+
+    /// <summary>The id frames written with <see cref="Dictionary"/> carry in their header (0 for none).</summary>
+    public uint DictionaryId { get; }
+
+    readonly LZ4Dictionary? dictionary;
+    readonly LZ4DecompressionOptions decodeOptions;
 
     public Lz4FrameProcessor()
         : this(DefaultMaxDecompressedSize)
@@ -29,83 +41,123 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
 
     /// <param name="maxDecompressedSize">Cap on the decompressed size of one message; the default is <see cref="DefaultMaxDecompressedSize"/>.</param>
     public Lz4FrameProcessor(long maxDecompressedSize)
+        : this(maxDecompressedSize, ReadOnlyMemory<byte>.Empty, 0)
+    {
+    }
+
+    /// <param name="maxDecompressedSize">Cap on the decompressed size of one message; the default is <see cref="DefaultMaxDecompressedSize"/>.</param>
+    /// <param name="dictionary">
+    /// A raw-content dictionary (up to 64 KB of bytes typical of the messages) every frame is compressed with and
+    /// decompressed through; empty for none. Writer and reader must hold the same dictionary. The frames carry
+    /// <paramref name="dictionaryId"/> in their header, and a frame that declares a different id is refused (a frame
+    /// declaring none is read, with the dictionary as history it never references).
+    /// </param>
+    /// <param name="dictionaryId">The id written into the frame header for the dictionary, so a reader can tell a mismatch; 0 writes none.</param>
+    public Lz4FrameProcessor(long maxDecompressedSize, ReadOnlyMemory<byte> dictionary, uint dictionaryId)
     {
         if (maxDecompressedSize <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(maxDecompressedSize));
         }
+        if (dictionary.IsEmpty && dictionaryId != 0)
+        {
+            throw new ArgumentException("A dictionary id needs a dictionary.", nameof(dictionaryId));
+        }
         MaxDecompressedSize = maxDecompressedSize;
+        Dictionary = dictionary;
+        DictionaryId = dictionaryId;
+        if (!dictionary.IsEmpty)
+        {
+            this.dictionary = LZ4Dictionary.Create(dictionary.Span, dictionaryId);
+            decodeOptions = new LZ4DecompressionOptions { Dictionary = this.dictionary };
+        }
     }
+
+    LZ4CompressionOptions EncodeOptions(long contentSize) => dictionary is null
+        ? new LZ4CompressionOptions { ContentSize = (ulong)contentSize }
+        : new LZ4CompressionOptions { ContentSize = (ulong)contentSize, Dictionary = dictionary };
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    void ThrowDictionaryMismatch(uint frameDictionaryId) => throw new MessagePackSerializationException(dictionary is null
+        ? $"The LZ4 frame was compressed with dictionary {frameDictionaryId}, and this reader has no dictionary; configure the processor with it (WithLz4Frame(dictionary, dictionaryId))."
+        : $"The LZ4 frame was compressed with dictionary {frameDictionaryId}, and this reader holds dictionary {DictionaryId}.");
 
     // ---- write side ----
 
+    // The streaming encoder compresses the message segment by segment straight into the output (no flattening copy,
+    // no staging of the frame), declaring the content size in the frame header so a reader sizes its buffer from
+    // the header and applies its cap before decompressing anything. Block boundaries follow the block size, not the
+    // segment boundaries, so the frame is the one the one-shot compress would write. The native context is cached
+    // in a single slot (see ZstandardCodec): uncontended use never allocates, a second thread creates its own.
+    sealed class EncoderBox
+    {
+        public LZ4Encoder Encoder = new();
+    }
+
+    EncoderBox? encoderCache;
+
+    EncoderBox RentEncoder() => Interlocked.Exchange(ref encoderCache, null) ?? new EncoderBox();
+
+    void ReturnEncoder(EncoderBox box)
+    {
+        if (Interlocked.CompareExchange(ref encoderCache, box, null) != null)
+        {
+            box.Encoder.Dispose(); // the slot was refilled meanwhile
+        }
+    }
+
     public override bool TryEncode(ref BufferSegments message, IBufferWriter<byte> output)
     {
-        var (rented, length) = EncodeCore(message, checked((int)message.Length));
+        var box = RentEncoder();
         try
         {
-            output.Write(rented.AsSpan(0, length));
+            var encoder = box.Encoder;
+            var options = EncodeOptions(message.Length);
+            encoder.Reset(in options); // a new frame declaring this message's length
+            while (message.TryGetNext(out var segment))
+            {
+                var destination = output.GetSpan(encoder.GetMaxCompressedLength(segment.Length, includingHeader: true, includingFooter: false));
+                output.Advance(encoder.Compress(segment, destination));
+            }
+            var tail = output.GetSpan(encoder.GetMaxFlushBufferLength(includingFooter: true));
+            output.Advance(encoder.Close(tail));
+            ReturnEncoder(box);
             return true;
         }
-        finally
+        catch
         {
-            ArrayPool<byte>.Shared.Return(rented);
+            box.Encoder.Dispose(); // a context that threw is not trusted back into the cache
+            throw;
         }
     }
 
 #if NET9_0_OR_GREATER
     public override bool TryEncode<TWriteBuffer>(ref BufferSegments message, ref TWriteBuffer output)
     {
-        var (rented, length) = EncodeCore(message, checked((int)message.Length));
+        var box = RentEncoder();
         try
         {
-            rented.AsSpan(0, length).CopyTo(output.GetSpan(length));
-            output.Advance(length);
+            var encoder = box.Encoder;
+            var options = EncodeOptions(message.Length);
+            encoder.Reset(in options);
+            while (message.TryGetNext(out var segment))
+            {
+                var destination = output.GetSpan(encoder.GetMaxCompressedLength(segment.Length, includingHeader: true, includingFooter: false));
+                output.Advance(encoder.Compress(segment, destination));
+            }
+            var tail = output.GetSpan(encoder.GetMaxFlushBufferLength(includingFooter: true));
+            output.Advance(encoder.Close(tail));
+            ReturnEncoder(box);
             return true;
         }
-        finally
+        catch
         {
-            ArrayPool<byte>.Shared.Return(rented);
+            box.Encoder.Dispose();
+            throw;
         }
     }
 #endif
-
-    static (byte[] Rented, int Length) EncodeCore(BufferSegments message, int messageLength)
-    {
-        // one frame from the contiguous message; the frame header carries the content size, so a reader sizes its
-        // buffer from the header and applies its cap before decompressing anything
-        var flat = ArrayPool<byte>.Shared.Rent(messageLength);
-        try
-        {
-            var offset = 0;
-            while (message.TryGetNext(out var segment))
-            {
-                segment.CopyTo(flat.AsSpan(offset));
-                offset += segment.Length;
-            }
-            var options = new LZ4CompressionOptions { ContentSize = (ulong)messageLength };
-            // LZ4F_compressFrameBound: the one-shot frame compress refuses a smaller destination outright
-            var rented = ArrayPool<byte>.Shared.Rent(LZ4.GetMaxCompressedLength(messageLength, in options));
-            try
-            {
-                var length = LZ4.Compress(flat.AsSpan(0, messageLength), rented, in options);
-                if (length <= 0)
-                {
-                    Lz4Throws.InvalidEnvelope(); // cannot happen with a GetMaxCompressedLength-sized target
-                }
-                return (rented, length);
-            }
-            catch
-            {
-                ArrayPool<byte>.Shared.Return(rented);
-                throw;
-            }
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(flat);
-        }
-    }
 
     // ---- read side ----
 
@@ -125,6 +177,10 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
             Lz4Throws.InvalidEnvelope();
             throw;
         }
+        if (info.DictionaryId != 0 && info.DictionaryId != DictionaryId)
+        {
+            ThrowDictionaryMismatch(info.DictionaryId); // the codec would decode garbage, or fail late
+        }
         // 0 is "not carried" (the lz4 tool writes it only on request) or an empty message; either way the size is
         // discovered while decompressing under the cap
         var contentSize = info.ContentSize;
@@ -140,7 +196,9 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
             rented = ArrayPool<byte>.Shared.Rent(expected);
             try
             {
-                written = LZ4.Decompress(source, rented.AsSpan(0, expected));
+                written = dictionary is null
+                    ? LZ4.Decompress(source, rented.AsSpan(0, expected))
+                    : LZ4.Decompress(source, rented.AsSpan(0, expected), in decodeOptions);
             }
             catch (LZ4Exception)
             {
@@ -188,7 +246,8 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
         var cap = (int)Math.Min(MaxDecompressedSize, int.MaxValue);
         var rented = ArrayPool<byte>.Shared.Rent(Math.Min(Math.Max(source.Length * 4, 1024), cap));
         var written = 0;
-        var decoder = new LZ4Decoder();
+        var decoder = dictionary is null ? new LZ4Decoder() : new LZ4Decoder(in decodeOptions);
+        Span<byte> scratch = stackalloc byte[64]; // for the epilogue probe below (once, outside the loop)
         try
         {
             while (true)
@@ -208,7 +267,26 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
                 }
                 if (written >= cap)
                 {
-                    Lz4Throws.DeclaredLengthExceedsMaximum(written + 1L, MaxDecompressedSize);
+                    // the output reached the cap: what remains can still be the frame's end mark (empty blocks and a
+                    // checksum), which produces nothing, so let the decoder consume it block by block into a scratch
+                    // buffer; a single produced byte is the bomb
+                    while (true)
+                    {
+                        var tail = decoder.Decompress(source, scratch, out var tailConsumed, out var tailProduced);
+                        source = source.Slice(tailConsumed);
+                        if (tailProduced > 0)
+                        {
+                            Lz4Throws.DeclaredLengthExceedsMaximum(written + tailProduced, MaxDecompressedSize);
+                        }
+                        if (tail == OperationStatus.Done)
+                        {
+                            return (rented, written);
+                        }
+                        if (tail != OperationStatus.DestinationTooSmall || tailConsumed == 0)
+                        {
+                            Lz4Throws.InvalidEnvelope();
+                        }
+                    }
                 }
                 var grown = ArrayPool<byte>.Shared.Rent((int)Math.Min((long)rented.Length * 2, cap));
                 rented.AsSpan(0, written).CopyTo(grown);
@@ -232,6 +310,9 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
     public override bool DefinesMessageBoundaries => true;
 
     public override bool TryFindMessageEnd(in ReadOnlySequence<byte> buffer, out long length) => Lz4FrameWalker.TryFindEnd(in buffer, out length);
+
+    /// <inheritdoc/>
+    public override bool TryFindMessageEnd(in ReadOnlySequence<byte> buffer, ref long position, out long length) => Lz4FrameWalker.TryFindEnd(in buffer, ref position, out length);
 
     sealed class RentedOwner : IDisposable
     {
@@ -297,6 +378,15 @@ static class Lz4FrameWalker
 
     public static bool TryFindEnd(in ReadOnlySequence<byte> buffer, out long length)
     {
+        long position = 0;
+        return TryFindEnd(in buffer, ref position, out length);
+    }
+
+    // position: the offset of the next block header to read, left here by the previous call over the same message
+    // (0 for a fresh walk). The frame header is re-read on every call (a few bytes, it carries the flags the block
+    // walk needs), the blocks already walked are not.
+    public static bool TryFindEnd(in ReadOnlySequence<byte> buffer, ref long position, out long length)
+    {
         var reader = new FrameHeaderReader(in buffer);
         Span<byte> scratch = stackalloc byte[4];
         long offset = 0;
@@ -352,10 +442,15 @@ static class Lz4FrameWalker
         }
         var maxBlockSize = 1L << (8 + 2 * blockSizeId); // 4: 64KB, 5: 256KB, 6: 1MB, 7: 4MB
         offset += 6 + (contentSize ? 8 : 0) + (dictionaryId ? 4 : 0) + 1;
+        if (position > offset)
+        {
+            offset = position; // resume at the block header the previous call stopped in front of
+        }
 
         // blocks: a 4-byte size (top bit = stored uncompressed), data, optional block checksum; 0 ends the frame
         while (true)
         {
+            position = offset;
             if (!reader.TryRead(offset, scratch))
             {
                 length = offset + 4;

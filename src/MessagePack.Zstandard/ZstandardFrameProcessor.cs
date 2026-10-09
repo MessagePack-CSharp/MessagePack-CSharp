@@ -3,28 +3,15 @@ using SerializerFoundation;
 #if NET11_0_OR_GREATER
 using FrameEncoder = System.IO.Compression.ZstandardEncoder;
 using FrameDecoder = System.IO.Compression.ZstandardDecoder;
+using FrameDictionary = System.IO.Compression.ZstandardDictionary;
 #else
 using NativeCompressions;
 using FrameEncoder = NativeCompressions.ZstandardEncoder;
 using FrameDecoder = NativeCompressions.ZstandardDecoder;
+using FrameDictionary = NativeCompressions.ZstandardDictionary;
 #endif
 
 namespace MessagePack;
-
-public static class ZstandardMessagePackOptionsExtensions
-{
-    /// <summary>Options writing every message as one standard Zstandard frame at the default compression level (3) and decompression cap, see <see cref="ZstandardFrameProcessor"/>.</summary>
-    public static MessagePackSerializerOptions WithZstandardFrame(this MessagePackSerializerOptions options)
-        => options with { MessageProcessor = new ZstandardFrameProcessor() };
-
-    /// <summary>Options writing Zstandard frames at <paramref name="compressionLevel"/> (1 = fastest, 3 = zstd default, 19 = slowest, 22 with ultra).</summary>
-    public static MessagePackSerializerOptions WithZstandardFrame(this MessagePackSerializerOptions options, int compressionLevel)
-        => options with { MessageProcessor = new ZstandardFrameProcessor(compressionLevel) };
-
-    /// <summary>Options writing Zstandard frames at <paramref name="compressionLevel"/> with a custom decompression-bomb cap (see <see cref="ZstandardFrameProcessor.MaxDecompressedSize"/>).</summary>
-    public static MessagePackSerializerOptions WithZstandardFrame(this MessagePackSerializerOptions options, int compressionLevel, long maxDecompressedSize)
-        => options with { MessageProcessor = new ZstandardFrameProcessor(compressionLevel, maxDecompressedSize) };
-}
 
 /// <summary>
 /// Every message as one standard Zstandard frame with nothing around it: the container the zstd tool and every
@@ -57,6 +44,35 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
     /// </summary>
     public long MaxDecompressedSize { get; }
 
+    /// <summary>
+    /// The largest back-reference window (as a power of two) a frame may declare, derived from
+    /// <see cref="MaxDecompressedSize"/>: the decoder allocates the declared window up front, so without this cap a
+    /// 10-byte frame could make it reserve the codec's 128 MB default. A frame whose content fits the cap never needs
+    /// a larger window; one that declares more is rejected.
+    /// </summary>
+    public int WindowLogMax { get; }
+
+    /// <summary>
+    /// The dictionary every frame is compressed with and decompressed through: a trained zstd dictionary (the
+    /// `zstd --train` format, which carries an id) or raw content (bytes typical of the messages, id 0); empty for
+    /// none. See the constructor for the contract.
+    /// </summary>
+    public ReadOnlyMemory<byte> Dictionary { get; }
+
+    /// <summary>The id of <see cref="Dictionary"/>, as frames written with it carry in their header (0 for raw content or none).</summary>
+    public uint DictionaryId { get; }
+
+    // ceil(log2(maxDecompressedSize)), within the codec's accepted range
+    static int WindowLogFor(long maxDecompressedSize)
+    {
+        var log = 0;
+        while (log < 31 && (1L << log) < maxDecompressedSize)
+        {
+            log++;
+        }
+        return Math.Max(10, log); // ZSTD_WINDOWLOG_MIN
+    }
+
     readonly ZstandardCodec codec;
 
     public ZstandardFrameProcessor()
@@ -73,6 +89,19 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
     /// <param name="compressionLevel">The zstd compression level (1 = fastest, 3 = zstd default, 19 = slowest, 22 with ultra).</param>
     /// <param name="maxDecompressedSize">Cap on the decompressed size of one message; the default is <see cref="DefaultMaxDecompressedSize"/>.</param>
     public ZstandardFrameProcessor(int compressionLevel, long maxDecompressedSize)
+        : this(compressionLevel, maxDecompressedSize, ReadOnlyMemory<byte>.Empty)
+    {
+    }
+
+    /// <param name="compressionLevel">The zstd compression level (1 = fastest, 3 = zstd default, 19 = slowest, 22 with ultra).</param>
+    /// <param name="maxDecompressedSize">Cap on the decompressed size of one message; the default is <see cref="DefaultMaxDecompressedSize"/>.</param>
+    /// <param name="dictionary">
+    /// A zstd dictionary every frame is compressed with and decompressed through: trained (`zstd --train`, the
+    /// codecs' Train; it carries an id the frames declare) or raw content (bytes typical of the messages); empty for
+    /// none. Writer and reader must hold the same dictionary. A frame that declares another dictionary id is refused;
+    /// one that declares none is read, with the dictionary as history it never references.
+    /// </param>
+    public ZstandardFrameProcessor(int compressionLevel, long maxDecompressedSize, ReadOnlyMemory<byte> dictionary)
     {
         if (maxDecompressedSize <= 0)
         {
@@ -80,8 +109,17 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
         }
         CompressionLevel = compressionLevel;
         MaxDecompressedSize = maxDecompressedSize;
-        codec = new ZstandardCodec(compressionLevel);
+        WindowLogMax = WindowLogFor(maxDecompressedSize);
+        Dictionary = dictionary;
+        DictionaryId = FrameCodec.DictionaryIdOfDictionary(dictionary.Span);
+        codec = new ZstandardCodec(compressionLevel, WindowLogMax, dictionary.IsEmpty ? null : FrameDictionary.Create(dictionary.Span, compressionLevel));
     }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    void ThrowDictionaryMismatch(uint frameDictionaryId) => throw new MessagePackSerializationException(Dictionary.IsEmpty
+        ? $"The Zstandard frame was compressed with dictionary {frameDictionaryId}, and this reader has no dictionary; configure the processor with it (WithZstandardFrame(dictionary))."
+        : $"The Zstandard frame was compressed with dictionary {frameDictionaryId}, and this reader holds dictionary {DictionaryId}.");
 
     // ---- write side ----
 
@@ -89,21 +127,110 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
     // staging copy. The encoder pledges the content size, so the frame header carries it and a reader applies its
     // cap before decompressing anything.
 
+    // The message is compressed segment by segment straight into the output, a window per segment (and per retry
+    // when the encoder has more to emit than the window holds) sized for that segment: the output never has to
+    // provide one contiguous window for the whole frame, as it would for the whole-message bound. The encoder is
+    // told the content size first so the frame header carries it (readers size their buffers from it).
     public override bool TryEncode(ref BufferSegments message, IBufferWriter<byte> output)
     {
         var messageLength = checked((int)message.Length);
-        var destination = output.GetSpan(FrameCodec.MaxCompressedLength(messageLength));
-        output.Advance(codec.CompressFrame(message, messageLength, destination));
-        return true;
+        var box = codec.BeginFrame(messageLength);
+        try
+        {
+            var remaining = messageLength;
+            var finished = false;
+            while (message.TryGetNext(out var segment))
+            {
+                remaining -= segment.Length;
+                if (remaining < 0)
+                {
+                    ZstandardThrows.InvalidFrame(); // the segments hold more than the declared message
+                }
+                // the segment that completes the declared length ends the frame; the view never yields an empty
+                // segment, so it is the last one (a further segment would overshoot above)
+                finished = remaining == 0;
+                bool done;
+                do
+                {
+                    var destination = output.GetSpan(FrameCodec.MaxCompressedLength(segment.Length));
+                    output.Advance(ZstandardCodec.Step(box.Encoder, ref segment, destination, finished, out done));
+                }
+                while (!done);
+            }
+            if (!finished)
+            {
+                if (remaining != 0)
+                {
+                    ZstandardThrows.InvalidFrame(); // the segments hold less than the declared message
+                }
+                var empty = ReadOnlySpan<byte>.Empty; // the empty message: a frame with no content
+                bool done;
+                do
+                {
+                    var destination = output.GetSpan(FrameCodec.MaxCompressedLength(0));
+                    output.Advance(ZstandardCodec.Step(box.Encoder, ref empty, destination, isFinalBlock: true, out done));
+                }
+                while (!done);
+            }
+            codec.EndFrame(box);
+            return true;
+        }
+        catch
+        {
+            codec.Abandon(box);
+            throw;
+        }
     }
 
 #if NET9_0_OR_GREATER
+    /// <inheritdoc cref="TryEncode(ref BufferSegments, IBufferWriter{byte})"/>
     public override bool TryEncode<TWriteBuffer>(ref BufferSegments message, ref TWriteBuffer output)
     {
         var messageLength = checked((int)message.Length);
-        var destination = output.GetSpan(FrameCodec.MaxCompressedLength(messageLength));
-        output.Advance(codec.CompressFrame(message, messageLength, destination));
-        return true;
+        var box = codec.BeginFrame(messageLength);
+        try
+        {
+            var remaining = messageLength;
+            var finished = false;
+            while (message.TryGetNext(out var segment))
+            {
+                remaining -= segment.Length;
+                if (remaining < 0)
+                {
+                    ZstandardThrows.InvalidFrame();
+                }
+                finished = remaining == 0;
+                bool done;
+                do
+                {
+                    var destination = output.GetSpan(FrameCodec.MaxCompressedLength(segment.Length));
+                    output.Advance(ZstandardCodec.Step(box.Encoder, ref segment, destination, finished, out done));
+                }
+                while (!done);
+            }
+            if (!finished)
+            {
+                if (remaining != 0)
+                {
+                    ZstandardThrows.InvalidFrame();
+                }
+                var empty = ReadOnlySpan<byte>.Empty;
+                bool done;
+                do
+                {
+                    var destination = output.GetSpan(FrameCodec.MaxCompressedLength(0));
+                    output.Advance(ZstandardCodec.Step(box.Encoder, ref empty, destination, isFinalBlock: true, out done));
+                }
+                while (!done);
+            }
+            codec.EndFrame(box);
+            return true;
+        }
+        catch
+        {
+            codec.Abandon(box);
+            throw;
+        }
     }
 #endif
 
@@ -112,6 +239,11 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
     public override bool TryDecode(ReadOnlySpan<byte> source, out DecodedMessage message)
     {
         source = ZstandardFrameWalker.SkipToFrame(source);
+        var frameDictionaryId = FrameCodec.DictionaryIdOfFrame(source);
+        if (frameDictionaryId != 0 && frameDictionaryId != DictionaryId)
+        {
+            ThrowDictionaryMismatch(frameDictionaryId); // the codec would report "dictionary wrong" later, less clearly
+        }
         byte[] rented;
         int written;
         if (FrameCodec.TryGetContentSize(source, out var contentSize))
@@ -122,7 +254,15 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
             }
             var expected = (int)contentSize;
             rented = ArrayPool<byte>.Shared.Rent(expected);
-            written = codec.DecompressFrame(source, rented.AsSpan(0, expected));
+            try
+            {
+                written = codec.DecompressFrame(source, rented.AsSpan(0, expected));
+            }
+            catch
+            {
+                ArrayPool<byte>.Shared.Return(rented); // a decoder failure (a window above the cap) must not leak the rental
+                throw;
+            }
             if (written != expected)
             {
                 ArrayPool<byte>.Shared.Return(rented);
@@ -163,6 +303,9 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
     public override bool DefinesMessageBoundaries => true;
 
     public override bool TryFindMessageEnd(in ReadOnlySequence<byte> buffer, out long length) => ZstandardFrameWalker.TryFindEnd(in buffer, out length);
+
+    /// <inheritdoc/>
+    public override bool TryFindMessageEnd(in ReadOnlySequence<byte> buffer, ref long position, out long length) => ZstandardFrameWalker.TryFindEnd(in buffer, ref position, out length);
 }
 
 // The codec behind the processor: cached contexts and the one-frame compress / decompress calls.
@@ -172,22 +315,35 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
 // and one decoder cached for reuse. The cache is a single slot taken and put back with interlocked exchanges:
 // uncontended use never allocates, and a second thread arriving while the slot is empty creates its own context and
 // disposes it afterwards instead of waiting.
-sealed class ZstandardCodec(int compressionLevel)
+sealed class ZstandardCodec(int compressionLevel, int windowLogMax, FrameDictionary? dictionary)
 {
-    sealed class EncoderBox(int compressionLevel)
+    // the dictionary, like the window cap, is a context parameter that survives Reset (session-only), so each cached
+    // context is created with it once. The BCL binds the compression level into the dictionary (ZstandardDictionary
+    // .Create takes it; the encoder's (dictionary, int) overload is a window log), so the level goes in at Create.
+    public sealed class EncoderBox(int compressionLevel, FrameDictionary? dictionary)
     {
-        public FrameEncoder Encoder = new(compressionLevel);
+#if NET11_0_OR_GREATER
+        public FrameEncoder Encoder = dictionary is null ? new(compressionLevel) : new(dictionary);
+#else
+        public FrameEncoder Encoder = dictionary is null ? new(compressionLevel) : new(new ZstandardCompressionOptions { CompressionLevel = compressionLevel, Dictionary = dictionary });
+#endif
     }
 
-    sealed class DecoderBox
+    sealed class DecoderBox(int windowLogMax, FrameDictionary? dictionary)
     {
-        public FrameDecoder Decoder = new();
+#if NET11_0_OR_GREATER
+        public FrameDecoder Decoder = dictionary is null ? new(windowLogMax) : new(dictionary, windowLogMax);
+#else
+        public FrameDecoder Decoder = dictionary is null
+            ? new(new ZstandardDecompressionOptions { WindowLogMax = windowLogMax })
+            : new(new ZstandardDecompressionOptions { WindowLogMax = windowLogMax, Dictionary = dictionary });
+#endif
     }
 
     EncoderBox? encoderCache;
     DecoderBox? decoderCache;
 
-    EncoderBox RentEncoder() => Interlocked.Exchange(ref encoderCache, null) ?? new EncoderBox(compressionLevel);
+    EncoderBox RentEncoder() => Interlocked.Exchange(ref encoderCache, null) ?? new EncoderBox(compressionLevel, dictionary);
 
     void ReturnEncoder(EncoderBox box)
     {
@@ -198,7 +354,7 @@ sealed class ZstandardCodec(int compressionLevel)
         }
     }
 
-    DecoderBox RentDecoder() => Interlocked.Exchange(ref decoderCache, null) ?? new DecoderBox();
+    DecoderBox RentDecoder() => Interlocked.Exchange(ref decoderCache, null) ?? new DecoderBox(windowLogMax, dictionary);
 
     void ReturnDecoder(DecoderBox box)
     {
@@ -209,85 +365,46 @@ sealed class ZstandardCodec(int compressionLevel)
         }
     }
 
-    // One complete frame from the message through the cached encoder, streamed segment by segment so the message is
-    // never flattened; the encoder is told the content size first so the frame header carries it (readers size their
-    // buffers from it). The destination is MaxCompressedLength-sized for the whole message, so anything but a finished
-    // frame that consumed every byte is a codec fault, and a call that makes no progress against it is reported
-    // instead of spun on.
-    public int CompressFrame(BufferSegments message, int messageLength, Span<byte> destination)
+    // A frame's encoder: rented, told the content size (the frame header carries it), and returned to the cache by
+    // EndFrame, or disposed by Abandon when a call threw (a context that threw is not trusted back into the cache).
+    public EncoderBox BeginFrame(int messageLength)
     {
         var box = RentEncoder();
         try
         {
             box.Encoder.SetSourceLength(messageLength);
-            var written = CompressSegments(box.Encoder, message, messageLength, destination);
-            if (written <= 0)
-            {
-                ZstandardThrows.InvalidFrame();
-            }
-            ReturnEncoder(box);
-            return written;
+            return box;
         }
         catch
         {
-            box.Encoder.Dispose(); // a context that threw is not trusted back into the cache
+            box.Encoder.Dispose();
             throw;
         }
     }
 
-    static int CompressSegments(FrameEncoder encoder, BufferSegments message, int messageLength, Span<byte> destination)
-    {
-        var written = 0;
-        var remaining = messageLength;
-        var finished = false;
-        while (!finished && message.TryGetNext(out var segment))
-        {
-            if (segment.IsEmpty)
-            {
-                continue;
-            }
-            remaining -= segment.Length;
-            if (remaining < 0)
-            {
-                ZstandardThrows.InvalidFrame(); // the segments hold more than the declared message
-            }
-            // the last non-empty segment ends the frame; the iterator may still yield empty segments after it, and
-            // feeding the encoder again would open a second frame
-            finished = remaining == 0;
-            written += CompressSegment(encoder, segment, destination.Slice(written), finished);
-        }
-        if (!finished)
-        {
-            if (remaining != 0)
-            {
-                ZstandardThrows.InvalidFrame(); // the segments hold less than the declared message
-            }
-            written += CompressSegment(encoder, ReadOnlySpan<byte>.Empty, destination.Slice(written), isFinalBlock: true); // the empty message
-        }
-        return written;
-    }
+    public void EndFrame(EncoderBox box) => ReturnEncoder(box);
 
-    static int CompressSegment(FrameEncoder encoder, ReadOnlySpan<byte> segment, Span<byte> destination, bool isFinalBlock)
+    public void Abandon(EncoderBox box) => box.Encoder.Dispose();
+
+    // One encoder call on the current segment into the window the caller holds, returning the bytes produced and
+    // whether the caller is done with the segment: its bytes are consumed (and, for the final block, the frame is
+    // closed). A window the encoder fills before it is done (DestinationTooSmall) is simply followed by another; a
+    // call that neither consumes nor produces against a window it did not fill is a codec fault, reported instead
+    // of spun on.
+    public static int Step(FrameEncoder encoder, ref ReadOnlySpan<byte> segment, Span<byte> destination, bool isFinalBlock, out bool done)
     {
-        var written = 0;
-        while (true)
+        var status = encoder.Compress(segment, destination, out var consumed, out var produced, isFinalBlock);
+        segment = segment.Slice(consumed);
+        if (status == OperationStatus.InvalidData)
         {
-            var status = encoder.Compress(segment, destination.Slice(written), out var consumed, out var produced, isFinalBlock);
-            written += produced;
-            segment = segment.Slice(consumed);
-            if (status == OperationStatus.InvalidData)
-            {
-                ZstandardThrows.InvalidFrame();
-            }
-            if (isFinalBlock ? (status == OperationStatus.Done && segment.IsEmpty) : segment.IsEmpty)
-            {
-                return written;
-            }
-            if (consumed == 0 && produced == 0)
-            {
-                ZstandardThrows.InvalidFrame(); // no progress against a bound-sized destination
-            }
+            ZstandardThrows.InvalidFrame();
         }
+        done = isFinalBlock ? (status == OperationStatus.Done && segment.IsEmpty) : segment.IsEmpty;
+        if (!done && consumed == 0 && produced == 0 && status != OperationStatus.DestinationTooSmall)
+        {
+            ZstandardThrows.InvalidFrame();
+        }
+        return produced;
     }
 
     // one complete frame through the cached decoder into a destination sized from the declared length; returns the
@@ -302,10 +419,17 @@ sealed class ZstandardCodec(int compressionLevel)
             // both decoders report malformed input as InvalidData; the caller throws after returning the buffer
             return status == OperationStatus.Done && consumed == frame.Length ? written : -1;
         }
-        catch
+        catch (Exception exception)
         {
+            // a context that threw is not trusted back into the cache; the codec's own exception (the .NET 11 decoder
+            // throws on a frame whose window exceeds the cap, where NativeCompressions reports InvalidData) is
+            // surfaced as the serialization failure it is, and this processor's own throws pass through
             box.Decoder.Dispose();
-            throw;
+            if (exception is MessagePackSerializationException)
+            {
+                throw;
+            }
+            throw ZstandardThrows.DecoderRejectedFrame(exception);
         }
     }
 
@@ -316,6 +440,7 @@ sealed class ZstandardCodec(int compressionLevel)
         var rented = ArrayPool<byte>.Shared.Rent(Math.Min(Math.Max(frame.Length * 4, 1024), cap));
         var written = 0;
         var box = RentDecoder();
+        Span<byte> scratch = stackalloc byte[64]; // for the epilogue probe below (once, outside the loop)
         try
         {
             while (true)
@@ -334,8 +459,28 @@ sealed class ZstandardCodec(int compressionLevel)
                 }
                 if (written >= cap)
                 {
-                    // the catch below returns the buffer; returning it here too would hand the same array to the pool twice
-                    ZstandardThrows.DeclaredLengthExceedsMaximum(written + 1L, maxDecompressedSize);
+                    // the output reached the cap: what remains can still be the frame's epilogue (the end of the last
+                    // block, a checksum), which produces nothing, so let the decoder finish into a scratch buffer
+                    // (neither codec accepts an empty destination for that); a single produced byte is the bomb.
+                    // The catch below returns the buffer; returning it here too would hand the same array to the pool twice
+                    while (true)
+                    {
+                        var tail = box.Decoder.Decompress(frame, scratch, out var tailConsumed, out var tailProduced);
+                        frame = frame.Slice(tailConsumed);
+                        if (tailProduced > 0)
+                        {
+                            ZstandardThrows.DeclaredLengthExceedsMaximum(written + tailProduced, maxDecompressedSize);
+                        }
+                        if (tail == OperationStatus.Done)
+                        {
+                            ReturnDecoder(box);
+                            return (rented, written);
+                        }
+                        if (tail != OperationStatus.DestinationTooSmall || tailConsumed == 0)
+                        {
+                            ZstandardThrows.InvalidFrame();
+                        }
+                    }
                 }
                 var grown = ArrayPool<byte>.Shared.Rent((int)Math.Min((long)rented.Length * 2, cap));
                 rented.AsSpan(0, written).CopyTo(grown);
@@ -343,11 +488,15 @@ sealed class ZstandardCodec(int compressionLevel)
                 rented = grown;
             }
         }
-        catch
+        catch (Exception exception)
         {
             ArrayPool<byte>.Shared.Return(rented);
             box.Decoder.Dispose();
-            throw;
+            if (exception is MessagePackSerializationException)
+            {
+                throw; // the cap throw above
+            }
+            throw ZstandardThrows.DecoderRejectedFrame(exception); // see DecompressFrame
         }
         ArrayPool<byte>.Shared.Return(rented);
         box.Decoder.Dispose();
@@ -416,6 +565,15 @@ static class ZstandardFrameWalker
 
     public static bool TryFindEnd(in ReadOnlySequence<byte> buffer, out long length)
     {
+        long position = 0;
+        return TryFindEnd(in buffer, ref position, out length);
+    }
+
+    // position: the offset of the next block header to read, left here by the previous call over the same message
+    // (0 for a fresh walk). The frame header is re-read on every call (a few bytes, it carries the flags the block
+    // walk needs), the blocks already walked are not.
+    public static bool TryFindEnd(in ReadOnlySequence<byte> buffer, ref long position, out long length)
+    {
         var reader = new FrameHeaderReader(in buffer);
         Span<byte> scratch = stackalloc byte[4];
         long offset = 0;
@@ -462,11 +620,16 @@ static class ZstandardFrameWalker
         var contentSizeBytes = (fhd >> 6) switch { 0 => singleSegment ? 1 : 0, 1 => 2, 2 => 4, _ => 8 };
         var dictionaryIdBytes = (fhd & 0x03) switch { 0 => 0, 1 => 1, 2 => 2, _ => 4 };
         offset += 5 + (singleSegment ? 0 : 1) + dictionaryIdBytes + contentSizeBytes;
+        if (position > offset)
+        {
+            offset = position; // resume at the block header the previous call stopped in front of
+        }
 
         // blocks: 3-byte header = last flag (bit 0), type (bits 1-2), size (bits 3-23); an RLE block carries one byte
         Span<byte> blockHeader = stackalloc byte[3];
         while (true)
         {
+            position = offset;
             if (!reader.TryRead(offset, blockHeader))
             {
                 length = offset + 3;
@@ -550,6 +713,37 @@ ref struct FrameHeaderReader
 // through the FrameEncoder/FrameDecoder aliases at the top of the file.
 static class FrameCodec
 {
+    const uint DictionaryMagic = 0xEC30A437;
+
+    // the id a trained dictionary (RFC 8878 5: magic, then the id) carries; raw content has none
+    public static uint DictionaryIdOfDictionary(ReadOnlySpan<byte> dictionary)
+        => dictionary.Length >= 8 && BinaryPrimitives.ReadUInt32LittleEndian(dictionary) == DictionaryMagic
+            ? BinaryPrimitives.ReadUInt32LittleEndian(dictionary.Slice(4))
+            : 0;
+
+    // the Dictionary_ID a frame header declares (RFC 8878 3.1.1.1: after the descriptor and the optional window
+    // descriptor, 0/1/2/4 bytes as the descriptor's low bits select); 0 when it declares none or the header is cut short
+    public static uint DictionaryIdOfFrame(ReadOnlySpan<byte> frame)
+    {
+        if (frame.Length < 5 || BinaryPrimitives.ReadUInt32LittleEndian(frame) != ZstandardFrameWalker.FrameMagic)
+        {
+            return 0;
+        }
+        var descriptor = frame[4];
+        var offset = 5 + ((descriptor & 0x20) != 0 ? 0 : 1);
+        var width = (descriptor & 0x03) switch { 0 => 0, 1 => 1, 2 => 2, _ => 4 };
+        if (width == 0 || frame.Length < offset + width)
+        {
+            return 0;
+        }
+        return width switch
+        {
+            1 => frame[offset],
+            2 => BinaryPrimitives.ReadUInt16LittleEndian(frame.Slice(offset)),
+            _ => BinaryPrimitives.ReadUInt32LittleEndian(frame.Slice(offset)),
+        };
+    }
+
 #if NET11_0_OR_GREATER
     public static int MaxCompressedLength(int inputLength) => checked((int)FrameEncoder.GetMaxCompressedLength(inputLength));
 
@@ -611,19 +805,4 @@ static class FrameCodec
         return false;
     }
 #endif
-}
-
-static class ZstandardThrows
-{
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    public static void InvalidFrame() => throw new MessagePackSerializationException("Invalid Zstandard frame.");
-
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    public static void NotAFrame() => throw new MessagePackSerializationException("The message is not a Zstandard frame; the Zstandard frame processor accepts nothing else.");
-
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    public static void DeclaredLengthExceedsMaximum(long declared, long maxDecompressedSize) => throw new MessagePackSerializationException($"Zstandard frame declares a {declared} byte decompressed length, which exceeds the configured maximum (MaxDecompressedSize {maxDecompressedSize})");
 }
