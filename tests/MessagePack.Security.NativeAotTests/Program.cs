@@ -110,8 +110,7 @@ internal static class Program
         var legacyOnly = new LegacySecurity();
         CheckHash(legacyOnly, "primitive override");
 
-        // These ordinary typed calls intentionally exercise the existing generic contract.
-        // There are no linker roots, DynamicDependency attributes, or reflection hints.
+        // Typed calls provide the generic instantiations needed by the legacy NativeAOT path.
         int typedCustom = legacyOnly.GetEqualityComparer<CustomKey>().GetHashCode(key);
         int typedEnum = legacyOnly.GetEqualityComparer<Int64Key>().GetHashCode((Int64Key)17);
         if (optIn)
@@ -149,7 +148,6 @@ internal static class Program
 
     private static void VerifySerialization()
     {
-        // Explicit built-in formatter: no dynamic resolver or generated formatter is needed.
         var options = new MessagePackSerializerOptions(PrimitiveResolver.Instance).WithSecurity(MessagePackSecurity.UntrustedData);
         var output = new ArrayBufferWriter<byte>();
         var writer = new MessagePackWriter(output);

@@ -258,25 +258,7 @@ namespace MessagePack
             throw new TypeAccessException($"No hash-resistant equality comparer available for type: {typeof(T)}");
         }
 
-        /// <summary>
-        /// Gets a collision-resistant comparer for an object key's runtime type when the application explicitly enables
-        /// the <c>MessagePack.Security.UseNonReflectiveObjectComparer</c> feature switch.
-        /// </summary>
-        /// <param name="type">The runtime type of the key.</param>
-        /// <returns>A collision-resistant comparer for keys of the specified type.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
-        /// <exception cref="TypeAccessException">No collision-resistant comparer is available for <paramref name="type"/>.</exception>
-        /// <remarks>
-        /// This opt-in mode does not dynamically invoke the generic comparer factory for arbitrary runtime types.
-        /// The built-in primitive types still use the generic factory. Boxed enums use the default keyed hash
-        /// of their underlying value, not enum-specific generic overrides. Override this method to handle
-        /// custom types or enum-specific comparers using statically known types, and delegate other keys to the
-        /// base implementation. Overrides must provide collision resistance and reject unsupported types.
-        /// The object comparer caches the result per runtime type, as in the legacy mode.
-        /// The application-wide switch is off by default and must be configured before using MessagePack.
-        /// For NativeAOT, set it at publish time and consume the annotated .NET 9 or later library asset
-        /// so that the unused legacy reflection-based comparer can be removed. Runtime toggling is unsupported.
-        /// </remarks>
+        /// <summary>Gets a collision-resistant comparer for opt-in object hashing.</summary>
         protected virtual IEqualityComparer GetHashCollisionResistantEqualityComparer(Type type)
         {
             if (type is null)
@@ -308,8 +290,7 @@ namespace MessagePack
 
         private static int GetEnumHashCode(Enum value)
         {
-            // Convert only to the actual underlying type, retaining its full width and signedness.
-            // Do not use Enum.GetHashCode(), which can collapse 64-bit values to the same hash.
+            // Hash the full underlying value; Enum.GetHashCode() loses bits for 64-bit enums.
             return value.GetTypeCode() switch
             {
                 TypeCode.SByte => SecureHash(Convert.ToSByte(value)),
