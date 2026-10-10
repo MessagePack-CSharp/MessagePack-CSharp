@@ -194,6 +194,69 @@ if (args.Contains("--jit-int32-nb"))
     return sink == 0 ? 0 : 0;
 }
 
+// deserialize-only three-way entry comparison (v4 / v3 / Nerdbank), one process per library so
+// each PGO profile stays clean. The call goes through a NoInlining wrapper so the wrapper tiers
+// up by call count with full dynamic PGO — the shape BDN measures — instead of riding Main's
+// OSR compile, whose inline budget is exhausted by the size of this file's top-level Main. Usage:
+//   $env:DOTNET_JitDisasm = "*JitInt32*"; dotnet run -c Release -- --jit-int32-de=v4   (or v3 / nb)
+if (args.FirstOrDefault(a => a.StartsWith("--jit-int32-de=")) is { } jitInt32De)
+{
+    var b = new Int32ValueBenchmark { Value = 3000 };
+    b.Setup();
+    var sink = 0;
+    switch (jitInt32De.Substring("--jit-int32-de=".Length))
+    {
+        case "v4": for (int i = 0; i < 200_000_000; i++) sink += JitInt32V4(b); break;
+        case "v3": for (int i = 0; i < 200_000_000; i++) sink += JitInt32V3(b); break;
+        case "nb": for (int i = 0; i < 200_000_000; i++) sink += JitInt32Nb(b); break;
+        default: throw new ArgumentException(jitInt32De);
+    }
+    return sink == 0 ? 0 : 0;
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    static int JitInt32V4(Int32ValueBenchmark b) => b.DeserializeV4();
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    static int JitInt32V3(Int32ValueBenchmark b) => b.DeserializeMpcs();
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    static int JitInt32Nb(Int32ValueBenchmark b) => b.DeserializeNerdbank();
+}
+
+// same NoInlining-wrapper hot-loop for one AlternatingTypeBenchmark row, picked by method name. Usage:
+//   $env:DOTNET_JitDisasm = "*JitAlt* AlternatingTypeBenchmark:*"; dotnet run -c Release -- --jit-alt=IntBoolV4
+if (args.FirstOrDefault(a => a.StartsWith("--jit-alt=")) is { } jitAlt)
+{
+    var b = new AlternatingTypeBenchmark();
+    b.Setup();
+    var f = typeof(AlternatingTypeBenchmark).GetMethod(jitAlt.Substring("--jit-alt=".Length))!.CreateDelegate<Func<int>>(b);
+    var sink = 0;
+    for (int i = 0; i < 100_000_000; i++) sink += JitAltInvoke(f);
+    return sink == 0 ? 0 : 0;
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    static int JitAltInvoke(Func<int> f) => f();
+}
+
+// hot-loops the non-generic Deserialize over four types per iteration, so the call site is megamorphic and every
+// NonGenericEntry<T>.Deserialize gets its own Tier1 body: checks that the shared-box branches (bool / Nil) fold
+// per instantiation and leave the int and reference-type bodies untouched. Usage:
+//   $env:DOTNET_JitDisasm = "*NonGenericEntry*:Deserialize*"; dotnet run -c Release -- --jit-ngbox
+if (args.Contains("--jit-ngbox"))
+{
+    var boolBytes = MessagePack.MessagePackSerializer.Serialize(true);
+    var intBytes = MessagePack.MessagePackSerializer.Serialize(8);
+    var stringBytes = MessagePack.MessagePackSerializer.Serialize("abc");
+    var nilBytes = MessagePack.MessagePackSerializer.Serialize(MessagePack.Nil.Default);
+    var sink = 0;
+    for (int i = 0; i < 50_000_000; i++)
+    {
+        sink += MessagePack.MessagePackSerializer.Deserialize(typeof(bool), boolBytes)!.GetHashCode();
+        sink += MessagePack.MessagePackSerializer.Deserialize(typeof(int), intBytes)!.GetHashCode();
+        sink += MessagePack.MessagePackSerializer.Deserialize(typeof(string), stringBytes)!.GetHashCode();
+        sink += MessagePack.MessagePackSerializer.Deserialize(typeof(MessagePack.Nil), nilBytes)!.GetHashCode();
+    }
+    return sink == 0 ? 0 : 0;
+}
+
 // runs AsyncPipeBenchmark's GlobalSetup sanity checks (every competitor must see every
 // message) without BDN — the async paths are outside --verify. Usage:
 //   dotnet run -c Release -- --asyncpipe-sanity

@@ -32,6 +32,34 @@ public class NonGenericSerializerTests
         AssertMatchesGeneric((List<int>?)null);
     }
 
+    // bool and Nil come back as shared boxes from every Deserialize entry, with the value still right
+    [Fact]
+    public async Task BoolAndNil_ReturnSharedBoxes()
+    {
+        foreach (var value in new[] { true, false })
+        {
+            var bytes = MessagePackSerializer.Serialize(value);
+            var expected = MessagePackSerializer.Deserialize(typeof(bool), bytes);
+            Assert.Equal((object)value, expected);
+
+            Assert.Same(expected, MessagePackSerializer.Deserialize(typeof(bool), bytes));
+            Assert.Same(expected, MessagePackSerializer.Deserialize(typeof(bool), new ReadOnlySequence<byte>(bytes)));
+            Assert.Same(expected, MessagePackSerializer.Deserialize(typeof(bool), new MemoryStream(bytes)));
+            Assert.Same(expected, await MessagePackSerializer.DeserializeAsync(typeof(bool), new MemoryStream(bytes), TestContext.Current.CancellationToken));
+            Assert.Same(expected, await MessagePackSerializer.DeserializeAsync(typeof(bool), PipeReader.Create(new MemoryStream(bytes)), TestContext.Current.CancellationToken));
+        }
+
+        Assert.NotSame(MessagePackSerializer.Deserialize(typeof(bool), MessagePackSerializer.Serialize(true)), MessagePackSerializer.Deserialize(typeof(bool), MessagePackSerializer.Serialize(false)));
+
+        var nil = MessagePackSerializer.Serialize(Nil.Default);
+        Assert.Equal((object)Nil.Default, MessagePackSerializer.Deserialize(typeof(Nil), nil));
+        Assert.Same(MessagePackSerializer.Deserialize(typeof(Nil), nil), MessagePackSerializer.Deserialize(typeof(Nil), nil));
+
+        // the neighbours are untouched: bool? still takes the plain box, and its null stays null
+        Assert.Equal((object)true, MessagePackSerializer.Deserialize(typeof(bool?), MessagePackSerializer.Serialize<bool?>(true)));
+        Assert.Null(MessagePackSerializer.Deserialize(typeof(bool?), MessagePackSerializer.Serialize<bool?>(null)));
+    }
+
     [Fact]
     public void NullValue_TypeFirstBindingEdge()
     {

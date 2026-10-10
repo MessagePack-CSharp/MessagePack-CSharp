@@ -453,6 +453,10 @@ public static partial class MessagePackSerializer
 
     abstract class NonGenericEntry
     {
+        protected static readonly object TrueBox = true;
+        protected static readonly object FalseBox = false;
+        protected static readonly object NilBox = Nil.Default;
+
         public abstract byte[] Serialize(object? value, MessagePackSerializerOptions options);
         public abstract void Serialize(IBufferWriter<byte> output, object? value, MessagePackSerializerOptions options);
         public abstract void Serialize(Stream stream, object? value, MessagePackSerializerOptions options);
@@ -473,6 +477,23 @@ public static partial class MessagePackSerializer
 
     sealed class NonGenericEntry<T> : NonGenericEntry
     {
+        // bool and Nil results share their boxes instead of allocating one per call. typeof(T) == typeof(...) is a
+        // JIT-time constant, so every other instantiation keeps the plain box (or the reference) and none of the branches.
+        // The boxes live on the non-generic base: statics of this class would exist once per T.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static object? Box(T value)
+        {
+            if (typeof(T) == typeof(bool))
+            {
+                return Unsafe.As<T, bool>(ref value) ? TrueBox : FalseBox;
+            }
+            if (typeof(T) == typeof(Nil))
+            {
+                return NilBox;
+            }
+            return value;
+        }
+
         public override byte[] Serialize(object? value, MessagePackSerializerOptions options)
         {
             return MessagePackSerializer.Serialize<T>((T)value!, options);
@@ -490,7 +511,7 @@ public static partial class MessagePackSerializer
 
         public override object? Deserialize(Stream stream, MessagePackSerializerOptions options)
         {
-            return MessagePackSerializer.Deserialize<T>(stream, options);
+            return Box(MessagePackSerializer.Deserialize<T>(stream, options));
         }
 
         public override Task SerializeAsync(Stream stream, object? value, MessagePackSerializerOptions options, CancellationToken cancellationToken)
@@ -500,17 +521,17 @@ public static partial class MessagePackSerializer
 
         public override async ValueTask<object?> DeserializeAsync(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken)
         {
-            return await MessagePackSerializer.DeserializeAsync<T>(stream, options, cancellationToken).ConfigureAwait(false);
+            return Box(await MessagePackSerializer.DeserializeAsync<T>(stream, options, cancellationToken).ConfigureAwait(false));
         }
 
         public override object? Deserialize(ReadOnlySpan<byte> source, MessagePackSerializerOptions options)
         {
-            return MessagePackSerializer.Deserialize<T>(source, options);
+            return Box(MessagePackSerializer.Deserialize<T>(source, options));
         }
 
         public override object? Deserialize(in ReadOnlySequence<byte> source, MessagePackSerializerOptions options)
         {
-            return MessagePackSerializer.Deserialize<T>(in source, options);
+            return Box(MessagePackSerializer.Deserialize<T>(in source, options));
         }
 
         public override Task SerializeAsync(PipeWriter pipeWriter, object? value, MessagePackSerializerOptions options, CancellationToken cancellationToken)
@@ -520,7 +541,7 @@ public static partial class MessagePackSerializer
 
         public override async ValueTask<object?> DeserializeAsync(PipeReader pipeReader, MessagePackSerializerOptions options, CancellationToken cancellationToken)
         {
-            return await MessagePackSerializer.DeserializeAsync<T>(pipeReader, options, cancellationToken).ConfigureAwait(false);
+            return Box(await MessagePackSerializer.DeserializeAsync<T>(pipeReader, options, cancellationToken).ConfigureAwait(false));
         }
 
 #if NET9_0_OR_GREATER
@@ -531,7 +552,7 @@ public static partial class MessagePackSerializer
 
         public override object? Deserialize<TReadBuffer>(ref TReadBuffer buffer, MessagePackSerializerOptions options)
         {
-            return MessagePackSerializer.Deserialize<TReadBuffer, T>(ref buffer, options);
+            return Box(MessagePackSerializer.Deserialize<TReadBuffer, T>(ref buffer, options));
         }
 #endif
     }

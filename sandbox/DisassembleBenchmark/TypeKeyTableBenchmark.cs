@@ -31,6 +31,19 @@ using BenchmarkDotNet.Attributes;
 // registers, the probe loop is identical). MixedLive, the product call shape (miss path consumes the Type):
 // OpenAddressPointer 0.68 | SlimSlot 0.66 | TypeRef 0.66, same register set, within noise. TypeRef shipped: the nint key
 // bought nothing the product call sites can use, and the slot loses 8 bytes plus the pointer-reuse argument.
+//
+// Type-keyed ConcurrentDictionary rows (2026-09-19, MediumRun, ns; this run's absolute numbers are ~1.7-2x the earlier
+// rounds across the board, so compare within the run only): Same: ConcurrentHandle 1.51 | ConcurrentType 3.00 |
+// ConcurrentTypeRefEq 2.54 | HyperMapper 0.93 | TypeRef 0.29; Mixed: ConcurrentHandle 2.44 | ConcurrentType 3.86 |
+// ConcurrentTypeRefEq 3.57 | HyperMapper 1.47 | TypeRef 1.39. ConcurrentDictionary<Type,> is the slowest shape: the
+// default comparer pays virtual Type.GetHashCode/Equals, ReferenceEqualityComparer still goes through the comparer
+// interface and RuntimeHelpers.GetHashCode (header read); the RuntimeTypeHandle key gets the devirtualized struct path.
+// Second run the same day with the harness floor: NextOnly 0.29 +-0.14 | ConcurrentType 3.76 | ConcurrentTypeRefEq 3.40 |
+// ConcurrentHandle 2.44 | TypeRef 1.68 (TypeRef moved 1.39 -> 1.68 between the two runs, the ConcurrentDictionary rows
+// did not). Hit-path asm: ConcurrentType = virtual call for the hash + two MT checks; RefEq = interface-stub call for
+// the hash + one MT check; ConcurrentHandle = one direct TryGetHashCode FCall, comparer null; all three FastMod (two
+// imul) and chase buckets -> Node -> value. TypeRef = no call, hash source is one field load (RuntimeType.m_handle),
+// one imul + mask, the slot is inline in the array (Type and Value on the same line).
 public class TypeKeyTableBenchmark
 {
     static readonly Type[] Types =
@@ -46,6 +59,8 @@ public class TypeKeyTableBenchmark
     }
 
     readonly ConcurrentDictionary<RuntimeTypeHandle, Payload> concurrent = new();
+    readonly ConcurrentDictionary<Type, Payload> concurrentType = new();
+    readonly ConcurrentDictionary<Type, Payload> concurrentTypeRefEq = new(ReferenceEqualityComparer.Instance);
     readonly HyperMapperTable<Payload> hyperMapper = new();
     readonly ChainPointerTable<Payload> chainPointer = new();
     readonly OpenAddressPointerTable<Payload> openAddress = new();
@@ -62,6 +77,8 @@ public class TypeKeyTableBenchmark
         {
             var payload = new Payload { Value = i + 1 };
             concurrent.TryAdd(Types[i].TypeHandle, payload);
+            concurrentType.TryAdd(Types[i], payload);
+            concurrentTypeRefEq.TryAdd(Types[i], payload);
             hyperMapper.TryAdd(Types[i], payload);
             chainPointer.TryAdd(Types[i], payload);
             openAddress.TryAdd(Types[i], payload);
@@ -92,6 +109,18 @@ public class TypeKeyTableBenchmark
     public int Same_ConcurrentHandle() => concurrent.TryGetValue(typeof(Payload).TypeHandle, out var p) ? p.Value : 0;
 
     [Benchmark]
+    public int Same_ConcurrentType() => concurrentType.TryGetValue(typeof(Payload), out var p) ? p.Value : 0;
+
+    [Benchmark]
+    public int Same_ConcurrentTypeRefEq() => concurrentTypeRefEq.TryGetValue(typeof(Payload), out var p) ? p.Value : 0;
+
+    [Benchmark]
+    public int Mixed_ConcurrentType() => concurrentType.TryGetValue(Next(), out var p) ? p.Value : 0;
+
+    [Benchmark]
+    public int Mixed_ConcurrentTypeRefEq() => concurrentTypeRefEq.TryGetValue(Next(), out var p) ? p.Value : 0;
+
+    [Benchmark]
     public int Same_HyperMapper() => hyperMapper.TryGetValue(typeof(Payload), out var p) ? p.Value : 0;
 
     [Benchmark]
@@ -102,6 +131,10 @@ public class TypeKeyTableBenchmark
 
     [Benchmark]
     public int Same_TypeRef() => typeRef.TryGetValue(typeof(Payload), out var p) ? p.Value : 0;
+
+    // harness floor of the Mixed rows: the cursor read-modify-write and the Types[] load, no lookup
+    [Benchmark]
+    public Type Mixed_NextOnly() => Next();
 
     [Benchmark]
     public int Mixed_ConcurrentHandle() => concurrent.TryGetValue(Next().TypeHandle, out var p) ? p.Value : 0;
