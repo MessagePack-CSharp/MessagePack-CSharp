@@ -66,6 +66,10 @@ internal static class AttributeFormatterActivator
             }
             if (formatterType.IsGenericTypeDefinition && formatterType.GetGenericArguments().Length == 2)
             {
+                if ((typeof(TWriteBuffer).IsByRefLike || typeof(TReadBuffer).IsByRefLike) && !AllowsRefStructBuffers(formatterType))
+                {
+                    return new CompatibleOnlyFormatterFactory(formatterType, arguments, subject);
+                }
                 return CreateInstance(formatterType.MakeGenericType(typeof(TWriteBuffer), typeof(TReadBuffer)), arguments, subject);
             }
         }
@@ -99,6 +103,41 @@ internal static class AttributeFormatterActivator
         }
         throw NeitherForm(formatterType, subject);
     }
+
+#if NET9_0_OR_GREATER
+    // the downlevel generic shape: a buffer type parameter without `allows ref struct` (a formatter compiled against a
+    // netstandard build, or hand-written without the constraint) cannot close over the ref struct buffers
+    static bool AllowsRefStructBuffers(Type openFormatterType)
+    {
+        foreach (var parameter in openFormatterType.GetGenericArguments())
+        {
+            if ((parameter.GenericParameterAttributes & GenericParameterAttributes.AllowByRefLike) == 0)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Serves such a formatter as a factory: it declines the ref struct pairs, so the resolver (CreateFormatterWith)
+    // reroutes the object graph to the Compatible buffers, exactly as for a netstandard-built factory, instead of the
+    // ArgumentException MakeGenericType would throw
+    sealed class CompatibleOnlyFormatterFactory(Type formatterType, object?[] arguments, string subject) : MessagePackFormatterFactory
+    {
+        public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type) => CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), type);
+
+        [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "callers are gated by RequiresDynamicCode at factory acquisition; the caller has already opted into dynamic code")]
+        [UnconditionalSuppressMessage("Trimming", "IL2055", Justification = "the formatter type comes from a [MessagePackFormatter] attribute in user code, which roots it; same RequiresUnreferencedCode gate")]
+        public override object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
+        {
+            if (writeBufferType.IsByRefLike || readBufferType.IsByRefLike)
+            {
+                return null;
+            }
+            return CreateInstance(formatterType.MakeGenericType(writeBufferType, readBufferType), arguments, subject);
+        }
+    }
+#endif
 
     static MessagePackFormatterFactory CreateFactory(Type formatterType, object?[] arguments, string subject)
     {

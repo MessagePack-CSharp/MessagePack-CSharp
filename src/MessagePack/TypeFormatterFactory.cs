@@ -10,6 +10,12 @@ namespace MessagePack;
 [Obsolete("Deserializing System.Type executes Type.GetType over payload-provided names, which can load assemblies and permanently grow the process. This exists for v3 compatibility with trusted data only; suppress this warning to accept that risk.")]
 public sealed partial class TypeFormatterFactory : MessagePackFormatterFactory
 {
+    /// <summary>Creates the factory. The formatter loads types by payload-provided names, which trimming cannot see.</summary>
+    [RequiresUnreferencedCode("TypeFormatter resolves System.Type values with Type.GetType over payload-provided names; trimming can remove those types silently.")]
+    public TypeFormatterFactory()
+    {
+    }
+
     // one method, two signatures: net9+ overrides the base virtual (constraints inherited);
     // downlevel has no base member, so the constraints are spelled out
 #if NET9_0_OR_GREATER

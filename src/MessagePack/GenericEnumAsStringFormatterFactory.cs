@@ -11,6 +11,7 @@ public sealed class GenericEnumAsStringFormatterFactory : GenericFormatterFactor
     readonly bool ignoreCase;
 
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
     public GenericEnumAsStringFormatterFactory(bool ignoreCase = false)
     {
         this.ignoreCase = ignoreCase;

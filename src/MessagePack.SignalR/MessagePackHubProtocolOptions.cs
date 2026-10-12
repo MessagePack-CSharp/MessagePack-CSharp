@@ -10,7 +10,7 @@ namespace MessagePack.SignalR;
 /// <summary>Options for <see cref="MessagePackHubProtocol"/>.</summary>
 public sealed class MessagePackHubProtocolOptions
 {
-    internal const string RequiresDynamicCodeMessage = "The default serializer options end in the contractless reflection tier, which closes generic formatters at runtime. Set SerializerOptions to options built on MessagePackFormatterFactory.DefaultAot for Native AOT.";
+    internal const string RequiresDynamicCodeMessage = "The default serializer options end in the contractless reflection tier, which closes generic formatters at runtime. Set SerializerOptions to options built on MessagePackFormatterFactory.DefaultAot for Native AOT. Note that DefaultAot writes enums as integers where these defaults (and the official protocol) write their names, and has no contractless tier: compose EnumAsStringFormatterFactory<TEnum> for each enum in front of it and annotate the argument types.";
     internal const string RequiresUnreferencedCodeMessage = "The default serializer options end in the contractless reflection tier. Set SerializerOptions to options built on an explicit chain for trimmed applications.";
 
     MessagePackSerializerOptions? serializerOptions;

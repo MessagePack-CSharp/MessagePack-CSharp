@@ -23,6 +23,13 @@ public sealed partial class ReflectionUnionFormatter<TWriteBuffer, TReadBuffer, 
     TypeKeyHashTable<CaseSlot> caseByType = null!; // TypeKeyHashTable: the serializer's add-only Type-keyed cache (open addressing, copy-on-write adds, lock-free reads), see TypeKeyTableBenchmark
     Dictionary<int, CaseSlot> caseByTag = null!;
 
+    /// <summary>Creates the formatter. Reflection over the union cases closes formatters at run time.</summary>
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
+    public ReflectionUnionFormatter()
+    {
+    }
+
     /// <inheritdoc/>
     [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "instances only exist behind ReflectionFormatterFactory's RequiresDynamicCode gate; the caller has already opted into dynamic code")]
     [UnconditionalSuppressMessage("Trimming", "IL2060", Justification = "CreateCaseSlot is a private member of this formatter, rooted by the typeof/nameof reference below; its type argument is a declared union case type, rooted by the attribute that names it")]
@@ -88,7 +95,7 @@ public sealed partial class ReflectionUnionFormatter<TWriteBuffer, TReadBuffer, 
         }
         if (caseByTag.TryGetValue(buffer.ReadInt32(), out var slot))
         {
-            value = (T?)slot.Deserialize(ref buffer, ref state);
+            value = (T?)slot.Deserialize(ref buffer, ref state, value); // populate: an existing instance of the case is read into
         }
         else
         {
@@ -174,7 +181,7 @@ public sealed partial class ReflectionUnionFormatter<TWriteBuffer, TReadBuffer, 
 
         public abstract void Serialize(ref TWriteBuffer buffer, ref SerializeState state, object value);
 
-        public abstract object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state);
+        public abstract object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state, object? existing);
     }
 
     sealed class CaseSlot<TCase> : CaseSlot
@@ -192,9 +199,10 @@ public sealed partial class ReflectionUnionFormatter<TWriteBuffer, TReadBuffer, 
             formatter.Serialize(ref buffer, ref state, (TCase)value);
         }
 
-        public override object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state)
+        public override object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state, object? existing)
         {
-            TCase value = default!;
+            // populate contract, as the generated union formatter: a value of this case is read into in place
+            TCase value = existing is TCase current ? current : default!;
             formatter.Deserialize(ref buffer, ref state, ref value);
             return value;
         }
@@ -204,7 +212,16 @@ public sealed partial class ReflectionUnionFormatter<TWriteBuffer, TReadBuffer, 
 /// <summary>Creates <see cref="ReflectionUnionFormatter{TWriteBuffer, TReadBuffer, T}"/> instances for <typeparamref name="T"/>.</summary>
 public sealed partial class ReflectionUnionFormatterFactory<T> : MessagePackFormatterFactory
 {
+    /// <summary>Creates the factory. Reflection over the union cases closes formatters at run time.</summary>
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
+    public ReflectionUnionFormatterFactory()
+    {
+    }
+
     /// <summary>Creates the formatter for <paramref name="type"/>, which must be <typeparamref name="T"/>.</summary>
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "this factory's constructor carries the formatter constructor's RequiresDynamicCode annotation")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "this factory's constructor carries the formatter constructor's RequiresUnreferencedCode annotation")]
 #if NET9_0_OR_GREATER
     public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
 #else

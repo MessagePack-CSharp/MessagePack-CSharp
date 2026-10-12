@@ -99,6 +99,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     int requiredArrayCount;       // array mode: smallest count that still carries every required slot
 
     /// <summary>Creates a formatter over the public members of <typeparamref name="T"/>.</summary>
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
     public ReflectionObjectFormatter()
         : this(allowPrivate: false)
     {
@@ -107,6 +109,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     // No extra machinery is needed for allowPrivate. Delegate binding to a private accessor is just reflection,
     // which is what made v3 grow a separate DynamicMethod-based resolver family.
     /// <summary>Creates a formatter that, with <paramref name="allowPrivate"/>, also includes non-public members, accessors and constructors.</summary>
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
     public ReflectionObjectFormatter(bool allowPrivate)
     {
         this.allowPrivate = allowPrivate;
@@ -219,9 +223,13 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             foreach (var property in level.GetProperties(memberFlags))
             {
                 var getMethod = property.GetMethod;
+                // an explicit interface implementation ("Ns.IFoo.Prop", reachable only under allowPrivate) is no member of
+                // an annotated type's contract: the generator skips it, so the attributed table does too (contractless keeps
+                // v3's enumeration, which included it)
                 if (property.GetIndexParameters().Length != 0 ||
                     getMethod is null ||
-                    (!allowPrivate && !getMethod.IsPublic))
+                    (!allowPrivate && !getMethod.IsPublic) ||
+                    (objectAttribute is not null && property.Name.IndexOf('.') >= 0))
                 {
                     continue;
                 }
@@ -650,7 +658,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             return (MemberSlot)createPropertySlot.MakeGenericMethod(candidate.MemberType).InvokeUnwrapped(null, [property, allowPrivate])!;
         }
         var createFieldSlot = formatterType.GetMethod(nameof(CreateFieldSlot), BindingFlags.NonPublic | BindingFlags.Static)!;
-        return (MemberSlot)createFieldSlot.MakeGenericMethod(candidate.MemberType).InvokeUnwrapped(null, [(FieldInfo)candidate.Member])!;
+        return (MemberSlot)createFieldSlot.MakeGenericMethod(candidate.MemberType).InvokeUnwrapped(null, [(FieldInfo)candidate.Member, allowPrivate])!;
     }
 
     static void ApplyMemberMetadata(MemberSlot slot, in MemberCandidate candidate)
@@ -1362,9 +1370,9 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         return typeof(T).IsValueType ? new StructPropertySlot<TMember>(property, allowPrivate) : new ClassPropertySlot<TMember>(property, allowPrivate);
     }
 
-    static FieldSlot<TMember> CreateFieldSlot<TMember>(FieldInfo field)
+    static FieldSlot<TMember> CreateFieldSlot<TMember>(FieldInfo field, bool allowPrivate)
     {
-        return new FieldSlot<TMember>(field);
+        return new FieldSlot<TMember>(field, allowPrivate);
     }
 
     // Duplicate known-key detection for the map wire forms (the array form is positional,
@@ -1784,10 +1792,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         readonly bool writable;
         IMessagePackFormatter<TWriteBuffer, TReadBuffer, TMember> formatter = null!;
 
-        public FieldSlot(FieldInfo field)
+        public FieldSlot(FieldInfo field, bool allowPrivate)
         {
             this.field = field;
-            writable = true; // readonly included: v3 wrote initonly fields, and FieldInfo.SetValue can
+            // a readonly field is written only under allowPrivate (v3's AllowPrivate resolvers did, FieldInfo.SetValue can);
+            // without it the value is skipped, as the generator (MsgPack007) and v3 did
+            writable = allowPrivate || !field.IsInitOnly;
         }
 
         public override Type MemberType => typeof(TMember);
@@ -1852,10 +1862,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         readonly MemberSetter<TMember>? setter;
         IMessagePackFormatter<TWriteBuffer, TReadBuffer, TMember> formatter = null!;
 
-        public FieldSlot(FieldInfo field)
+        public FieldSlot(FieldInfo field, bool allowPrivate)
         {
             getter = CreateGetter(field);
-            setter = CreateSetter(field); // readonly included: v3 wrote initonly fields, and skipVisibility stfld can
+            // a readonly field is written only under allowPrivate (v3's AllowPrivate resolvers did, skipVisibility stfld can);
+            // without it the value is skipped, as the generator (MsgPack007) and v3 did
+            setter = allowPrivate || !field.IsInitOnly ? CreateSetter(field) : null;
         }
 
         [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "instances only exist behind ReflectionFormatterFactory's RequiresDynamicCode gate; the caller has already opted into dynamic code")]
@@ -1974,6 +1986,8 @@ public sealed partial class ReflectionObjectFormatterFactory<T> : MessagePackFor
     // One method, two signatures. net9+ overrides the base virtual (constraints inherited),
     // while downlevel has no base member, so the constraints are spelled out.
     /// <summary>Creates the formatter for <paramref name="type"/>, which must be <typeparamref name="T"/>.</summary>
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "this factory's constructors carry the formatter constructors' RequiresDynamicCode annotation")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "this factory's constructors carry the formatter constructors' RequiresUnreferencedCode annotation")]
 #if NET9_0_OR_GREATER
     public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
 #else

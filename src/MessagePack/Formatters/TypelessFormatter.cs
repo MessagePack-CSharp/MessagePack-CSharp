@@ -49,6 +49,8 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
     // omitAssemblyVersion writes type names without Version/Culture/PublicKeyToken,
     // falling back to the full name when the short one does not resolve.
     // the v3 option of the same name.
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(TypelessMessages.RequiresUnreferencedCode)]
     public TypelessFormatter(TypelessTypeLoader typeLoader, bool omitAssemblyVersion = false)
     {
         ArgumentNullException.ThrowIfNull(typeLoader);

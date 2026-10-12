@@ -1195,6 +1195,16 @@ static class ObjectParser
                     builtIns.Add(closedCollectionName, new HarvestedBuiltInModel(
                         ClosedTypeName: closedCollectionName,
                         FormatterConstruction: $"new global::MessagePack.Formatters.{genericFormatter}<TWriteBuffer, TReadBuffer, {string.Join(", ", named.TypeArguments.Select(static a => a.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))}>({arguments})"));
+                    // InterfaceLookupFormatter resolves IGrouping<K,V> from the resolver, and InterfaceGroupingFormatter
+                    // IEnumerable<V>: the AOT chains serve those only when they are harvested here too
+                    if (genericFormatter == "InterfaceLookupFormatter" && compilation.GetTypeByMetadataName("System.Linq.IGrouping`2") is { } grouping)
+                    {
+                        HarvestSerializedType(grouping.Construct(named.TypeArguments[0], named.TypeArguments[1]), compilation, userGenerics, builtIns, closureDepth);
+                    }
+                    else if (genericFormatter == "InterfaceGroupingFormatter")
+                    {
+                        HarvestSerializedType(compilation.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T).Construct(named.TypeArguments[1]), compilation, userGenerics, builtIns, closureDepth);
+                    }
                 }
             }
             return;

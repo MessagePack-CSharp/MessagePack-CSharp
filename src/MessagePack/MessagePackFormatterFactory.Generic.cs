@@ -18,13 +18,16 @@ public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
     public static GenericFormatterFactory Instance
     {
         [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
         get => instance ??= new GenericFormatterFactory(); // benign race: stateless singleton
     }
 
-    // Public for [MessagePackFormatter] use (the attribute paths construct via new). The RequiresDynamicCode gate
-    // carries over, so AOT-enabled consumers get the warning.
+    // Public for [MessagePackFormatter] use (the attribute paths construct via new). The RequiresDynamicCode and
+    // RequiresUnreferencedCode gates carry over, so AOT-enabled and trimmed consumers get the warning (the catch-all
+    // probes a custom collection type for constructors, which trimming removes without a warning otherwise).
     /// <summary>Creates a new instance, for use with <see cref="MessagePackFormatterAttribute"/>. Chains use <see cref="Instance"/>.</summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
     public GenericFormatterFactory()
     {
     }
@@ -378,7 +381,10 @@ public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
         // construct-from-intermediate formatters (which also serve struct collections). ExpandoObject structurally
         // matches the IDictionary<,> branch, but serving it would silently revive the deprecated quadratic-Add path,
         // so only the opt-in ExpandoObjectFormatterFactory serves it and the miss stays loud.
-        if (type != typeof(System.Dynamic.ExpandoObject) && !type.IsAbstract)
+        // A [MessagePackObject] (or [DataContract], or type-level [MessagePackFormatter]) type that happens to be a
+        // collection shape belongs to the object tiers: served here, its [Key] members would silently never be written
+        // (the generator registers such a type as an object; the reflection tier takes over when it did not).
+        if (type != typeof(System.Dynamic.ExpandoObject) && !type.IsAbstract && !ReflectionFormatterFactory.HasObjectClaim(type))
         {
             var hasDefaultConstructor = !type.IsValueType && type.GetConstructor(Type.EmptyTypes) != null;
             Type? collectionInterface = null;

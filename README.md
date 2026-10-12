@@ -30,7 +30,9 @@ builder.Services.AddSignalR().AddMessagePackProtocol();       // SignalR: the "m
 // both take a MessagePackSerializerOptions overload; the SignalR one is also the overload for trimmed / Native AOT apps
 ```
 
-The source generator's output needs **C# 9** (C# 13 on `net9.0` and later, which is those SDKs' default). `net48` and `netstandard2.0` projects default to C# 7.3, so a project that declares `[MessagePackObject]` types there must set `<LangVersion>9.0</LangVersion>` or later; otherwise the generator reports MsgPack024 and generates nothing. Projects that only use the reflection tier are unaffected.
+For SignalR on Native AOT, mind the enums: the defaults (like the official protocol) send enum *names*, and `DefaultAot` sends integers, which the official .NET, JavaScript and Java clients then fail to read. Compose `EnumAsStringFormatterFactory<TEnum>` for each enum in front of `DefaultAot` (`MessagePackFormatterFactory.Combine(new EnumAsStringFormatterFactory<Status>(), MessagePackFormatterFactory.DefaultAot)`), and annotate the hub argument types, since the contractless tier is not available on that chain.
+
+The source generator's output needs **C# 9** (C# 13 on `net9.0` and later, which is those SDKs' default). `net48` and `netstandard2.0` projects default to C# 7.3, so a project that declares `[MessagePackObject]` types there must set `<LangVersion>9.0</LangVersion>` or later; otherwise the generator reports MsgPack024 and generates nothing. Projects that only use the reflection tier are unaffected. On those targets the generator also emits a `ModuleInitializerAttribute` polyfill when the compilation has none; a project that uses [PolySharp](https://github.com/Sergio0694/PolySharp) is detected through its build properties and gets no second copy (if you exclude that attribute from PolySharp with `PolySharpExcludeGeneratedTypes`, the generator emits its own again).
 
 ## Quick start
 

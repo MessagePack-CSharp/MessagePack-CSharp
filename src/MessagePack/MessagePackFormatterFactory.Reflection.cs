@@ -82,7 +82,9 @@ public sealed class ReflectionFormatterFactory : GenericFormatterFactoryBase
         // A type-level [MessagePackFormatter] (v3's attribute name matches too) that got this far was not compiled by
         // the source generator, and no runtime tier serves it. Serving the type as a reflection map instead would
         // silently change its format (the attribute outranks the object formatter), so name the actual problem.
-        if (AttributeFormatterActivator.FindAttribute(type.GetCustomAttributes(inherit: true), MessagePackAttributeNames.Formatter) is { } formatterAttribute)
+        // declared on the type itself: the attribute is Inherited = true, but the generator reads only the type's own
+        // declaration and generates an object formatter for a derived [MessagePackObject] type
+        if (AttributeFormatterActivator.FindAttribute(type.GetCustomAttributes(inherit: false), MessagePackAttributeNames.Formatter) is { } formatterAttribute)
         {
             throw AttributeFormatterActivator.TypeLevelNotCompiled(formatterAttribute, type);
         }
@@ -109,6 +111,12 @@ public sealed class ReflectionFormatterFactory : GenericFormatterFactoryBase
         }
         return false;
     }
+
+    // a type the object tiers claim as a whole ([MessagePackObject]/[DataContract], or a type-level [MessagePackFormatter]):
+    // GenericFormatterFactory's collection catch-all leaves such a type alone even when it implements a collection interface
+    internal static bool HasObjectClaim(Type type) =>
+        HasSerializableAnnotation(type)
+        || AttributeFormatterActivator.FindAttribute(type.GetCustomAttributes(inherit: false), MessagePackAttributeNames.Formatter) is not null;
 
     static bool HasSerializableAnnotation(Type type)
     {

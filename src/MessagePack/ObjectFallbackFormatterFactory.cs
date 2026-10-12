@@ -8,7 +8,22 @@ namespace MessagePack;
 
 public sealed partial class ObjectFallbackFormatterFactory : MessagePackFormatterFactory
 {
-    public static readonly ObjectFallbackFormatterFactory Instance = new();
+    static ObjectFallbackFormatterFactory? instance;
+
+    /// <summary>Shared instance. The formatter serializes an object slot by its runtime type, closing a formatter over it at run time.</summary>
+    public static ObjectFallbackFormatterFactory Instance
+    {
+        [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
+        get => instance ??= new ObjectFallbackFormatterFactory(); // benign race: stateless singleton
+    }
+
+    /// <summary>Creates a new instance, for use with <see cref="MessagePackFormatterAttribute"/>. Chains use <see cref="Instance"/>.</summary>
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
+    public ObjectFallbackFormatterFactory()
+    {
+    }
 
 #if NET9_0_OR_GREATER
     public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)

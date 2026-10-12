@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MessagePack.SourceGenerator.Generators;
 
@@ -20,8 +21,12 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
         // ModuleInitializerAttribute polyfill decision: the registration file needs the attribute,
         // netstandard2.x / .NET Framework targets do not have it in the BCL,
         // and the compiler recognizes it purely by name (module cctors run on every runtime).
+        // PolySharp polyfills the attribute itself, invisibly to CompilationProvider (another generator's output), and two
+        // copies are CS0101: its presence is read off its compiler-visible build properties instead
         var needsModuleInitializerPolyfill = context.CompilationProvider
-            .Select(static (compilation, _) => NeedsPolyfill(compilation, "System.Runtime.CompilerServices.ModuleInitializerAttribute"));
+            .Select(static (compilation, _) => NeedsPolyfill(compilation, "System.Runtime.CompilerServices.ModuleInitializerAttribute"))
+            .Combine(context.AnalyzerConfigOptionsProvider.Select(static (provider, _) => PolySharpProvidesModuleInitializer(provider.GlobalOptions)))
+            .Select(static (pair, _) => pair.Left && !pair.Right);
 
         var results = context.SyntaxProvider.ForAttributeWithMetadataName(
             "MessagePack.MessagePackObjectAttribute",
@@ -265,10 +270,9 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
             {
                 // emitted only alongside a registration file, so compilations that merely reference the generator (no
                 // [MessagePackObject]/[MessagePackFormatter]/[MessagePackSerializable] types)
-                // never receive the polyfill. A remaining collision is possible when a downlevel compilation also gets
-                // the attribute from another polyfill generator (e.g. PolySharp,
-                // invisible to CompilationProvider): exclude one side there (PolySharp:
-                // PolySharpExcludeGeneratedTypes).
+                // never receive the polyfill. PolySharp's copy is detected through its build properties (see
+                // needsModuleInitializerPolyfill); a copy from any other polyfill generator is a collision the project
+                // resolves by excluding one side.
                 if (needsPolyfill)
                 {
                     spc.AddSource("ModuleInitializerAttribute.g.cs", """
@@ -298,6 +302,23 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
     /// usable copies would be ambiguous (CS0433); a source copy outranks metadata ones, so emit one then as well.
     /// </summary>
     // takes the name so tests can probe the decision with a made-up attribute (every test compilation has the BCL one)
+    // PolySharp's targets declare its switches as CompilerVisibleProperty items, so their keys exist (possibly empty)
+    // whenever the package is referenced; its polyfill set includes ModuleInitializerAttribute unless the project narrows
+    // the set with PolySharpIncludeGeneratedTypes or excludes the attribute with PolySharpExcludeGeneratedTypes
+    internal static bool PolySharpProvidesModuleInitializer(AnalyzerConfigOptions options)
+    {
+        if (!options.TryGetValue("build_property.PolySharpIncludeGeneratedTypes", out var include))
+        {
+            return false;
+        }
+        const string attribute = "ModuleInitializerAttribute";
+        if (options.TryGetValue("build_property.PolySharpExcludeGeneratedTypes", out var exclude) && exclude.Contains(attribute))
+        {
+            return false;
+        }
+        return string.IsNullOrWhiteSpace(include) || include.Contains(attribute);
+    }
+
     internal static bool NeedsPolyfill(Compilation compilation, string metadataName)
     {
         var accessible = 0;

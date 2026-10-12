@@ -25,6 +25,8 @@ public sealed partial class TypelessFormatterFactory : MessagePackFormatterFacto
         this.omitAssemblyVersion = omitAssemblyVersion;
     }
 
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "this factory's constructor carries the formatter constructor's RequiresDynamicCode annotation")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "this factory's constructor carries the formatter constructor's RequiresUnreferencedCode annotation")]
 #if NET9_0_OR_GREATER
     public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
 #else

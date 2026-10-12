@@ -245,12 +245,16 @@ internal sealed class CompositeFormatterFactory : MessagePackFormatterFactory
 /// <summary>
 /// Base for factories that close an open generic factory over the requested type at runtime.
 /// Derived classes only map a type to the open definition and its arguments; the reflection lives here.
-/// Derived constructors must carry <see cref="RequiresDynamicCodeAttribute"/>.
+/// Derived constructors must carry <see cref="RequiresDynamicCodeAttribute"/> and <see cref="RequiresUnreferencedCodeAttribute"/>.
 /// </summary>
 public abstract class GenericFormatterFactoryBase : MessagePackFormatterFactory
 {
-    /// <summary>Initializes the factory. Requires dynamic code, so derived constructors carry the same annotation.</summary>
+    /// <summary>
+    /// Initializes the factory. Requires dynamic code, and constructs formatters over types trimming cannot see (so a
+    /// trimmed application needs the warning too), so derived constructors carry the same two annotations.
+    /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
     protected GenericFormatterFactoryBase()
     {
     }
