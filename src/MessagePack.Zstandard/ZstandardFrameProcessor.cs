@@ -32,6 +32,7 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
     /// <see cref="MessagePackSerializerOptions.MaxBufferedMessageSize"/>'s default.
     /// </summary>
     public const long DefaultMaxDecompressedSize = 64 * 1024 * 1024;
+    const long MaxArrayLength = 0x7FFFFFC7; // Array.MaxLength, which netstandard2.0 lacks
 
     /// <summary>The zstd compression level frames are written at.</summary>
     public int CompressionLevel { get; }
@@ -248,9 +249,19 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
         int written;
         if (FrameCodec.TryGetContentSize(source, out var contentSize))
         {
-            if (contentSize > MaxDecompressedSize)
+            // the cap, and the array an int-sized Rent can hold: a cap configured above Array.MaxLength used to let a
+            // declaration past int.MaxValue wrap negative in the cast below
+            var limit = Math.Min(MaxDecompressedSize, MaxArrayLength);
+            if (contentSize > limit)
             {
-                ZstandardThrows.DeclaredLengthExceedsMaximum(contentSize, MaxDecompressedSize);
+                ZstandardThrows.DeclaredLengthExceedsMaximum(contentSize, limit);
+            }
+            // a zstd block is at least 4 bytes (3-byte header plus one byte, the RLE form) and decodes to at most
+            // 128 KB, so the frame's size bounds what it can declare: a 13-byte frame claiming the whole cap is refused
+            // before the rental below becomes the attacker's allocation
+            if (contentSize > (source.Length / 4 + 1) * 131072L)
+            {
+                ZstandardThrows.ImplausibleDeclaredLength(contentSize, source.Length);
             }
             var expected = (int)contentSize;
             rented = ArrayPool<byte>.Shared.Rent(expected);
@@ -340,7 +351,10 @@ sealed class ZstandardCodec(int compressionLevel, int windowLogMax, FrameDiction
 #endif
     }
 
-    EncoderBox? encoderCache;
+    // the first encoder is created with the processor rather than at the first Serialize, so an out-of-range
+    // compression level fails where it was configured (WithZstandardFrame(99) used to construct, and every later
+    // Serialize threw while Deserialize kept working; the dictionary path already failed at construction)
+    EncoderBox? encoderCache = new EncoderBox(compressionLevel, dictionary);
     DecoderBox? decoderCache;
 
     EncoderBox RentEncoder() => Interlocked.Exchange(ref encoderCache, null) ?? new EncoderBox(compressionLevel, dictionary);

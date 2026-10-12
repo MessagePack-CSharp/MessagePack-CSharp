@@ -15,6 +15,7 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
 {
     /// <summary>Default cap on the decompressed size of one message, the same 64MB as the v3 ext envelopes.</summary>
     public const long DefaultMaxDecompressedSize = Lz4BlockEnvelope.DefaultMaxDecompressedSize;
+    const long MaxArrayLength = 0x7FFFFFC7; // Array.MaxLength, which netstandard2.0 lacks
 
     /// <summary>
     /// Cap on the decompressed size of one message (decompression-bomb guard, CWE-409). A frame that declares its content
@@ -184,9 +185,18 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
         // 0 is "not carried" (the lz4 tool writes it only on request) or an empty message; either way the size is
         // discovered while decompressing under the cap
         var contentSize = info.ContentSize;
-        if (contentSize > (ulong)MaxDecompressedSize)
+        // the cap, and the array an int-sized Rent can hold: a cap configured above Array.MaxLength used to let a
+        // declaration past int.MaxValue wrap negative in the cast below
+        var limit = Math.Min(MaxDecompressedSize, MaxArrayLength);
+        if (contentSize > (ulong)limit)
         {
-            Lz4Throws.DeclaredLengthExceedsMaximum((long)contentSize, MaxDecompressedSize);
+            Lz4Throws.DeclaredLengthExceedsMaximum((long)contentSize, limit);
+        }
+        if (contentSize > (ulong)source.Length * 255)
+        {
+            // LZ4 expands at most 255:1, so a 19-byte header declaring the whole cap is a lie; refusing it here keeps
+            // the rental below from being the attacker's allocation (the block envelope has had this check all along)
+            Lz4Throws.ImplausibleDeclaredLength((int)contentSize, source.Length);
         }
         byte[] rented;
         int written;

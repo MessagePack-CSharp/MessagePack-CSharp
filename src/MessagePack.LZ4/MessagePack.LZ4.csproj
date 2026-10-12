@@ -9,7 +9,7 @@
 		<Nullable>enable</Nullable>
 		<IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
 		<IsPackable>true</IsPackable>
-		<Description>LZ4 compression for MessagePack as a MessagePackMessageProcessor — v3-compatible Lz4Block (ext 99) and Lz4BlockArray (ext 98) envelopes, composed purely through options.</Description>
+		<Description>LZ4 compression for MessagePack as a MessagePackMessageProcessor: options.WithLz4Frame() writes standard LZ4 frames (optionally with a dictionary) that the lz4 tool reads; the v3-compatible Lz4Block (ext 99) and Lz4BlockArray (ext 98) envelopes remain for data shared with v3.</Description>
 	</PropertyGroup>
 
 	<ItemGroup>

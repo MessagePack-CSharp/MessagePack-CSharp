@@ -69,6 +69,8 @@ public sealed record class MessagePackSerializerOptions
     /// <summary>
     /// Maximum number of bytes the Stream and PipeReader entries buffer before parsing, per message, or per element when elements are streamed one by one.
     /// It bounds the memory an oversized or hostile stream can pin. The span and sequence entries are unaffected, since the caller owns the buffer there.
+    /// Under a compressing <see cref="MessageProcessor"/> this counts the compressed bytes; the decoded size is bounded by that processor's own
+    /// MaxDecompressedSize, so set both for untrusted input (a 2 KB frame may legitimately decode to the processor's full cap).
     /// Defaults to 64 MiB.
     /// </summary>
     public long MaxBufferedMessageSize { get; init; } = 64 * 1024 * 1024;

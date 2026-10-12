@@ -40,92 +40,108 @@ public static partial class MessagePackSerializer
         {
             var result = await pipeReader.ReadAsync(cancellationToken).ConfigureAwait(false);
             var buffer = result.Buffer;
-            if (result.IsCanceled)
+            // every way out of this iteration hands the read back. A size, truncation or boundary-scan failure used to
+            // propagate with the read still in progress, so a caller that caught the exception and read again got
+            // "Reading is already in progress" instead of its data (or the next message). The failed bytes are consumed
+            // when their boundary is known (the framed and fast paths), otherwise left in place and examined to the end
+            var advanced = false;
+            try
             {
-                // the reader is abandoned mid-read (Complete is legal from here), same as the truncated/size-exceeded throws below
-                throw new OperationCanceledException("The PipeReader read was canceled");
-            }
-
-            if (result.IsCompleted)
-            {
-                if (buffer.IsEmpty)
+                if (result.IsCanceled)
                 {
-                    pipeReader.AdvanceTo(buffer.End);
-                    MessagePackSerializationException.ThrowAsyncMessageMissing();
+                    throw new OperationCanceledException("The PipeReader read was canceled");
                 }
 
-                // single-pass fast path.
-                // Declined when an envelope may be present (the decode entry point owns that parse) or the buffered data exceeds the cap.
-                if (options.MessageProcessor == null && buffer.Length <= maxMessageSize)
+                if (result.IsCompleted)
                 {
-                    T value = default!;
-                    var state = new DeserializeState(options.MaxDepth, buffer.Length);
-                    long bytesConsumed;
-                    try
+                    if (buffer.IsEmpty)
                     {
-                        bytesConsumed = buffer.IsSingleSegment
-                            ? DeserializeSpanCore(ref value, buffer.FirstSpan, options, ref state)
-                            : DeserializeSequenceCore(ref value, in buffer, options, ref state);
+                        advanced = true;
+                        pipeReader.AdvanceTo(buffer.End);
+                        MessagePackSerializationException.ThrowAsyncMessageMissing();
                     }
-                    catch
+
+                    // single-pass fast path.
+                    // Declined when an envelope may be present (the decode entry point owns that parse) or the buffered data exceeds the cap.
+                    if (options.MessageProcessor == null && buffer.Length <= maxMessageSize)
                     {
-                        // the read must be released even when the parse throws (the reader is otherwise stuck in
-                        // "reading in progress"): the failed message is consumed when its boundary is known, as on the
-                        // framed path, and left in place otherwise (a boundary scan that throws on the malformed data
-                        // changes nothing: the parse error is the one to report)
-                        var consumed = buffer.Start;
+                        T value = default!;
+                        var state = new DeserializeState(options.MaxDepth, buffer.Length);
+                        long bytesConsumed;
                         try
                         {
-                            if (finder.TryFindEnd(buffer))
-                            {
-                                consumed = buffer.GetPosition(finder.Consumed);
-                            }
+                            bytesConsumed = buffer.IsSingleSegment
+                                ? DeserializeSpanCore(ref value, buffer.FirstSpan, options, ref state)
+                                : DeserializeSequenceCore(ref value, in buffer, options, ref state);
                         }
                         catch
                         {
+                            // the failed message is consumed when its boundary is known, as on the framed path, and left
+                            // in place otherwise (a boundary scan that throws on the malformed data changes nothing: the
+                            // parse error is the one to report)
+                            var consumed = buffer.Start;
+                            try
+                            {
+                                if (finder.TryFindEnd(buffer))
+                                {
+                                    consumed = buffer.GetPosition(finder.Consumed);
+                                }
+                            }
+                            catch
+                            {
+                            }
+                            advanced = true;
+                            pipeReader.AdvanceTo(consumed, buffer.End);
+                            throw;
                         }
-                        pipeReader.AdvanceTo(consumed, buffer.End);
-                        throw;
+                        advanced = true;
+                        pipeReader.AdvanceTo(buffer.GetPosition(bytesConsumed));
+                        return value;
                     }
-                    pipeReader.AdvanceTo(buffer.GetPosition(bytesConsumed));
+                }
+
+                if (finder.TryFindEnd(buffer))
+                {
+                    if (finder.Consumed > maxMessageSize)
+                    {
+                        MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(finder.Consumed, maxMessageSize);
+                    }
+
+                    var message = buffer.Slice(0, finder.Consumed);
+                    T value = default!;
+                    try
+                    {
+                        // pass 2: the slice is exactly one value, so the sync entry applies as-is.
+                        Deserialize(in message, ref value, options);
+                    }
+                    finally
+                    {
+                        // the boundary is known even when the parse throws
+                        advanced = true;
+                        pipeReader.AdvanceTo(message.End);
+                    }
                     return value;
                 }
-            }
 
-            if (finder.TryFindEnd(buffer))
-            {
-                if (finder.Consumed > maxMessageSize)
+                // reject an implausible value before buffering it (headers claiming huge payloads/counts push the lower bound over the cap immediately)
+                if (finder.MinimumMessageSize > maxMessageSize)
                 {
-                    MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(finder.Consumed, maxMessageSize);
+                    MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(finder.MinimumMessageSize, maxMessageSize);
                 }
 
-                var message = buffer.Slice(0, finder.Consumed);
-                T value = default!;
-                try
+                if (result.IsCompleted)
                 {
-                    // pass 2: the slice is exactly one value, so the sync entry applies as-is.
-                    Deserialize(in message, ref value, options);
+                    MessagePackSerializationException.ThrowAsyncMessageTruncated();
                 }
-                finally
-                {
-                    // the boundary is known even when the parse throws
-                    pipeReader.AdvanceTo(message.End);
-                }
-                return value;
-            }
 
-            // reject an implausible value before buffering it (headers claiming huge payloads/counts push the lower bound over the cap immediately)
-            if (finder.MinimumMessageSize > maxMessageSize)
+                advanced = true;
+                pipeReader.AdvanceTo(buffer.Start, buffer.End); // consumed nothing, examined everything
+            }
+            catch when (!advanced)
             {
-                MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(finder.MinimumMessageSize, maxMessageSize);
+                pipeReader.AdvanceTo(buffer.Start, buffer.End);
+                throw;
             }
-
-            if (result.IsCompleted)
-            {
-                MessagePackSerializationException.ThrowAsyncMessageTruncated();
-            }
-
-            pipeReader.AdvanceTo(buffer.Start, buffer.End); // consumed nothing, examined everything
         }
     }
 

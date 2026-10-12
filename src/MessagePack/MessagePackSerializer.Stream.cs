@@ -191,32 +191,31 @@ public static partial class MessagePackSerializer
             initialSize = (int)Math.Max(remaining, 1);
         }
 
-        var rented = ArrayPool<byte>.Shared.Rent(initialSize);
+        // read at most one byte past the cap: a message of exactly the cap is legal, and the byte after it is what
+        // proves the input is over. Reads used to fill whatever the pool handed out (a power of two), so a 100 MB cap
+        // let a hostile stream push 128 MB through before the rejection
+        var limit = (int)Math.Min(maxMessageSize + 1, Array.MaxLength);
+        var rented = ArrayPool<byte>.Shared.Rent(Math.Min(initialSize, limit));
         length = 0;
         try
         {
             while (true)
             {
-                if (length == rented.Length)
+                var readable = Math.Min(rented.Length, limit);
+                if (length == readable)
                 {
-                    if (length >= maxMessageSize)
+                    if (length > maxMessageSize)
                     {
-                        // full at the cap: a message of exactly the cap is legal, so only a further
-                        // byte (not the pool array's capacity) proves the input is over it
-                        var over = stream.ReadByte() >= 0 ? length + 1 : length;
-                        if (over > maxMessageSize)
-                        {
-                            MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(over, maxMessageSize);
-                        }
-                        return rented;
+                        MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(length, maxMessageSize);
                     }
-                    var grown = ArrayPool<byte>.Shared.Rent((int)Math.Min((long)rented.Length * 2, Array.MaxLength));
+                    var grown = ArrayPool<byte>.Shared.Rent((int)Math.Min((long)rented.Length * 2, limit));
                     Array.Copy(rented, grown, length);
                     ArrayPool<byte>.Shared.Return(rented);
                     rented = grown;
+                    readable = Math.Min(rented.Length, limit);
                 }
 
-                var read = stream.Read(rented, length, rented.Length - length);
+                var read = stream.Read(rented, length, readable - length);
                 if (read == 0)
                 {
                     if (length > maxMessageSize)

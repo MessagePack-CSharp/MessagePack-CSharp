@@ -74,7 +74,12 @@ public static partial class MessagePackSerializer
         }
     }
 
-    /// <summary>Serializes <paramref name="value"/> and writes the MessagePack bytes to <paramref name="output"/>.</summary>
+    /// <summary>
+    /// Serializes <paramref name="value"/> and writes the MessagePack bytes to <paramref name="output"/>.
+    /// If serialization throws, the bytes of the failed message that were already flushed to <paramref name="output"/>
+    /// (a message larger than one of the writer's spans) stay there: discard the writer, or complete a
+    /// <see cref="System.IO.Pipelines.PipeWriter"/> with the exception, rather than writing the next message after them.
+    /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
     public static void Serialize<T>(IBufferWriter<byte> output, T value)
@@ -111,30 +116,21 @@ public static partial class MessagePackSerializer
             return;
         }
 
+        // Flush only on success. Dispose is a Flush too, so a Dispose in a finally committed the span a failing
+        // formatter had half-written (MaxDepth exceeded, a user formatter's exception) into the writer, where a
+        // PipeWriter would send it ahead of the next message. The write buffer holds nothing to release: its staging
+        // is the writer's own span, which stays uncommitted when the formatter throws. Spans already flushed by the
+        // formatter (a large message) are in the writer regardless, see the entry point's doc.
         var buffer = new BufferWriterWriteBuffer(output);
-        try
-        {
-            formatter.Serialize(ref buffer, ref state, value);
-            buffer.Flush();
-        }
-        finally
-        {
-            buffer.Dispose();
-        }
+        formatter.Serialize(ref buffer, ref state, value);
+        buffer.Flush();
 
         static void SerializeCompatible(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options, ref SerializeState state)
 #endif
         {
             var buffer = new CompatibleBufferWriterWriteBuffer(output);
-            try
-            {
-                options.Resolver.GetFormatter<CompatibleBufferWriterWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
-                buffer.Flush();
-            }
-            finally
-            {
-                buffer.Dispose();
-            }
+            options.Resolver.GetFormatter<CompatibleBufferWriterWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
+            buffer.Flush();
         }
     }
 

@@ -63,7 +63,14 @@ public sealed class MessagePackFormatterResolver
     // and lock-free to read.
     object?[] compatRequiredTable = [];
 
-    /// <summary>Whether formatters that build hash-based collections such as Dictionary and HashSet use an equality comparer resistant to hash-flooding attacks.</summary>
+    /// <summary>
+    /// Whether formatters that build hash-based collections such as Dictionary and HashSet use an equality comparer resistant to hash-flooding attacks.
+    /// Covered keys: bool, char, the integer types including nint/nuint, enums, TimeSpan, Guid, DateOnly, TimeOnly, Int128, UInt128, their Nullable forms,
+    /// and string (on .NET 9+ the runtime's own randomized string hashing already applies, so string keeps the default comparer). A key of any other type
+    /// uses its own GetHashCode: a user-defined key type should hash with HashCode.Combine (randomized per process), or the collection's factory should
+    /// be composed with an explicit comparer. Only the exact BCL collection types are protected; a derived collection class, Hashtable, or a type the
+    /// generic tier constructs through a constructor is built with the default comparer.
+    /// </summary>
     public bool HashFloodingResistant { get; init; } = true;
 
     /// <summary>Whether a formatter built without ref struct buffer support makes serialization throw instead of falling back to the compatible buffers.</summary>
