@@ -34,6 +34,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="DeserializeAsync{T}(PipeReader, CancellationToken)"/>
     public static async ValueTask<T> DeserializeAsync<T>(PipeReader pipeReader, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var maxMessageSize = options.MaxBufferedMessageSize;
         var finder = new MessageBoundaryFinder(options.MessageProcessor);
         while (true)
@@ -159,6 +160,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="DeserializeMessagesAsync{T}(PipeReader, CancellationToken)"/>
     public static async IAsyncEnumerable<T> DeserializeMessagesAsync<T>(PipeReader pipeReader, MessagePackSerializerOptions options, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var maxMessageSize = options.MaxBufferedMessageSize;
         var finder = new MessageBoundaryFinder(options.MessageProcessor);
         // Every yield sits between a ReadAsync and its AdvanceTo. Leaving the iterator there (the consumer breaks
@@ -277,6 +279,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="DeserializeElementsAsync{T}(PipeReader, CancellationToken)"/>
     public static async IAsyncEnumerable<T> DeserializeElementsAsync<T>(PipeReader pipeReader, MessagePackSerializerOptions options, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         if (options.MessageProcessor is { DefinesMessageBoundaries: true })
         {
             // the array header and its elements are MessagePack tokens on the pipe; inside a container envelope they are not visible

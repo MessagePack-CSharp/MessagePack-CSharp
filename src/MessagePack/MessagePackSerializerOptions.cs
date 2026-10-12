@@ -78,6 +78,7 @@ public sealed record class MessagePackSerializerOptions
     /// <summary>Creates options over <paramref name="resolver"/> with default per-call settings, which a <c>with</c> expression can adjust.</summary>
     public MessagePackSerializerOptions(MessagePackFormatterResolver resolver)
     {
+        ArgumentNullException.ThrowIfNull(resolver);
         this.resolver = resolver;
     }
 }

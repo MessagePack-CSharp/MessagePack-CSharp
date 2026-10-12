@@ -95,7 +95,7 @@ public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
                 {
                     opensContainer = true;
                 }
-                else if (ForwardsStateToFormatter(invocation))
+                else if (ForwardsStateToFormatter(invocation) || ForwardsStateToHelper(invocation))
                 {
                     descends = true;
                 }
@@ -355,6 +355,34 @@ public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
 
     static string TrimPrefix(string name, string prefix) =>
         name.StartsWith(prefix, StringComparison.Ordinal) ? name.Substring(prefix.Length) : name;
+
+    // a descent split into a helper: the entry hands both its buffer and its state on by ref to a method of its own
+    // that is not a formatter entry (the helper is where the nested Serialize/Deserialize calls then live)
+    static bool ForwardsStateToHelper(IInvocationOperation invocation)
+    {
+        if (invocation.TargetMethod.Name is "Serialize" or "Deserialize" || invocation.TargetMethod.MethodKind != MethodKind.Ordinary)
+        {
+            return false;
+        }
+        var forwardsState = false;
+        var forwardsBuffer = false;
+        foreach (var argument in invocation.Arguments)
+        {
+            if (argument.Parameter?.RefKind != RefKind.Ref || argument.Value is not IParameterReferenceOperation { Parameter.Type: { } type })
+            {
+                continue;
+            }
+            if (type.ToDisplayString() is SerializeStateName or DeserializeStateName)
+            {
+                forwardsState = true;
+            }
+            else if (type is ITypeParameterSymbol)
+            {
+                forwardsBuffer = true; // the buffer: the entry's other by-ref parameter, of a type-parameter type
+            }
+        }
+        return forwardsState && forwardsBuffer;
+    }
 
     // a nested-formatter descent: the state parameter handed by ref to a Serialize/Deserialize
     static bool ForwardsStateToFormatter(IInvocationOperation invocation)

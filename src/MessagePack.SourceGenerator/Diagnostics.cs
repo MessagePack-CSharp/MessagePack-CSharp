@@ -38,4 +38,5 @@ public static class Diagnostics
     public static readonly DiagnosticDescriptor InvalidObjectAttribute = Make("MsgPack025", "MessagePackObject attribute argument is invalid", DiagnosticSeverity.Error);
     public static readonly DiagnosticDescriptor ObsoleteErrorMember = Make("MsgPack026", "Serialized member is marked Obsolete(error: true)", DiagnosticSeverity.Error);
     public static readonly DiagnosticDescriptor ContainingTypeNotPartial = Make("MsgPack027", "Generated partial declaration requires partial containing types", DiagnosticSeverity.Error);
+    public static readonly DiagnosticDescriptor BufferConstraintsNotGenerated = Make("MsgPack028", "Buffer constraints are not generated for a formatter with its own constraints", DiagnosticSeverity.Warning);
 }

@@ -141,6 +141,7 @@ The wire format is the same: v3 and v4 read each other's output — primitives, 
 - `Deserialize<T>(ReadOnlyMemory<byte>)` has no overload yet; pass `.Span`. `byte[]` converts implicitly.
 - `Deserialize<T>(..., out int bytesRead)` is gone. For a stream of messages use `DeserializeMessagesAsync` (or read from a `PipeReader`, which leaves the following message unconsumed).
 - `MessagePackStreamReader` is gone; `DeserializeMessagesAsync` / `DeserializeElementsAsync` over `Stream` or `PipeReader` replace it.
+- An `options` argument is required wherever an overload takes one (`ArgumentNullException`); v3 read `null` as `DefaultOptions`, which no longer exists. The overloads without `options` use `MessagePackSerializerOptions.Default`.
 - `Deserialize<T>(source, ref T value)` populates an existing instance when the type can be refilled: collections are cleared and refilled, and objects with settable members are overwritten member by member, recursively into the member values that instance holds. A type whose members can only be set at construction (a constructor-bound, init-only or required member) is constructed afresh instead, like a collection that cannot be cleared, so a member initializer such as `Child = new Child(0)` never shadows the value being read. Element instances survive only where the collection is refilled in place: `T[]` of the same length (and an `ArraySegment<T>` / `Memory<T>` over one), multi-dimensional arrays of the same dimensions, and `List<T>`; every other collection, an `IList<T>`-typed member holding that same `List<T>` included, is cleared and re-added, so its elements are new instances.
 - **This applies to member initializers too, and differs from v3.** A plain `Deserialize<T>(source)` constructs the object (running its initializers) and then refills, in place, whatever the initializers put in its settable members: `List<int> Items { get; set; } = new()` is cleared and refilled (one allocation, and a comparer or concrete collection type chosen in the initializer is kept), the same way Newtonsoft.Json's `ObjectCreationHandling.Auto` works. v3 constructed a new value for every member. Two consequences: an `ObservableCollection` initializer raises its events while the object is still being read, and an instance shared through an initializer (`= Defaults.Settings`) is written to. A member absent from the payload keeps the value its initializer gave it. A covariant array initializer (`object[] Tags = new string[n]`) is replaced rather than refilled.
 
@@ -182,7 +183,26 @@ public sealed partial class PointFormatter<TWriteBuffer, TReadBuffer> : IMessage
 public readonly record struct Point(int X, int Y);
 ```
 
+The generator supplies the buffer constraints only when the formatter declares none of its own: partial declarations that both carry `where` clauses must carry the same ones (CS0265), so a formatter with `where T : struct, Enum` on a third type parameter writes the buffer constraints itself (`where TWriteBuffer : struct, IWriteBuffer`, `where TReadBuffer : struct, IReadBuffer`, each with `, allows ref struct` under `#if NET9_0_OR_GREATER`); MsgPack028 spells them out.
+
 A formatter is attached either with `[MessagePackFormatter(typeof(...))]` on the type (an open generic formatter, or a `MessagePackFormatterFactory` for anything that needs arguments or serves several types) or by putting a factory in front of the chain. When a formatter calls into another formatter it brackets the call with `state.Enter()` / `state.Exit()` (an analyzer enforces it). Nested formatters come from `resolver.GetFormatter<TWriteBuffer, TReadBuffer, TNested>()` inside `Initialize`.
+
+A factory is written once for every target framework. On `net9.0` and later the base class has a virtual generic `CreateFormatter<TWriteBuffer, TReadBuffer>(Type)` to override; the netstandard builds have no such member, so the same method is declared there without `override` and with the buffer constraints spelled out. The `Type`-based `CreateFormatter(Type, Type, Type)` is abstract on every target: a `partial` factory that writes the generic method gets it generated (the Type-based call maps the buffer types back onto the generic one), otherwise write it yourself.
+
+```csharp
+public sealed partial class PointFormatterFactory : MessagePackFormatterFactory
+{
+#if NET9_0_OR_GREATER
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+#else
+    public object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+        where TWriteBuffer : struct, IWriteBuffer
+        where TReadBuffer : struct, IReadBuffer
+#endif
+        => type == typeof(Point) ? new PointFormatter<TWriteBuffer, TReadBuffer>() : null;
+    // CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType) is generated for this partial class
+}
+```
 
 For types you cannot annotate, `IMessagePackSurrogate<TTarget, TSurrogate>` on a `[MessagePackObject]` struct declares a serialized stand-in; the generator registers the formatter for the target. Registration rides the declaring assembly's module initializer, which runs when that assembly's code first executes. For a target that lives in a *third* assembly (a surrogate in library B for a type of library A), every assembly that references B adopts the surrogate into its own generated factory and module initializer, so serializing the A type never depends on B being called into first; a `public` surrogate is enough, no declaration on the consumer side. If two referenced libraries declare surrogates for the same foreign type, neither is adopted (MsgPack019) and the chain must be composed by hand with `SurrogateFormatterFactory<TTarget, TSurrogate>`. Do not serialize from inside a `[ModuleInitializer]` or a static constructor: the resolver builds formatter graphs under a lock and, on a miss, runs the module initializers of the missing type's assembly, so an initializer that serializes on one thread while another thread resolves a type of that assembly deadlocks with it.
 
@@ -210,8 +230,8 @@ var options = MessagePackSerializerOptions.DefaultAot; // source-generated + bui
 Everything the generator can see from `[MessagePackObject]` member graphs is covered, and `DefaultAot` never closes a generic formatter at run time, on Native AOT or on the JIT: an instantiation the generator did not construct (`Box<Guid>` used only at a call site) is formatter-not-found in a JIT test run exactly as in the published app, where `Default` would have closed it with `MakeGenericType`. Roots that only appear at call sites (`Person[]`, `List<Person>`, `Dictionary<string, Order>` passed straight to `Serialize`) are declared the `JsonSerializerContext` way:
 
 ```csharp
-[MessagePackSerializable<Person[]>]
-[MessagePackSerializable<Dictionary<string, Order>>]
+[MessagePackSerializable<Person[]>]                           // net9.0 and later
+[MessagePackSerializable(typeof(Dictionary<string, Order>))] // every target (netstandard, net8.0, Unity)
 public partial class MySerializationRoots { }
 ```
 
@@ -250,6 +270,6 @@ Under IL2CPP use `DefaultAot`; the annotated types need no `partial` (the genera
 - A `ReadOnlyMemory<byte>` overload of `Deserialize`, and `[Obsolete]` bridges for the removed v3 option/resolver names (today they are plain compile errors; the table above is the map).
 - A v4 Unity test project; the Unity package is exercised through `MessagePack.UnityShims` on .NET only.
 - Unloading of collectible `AssemblyLoadContext`s that share the `MessagePack` assembly with their host: the generated module initializers register a plugin's types and factories in the process-wide registry (and the `Type`-based entries cache per type), which keeps the plugin assembly alive. Load MessagePack into the plugin context too, or restart the process to reclaim it.
-- Documentation beyond this file. The XML docs on the public types are complete, and the `tests/` directory is the most precise description of behaviour, including the `V3Compat` suite that runs v3's own tests against v4.
+- Documentation beyond this file. The XML docs cover the entry points, options, factories and attributes (most formatter types have none yet), and the `tests/` directory is the most precise description of behaviour, including the `V3Compat` suite that runs v3's own tests against v4.
 
 Issues and feedback: https://github.com/MessagePack-CSharp/MessagePack-CSharp/issues

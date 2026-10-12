@@ -65,7 +65,8 @@ public sealed class FormatterEntryCallAnalyzer : DiagnosticAnalyzer
     {
         for (var containing = method.ContainingType; containing is not null; containing = containing.ContainingType)
         {
-            if (containing.ToDisplayString() == SerializerTypeName)
+            // the cheap name test first: this runs on every invocation in the project
+            if (containing.Name == "MessagePackSerializer" && containing.ToDisplayString() == SerializerTypeName)
             {
                 return true;
             }

@@ -40,6 +40,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Serialize(Type, object?)"/>
     public static byte[] Serialize(Type type, object? value, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var entry = GetNonGenericEntry(type);
         ValidateValue(type, value);
         return entry.Serialize(value, options);
@@ -56,6 +57,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Serialize(Type, object?)"/>
     public static void Serialize(Type type, IBufferWriter<byte> output, object? value, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var entry = GetNonGenericEntry(type);
         ValidateValue(type, value);
         entry.Serialize(output, value, options);
@@ -72,6 +74,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Deserialize(Type, ReadOnlySpan{byte})"/>
     public static object? Deserialize(Type type, ReadOnlySpan<byte> source, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         return GetNonGenericEntry(type).Deserialize(source, options);
     }
 
@@ -86,6 +89,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Deserialize(Type, ReadOnlySpan{byte})"/>
     public static object? Deserialize(Type type, in ReadOnlySequence<byte> source, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         return GetNonGenericEntry(type).Deserialize(in source, options);
     }
 
@@ -100,6 +104,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Serialize(Type, object?)"/>
     public static void Serialize(Type type, Stream stream, object? value, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var entry = GetNonGenericEntry(type);
         ValidateValue(type, value);
         entry.Serialize(stream, value, options);
@@ -116,6 +121,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Deserialize(Type, ReadOnlySpan{byte})"/>
     public static object? Deserialize(Type type, Stream stream, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         return GetNonGenericEntry(type).Deserialize(stream, options);
     }
 
@@ -130,6 +136,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="SerializeAsync(Type, PipeWriter, object?, CancellationToken)"/>
     public static Task SerializeAsync(Type type, Stream stream, object? value, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var entry = GetNonGenericEntry(type);
         ValidateValue(type, value);
         return entry.SerializeAsync(stream, value, options, cancellationToken);
@@ -146,6 +153,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="DeserializeAsync(Type, PipeReader, CancellationToken)"/>
     public static ValueTask<object?> DeserializeAsync(Type type, Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         return GetNonGenericEntry(type).DeserializeAsync(stream, options, cancellationToken);
     }
 
@@ -163,6 +171,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="SerializeAsync(Type, PipeWriter, object?, CancellationToken)"/>
     public static Task SerializeAsync(Type type, PipeWriter pipeWriter, object? value, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var entry = GetNonGenericEntry(type);
         ValidateValue(type, value);
         return entry.SerializeAsync(pipeWriter, value, options, cancellationToken);
@@ -179,6 +188,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="DeserializeAsync(Type, PipeReader, CancellationToken)"/>
     public static ValueTask<object?> DeserializeAsync(Type type, PipeReader pipeReader, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         return GetNonGenericEntry(type).DeserializeAsync(pipeReader, options, cancellationToken);
     }
 
@@ -201,6 +211,7 @@ public static partial class MessagePackSerializer
     public static void Serialize<TWriteBuffer>(Type type, ref TWriteBuffer buffer, object? value, MessagePackSerializerOptions options)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
     {
+        ArgumentNullException.ThrowIfNull(options);
         var entry = GetNonGenericEntry(type);
         ValidateValue(type, value);
         entry.Serialize(ref buffer, value, options);
@@ -223,6 +234,7 @@ public static partial class MessagePackSerializer
     public static object? Deserialize<TReadBuffer>(Type type, ref TReadBuffer buffer, MessagePackSerializerOptions options)
         where TReadBuffer : struct, IReadBuffer, allows ref struct
     {
+        ArgumentNullException.ThrowIfNull(options);
         return GetNonGenericEntry(type).Deserialize(ref buffer, options);
     }
 
@@ -290,7 +302,7 @@ public static partial class MessagePackSerializer
         {
             throw new NotSupportedException(
                 $"No Type-based entry exists for '{type}' and this runtime cannot generate one: the type is not a generated type, a harvested closure, a [MessagePackSerializable] root or a built-in scalar. " +
-                "Use the generic entries, or declare the type as a [MessagePackSerializable<T>] root on a partial factory so the source generator registers it.");
+                "Use the generic entries, or declare the type as a [MessagePackSerializable(typeof(T))] root (or [MessagePackSerializable<T>] on net9.0 and later) on a partial factory so the source generator registers it.");
         }
 #endif
         return (NonGenericEntry)Activator.CreateInstance(typeof(NonGenericEntry<>).MakeGenericType(type))!;

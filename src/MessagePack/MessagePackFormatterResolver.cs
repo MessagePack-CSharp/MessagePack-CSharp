@@ -100,6 +100,7 @@ public sealed class MessagePackFormatterResolver
     /// </summary>
     public MessagePackFormatterResolver(MessagePackFormatterFactory factory)
     {
+        ArgumentNullException.ThrowIfNull(factory);
         this.factory = factory;
     }
 
@@ -492,7 +493,8 @@ internal sealed partial class MissingMessagePackFormatter<TWriteBuffer, TReadBuf
         {
             // collection-shaped misses under a source-generated-only chain are usually roots the member-graph harvest
             // cannot see (Person[] passed straight to Serialize), so point at the declaration that closes them
-            message += " If this type appears only as a serialization root under a source-generated-only chain (DefaultAot / Native AOT), declare it on a partial factory class with [MessagePackSerializable<" + typeof(T).Name + ">] so the source generator registers its formatter.";
+            var spelled = TypeNames.CSharp(typeof(T));
+            message += " If this type appears only as a serialization root under a source-generated-only chain (DefaultAot / Native AOT), declare it on a partial factory class with [MessagePackSerializable(typeof(" + spelled + "))] (or [MessagePackSerializable<" + spelled + ">] on net9.0 and later) so the source generator registers its formatter.";
         }
         return message;
     }

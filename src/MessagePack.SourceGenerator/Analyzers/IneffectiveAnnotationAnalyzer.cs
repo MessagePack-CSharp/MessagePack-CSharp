@@ -154,7 +154,9 @@ public sealed class IneffectiveAnnotationAnalyzer : DiagnosticAnalyzer
                 }
             }
         }
-        return false;
+        // [MessagePackObject] inherits ([DataContract] does not): a sealed derived type of an annotated base is served by
+        // the reflection tier through the base's attribute, so its [Key]s are not dead
+        return FormatterSymbols.FindInheritedMessagePackObject(type) is not null;
     }
 
     static Location PickLocation(ISymbol symbol)

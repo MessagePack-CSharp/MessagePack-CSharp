@@ -120,6 +120,11 @@ public abstract class MessagePackFormatterFactory
     /// <summary>Composes factories into one chain. The first factory that serves a type wins, so put overrides before defaults.</summary>
     public static MessagePackFormatterFactory Combine(params MessagePackFormatterFactory[] factories)
     {
+        ArgumentNullException.ThrowIfNull(factories);
+        if (Array.IndexOf(factories, null) >= 0)
+        {
+            throw new ArgumentException("a factory in the chain is null", nameof(factories));
+        }
         if (factories.Length == 0)
         {
             throw new ArgumentException("pass at least one factory (e.g. MessagePackFormatterFactory.Default)", nameof(factories));
@@ -154,6 +159,9 @@ public abstract class MessagePackFormatterFactory
     /// Creates a formatter for <paramref name="type"/>, or returns null when this factory does not serve it.
     /// Return a fresh instance per call unless the formatter is fully stateless.
     /// The default forwards to the <see cref="Type"/>-based overload; overriding this one avoids reflection.
+    /// Exists on net9.0 and later only: a factory built for the netstandard targets declares the same method without
+    /// <c>override</c>, with <c>where TWriteBuffer : struct, IWriteBuffer</c> / <c>where TReadBuffer : struct, IReadBuffer</c>,
+    /// under <c>#if NET9_0_OR_GREATER</c> (the README shows the shape).
     /// </summary>
     public virtual object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
@@ -167,7 +175,9 @@ public abstract class MessagePackFormatterFactory
     /// <summary>
     /// Creates a formatter for <paramref name="valueType"/> over the given buffer types, or returns null when this factory does not serve it.
     /// Return a fresh instance per call unless the formatter is fully stateless.
-    /// This overload is required on every target framework.
+    /// This overload is required on every target framework. A <c>partial</c> factory that implements the generic overload
+    /// gets it generated (the buffer types are mapped back onto the generic method); otherwise implement it, typically by
+    /// switching on the buffer types.
     /// </summary>
     public abstract object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType);
 }

@@ -24,6 +24,7 @@ public static partial class MessagePackSerializer
     [SkipLocalsInit]
     public static void Serialize<T>(Stream stream, T value, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
 #if NET9_0_OR_GREATER
         if (!options.Resolver.TryGetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, T>(out var formatter))
         {
@@ -106,6 +107,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Deserialize{T}(Stream)"/>
     public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         // An exposable MemoryStream deserializes straight over its buffer, with no copy, no rent and no buffering cap
         // (the data is already in memory, same as the span entry).
         if (stream is MemoryStream memoryStream && memoryStream.TryGetBuffer(out var exposed))
@@ -246,6 +248,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="SerializeAsync{T}(Stream, T, CancellationToken)"/>
     public static async Task SerializeAsync<T>(Stream stream, T value, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var pipeWriter = PipeWriter.Create(stream, StreamWriterOptions);
         try
         {
@@ -274,6 +277,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="DeserializeAsync{T}(Stream, CancellationToken)"/>
     public static async ValueTask<T> DeserializeAsync<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         // An exposable MemoryStream skips the pipe entirely. It completes synchronously, and unlike the pipe path the
         // position lands exactly past the value, so trailing data stays readable. The pipe path observes the token in
         // ReadAsync; this one has no await, so it checks up front (as v3 did) to keep the two consistent.
@@ -312,6 +316,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="SerializeMessagesAsync{T}(PipeWriter, IAsyncEnumerable{T}, CancellationToken)"/>
     public static async Task SerializeMessagesAsync<T>(Stream stream, IAsyncEnumerable<T> source, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var pipeWriter = PipeWriter.Create(stream, StreamWriterOptions);
         try
         {
@@ -336,6 +341,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="SerializeMessagesAsync{T}(PipeWriter, IAsyncEnumerable{T}, CancellationToken)"/>
     public static async Task SerializeMessagesAsync<T>(Stream stream, IEnumerable<T> source, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var pipeWriter = PipeWriter.Create(stream, StreamWriterOptions);
         try
         {
@@ -360,6 +366,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="SerializeElementsAsync{T}(PipeWriter, IAsyncEnumerable{T}, long, CancellationToken)"/>
     public static async Task SerializeElementsAsync<T>(Stream stream, IAsyncEnumerable<T> source, long count, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var pipeWriter = PipeWriter.Create(stream, StreamWriterOptions);
         try
         {
@@ -384,6 +391,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="SerializeElementsAsync{T}(PipeWriter, IAsyncEnumerable{T}, long, CancellationToken)"/>
     public static async Task SerializeElementsAsync<T>(Stream stream, IEnumerable<T> source, long count, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var pipeWriter = PipeWriter.Create(stream, StreamWriterOptions);
         try
         {
@@ -408,6 +416,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="DeserializeMessagesAsync{T}(PipeReader, CancellationToken)"/>
     public static async IAsyncEnumerable<T> DeserializeMessagesAsync<T>(Stream stream, MessagePackSerializerOptions options, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var pipeReader = PipeReader.Create(stream, StreamReaderOptions);
         try
         {
@@ -456,6 +465,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="DeserializeElementsAsync{T}(PipeReader, CancellationToken)"/>
     public static async IAsyncEnumerable<T> DeserializeElementsAsync<T>(Stream stream, MessagePackSerializerOptions options, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var pipeReader = PipeReader.Create(stream, StreamReaderOptions);
         try
         {

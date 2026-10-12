@@ -82,17 +82,19 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                 return;
             }
 
+            // the registry walks the whole referenced surface: built on the first symbol that needs it, not on every
+            // callback (and never in a compilation without an annotated type or an entry call)
             var registry = new Lazy<Registry>(() => Registry.Build(startContext.Compilation, formatterInterface));
             startContext.RegisterSymbolAction(
-                context => AnalyzeType(context, registry.Value),
+                context => AnalyzeType(context, registry),
                 SymbolKind.NamedType);
             startContext.RegisterOperationAction(
-                context => AnalyzeInvocation(context, registry.Value),
+                context => AnalyzeInvocation(context, registry),
                 OperationKind.Invocation);
         });
     }
 
-    static void AnalyzeType(SymbolAnalysisContext context, Registry registry)
+    static void AnalyzeType(SymbolAnalysisContext context, Lazy<Registry> registry)
     {
         var type = (INamedTypeSymbol)context.Symbol;
 
@@ -101,7 +103,7 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
             // a union root's own members never ride the wire (the generator routes it to UnionParser,
             // not ObjectParser), so only the case types get checked, this also keeps a struct union's public Value
             // property out of the member walk
-            AnalyzeUnionCases(context, registry, type);
+            AnalyzeUnionCases(context, registry.Value, type);
             return;
         }
 
@@ -121,7 +123,7 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
             {
                 continue; // member-level formatter override takes over resolution
             }
-            if (registry.TryFindUnserializable(memberType, out var offender))
+            if (registry.Value.TryFindUnserializable(memberType, out var offender))
             {
                 context.ReportDiagnostic(Diagnostic.Create(
                     Rule,
@@ -133,22 +135,22 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    static void AnalyzeInvocation(OperationAnalysisContext context, Registry registry)
+    static void AnalyzeInvocation(OperationAnalysisContext context, Lazy<Registry> registry)
     {
         var invocation = (IInvocationOperation)context.Operation;
         var method = invocation.TargetMethod;
         if (!method.IsGenericMethod
-            || method.TypeArguments.Length != 1
-            || method.ContainingType?.ToDisplayString() != SerializerTypeName)
+            || method.ContainingType?.Name != "MessagePackSerializer" // the cheap test first: this runs on every call in the project
+            || method.ContainingType.ToDisplayString() != SerializerTypeName)
         {
             return;
         }
-        if (PassesCustomOptions(invocation))
+        if (PayloadTypeArgument(method) is not { } payload || PassesCustomOptions(invocation))
         {
             return;
         }
         // open payloads pass (judged at the closed call, like member type parameters)
-        if (registry.TryFindUnserializable(method.TypeArguments[0], out var offender))
+        if (registry.Value.TryFindUnserializable(payload, out var offender))
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 UsageRule,
@@ -157,6 +159,44 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                 offender.ToDisplayString(),
                 method.Name));
         }
+    }
+
+    // The payload type argument. The entries are generic over the payload (Serialize<T>), over a buffer and the payload
+    // (Serialize<TWriteBuffer, T>, Deserialize<TReadBuffer, T>), or over a buffer alone with a System.Type payload (the
+    // Type-based buffer entries, which this analyzer cannot judge); a buffer type parameter is the one constrained to
+    // IWriteBuffer / IReadBuffer, never a payload
+    static ITypeSymbol? PayloadTypeArgument(IMethodSymbol method)
+    {
+        if (method.Parameters.Length > 0 && method.Parameters[0].Type is { Name: "Type", ContainingNamespace.Name: "System" })
+        {
+            return null;
+        }
+        ITypeSymbol? payload = null;
+        for (var i = 0; i < method.TypeParameters.Length; i++)
+        {
+            if (IsBufferTypeParameter(method.TypeParameters[i]))
+            {
+                continue;
+            }
+            if (payload is not null)
+            {
+                return null; // not an entry shape this analyzer knows
+            }
+            payload = method.TypeArguments[i];
+        }
+        return payload;
+    }
+
+    static bool IsBufferTypeParameter(ITypeParameterSymbol typeParameter)
+    {
+        foreach (var constraint in typeParameter.ConstraintTypes)
+        {
+            if (constraint.Name is "IWriteBuffer" or "IReadBuffer")
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     // A custom options argument carries its own resolver chain, which this analyzer cannot see into,
@@ -604,7 +644,9 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
             {
                 return true;
             }
-            if (FindAttribute(type, MessagePackObjectAttributeName) is not null
+            // [MessagePackObject] counts from a base type too: the attribute is Inherited = true and the Default chain's
+            // reflection tier serves an unannotated derived type that way (the AOT chains do not, see MsgPack110)
+            if (FormatterSymbols.FindInheritedMessagePackObject(type) is not null
                 || FindAttribute(type, UnionTagAttributeName) is not null
                 // served by the Default chain's reflection tail (SG stays out, v3-parity)
                 || FindAttribute(type, DataContractAttributeName) is not null)
@@ -657,11 +699,13 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
             // and a public single-parameter collection-accepting constructor unlocks the construct-from-intermediate
             // formatters (IReadOnlyDictionary<K,V>, IEnumerable<T>). Their TValue patterns are bare wildcards,
             // skipped by the harvest above, so the rule is modeled explicitly.
-            if (type.TypeKind == TypeKind.Class
+            // a struct collection rides the construct-from-intermediate formatters too (the Add-based ones need a class:
+            // the runtime's `!type.IsValueType && GetConstructor(...)` probe)
+            if (type.TypeKind is TypeKind.Class or TypeKind.Struct
                 && !type.IsAbstract
                 && type.ToDisplayString() != "System.Dynamic.ExpandoObject")
             {
-                var hasDefaultConstructor = HasPublicParameterlessConstructor(type);
+                var hasDefaultConstructor = type.TypeKind == TypeKind.Class && HasPublicParameterlessConstructor(type);
                 INamedTypeSymbol? dictionaryInterface = null;
                 INamedTypeSymbol? collectionInterface = null;
                 INamedTypeSymbol? readOnlyDictionaryInterface = null;

@@ -66,17 +66,24 @@ public sealed class DeclaredElementBudgetAnalyzer : DiagnosticAnalyzer
             return;
         }
 
+        var charging = invocation.TargetMethod.Name.Contains("Array") ? "ReadArrayHeader" : "ReadMapHeader";
         context.ReportDiagnostic(Diagnostic.Create(
             Rule,
             invocation.Syntax.GetLocation(),
-            $"'{function.ContainingType.ToDisplayString()}.{function.Name}' reads a container header with {invocation.TargetMethod.Name}() while its DeserializeState is in scope; call buffer.{invocation.TargetMethod.Name}(ref state) instead so the claimed count is charged against the message's declared-element budget."));
+            $"'{function.ContainingType.ToDisplayString()}.{function.Name}' reads a container header with {invocation.TargetMethod.Name}() while its DeserializeState is in scope; call buffer.{charging}(ref state) instead so the claimed count is charged against the message's declared-element budget."));
     }
 
-    // buffer.ReadArrayHeader() / buffer.ReadMapHeader() with no DeserializeState argument.
+    // buffer.ReadArrayHeader() / buffer.ReadMapHeader() with no DeserializeState argument, and the primitive decoders
+    // MessagePackPrimitives.TryReadArrayHeader / TryReadMapHeader (a formatter decoding the header itself over a span and
+    // advancing past it charges nothing either).
     // Matched by name, like the depth analyzer's container-header check, so the extension-member surface and
     // any buffer-tier twin both count; a call that already passes a DeserializeState is the charging overload.
     static bool IsStatelessHeaderRead(IInvocationOperation invocation)
     {
+        if (invocation.TargetMethod.Name is "TryReadArrayHeader" or "TryReadMapHeader")
+        {
+            return invocation.TargetMethod.ContainingType?.Name == "MessagePackPrimitives";
+        }
         if (invocation.TargetMethod.Name is not ("ReadArrayHeader" or "ReadMapHeader"))
         {
             return false;

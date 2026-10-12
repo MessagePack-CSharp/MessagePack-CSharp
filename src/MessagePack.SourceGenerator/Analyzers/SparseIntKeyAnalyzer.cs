@@ -50,21 +50,14 @@ public sealed class SparseIntKeyAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        var isMessagePackObject = false;
-        foreach (var attribute in type.GetAttributes())
+        // the type's own [MessagePackObject] or an inherited one (the reflection tier serves an unannotated derived type
+        // through its base's attribute, positional slots included)
+        if (FormatterSymbols.FindInheritedMessagePackObject(type) is not { } objectAttribute)
         {
-            if (attribute.AttributeClass?.ToDisplayString() != MessagePackObjectAttributeName)
-            {
-                continue;
-            }
-            isMessagePackObject = true;
-            // keyAsPropertyName / KeyNamingPolicy overload = map wire form, no positional slots
-            if (attribute.ConstructorArguments.Length > 0 && attribute.ConstructorArguments[0].Value is true or int)
-            {
-                return;
-            }
+            return;
         }
-        if (!isMessagePackObject)
+        // keyAsPropertyName / KeyNamingPolicy overload = map wire form, no positional slots
+        if (objectAttribute.ConstructorArguments.Length > 0 && objectAttribute.ConstructorArguments[0].Value is true or int)
         {
             return;
         }

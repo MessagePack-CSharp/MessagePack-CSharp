@@ -5,6 +5,28 @@ namespace MessagePack.SourceGenerator.Analyzers;
 /// <summary>Shared symbol questions for the analyzers that look inside IMessagePackFormatter implementations.</summary>
 static class FormatterSymbols
 {
+    const string MessagePackObjectAttributeName = "MessagePack.MessagePackObjectAttribute";
+
+    /// <summary>
+    /// The [MessagePackObject] on <paramref name="type"/> or the nearest base type that carries one. The attribute is
+    /// Inherited = true, and the reflection tier serves an unannotated derived type through the base's annotation (the
+    /// generator does not, so the AOT chains miss such a type); the analyzers that model the Default chain look the same way.
+    /// </summary>
+    public static AttributeData? FindInheritedMessagePackObject(INamedTypeSymbol type)
+    {
+        for (var current = type; current is not null; current = current.BaseType)
+        {
+            foreach (var attribute in current.GetAttributes())
+            {
+                if (attribute.AttributeClass?.ToDisplayString() == MessagePackObjectAttributeName)
+                {
+                    return attribute;
+                }
+            }
+        }
+        return null;
+    }
+
     public static bool ImplementsFormatterInterface(INamedTypeSymbol type)
     {
         foreach (var implemented in type.AllInterfaces)

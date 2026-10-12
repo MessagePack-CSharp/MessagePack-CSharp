@@ -1576,7 +1576,9 @@ static class ObjectParser
 
     static CollectionShape? SelectCollectionShape(INamedTypeSymbol named, Compilation compilation)
     {
-        if (named.TypeKind != TypeKind.Class || named.IsAbstract || named.SpecialType != SpecialType.None)
+        // a struct collection rides the construct-from-intermediate formatters (the Add-based ones need a class, as the
+        // runtime catch-all's `!type.IsValueType && GetConstructor(...)` probe says)
+        if (named.TypeKind is not (TypeKind.Class or TypeKind.Struct) || named.IsAbstract || named.SpecialType != SpecialType.None)
         {
             return null;
         }
@@ -1590,7 +1592,7 @@ static class ObjectParser
         }
         // the Add-based formatters construct through `new()`, which a type with `required` members refuses unless its
         // parameterless constructor carries [SetsRequiredMembers] (CS9040 in the generated code otherwise)
-        var hasDefaultConstructor = named.InstanceConstructors.Any(c => c.Parameters.Length == 0 && c.DeclaredAccessibility == Accessibility.Public
+        var hasDefaultConstructor = named.TypeKind == TypeKind.Class && named.InstanceConstructors.Any(c => c.Parameters.Length == 0 && c.DeclaredAccessibility == Accessibility.Public
             && (!HasRequiredMembers(named) || HasAttribute(c, SetsRequiredMembersAttributeName)));
         INamedTypeSymbol? dictionaryInterface = null;
         INamedTypeSymbol? collectionInterface = null;

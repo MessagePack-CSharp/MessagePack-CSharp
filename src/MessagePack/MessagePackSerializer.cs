@@ -90,6 +90,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Serialize{T}(IBufferWriter{byte}, T)"/>
     public static void Serialize<T>(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var state = new SerializeState(options.MaxDepth);
         Serialize(output, value, options, ref state);
     }
@@ -152,6 +153,7 @@ public static partial class MessagePackSerializer
     public static void Serialize<TWriteBuffer, T>(ref TWriteBuffer buffer, T value, MessagePackSerializerOptions options)
         where TWriteBuffer : struct, IWriteBuffer, allows ref struct
     {
+        ArgumentNullException.ThrowIfNull(options);
         if (options.MessageProcessor != null)
         {
             ThrowMessageProcessorNotApplicable();

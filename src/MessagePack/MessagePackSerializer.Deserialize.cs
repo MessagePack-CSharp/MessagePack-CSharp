@@ -17,6 +17,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Deserialize{T}(ReadOnlySpan{byte})"/>
     public static T Deserialize<T>(ReadOnlySpan<byte> source, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         T result = default!;
         Deserialize(source, ref result, options);
         return result;
@@ -36,6 +37,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Deserialize{T}(ReadOnlySpan{byte}, ref T)"/>
     public static void Deserialize<T>(ReadOnlySpan<byte> source, ref T value, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var processor = options.MessageProcessor;
         if (processor != null && processor.TryDecode(source, out var decoded))
         {
@@ -72,6 +74,7 @@ public static partial class MessagePackSerializer
     public static T Deserialize<TReadBuffer, T>(ref TReadBuffer buffer, MessagePackSerializerOptions options)
         where TReadBuffer : struct, IReadBuffer, allows ref struct
     {
+        ArgumentNullException.ThrowIfNull(options);
         T value = default!;
         Deserialize(ref buffer, ref value, options);
         return value;
@@ -90,6 +93,7 @@ public static partial class MessagePackSerializer
     public static void Deserialize<TReadBuffer, T>(ref TReadBuffer buffer, ref T value, MessagePackSerializerOptions options)
         where TReadBuffer : struct, IReadBuffer, allows ref struct
     {
+        ArgumentNullException.ThrowIfNull(options);
         if (options.MessageProcessor != null)
         {
             ThrowMessageProcessorNotApplicable();
@@ -111,6 +115,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Deserialize{T}(in ReadOnlySequence{byte})"/>
     public static T Deserialize<T>(in ReadOnlySequence<byte> source, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         T result = default!;
         Deserialize(source, ref result, options);
         return result;
@@ -130,6 +135,7 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="Deserialize{T}(in ReadOnlySequence{byte}, ref T)"/>
     public static void Deserialize<T>(in ReadOnlySequence<byte> source, ref T value, MessagePackSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var processor = options.MessageProcessor;
         if (processor != null && processor.TryDecode(in source, out var decoded))
         {

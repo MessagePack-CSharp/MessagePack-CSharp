@@ -57,6 +57,11 @@ public abstract class TypelessTypeLoader
     /// </summary>
     public static TypelessTypeLoader AllowedTypes(params Type[] types)
     {
+        ArgumentNullException.ThrowIfNull(types);
+        if (Array.IndexOf(types, null) >= 0)
+        {
+            throw new ArgumentException("a type in the allowed list is null", nameof(types));
+        }
         return new AllowedTypesLoader(types);
     }
 

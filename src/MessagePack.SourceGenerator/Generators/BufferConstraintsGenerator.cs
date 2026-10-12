@@ -157,20 +157,6 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
             return null;
         }
 
-        foreach (var typeParameter in symbol.TypeParameters)
-        {
-            if (HasAnyConstraint(typeParameter))
-            {
-                return null;
-            }
-        }
-        // a manual where-clause that is still being typed may not have reached the symbol yet;
-        // the syntax-level check keeps us from fighting it with CS0265
-        if (typeDeclaration.ConstraintClauses.Count > 0)
-        {
-            return null;
-        }
-
         var roles = new byte[symbol.Arity];
         var found = false;
         var formatterDefinition = context.SemanticModel.Compilation.GetTypeByMetadataName("MessagePack.IMessagePackFormatter`3");
@@ -198,6 +184,47 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
         if (!found)
         {
             return null;
+        }
+
+        // Partial declarations that both carry where-clauses must carry the same ones (CS0265), so a type that constrains
+        // any type parameter itself cannot receive generated constraints. One that already constrains its buffer
+        // parameters wrote them by hand (a manual where-clause still being typed may not have reached the symbol yet,
+        // hence the syntax-level check too): stay silent. One that constrains only its other parameters gets told what
+        // to add, since the alternative is CS0453 / CS0314 on its own declaration with no hint.
+        var constrainsBuffer = false;
+        var constrainsOther = typeDeclaration.ConstraintClauses.Count > 0;
+        for (var i = 0; i < symbol.Arity; i++)
+        {
+            if (HasAnyConstraint(symbol.TypeParameters[i]))
+            {
+                constrainsBuffer |= roles[i] != 0;
+                constrainsOther |= roles[i] == 0;
+            }
+        }
+        if (constrainsBuffer)
+        {
+            return null;
+        }
+        if (constrainsOther)
+        {
+            var clauses = new StringBuilder();
+            for (var i = 0; i < symbol.Arity; i++)
+            {
+                if (roles[i] == 0)
+                {
+                    continue;
+                }
+                clauses.Append(" where ").Append(symbol.TypeParameters[i].Name).Append(" : struct");
+                if ((roles[i] & RoleWrite) != 0)
+                {
+                    clauses.Append(", IWriteBuffer");
+                }
+                if ((roles[i] & RoleRead) != 0)
+                {
+                    clauses.Append(", IReadBuffer");
+                }
+            }
+            return BufferConstraintModel.Refused(new DiagnosticInfo(Diagnostics.BufferConstraintsNotGenerated, $"'{symbol.ToDisplayString()}' constrains its own type parameters, so its buffer constraints cannot be generated (partial declarations that both carry where-clauses must match). Add them next to yours:{clauses}, and under NET9_0_OR_GREATER append ', allows ref struct' to each (#if).", LocationInfo.From(symbol)));
         }
 
         if (!ObjectParser.IsPartialChain(symbol))
