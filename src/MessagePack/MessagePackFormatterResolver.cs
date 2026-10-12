@@ -88,7 +88,10 @@ public sealed class MessagePackFormatterResolver
     /// </summary>
     public bool ValidateNullableAnnotations { get; init; }
 
-    /// <summary>Raised with the root type when serialization fell back to the compatible buffers because a formatter built without ref struct buffer support was involved.</summary>
+    /// <summary>
+    /// Raised with the root type when serialization fell back to the compatible buffers because a formatter built without ref struct buffer support was involved.
+    /// Raised after the resolver has released its lock, so a handler may serialize or resolve formatters itself.
+    /// </summary>
     public event Action<Type>? CompatibilityFallback;
 
     /// <summary>
@@ -189,6 +192,27 @@ public sealed class MessagePackFormatterResolver
         , allows ref struct
 #endif
     {
+        var formatter = CreateAndRegisterFormatterCore<TWriteBuffer, TReadBuffer, T>(id, out var compatibilityFallback);
+        if (compatibilityFallback)
+        {
+            // raised once the gate is released: a handler that serializes, or logs through something that does, on
+            // another thread would otherwise wait for this thread's lock while this thread waits for the handler
+            CompatibilityFallback?.Invoke(typeof(T));
+        }
+        return formatter;
+    }
+
+    IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> CreateAndRegisterFormatterCore<TWriteBuffer, TReadBuffer, T>(int id, out bool compatibilityFallback)
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        compatibilityFallback = false;
         lock (gate)
         {
             var isRoot = !construction.IsConstructing;
@@ -260,7 +284,7 @@ public sealed class MessagePackFormatterResolver
                         var sentinel = new CompatiblePairRequiredFormatter<TWriteBuffer, TReadBuffer, T>(factory.GetType());
                         RegisterInto(ref compatRequiredTable, id, sentinel);
                         construction.Clear();
-                        CompatibilityFallback?.Invoke(typeof(T));
+                        compatibilityFallback = true;
                         return sentinel;
                     }
 

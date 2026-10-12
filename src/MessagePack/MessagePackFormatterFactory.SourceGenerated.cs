@@ -208,10 +208,12 @@ public sealed class SourceGeneratedFormatterFactory : MessagePackFormatterFactor
             {
                 RuntimeHelpers.RunModuleConstructor(type.Module.ModuleHandle);
             }
-            catch (Exception)
+            catch (Exception ex) when (ex is not TypeInitializationException)
             {
                 // Best effort. A runtime without lazy module cctors (initializers there ran at startup) has nothing
-                // left for this mitigation to do.
+                // left for this mitigation to do. A module initializer that itself throws is that one assembly's
+                // failure (TypeInitializationException, which its first method call would raise just the same), so
+                // it propagates rather than switching the mitigation off for every other assembly in the process.
                 runModuleConstructorUnsupported = true;
             }
         }

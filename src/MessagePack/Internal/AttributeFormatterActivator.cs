@@ -338,7 +338,7 @@ internal static class AttributeFormatterActivator
                         ? Coerce(arguments[i], parameters[i].ParameterType)
                         : parameters[i].DefaultValue is DBNull ? Type.Missing : parameters[i].DefaultValue;
                 }
-                return constructor.Invoke(padded);
+                return constructor.InvokeUnwrapped(padded);
             }
             throw new MessagePackSerializationException($"[MessagePackFormatter] on '{subject}': the arguments bind to more than one constructor of '{type}'; disambiguate the overloads.");
         }

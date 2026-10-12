@@ -50,7 +50,10 @@ public abstract class TypelessTypeLoader
     /// <summary>
     /// Resolves only the listed types. Payload names match by assembly-qualified
     /// spelling, tolerating omitted or drifted Version/Culture/PublicKeyToken; nothing is
-    /// ever loaded from payload input.
+    /// ever loaded from payload input. List every type that can appear in an <c>object</c> or
+    /// abstract slot, <see cref="Guid"/>, <see cref="DateTime"/>, enums and collection types included:
+    /// everything but bool, the integers, float, double, string and byte[] is written with its type
+    /// name, and a name outside the list fails to read.
     /// </summary>
     public static TypelessTypeLoader AllowedTypes(params Type[] types)
     {

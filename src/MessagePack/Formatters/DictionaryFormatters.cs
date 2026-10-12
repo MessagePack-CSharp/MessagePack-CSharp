@@ -77,12 +77,12 @@ public sealed class DictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
             result = value;
             result.Clear();
 #if !NETSTANDARD2_0
-            result.EnsureCapacity(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining));
+            result.EnsureCapacity(ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining));
 #endif
         }
         else
         {
-            result = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
+            result = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
         }
 
         var kf = keyFormatter;
@@ -240,7 +240,7 @@ public sealed class InterfaceDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey
         }
         else
         {
-            result = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
+            result = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
         }
 
         var kf = keyFormatter;
@@ -362,7 +362,7 @@ public sealed class InterfaceReadOnlyDictionaryFormatter<TWriteBuffer, TReadBuff
         state.Enter();
 
         // the interface is read-only: always materialize fresh
-        var result = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
+        var result = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
 
         var kf = keyFormatter;
         var vf = valueFormatter;
@@ -483,7 +483,7 @@ public sealed class ReadOnlyDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey,
         state.Enter();
 
         // the wrapper is immutable: always materialize a fresh inner dictionary
-        var inner = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
+        var inner = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
 
         var kf = keyFormatter;
         var vf = valueFormatter;
@@ -1000,11 +1000,11 @@ public sealed class OrderedDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, 
         {
             result = value; // reuse keeps a caller-chosen comparer (an instance on the default one is replaced, see DictionaryFormatter)
             result.Clear();
-            result.EnsureCapacity(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining));
+            result.EnsureCapacity(ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining));
         }
         else
         {
-            result = new OrderedDictionary<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
+            result = new OrderedDictionary<TKey, TValue>(ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
         }
 
         var kf = keyFormatter;

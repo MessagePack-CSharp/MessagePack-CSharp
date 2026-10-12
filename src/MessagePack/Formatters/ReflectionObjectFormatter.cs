@@ -647,10 +647,10 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         if (candidate.Member is PropertyInfo property)
         {
             var createPropertySlot = formatterType.GetMethod(nameof(CreatePropertySlot), BindingFlags.NonPublic | BindingFlags.Static)!;
-            return (MemberSlot)createPropertySlot.MakeGenericMethod(candidate.MemberType).Invoke(null, [property, allowPrivate])!;
+            return (MemberSlot)createPropertySlot.MakeGenericMethod(candidate.MemberType).InvokeUnwrapped(null, [property, allowPrivate])!;
         }
         var createFieldSlot = formatterType.GetMethod(nameof(CreateFieldSlot), BindingFlags.NonPublic | BindingFlags.Static)!;
-        return (MemberSlot)createFieldSlot.MakeGenericMethod(candidate.MemberType).Invoke(null, [(FieldInfo)candidate.Member])!;
+        return (MemberSlot)createFieldSlot.MakeGenericMethod(candidate.MemberType).InvokeUnwrapped(null, [(FieldInfo)candidate.Member])!;
     }
 
     static void ApplyMemberMetadata(MemberSlot slot, in MemberCandidate candidate)
@@ -1194,7 +1194,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             ThrowIfRequiredMemberMissing(count, in seenSlots);
         }
 
-        value = (T)argumentConstructor!.Invoke(arguments);
+        value = (T)argumentConstructor!.InvokeUnwrapped(arguments);
         for (int i = 0; i < pendingSet.Length; i++)
         {
             if (pendingSet[i])
@@ -1250,18 +1250,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     static void InvokeLegacyCallback(ref T value, MethodInfo callback)
     {
         object boxed = value!;
-#if NETSTANDARD2_0
-        try
-        {
-            callback.Invoke(boxed, null);
-        }
-        catch (TargetInvocationException ex) when (ex.InnerException is { } inner)
-        {
-            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(inner).Throw();
-        }
-#else
-        callback.Invoke(boxed, BindingFlags.DoNotWrapExceptions, null, null, null);
-#endif
+        callback.InvokeUnwrapped(boxed, null);
         value = (T)boxed;
     }
 

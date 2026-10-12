@@ -204,7 +204,7 @@ public sealed class InterfaceLookupFormatter<TWriteBuffer, TReadBuffer, TKey, TE
         var count = buffer.ReadArrayHeader(ref state);
         state.Enter();
 
-        var map = new Dictionary<TKey, Grouping<TKey, TElement>>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, Grouping<TKey, TElement>>>(count, buffer.BytesRemaining), comparer);
+        var map = new Dictionary<TKey, Grouping<TKey, TElement>>(ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<TKey, Grouping<TKey, TElement>>>(count, buffer.BytesRemaining), comparer);
         Grouping<TKey, TElement>? nullKeyGrouping = null;
         Grouping<TKey, TElement>? first = null;
         Grouping<TKey, TElement>? last = null;

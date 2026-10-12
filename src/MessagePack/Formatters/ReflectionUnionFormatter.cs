@@ -36,7 +36,7 @@ public sealed partial class ReflectionUnionFormatter<TWriteBuffer, TReadBuffer, 
         for (int i = 0; i < declared.Count; i++)
         {
             var (tag, caseType) = declared[i];
-            var slot = (CaseSlot)createCaseSlot.MakeGenericMethod(caseType).Invoke(null, [resolver, tag])!;
+            var slot = (CaseSlot)createCaseSlot.MakeGenericMethod(caseType).InvokeUnwrapped(null, [resolver, tag])!;
             slots[i] = slot;
             if (!byTag.TryAdd(tag, slot))
             {

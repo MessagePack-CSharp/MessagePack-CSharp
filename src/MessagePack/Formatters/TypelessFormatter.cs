@@ -208,7 +208,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
             ? new DateTimeSerializer(typeName)
             : type == typeof(object)
                 ? new ObjectSerializer(typeName) // the object formatter is this one: resolving it would recurse
-                : (TypelessSerializer)createSerializerMethod.MakeGenericMethod(type).Invoke(this, [typeName])!;
+                : (TypelessSerializer)createSerializerMethod.MakeGenericMethod(type).InvokeUnwrapped(this, [typeName])!;
         // the write side never seeds serializersByName: that cache is the read side's, and every entry in it
         // has passed the type loader and the deny list. Seeding it here would let a type this process serialized
         // deserialize without those checks (a shared resolver makes the read-side policy depend on cache state)
@@ -296,7 +296,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
     }
 
     // `new object()` has no state: v3 wrote the ext with the type name and nothing after it, and reads one back
-    sealed class ObjectSerializer(string typeName) : TypelessSerializer(typeName)
+    sealed class ObjectSerializer(string? typeName) : TypelessSerializer(typeName)
     {
         public override void Serialize(ref CompatibleArrayPoolListWriteBuffer staging, ref SerializeState state, object value)
         {
@@ -426,7 +426,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
     // v3's typeless DateTime is ToBinary as smallest int64 (Kind-preserving), NOT the timestamp ext the standard formatter writes.
     sealed class DateTimeSerializer : TypelessSerializer
     {
-        public DateTimeSerializer(string typeName)
+        public DateTimeSerializer(string? typeName)
             : base(typeName)
         {
         }
@@ -482,7 +482,20 @@ public sealed partial class ForceTypelessFormatter<TWriteBuffer, TReadBuffer, T>
     {
         object? boxed = null;
         typeless.Deserialize(ref buffer, ref state, ref boxed);
-        value = (T?)boxed;
+        if (boxed is null)
+        {
+            value = default;
+        }
+        else if (boxed is T typed)
+        {
+            value = typed;
+        }
+        else
+        {
+            // an allowed type that is not assignable to this slot, or a bare primitive where an interface or abstract
+            // type is declared: a data error, not the InvalidCastException a caller's catch would miss
+            throw new MessagePackSerializationException($"Typeless slot of type '{typeof(T).FullName}' received a value of type '{boxed.GetType().FullName}', which is not assignable to it.");
+        }
     }
 }
 

@@ -223,9 +223,11 @@ public sealed partial class PrimitiveObjectFormatter<TWriteBuffer, TReadBuffer> 
         var length = buffer.ReadMapHeader(ref state);
         state.Enter();
 
+        // the count is byte-guarded by the header read, the capacity sized against the bytes (see PresizeHashCapacity)
+        var capacity = ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<object, object?>>(length, buffer.BytesRemaining);
         var dictionary = comparer == null
-            ? new Dictionary<object, object?>(length)
-            : new Dictionary<object, object?>(length, comparer);
+            ? new Dictionary<object, object?>(capacity)
+            : new Dictionary<object, object?>(capacity, comparer);
         for (int i = 0; i < length; i++)
         {
             object? key = null;

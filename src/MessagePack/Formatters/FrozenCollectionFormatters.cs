@@ -67,7 +67,7 @@ public sealed class FrozenDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, T
         state.Enter();
 
         // stage in a Dictionary (bomb-guarded count) and freeze once
-        var staging = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
+        var staging = new Dictionary<TKey, TValue>(ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining), comparer);
 
         var kf = keyFormatter;
         var vf = valueFormatter;
@@ -177,7 +177,7 @@ public sealed partial class FrozenSetFormatter<TWriteBuffer, TReadBuffer, T> : I
 #if NETSTANDARD2_0
         var staging = new HashSet<T>(comparer); // no capacity ctor on ns2.0
 #else
-        var staging = new HashSet<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining), comparer);
+        var staging = new HashSet<T>(ReadBufferExtensions.PresizeHashCapacity<T>(count, buffer.BytesRemaining), comparer);
 #endif
 
         var f = formatter;

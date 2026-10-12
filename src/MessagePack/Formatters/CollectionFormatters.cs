@@ -1,7 +1,8 @@
 // Contract for Populate on collections (Deserialize(ref T value))
-// If elements can be accessed by indexer, populate them through the indexer
-// If the collection supports Clear, call Clear first and then Add
-// If Clear is not supported, populate the existing instance only when Count matches
+// T[] of the same length (also the array behind an ArraySegment / Memory of the same length) and List<T> are refilled
+//   in place through the indexer: existing element instances are read into, a longer payload appends, a shorter one truncates
+// Every other collection that supports Clear is cleared and refilled with Add, so its elements are new instances
+// A collection that cannot be cleared (read-only, immutable, frozen) is replaced by a new instance
 // Do not add extra elements, behave the same as a fresh deserialization
 
 // These formatters will be created by GenericFormatterFactory or Source Generated closed-generic formatter factory
@@ -601,7 +602,7 @@ public sealed partial class HashSetFormatter<TWriteBuffer, TReadBuffer, T> : IMe
 #if NETSTANDARD2_0
             result = new HashSet<T>(comparer); // no capacity ctor on ns2.0
 #else
-            result = new HashSet<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining), comparer);
+            result = new HashSet<T>(ReadBufferExtensions.PresizeHashCapacity<T>(count, buffer.BytesRemaining), comparer);
 #endif
         }
 
@@ -820,7 +821,7 @@ public sealed partial class ReadOnlySetFormatter<TWriteBuffer, TReadBuffer, T> :
         var count = buffer.ReadArrayHeader(ref state);
         state.Enter();
 
-        var set = new HashSet<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining), comparer);
+        var set = new HashSet<T>(ReadBufferExtensions.PresizeHashCapacity<T>(count, buffer.BytesRemaining), comparer);
 
         var f = formatter;
 
@@ -2067,7 +2068,7 @@ public sealed partial class InterfaceSetFormatter<TWriteBuffer, TReadBuffer, T> 
 #if NETSTANDARD2_0
             result = new HashSet<T>(comparer); // no capacity ctor on ns2.0
 #else
-            result = new HashSet<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining), comparer);
+            result = new HashSet<T>(ReadBufferExtensions.PresizeHashCapacity<T>(count, buffer.BytesRemaining), comparer);
 #endif
         }
 
@@ -2172,7 +2173,7 @@ public sealed partial class InterfaceReadOnlySetFormatter<TWriteBuffer, TReadBuf
         var f = formatter;
         state.Enter();
 
-        var result = new HashSet<T>(ReadBufferExtensions.PresizeCapacity<T>(count, buffer.BytesRemaining), comparer);
+        var result = new HashSet<T>(ReadBufferExtensions.PresizeHashCapacity<T>(count, buffer.BytesRemaining), comparer);
         for (int i = 0; i < count; i++)
         {
             T item = default!;

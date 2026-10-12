@@ -248,4 +248,32 @@ public class PresizeCapacityTests
         Assert.Equal(125, ReadBufferExtensions.PresizeCapacity<Wide64>(1000, 1000));
         Assert.Equal(0, ReadBufferExtensions.PresizeCapacity<Wide64>(0, 0));
     }
+
+    // ---- hash containers: an entry costs 12 bytes (hash code, chain link, bucket slot) beyond the pair ----
+
+    [Fact]
+    public void PresizeHashCapacity_CountsTheEntryOverhead()
+    {
+        // 16 bytes of pair plus 12 of overhead: 28 per entry, so 1000 entries need 3500 unread bytes under the 8x cap
+        Assert.Equal(1000, ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<long, long>>(1000, 3500));
+        Assert.Equal(571, ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<long, long>>(1000, 2000));
+        Assert.Equal(400, ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<object, object?>>(1000, 1400));
+        // the flat variant trusts the same header: the overhead is what the hash variant adds
+        Assert.Equal(1000, ReadBufferExtensions.PresizeCapacity<KeyValuePair<long, long>>(1000, 2000));
+    }
+
+    [Fact]
+    public void ObjectMap_LyingHeader_AllocatesAtMostEightTimesThePayload()
+    {
+        // the object formatter and the non-generic IDictionary formatter presized Dictionary<object, object?> straight
+        // from the header: about 28 bytes per claimed entry for 2 wire bytes, 14x the payload
+        AssertAllocationBounded(MapBomb(), bytes => V4.Deserialize<object>(bytes, Options));
+        AssertAllocationBounded(MapBomb(), bytes => V4.Deserialize<System.Collections.IDictionary>(bytes, Options));
+    }
+
+    [Fact]
+    public void WideStructHashSet_LyingHeader_AllocatesAtMostEightTimesThePayload()
+    {
+        AssertAllocationBounded(ArrayBomb(), bytes => V4.Deserialize<HashSet<Wide64>>(bytes, Options));
+    }
 }

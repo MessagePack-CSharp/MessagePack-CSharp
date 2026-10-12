@@ -24,18 +24,21 @@ public class ForeignSurrogateTests
     [Fact]
     public void ReferencedForeignTargetSurrogate_IsServedByThisAssemblysFactory()
     {
-        // the surrogate assembly has not run (nothing in this suite calls into it); the registration that follows
-        // came from this assembly's own module initializer
-        Assert.Null(AppDomain.CurrentDomain.GetData(CanaryKey));
+        // this assembly's generated factory serves the target directly, independent of the registry (which the
+        // surrogate's own assembly populates too once its module initializer has run)
+        var formatter = MessagePack.Generated.GeneratedMessagePackFormatterFactory.Instance
+            .CreateFormatter<SerializerFoundation.ArrayPoolListWriteBuffer, SerializerFoundation.ReadOnlySpanReadBuffer>(typeof(ForeignTarget));
+        Assert.StartsWith("SurrogateFormatter", Assert.IsAssignableFrom<object>(formatter).GetType().Name, StringComparison.Ordinal);
 
         var bytes = V4.Serialize(new ForeignTarget { X = 42 });
         Assert.Equal(new byte[] { 0x91, 0x2A }, bytes); // the surrogate's [X] array
         Assert.Equal(42, V4.Deserialize<ForeignTarget>(bytes)!.X);
 
-        // and this assembly's generated factory serves the target directly, independent of the registry
-        var formatter = MessagePack.Generated.GeneratedMessagePackFormatterFactory.Instance
-            .CreateFormatter<SerializerFoundation.ArrayPoolListWriteBuffer, SerializerFoundation.ReadOnlySpanReadBuffer>(typeof(ForeignTarget));
-        Assert.StartsWith("SurrogateFormatter", Assert.IsAssignableFrom<object>(formatter).GetType().Name, StringComparison.Ordinal);
+        // the conversion ran code of the surrogate's assembly, so its module initializer has run by now. "Not run yet"
+        // cannot be asserted up front in a parallel suite: the CLR activates that module (running its initializer) as
+        // soon as any method referencing its types is compiled, and this assembly's generated factory is one, so the
+        // first generated type any test class serializes trips it
+        Assert.Equal(true, AppDomain.CurrentDomain.GetData(CanaryKey));
     }
 
     // ---- the generator decision, over in-memory assemblies ----

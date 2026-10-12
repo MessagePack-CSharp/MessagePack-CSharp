@@ -143,9 +143,10 @@ public sealed partial class NonGenericInterfaceDictionaryFormatter<TWriteBuffer,
         }
         else
         {
+            var capacity = ReadBufferExtensions.PresizeHashCapacity<KeyValuePair<object, object?>>(count, buffer.BytesRemaining);
             dictionary = comparer == null
-                ? new Dictionary<object, object?>(count)
-                : new Dictionary<object, object?>(count, comparer);
+                ? new Dictionary<object, object?>(capacity)
+                : new Dictionary<object, object?>(capacity, comparer);
         }
         for (int i = 0; i < count; i++)
         {

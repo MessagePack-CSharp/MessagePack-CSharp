@@ -41,6 +41,22 @@ public static class ReadBufferExtensions
         return (long)count * Unsafe.SizeOf<T>() <= budget ? count : (int)(budget / Unsafe.SizeOf<T>());
     }
 
+    // a Dictionary or HashSet entry carries, besides the key and value, a hash code and a chain link (8 bytes) and a
+    // bucket slot (4 bytes): sized by sizeof(T) alone, a hash container overshot the 8x cap by that much per entry
+    const int HashEntryOverhead = 12;
+
+    /// <summary>
+    /// <see cref="PresizeCapacity{T}"/> for a hash-based container (<c>Dictionary</c>, <c>HashSet</c> and the types built on them), whose entries cost
+    /// about 12 bytes beyond <typeparamref name="T"/> (the <c>KeyValuePair</c> for a dictionary) for the hash code, the chain link and the bucket slot.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int PresizeHashCapacity<T>(int count, long bytesRemaining)
+    {
+        var budget = PresizeBytesPerUnreadByte * bytesRemaining;
+        var entrySize = Unsafe.SizeOf<T>() + HashEntryOverhead;
+        return (long)count * entrySize <= budget ? count : (int)(budget / entrySize);
+    }
+
     extension<TReadBuffer>(ref TReadBuffer buffer)
         where TReadBuffer : struct, IReadBuffer
 #if NET9_0_OR_GREATER

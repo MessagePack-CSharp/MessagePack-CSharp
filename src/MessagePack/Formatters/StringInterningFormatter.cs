@@ -1,4 +1,3 @@
-#if !NETSTANDARD2_0 // netstandard2.0 HashSet has no TryGetValue (canonical-instance retrieval), so the formatter is not offered there
 namespace MessagePack.Formatters;
 
 // MsgPack104 steers formatters to the resolver-configured string formatter; this IS that customization.
@@ -16,6 +15,16 @@ public sealed partial class StringInterningFormatter<TWriteBuffer, TReadBuffer> 
 
     // Every access inside the formatter is lock (internedStrings)
     // external mutation of a caller-supplied set must take the same lock.
+#if NETSTANDARD2_0
+    // netstandard2.0's HashSet<T> has no TryGetValue (canonical-instance retrieval), so the pool maps each string to
+    // itself and is the factory's own: there is no caller-supplied set on this build
+    readonly Dictionary<string, string> internedStrings;
+
+    internal StringInterningFormatter(Dictionary<string, string> internedStrings)
+    {
+        this.internedStrings = internedStrings;
+    }
+#else
     readonly HashSet<string> internedStrings;
 
     public StringInterningFormatter(HashSet<string> internedStrings)
@@ -25,6 +34,7 @@ public sealed partial class StringInterningFormatter<TWriteBuffer, TReadBuffer> 
 #endif
         this.internedStrings = internedStrings;
     }
+#endif
 
     public void Initialize(MessagePackFormatterResolver resolver)
     {
@@ -78,7 +88,7 @@ public sealed partial class StringInterningFormatter<TWriteBuffer, TReadBuffer> 
             ArrayPool<char>.Shared.Return(rented);
         }
 #else
-        // netstandard2.1 has no alternate lookup, so a hit allocates the string too,
+        // the netstandard builds have no alternate lookup, so a hit allocates the string too,
         // but still hands every caller the one canonical instance.
         var materialized = buffer.ReadString()!; // nil was consumed above
         if (materialized.Length == 0)
@@ -94,11 +104,13 @@ public sealed partial class StringInterningFormatter<TWriteBuffer, TReadBuffer> 
                 value = interned; // don't set materialized, materialized string will be collected by GC.
                 return;
             }
+#if NETSTANDARD2_0
+            internedStrings.Add(materialized, materialized);
+#else
             internedStrings.Add(materialized);
+#endif
             value = materialized;
         }
 #endif
     }
 }
-
-#endif

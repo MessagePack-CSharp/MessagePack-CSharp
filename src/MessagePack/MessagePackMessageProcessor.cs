@@ -66,7 +66,7 @@ public abstract class MessagePackMessageProcessor
 
     /// <summary>
     /// True when this processor's envelope is not a MessagePack value (a raw compression container, for example), so the
-    /// async entries find message boundaries through <see cref="TryFindMessageEnd"/> instead of scanning MessagePack tokens.
+    /// async entries find message boundaries through <see cref="TryFindMessageEnd(in ReadOnlySequence{byte}, out long)"/> instead of scanning MessagePack tokens.
     /// Such a processor never passes messages through: every message on the wire is its container.
     /// </summary>
     public virtual bool DefinesMessageBoundaries => false;

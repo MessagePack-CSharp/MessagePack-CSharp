@@ -84,7 +84,7 @@ public sealed partial class ObjectFallbackFormatter<TWriteBuffer, TReadBuffer> :
     [UnconditionalSuppressMessage("Trimming", "IL2060", Justification = "CreateDispatcherCore is a private member of this formatter, rooted by the typeof/nameof reference above; its type argument is the value's runtime type, which the caller roots")]
     Dispatcher CreateDispatcher(Type type)
     {
-        var dispatcher = (Dispatcher)createDispatcherMethod.MakeGenericMethod(type).Invoke(this, null)!;
+        var dispatcher = (Dispatcher)createDispatcherMethod.MakeGenericMethod(type).InvokeUnwrapped(this, null)!;
         return dispatchers.GetOrAdd(type, dispatcher);
     }
 
