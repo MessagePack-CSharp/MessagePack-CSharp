@@ -310,6 +310,80 @@ public class FormatterAttributeTests
         Assert.Contains(result.Diagnostics, d => d.Id == "MsgPack014");
     }
 
+    // README §4's shape: a partial formatter with no where-clauses, whose buffer constraints (allows ref struct
+    // included) come from BufferConstraintsGenerator. MessagePackGenerator cannot see that output, so it used to judge
+    // the bare syntax and report MsgPack012 on every net9+ build of the README sample.
+    const string ReadmeFormatterProbe = """
+        using MessagePack;
+        using MessagePack.Formatters;
+
+        public sealed partial class PointFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Point>
+        {
+            public void Initialize(MessagePackFormatterResolver resolver) { }
+
+            public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Point value)
+            {
+                buffer.WriteArrayHeader(2);
+                buffer.WriteInt32(value.X);
+                buffer.WriteInt32(value.Y);
+            }
+
+            public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Point value)
+            {
+                var count = buffer.ReadArrayHeader(ref state);
+                var x = buffer.ReadInt32();
+                var y = buffer.ReadInt32();
+                for (int i = 2; i < count; i++) buffer.Skip();
+                value = new Point(x, y);
+            }
+        }
+
+        [MessagePackFormatter(typeof(PointFormatter<,>))]
+        public readonly record struct Point(int X, int Y);
+
+        [MessagePackObject]
+        public class Shape
+        {
+            [Key(0)] public Point Origin { get; set; }
+            [Key(1)] [MessagePackFormatter(typeof(PointFormatter<,>))] public Point Corner { get; set; }
+        }
+        """;
+
+    static (GeneratorDriverRunResult Result, Compilation Updated) RunAllGenerators(string source)
+    {
+        var compilation = AnalyzerTestHost.CreateCompilation(source, "GeneratorProbe");
+        var parseOptions = (CSharpParseOptions)compilation.SyntaxTrees[0].Options;
+        var driver = CSharpGeneratorDriver.Create(
+            [new MessagePackGenerator().AsSourceGenerator(), new BufferConstraintsGenerator().AsSourceGenerator(), new FactoryBridgeGenerator().AsSourceGenerator()],
+            parseOptions: parseOptions);
+        var updatedDriver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var updated, out _, CancellationToken.None);
+        return (updatedDriver.GetRunResult(), updated);
+    }
+
+    [Fact]
+    public void Generator_ReadmePartialFormatter_IsAcceptedOnNet9()
+    {
+        var (result, updated) = RunAllGenerators(ReadmeFormatterProbe);
+
+        Assert.DoesNotContain(result.Diagnostics, d => d.Id == "MsgPack012");
+        Assert.Empty(updated.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error));
+    }
+
+    [Fact]
+    public void Generator_HandWrittenConstraintsWithoutAllowsRefStruct_ReportsUMP012WithTheRemedy()
+    {
+        // a where-clause opts the type out of the generated constraints, so the missing allowance is the author's
+        var (result, _) = RunAllGenerators(ReadmeFormatterProbe.Replace(
+            "IMessagePackFormatter<TWriteBuffer, TReadBuffer, Point>",
+            "IMessagePackFormatter<TWriteBuffer, TReadBuffer, Point> where TWriteBuffer : struct, SerializerFoundation.IWriteBuffer where TReadBuffer : struct, SerializerFoundation.IReadBuffer"));
+
+        // one per attribute site (the type-level one on Point, the member-level one on Shape.Corner)
+        var messages = result.Diagnostics.Where(d => d.Id == "MsgPack012").Select(d => d.GetMessage()).ToList();
+        Assert.Equal(2, messages.Count);
+        Assert.All(messages, m => Assert.Contains("allows ref struct", m, StringComparison.Ordinal));
+        Assert.All(messages, m => Assert.Contains("partial", m, StringComparison.Ordinal));
+    }
+
     [Fact]
     public void Generator_NonFormatterType_ReportsUMP012()
     {

@@ -101,7 +101,43 @@ public class DictionaryFamilyFormatterTests
         Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<Dictionary<int, string>>(bytes));
         Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<IDictionary<int, string>>(bytes));
         Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<SortedDictionary<int, string>>(bytes));
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<SortedList<int, string>>(bytes));
         Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<ConcurrentDictionary<int, string>>(bytes));
+    }
+
+    // SortedList used to insert each pair as it arrived (binary search + shift): descending keys made every insert
+    // O(n), 1M entries over a minute. The formatter now reads into arrays, sorts once with the list's comparer and
+    // inserts ascending; these pin the co-sort of values with keys, the instance comparer, and the large case.
+    [Fact]
+    public void SortedList_UnorderedPayload_IsSortedOnRead()
+    {
+        var back = MessagePackSerializer.Deserialize<SortedList<int, string>>(SerializeAsMap([new(3, "c"), new(1, "a"), new(2, "b")]))!;
+        Assert.Equal([1, 2, 3], back.Keys);
+        Assert.Equal(["a", "b", "c"], back.Values);
+    }
+
+    [Fact]
+    public void SortedList_PopulateKeepsTheInstanceComparer()
+    {
+        var target = new SortedList<int, string>(Comparer<int>.Create((a, b) => b.CompareTo(a)));
+        MessagePackSerializer.Deserialize(SerializeAsMap([new(1, "a"), new(3, "c"), new(2, "b")]), ref target);
+        Assert.Equal([3, 2, 1], target!.Keys);
+        Assert.Equal(["c", "b", "a"], target.Values);
+    }
+
+    [Fact]
+    public void SortedList_LargeDescendingPayload_RoundTrips()
+    {
+        // correctness only; a quadratic regression shows up as seconds instead of milliseconds in the test log
+        var pairs = new List<KeyValuePair<int, string>>();
+        for (int i = 100_000; i > 0; i--)
+        {
+            pairs.Add(new(i, "v"));
+        }
+        var back = MessagePackSerializer.Deserialize<SortedList<int, string>>(SerializeAsMap(pairs))!;
+        Assert.Equal(100_000, back.Count);
+        Assert.Equal(1, back.Keys[0]);
+        Assert.Equal(100_000, back.Keys[^1]);
     }
 
     // net9+ OrderedDictionary: hash-based + insertion-ordered; no v3 oracle (v3 has no

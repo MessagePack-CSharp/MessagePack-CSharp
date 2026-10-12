@@ -31,6 +31,8 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MessagePack.AotCompatibilityTest/MessagePack.AotCompatibilityTest.csproj" />
+    <Project Path="tests/MessagePack.Tests.ForeignSurrogate/MessagePack.Tests.ForeignSurrogate.csproj" />
+    <Project Path="tests/MessagePack.Tests.ForeignSurrogateTarget/MessagePack.Tests.ForeignSurrogateTarget.csproj" />
     <Project Path="tests/MessagePack.Tests.LazyModuleTypes/MessagePack.Tests.LazyModuleTypes.csproj" />
     <Project Path="tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj" />
     <Project Path="tests/MessagePack.Tests.Net8/MessagePack.Tests.Net8.csproj" />

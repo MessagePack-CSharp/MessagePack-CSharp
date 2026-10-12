@@ -72,6 +72,10 @@ public abstract class TypelessTypeLoader
 
         readonly bool allowAssemblyVersionMismatch;
 
+        // the running core library: mscorlib on .NET Framework (and Mono), System.Private.CoreLib on .NET. The
+        // netstandard asset runs on both, so this is a runtime check (v3's IsMscorlib)
+        static readonly bool IsMscorlib = typeof(object).Assembly.GetName().Name == "mscorlib";
+
         public LoadAnyTypeLoader(bool allowAssemblyVersionMismatch)
         {
             this.allowAssemblyVersionMismatch = allowAssemblyVersionMismatch;
@@ -93,6 +97,23 @@ public abstract class TypelessTypeLoader
                 {
                     // v3's AllowAssemblyVersionMismatch: retry with the shortened spelling
                     type = Type.GetType(TypelessTypeNames.SubtractFullNameRegex.Replace(typeName, string.Empty), throwOnError: false);
+                }
+                if (type is null)
+                {
+                    // v3's cross-runtime swap: a payload written on the other runtime family names the other core
+                    // library for the same type (System.Guid lives in mscorlib on .NET Framework, in
+                    // System.Private.CoreLib on .NET). .NET reads mscorlib names through its facade, but .NET Framework
+                    // has no System.Private.CoreLib at all, so swap the spelling and retry. Each binder resolves its own
+                    // core library by simple name whatever Version/PublicKeyToken follows, so the other runtime's
+                    // identity can stay in the name.
+                    if (IsMscorlib && typeName.Contains("System.Private.CoreLib"))
+                    {
+                        type = Type.GetType(typeName.Replace("System.Private.CoreLib", "mscorlib"), throwOnError: false);
+                    }
+                    else if (!IsMscorlib && typeName.Contains("mscorlib"))
+                    {
+                        type = Type.GetType(typeName.Replace("mscorlib", "System.Private.CoreLib"), throwOnError: false);
+                    }
                 }
                 return type;
             }

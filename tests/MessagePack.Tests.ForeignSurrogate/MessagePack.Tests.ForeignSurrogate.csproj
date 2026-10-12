@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- ForeignSurrogateTests' surrogate fixture: declares a surrogate for a type of ANOTHER assembly
+       (MessagePack.Tests.ForeignSurrogateTarget) and nothing else, so no code path in the test suite ever
+       executes in this module; its own module-initializer registration therefore never runs. The test
+       assembly's generator adopts the surrogate into the test assembly's factory instead. Keep the test suite
+       from referencing these types in source. -->
+  <ItemGroup>
+    <ProjectReference Include="..\MessagePack.Tests.ForeignSurrogateTarget\MessagePack.Tests.ForeignSurrogateTarget.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+</Project>

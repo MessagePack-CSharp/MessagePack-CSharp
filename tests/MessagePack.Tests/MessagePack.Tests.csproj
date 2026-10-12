@@ -59,6 +59,10 @@
     <!-- ReferenceOutputAssembly=true: analyzer unit tests instantiate the analyzer types
          directly; the projects still run as analyzers on this project via OutputItemType -->
     <ProjectReference Include="..\MessagePack.Tests.LazyModuleTypes\MessagePack.Tests.LazyModuleTypes.csproj" />
+    <!-- ForeignSurrogateTests: a plain target type in one fixture, a surrogate for it in another; this assembly's
+         generator adopts the surrogate (nothing here may reference the surrogate fixture's types in source) -->
+    <ProjectReference Include="..\MessagePack.Tests.ForeignSurrogateTarget\MessagePack.Tests.ForeignSurrogateTarget.csproj" />
+    <ProjectReference Include="..\MessagePack.Tests.ForeignSurrogate\MessagePack.Tests.ForeignSurrogate.csproj" />
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator.CodeFixes\MessagePack.SourceGenerator.CodeFixes.csproj" ReferenceOutputAssembly="true" />
   </ItemGroup>

@@ -67,7 +67,7 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
         });
     }
 
-    static bool SupportsAllowsRefStruct(Compilation compilation)
+    internal static bool SupportsAllowsRefStruct(Compilation compilation)
     {
         // corelib advertising ByRefLikeGenerics means the runtime executes ref-struct generic instantiations.
         // The language gate is numeric because this project pins Microsoft.CodeAnalysis 4.8,
@@ -76,6 +76,40 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
         var runtimeFeature = compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.RuntimeFeature");
         var runtimeSupports = runtimeFeature is not null && !runtimeFeature.GetMembers("ByRefLikeGenerics").IsEmpty;
         return runtimeSupports && compilation is CSharpCompilation csharp && (int)csharp.LanguageVersion >= 1300;
+    }
+
+    /// <summary>
+    /// Whether this generator will emit the buffer constraints for <paramref name="symbol"/>: a partial declaration
+    /// with a base list, and no constraint anywhere (a hand-written where-clause opts the type out). Other generators
+    /// cannot see this one's output, so MessagePackGenerator asks here before judging a formatter's constraints.
+    /// </summary>
+    internal static bool ReceivesGeneratedConstraints(INamedTypeSymbol symbol)
+    {
+        if (symbol.Arity == 0 || symbol.DeclaringSyntaxReferences.Length == 0)
+        {
+            return false;
+        }
+        foreach (var typeParameter in symbol.TypeParameters)
+        {
+            if (HasAnyConstraint(typeParameter))
+            {
+                return false;
+            }
+        }
+        var partialWithBaseList = false;
+        foreach (var reference in symbol.DeclaringSyntaxReferences)
+        {
+            if (reference.GetSyntax() is not TypeDeclarationSyntax declaration)
+            {
+                return false;
+            }
+            if (declaration.ConstraintClauses.Count > 0)
+            {
+                return false;
+            }
+            partialWithBaseList |= declaration.BaseList is not null && declaration.Modifiers.Any(SyntaxKind.PartialKeyword);
+        }
+        return partialWithBaseList;
     }
 
     static BufferConstraintModel? Parse(GeneratorSyntaxContext context, CancellationToken cancellationToken)
@@ -253,7 +287,7 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
         }
     }
 
-    static bool HasAnyConstraint(ITypeParameterSymbol typeParameter) =>
+    internal static bool HasAnyConstraint(ITypeParameterSymbol typeParameter) =>
         typeParameter.HasValueTypeConstraint ||
         typeParameter.HasReferenceTypeConstraint ||
         typeParameter.HasConstructorConstraint ||

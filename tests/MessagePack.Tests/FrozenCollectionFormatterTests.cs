@@ -51,6 +51,22 @@ public class FrozenCollectionFormatterTests
         Assert.Same(HashFloodingResistantEqualityComparer.Get<long>(), set.Comparer);
     }
 
+    // string keys on net9+: HashFloodingResistantEqualityComparer.Get<string>() is deliberately null, because the BCL's
+    // default string comparer already hashes with a per-process random Marvin seed (no precomputable collisions), and a
+    // custom comparer would cost FrozenDictionary/FrozenSet their optimized ordinal-string strategies. Pinned here so a
+    // future "fix" does not inject one (a review once mistook the default comparer for a deterministic hash).
+    [Fact]
+    public void StringKeys_KeepTheBclOrdinalStrategy()
+    {
+        var dict = MessagePackSerializer.Deserialize<FrozenDictionary<string, int>>(
+            MessagePackSerializer.Serialize(new Dictionary<string, int> { ["a"] = 1, ["bb"] = 2 }.ToFrozenDictionary()))!;
+        Assert.Same(EqualityComparer<string>.Default, dict.Comparer);
+
+        var set = MessagePackSerializer.Deserialize<FrozenSet<string>>(
+            MessagePackSerializer.Serialize(new[] { "a", "bb" }.ToFrozenSet()))!;
+        Assert.Same(EqualityComparer<string>.Default, set.Comparer);
+    }
+
     [Fact]
     public void Trusted_KeepsDefaultComparer()
     {

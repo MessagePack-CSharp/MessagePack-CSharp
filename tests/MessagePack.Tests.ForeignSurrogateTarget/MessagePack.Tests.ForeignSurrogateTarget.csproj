@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- ForeignSurrogateTests' target fixture: a plain type with no MessagePack reference at all, the
+       "third-party type you cannot annotate" that MessagePack.Tests.ForeignSurrogate declares a surrogate for. -->
+
+</Project>

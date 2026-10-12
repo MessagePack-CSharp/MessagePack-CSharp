@@ -131,6 +131,56 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
         if (type == typeof(System.Numerics.Decimal128)) return new Decimal128Formatter<TWriteBuffer, TReadBuffer>();
 #endif
 
+        // NullableFormatters.cs, closed over the scalars above. GenericFormatterFactory closes Nullable<T> for any T
+        // through MakeGenericType, which the AOT chains do not have; a root `int?` (a SignalR hub argument, a bare
+        // Serialize<DateTime?>) is not a member the generator harvests either, so the AOT chains need these spelled out.
+        // Same formatter type as the generic tier produces, so the wire and the Default chain's behavior do not change.
+        if (type == typeof(int?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, int>();
+        if (type == typeof(long?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, long>();
+        if (type == typeof(short?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, short>();
+        if (type == typeof(byte?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, byte>();
+        if (type == typeof(sbyte?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, sbyte>();
+        if (type == typeof(uint?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, uint>();
+        if (type == typeof(ulong?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, ulong>();
+        if (type == typeof(ushort?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, ushort>();
+        if (type == typeof(char?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, char>();
+        if (type == typeof(bool?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, bool>();
+        if (type == typeof(float?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, float>();
+        if (type == typeof(double?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, double>();
+        if (type == typeof(DateTime?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, DateTime>();
+        if (type == typeof(decimal?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, decimal>();
+        if (type == typeof(TimeSpan?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, TimeSpan>();
+        if (type == typeof(DateTimeOffset?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, DateTimeOffset>();
+        if (type == typeof(Guid?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, Guid>();
+        if (type == typeof(System.Numerics.BigInteger?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.BigInteger>();
+        if (type == typeof(System.Numerics.Complex?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.Complex>();
+        if (type == typeof(System.Numerics.Vector2?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.Vector2>();
+        if (type == typeof(System.Numerics.Vector3?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.Vector3>();
+        if (type == typeof(System.Numerics.Vector4?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.Vector4>();
+        if (type == typeof(System.Numerics.Quaternion?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.Quaternion>();
+        if (type == typeof(System.Numerics.Matrix3x2?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.Matrix3x2>();
+        if (type == typeof(System.Numerics.Matrix4x4?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.Matrix4x4>();
+        if (type == typeof(System.Numerics.Plane?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.Plane>();
+#if NET9_0_OR_GREATER
+        if (type == typeof(Half?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, Half>();
+        if (type == typeof(Rune?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, Rune>();
+        if (type == typeof(DateOnly?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, DateOnly>();
+        if (type == typeof(TimeOnly?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, TimeOnly>();
+        if (type == typeof(Int128?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, Int128>();
+        if (type == typeof(UInt128?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, UInt128>();
+        if (type == typeof(System.Runtime.InteropServices.NFloat?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Runtime.InteropServices.NFloat>();
+#endif
+#if NETSTANDARD2_1 || NET9_0_OR_GREATER
+        if (type == typeof(Index?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, Index>();
+        if (type == typeof(Range?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, Range>();
+#endif
+#if NET11_0_OR_GREATER
+        if (type == typeof(System.Numerics.BFloat16?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.BFloat16>();
+        if (type == typeof(System.Numerics.Decimal32?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.Decimal32>();
+        if (type == typeof(System.Numerics.Decimal64?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.Decimal64>();
+        if (type == typeof(System.Numerics.Decimal128?)) return new NullableFormatter<TWriteBuffer, TReadBuffer, System.Numerics.Decimal128>();
+#endif
+
         // PrimitiveObjectFormatter.cs / NonGenericCollectionFormatters.cs
         // (ExpandoObject is deliberately absent: opt in with ExpandoObjectFormatterFactory, whose [Obsolete] message explains the quadratic Add cost)
         if (type == typeof(object)) return new PrimitiveObjectFormatter<TWriteBuffer, TReadBuffer>();

@@ -46,6 +46,7 @@ public class CollectionKeyGuardTests
     public void MixedRuntimeTypeKeys_AreADataError_InComparisonBasedCollections()
     {
         AssertRejected<SortedDictionary<object, object?>>(MixedKeyMap);
+        AssertRejected<SortedList<object, object?>>(MixedKeyMap); // Array.Sort wraps the comparer's failure in InvalidOperationException
         AssertRejected<ImmutableSortedDictionary<object, object?>>(MixedKeyMap);
         AssertRejected<SortedSet<object>>(MixedElementArray);
         AssertRejected<ImmutableSortedSet<object>>(MixedElementArray);
@@ -58,6 +59,8 @@ public class CollectionKeyGuardTests
         // the guards only reword the failure; comparable object keys keep working through the same path
         var sorted = V4.Deserialize<SortedDictionary<object, object?>>(V4.Serialize(new SortedDictionary<object, object?> { [1] = "x", [2] = null }, Options), Options)!;
         Assert.Equal(2, sorted.Count);
+        var sortedList = V4.Deserialize<SortedList<object, object?>>(V4.Serialize(new SortedList<object, object?> { [1] = "x", [2] = null }, Options), Options)!;
+        Assert.Equal(2, sortedList.Count);
         var set = V4.Deserialize<SortedSet<object>>(V4.Serialize(new SortedSet<object> { "b", "a" }, Options), Options)!;
         Assert.Equal(["a", "b"], set.ToArray());
     }

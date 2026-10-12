@@ -17,7 +17,7 @@ namespace MessagePack.SourceGenerator;
 /// </summary>
 static class SurrogateParser
 {
-    const string FormatterAttributeName = "MessagePack.MessagePackFormatterAttribute";
+    internal const string FormatterAttributeName = "MessagePack.MessagePackFormatterAttribute";
 
     /// <summary>
     /// Cheap syntax gate: a struct declaration with a base list. The interface itself is matched semantically in

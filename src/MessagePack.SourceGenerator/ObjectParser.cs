@@ -2390,7 +2390,7 @@ static class ObjectParser
 
         if (LacksRefStructAllowance(definition, context, out var why))
         {
-            diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidFormatterAttribute, $"'{member}': '{formatterType.ToDisplayString()}' cannot be closed over the generated formatter's buffer types on this target because {why} (CS9244); specify a MessagePackFormatterFactory instead (the resolver reroutes a downlevel factory to the Compatible buffers), or multi-target the formatter library so its type parameters allow ref struct buffers.", location));
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidFormatterAttribute, $"'{member}': '{formatterType.ToDisplayString()}' cannot be closed over the generated formatter's buffer types on this target (CS9244) because {why}.", location));
             return false;
         }
         if (!TryBindConstructor(definition.InstanceConstructors, arguments, compilation, semanticModel, position, member, diagnostics, location, out var formatterArguments, accessScope))
@@ -2417,6 +2417,18 @@ static class ObjectParser
         }
         if (definition.DeclaringSyntaxReferences.Length > 0)
         {
+            // README's shape: `partial`, no where-clauses, and BufferConstraintsGenerator supplies the constraints
+            // (`allows ref struct` included wherever the compilation can express it). Its output is invisible from
+            // here, so the convention is asked instead of the syntax.
+            if (Generators.BufferConstraintsGenerator.ReceivesGeneratedConstraints(definition))
+            {
+                if (Generators.BufferConstraintsGenerator.SupportsAllowsRefStruct(context.SemanticModel.Compilation))
+                {
+                    return false;
+                }
+                reason = "its generated buffer constraints cannot include `allows ref struct` in this compilation (C# 13 or later is required)";
+                return true;
+            }
             foreach (var typeParameter in definition.TypeParameters)
             {
                 var allowed = false;
@@ -2435,7 +2447,7 @@ static class ObjectParser
                 }
                 if (!allowed)
                 {
-                    reason = $"its type parameter '{typeParameter.Name}' has no `allows ref struct` constraint";
+                    reason = $"its type parameter '{typeParameter.Name}' has no `allows ref struct` constraint; either add `allows ref struct` to both buffer type parameters, or declare the formatter `partial` with no where-clauses and let the generator supply the constraints";
                     return true;
                 }
             }
@@ -2452,7 +2464,7 @@ static class ObjectParser
                 {
                     return false;
                 }
-                reason = $"it is built for {framework}, whose type parameters cannot allow ref struct buffers";
+                reason = $"it is built for {framework}, whose type parameters cannot allow ref struct buffers; specify a MessagePackFormatterFactory instead (the resolver reroutes a downlevel factory to the Compatible buffers), or multi-target the formatter library with net9.0";
                 return true;
             }
         }

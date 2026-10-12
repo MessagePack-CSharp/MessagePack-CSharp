@@ -101,3 +101,110 @@ public class GenSuppressedCallbackPoco : IMessagePackSerializationCallbackReceiv
 
     public void OnAfterDeserialize() => Restored = true;
 }
+
+// ---- v3-built assemblies: the interface from MessagePack.Annotations 3.x is a different Type with the same name ----
+
+// The reflection tier matches attributes by name so a v3-built DLL works as is; the callback interface used to be
+// checked by identity, so a type implementing ONLY v3's interface had its callbacks skipped without a word (and wrote
+// different bytes than v3 did for the same object).
+public class LegacyCallbackInterfaceTests
+{
+    [Fact]
+    public void V3OnlyInterface_CallbacksRun_AndBytesMatchTheOracle()
+    {
+        var bytes = V4.Serialize(new V3OnlyCallbackPoco { Raw = 21 });
+        Assert.Equal(Oracle.Serialize(new V3OnlyCallbackPoco { Raw = 21 }), bytes); // [21, 42]: the oracle fires its own callbacks
+
+        var back = V4.Deserialize<V3OnlyCallbackPoco>(bytes)!;
+        Assert.Equal(42, back.Normalized);
+        Assert.True(back.Restored);
+    }
+
+    [Fact]
+    public void V3OnlyInterface_ExplicitImplementationOnAStruct_MutatesThroughTheBox()
+    {
+        var bytes = V4.Serialize(new V3OnlyCallbackStruct { A = 2, B = 3 });
+        var back = V4.Deserialize<V3OnlyCallbackStruct>(bytes);
+        Assert.Equal(5, back.Checksum);
+        Assert.True(back.Restored);
+    }
+
+    [Fact]
+    public void V3OnlyInterface_HiddenMethodDoesNotWin()
+    {
+        // dispatch goes through the interface slot: the base implementation that satisfies the interface runs
+        var back = V4.Deserialize<V3OnlyHidingDerived>(V4.Serialize(new V3OnlyHidingDerived { Raw = 1 }))!;
+        Assert.True(back.Restored);
+        Assert.False(back.HiddenRan);
+    }
+
+    [Fact]
+    public void NoInterface_SameNamedMethods_DoNotRun()
+    {
+        var back = V4.Deserialize<LookalikeCallbackPoco>(V4.Serialize(new LookalikeCallbackPoco { Raw = 1 }))!;
+        Assert.Equal(0, back.Normalized);
+        Assert.False(back.Restored);
+    }
+
+    [Fact]
+    public void V3OnlyInterface_CallbackException_SurfacesUnwrapped()
+    {
+        var bytes = V4.Serialize(new V3OnlyThrowingPoco());
+        Assert.Throws<InvalidOperationException>(() => V4.Deserialize<V3OnlyThrowingPoco>(bytes));
+    }
+}
+
+[V3::MessagePack.MessagePackObject(SuppressSourceGeneration = true)]
+public class V3OnlyCallbackPoco : V3::MessagePack.IMessagePackSerializationCallbackReceiver
+{
+    [V3::MessagePack.Key(0)] public int Raw { get; set; }
+    [V3::MessagePack.Key(1)] public int Normalized { get; set; }
+    [V3::MessagePack.IgnoreMember] public bool Restored { get; set; }
+
+    public void OnBeforeSerialize() => Normalized = Raw * 2;
+
+    public virtual void OnAfterDeserialize() => Restored = true;
+}
+
+[V3::MessagePack.MessagePackObject(SuppressSourceGeneration = true)]
+public class V3OnlyHidingDerived : V3OnlyCallbackPoco
+{
+    [V3::MessagePack.IgnoreMember] public bool HiddenRan { get; set; }
+
+    public new void OnAfterDeserialize() => HiddenRan = true;
+}
+
+[V3::MessagePack.MessagePackObject(SuppressSourceGeneration = true)]
+public struct V3OnlyCallbackStruct : V3::MessagePack.IMessagePackSerializationCallbackReceiver
+{
+    [V3::MessagePack.Key(0)] public int A;
+    [V3::MessagePack.Key(1)] public int B;
+    [V3::MessagePack.Key(2)] public int Checksum;
+    [V3::MessagePack.IgnoreMember] public bool Restored;
+
+    void V3::MessagePack.IMessagePackSerializationCallbackReceiver.OnBeforeSerialize() => Checksum = A + B;
+
+    void V3::MessagePack.IMessagePackSerializationCallbackReceiver.OnAfterDeserialize() => Restored = true;
+}
+
+[V3::MessagePack.MessagePackObject(SuppressSourceGeneration = true)]
+public class LookalikeCallbackPoco
+{
+    [V3::MessagePack.Key(0)] public int Raw { get; set; }
+    [V3::MessagePack.Key(1)] public int Normalized { get; set; }
+    [V3::MessagePack.IgnoreMember] public bool Restored { get; set; }
+
+    public void OnBeforeSerialize() => Normalized = Raw * 2;
+
+    public void OnAfterDeserialize() => Restored = true;
+}
+
+[V3::MessagePack.MessagePackObject(SuppressSourceGeneration = true)]
+public class V3OnlyThrowingPoco : V3::MessagePack.IMessagePackSerializationCallbackReceiver
+{
+    [V3::MessagePack.Key(0)] public int Raw { get; set; }
+
+    public void OnBeforeSerialize() { }
+
+    public void OnAfterDeserialize() => throw new InvalidOperationException("from the callback");
+}

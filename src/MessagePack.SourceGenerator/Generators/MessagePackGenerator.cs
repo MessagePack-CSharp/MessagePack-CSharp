@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -195,7 +196,32 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
         var surrogateModels = surrogateResults
             .SelectMany(static (result, _) => result.Sites.AsArray().Select(static site => new SurrogateModel(site.TargetTypeName, site.SurrogateTypeName)))
             .Collect();
-        context.RegisterSourceOutput(models.Combine(attributeModels).Combine(genericAttributeModels).Combine(serializableModels.Combine(genericSerializableModels)).Combine(surrogateModels).Combine(needsModuleInitializerPolyfill.Combine(languageGate)), static (spc, pair) =>
+
+        // surrogates referenced assemblies declare for types of yet another assembly are adopted here (see
+        // ReferencedSurrogateScanner); the result is equatable, so the factory node below re-runs only when the set changes
+        var referencedSurrogates = context.CompilationProvider.Select(static (compilation, cancellationToken) => ReferencedSurrogateScanner.Scan(compilation, cancellationToken));
+        context.RegisterSourceOutput(referencedSurrogates, static (spc, result) =>
+        {
+            foreach (var diagnostic in result.Diagnostics)
+            {
+                spc.ReportDiagnostic(diagnostic.ToDiagnostic());
+            }
+        });
+        var allSurrogateModels = surrogateModels.Combine(referencedSurrogates).Select(static (pair, _) =>
+        {
+            // a surrogate declared in this compilation outranks an adopted one for the same target
+            var merged = pair.Left.ToList();
+            var claimed = new HashSet<string>(merged.Select(static m => m.TargetTypeName), StringComparer.Ordinal);
+            foreach (var site in pair.Right.Sites.AsArray())
+            {
+                if (claimed.Add(site.TargetTypeName))
+                {
+                    merged.Add(new SurrogateModel(site.TargetTypeName, site.SurrogateTypeName));
+                }
+            }
+            return merged.ToImmutableArray();
+        });
+        context.RegisterSourceOutput(models.Combine(attributeModels).Combine(genericAttributeModels).Combine(serializableModels.Combine(genericSerializableModels)).Combine(allSurrogateModels).Combine(needsModuleInitializerPolyfill.Combine(languageGate)), static (spc, pair) =>
         {
             var (needsPolyfill, gate) = pair.Right;
             var surrogates = pair.Left.Right;

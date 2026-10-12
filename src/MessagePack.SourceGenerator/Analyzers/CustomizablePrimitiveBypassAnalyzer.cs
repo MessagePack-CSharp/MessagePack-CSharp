@@ -23,7 +23,7 @@ public sealed class CustomizablePrimitiveBypassAnalyzer : DiagnosticAnalyzer
     static readonly DiagnosticDescriptor Rule = new(
         DiagnosticId,
         "Formatter bypasses the resolver-configured string/DateTime formatter",
-        "'{0}' inside a formatter bypasses the resolver's {1} formatter, so configurations like string interning or the .NET-native DateTime format silently do not apply; cache resolver.GetFormatter<TWriteBuffer, TReadBuffer, {1}>() in Initialize and serialize through it",
+        "'{0}' inside a formatter bypasses the resolver's {1} formatter, so configurations like string interning or the .NET-native DateTime format silently do not apply; cache resolver.GetFormatter<TWriteBuffer, TReadBuffer, {1}>() in Initialize and serialize through it. When the {1} is this formatter's own wire form (a name, an id, a textual rendering of the value) rather than a {1} member of the object model, the bypass is intended: suppress this rule for the formatter with #pragma warning disable MsgPack104",
         "MessagePack.SourceGenerator",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,

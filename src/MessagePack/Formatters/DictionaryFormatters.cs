@@ -595,28 +595,57 @@ public sealed class SortedListFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
         var count = buffer.ReadMapHeader(ref state);
         state.Enter();
 
+        var capacity = ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining);
         SortedList<TKey, TValue> result;
         if (value != null)
         {
-            result = value;
+            result = value; // reuse keeps the instance's comparer
             result.Clear();
         }
         else
         {
-            result = new SortedList<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining));
+            result = new SortedList<TKey, TValue>(capacity);
         }
 
+        // SortedList inserts by binary search plus an Array.Copy shift of everything after the slot, so keys arriving
+        // in descending order (a Dictionary producer, another language's map) cost O(n) each, O(n^2) in all: 1M entries
+        // took over a minute. Read into parallel arrays, sort once with the list's own comparer, then insert ascending,
+        // where every insert lands at the end and shifts nothing.
+        var keys = new TKey[capacity];
+        var values = new TValue[capacity];
         var kf = keyFormatter;
         var vf = valueFormatter;
-
         for (int i = 0; i < count; i++)
         {
+            if (i == keys.Length)
+            {
+                // the header claimed more than its bytes justify (see PresizeCapacity): grow as the bytes arrive
+                var grown = (int)Math.Min(Math.Max(4L, keys.Length * 2L), count);
+                Array.Resize(ref keys, grown);
+                Array.Resize(ref values, grown);
+            }
             TKey k = default!;
             TValue v = default!;
             kf.Deserialize(ref buffer, ref state, ref k);
             vf.Deserialize(ref buffer, ref state, ref v);
             MessagePackSerializationException.ThrowIfNullMapKey(k);
-            result[k] = v;
+            keys[i] = k;
+            values[i] = v;
+        }
+
+        try
+        {
+            Array.Sort(keys, values, 0, count, result.Comparer);
+            for (int i = 0; i < count; i++)
+            {
+                result[keys[i]] = values[i]; // ascending: an append; a duplicate overwrites in place and trips the Count check
+            }
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            // Array.Sort and the list's binary search wrap the comparer's failure (Comparer<object>.Default on mixed
+            // runtime types) in InvalidOperationException("Failed to compare two elements"): a data error, reported as one
+            throw new MessagePackSerializationException("Invalid SortedList payload: a key is not comparable with the others.", ex);
         }
         // a duplicate key collapsed into one slot: reject (cheapest possible detection)
         if (result.Count != count)

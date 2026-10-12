@@ -175,6 +175,55 @@ public class TypelessFormatterTests
         Assert.IsType<ArgumentException>(ex.InnerException, exactMatch: false);
     }
 
+    // v3's cross-runtime spelling swap (mscorlib <-> System.Private.CoreLib). On .NET the mscorlib facade already
+    // resolves a .NET Framework writer's names, so the swap itself is observable only with an identity the facade
+    // refuses: mscorlib with .NET's own Version/PublicKeyToken (verified null without the swap)
+    [Fact]
+    public void LoadAnyType_ReadsNetFrameworkSpelledNames()
+    {
+        var guid = Guid.Parse("01020304-0506-0708-090a-0b0c0d0e0f10");
+        const string Mscorlib = "mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+        var payload = BuildTypelessPayload("System.Guid, " + Mscorlib, MessagePackSerializer.Serialize(guid));
+        Assert.Equal(guid, Assert.IsType<Guid>(MessagePackSerializer.Deserialize<object?>(payload, options)));
+        var list = BuildTypelessPayload($"System.Collections.Generic.List`1[[System.Int32, {Mscorlib}]], {Mscorlib}", MessagePackSerializer.Serialize(new List<int> { 1, 2 }));
+        Assert.Equal([1, 2], Assert.IsType<List<int>>(MessagePackSerializer.Deserialize<object?>(list, options)));
+
+        Assert.Same(typeof(Guid), TypelessTypeLoader.LoadAnyType().LoadType("System.Guid, mscorlib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e"));
+    }
+
+    // v3 wrote an anonymous type in an object slot as the bare contractless map (its compiler-generated name is a
+    // per-compilation ordinal nobody else can load); v4 used to wrap it in ext 100 with that name, 300 bytes that only
+    // the identical build could read back
+    [Fact]
+    public void AnonymousType_WritesPlainMapLikeV3()
+    {
+        object value = new { Hoge = 100, Nano = "nanoanno" };
+        var bytes = MessagePackSerializer.Serialize<object?>(value, options);
+        Assert.Equal(V3::MessagePack.MessagePackSerializer.Typeless.Serialize(value), bytes); // 82 A4 Hoge 64 A4 Nano A8 nanoanno
+        Assert.Equal(0x82, bytes[0]);
+        Assert.Equal("""{"Hoge":100,"Nano":"nanoanno"}""", MessagePackSerializer.ConvertToJson(bytes));
+        Assert.Equal(bytes, MessagePackSerializer.Serialize<object?>(value, v3TypelessEquivalent)); // allowPrivate does not pull in the backing fields
+
+        // v3's read shape: anonymous types are not reconstructed, the map reads as a dictionary
+        var back = Assert.IsType<Dictionary<object, object?>>(MessagePackSerializer.Deserialize<object?>(bytes, options));
+        Assert.Equal((byte)100, back["Hoge"]);
+        Assert.Equal("nanoanno", back["Nano"]);
+        Assert.IsType<Dictionary<object, object>>(V3::MessagePack.MessagePackSerializer.Typeless.Deserialize(bytes));
+
+        Assert.Equal(new byte[] { 0x80 }, MessagePackSerializer.Serialize<object?>(new { }, options));
+    }
+
+    [Fact]
+    public void AnonymousType_InObjectMember_MatchesV3()
+    {
+        var holder = new ObjectHolder { Payload = new { X = 1 } };
+        var bytes = MessagePackSerializer.Serialize<object?>(holder, options);
+        Assert.Equal(V3::MessagePack.MessagePackSerializer.Typeless.Serialize(holder), bytes); // the outer ext keeps its name, the inner is 81 A1 X 01
+
+        Assert.IsType<Dictionary<object, object>>(Assert.IsType<ObjectHolder>(V3::MessagePack.MessagePackSerializer.Typeless.Deserialize(bytes)).Payload);
+        Assert.IsType<Dictionary<object, object?>>(Assert.IsType<ObjectHolder>(MessagePackSerializer.Deserialize<object?>(bytes, options)).Payload);
+    }
+
     [Fact]
     public void CrossCompatible_WithV3Typeless_BothDirections()
     {

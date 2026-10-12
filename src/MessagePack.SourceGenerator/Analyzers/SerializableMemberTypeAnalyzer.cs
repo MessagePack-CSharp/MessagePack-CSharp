@@ -396,10 +396,16 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
 
             // IMessagePackSurrogate implementations auto-register their targets through the generated factory,
             // so a target is serializable with no declaration of its own (same own-assembly scope as hand-written
-            // formatters: another assembly's surrogates declare coverage with [assembly: MessagePackKnownType])
+            // formatters); foreign-target surrogates of referenced assemblies are adopted below
             if (compilation.GetTypeByMetadataName("MessagePack.IMessagePackSurrogate`2") is { } surrogateInterface)
             {
                 HarvestSurrogateTargets(compilation.Assembly.GlobalNamespace, surrogateInterface, registry);
+                // and the foreign-target surrogates of referenced assemblies, which the generator adopts into this
+                // assembly's factory (ReferencedSurrogateScanner)
+                foreach (var foreign in ReferencedSurrogateScanner.Enumerate(compilation, CancellationToken.None))
+                {
+                    registry.surrogateTargets.Add(foreign.Target);
+                }
             }
 
             registry.HarvestAssemblyAttributes(compilation.Assembly);

@@ -21,8 +21,10 @@ static class AnalyzerTestHost
         {
             var file = Path.GetFileName(path);
             // the v3 oracle assemblies define the same MessagePack.* attribute names as
-            // the product and would make every probe source ambiguous (CS0433)
-            if (file is "MessagePackV3.dll" or "MessagePack.Annotations.dll" || !seen.Add(file))
+            // the product and would make every probe source ambiguous (CS0433); the foreign-surrogate fixtures
+            // would be adopted into every probe's generated factory (ReferencedSurrogateScanner), so probes that
+            // expect no generated output stay clean without them
+            if (file is "MessagePackV3.dll" or "MessagePack.Annotations.dll" or "MessagePack.Tests.ForeignSurrogate.dll" or "MessagePack.Tests.ForeignSurrogateTarget.dll" || !seen.Add(file))
             {
                 continue;
             }

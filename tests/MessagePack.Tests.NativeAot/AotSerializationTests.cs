@@ -291,6 +291,20 @@ public class AotSerializationTests
         Assert.Equal(long.MaxValue, composedBack[0].Y);
     }
 
+    [Fact]
+    public void NullableBuiltInScalarRoots()
+    {
+        // a root `int?` (a hub-method argument) is nobody's member, so no harvest covers it: BuiltIn closes the
+        // nullable formatters over its scalar set itself, without MakeGenericType
+        var aot = MessagePackSerializerOptions.DefaultAot;
+        Assert.Equal(42, V4.Deserialize<int?>(V4.Serialize<int?>(42, aot), aot));
+        Assert.Null(V4.Deserialize<int?>(V4.Serialize<int?>(null, aot), aot));
+        var when = new DateTime(2026, 10, 12, 1, 2, 3, DateTimeKind.Utc);
+        Assert.Equal(when, V4.Deserialize<DateTime?>(V4.Serialize<DateTime?>(when, aot), aot));
+        Assert.Equal(1.25m, V4.Deserialize<decimal?>(V4.Serialize<decimal?>(1.25m, aot), aot));
+        Assert.Null(V4.Deserialize<Guid?>(V4.Serialize<Guid?>(null, aot), aot));
+    }
+
     // circular-reference envelope + back-reference under ILC: the tracking tables and
     // ResolveCircularReference<T> are reflection-free, so the whole path must publish clean
     [Fact]

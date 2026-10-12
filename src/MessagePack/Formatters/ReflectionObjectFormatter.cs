@@ -28,6 +28,7 @@ static class MessagePackAttributeNames
     public const string DataContract = "System.Runtime.Serialization.DataContractAttribute";
     public const string DataMember = "System.Runtime.Serialization.DataMemberAttribute";
     public const string IgnoreDataMember = "System.Runtime.Serialization.IgnoreDataMemberAttribute";
+    public const string CallbackReceiver = "MessagePack.IMessagePackSerializationCallbackReceiver";
 }
 
 // A plain generic class driven by a member table built once in Initialize. Reflection is distilled into typed
@@ -75,6 +76,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     bool allowPrivate;
 
     static readonly bool IsCallbackReceiver = typeof(IMessagePackSerializationCallbackReceiver).IsAssignableFrom(typeof(T));
+
+    // A v3-built assembly still bound to MessagePack.Annotations 3.x implements a different Type with the same full
+    // name. The attribute contract above tolerates that by name, so the callback contract does too: the legacy
+    // interface's methods, invoked through the interface slot (a `new`-hidden method on T does not win).
+    static readonly MethodInfo? LegacyOnBeforeSerialize = IsCallbackReceiver ? null : FindLegacyCallback("OnBeforeSerialize");
+    static readonly MethodInfo? LegacyOnAfterDeserialize = IsCallbackReceiver ? null : FindLegacyCallback("OnAfterDeserialize");
 
     MemberSlot[] slots = null!;
     byte[][] encodedKeys = null!; // UTF-8 wire keys, parallel to slots (map modes only)
@@ -226,8 +233,11 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             foreach (var field in level.GetFields(memberFlags))
             {
                 // compiler-generated fields are auto-property backing fields (and friends): the property slot already
-                // owns that data. [NonSerialized] opts a field out in every mode (v3's shared rule)
+                // owns that data. An anonymous type's backing fields (<X>i__Field) carry no attribute, only the
+                // unspeakable name ('<' in C#, '$' in VB), so the name is checked too. [NonSerialized] opts a field out
+                // in every mode (v3's shared rule)
                 if (field.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false) ||
+                    field.Name.Length > 0 && field.Name[0] is '<' or '$' ||
                     field.IsDefined(typeof(NonSerializedAttribute), inherit: true))
                 {
                     continue;
@@ -1031,6 +1041,10 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         {
             InvokeOnBeforeSerialize(ref value);
         }
+        else if (LegacyOnBeforeSerialize is { } legacy)
+        {
+            InvokeLegacyCallback(ref value, legacy);
+        }
 
         var memberSlots = slots;
         state.Enter();
@@ -1128,6 +1142,10 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         {
             InvokeOnAfterDeserialize(ref value);
         }
+        else if (LegacyOnAfterDeserialize is { } legacy)
+        {
+            InvokeLegacyCallback(ref value, legacy);
+        }
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)] // keep the boxed argument-state machinery out of the populate hot path
@@ -1190,6 +1208,10 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         {
             InvokeOnAfterDeserialize(ref value);
         }
+        else if (LegacyOnAfterDeserialize is { } legacy)
+        {
+            InvokeLegacyCallback(ref value, legacy);
+        }
     }
 
     // Box round-trip so explicit interface implementations stay reachable and struct mutations land back in the value
@@ -1206,6 +1228,40 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     {
         object boxed = value!;
         ((IMessagePackSerializationCallbackReceiver)boxed).OnAfterDeserialize();
+        value = (T)boxed;
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation, same as the member discovery")]
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "same gate; the interface is one T declares, so it is kept with T")]
+    static MethodInfo? FindLegacyCallback(string name)
+    {
+        foreach (var implemented in typeof(T).GetInterfaces())
+        {
+            if (implemented.FullName == MessagePackAttributeNames.CallbackReceiver)
+            {
+                return implemented.GetMethod(name, Type.EmptyTypes);
+            }
+        }
+        return null;
+    }
+
+    // the legacy interface's slot, through the same box round-trip as the typed calls above; the callback's own
+    // exception surfaces as it would from the typed call, not wrapped in TargetInvocationException
+    static void InvokeLegacyCallback(ref T value, MethodInfo callback)
+    {
+        object boxed = value!;
+#if NETSTANDARD2_0
+        try
+        {
+            callback.Invoke(boxed, null);
+        }
+        catch (TargetInvocationException ex) when (ex.InnerException is { } inner)
+        {
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(inner).Throw();
+        }
+#else
+        callback.Invoke(boxed, BindingFlags.DoNotWrapExceptions, null, null, null);
+#endif
         value = (T)boxed;
     }
 

@@ -112,15 +112,17 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
             state.Exit();
 
             var segments = staging.GetWrittenSegments();
-            var name = serializer.EncodedTypeName;
-            var bodyLength = name.Length + segments.Length;
-            if (bodyLength > int.MaxValue)
+            if (serializer.EncodedTypeName is { } name)
             {
-                throw new MessagePackSerializationException($"Typeless body for '{type.FullName}' exceeds the ext32 length limit.");
-            }
+                var bodyLength = name.Length + segments.Length;
+                if (bodyLength > int.MaxValue)
+                {
+                    throw new MessagePackSerializationException($"Typeless body for '{type.FullName}' exceeds the ext32 length limit.");
+                }
 
-            buffer.Advance(UnsafeWriteExtHeader(ref buffer.GetReference(MaxExtHeaderLength), ThisLibraryExtensionTypeCodes.TypelessFormatter, (int)bodyLength));
-            buffer.Advance(UnsafeWriteRaw(ref buffer.GetReference(name.Length), name));
+                buffer.Advance(UnsafeWriteExtHeader(ref buffer.GetReference(MaxExtHeaderLength), ThisLibraryExtensionTypeCodes.TypelessFormatter, (int)bodyLength));
+                buffer.Advance(UnsafeWriteRaw(ref buffer.GetReference(name.Length), name));
+            }
             while (segments.TryGetNext(out var segment))
             {
                 buffer.Advance(UnsafeWriteRaw(ref buffer.GetReference(segment.Length), segment));
@@ -189,8 +191,11 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
     [UnconditionalSuppressMessage("Trimming", "IL2057", Justification = "the omitAssemblyVersion probe only verifies that the shortened spelling of an already-loaded type still resolves; gated behind TypelessFormatterFactory's RequiresUnreferencedCode annotation")]
     TypelessSerializer CreateSerializerForType(Type type)
     {
-        var typeName = type.AssemblyQualifiedName ?? type.FullName!;
-        if (omitAssemblyVersion)
+        // v3 wrote an anonymous type as the bare contractless map, no ext and no name: the name is a per-compilation
+        // ordinal plus the writer's assembly identity, which nothing but the identical build can load (not v3, not
+        // another app, not this project after another anonymous type moved it). Read back as a map, as v3 did.
+        var typeName = IsAnonymous(type) ? null : type.AssemblyQualifiedName ?? type.FullName!;
+        if (omitAssemblyVersion && typeName is not null)
         {
             // v3 rule: use the shortened spelling only when it still resolves
             var shortened = TypelessTypeNames.SubtractFullNameRegex.Replace(typeName, string.Empty);
@@ -209,6 +214,15 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
         // deserialize without those checks (a shared resolver makes the read-side policy depend on cache state)
         return serializersByType.GetOrAdd(type, serializer);
     }
+
+    // v3's ReflectionExtensions.IsAnonymous: the C# and VB compiler-generated anonymous types
+    static bool IsAnonymous(Type type) =>
+        type.Namespace is null
+        && type.IsSealed
+        && (type.Name.StartsWith("<>f__AnonymousType", StringComparison.Ordinal)
+            || type.Name.StartsWith("<>__AnonType", StringComparison.Ordinal)
+            || type.Name.StartsWith("VB$AnonymousType_", StringComparison.Ordinal))
+        && type.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false);
 
     // Bound on payload-spelling cache entries. Type.GetType is lenient about whitespace and
     // version/culture spelling, so distinct spellings of ONE type are effectively unbounded
@@ -276,7 +290,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
         }
     }
 
-    TypelessSerializer<T> CreateSerializer<T>(string typeName)
+    TypelessSerializer<T> CreateSerializer<T>(string? typeName)
     {
         return new TypelessSerializer<T>(typeName, resolver);
     }
@@ -300,11 +314,16 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
 
     abstract class TypelessSerializer
     {
-        // the full str token (header + UTF-8 name), ready for raw emission
-        public readonly byte[] EncodedTypeName;
+        // the full str token (header + UTF-8 name), ready for raw emission; null for a type that travels without the
+        // ext envelope (an anonymous type, see IsAnonymous)
+        public readonly byte[]? EncodedTypeName;
 
-        protected TypelessSerializer(string typeName)
+        protected TypelessSerializer(string? typeName)
         {
+            if (typeName is null)
+            {
+                return;
+            }
             var utf8 = Encoding.UTF8.GetBytes(typeName);
             var token = new byte[MaxStrHeaderLength + utf8.Length];
             TryWriteString(token, utf8, out var written);
@@ -322,7 +341,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
         // side then runs writeFormatter's pair over a copy of the value, see DeserializeCompatible
         readonly IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>? readFormatter;
 
-        public TypelessSerializer(string typeName, MessagePackFormatterResolver resolver)
+        public TypelessSerializer(string? typeName, MessagePackFormatterResolver resolver)
             : base(typeName)
         {
             writeFormatter = resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>();
