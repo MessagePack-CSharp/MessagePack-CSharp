@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -44,12 +45,19 @@ namespace MessagePack
 
         private static readonly SipHash Hash = new();
 
-        private readonly ObjectFallbackEqualityComparer objectFallbackEqualityComparer;
+        private readonly IEqualityComparer<object> objectFallbackEqualityComparer;
 
         private MessagePackSecurity()
         {
-            this.objectFallbackEqualityComparer = new ObjectFallbackEqualityComparer(this);
+            this.objectFallbackEqualityComparer = UseNonReflectiveObjectComparer
+                ? new NonReflectiveObjectEqualityComparer(this)
+                : new ObjectFallbackEqualityComparer(this);
         }
+
+#if NET9_0_OR_GREATER
+        [FeatureSwitchDefinition("MessagePack.Security.UseNonReflectiveObjectComparer")]
+#endif
+        private static bool UseNonReflectiveObjectComparer => AppContext.TryGetSwitch("MessagePack.Security.UseNonReflectiveObjectComparer", out bool enabled) && enabled;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackSecurity"/> class
@@ -250,6 +258,53 @@ namespace MessagePack
             throw new TypeAccessException($"No hash-resistant equality comparer available for type: {typeof(T)}");
         }
 
+        /// <summary>Gets a collision-resistant comparer for opt-in object hashing.</summary>
+        protected virtual IEqualityComparer GetHashCollisionResistantEqualityComparer(Type type)
+        {
+            if (type is null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
+            return
+                type == typeof(bool) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<bool>() :
+                type == typeof(char) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<char>() :
+                type == typeof(sbyte) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<sbyte>() :
+                type == typeof(byte) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<byte>() :
+                type == typeof(short) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<short>() :
+                type == typeof(ushort) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<ushort>() :
+                type == typeof(int) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<int>() :
+                type == typeof(uint) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<uint>() :
+                type == typeof(long) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<long>() :
+                type == typeof(ulong) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<ulong>() :
+                type == typeof(Guid) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<Guid>() :
+                type == typeof(float) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<float>() :
+                type == typeof(double) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<double>() :
+                type == typeof(string) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<string>() :
+                type == typeof(DateTime) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<DateTime>() :
+                type == typeof(DateTimeOffset) ? (IEqualityComparer)this.GetHashCollisionResistantEqualityComparer<DateTimeOffset>() :
+                type == typeof(object) ? (IEqualityComparer)this.objectFallbackEqualityComparer :
+                type.IsEnum ? NonReflectiveEnumEqualityComparer.Instance :
+                throw new TypeAccessException($"No hash-resistant equality comparer available for type: {type}");
+        }
+
+        private static int GetEnumHashCode(Enum value)
+        {
+            // Hash the full underlying value; Enum.GetHashCode() loses bits for 64-bit enums.
+            return value.GetTypeCode() switch
+            {
+                TypeCode.SByte => SecureHash(Convert.ToSByte(value)),
+                TypeCode.Byte => SecureHash(Convert.ToByte(value)),
+                TypeCode.Int16 => SecureHash(Convert.ToInt16(value)),
+                TypeCode.UInt16 => SecureHash(Convert.ToUInt16(value)),
+                TypeCode.Int32 => SecureHash(Convert.ToInt32(value)),
+                TypeCode.UInt32 => SecureHash(Convert.ToUInt32(value)),
+                TypeCode.Int64 => SecureHash(Convert.ToInt64(value)),
+                TypeCode.UInt64 => SecureHash(Convert.ToUInt64(value)),
+                _ => throw new TypeAccessException($"No hash-resistant equality comparer available for type: {value.GetType()}"),
+            };
+        }
+
         /// <summary>
         /// Checks the depth of the deserializing graph and increments it by 1.
         /// </summary>
@@ -318,6 +373,49 @@ namespace MessagePack
             internal static readonly CollisionResistantHasherUnmanaged<T> Instance = new();
 
             public override int GetHashCode(T value) => SecureHash(value);
+        }
+
+        private sealed class NonReflectiveObjectEqualityComparer : IEqualityComparer<object>, IEqualityComparer
+        {
+            private readonly MessagePackSecurity security;
+            private readonly ThreadsafeTypeKeyHashTable<IEqualityComparer> equalityComparerCache = new ThreadsafeTypeKeyHashTable<IEqualityComparer>();
+
+            internal NonReflectiveObjectEqualityComparer(MessagePackSecurity security) => this.security = security;
+
+            bool IEqualityComparer<object>.Equals(object? x, object? y) => EqualityComparer<object?>.Default.Equals(x, y);
+
+            bool IEqualityComparer.Equals(object? x, object? y) => ((IEqualityComparer)EqualityComparer<object>.Default).Equals(x, y);
+
+            public int GetHashCode(object value)
+            {
+                if (value is null)
+                {
+                    return 0;
+                }
+
+                Type type = value.GetType();
+                if (type == typeof(object))
+                {
+                    return value.GetHashCode();
+                }
+
+                if (!this.equalityComparerCache.TryGetValue(type, out IEqualityComparer? comparer))
+                {
+                    comparer = this.security.GetHashCollisionResistantEqualityComparer(type);
+                    this.equalityComparerCache.TryAdd(type, comparer);
+                }
+
+                return comparer.GetHashCode(value);
+            }
+        }
+
+        private sealed class NonReflectiveEnumEqualityComparer : IEqualityComparer
+        {
+            internal static readonly NonReflectiveEnumEqualityComparer Instance = new();
+
+            bool IEqualityComparer.Equals(object? x, object? y) => object.Equals(x, y);
+
+            public int GetHashCode(object value) => GetEnumHashCode((Enum)value);
         }
 
         /// <summary>

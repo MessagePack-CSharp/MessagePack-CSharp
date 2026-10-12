@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <SecurityTestTargetFramework Condition="'$(SecurityTestTargetFramework)' == ''">net9.0</SecurityTestTargetFramework>
+    <TargetFramework>$(SecurityTestTargetFramework)</TargetFramework>
+    <IsTestProject>false</IsTestProject>
+    <PublishAot>true</PublishAot>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(NonReflectiveSecurity)' == 'true'">
+    <RuntimeHostConfigurationOption Include="MessagePack.Security.UseNonReflectiveObjectComparer" Value="true" Trim="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/MessagePack/MessagePack.csproj" />
+  </ItemGroup>
+</Project>
