@@ -15,14 +15,54 @@ namespace MessagePack;
 public sealed class SourceGeneratedFormatterFactory : MessagePackFormatterFactory
 {
     /// <summary>Shared instance, which generated code registers into.</summary>
-    public static readonly SourceGeneratedFormatterFactory Instance = new SourceGeneratedFormatterFactory();
+    public static readonly SourceGeneratedFormatterFactory Instance = new SourceGeneratedFormatterFactory(new Registrations(), closeOpenGenerics: true);
 
-    ConcurrentDictionary<Type, MessagePackFormatterFactory> factories = new ConcurrentDictionary<Type, MessagePackFormatterFactory>();
+    /// <summary>
+    /// The same registrations as <see cref="Instance"/> without dynamic closing: a closed instantiation of a generic
+    /// <see cref="MessagePackObjectAttribute"/> type is served only when the generator constructed it statically (reached
+    /// from a member graph, or declared with <see cref="MessagePackSerializableAttribute"/>). This is what
+    /// <see cref="MessagePackFormatterFactory.DefaultAot"/> composes, so a JIT run of the AOT chain fails exactly where
+    /// the Native AOT build would, instead of closing the formatter with <see cref="Type.MakeGenericType"/> and passing.
+    /// </summary>
+    public static readonly SourceGeneratedFormatterFactory StaticInstance = new SourceGeneratedFormatterFactory(Instance.registrations, closeOpenGenerics: false);
+
+    // the two instances share one table: generated module initializers register into Instance, StaticInstance reads
+    sealed class Registrations
+    {
+        public readonly ConcurrentDictionary<Type, MessagePackFormatterFactory> Factories = new();
+        // open [MessagePackObject] definition -> open generated formatter definition (TWriteBuffer, TReadBuffer, then
+        // the value type's own parameters), closed at run time for instantiations the generator never saw
+        public readonly ConcurrentDictionary<Type, Type> OpenGenericFormatters = new();
+    }
+
+    readonly Registrations registrations;
+    readonly bool closeOpenGenerics;
 
     /// <summary>Creates an empty registry. Chains use <see cref="Instance"/>, which generated code populates.</summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public SourceGeneratedFormatterFactory()
+        : this(new Registrations(), closeOpenGenerics: true)
     {
+    }
+
+    SourceGeneratedFormatterFactory(Registrations registrations, bool closeOpenGenerics)
+    {
+        this.registrations = registrations;
+        this.closeOpenGenerics = closeOpenGenerics;
+    }
+
+    ConcurrentDictionary<Type, MessagePackFormatterFactory> factories => registrations.Factories;
+
+    /// <summary>
+    /// Registers the generated formatter definition for an open generic <see cref="MessagePackObjectAttribute"/> type:
+    /// <paramref name="openFormatterType"/> takes the buffer pair and then the value type's own type parameters. An
+    /// instantiation the generator did not construct statically is closed here at run time, by <see cref="Instance"/>
+    /// only (<see cref="StaticInstance"/> declines it). Called by generated module initializers.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public void RegisterOpenGeneric(Type openValueType, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type openFormatterType)
+    {
+        registrations.OpenGenericFormatters[openValueType] = openFormatterType;
     }
 
     /// <summary>
@@ -74,7 +114,7 @@ public sealed class SourceGeneratedFormatterFactory : MessagePackFormatterFactor
     {
         return TryFindFactory(type, out var factory)
             ? factory.CreateFormatter<TWriteBuffer, TReadBuffer>(type)
-            : null;
+            : CloseOpenGeneric(type, typeof(TWriteBuffer), typeof(TReadBuffer));
     }
 #endif
 
@@ -83,7 +123,46 @@ public sealed class SourceGeneratedFormatterFactory : MessagePackFormatterFactor
     {
         return TryFindFactory(valueType, out var factory)
             ? factory.CreateFormatter(writeBufferType, readBufferType, valueType)
-            : null;
+            : CloseOpenGeneric(valueType, writeBufferType, readBufferType);
+    }
+
+    // The one place generated formatters are closed dynamically. It used to live in every generated factory behind
+    // RuntimeFeature.IsDynamicCodeSupported, which told Native AOT apart from the JIT but not a JIT run of the AOT
+    // chain from a JIT run of the Default chain: DefaultAot passed every test on the JIT and failed in the published
+    // app. Here the chain decides (closeOpenGenerics), and the trimmer sees RegisterOpenGeneric's constructor
+    // requirement instead of a suppression.
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "only Instance closes; Default and DotNetOptimized, which compose it, carry RequiresDynamicCode, DefaultAot composes StaticInstance, and a Native AOT runtime returns null through the IsDynamicCodeSupported guard")]
+    [UnconditionalSuppressMessage("Trimming", "IL2055", Justification = "the open formatter definition arrives through RegisterOpenGeneric, whose parameter requires the public parameterless constructor; its type arguments are the value type's own arguments, rooted by the caller")]
+    object? CloseOpenGeneric(Type type, Type writeBufferType, Type readBufferType)
+    {
+        if (!closeOpenGenerics || !type.IsConstructedGenericType
+            || !registrations.OpenGenericFormatters.TryGetValue(type.GetGenericTypeDefinition(), out var openFormatter))
+        {
+            return null;
+        }
+#if NET9_0_OR_GREATER
+        if (!RuntimeFeature.IsDynamicCodeSupported)
+        {
+            return null; // Native AOT: the resolver's formatter-not-found names the instantiation to declare
+        }
+#endif
+        var valueArguments = type.GetGenericArguments();
+        var arguments = new Type[valueArguments.Length + 2];
+        arguments[0] = writeBufferType;
+        arguments[1] = readBufferType;
+        valueArguments.CopyTo(arguments, 2);
+        Type closed;
+        try
+        {
+            closed = openFormatter.MakeGenericType(arguments);
+        }
+        catch (Exception ex) when (ex is TypeLoadException or ArgumentException or NotSupportedException || ex.GetType().Name == "ExecutionEngineException")
+        {
+            // ref struct buffer arguments on a runtime that cannot instantiate them, a constraint the value arguments
+            // do not satisfy, an IL2CPP build without this instantiation: not served, the resolver reports not-found
+            return null;
+        }
+        return Activator.CreateInstance(closed);
     }
 
     bool TryFindFactory(Type type, [NotNullWhen(true)] out MessagePackFormatterFactory? factory)

@@ -49,9 +49,13 @@ public class CrossAssemblyRegistrationTests
 
     static MessagePackFormatterFactory? Registered(SourceGeneratedFormatterFactory registry, Type type)
     {
-        var factories = (System.Collections.Concurrent.ConcurrentDictionary<Type, MessagePackFormatterFactory>)typeof(SourceGeneratedFormatterFactory)
-            .GetField("factories", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+        // the table lives on the Registrations holder the Instance / StaticInstance views share
+        var registrations = typeof(SourceGeneratedFormatterFactory)
+            .GetField("registrations", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(registry)!;
+        var factories = (System.Collections.Concurrent.ConcurrentDictionary<Type, MessagePackFormatterFactory>)registrations.GetType()
+            .GetField("Factories", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public)!
+            .GetValue(registrations)!;
         return factories.TryGetValue(type, out var factory) ? factory : null;
     }
 

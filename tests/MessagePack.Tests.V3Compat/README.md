@@ -26,6 +26,7 @@ dotnet run --project tests/MessagePack.Tests.V3Compat -c Release
 **意図的な非互換は `[Fact(Skip = "v4 intentional: ...")]` で明示**(理由は各 Skip 文字列に記載)。主なもの:
 
 - ExpandoObject / System.Type: 既定チェーンから外れた opt-in factory。
+- `MessagePackObjectAttribute` は v4 で sealed(派生属性はソース生成器が拾わないので黙って未生成になる穴を塞ぐ)。DynamicObjectResolverDerivedAttributeInheritanceTest は `<Compile Remove>`。Annotations 3.x から派生させた v3 製 DLL は reflection tier の基底チェーン照合で引き続き認識。
 - boxed primitive は forced-width 書き込みで .NET 型を保存(v3 の compact 書き込みは読み戻しで幅が縮む)。
 - ConvertToJson は diagnostic view(ext の `{"$extension"}` 形式、DateTime の ISO-8601 トリム)。
 - v3 の可変 options オブジェクトモデル(LoadType / ThrowIfDeserializingTypeIsDisallowed / WithPool)は sealed record の v4 に対応物がない。

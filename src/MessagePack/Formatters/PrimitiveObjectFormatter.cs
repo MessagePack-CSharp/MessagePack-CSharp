@@ -1,6 +1,8 @@
 namespace MessagePack.Formatters;
 
-// MsgPack104: this formatter is a self-contained mini-protocol dispatching on runtime/wire type (v3 parity); its string/DateTime handling is part of that protocol and deliberately independent of resolver customization.
+// MsgPack104: this formatter is a self-contained mini-protocol dispatching on runtime/wire type; its string/DateTime
+// handling is part of that protocol and deliberately independent of resolver customization (README notes that
+// StringInterningFormatterFactory does not reach object slots; v3 did route these strings through its resolver).
 #pragma warning disable MsgPack104
 
 /// <summary>

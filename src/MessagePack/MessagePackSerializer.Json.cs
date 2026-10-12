@@ -70,13 +70,18 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="ConvertFromJson(string)"/>
     public static byte[] ConvertFromJson(ReadOnlySpan<char> json)
     {
-        return ConvertFromParsedJson(JsonElement.Parse(json));
+        // JsonDocument rather than JsonElement.Parse: the latter is .NET 10's, and the only reason the net9.0 build
+        // referenced the System.Text.Json package (replacing the app's in-box one). A diagnostic entry point can afford
+        // the string copy.
+        using var document = JsonDocument.Parse(json.ToString());
+        return ConvertFromParsedJson(document.RootElement);
     }
 
     /// <inheritdoc cref="ConvertFromJson(string)"/>
     public static byte[] ConvertFromJson(ReadOnlySpan<byte> utf8Json)
     {
-        return ConvertFromParsedJson(JsonElement.Parse(utf8Json));
+        using var document = JsonDocument.Parse(utf8Json.ToArray());
+        return ConvertFromParsedJson(document.RootElement);
     }
 
     static byte[] ConvertFromParsedJson(JsonElement root)

@@ -136,9 +136,9 @@ public class RequiredAndNullableValidationTests
     public void RequiredModifier_Contractless_MissingKeyThrows()
     {
         var contractless = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
-            [BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance, new ReflectionFormatterFactory()]));
+            [BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance, new ReflectionFormatterFactory(annotatedOnly: false)]));
         var lenient = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
-            [BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance, new ReflectionFormatterFactory()]) { ValidateRequiredMembers = false });
+            [BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance, new ReflectionFormatterFactory(annotatedOnly: false)]) { ValidateRequiredMembers = false });
 
         var old = V4.Serialize(new ContractlessReqPocoV0 { Id = 3 }, contractless);
         var ex = Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<ContractlessReqPoco>(old, contractless));

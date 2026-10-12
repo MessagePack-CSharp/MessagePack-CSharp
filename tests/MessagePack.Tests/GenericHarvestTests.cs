@@ -10,7 +10,8 @@ namespace MessagePack.Tests;
 // [MessagePackObject] types found inside serialized member types get static closed
 // constructions in the generated factory — the Native AOT route (MakeGenericType cannot
 // close over the ref struct buffer arguments there), and an Activator-free fast path on
-// CoreCLR. MakeGenericType stays as the CoreCLR fallback for unharvested instantiations.
+// CoreCLR. Unharvested instantiations are closed at run time by SourceGeneratedFormatterFactory.Instance (the
+// chains that allow dynamic code), from the open formatter definition the factory registers.
 public class GenericHarvestTests
 {
     static (GeneratorDriverRunResult Result, Compilation Updated) RunGenerator(string source)
@@ -48,8 +49,9 @@ public class GenericHarvestTests
         // four closed instantiations: Box<int>, Box<string>, Box<double> (harvested from
         // inside the nested argument), and Box<Box<double>> itself
         Assert.Equal(4, Regex.Matches(factory, @"if \(type == typeof\(global::Box<(?!>)").Count);
-        // the open MakeGenericType fallback stays for unharvested instantiations
-        Assert.Contains("GetGenericTypeDefinition() == typeof(global::Box<>)", factory);
+        // unharvested instantiations: the open formatter definition is registered for the registry to close at run time
+        Assert.Contains("RegisterOpenGeneric(typeof(global::Box<>), typeof(", factory);
+        Assert.DoesNotContain("MakeGenericType", factory);
         Assert.Empty(updated.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error));
     }
 

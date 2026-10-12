@@ -324,7 +324,7 @@ public class TypelessFormatterTests
                 SourceGeneratedFormatterFactory.Instance,
                 BuiltInFormatterFactory.Instance,
                 GenericFormatterFactory.Instance,
-                new ReflectionFormatterFactory()),
+                new ReflectionFormatterFactory(annotatedOnly: false)),
         ]));
 
         // allowed type: round-trips
@@ -347,7 +347,7 @@ public class TypelessFormatterTests
                 SourceGeneratedFormatterFactory.Instance,
                 BuiltInFormatterFactory.Instance,
                 GenericFormatterFactory.Instance,
-                new ReflectionFormatterFactory()),
+                new ReflectionFormatterFactory(annotatedOnly: false)),
         ]));
 
         // listed type: round-trips
@@ -372,7 +372,7 @@ public class TypelessFormatterTests
                 SourceGeneratedFormatterFactory.Instance,
                 BuiltInFormatterFactory.Instance,
                 GenericFormatterFactory.Instance,
-                new ReflectionFormatterFactory()),
+                new ReflectionFormatterFactory(annotatedOnly: false)),
         ]));
 
         var written = MessagePackSerializer.Serialize<object?>(new ObjectHolder(), allowed);
@@ -390,7 +390,7 @@ public class TypelessFormatterTests
                 SourceGeneratedFormatterFactory.Instance,
                 BuiltInFormatterFactory.Instance,
                 GenericFormatterFactory.Instance,
-                new ReflectionFormatterFactory()),
+                new ReflectionFormatterFactory(annotatedOnly: false)),
         ]));
         var inner = MessagePackSerializer.Serialize(new TypelessPerson { Age = 9 },
             new MessagePackSerializerOptions(new MessagePackFormatterResolver([MessagePackFormatterFactory.Default.WithContractless()])));
@@ -421,7 +421,7 @@ public class TypelessFormatterTests
                 SourceGeneratedFormatterFactory.Instance,
                 BuiltInFormatterFactory.Instance,
                 GenericFormatterFactory.Instance,
-                new ReflectionFormatterFactory()),
+                new ReflectionFormatterFactory(annotatedOnly: false)),
         ]));
         var v3OmitOptions = V3::MessagePack.Resolvers.TypelessContractlessStandardResolver.Options.WithOmitAssemblyVersion(true);
         var value = new TypelessPerson { Age = 4, Name = "omit" };
@@ -455,7 +455,7 @@ public class TypelessFormatterTests
                 SourceGeneratedFormatterFactory.Instance,
                 BuiltInFormatterFactory.Instance,
                 GenericFormatterFactory.Instance,
-                new ReflectionFormatterFactory()),
+                new ReflectionFormatterFactory(annotatedOnly: false)),
         ]));
         Assert.Equal(8, Assert.IsType<TypelessPerson>(MessagePackSerializer.Deserialize<object?>(payload, tolerant)).Age);
     }
@@ -484,7 +484,7 @@ public class TypelessFormatterTests
                 SourceGeneratedFormatterFactory.Instance,
                 BuiltInFormatterFactory.Instance,
                 GenericFormatterFactory.Instance,
-                new ReflectionFormatterFactory()),
+                new ReflectionFormatterFactory(annotatedOnly: false)),
         ]));
 
         var payload = BuildTypelessPayload("anything");
@@ -518,7 +518,7 @@ public class TypelessFormatterTests
                     SourceGeneratedFormatterFactory.Instance,
                     BuiltInFormatterFactory.Instance,
                     GenericFormatterFactory.Instance,
-                    new ReflectionFormatterFactory()),
+                    new ReflectionFormatterFactory(annotatedOnly: false)),
             ]));
 
             var payload = BuildTypelessPayload("anything");

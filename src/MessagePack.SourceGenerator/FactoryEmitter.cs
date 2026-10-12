@@ -35,9 +35,6 @@ static class FactoryEmitter
         var orderedAttributes = attributeModels
             .OrderBy(static m => m.FullTypeName, StringComparer.Ordinal)
             .ToArray();
-        var anyGeneric = ordered.Any(static m => m.OpenFormatterTypeOf.Length > 0)
-            || orderedUnions.Any(static m => m.OpenFormatterTypeOf.Length > 0);
-
         // harvested closed instantiations, joined against the open models that actually exist (a suppressed or invalid
         // definition never got a model, drop its harvest); nested (AllowPrivate)
         // formatters are skipped: their closed form lives inside the user's type and the MakeGenericType fallback still
@@ -145,51 +142,10 @@ static class FactoryEmitter
             {
                 writer.Line($"if (type == typeof({builtIn.ClosedTypeName})) return {builtIn.FormatterConstruction};");
             }
-            foreach (var model in ordered)
-            {
-                if (model.OpenFormatterTypeOf.Length > 0)
-                {
-                    writer.Line($"if (type.IsGenericType && !type.IsGenericTypeDefinition && type.GetGenericTypeDefinition() == typeof({model.OpenTypeOf})) return CreateGenericFormatter(typeof({model.OpenFormatterTypeOf}), typeof(TWriteBuffer), typeof(TReadBuffer), type);");
-                }
-            }
-            foreach (var model in orderedUnions)
-            {
-                if (model.OpenFormatterTypeOf.Length > 0)
-                {
-                    writer.Line($"if (type.IsGenericType && !type.IsGenericTypeDefinition && type.GetGenericTypeDefinition() == typeof({model.OpenTypeOf})) return CreateGenericFormatter(typeof({model.OpenFormatterTypeOf}), typeof(TWriteBuffer), typeof(TReadBuffer), type);");
-                }
-            }
+            // instantiations of an open generic that the harvest never saw are not closed here: this factory stays
+            // static (what an explicit AOT composition expects); the registry closes them at run time in the chains
+            // that allow dynamic code, from the RegisterOpenGeneric entry below
             writer.Line("return null;");
-        }
-
-        if (anyGeneric)
-        {
-            writer.Line();
-            writer.Line("#if NET5_0_OR_GREATER");
-            writer.Line("[global::System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(\"AOT\", \"IL3050\", Justification = \"guarded by RuntimeFeature.IsDynamicCodeSupported: Native AOT returns null (resolver not-found) instead of closing dynamically\")]");
-            writer.Line("[global::System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(\"Trimming\", \"IL2055\", Justification = \"the formatter definition and its type parameters are rooted by the typeof references at the call sites above\")]");
-            writer.Line("[global::System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(\"Trimming\", \"IL2067\", Justification = \"generated formatters always have a public parameterless constructor, rooted by the same typeof references\")]");
-            writer.Line("#endif");
-            writer.Line("static object? CreateGenericFormatter(global::System.Type formatterDefinition, global::System.Type writeBufferType, global::System.Type readBufferType, global::System.Type closedValueType)");
-            using (writer.OpenScope())
-            {
-                writer.Line("// Native AOT cannot close a generic over the byref-like buffer types");
-                writer.Line("// (MakeGenericType throws TypeLoadException for ref struct arguments);");
-                writer.Line("// declining here surfaces the resolver's actionable formatter-not-found");
-                writer.Line("// error instead of a reflection crash");
-                writer.Line("#if NET5_0_OR_GREATER"); // RuntimeFeature.IsDynamicCodeSupported is missing on netstandard2.0 and .NET Framework
-                using (writer.Block("if (!global::System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported)"))
-                {
-                    writer.Line("return null;");
-                }
-                writer.Line("#endif");
-                writer.Line("var valueArguments = closedValueType.GetGenericArguments();");
-                writer.Line("var arguments = new global::System.Type[valueArguments.Length + 2];");
-                writer.Line("arguments[0] = writeBufferType;");
-                writer.Line("arguments[1] = readBufferType;");
-                writer.Line("valueArguments.CopyTo(arguments, 2);");
-                writer.Line("return global::System.Activator.CreateInstance(formatterDefinition.MakeGenericType(arguments));");
-            }
         }
 
         writer.Line();
@@ -231,17 +187,19 @@ static class FactoryEmitter
                 {
                     writer.Line($"SourceGeneratedFormatterFactory.Instance.Register<{surrogate.TargetTypeName}>(GeneratedMessagePackFormatterFactory.Instance);");
                 }
+                // an open generic registers its open formatter definition: the registry closes instantiations the
+                // harvest never saw, at run time and only in the chains that allow dynamic code (SourceGenerated.cs)
                 foreach (var model in ordered)
                 {
                     writer.Line(model.OpenFormatterTypeOf.Length == 0
                         ? $"SourceGeneratedFormatterFactory.Instance.Register<{model.FullTypeName}>(GeneratedMessagePackFormatterFactory.Instance);"
-                        : $"SourceGeneratedFormatterFactory.Instance.Register(typeof({model.OpenTypeOf}), GeneratedMessagePackFormatterFactory.Instance);");
+                        : $"SourceGeneratedFormatterFactory.Instance.RegisterOpenGeneric(typeof({model.OpenTypeOf}), typeof({model.OpenFormatterTypeOf}));");
                 }
                 foreach (var model in orderedUnions)
                 {
                     writer.Line(model.OpenFormatterTypeOf.Length == 0
                         ? $"SourceGeneratedFormatterFactory.Instance.Register<{model.FullTypeName}>(GeneratedMessagePackFormatterFactory.Instance);"
-                        : $"SourceGeneratedFormatterFactory.Instance.Register(typeof({model.OpenTypeOf}), GeneratedMessagePackFormatterFactory.Instance);");
+                        : $"SourceGeneratedFormatterFactory.Instance.RegisterOpenGeneric(typeof({model.OpenTypeOf}), typeof({model.OpenFormatterTypeOf}));");
                 }
                 // harvested closed forms are incidental defaults: they must not displace a declaration (surrogate,
                 // attribute) another assembly registers for the same type

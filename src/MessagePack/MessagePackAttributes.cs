@@ -5,7 +5,7 @@ namespace MessagePack;
 /// On an interface or abstract class, combine it with <see cref="UnionTagAttribute"/> to declare a polymorphic base.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface, AllowMultiple = false, Inherited = true)]
-public class MessagePackObjectAttribute : Attribute
+public sealed class MessagePackObjectAttribute : Attribute
 {
     /// <summary>Whether members are written as a map keyed by their names instead of an array indexed by <see cref="KeyAttribute"/>.</summary>
     public bool KeyAsPropertyName { get; }

@@ -42,11 +42,15 @@ public abstract class MessagePackFormatterFactory
             new ReflectionFormatterFactory(annotatedOnly: true));
     }
 
-    /// <summary>Default chain for Native AOT and trimmed applications. Serves source-generated and built-in formatters only.</summary>
+    /// <summary>
+    /// Default chain for Native AOT and trimmed applications. Serves source-generated and built-in formatters only, and
+    /// never closes a generic formatter at run time (<see cref="SourceGeneratedFormatterFactory.StaticInstance"/>): an
+    /// instantiation the generator did not construct statically fails the same way on the JIT as in the published app.
+    /// </summary>
     public static MessagePackFormatterFactory DefaultAot
     {
         get => defaultAotInstance ??= Combine(
-            SourceGeneratedFormatterFactory.Instance,
+            SourceGeneratedFormatterFactory.StaticInstance,
             BuiltInFormatterFactory.Instance);
     }
 
@@ -72,7 +76,7 @@ public abstract class MessagePackFormatterFactory
     public static MessagePackFormatterFactory DotNetOptimizedAot
     {
         get => dotNetOptimizedAotInstance ??= Combine(
-            SourceGeneratedFormatterFactory.Instance,
+            SourceGeneratedFormatterFactory.StaticInstance,
             DotNetOptimizedFormatterFactory.Instance, // insert .NET Optimized before BuiltIn
             BuiltInFormatterFactory.Instance);
     }

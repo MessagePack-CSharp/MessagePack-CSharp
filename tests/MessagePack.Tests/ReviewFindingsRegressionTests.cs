@@ -342,17 +342,19 @@ public class ReviewFindingsRegressionTests
     }
 
     [Fact]
-    public void GenericFormatterFactory_GuardsTheDynamicCodeCheckByTargetFramework()
+    public void GenericFormatterFactory_LeavesDynamicClosingToTheRegistry()
     {
+        // the generated factory used to close unharvested instantiations itself behind RuntimeFeature.IsDynamicCodeSupported,
+        // which could not tell a JIT run of DefaultAot from Default; now it only registers the open formatter definition
         var text = Generate("""
             using MessagePack;
             namespace Probe;
             [MessagePackObject] public class Box<T> { [Key(0)] public T? Item { get; set; } }
             """);
-        var lines = text.Split('\n').Select(static l => l.Trim()).ToArray();
-        var guard = Array.FindIndex(lines, static l => l.Contains("RuntimeFeature.IsDynamicCodeSupported"));
-        Assert.True(guard > 0, "the generated factory has no dynamic-code guard");
-        Assert.Equal("#if NET5_0_OR_GREATER", lines[guard - 1]); // netstandard2.0 and .NET Framework lack the API
+        Assert.DoesNotContain("MakeGenericType", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("IsDynamicCodeSupported", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Activator", text, StringComparison.Ordinal);
+        Assert.Contains("SourceGeneratedFormatterFactory.Instance.RegisterOpenGeneric(typeof(global::Probe.Box<>), typeof(", text, StringComparison.Ordinal);
     }
 }
 

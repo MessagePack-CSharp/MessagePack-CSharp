@@ -33,10 +33,6 @@
 		<PackageReference Include="System.Collections.Immutable" Version="10.0.0" />
 		<PackageReference Include="System.Text.Json" Version="10.0.0" />
 	</ItemGroup>
-	<!-- ConvertFromJson uses JsonElement.Parse, which the in-box .NET 9 System.Text.Json does not have -->
-	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-		<PackageReference Include="System.Text.Json" Version="10.0.0" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="PolySharp" Version="1.16.0">

@@ -313,7 +313,7 @@ public class ReflectionObjectFormatterTests
         [
             BuiltInFormatterFactory.Instance,
             GenericFormatterFactory.Instance,
-            new ReflectionFormatterFactory(),
+            new ReflectionFormatterFactory(annotatedOnly: false),
         ]));
 
         var value = new GenIntKeyPoco { Id = 3, Name = "k" };

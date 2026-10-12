@@ -7,8 +7,8 @@ using V4 = MessagePack.MessagePackSerializer;
 namespace MessagePack.Tests;
 
 // Generic [MessagePackObject] types: the generator emits ONE open formatter (generic over
-// the value type's own parameters) and registers the open value-type definition; the
-// factory closes the formatter over the runtime type arguments via MakeGenericType.
+// the value type's own parameters) and registers its open definition; the registry
+// (SourceGeneratedFormatterFactory.Instance) closes it over the runtime type arguments.
 public class GeneratedGenericTests
 {
     static void AssertBytesAndRoundtrip<T>(T value)
@@ -43,9 +43,9 @@ public class GeneratedGenericTests
     [Fact]
     public void GeneratedRegistryServesClosedGenerics()
     {
-        // the open definition is registered; a closed type must resolve through it (and
+        // the open definition is registered; a closed type must resolve through the registry (and
         // NOT fall through to the reflection tail)
-        var formatter = MessagePack.Generated.GeneratedMessagePackFormatterFactory.Instance
+        var formatter = SourceGeneratedFormatterFactory.Instance
             .CreateFormatter<SerializerFoundation.CompatibleArrayPoolListWriteBuffer, SerializerFoundation.CompatibleReadOnlySequenceReadBuffer>(typeof(GenWrapper<int>));
         Assert.NotNull(formatter);
         Assert.Contains("GenWrapper", formatter!.GetType().Name);

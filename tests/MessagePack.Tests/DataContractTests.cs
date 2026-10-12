@@ -104,7 +104,7 @@ public class DataContractTests
         [
             BuiltInFormatterFactory.Instance,
             GenericFormatterFactory.Instance,
-            new ReflectionFormatterFactory(),
+            new ReflectionFormatterFactory(annotatedOnly: false),
         ]));
         // {"A":1}: v3's DynamicContractlessObjectResolver honored [IgnoreMember] and
         // [IgnoreDataMember] (oracle-probed), and v4's contractless table now does too

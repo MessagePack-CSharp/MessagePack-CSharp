@@ -27,7 +27,7 @@ public sealed class ReflectionFormatterFactory : GenericFormatterFactoryBase
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
-    public ReflectionFormatterFactory(bool annotatedOnly = false, bool allowPrivate = false)
+    public ReflectionFormatterFactory(bool annotatedOnly, bool allowPrivate = false)
     {
         this.annotatedOnly = annotatedOnly;
         this.allowPrivate = allowPrivate;

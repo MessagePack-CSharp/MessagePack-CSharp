@@ -1231,7 +1231,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         value = (T)boxed;
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation, same as the member discovery")]
+    [UnconditionalSuppressMessage("Trimming", "IL2090", Justification = "gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation, same as the member discovery")]
     [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "same gate; the interface is one T declares, so it is kept with T")]
     static MethodInfo? FindLegacyCallback(string name)
     {

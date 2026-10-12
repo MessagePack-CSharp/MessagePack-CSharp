@@ -70,6 +70,10 @@
     <Compile Remove="MessagePackStreamReaderMapTests.cs" />
     <!-- v3 MessagePackSecurity object model (v4: hash-flooding resistance is a resolver flag, depth is MaxDepth) -->
     <Compile Remove="MessagePackSecurityTests.cs" />
+    <!-- derives its own attribute from MessagePackObjectAttribute, which v4 seals (the generator matches the exact
+         attribute class and would silently skip a derived one; v3-built DLLs with Annotations 3.x derivations still
+         reach the reflection tier through its base-chain walk) -->
+    <Compile Remove="DynamicObjectResolverDerivedAttributeInheritanceTest.cs" />
     <!-- v3 mutable-class MessagePackSerializerOptions object model (Clone/virtuals; v4 options are a sealed record) -->
     <Compile Remove="MessagePackSerializerOptionsTests.cs" />
     <!-- v3-style IMessagePackFormatter<T>/IFormatterResolver custom implementations (v4 formatter interface is buffer-generic) -->
