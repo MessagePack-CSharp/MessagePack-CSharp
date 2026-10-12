@@ -57,13 +57,21 @@ public struct SerializeState
         this.remainingDepth = maxDepth == 0 ? 0 : maxDepth + 1; // 0 is unlimited
     }
 
-    /// <summary>Enters one nesting level before calling another formatter. Throws when the depth limit is exceeded.</summary>
+    /// <summary>
+    /// Enters one nesting level before calling another formatter.
+    /// Throws when the depth limit is exceeded, or when the thread is running out of stack before it.
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Enter()
     {
         if (--remainingDepth == 0)
         {
             MessagePackSerializationException.ThrowSerializeDepthExceeded();
+        }
+        // every 16th level (the countdown keeps moving under MaxDepth 0 too), see StackGuard
+        if ((remainingDepth & StackGuard.ProbeMask) == 0)
+        {
+            StackGuard.Probe();
         }
     }
 
@@ -160,13 +168,20 @@ public struct DeserializeState
         remainingDeclaredElements = remaining;
     }
 
-    /// <summary>Enters one nesting level before calling another formatter. Throws when the depth limit is exceeded.</summary>
+    /// <summary>
+    /// Enters one nesting level before calling another formatter.
+    /// Throws when the depth limit is exceeded, or when the thread is running out of stack before it.
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Enter()
     {
         if (--remainingDepth == 0)
         {
             MessagePackSerializationException.ThrowDeserializeDepthExceeded();
+        }
+        if ((remainingDepth & StackGuard.ProbeMask) == 0)
+        {
+            StackGuard.Probe();
         }
     }
 

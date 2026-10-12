@@ -45,9 +45,15 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
             .Where(static model => model is not null);
 
         var allowsRefStruct = context.CompilationProvider.Select(static (compilation, _) => SupportsAllowsRefStruct(compilation));
+        var belowFloor = LanguageGate.BelowFloor(context, models);
 
-        context.RegisterSourceOutput(models.Combine(allowsRefStruct), static (spc, pair) =>
+        context.RegisterSourceOutput(models.Combine(allowsRefStruct).Combine(belowFloor), static (spc, gated) =>
         {
+            if (gated.Right)
+            {
+                return;
+            }
+            var pair = gated.Left;
             // a thrown exception here (e.g. a duplicate hint name from colliding mid-edit declarations)
             // would discard every generated source of this generator for the pass,
             // turning one editing slip into a screenful of constraint errors, drop just the offending output instead

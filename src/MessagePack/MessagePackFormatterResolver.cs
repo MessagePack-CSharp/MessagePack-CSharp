@@ -453,6 +453,10 @@ internal sealed partial class MissingMessagePackFormatter<TWriteBuffer, TReadBuf
             // only reachable when ThrowOnLegacyFormatter is enabled
             message += " The factory can create this formatter for the Compatible (non-ref-struct) buffer pair: it is likely provided by a library compiled against a netstandard build of MessagePack, which cannot serve ref struct buffer pairs. Multi-target that library with net9.0 for full speed, or serialize through the MessagePackSerializer entry points (with ThrowOnLegacyFormatter off) to run it over the compatibility path.";
         }
+        else if (Net9OnlyBuiltIns.Contains(typeof(T)))
+        {
+            message += Net9OnlyBuiltIns.Hint;
+        }
         else if (typeof(T).IsArray || typeof(T).IsConstructedGenericType)
         {
             // collection-shaped misses under a source-generated-only chain are usually roots the member-graph harvest

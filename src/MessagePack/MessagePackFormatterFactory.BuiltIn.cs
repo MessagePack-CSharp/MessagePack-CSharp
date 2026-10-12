@@ -69,8 +69,6 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
         if (type == typeof(Version)) return new VersionFormatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(StringBuilder)) return new StringBuilderFormatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(BitArray)) return new BitArrayFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(System.Globalization.CultureInfo)) return new CultureInfoFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(TimeZoneInfo)) return new TimeZoneInfoFormatter<TWriteBuffer, TReadBuffer>();
 
         // NetworkFormatters.cs
         if (type == typeof(System.Net.IPAddress)) return new IPAddressFormatter<TWriteBuffer, TReadBuffer>();
@@ -93,6 +91,22 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
                 "Opt in by composing the factory before the default chain: new MessagePackSerializerOptions(new MessagePackFormatterResolver([new TypeFormatterFactory(), MessagePackFormatterFactory.Default])).");
         }
 
+        // same reasoning, same opt-in shape (and not served by v3 either): reading one looks a payload-provided name
+        // up in the runtime's culture table or the OS time zone database. Thrown rather than declined so a contractless
+        // tail cannot claim them as member maps.
+        if (type == typeof(System.Globalization.CultureInfo))
+        {
+            throw new InvalidOperationException(
+                "Serializing CultureInfo is not enabled by default: deserializing looks payload-provided names up in the runtime's culture table. " +
+                "Opt in by composing the factory before the default chain: MessagePackFormatterFactory.Combine(new CultureInfoFormatterFactory(), MessagePackFormatterFactory.Default).");
+        }
+        if (type == typeof(TimeZoneInfo))
+        {
+            throw new InvalidOperationException(
+                "Serializing TimeZoneInfo is not enabled by default: deserializing resolves payload-provided ids against the OS time zone database. " +
+                "Opt in by composing the factory before the default chain: MessagePackFormatterFactory.Combine(new TimeZoneInfoFormatterFactory(), MessagePackFormatterFactory.Default).");
+        }
+
 #if NET9_0_OR_GREATER
         // BclFormatters.cs (types that do not exist downlevel)
         if (type == typeof(Half)) return new HalfFormatter<TWriteBuffer, TReadBuffer>();
@@ -101,9 +115,11 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
         if (type == typeof(TimeOnly)) return new TimeOnlyFormatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(Int128)) return new Int128Formatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(UInt128)) return new UInt128Formatter<TWriteBuffer, TReadBuffer>();
+        if (type == typeof(System.Runtime.InteropServices.NFloat)) return new NFloatFormatter<TWriteBuffer, TReadBuffer>();
+#endif
+#if NETSTANDARD2_1 || NET9_0_OR_GREATER
         if (type == typeof(Index)) return new IndexFormatter<TWriteBuffer, TReadBuffer>();
         if (type == typeof(Range)) return new RangeFormatter<TWriteBuffer, TReadBuffer>();
-        if (type == typeof(System.Runtime.InteropServices.NFloat)) return new NFloatFormatter<TWriteBuffer, TReadBuffer>();
 #endif
 
 #if NET11_0_OR_GREATER

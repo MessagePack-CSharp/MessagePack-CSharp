@@ -429,7 +429,7 @@ public class CollectionAndObjectTests
     }
 
     [Fact]
-    public void Array_CovariantInstance_SerializeAccepts_PopulateReuseThrows()
+    public void Array_CovariantInstance_SerializeAccepts_PopulateReplaces()
     {
         SourceGeneratedFormatterFactory.Instance.Register(typeof(Person), new PersonFormatterFactory());
 
@@ -439,10 +439,15 @@ public class CollectionAndObjectTests
         var bytes = MessagePackSerializer.Serialize(covariant);
         Assert.Equal(Oracle.Serialize(covariant), bytes);
 
-        // Populate into a length-matching covariant array hits AsSpan's exact-type check.
-        // Spec'd to throw (populate is new in v4, no compat constraint; see ArrayFormatter)
+        // Populate into a length-matching covariant array: the DerivedPerson[] cannot hold the Person elements being
+        // read, so it is replaced by a fresh Person[] (it used to leak AsSpan's ArrayTypeMismatchException; the
+        // initializer `object[] Tags = new string[n]` made that reachable from a plain Deserialize)
         Person[] target = new DerivedPerson[1];
-        Assert.Throws<ArrayTypeMismatchException>(() => MessagePackSerializer.Deserialize(bytes, ref target));
+        var original = target;
+        MessagePackSerializer.Deserialize(bytes, ref target);
+        Assert.NotSame(original, target);
+        Assert.Equal(typeof(Person[]), target.GetType());
+        Assert.Equal(1, target[0].Id);
     }
 }
 

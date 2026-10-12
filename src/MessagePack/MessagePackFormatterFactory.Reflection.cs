@@ -68,6 +68,9 @@ public sealed class ReflectionFormatterFactory : GenericFormatterFactoryBase
             // (no public members) as an empty map, silent data loss, so declining keeps the miss loud until
             // ExpandoObjectFormatterFactory is composed in.
             || type == typeof(System.Dynamic.ExpandoObject)
+            // same reasoning: a BCL value type the netstandard build has no formatter for (Half, DateOnly, ...) would
+            // be claimed as a member map and lose its value without an error
+            || Net9OnlyBuiltIns.Contains(type)
 #if !NETSTANDARD2_0
             || type.IsByRefLike
 #endif

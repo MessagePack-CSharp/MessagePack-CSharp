@@ -23,9 +23,9 @@ namespace MessagePack.SourceGenerator;
 ///                 tolerance. Measured equal to straight-line reads (the decode chain
 ///                 dominates), and it handles count mismatches naturally.
 ///                 Types with a matched constructor or init-only members read into locals
-///                 and construct at the end (`new T(args) { inits }`); a caller-supplied
-///                 class instance still takes the populate path, mirroring
-///                 ReflectionObjectFormatter's Arguments-mode split.
+///                 and construct at the end (`new T(args) { inits }`), whatever the caller
+///                 supplied; the parameterless-settable shape refills the instance it gets or
+///                 constructs, member by member (ReflectionObjectFormatter's mode split).
 ///   Nested      - formatters resolved once in Initialize into interface fields
 ///                 (NestedFormatterDispatchBenchmark: per-call resolution is strictly worse).
 ///   AllowPrivate- the formatter is emitted as a nested class inside the (partial) target

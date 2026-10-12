@@ -33,9 +33,14 @@ public sealed class FactoryBridgeGenerator : IIncrementalGenerator
                 transform: static (ctx, cancellationToken) => Parse(ctx, cancellationToken))
             .Where(static model => model is not null);
 
-        context.RegisterSourceOutput(models, static (spc, model) =>
+        var belowFloor = LanguageGate.BelowFloor(context, models);
+
+        context.RegisterSourceOutput(models.Combine(belowFloor), static (spc, pair) =>
         {
-            spc.AddSource(model!.HintName, EmitBridge(model!));
+            if (!pair.Right)
+            {
+                spc.AddSource(pair.Left!.HintName, EmitBridge(pair.Left!));
+            }
         });
     }
 

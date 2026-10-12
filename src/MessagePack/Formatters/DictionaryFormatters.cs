@@ -833,7 +833,10 @@ public sealed class ConcurrentDictionaryFormatter<TWriteBuffer, TReadBuffer, TKe
 #if NET9_0_OR_GREATER
         var reusable = value != null && !HashFloodingResistantEqualityComparer.ReplacesDefault(comparer, value.Comparer);
 #else
-        var reusable = value != null; // no Comparer property downlevel: the instance's comparer stays, whichever it is
+        // no Comparer property downlevel, so an instance cannot be told apart from one on the default comparer: where a
+        // resistant comparer applies, always build anew (a caller-chosen comparer is lost on these targets; HashDoS
+        // protection is not)
+        var reusable = value != null && comparer == null;
 #endif
         if (reusable)
         {

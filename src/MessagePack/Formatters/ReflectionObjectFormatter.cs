@@ -653,6 +653,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         // base virtual (see GetMemberAttributes)
             var attributes = GetMemberAttributes(candidate.Member);
         slot.IsRequired = FindAttribute(attributes, MessagePackAttributeNames.RequiredMember) is not null;
+        slot.IsInitOnly = candidate.Member is PropertyInfo { SetMethod: { } setMethod }
+            && Array.Exists(setMethod.ReturnParameter.GetRequiredCustomModifiers(), static modifier => modifier.FullName == "System.Runtime.CompilerServices.IsExternalInit");
         slot.ValidateNull = NullableAnnotationReader.IsNonNullableReference(candidate.Member, candidate.MemberType);
         if (FindAttribute(attributes, MessagePackAttributeNames.Formatter) is { } formatterAttribute)
         {
@@ -921,7 +923,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 continue;
             }
 
-            if (parameters.Length == 0 && !(attributed is not null && typeof(T).IsValueType))
+            if (parameters.Length == 0 && !(attributed is not null && typeof(T).IsValueType) && !ConstructsAfresh())
             {
                 // (a struct's explicit parameterless [SerializationConstructor] is an initializer the author asked
                 // for: the populate path would assign into the caller's value without ever running it)
@@ -949,16 +951,33 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         // no constructor matched: structs always default-construct, classes fall back to a (possibly non-public)
         // parameterless constructor
-        if (typeof(T).IsValueType ||
-            typeof(T).GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, binder: null, Type.EmptyTypes, modifiers: null) != null)
+        if (typeof(T).IsValueType)
         {
             mode = ConstructionMode.Populate;
+        }
+        else if (typeof(T).GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, binder: null, Type.EmptyTypes, modifiers: null) is { } parameterless)
+        {
+            if (ConstructsAfresh())
+            {
+                mode = ConstructionMode.Arguments;
+                argumentConstructor = parameterless;
+                argumentCount = 0;
+            }
+            else
+            {
+                mode = ConstructionMode.Populate;
+            }
         }
         else
         {
             mode = ConstructionMode.Unconstructable;
         }
     }
+
+    // A class with an init-only or required member takes the argument path even through its parameterless
+    // constructor: always a fresh instance, as the generator's construction shape and README's populate contract
+    // promise. Populating a caller's instance would write an init-only member after construction.
+    bool ConstructsAfresh() => !typeof(T).IsValueType && Array.Exists(slots, static slot => slot.IsInitOnly || slot.IsRequired);
 
     int FindParameterSlot(string?[] names, ParameterInfo parameter)
     {
@@ -1365,6 +1384,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         public string MemberName = "";
         public Type? DeclaringType; // the declaration's type: a `new` member and the one it hides share MemberName
         public bool IsRequired;    // required modifier, or a no-default constructor parameter
+        public bool IsInitOnly;    // an `init` accessor: settable only while constructing
         public bool ValidateNull;  // non-nullable annotated and the resolver enforces the annotation
         public object? CustomFormatter; // [MessagePackFormatter] instance, overrides resolver resolution
 

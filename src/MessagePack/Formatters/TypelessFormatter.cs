@@ -404,7 +404,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
 #endif
     }
 
-    // v3's typeless DateTime is ToBinary as smallest int64 (Kind-preserving), NOT the imestamp ext the standard formatter writes.
+    // v3's typeless DateTime is ToBinary as smallest int64 (Kind-preserving), NOT the timestamp ext the standard formatter writes.
     sealed class DateTimeSerializer : TypelessSerializer
     {
         public DateTimeSerializer(string typeName)
@@ -419,7 +419,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
 
         public override object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state, long bodyRemaining)
         {
-            return DateTime.FromBinary(buffer.ReadInt64());
+            return DateTimeBinary.Decode(buffer.ReadInt64());
         }
     }
 }

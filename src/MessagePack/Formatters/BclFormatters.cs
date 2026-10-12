@@ -336,7 +336,8 @@ public sealed partial class BitArrayFormatter<TWriteBuffer, TReadBuffer> : IMess
 
 /// <summary>
 /// Serializes <see cref="System.Globalization.CultureInfo"/> as its <see cref="System.Globalization.CultureInfo.Name"/>
-/// ("" = invariant). Instance customizations beyond the name do not roundtrip.
+/// ("" = invariant). Instance customizations beyond the name do not roundtrip. Reading accepts predefined
+/// culture names only (custom cultures the runtime would synthesize from an arbitrary name are refused).
 /// </summary>
 public sealed partial class CultureInfoFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, CultureInfo?>
 {
@@ -357,10 +358,50 @@ public sealed partial class CultureInfoFormatter<TWriteBuffer, TReadBuffer> : IM
             value = null;
             return;
         }
+        value = CultureInfoNames.Get(name);
+    }
+}
+
+// Only the runtime's predefined cultures are served. On ICU and .NET Framework, GetCultureInfo synthesizes a custom
+// culture for any BCP-47-shaped name and caches it for the process lifetime, so payload names were an unbounded,
+// permanent allocation (a 300 KB CultureInfo[] held 14.6 MB and the thread for 14 s), the same class of hazard that
+// keeps System.Type opt-in. GetCultureInfo(name, predefinedOnly: true) is not enough: it still synthesizes private-use
+// variants ("en-US-x-anything"). So the name must be in the runtime's own list (ICU's on .NET, NLS plus registered
+// custom cultures on .NET Framework), built once; LOCALE_NAME_MAX_LENGTH bounds the name before the lookup.
+static class CultureInfoNames
+{
+    const int MaxNameLength = 85;
+
+    static HashSet<string>? predefined;
+
+    static HashSet<string> Predefined => Volatile.Read(ref predefined) ?? Build();
+
+    static HashSet<string> Build()
+    {
+        // a racing duplicate build is harmless: both sets are equal
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var culture in CultureInfo.GetCultures(CultureTypes.AllCultures))
+        {
+            names.Add(culture.Name);
+        }
+        Volatile.Write(ref predefined, names);
+        return names;
+    }
+
+    public static CultureInfo Get(string name)
+    {
+        if (name.Length > MaxNameLength)
+        {
+            throw new MessagePackSerializationException($"Can't load culture: the name is {name.Length} characters long (the limit is {MaxNameLength}).");
+        }
+        if (!Predefined.Contains(name))
+        {
+            throw new MessagePackSerializationException($"Can't load culture '{name}': not a predefined culture of this runtime.");
+        }
         // GetCultureInfo over the ctor: cached read-only instances, no per-call allocation
         try
         {
-            value = CultureInfo.GetCultureInfo(name);
+            return CultureInfo.GetCultureInfo(name);
         }
         catch (CultureNotFoundException ex)
         {
@@ -398,14 +439,17 @@ public sealed partial class TimeZoneInfoFormatter<TWriteBuffer, TReadBuffer> : I
         {
             value = TimeZoneInfo.FindSystemTimeZoneById(id);
         }
-        catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
+            // beyond TimeZoneNotFound/InvalidTimeZone: a zoneinfo directory name ("America") raises SecurityException
+            // on Unix, a registry-walking id ("\") NullReferenceException on Windows; all are a bad payload
             throw new MessagePackSerializationException($"Can't load time zone '{id}'.", ex);
         }
     }
 }
 
-#if NET9_0_OR_GREATER
+// Index and Range exist from netstandard2.1 on (the net8.0 consumer's asset)
+#if NETSTANDARD2_1 || NET9_0_OR_GREATER
 
 /// <summary>
 /// Serializes <see cref="Index"/> as an int32: the value itself, or the from-end value
@@ -456,6 +500,10 @@ public sealed partial class RangeFormatter<TWriteBuffer, TReadBuffer> : IMessage
             end < 0 ? new Index(~end, fromEnd: true) : new Index(end));
     }
 }
+
+#endif
+
+#if NET9_0_OR_GREATER
 
 /// <summary>Serializes <see cref="Half"/> as a float32.</summary>
 public sealed partial class HalfFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Half>
@@ -606,4 +654,4 @@ public sealed partial class UInt128Formatter<TWriteBuffer, TReadBuffer> : IMessa
     }
 }
 
-#endif
+#endif

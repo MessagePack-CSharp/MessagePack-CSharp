@@ -7,8 +7,9 @@
 //   StandardResolverAllowPrivate            -> Default chain with ReflectionFormatterFactory(annotatedOnly: true, allowPrivate: true)
 //   ContractlessStandardResolver            -> Default.WithContractless()
 //   ContractlessStandardResolverAllowPrivate-> allow-private chain .WithContractless(allowPrivate: true)
-//   TypelessObjectResolver /
-//   TypelessContractlessStandardResolver    -> Default.WithContractless().WithTypeless(TypelessTypeLoader.LoadAnyType())
+//   TypelessObjectResolver                  -> Default.WithContractless().WithTypeless(TypelessTypeLoader.LoadAnyType())
+//   TypelessContractlessStandardResolver /
+//   MessagePackSerializer.Typeless          -> Combine(NativeDateTimeFormatterFactory.Instance, Default).WithContractless(allowPrivate: true).WithTypeless(LoadAnyType())
 //   DynamicEnumAsStringResolver             -> GenericEnumAsStringFormatterFactory composed before the chain
 //   BuiltinResolver                         -> BuiltInFormatterFactory alone
 //   options.WithCompression(Lz4*)           -> options.WithLz4Block()/WithLz4BlockArray() (MessagePack.LZ4)
@@ -235,7 +236,11 @@ namespace MessagePack.Resolvers
 
     public static class TypelessContractlessStandardResolver
     {
-        public static MessagePackSerializerOptions Options => TypelessObjectResolver.Options;
+        // v3's chain: NativeDateTimeResolver first, DynamicContractlessObjectResolverAllowPrivate before the typeless tail
+        public static MessagePackSerializerOptions Options { get; } = V3CompatChains.ToOptions(
+            MessagePackFormatterFactory.Combine(NativeDateTimeFormatterFactory.Instance, MessagePackFormatterFactory.Default)
+                .WithContractless(allowPrivate: true)
+                .WithTypeless(TypelessTypeLoader.LoadAnyType()));
 
         public static MessagePackFormatterResolver Instance => Options.Resolver;
     }
@@ -332,7 +337,7 @@ namespace MessagePack.Resolvers
 /// </summary>
 public static class TypelessCompat
 {
-    public static MessagePack.MessagePackSerializerOptions DefaultOptions { get; } = MessagePack.Resolvers.TypelessObjectResolver.Options;
+    public static MessagePack.MessagePackSerializerOptions DefaultOptions { get; } = MessagePack.Resolvers.TypelessContractlessStandardResolver.Options;
 
     public static byte[] Serialize(object value, MessagePack.MessagePackSerializerOptions options = null) =>
         MessagePack.MessagePackSerializer.Serialize<object>(value, options ?? DefaultOptions);

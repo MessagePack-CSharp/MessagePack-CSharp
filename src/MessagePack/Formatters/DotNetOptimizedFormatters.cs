@@ -176,19 +176,29 @@ public sealed partial class DotNetOptimizedDateTimeFormatter<TWriteBuffer, TRead
             binary = buffer.ReadInt64();
         }
 
+        value = DateTimeBinary.Decode(binary);
+    }
+}
+
+// DateTime.FromBinary over payload bits, validated: shared by DotNetOptimizedDateTimeFormatter and the Typeless
+// DateTime body (both v3 NativeDateTimeFormatter's ToBinary form)
+static class DateTimeBinary
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DateTime Decode(long binary)
+    {
         // Utc/Unspecified (bit 63 clear) decode as pure bit work.
         if (binary >= 0)
         {
             var ticks = (ulong)binary & 0x3FFF_FFFF_FFFF_FFFF;
             if (ticks > (ulong)DateTime.MaxValue.Ticks)
             {
-                throw new MessagePackSerializationException("Invalid DateTime binary value.");
+                MessagePackSerializationException.ThrowInvalidDateTimeBinary();
             }
-            value = new DateTime((long)ticks, (DateTimeKind)((ulong)binary >> 62)); // 0 or 1
-            return;
+            return new DateTime((long)ticks, (DateTimeKind)((ulong)binary >> 62)); // 0 or 1
         }
 
-        value = FromBinaryLocal(binary);
+        return FromBinaryLocal(binary);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]

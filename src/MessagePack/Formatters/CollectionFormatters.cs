@@ -66,9 +66,11 @@ public sealed partial class ArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMess
         var f = formatter;
 
         // Populate contract: reuse the incoming array only when the length matches exactly, otherwise allocate fresh.
-        // A covariant incoming array (U[] behind T[]) is rejected by AsSpan below — spec'd, rare case.
+        // A covariant incoming array (a string[] behind an object[] member, `object[] Tags = new string[2]`) cannot
+        // take the elements read for T, so it is replaced like a wrong-length one; the GetType check is skipped for
+        // value types (arrays of them are never covariant).
         T[] result;
-        if (value != null && value.Length == count)
+        if (value != null && value.Length == count && (typeof(T).IsValueType || value.GetType() == typeof(T[])))
         {
             result = value;
             // AsSpan pays the array covariance check once
@@ -1161,11 +1163,11 @@ public sealed partial class ArraySegmentFormatter<TWriteBuffer, TReadBuffer, T> 
 
         T[] array;
         int offset;
-        if (value.Array != null && value.Count == count)
+        if (value.Array != null && value.Count == count && (typeof(T).IsValueType || value.Array.GetType() == typeof(T[])))
         {
             array = value.Array;
             offset = value.Offset;
-            // AsSpan pays the covariance check once (throws on covariant reuse — spec'd, same as ArrayFormatter populate)
+            // a covariant backing array is replaced, not reused (same as ArrayFormatter populate)
             var span = array.AsSpan(offset, count);
             for (int i = 0; i < span.Length; i++)
             {

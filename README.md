@@ -16,7 +16,9 @@ dotnet add package MessagePack --prerelease
 | `MessagePack.SignalR` | The SignalR `messagepack` hub protocol, wire-compatible with `Microsoft.AspNetCore.SignalR.Protocols.MessagePack`. |
 | `MessagePack.Annotations` | Migration shim only: type-forwards the v3 attributes to `MessagePack`. See [Migrating from v3](#migrating-from-v3). |
 
-Targets: `netstandard2.0`, `netstandard2.1`, `net9.0`, `net10.0`, `net11.0`. The full-speed path (ref struct buffers, `allows ref struct`) exists from `net9.0` up; .NET Framework and Unity get the `netstandard2.0` build. The core depends on [SerializerFoundation](https://github.com/Cysharp/SerializerFoundation), which provides the buffer abstractions.
+Targets: `netstandard2.0`, `netstandard2.1`, `net9.0`, `net10.0`, `net11.0`. The full-speed path (ref struct buffers, `allows ref struct`) exists from `net9.0` up; .NET Framework and Unity get the `netstandard2.0` build, and **a `net8.0` project gets the `netstandard2.1` build**. The netstandard builds have no formatters for `Half`, `Int128`, `UInt128`, `DateOnly`, `TimeOnly`, `Rune` and `NFloat` (and `netstandard2.0` none for `Index` / `Range`): serializing them throws, under `WithContractless()` too, so target `net9.0` or later for them. The core depends on [SerializerFoundation](https://github.com/Cysharp/SerializerFoundation), which provides the buffer abstractions.
+
+The source generator's output needs **C# 9** (C# 13 on `net9.0` and later, which is those SDKs' default). `net48` and `netstandard2.0` projects default to C# 7.3, so a project that declares `[MessagePackObject]` types there must set `<LangVersion>9.0</LangVersion>` or later; otherwise the generator reports MsgPack024 and generates nothing. Projects that only use the reflection tier are unaffected.
 
 ## Quick start
 
@@ -83,7 +85,7 @@ var options = new MessagePackSerializerOptions(resolver) { MaxDepth = 500 };
 
 ## Migrating from v3
 
-The wire format is the same: v3 and v4 read each other's output for everything — primitives, collections, `[MessagePackObject]` arrays and maps, `[Union]`, Typeless, `DateTime` (ext -1), and the LZ4 envelopes. Migration is a source-level exercise.
+The wire format is the same: v3 and v4 read each other's output — primitives, collections, `[MessagePackObject]` arrays and maps, `[Union]`, `DateTime` (ext -1), and the LZ4 envelopes — as long as the v4 chain matches the v3 resolver that wrote the data. The table in §2 gives the matching chain; Typeless is the case to watch, because v3's Typeless chain wrote `DateTime` in its native form (see the Typeless row). Migration is a source-level exercise.
 
 ### 1. Packages and attributes
 
@@ -102,7 +104,7 @@ The wire format is the same: v3 and v4 read each other's output for everything �
 | `StandardResolver.Instance` | `MessagePackFormatterFactory.Default` |
 | `ContractlessStandardResolver` | `MessagePackFormatterFactory.Default.WithContractless()` |
 | `CompositeResolver.Create(a, b)` | `MessagePackFormatterFactory.Combine(a, b)` |
-| `TypelessContractlessStandardResolver` / `MessagePackSerializer.Typeless` | `Default.WithContractless().WithTypeless(TypelessTypeLoader.LoadAnyType())` — prefer `TypelessTypeLoader.AllowedTypes(...)` for untrusted input |
+| `TypelessContractlessStandardResolver` / `MessagePackSerializer.Typeless` | `MessagePackFormatterFactory.Combine(NativeDateTimeFormatterFactory.Instance, MessagePackFormatterFactory.Default).WithContractless(allowPrivate: true).WithTypeless(TypelessTypeLoader.LoadAnyType())`. v3's Typeless chain wrote `DateTime` (also in `DateTime?`, `DateTime[]` and collections) as a `ToBinary` int64 and included non-public members; without `NativeDateTimeFormatterFactory` those `DateTime`s fail to read in both directions, and without `allowPrivate` non-public members are silently dropped. Prefer `TypelessTypeLoader.AllowedTypes(...)` for untrusted input |
 | `options.WithCompression(MessagePackCompression.Lz4BlockArray)` | `options.WithLz4BlockArray()` from `MessagePack.LZ4` (kept for v3 data, `[Obsolete]`); new data should use `WithLz4Frame()` or `MessagePack.Zstandard`'s `WithZstandardFrame()` |
 | `options.WithSecurity(MessagePackSecurity.UntrustedData)` | On by default. The knobs are `MaxDepth` (500) and `MaxBufferedMessageSize` (64 MB) on the options, `HashFloodingResistant` on the resolver, and `MaxDecompressedSize` on the compression processors. There is no "trusted data" mode. |
 | `options.WithOmitAssemblyVersion(true)` | `WithTypeless(loader, omitAssemblyVersion: true)` |
@@ -116,7 +118,8 @@ The wire format is the same: v3 and v4 read each other's output for everything �
 - `Deserialize<T>(ReadOnlyMemory<byte>)` has no overload yet; pass `.Span`. `byte[]` converts implicitly.
 - `Deserialize<T>(..., out int bytesRead)` is gone. For a stream of messages use `DeserializeMessagesAsync` (or read from a `PipeReader`, which leaves the following message unconsumed).
 - `MessagePackStreamReader` is gone; `DeserializeMessagesAsync` / `DeserializeElementsAsync` over `Stream` or `PipeReader` replace it.
-- `Deserialize<T>(source, ref T value)` populates an existing instance when the type can be refilled: collections are cleared and refilled, and objects with settable members are overwritten member by member. A type whose members can only be set at construction (a constructor-bound, init-only or required member) is constructed afresh instead, like a collection that cannot be cleared, so a member initializer such as `Child = new Child(0)` never shadows the value being read.
+- `Deserialize<T>(source, ref T value)` populates an existing instance when the type can be refilled: collections are cleared and refilled, and objects with settable members are overwritten member by member, recursively into the member values that instance holds. A type whose members can only be set at construction (a constructor-bound, init-only or required member) is constructed afresh instead, like a collection that cannot be cleared, so a member initializer such as `Child = new Child(0)` never shadows the value being read.
+- **This applies to member initializers too, and differs from v3.** A plain `Deserialize<T>(source)` constructs the object (running its initializers) and then refills, in place, whatever the initializers put in its settable members: `List<int> Items { get; set; } = new()` is cleared and refilled (one allocation, and a comparer or concrete collection type chosen in the initializer is kept), the same way Newtonsoft.Json's `ObjectCreationHandling.Auto` works. v3 constructed a new value for every member. Two consequences: an `ObservableCollection` initializer raises its events while the object is still being read, and an instance shared through an initializer (`= Defaults.Settings`) is written to. A member absent from the payload keeps the value its initializer gave it. A covariant array initializer (`object[] Tags = new string[n]`) is replaced rather than refilled.
 
 ### 4. Custom formatters
 
@@ -164,7 +167,8 @@ For types you cannot annotate, `IMessagePackSurrogate<TTarget, TSurrogate>` on a
 
 - **Constructor binding**: parameters bind to members by name (`[Key("name")]` or member name, case-insensitive). v3 bound int-keyed parameters by position; a constructor whose parameter names do not match its members now needs `[SerializationConstructor]` on a matching one or a settable member.
 - **Required members** (`required`, or a constructor parameter without a default) missing from the payload throw by default (`ValidateRequiredMembers`). v3 left them at their default.
-- **Depth**: `MaxDepth` defaults to 500 for both serialization and deserialization. `0` disables the check — do that only for data you trust completely, since the formatters recurse.
+- **Depth**: `MaxDepth` defaults to 500 for both serialization and deserialization. `0` disables the check — do that only for data you trust completely, since the formatters recurse. Independently of `MaxDepth`, nesting that would exhaust the thread's stack (a small thread, such as IIS's 512 KB, with a stack-hungry shape like `object[]` on .NET Framework) throws `MessagePackSerializationException` instead of crashing the process.
+- **Not on the default chain**: types whose deserialization looks a payload-provided name up in the runtime or the OS are opt-in, composed before `Default` with their own factory. `System.Type` (`TypeFormatterFactory`, `[Obsolete]`-gated: `Type.GetType` can load assemblies) and `ExpandoObject` (`ExpandoObjectFormatterFactory`: quadratic `Add`) were on v3's default resolvers and are not on v4's. `CultureInfo` (`CultureInfoFormatterFactory`, predefined culture names only) and `TimeZoneInfo` (`TimeZoneInfoFormatterFactory`, `FindSystemTimeZoneById` on the reading machine) are new in v4 and opt-in from the start. The default chain throws `InvalidOperationException` naming the factory for all four.
 - **Unknown members**: a `[MessagePackObject]` type can declare one `MessagePackUnknownMembers` member (no `[Key]`) and the generated formatter round-trips whatever a newer writer added.
 - **Circular references**: `[MessagePackObject(AllowCircularReferences = true)]` (generated types only).
 - **Typeless** requires an explicit `TypelessTypeLoader`; `LoadAnyType()` (v3 behaviour, `Type.GetType` over payload-provided names) is `[Obsolete]` to make the trust decision visible.

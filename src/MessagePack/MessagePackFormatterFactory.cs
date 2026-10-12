@@ -98,7 +98,9 @@ public abstract class MessagePackFormatterFactory
     /// <summary>
     /// Adds typeless handling, where object slots embed the concrete .NET type name, compatible with v3's Typeless format.
     /// <paramref name="typeLoader"/> decides how type names in the payload resolve on read.
-    /// <c>Default.WithContractless().WithTypeless(TypelessTypeLoader.LoadAnyType())</c> is the equivalent of v3's TypelessContractlessStandardResolver.
+    /// The equivalent of v3's TypelessContractlessStandardResolver, wire-compatible with it in both directions, is
+    /// <c>Combine(NativeDateTimeFormatterFactory.Instance, Default).WithContractless(allowPrivate: true).WithTypeless(TypelessTypeLoader.LoadAnyType())</c>:
+    /// v3 wrote DateTime members as ToBinary int64 and included non-public members.
     /// </summary>
     [RequiresDynamicCode(RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(TypelessMessages.RequiresUnreferencedCode)]

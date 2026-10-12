@@ -83,6 +83,12 @@ public class MessagePackSerializationException : Exception
     internal static Exception ThrowDeserializeDepthExceeded() => throw new MessagePackSerializationException("The msgpack payload nests deeper than MessagePackSerializerOptions.MaxDepth");
 
     [DoesNotReturn]
+    internal static Exception ThrowInvalidDateTimeBinary() => throw new MessagePackSerializationException("Invalid DateTime binary value.");
+
+    [DoesNotReturn]
+    internal static Exception ThrowInsufficientStack() => throw new MessagePackSerializationException("The object graph or msgpack payload nests too deep for the remaining thread stack (within MessagePackSerializerOptions.MaxDepth, but each level of this shape takes more stack than the thread has left); lower MaxDepth or run on a thread with a larger stack");
+
+    [DoesNotReturn]
     internal static Exception ThrowAsyncMessageMissing() => throw new MessagePackSerializationException("The PipeReader completed without a MessagePack value");
 
     [DoesNotReturn]

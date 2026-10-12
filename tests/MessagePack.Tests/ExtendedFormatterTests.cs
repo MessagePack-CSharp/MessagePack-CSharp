@@ -7,7 +7,7 @@ using Xunit;
 namespace MessagePack.Tests;
 
 // v4-only additions (no v3 oracle exists for any of these): Plane, the typed generic
-// collection catch-all, Index/Range, CultureInfo, TimeZoneInfo, IPAddress/IPEndPoint.
+// collection catch-all, Index/Range, CultureInfo and TimeZoneInfo (opt-in), IPAddress/IPEndPoint.
 // Wire shapes are asserted structurally instead.
 public class ExtendedFormatterTests
 {
@@ -119,28 +119,85 @@ public class ExtendedFormatterTests
         }
     }
 
+    // CultureInfo and TimeZoneInfo are opt-in (a payload-provided name looked up in the runtime's culture table or the
+    // OS time zone database, like System.Type); the default chain refuses them with the opt-in instruction
+    static readonly MessagePackSerializerOptions Globalization = new(new MessagePackFormatterResolver(
+        MessagePackFormatterFactory.Combine(new CultureInfoFormatterFactory(), new TimeZoneInfoFormatterFactory(), MessagePackFormatterFactory.Default)));
+
+    static void AssertGlobalizationRoundtrip<T>(T value)
+    {
+        Assert.Equal(value, MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, Globalization), Globalization));
+    }
+
+    [Fact]
+    public void CultureInfoAndTimeZoneInfo_AreNotOnTheDefaultChain()
+    {
+        var culture = Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(CultureInfo.InvariantCulture));
+        Assert.Contains("CultureInfoFormatterFactory", culture.Message, StringComparison.Ordinal);
+        var zone = Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(TimeZoneInfo.Utc));
+        Assert.Contains("TimeZoneInfoFormatterFactory", zone.Message, StringComparison.Ordinal);
+
+        // a contractless tail does not claim them as member maps either
+        var contractless = new MessagePackSerializerOptions(new MessagePackFormatterResolver(MessagePackFormatterFactory.Default.WithContractless()));
+        Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(CultureInfo.InvariantCulture, contractless));
+        Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(TimeZoneInfo.Utc, contractless));
+    }
+
     [Fact]
     public void CultureInfo_NameWire_AndRoundtrip()
     {
         // wire = the name string (Nerdbank.MessagePack-compatible)
-        Assert.Equal(MessagePackSerializer.Serialize("ja-JP"), MessagePackSerializer.Serialize(CultureInfo.GetCultureInfo("ja-JP")));
-        AssertRoundtrip(CultureInfo.GetCultureInfo("ja-JP"));
-        AssertRoundtrip(CultureInfo.InvariantCulture); // "" name
-        AssertRoundtrip((CultureInfo?)null);
+        Assert.Equal(MessagePackSerializer.Serialize("ja-JP"), MessagePackSerializer.Serialize(CultureInfo.GetCultureInfo("ja-JP"), Globalization));
+        AssertGlobalizationRoundtrip(CultureInfo.GetCultureInfo("ja-JP"));
+        AssertGlobalizationRoundtrip(CultureInfo.InvariantCulture); // "" name
+        AssertGlobalizationRoundtrip((CultureInfo?)null);
+        Assert.Equal("ja-JP", MessagePackSerializer.Deserialize<CultureInfo?>(MessagePackSerializer.Serialize("JA-jp"), Globalization)!.Name); // names are case-insensitive
+    }
+
+    // ICU and .NET Framework synthesize (and cache for the process lifetime) a custom culture for any BCP-47-shaped
+    // name, so payload names were an unbounded permanent allocation; only predefined cultures are read
+    [Theory]
+    [InlineData("zz-Zzzz-ZZ")]
+    [InlineData("en-US-x-attacker0001")]
+    [InlineData("not a culture")]
+    public void CultureInfo_UnknownOrSynthesizableName_IsRefused(string name)
+    {
+        var bytes = MessagePackSerializer.Serialize(name);
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<CultureInfo?>(bytes, Globalization));
+    }
+
+    [Fact]
+    public void CultureInfo_OverlongName_IsRefusedBeforeLookup()
+    {
+        var bytes = MessagePackSerializer.Serialize("en-" + new string('a', 200));
+        var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<CultureInfo?>(bytes, Globalization));
+        Assert.Contains("limit", ex.Message, StringComparison.Ordinal);
     }
 
     [Fact]
     public void TimeZoneInfo_IdWire_AndRoundtrip()
     {
-        AssertRoundtrip(TimeZoneInfo.Utc);
-        AssertRoundtrip(TimeZoneInfo.Local);
-        Assert.Equal(MessagePackSerializer.Serialize("UTC"), MessagePackSerializer.Serialize(TimeZoneInfo.Utc));
-        AssertRoundtrip((TimeZoneInfo?)null);
+        AssertGlobalizationRoundtrip(TimeZoneInfo.Utc);
+        AssertGlobalizationRoundtrip(TimeZoneInfo.Local);
+        Assert.Equal(MessagePackSerializer.Serialize("UTC"), MessagePackSerializer.Serialize(TimeZoneInfo.Utc, Globalization));
+        AssertGlobalizationRoundtrip((TimeZoneInfo?)null);
 
         var bogus = MessagePackSerializer.Serialize("Not/A_Real_Zone");
-        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<TimeZoneInfo?>(bogus));
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<TimeZoneInfo?>(bogus, Globalization));
     }
 
+    // FindSystemTimeZoneById raises more than its documented exceptions: SecurityException for a zoneinfo directory
+    // on Unix, NullReferenceException for a registry-walking id on Windows; all surface as the data error
+    [Theory]
+    [InlineData("\\")]
+    [InlineData("America")]
+    [InlineData(@"Pacific Standard Time\Dynamic DST")]
+    [InlineData("")]
+    public void TimeZoneInfo_HostileId_IsTheDataError(string id)
+    {
+        var bytes = MessagePackSerializer.Serialize(id);
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<TimeZoneInfo?>(bytes, Globalization));
+    }
     [Fact]
     public void IPAddress_And_IPEndPoint_Roundtrip()
     {

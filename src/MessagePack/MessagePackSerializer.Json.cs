@@ -227,8 +227,25 @@ file static class JsonCodec
         }
     }
 
+    // the conversion has no options, so it applies the default MaxDepth itself; without it the only limit was
+    // Utf8JsonWriter's own 1000 (an InvalidOperationException), past what a 512 KB thread survives
+    const int MaxDepth = 500;
+
+    static void EnterContainer(Utf8JsonWriter writer)
+    {
+        if (writer.CurrentDepth >= MaxDepth)
+        {
+            throw new MessagePackSerializationException($"The msgpack payload nests deeper than {MaxDepth} levels converting to JSON.");
+        }
+        if (!StackGuard.HasSufficientStack())
+        {
+            MessagePackSerializationException.ThrowInsufficientStack();
+        }
+    }
+
     internal static void WriteJsonArray(Utf8JsonWriter writer, ReadOnlySpan<byte> source, ref int position, int count, int headerSize)
     {
+        EnterContainer(writer);
         position += headerSize;
         writer.WriteStartArray();
         for (var i = 0; i < count; i++)
@@ -240,6 +257,7 @@ file static class JsonCodec
 
     internal static void WriteJsonMap(Utf8JsonWriter writer, ReadOnlySpan<byte> source, ref int position, int count, int headerSize)
     {
+        EnterContainer(writer);
         position += headerSize;
         writer.WriteStartObject();
         for (var i = 0; i < count; i++)

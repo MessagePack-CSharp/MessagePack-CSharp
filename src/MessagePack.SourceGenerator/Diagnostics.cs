@@ -34,4 +34,5 @@ public static class Diagnostics
     public static readonly DiagnosticDescriptor OverrideChangesKey = Make("MsgPack021", "Property override declares a different key than the declaration it overrides", DiagnosticSeverity.Error);
     public static readonly DiagnosticDescriptor SerializableRootRedundant = Make("MsgPack022", "MessagePackSerializable root contributes no registration", DiagnosticSeverity.Warning);
     public static readonly DiagnosticDescriptor RequiredInitializerNotPreserved = Make("MsgPack023", "Initializer of an unread required member is not preserved", DiagnosticSeverity.Warning);
+    public static readonly DiagnosticDescriptor LanguageVersionTooLow = Make("MsgPack024", "C# language version is too low for generated code", DiagnosticSeverity.Error);
 }

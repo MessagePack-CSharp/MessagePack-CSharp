@@ -104,6 +104,77 @@ public class TypelessFormatterTests
         Assert.IsType<TypelessPerson>(objects[2]);
     }
 
+    // README's migration row for MessagePackSerializer.Typeless. v3's TypelessContractlessStandardResolver put
+    // NativeDateTimeResolver first (DateTime as ToBinary int64, also inside DateTime? / DateTime[] / List<DateTime>)
+    // and ended in the AllowPrivate contractless resolver; the old row (Default.WithContractless().WithTypeless) threw
+    // on every DateTime member in both directions and silently dropped non-public members.
+    static readonly MessagePackSerializerOptions v3TypelessEquivalent = new(new MessagePackFormatterResolver(
+        MessagePackFormatterFactory.Combine(NativeDateTimeFormatterFactory.Instance, MessagePackFormatterFactory.Default)
+            .WithContractless(allowPrivate: true)
+            .WithTypeless(TypelessTypeLoader.LoadAnyType())));
+
+    public class DateTimeHolder
+    {
+        public DateTime When { get; set; }
+        public DateTime? Maybe { get; set; }
+        public DateTime[]? Many { get; set; }
+        public List<DateTime>? List { get; set; }
+        internal int Hidden { get; set; }
+        private string? secret;
+
+        public string? Secret
+        {
+            get => secret;
+            set => secret = value;
+        }
+    }
+
+    [Fact]
+    public void CrossCompatible_WithV3Typeless_DateTimeMembersAndPrivateMembers()
+    {
+        var local = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Local);
+        var utc = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        var value = new DateTimeHolder { When = local, Maybe = utc, Many = [local, utc], List = [utc], Hidden = 7, Secret = "s" };
+        object?[] boxed = [value, new[] { local, utc }, new List<DateTime> { local }];
+
+        foreach (var item in boxed)
+        {
+            var v3Bytes = V3::MessagePack.MessagePackSerializer.Typeless.Serialize(item);
+            AssertSame(item, MessagePackSerializer.Deserialize<object?>(v3Bytes, v3TypelessEquivalent)!);
+
+            var v4Bytes = MessagePackSerializer.Serialize<object?>(item, v3TypelessEquivalent);
+            AssertSame(item, V3::MessagePack.MessagePackSerializer.Typeless.Deserialize(v4Bytes)!);
+        }
+
+        static void AssertSame(object? expected, object actual)
+        {
+            if (expected is DateTimeHolder holder)
+            {
+                var back = Assert.IsType<DateTimeHolder>(actual);
+                Assert.Equal((holder.When, holder.When.Kind), (back.When, back.When.Kind));
+                Assert.Equal(holder.Maybe, back.Maybe);
+                Assert.Equal(holder.Many, back.Many);
+                Assert.Equal(holder.List, back.List);
+                Assert.Equal(7, back.Hidden);
+                Assert.Equal("s", back.Secret);
+                return;
+            }
+            Assert.Equal(expected, actual);
+        }
+    }
+
+    // the ext-100 DateTime body went straight to DateTime.FromBinary: forged tick bits (Local, ticks past MaxValue)
+    // leaked a raw ArgumentException
+    [Fact]
+    public void ForgedDateTimeBody_IsTheDataError()
+    {
+        var bytes = MessagePackSerializer.Serialize<object?>(new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Local), options);
+        Assert.Equal(MessagePackCode.Int64, bytes[^9]); // a Local binary is negative: always the full int64 form
+        System.Buffers.Binary.BinaryPrimitives.WriteInt64BigEndian(bytes.AsSpan(bytes.Length - 8), unchecked((long)0xB000_0000_0000_0000));
+        var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<object?>(bytes, options));
+        Assert.IsType<ArgumentException>(ex.InnerException, exactMatch: false);
+    }
+
     [Fact]
     public void CrossCompatible_WithV3Typeless_BothDirections()
     {
