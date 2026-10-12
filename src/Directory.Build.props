@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Nullable>enable</Nullable>
     <SignAssembly>True</SignAssembly>
-    <LangVersion>13</LangVersion>
+    <LangVersion>14</LangVersion>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\opensource.snk</AssemblyOriginatorKeyFile>
     <EnforceExtendedAnalyzerRules Condition="'$(IsAnalyzerProject)'=='true'">true</EnforceExtendedAnalyzerRules>
   </PropertyGroup>

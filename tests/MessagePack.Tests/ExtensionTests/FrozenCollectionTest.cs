@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if NET8_0_OR_GREATER
@@ -95,7 +95,7 @@ namespace MessagePack.Tests.ExtensionTests
             for (var i = 1; i < 11; i++)
             {
                 var array = new int[1 << i];
-                Random.Shared.NextBytes(MemoryMarshal.AsBytes<int>(array));
+                Random.Shared.NextBytes(MemoryMarshal.AsBytes<int>(array.AsSpan()));
                 var set = array.ToFrozenSet();
                 Convert(set.ToArray()).IsStructuralEqualIgnoreCollectionOrder(set.ToArray()); // reduce to an array to erase private runtime type differences
             }
@@ -107,7 +107,7 @@ namespace MessagePack.Tests.ExtensionTests
             for (var i = 1; i < 11; i++)
             {
                 var array = new KeyValuePair<int, int>[1 << i];
-                Random.Shared.NextBytes(MemoryMarshal.AsBytes<KeyValuePair<int, int>>(array));
+                Random.Shared.NextBytes(MemoryMarshal.AsBytes<KeyValuePair<int, int>>(array.AsSpan()));
                 var dictionary = array.ToFrozenDictionary();
                 Convert(dictionary).ToArray().IsStructuralEqualIgnoreCollectionOrder(dictionary.ToArray()); // reduce to an array to erase private runtime type differences
             }

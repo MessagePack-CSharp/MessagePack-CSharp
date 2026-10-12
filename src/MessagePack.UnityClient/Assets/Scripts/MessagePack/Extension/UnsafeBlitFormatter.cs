@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 #nullable enable
 
@@ -72,7 +72,7 @@ namespace MessagePack.Unity.Extension
 
             // Allocate a T[] that we will return. We'll then cast the T[] as byte[] so we can copy the byte sequence directly into it.
             var result = new T[byteLength / sizeof(T)];
-            Span<byte> resultAsBytes = MemoryMarshal.Cast<T, byte>(result);
+            Span<byte> resultAsBytes = MemoryMarshal.Cast<T, byte>(result.AsSpan());
             extensionReader.ReadRaw(byteLength).CopyTo(resultAsBytes);
 
             // Reverse the byte order if necessary.

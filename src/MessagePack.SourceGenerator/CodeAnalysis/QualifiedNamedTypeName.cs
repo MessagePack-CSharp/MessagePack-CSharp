@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma warning disable SA1402 // File may only contain a single type
@@ -27,7 +27,7 @@ public record QualifiedNamedTypeName : QualifiedTypeName, IComparable<QualifiedN
             throw new ArgumentException($"Create an {nameof(QualifiedArrayTypeName)} instead.", nameof(kind));
         }
 
-        if (isRecord && kind is not TypeKind.Class or TypeKind.Struct)
+        if (isRecord && kind is not (TypeKind.Class or TypeKind.Struct))
         {
             throw new ArgumentException("Cannot be a record if kind is not a class or struct.", nameof(isRecord));
         }
