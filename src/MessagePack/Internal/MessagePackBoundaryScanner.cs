@@ -18,6 +18,8 @@ internal struct MessagePackBoundaryScanner
     long remainingValues;     // msgpack values still outstanding (each container adds its children)
     long pendingPayloadBytes; // opaque bytes (str/bin/ext payloads, numeric bodies) still to pass over
     long consumed;            // offset into the buffered sequence already scanned
+    SequencePosition resumePosition; // the multi-segment walk's position for consumed, so a resumed scan does not re-walk the segments from the start
+    bool hasResumePosition;
 
     /// <summary>Bytes of the buffered sequence covered by the value once complete.</summary>
     public long Consumed => consumed;
@@ -50,6 +52,7 @@ internal struct MessagePackBoundaryScanner
     public void Rebase(long consumedBytes)
     {
         consumed -= consumedBytes;
+        hasResumePosition = false; // a position into the previous sequence: the next scan re-derives it once
     }
 
     /// <summary>
@@ -75,16 +78,21 @@ internal struct MessagePackBoundaryScanner
         }
 
         var offset = consumed;
-        var found = ScanSegments(in buffer, ref remaining, ref pending, ref offset);
+        var position = hasResumePosition ? resumePosition : buffer.GetPosition(consumed);
+        var found = ScanSegments(in buffer, ref remaining, ref pending, ref offset, ref position);
         remainingValues = remaining;
         pendingPayloadBytes = pending;
         consumed = offset;
+        resumePosition = position;
+        hasResumePosition = true;
         return found;
     }
 
     // The multi-segment walk: ScanSpan per segment, and a multi-byte header whose length bytes
-    // straddle a segment boundary is stitched through the sequence when they are all buffered.
-    static bool ScanSegments(in ReadOnlySequence<byte> buffer, ref long remaining, ref long pending, ref long offset)
+    // straddle a segment boundary is stitched through the sequence when they are all buffered. The walk resumes at a
+    // SequencePosition instead of re-slicing the sequence by offset (a walk over every segment from the start, which
+    // made one large message spread over many small segments quadratic across the reads that buffered it).
+    static bool ScanSegments(in ReadOnlySequence<byte> buffer, ref long remaining, ref long pending, ref long offset, ref SequencePosition position)
     {
         var totalLength = buffer.Length;
         Span<byte> stitch = stackalloc byte[MaxTokenSize];
@@ -92,40 +100,47 @@ internal struct MessagePackBoundaryScanner
         {
             if (offset == totalLength)
             {
+                position = buffer.End;
                 return remaining == 0 && pending == 0;
             }
             var straddled = false;
-            foreach (var segment in buffer.Slice(offset))
+            var next = position;
+            while (buffer.TryGet(ref next, out var memory, advance: true))
             {
                 var index = 0;
-                var status = ScanSpan(segment.Span, ref remaining, ref pending, ref index, out var need);
+                var status = ScanSpan(memory.Span, ref remaining, ref pending, ref index, out var need);
                 offset += index;
                 if (status == ScanStatus.Done)
                 {
+                    position = buffer.GetPosition(index, position);
                     return true;
                 }
                 if (status == ScanStatus.Straddle)
                 {
+                    position = buffer.GetPosition(index, position);
                     if (totalLength - offset < need)
                     {
                         return false; // the header's length bytes are not buffered yet
                     }
-                    buffer.Slice(offset, need).CopyTo(stitch);
+                    buffer.Slice(position, need).CopyTo(stitch);
                     // cannot fail: need bytes are present and 0xc1 was excluded by ScanSpan
                     MessagePackPrimitives.TryReadToken(stitch.Slice(0, need), out var payloadLength, out var childValueCount, out var tokenSize);
                     remaining += childValueCount - 1;
                     pending = payloadLength;
                     offset += tokenSize;
+                    position = buffer.GetPosition(tokenSize, position);
                     if (remaining == 0 && pending == 0)
                     {
                         return true; // the stitched token ended the value (an empty bin / str / array / map): the next bytes belong to the next message
                     }
                     straddled = true;
-                    break; // re-slice from the new offset: the payload (if any) is skipped by the next ScanSpan
+                    break; // re-enter from the new position: the payload (if any) is skipped by the next ScanSpan
                 }
+                position = next; // this segment is exhausted: continue at the start of the next one
             }
             if (!straddled)
             {
+                position = buffer.End;
                 return remaining == 0 && pending == 0;
             }
         }

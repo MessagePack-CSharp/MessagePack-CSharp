@@ -60,7 +60,7 @@ public sealed partial class ObjectFallbackFormatter<TWriteBuffer, TReadBuffer> :
             return;
         }
 
-        GetDispatcher(RuntimeTypeView.Normalize(type)).Serialize(ref buffer, ref state, value);
+        GetDispatcher(type).Serialize(ref buffer, ref state, value);
     }
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref object? value)
@@ -84,7 +84,12 @@ public sealed partial class ObjectFallbackFormatter<TWriteBuffer, TReadBuffer> :
     [UnconditionalSuppressMessage("Trimming", "IL2060", Justification = "CreateDispatcherCore is a private member of this formatter, rooted by the typeof/nameof reference above; its type argument is the value's runtime type, which the caller roots")]
     Dispatcher CreateDispatcher(Type type)
     {
-        var dispatcher = (Dispatcher)createDispatcherMethod.MakeGenericMethod(type).InvokeUnwrapped(this, null)!;
+        // the table is keyed by the value's own runtime type, so Normalize (IsVisible, a base-type walk for the
+        // non-public ones) runs once per type on the miss, not on every value
+        var normalized = RuntimeTypeView.Normalize(type);
+        var dispatcher = normalized == type
+            ? (Dispatcher)createDispatcherMethod.MakeGenericMethod(type).InvokeUnwrapped(this, null)!
+            : GetDispatcher(normalized);
         return dispatchers.GetOrAdd(type, dispatcher);
     }
 

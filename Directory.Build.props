@@ -16,6 +16,12 @@
 		<PackRootReadme>true</PackRootReadme>
 	</PropertyGroup>
 
+	<!-- Reproducible release binaries: the SDK enables DeterministicSourcePaths (the PathMap that keeps the runner's
+	     /home/runner/work/... out of the PDBs and the snupkg) only under ContinuousIntegrationBuild -->
+	<PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+	</PropertyGroup>
+
 	<ItemGroup Condition="'$(PackRootReadme)' == 'true'">
 		<None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>

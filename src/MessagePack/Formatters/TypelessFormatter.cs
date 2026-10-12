@@ -72,7 +72,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
             return;
         }
 
-        var type = RuntimeTypeView.Normalize(value.GetType()); // a frozen collection's internal implementation names its public base
+        var type = value.GetType(); // normalized (a frozen collection's internal implementation names its public base) only on the serializer-table miss
         if (!type.IsEnum) // enums wrap; GetTypeCode would report the underlying integer
         {
             switch (Type.GetTypeCode(type))
@@ -193,6 +193,13 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
     [UnconditionalSuppressMessage("Trimming", "IL2057", Justification = "the omitAssemblyVersion probe only verifies that the shortened spelling of an already-loaded type still resolves; gated behind TypelessFormatterFactory's RequiresUnreferencedCode annotation")]
     TypelessSerializer CreateSerializerForType(Type type)
     {
+        // the table is keyed by the value's own runtime type, so Normalize (IsVisible, a base-type walk for the non-public
+        // ones) runs once per type on the miss, not on every value; the raw type then maps to its public base's serializer
+        var normalized = RuntimeTypeView.Normalize(type);
+        if (normalized != type)
+        {
+            return serializersByType.GetOrAdd(type, GetSerializerByType(normalized));
+        }
         // v3 wrote an anonymous type as the bare contractless map, no ext and no name: the name is a per-compilation
         // ordinal plus the writer's assembly identity, which nothing but the identical build can load (not v3, not
         // another app, not this project after another anonymous type moved it). Read back as a map, as v3 did.

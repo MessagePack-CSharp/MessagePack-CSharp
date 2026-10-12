@@ -187,17 +187,19 @@ public static partial class MessagePackSerializer
                 if (result.IsCompleted && options.MessageProcessor == null && buffer.Length <= maxMessageSize)
                 {
                     var position = 0L;
+                    var tail = buffer;
                     while (position < buffer.Length)
                     {
                         // the token is otherwise only observed by ReadAsync: a consumer that cancels between elements
                         // must not receive the rest of an already-buffered batch
                         cancellationToken.ThrowIfCancellationRequested();
                         T value = default!;
-                        var tail = buffer.Slice(position);
                         var state = new DeserializeState(options.MaxDepth, tail.Length); // every message its own state
-                        position += tail.IsSingleSegment
+                        var length = tail.IsSingleSegment
                             ? DeserializeSpanCore(ref value, tail.FirstSpan, options, ref state)
                             : DeserializeSequenceCore(ref value, in tail, options, ref state);
+                        position += length;
+                        tail = tail.Slice(length); // from the tail, not the buffer start: the segments behind us are not walked again
                         consumed = position;
                         yield return value;
                     }
@@ -320,6 +322,7 @@ public static partial class MessagePackSerializer
                 if (result.IsCompleted && options.MessageProcessor == null && buffer.Length <= maxMessageSize)
                 {
                     var position = 0L;
+                    var tail = buffer;
                     while (produced < count)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
@@ -328,11 +331,12 @@ public static partial class MessagePackSerializer
                             MessagePackSerializationException.ThrowAsyncArrayTruncated(count, produced);
                         }
                         T value = default!;
-                        var tail = buffer.Slice(position);
                         state.Reset(options.MaxDepth, tail.Length);
-                        position += tail.IsSingleSegment
+                        var length = tail.IsSingleSegment
                             ? DeserializeSpanCore(ref value, tail.FirstSpan, options, ref state)
                             : DeserializeSequenceCore(ref value, in tail, options, ref state);
+                        position += length;
+                        tail = tail.Slice(length); // from the tail, not the buffer start: the segments behind us are not walked again
                         produced++;
                         consumed = position;
                         yield return value;
