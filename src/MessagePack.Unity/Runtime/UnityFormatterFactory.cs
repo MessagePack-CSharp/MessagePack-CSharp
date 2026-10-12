@@ -38,8 +38,9 @@ namespace MessagePack.Unity
     /// <summary>
     /// Serves the UnityEngine value types (vectors, quaternion, colors, rects, bounds, keyframes and curves, gradients,
     /// matrices, layer masks and the integer variants) in MessagePack-CSharp v3's array wire form.
-    /// Nullable, array and List forms of these types come from the generic tier of the default chain, and the WrapMode /
-    /// GradientMode enums from its enum tier, so only the value types themselves live here.
+    /// Their T?, T[], T?[], List&lt;T&gt; and List&lt;T?&gt; forms and the WrapMode / GradientMode enums (with the same
+    /// wrapper forms) are closed statically here too, so <c>DefaultAot.WithUnity()</c> (IL2CPP, Native AOT), which has
+    /// no generic or enum tier, serves them as roots the way v3's UnityResolver did.
     /// </summary>
     public sealed partial class UnityFormatterFactory : MessagePackFormatterFactory
     {
@@ -50,7 +51,7 @@ namespace MessagePack.Unity
         }
 
         // One method, two signatures. net9+ overrides the base virtual (constraints inherited), while downlevel has no base
-        // member, so the constraints are spelled out; the Type-based dispatch is generated for the partial type.
+        // member, so the constraints are spelled out; the Type-based dispatch is written out below.
 #if NET9_0_OR_GREATER
         public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
 #else
@@ -84,10 +85,35 @@ namespace MessagePack.Unity
                 Struct<Vector3Int, Vector3IntFormatter<TWriteBuffer, TReadBuffer>, TWriteBuffer, TReadBuffer>(type) ??
                 Struct<RangeInt, RangeIntFormatter<TWriteBuffer, TReadBuffer>, TWriteBuffer, TReadBuffer>(type) ??
                 Struct<RectInt, RectIntFormatter<TWriteBuffer, TReadBuffer>, TWriteBuffer, TReadBuffer>(type) ??
-                Struct<BoundsInt, BoundsIntFormatter<TWriteBuffer, TReadBuffer>, TWriteBuffer, TReadBuffer>(type);
+                Struct<BoundsInt, BoundsIntFormatter<TWriteBuffer, TReadBuffer>, TWriteBuffer, TReadBuffer>(type) ??
+                Enum<WrapMode, TWriteBuffer, TReadBuffer>(type) ??
+                Enum<GradientMode, TWriteBuffer, TReadBuffer>(type);
         }
 
-        // T, T?, T[] and List<T> for a value type; the wrapper factories are the default chain's own, closed statically
+        // The Type-based overload, written out rather than generated: the Unity package must compile where the companion
+        // generator does not run (an analyzer placed under an asmdef, DLLs copied in by hand), and this abstract member
+        // would be CS0534 there. Downlevel dispatches the Compatible pairs onto the generic method; on net9+ the resolver
+        // takes the generic override and only probes land here (the generated bridges answer them with null too).
+        public override object? CreateFormatter(Type writeBufferType, Type readBufferType, Type valueType)
+        {
+#if NET9_0_OR_GREATER
+            return null;
+#else
+            if (writeBufferType == typeof(CompatibleArrayPoolListWriteBuffer))
+            {
+                if (readBufferType == typeof(CompatibleReadOnlySpanReadBuffer)) return CreateFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer>(valueType);
+                if (readBufferType == typeof(CompatibleReadOnlySequenceReadBuffer)) return CreateFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySequenceReadBuffer>(valueType);
+            }
+            if (writeBufferType == typeof(CompatibleBufferWriterWriteBuffer))
+            {
+                if (readBufferType == typeof(CompatibleReadOnlySpanReadBuffer)) return CreateFormatter<CompatibleBufferWriterWriteBuffer, CompatibleReadOnlySpanReadBuffer>(valueType);
+                if (readBufferType == typeof(CompatibleReadOnlySequenceReadBuffer)) return CreateFormatter<CompatibleBufferWriterWriteBuffer, CompatibleReadOnlySequenceReadBuffer>(valueType);
+            }
+            return null;
+#endif
+        }
+
+        // T, T?, T[], T?[], List<T> and List<T?> for a value type; the wrapper factories are the default chain's own, closed statically
         static object? Struct<T, TFormatter, TWriteBuffer, TReadBuffer>(Type type)
             where T : struct
             where TFormatter : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>, new()
@@ -101,6 +127,27 @@ namespace MessagePack.Unity
 #endif
         {
             if (type == typeof(T)) return new TFormatter();
+            if (type == typeof(T?)) return new NullableFormatterFactory<T>().CreateFormatter<TWriteBuffer, TReadBuffer>(type);
+            if (type == typeof(T[])) return new ArrayFormatterFactory<T>().CreateFormatter<TWriteBuffer, TReadBuffer>(type);
+            if (type == typeof(List<T>)) return new ListFormatterFactory<T>().CreateFormatter<TWriteBuffer, TReadBuffer>(type);
+            if (type == typeof(T?[])) return new ArrayFormatterFactory<T?>().CreateFormatter<TWriteBuffer, TReadBuffer>(type);
+            if (type == typeof(List<T?>)) return new ListFormatterFactory<T?>().CreateFormatter<TWriteBuffer, TReadBuffer>(type);
+            return null;
+        }
+
+        // the enums the curve and gradient formatters embed, as roots and in the same wrapper forms (DefaultAot has no enum tier)
+        static object? Enum<T, TWriteBuffer, TReadBuffer>(Type type)
+            where T : struct, System.Enum
+            where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+            , allows ref struct
+#endif
+            where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+            , allows ref struct
+#endif
+        {
+            if (type == typeof(T)) return new EnumInt32Formatter<TWriteBuffer, TReadBuffer, T>();
             if (type == typeof(T?)) return new NullableFormatterFactory<T>().CreateFormatter<TWriteBuffer, TReadBuffer>(type);
             if (type == typeof(T[])) return new ArrayFormatterFactory<T>().CreateFormatter<TWriteBuffer, TReadBuffer>(type);
             if (type == typeof(List<T>)) return new ListFormatterFactory<T>().CreateFormatter<TWriteBuffer, TReadBuffer>(type);

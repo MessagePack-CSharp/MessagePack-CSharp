@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Protocol;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace MessagePack.SignalR;
 
@@ -51,7 +52,12 @@ public static class MessagePackHubProtocolSignalRBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(configure);
-        builder.Services.TryAddEnumerable(Microsoft.Extensions.DependencyInjection.ServiceDescriptor.Singleton<IHubProtocol, MessagePackHubProtocol>());
+        // an explicit factory that picks the IOptions constructor: an application that also registers a
+        // MessagePackSerializerOptions service would otherwise leave the container with two satisfiable single-argument
+        // constructors (InvalidOperationException at resolution, at startup under ValidateOnBuild). The implementation type
+        // stays declared, which is what TryAddEnumerable matches on
+        builder.Services.TryAddEnumerable(Microsoft.Extensions.DependencyInjection.ServiceDescriptor.Singleton<IHubProtocol, MessagePackHubProtocol>(
+            static provider => new MessagePackHubProtocol(provider.GetRequiredService<IOptions<MessagePackHubProtocolOptions>>())));
         builder.Services.Configure(configure);
         return builder;
     }

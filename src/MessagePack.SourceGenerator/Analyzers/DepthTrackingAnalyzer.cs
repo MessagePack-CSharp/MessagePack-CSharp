@@ -95,7 +95,7 @@ public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
                 {
                     opensContainer = true;
                 }
-                else if (ForwardsStateToFormatter(invocation) || ForwardsStateToHelper(invocation))
+                else if (ForwardsStateToFormatter(invocation) || ForwardsStateThroughHelper(invocation, context.Compilation))
                 {
                     descends = true;
                 }
@@ -356,9 +356,35 @@ public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
     static string TrimPrefix(string name, string prefix) =>
         name.StartsWith(prefix, StringComparison.Ordinal) ? name.Substring(prefix.Length) : name;
 
-    // a descent split into a helper: the entry hands both its buffer and its state on by ref to a method of its own
-    // that is not a formatter entry (the helper is where the nested Serialize/Deserialize calls then live)
-    static bool ForwardsStateToHelper(IInvocationOperation invocation)
+    // a descent split into a helper: the entry hands both its buffer and its state on by ref to a method of its own, and
+    // that method's body forwards the state to a Serialize/Deserialize (one level down, the helper that reads the
+    // elements). A helper that only skips or reads scalars with the state (version-tolerance tails, float readers) is
+    // not a descent
+    static bool ForwardsStateThroughHelper(IInvocationOperation invocation, Compilation compilation)
+    {
+        if (!ForwardsBufferAndState(invocation))
+        {
+            return false;
+        }
+        foreach (var reference in invocation.TargetMethod.DeclaringSyntaxReferences)
+        {
+            var syntax = reference.GetSyntax();
+            if (compilation.GetSemanticModel(syntax.SyntaxTree).GetOperation(syntax) is not { } body)
+            {
+                continue;
+            }
+            foreach (var operation in body.Descendants())
+            {
+                if (operation is IInvocationOperation nested && ForwardsStateToFormatter(nested))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    static bool ForwardsBufferAndState(IInvocationOperation invocation)
     {
         if (invocation.TargetMethod.Name is "Serialize" or "Deserialize" || invocation.TargetMethod.MethodKind != MethodKind.Ordinary)
         {

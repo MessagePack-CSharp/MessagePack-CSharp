@@ -103,13 +103,13 @@ var options = new MessagePackSerializerOptions(resolver) { MaxDepth = 500 };
 
 ## Migrating from v3
 
-The wire format is the same: v3 and v4 read each other's output — primitives, collections, `[MessagePackObject]` arrays and maps, `[Union]`, `DateTime` (ext -1), and the LZ4 envelopes — as long as the v4 chain matches the v3 resolver that wrote the data. The table in §2 gives the matching chain; Typeless is the case to watch, because v3's Typeless chain wrote `DateTime` in its native form (see the Typeless row). Migration is a source-level exercise.
+The wire format is the same: v3 and v4 read each other's output — primitives, collections, `[MessagePackObject]` arrays and maps, `[Union]`, `DateTime` (ext -1), and the LZ4 envelopes — as long as the v4 chain matches the v3 resolver that wrote the data (the one v3 form with no v4 reader is the opt-in `UnityBlitResolver`'s ext 30-39, see the Unity row). The table in §2 gives the matching chain; Typeless is the case to watch, because v3's Typeless chain wrote `DateTime` in its native form (see the Typeless row). Migration is a source-level exercise.
 
 **Before you start: v4 replaces v3 for the whole dependency graph.** The package id and the strong name are v3's, so NuGet unifies every `MessagePack >= 2.x / 3.x` dependency in the graph to the v4 version you reference, without a warning. A library compiled against v3 then fails at run time (`MissingMethodException` / `TypeLoadException` on first use): `Microsoft.AspNetCore.SignalR.Protocols.MessagePack`, `StreamJsonRpc`, `MagicOnion` and any in-house v3 library included. Move to v4 only when everything in the graph that uses MessagePack can move with it. `MessagePack.SignalR` is the replacement for `Microsoft.AspNetCore.SignalR.Protocols.MessagePack` (same `messagepack` protocol name), not a companion to it.
 
 ### 1. Packages and attributes
 
-- Attributes moved into `MessagePack`; `MessagePack.Annotations` is now a type-forwarding shim. Keep referencing it only until the project compiles against v4, then drop it. If a v3-built library in your graph still references `MessagePack.Annotations` 3.x, add an explicit reference to `MessagePack.Annotations` 4.x so that both versions do not end up loaded (CS0433).
+- Attributes moved into `MessagePack`; `MessagePack.Annotations` is now a type-forwarding shim. Keep referencing it only until the project compiles against v4, then drop it. If any v3-built library in your graph declares MessagePack types (attributes, formatters, generated code), add an explicit reference to `MessagePack.Annotations` 4.x: most such libraries depend on the `MessagePack` package alone, so once that unifies to 4.x the 3.x `Annotations` drops out of the graph while their assemblies still reference it, and the attribute and formatter types then fail to load at run time (`FileNotFoundException` out of `GetCustomAttributes` / `GetTypes`, a startup failure in frameworks that scan assemblies). The shim keeps those types resolvable; the library's own formatter code still cannot run on v4 (see above).
 - `MessagePackAnalyzer` is gone; the generator and its analyzers ship inside `MessagePack`.
 - `[Union(key, typeof(T))]` became `[UnionTag(typeof(T), key)]` / `[UnionTag<T>(key)]` on a root that also carries `[MessagePackObject]`. The string (assembly-qualified name) form is gone. Generic unions can name a type parameter: `[UnionTag("T", 0)]`.
 - `[MessagePackAssumedFormattable]` → `[assembly: MessagePackKnownType(typeof(T))]`. `[MessagePackKnownFormatter]` and `[ExcludeFormatterFromSourceGeneratedResolver]` are deleted (the generator never collects formatters into a resolver). `GeneratedMessagePackResolver` no longer exists: generated formatters register themselves.
@@ -130,7 +130,7 @@ The wire format is the same: v3 and v4 read each other's output — primitives, 
 | `options.WithSecurity(MessagePackSecurity.UntrustedData)` | On by default. The knobs are `MaxDepth` (500) and `MaxBufferedMessageSize` (64 MB) on the options, `HashFloodingResistant` on the resolver, and `MaxDecompressedSize` on the compression processors. There is no "trusted data" mode. |
 | `options.WithOmitAssemblyVersion(true)` | `WithTypeless(loader, omitAssemblyVersion: true)` |
 | `options.WithAllowAssemblyVersionMismatch(true)` | `TypelessTypeLoader.LoadAnyType(allowAssemblyVersionMismatch: true)` |
-| `UnityResolver` | `MessagePackFormatterFactory.Default.WithUnity()` (`MessagePack.UnityShims` / the Unity package) |
+| `UnityResolver` | `MessagePackFormatterFactory.Default.WithUnity()` (`MessagePack.UnityShims` / the Unity package). v3's opt-in `UnityBlitResolver` / `UnityBlitWithPrimitiveArrayResolver` (ext 30-39 for `Vector2[]`, `float[]`, ...) has no v4 reader: data written with it fails with a token mismatch |
 | `MessagePackSerializer.SerializeToJson(value, options)` / `ConvertToJson(bytes, options)` | `ConvertToJson(bytes)` has no `options`: it reads one plain MessagePack value. For a compressed or framed payload, unwrap it first with `options.MessageProcessor.TryDecode(bytes, out var message)` and pass `message`'s value; `SerializeToJson` is `ConvertToJson(Serialize(value))`. |
 | `MessagePackSerializer.DefaultOptions = ...` | Gone: there is no mutable process-wide default. Build one `MessagePackSerializerOptions` and pass it to every call (the parameterless overloads use `MessagePackSerializerOptions.Default`, which cannot be changed). In Unity, v3's package set `DefaultOptions` to the `UnityResolver` chain at startup; v4 does not, so a call without options fails for `Vector3` and friends until the `WithUnity()` options are passed. |
 
@@ -256,9 +256,18 @@ Unlike v3's managed LZ4, `MessagePack.LZ4` (and `MessagePack.Zstandard` below .N
 
 ## Unity
 
-The serializer core (`MessagePack`, `SerializerFoundation` and their dependencies) comes from NuGet, for example through [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity); the UnityEngine formatters are the `MessagePack.Unity` UPM package (`src/MessagePack.Unity`, Unity 2022.3.12f1 or later, the first release whose Roslyn runs the source generator). Compose them into the chain:
+The serializer core (`MessagePack`, `SerializerFoundation` and their dependencies) comes from NuGet, for example through [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity); the UnityEngine formatters are the `com.messagepack-csharp.unity` UPM package, added through the Package Manager's "Add package from git URL" (Unity 2022.3.12f1 or later, the first release whose Roslyn runs the source generator):
+
+```
+https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.Unity#v4.0.0-preview.1
+```
+
+Coming from v3, remove its UPM package (`com.github.messagepack-csharp`) first: both carry an assembly definition named `MessagePack.Unity`, and v3's registered its `UnityResolver` into `MessagePackSerializer.DefaultOptions` at startup, which v4 has no equivalent of (there is no process-wide default; see the `DefaultOptions` row above). Compose the formatters into the chain and pass the options to every call:
 
 ```csharp
+using MessagePack;
+using MessagePack.Unity;
+
 var options = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
     MessagePackFormatterFactory.DefaultAot.WithUnity())); // IL2CPP: no runtime generic instantiation
 ```
@@ -269,6 +278,7 @@ Under IL2CPP use `DefaultAot`; the annotated types need no `partial` (the genera
 
 - A `ReadOnlyMemory<byte>` overload of `Deserialize`, and `[Obsolete]` bridges for the removed v3 option/resolver names (today they are plain compile errors; the table above is the map).
 - A v4 Unity test project; the Unity package is exercised through `MessagePack.UnityShims` on .NET only.
+- A reader for v3's opt-in `UnityBlitResolver` forms (ext 30-39 for `Vector2[]`, `Vector3[]`, `float[]`, ...): v4 fails on them with a token mismatch.
 - Unloading of collectible `AssemblyLoadContext`s that share the `MessagePack` assembly with their host: the generated module initializers register a plugin's types and factories in the process-wide registry (and the `Type`-based entries cache per type), which keeps the plugin assembly alive. Load MessagePack into the plugin context too, or restart the process to reclaim it.
 - Documentation beyond this file. The XML docs cover the entry points, options, factories and attributes (most formatter types have none yet), and the `tests/` directory is the most precise description of behaviour, including the `V3Compat` suite that runs v3's own tests against v4.
 
