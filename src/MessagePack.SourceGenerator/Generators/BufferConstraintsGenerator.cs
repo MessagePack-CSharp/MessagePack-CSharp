@@ -12,7 +12,14 @@ public sealed record BufferConstraintModel(
     string Name,
     EquatableArray<string> TypeParameterNames,
     EquatableArray<byte> ParameterRoles,
-    string HintName);
+    string HintName)
+{
+    /// <summary>Set instead of an output when the shape cannot be generated; the output step reports it.</summary>
+    public DiagnosticInfo? Diagnostic { get; init; }
+
+    public static BufferConstraintModel Refused(DiagnosticInfo diagnostic) =>
+        new(null, new EquatableArray<string>([]), "", "", new EquatableArray<string>([]), new EquatableArray<byte>([]), "") { Diagnostic = diagnostic };
+}
 
 /// <summary>
 /// The Round's multi-targeting escape hatch for formatter authors: write
@@ -54,6 +61,11 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
                 return;
             }
             var pair = gated.Left;
+            if (pair.Left!.Diagnostic is { } refused)
+            {
+                spc.ReportDiagnostic(refused.ToDiagnostic());
+                return;
+            }
             // a thrown exception here (e.g. a duplicate hint name from colliding mid-edit declarations)
             // would discard every generated source of this generator for the pass,
             // turning one editing slip into a screenful of constraint errors, drop just the offending output instead
@@ -186,6 +198,13 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
         if (!found)
         {
             return null;
+        }
+
+        if (!ObjectParser.IsPartialChain(symbol))
+        {
+            // the constraints re-declare every containing type as partial too: a non-partial one would be CS0260 inside
+            // the generated file, so the fix is named here instead (MsgPack010's rule for AllowPrivate types)
+            return BufferConstraintModel.Refused(new DiagnosticInfo(Diagnostics.ContainingTypeNotPartial, $"'{symbol.ToDisplayString()}': every containing type must be partial for the generated buffer constraints; add the partial modifier to them.", LocationInfo.From(symbol)));
         }
 
         var containingDeclarations = new List<string>();

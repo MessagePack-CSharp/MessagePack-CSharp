@@ -48,6 +48,27 @@ static class AnnotationSyntax
         // a type already keyed by strings stays a map: an int key next to a string key is MsgPack002
         var stringKeys = type is not null && HasStringKey(type);
 
+        // a positional record's parameters are its first serialized members (the generator numbers them before the body);
+        // [property: Key(n)] targets the synthesized property
+        if (declaration is RecordDeclarationSyntax { ParameterList: { } parameterList } && type is not null)
+        {
+            foreach (var parameter in parameterList.Parameters)
+            {
+                var property = type.GetMembers(parameter.Identifier.ValueText).OfType<IPropertySymbol>().FirstOrDefault();
+                if (property is null
+                    || HasAttributeInOverrideChain(property, KeyAttributeName)
+                    || HasAttributeInOverrideChain(property, IgnoreMemberAttributeName)
+                    || IsUnknownMembersPacket(property))
+                {
+                    continue;
+                }
+                var attribute = (AttributeListSyntax)editor.Generator.Attribute("MessagePack.Key", stringKeys ? editor.Generator.LiteralExpression(property.Name) : editor.Generator.LiteralExpression(nextKey));
+                attribute = attribute.WithTarget(SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.PropertyKeyword)));
+                editor.AddAttribute(parameter, attribute.WithAdditionalAnnotations(Simplifier.Annotation));
+                nextKey++;
+            }
+        }
+
         foreach (var member in SerializedMembersInKeyOrder(declaration))
         {
             var symbol = member is FieldDeclarationSyntax field

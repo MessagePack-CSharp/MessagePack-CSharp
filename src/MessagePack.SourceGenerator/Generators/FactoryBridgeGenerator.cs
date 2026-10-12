@@ -11,7 +11,14 @@ public sealed record FactoryBridgeModel(
     string TypeKeyword,
     string Name,
     EquatableArray<string> TypeParameterNames,
-    string HintName);
+    string HintName)
+{
+    /// <summary>Set instead of an output when the shape cannot be generated; the output step reports it.</summary>
+    public DiagnosticInfo? Diagnostic { get; init; }
+
+    public static FactoryBridgeModel Refused(DiagnosticInfo diagnostic) =>
+        new(null, new EquatableArray<string>([]), "", "", new EquatableArray<string>([]), "") { Diagnostic = diagnostic };
+}
 
 /// <summary>
 /// Companion to the two-tier MessagePackFormatterFactory shape: the interface's only abstract member is the Type-based
@@ -37,6 +44,11 @@ public sealed class FactoryBridgeGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(models.Combine(belowFloor), static (spc, pair) =>
         {
+            if (pair.Left!.Diagnostic is { } refused)
+            {
+                spc.ReportDiagnostic(refused.ToDiagnostic());
+                return;
+            }
             if (!pair.Right)
             {
                 spc.AddSource(pair.Left!.HintName, EmitBridge(pair.Left!));
@@ -118,6 +130,13 @@ public sealed class FactoryBridgeGenerator : IIncrementalGenerator
         if (!hasGeneric)
         {
             return null;
+        }
+
+        if (!ObjectParser.IsPartialChain(symbol))
+        {
+            // the bridge re-declares every containing type as partial too: a non-partial one would be CS0260 inside the
+            // generated file, so the fix is named here instead (MsgPack010's rule for AllowPrivate types)
+            return FactoryBridgeModel.Refused(new DiagnosticInfo(Diagnostics.ContainingTypeNotPartial, $"'{symbol.ToDisplayString()}': every containing type must be partial for the generated factory bridge (the Type-based CreateFormatter overload); add the partial modifier to them.", LocationInfo.From(symbol)));
         }
 
         var containingDeclarations = new List<string>();

@@ -94,6 +94,14 @@ static class ObjectParser
             return Invalid(diagnostics);
         }
 
+        if (type.IsRefLikeType)
+        {
+            // a ref struct cannot be a type argument (IMessagePackFormatter<..., T>, Register<T>()): the formatter and the
+            // registration would be CS9244 / CS0306 inside the generated files
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}' is skipped: a ref struct cannot be serialized, because it cannot be a type argument of the formatter or the registry.", typeLocation));
+            return Invalid(diagnostics);
+        }
+
         if (type.IsAbstract)
         {
             // same routing as interfaces: an abstract (or closed, which is implicitly abstract)
@@ -186,6 +194,13 @@ static class ObjectParser
                 case int policyValue: // the KeyNamingPolicy overload implies string-key mode
                     keyAsPropertyName = true;
                     namingPolicy = (KeyNamingPolicy)policyValue;
+                    if (!Enum.IsDefined(typeof(KeyNamingPolicy), namingPolicy))
+                    {
+                        // a cast of an undefined value: ConvertName would throw below, and an exception out of the generator
+                        // (CS8785) discards every file it produces for this compilation
+                        diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidObjectAttribute, $"'{typeName}': KeyNamingPolicy value {policyValue} is not a defined member of KeyNamingPolicy.", typeLocation));
+                        return Invalid(diagnostics);
+                    }
                     break;
             }
         }
@@ -246,6 +261,17 @@ static class ObjectParser
                 {
                     candidates.Add(new Candidate(field, field.Type, field.IsReadOnly ? SetterKind.None : SetterKind.Set));
                 }
+            }
+        }
+
+        // the generated formatter reads and writes every candidate by name: a member under [Obsolete(error: true)] makes
+        // that CS0619 inside the generated file, which no pragma lifts, so the type is refused with the fix spelled out
+        foreach (var candidate in candidates)
+        {
+            if (IsObsoleteError(candidate.Symbol))
+            {
+                diagnostics.Add(new DiagnosticInfo(Diagnostics.ObsoleteErrorMember, $"'{typeName}.{candidate.Symbol.Name}' is marked [Obsolete(error: true)], which the generated formatter cannot reference; add [IgnoreMember] to it, or drop error: true.", LocationInfo.From(candidate.Symbol)));
+                return Invalid(diagnostics);
             }
         }
 
@@ -1691,6 +1717,30 @@ static class ObjectParser
     // second pass, the partial type whose nested factory registers what only it can name
     [ThreadStatic]
     static INamedTypeSymbol? privateAccessScope;
+
+    // [Obsolete("...", error: true)]: the second constructor argument, or the IsError named argument
+    static bool IsObsoleteError(ISymbol symbol)
+    {
+        foreach (var attribute in symbol.GetAttributes())
+        {
+            if (attribute.AttributeClass?.ToDisplayString() != "System.ObsoleteAttribute")
+            {
+                continue;
+            }
+            if (attribute.ConstructorArguments.Length == 2 && attribute.ConstructorArguments[1].Value is true)
+            {
+                return true;
+            }
+            foreach (var named in attribute.NamedArguments)
+            {
+                if (named.Key == "IsError" && named.Value.Value is true)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     internal static bool IsAccessibleToGeneratedCode(ITypeSymbol type, Compilation compilation) => type switch
     {

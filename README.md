@@ -52,7 +52,11 @@ public partial class Person
 }
 ```
 
-`[MessagePackObject]` types are serialized as arrays indexed by `[Key(int)]` (the compact, versionable default). `[MessagePackObject(true)]` or `[MessagePackObject(KeyNamingPolicy.CamelCase)]` writes a map keyed by member name instead. The source generator produces the formatter at compile time and reports problems as `MsgPack0xx` diagnostics (a public member without `[Key]`/`[IgnoreMember]`, duplicate keys, a type that cannot be constructed, ...). Making the type `partial` is not required, but it lets the generator put the formatter inside the type, which is what you want for `private` members (`AllowPrivate = true`) and for Native AOT.
+`[MessagePackObject]` types are serialized as arrays indexed by `[Key(int)]` (the compact, versionable default). `[MessagePackObject(true)]` or `[MessagePackObject(KeyNamingPolicy.CamelCase)]` writes a map keyed by member name instead. The source generator produces the formatter at compile time and reports problems as `MsgPack0xx` diagnostics (a public member without `[Key]`/`[IgnoreMember]`, duplicate keys, a type that cannot be constructed, ...). `partial` is needed only where the generator has to declare something inside your type: `AllowPrivate = true` (the formatter is nested in the type to reach its private members), a `[MessagePackSerializable]` roots class, and a partial formatter (buffer constraints). Everything else, Native AOT and IL2CPP included, works on non-partial types: the formatters live in the `MessagePack.Generated` namespace and register through the assembly's module initializer.
+
+Two things the generator cannot see. A member that another source generator produces (a CommunityToolkit.Mvvm `[ObservableProperty]` property, for example) is not part of the generated formatter, and no diagnostic says so, because Roslyn generators cannot read each other's output: declare such members yourself, use partial properties, or put `[Key]` on the backing field with `AllowPrivate = true`. And the generated code refers to the library's and the BCL's types by their simple names under `using` directives, so a type of your own named like one of them (`Unsafe`, `BinaryPrimitives`, `SerializeState`, `IWriteBuffer`, ...) in the global namespace, or nested in an `AllowPrivate` type, shadows it and the generated file fails to compile; rename yours.
+
+The generator and the analyzers are built against Roslyn 4.3 on every toolchain: Visual Studio 2022 17.3 / .NET SDK 6.0.400 or later, Unity 2022.3.12f1 or later. An older compiler skips them with warning CS8032 and shows their absence only through follow-on errors (or, with `DefaultAot`, formatters not found at run time).
 
 Everything goes through `MessagePackSerializerOptions`:
 
@@ -215,6 +219,8 @@ One shape stays outside the generator's reach: a generic `[MessagePackObject]` t
 
 The `Default` chain is annotated with `RequiresDynamicCode` / `RequiresUnreferencedCode`, so the trimmer tells you where it is used.
 
+To put the generated formatters in a chain of your own, compose `SourceGeneratedFormatterFactory.Instance` (the registry every assembly's module initializer fills), not the generated `MessagePack.Generated.GeneratedMessagePackFormatterFactory` class: that one is internal, exists once per assembly under the same name, and is therefore ambiguous (CS0436) from a test project that has `InternalsVisibleTo` into the library.
+
 ## Compression
 
 ```csharp
@@ -237,7 +243,7 @@ var options = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
     MessagePackFormatterFactory.DefaultAot.WithUnity())); // IL2CPP: no runtime generic instantiation
 ```
 
-Under IL2CPP use `DefaultAot` and make the annotated types `partial` so the formatters are generated into them. The wire form of the Unity types is v3's, so v3 clients and v4 servers (with `MessagePack.UnityShims`) interoperate.
+Under IL2CPP use `DefaultAot`; the annotated types need no `partial` (the generated formatters register through the assembly's module initializer, see above). The wire form of the Unity types is v3's, so v3 clients and v4 servers (with `MessagePack.UnityShims`) interoperate.
 
 ## What is not in this preview
 

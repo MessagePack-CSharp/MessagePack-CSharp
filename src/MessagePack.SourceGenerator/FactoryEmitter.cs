@@ -170,8 +170,9 @@ static class FactoryEmitter
         using (writer.OpenScope())
         {
             writer.Line("// The default options resolve through SourceGeneratedFormatterFactory, so");
-            writer.Line("// generated types work without manual registration; an explicit chain can");
-            writer.Line("// still place GeneratedMessagePackFormatterFactory.Instance directly.");
+            writer.Line("// generated types work without manual registration; an explicit chain composes");
+            writer.Line("// SourceGeneratedFormatterFactory.Instance (this class is internal and exists once per");
+            writer.Line("// assembly under this name, so a reference across InternalsVisibleTo is ambiguous, CS0436).");
             writer.Line("[global::System.Runtime.CompilerServices.ModuleInitializer]");
             writer.Line("internal static void Register()");
             using (writer.OpenScope())

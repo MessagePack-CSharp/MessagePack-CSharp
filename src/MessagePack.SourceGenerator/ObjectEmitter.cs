@@ -1174,7 +1174,18 @@ static class ObjectEmitter
                 case '\r': builder.Append("\\r"); break;
                 case '\t': builder.Append("\\t"); break;
                 case '\0': builder.Append("\\0"); break;
-                default: builder.Append(c); break;
+                default:
+                    if (char.IsControl(c) || c is '\u2028' or '\u2029')
+                    {
+                        // C# ends a line at U+0085, U+2028 and U+2029 as well: written raw into the comment that carries
+                        // the key, the rest of that comment would become code
+                        builder.Append("\\u").Append(((int)c).ToString("x4"));
+                    }
+                    else
+                    {
+                        builder.Append(c);
+                    }
+                    break;
             }
         }
         return builder.ToString();

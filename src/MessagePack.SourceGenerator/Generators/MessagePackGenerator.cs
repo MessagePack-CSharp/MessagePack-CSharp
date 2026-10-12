@@ -31,9 +31,17 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
         var results = context.SyntaxProvider.ForAttributeWithMetadataName(
             "MessagePack.MessagePackObjectAttribute",
             predicate: static (node, _) => node is TypeDeclarationSyntax,
-            transform: static (ctx, _) =>
+            transform: static (ctx, cancellationToken) =>
             {
-                if (UnionParser.HasUnionTag((INamedTypeSymbol)ctx.TargetSymbol))
+                var symbol = (INamedTypeSymbol)ctx.TargetSymbol;
+                // [MessagePackObject] on more than one partial declaration of a type (CS0579 already) runs this transform
+                // once per declaration: only the first emits, or AddSource would see the hint name twice and discard every
+                // output of this generator (CS8785)
+                if (!IsFirstAttributedDeclaration(symbol, ctx.TargetNode, cancellationToken))
+                {
+                    return new TypeParseResult(null, null, new EquatableArray<DiagnosticInfo>([]));
+                }
+                if (UnionParser.HasUnionTag(symbol))
                 {
                     var union = UnionParser.Parse(ctx);
                     return new TypeParseResult(null, union.Model, union.Diagnostics);
@@ -317,6 +325,46 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
             return false;
         }
         return string.IsNullOrWhiteSpace(include) || include.Contains(attribute);
+    }
+
+    // the first declaration (in declaration order) whose attribute lists spell the object attribute: a type declared
+    // once is trivially it, and when no declaration spells it (an alias) every declaration counts, as before
+    static bool IsFirstAttributedDeclaration(INamedTypeSymbol symbol, SyntaxNode node, System.Threading.CancellationToken cancellationToken)
+    {
+        var references = symbol.DeclaringSyntaxReferences;
+        if (references.Length <= 1)
+        {
+            return true;
+        }
+        foreach (var reference in references)
+        {
+            if (reference.GetSyntax(cancellationToken) is TypeDeclarationSyntax declaration && SpellsObjectAttribute(declaration))
+            {
+                return reference.SyntaxTree == node.SyntaxTree && reference.Span == node.Span;
+            }
+        }
+        return true;
+    }
+
+    static bool SpellsObjectAttribute(TypeDeclarationSyntax declaration)
+    {
+        foreach (var list in declaration.AttributeLists)
+        {
+            foreach (var attribute in list.Attributes)
+            {
+                var name = attribute.Name switch
+                {
+                    QualifiedNameSyntax qualified => qualified.Right.Identifier.ValueText,
+                    SimpleNameSyntax simple => simple.Identifier.ValueText,
+                    _ => null,
+                };
+                if (name is "MessagePackObject" or "MessagePackObjectAttribute")
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     internal static bool NeedsPolyfill(Compilation compilation, string metadataName)

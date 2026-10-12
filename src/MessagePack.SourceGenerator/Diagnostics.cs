@@ -35,4 +35,7 @@ public static class Diagnostics
     public static readonly DiagnosticDescriptor SerializableRootRedundant = Make("MsgPack022", "MessagePackSerializable root contributes no registration", DiagnosticSeverity.Warning);
     public static readonly DiagnosticDescriptor RequiredInitializerNotPreserved = Make("MsgPack023", "Initializer of an unread required member is not preserved", DiagnosticSeverity.Warning);
     public static readonly DiagnosticDescriptor LanguageVersionTooLow = Make("MsgPack024", "C# language version is too low for generated code", DiagnosticSeverity.Error);
+    public static readonly DiagnosticDescriptor InvalidObjectAttribute = Make("MsgPack025", "MessagePackObject attribute argument is invalid", DiagnosticSeverity.Error);
+    public static readonly DiagnosticDescriptor ObsoleteErrorMember = Make("MsgPack026", "Serialized member is marked Obsolete(error: true)", DiagnosticSeverity.Error);
+    public static readonly DiagnosticDescriptor ContainingTypeNotPartial = Make("MsgPack027", "Generated partial declaration requires partial containing types", DiagnosticSeverity.Error);
 }

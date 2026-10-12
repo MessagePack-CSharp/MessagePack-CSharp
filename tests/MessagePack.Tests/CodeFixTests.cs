@@ -68,6 +68,27 @@ public class CodeFixTests
         Assert.True(fixedSource.IndexOf("[Key(2)]") < fixedSource.IndexOf("Score"));
     }
 
+    [Fact]
+    public async Task AddKeyAttributes_AnnotatesPositionalRecordParameters()
+    {
+        // the fix used to walk declaration.Members only, so a positional record got an empty edit
+        var fixedSource = await ApplyFixAsync(new AddKeyAttributesCodeFixProvider(), analyzer: null, """
+            using MessagePack;
+            [MessagePackObject]
+            public record Person(string Name, int Age)
+            {
+                public string? Note { get; set; }
+            }
+            """, "MsgPack001");
+        Assert.Contains("[property: Key(0)]", fixedSource);
+        Assert.Contains("[property: Key(1)]", fixedSource);
+        Assert.Contains("[Key(2)]", fixedSource);
+        // parameters number first, in declaration order, then the body
+        Assert.True(fixedSource.IndexOf("[property: Key(0)]") < fixedSource.IndexOf("string Name"));
+        Assert.True(fixedSource.IndexOf("[property: Key(1)]") < fixedSource.IndexOf("int Age"));
+        Assert.True(fixedSource.IndexOf("[Key(2)]") < fixedSource.IndexOf("Note"));
+    }
+
     // a key attribute derived from KeyAttribute counts: the next number follows it, and a derived string key keeps
     // the type a map
     [Fact]

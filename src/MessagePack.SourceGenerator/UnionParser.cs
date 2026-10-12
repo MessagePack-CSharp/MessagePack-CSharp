@@ -265,6 +265,13 @@ static class UnionParser
                 valid = false;
                 continue;
             }
+            if (!ObjectParser.IsAccessibleToGeneratedCode(caseType, context.SemanticModel.Compilation))
+            {
+                // the generated formatter names the case type (a private or protected nested case would be CS0122 in it)
+                diagnostics.Add(new DiagnosticInfo(Diagnostics.TypeNotAccessible, $"'{typeName}': [UnionTag] case type '{caseType.ToDisplayString()}' must be public or internal (and so must its containing types) for the generated formatter to reference it.", typeLocation));
+                valid = false;
+                continue;
+            }
             var hasCreationMember = !isPatternUnion
                 || (providerInterface is null ? HasCaseConstructor(type, caseType) : HasCaseFactory(definingType, type, caseType));
             if (isPatternUnion ? !hasCreationMember : !(caseType is INamedTypeSymbol namedCase && IsAssignableTo(namedCase, type)))
