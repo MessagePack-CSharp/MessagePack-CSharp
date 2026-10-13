@@ -8,7 +8,7 @@ namespace MessagePack;
 /// Pass the same set to several factories (or pre-seed / clear it under <c>lock</c>) to
 /// choose the intern pool's sharing scope and lifetime yourself; sharing the factory
 /// instance itself across resolvers shares the pool the same way. The netstandard2.0 build
-/// (.NET Framework, Unity) has the parameterless constructor only: its <c>HashSet&lt;T&gt;</c> cannot
+/// (.NET Framework) has the parameterless constructor only: its <c>HashSet&lt;T&gt;</c> cannot
 /// hand back the canonical instance, so the pool there is the factory's own.
 /// </summary>
 public sealed partial class StringInterningFormatterFactory : MessagePackFormatterFactory
