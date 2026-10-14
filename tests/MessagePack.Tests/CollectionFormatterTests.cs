@@ -1,4 +1,6 @@
 extern alias V3;
+using System.Buffers;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using MessagePack;
@@ -177,6 +179,79 @@ public class CollectionFormatterTests
             AssertOracleAndRoundtrip<ISet<int>>(new HashSet<int>(payload));
             AssertOracleAndRoundtrip<IReadOnlySet<int>>(new HashSet<int>(payload));
         }
+    }
+
+    // a source that mutates and re-yields one instance (a pooled buffer, a reused DTO): each element is encoded as it
+    // is enumerated, as v3 did, so the wire holds every value rather than the last one repeated
+    sealed class ReusedInstanceSource : IEnumerable<int[]>
+    {
+        readonly int[] slot = new int[1];
+        public int Enumerations;
+        public IEnumerator<int[]> GetEnumerator()
+        {
+            Enumerations++;
+            for (int i = 1; i <= 3; i++)
+            {
+                slot[0] = i;
+                yield return slot;
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    // the same through a collection type the generic view serves (an IEnumerable<T> constructor, no count)
+    sealed class ReusedInstanceBag : IEnumerable<int[]>
+    {
+        readonly List<int> values;
+        public ReusedInstanceBag(IEnumerable<int[]> items)
+        {
+            values = items.Select(static item => item[0]).ToList();
+        }
+        public IEnumerator<int[]> GetEnumerator()
+        {
+            var slot = new int[1];
+            foreach (var value in values)
+            {
+                slot[0] = value;
+                yield return slot;
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    // and through the non-generic view
+    sealed class ReusedInstanceNonGeneric : IEnumerable
+    {
+        public IEnumerator GetEnumerator()
+        {
+            var slot = new int[1];
+            for (int i = 1; i <= 3; i++)
+            {
+                slot[0] = i;
+                yield return slot;
+            }
+        }
+    }
+
+    [Fact]
+    public void MutatingLazySource_CapturesEachElementAsYielded()
+    {
+        var expected = MessagePackSerializer.Serialize(new[] { new[] { 1 }, new[] { 2 }, new[] { 3 } });
+        var source = new ReusedInstanceSource();
+        Assert.Equal(expected, MessagePackSerializer.Serialize<IEnumerable<int[]>>(source));
+        Assert.Equal(1, source.Enumerations);
+        var writer = new ArrayBufferWriter<byte>();
+        MessagePackSerializer.Serialize<IEnumerable<int[]>>(writer, source); // the IBufferWriter entry: another buffer pair, the same staging
+        Assert.Equal(expected, writer.WrittenSpan.ToArray());
+        Assert.Equal(expected, MessagePackSerializer.Serialize(new ReusedInstanceBag([[1], [2], [3]])));
+        Assert.Equal(expected, MessagePackSerializer.Serialize<IEnumerable>(new ReusedInstanceNonGeneric()));
+        Assert.Equal(expected, Oracle.Serialize<IEnumerable<int[]>>(new ReusedInstanceSource())); // v3 agrees
+        Assert.Equal([[1], [2], [3]], MessagePackSerializer.Deserialize<int[][]>(expected));
+
+        // lazy sources inside lazy sources: the staging nests
+        var nested = MessagePackSerializer.Serialize<IEnumerable<IEnumerable<int>>>(
+            Enumerable.Range(1, 2).Where(static i => true).Select(static i => Enumerable.Range(1, i).Where(static j => true).Select(j => j * i)));
+        Assert.Equal(MessagePackSerializer.Serialize(new[] { new[] { 1 }, new[] { 2, 4 } }), nested);
     }
 
     sealed class SingleEnumerationSource : IEnumerable<int>

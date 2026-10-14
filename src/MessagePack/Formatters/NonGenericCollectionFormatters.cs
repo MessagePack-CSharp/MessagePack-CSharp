@@ -7,9 +7,12 @@ namespace MessagePack.Formatters;
 public sealed partial class NonGenericInterfaceEnumerableFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IEnumerable?>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, object?> formatter = null!;
+    MessagePackFormatterResolver resolver = null!;
+    IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, object?>? staged; // for sources without a count, see StagedEnumerable
 
     public void Initialize(MessagePackFormatterResolver resolver)
     {
+        this.resolver = resolver;
         formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, object?>();
     }
 
@@ -20,18 +23,19 @@ public sealed partial class NonGenericInterfaceEnumerableFormatter<TWriteBuffer,
             buffer.WriteNil();
             return;
         }
-        
-        // the count is unknown upfront: collect the item REFERENCES first.
-        var items = new List<object?>();
-        foreach (var item in value)
-        {
-            items.Add(item);
-        }
         state.Enter();
-        buffer.WriteArrayHeader(items.Count);
-        foreach (var item in items)
+        if (value is ICollection collection)
         {
-            formatter.Serialize(ref buffer, ref state, item);
+            buffer.WriteArrayHeader(collection.Count);
+            foreach (var item in collection)
+            {
+                formatter.Serialize(ref buffer, ref state, item);
+            }
+        }
+        else
+        {
+            // no count up front: each element is encoded as it is enumerated, then the header and the bytes
+            StagedEnumerable.Serialize(ref buffer, ref state, staged ??= StagedEnumerable.Formatter<object?>(resolver), value);
         }
         state.Exit();
     }

@@ -79,6 +79,7 @@ static class SerializableParser
             var rootGenerics = new Dictionary<string, HarvestedGenericModel>();
             var rootBuiltIns = new Dictionary<string, HarvestedBuiltInModel>();
             ObjectParser.HarvestSerializedType(root, compilation, rootGenerics, rootBuiltIns);
+            ObjectParser.ReportClosureCutoffs(typeName, diagnostics, LocationInfo.From(attribute) ?? typeLocation);
             if (rootGenerics.Count == 0 && rootBuiltIns.Count == 0)
             {
                 diagnostics.Add(new DiagnosticInfo(Diagnostics.SerializableRootRedundant, RedundantRootMessage(typeName, root, compilation), LocationInfo.From(attribute) ?? typeLocation));

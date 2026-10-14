@@ -800,6 +800,7 @@ static class ObjectParser
             }
             HarvestSerializedType(entry.Type, compilation, harvestedGenerics, harvestedBuiltIns);
         }
+        ReportClosureCutoffs(typeName, diagnostics, typeLocation);
 
         // AllowPrivate: member types the generated factory cannot name (a private nested enum, alone or inside
         // Nullable<>, arrays, List<>, Dictionary<,>, ...) are harvested again with the type itself as the
@@ -824,6 +825,7 @@ static class ObjectParser
             finally
             {
                 privateAccessScope = null;
+                DiscardClosureCutoffs(); // the same walk again, already reported
             }
             foreach (var harvested in scopedBuiltIns)
             {
@@ -920,6 +922,28 @@ static class ObjectParser
     // the nesting depth of the type the current walk started from (one top-level call per member type)
     [ThreadStatic]
     static int? harvestRootNesting;
+
+    // the closures the growth bound cut since the caller last took them (in walk order, each once): types the generated
+    // factory will not register, which the caller reports (MsgPack024) so the omission shows at build time, not when
+    // Native AOT (no dynamic fallback) first meets the type
+    [ThreadStatic]
+    static List<string>? closureCutoffs;
+
+    internal static void ReportClosureCutoffs(string typeName, List<DiagnosticInfo> diagnostics, LocationInfo? location)
+    {
+        var cut = closureCutoffs;
+        closureCutoffs = null;
+        if (cut is null)
+        {
+            return;
+        }
+        foreach (var closed in cut)
+        {
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.ClosureHarvestStopped, $"'{typeName}': '{closed}' is not registered. It is a closure of an expanding generic definition (each step closes a deeper type) nested more than {MaxClosureGrowth} levels deeper than the type it was reached from, where the harvest stops. If it is serialized, declare it as a root ([MessagePackSerializable<{closed}>] on a partial class): the harvest restarts from there. Under Native AOT an unregistered closed generic type cannot be constructed at run time.", location));
+        }
+    }
+
+    internal static void DiscardClosureCutoffs() => closureCutoffs = null;
 
     // per walk: whether a generic definition is expanding, and the edges of the expansion graph
     [ThreadStatic]
@@ -1086,7 +1110,14 @@ static class ObjectParser
                 && type is INamedTypeSymbol { IsGenericType: true } grown
                 && IsExpandingDefinition(grown.OriginalDefinition, compilation))
             {
-                return; // an expanding definition's closures end here, see MaxClosureGrowth
+                // an expanding definition's closures end here, see MaxClosureGrowth; the cut is reported by the caller
+                var closed = type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString(); // a `?` cannot go into the attribute's type argument
+                closureCutoffs ??= new List<string>();
+                if (!closureCutoffs.Contains(closed))
+                {
+                    closureCutoffs.Add(closed);
+                }
+                return;
             }
             HarvestSerializedTypeCore(type, compilation, userGenerics, builtIns, closureDepth);
         }

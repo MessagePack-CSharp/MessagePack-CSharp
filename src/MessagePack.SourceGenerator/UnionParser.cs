@@ -300,6 +300,7 @@ static class UnionParser
             }
             useNonBoxing = useNonBoxing && HasTryGetValue(definingType, caseType);
             ObjectParser.HarvestSerializedType(caseType, context.SemanticModel.Compilation, harvestedGenerics, harvestedBuiltIns);
+            ObjectParser.ReportClosureCutoffs(typeName, diagnostics, typeLocation);
             cases.Add(new UnionCaseModel(
                 Tag: tag,
                 TypeName: caseTypeName,

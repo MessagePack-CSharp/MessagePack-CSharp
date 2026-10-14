@@ -82,6 +82,40 @@ public class GeneratedNameCollisionTests
         Assert.Empty(updated.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error));
     }
 
+    // the cut is not silent: the first closure left out is named (MsgPack029, a warning on the declaring type), with the
+    // root declaration as the way to have it registered; a finite graph never triggers it (the tests below)
+    [Fact]
+    public void ExpandingShape_ReportsTheClosureLeftOut()
+    {
+        var result = RunGenerator("""
+            using System.Collections.Generic;
+            using MessagePack;
+            [MessagePackObject] public class Node<T> { [Key(0)] public Node<List<T>>? Next { get; set; } }
+            [MessagePackObject] public class Root { [Key(0)] public Node<int>? First { get; set; } }
+            """, out var updated);
+        Assert.Empty(result.Diagnostics.Where(static d => d.Severity == DiagnosticSeverity.Error).Select(static d => d.ToString()));
+        Assert.Empty(updated.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error).Select(static d => d.ToString()));
+        var cut = Assert.Single(result.Diagnostics, static d => d.Id == "MsgPack029");
+        Assert.Equal(DiagnosticSeverity.Warning, cut.Severity);
+        Assert.StartsWith("'Root': 'Node<System.Collections.Generic.List<System.Collections.Generic.List<", cut.GetMessage());
+        Assert.Contains("[MessagePackSerializable<Node<System.Collections.Generic.List<", cut.GetMessage());
+        Assert.Equal(3, cut.Location.GetLineSpan().StartLinePosition.Line); // on Root, whose member reached the cut
+
+        // the root declaration restarts the harvest from the named type, 32 levels further (and is cut again there)
+        var named = cut.GetMessage().Split('\'')[3];
+        var extended = RunGenerator($$"""
+            using System.Collections.Generic;
+            using MessagePack;
+            [MessagePackObject] public class Node<T> { [Key(0)] public Node<List<T>>? Next { get; set; } }
+            [MessagePackObject] public class Root { [Key(0)] public Node<int>? First { get; set; } }
+            [MessagePackSerializable<{{named}}>] public partial class Extra { }
+            """, out updated);
+        Assert.Empty(updated.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error).Select(static d => d.ToString()));
+        var closed = named.Replace("Node<", "global::Node<").Replace("System.Collections.Generic.List<", "global::System.Collections.Generic.List<");
+        Assert.Contains(extended.GeneratedTrees, t => t.ToString().Contains($"typeof({closed})"));
+        Assert.Contains(extended.Diagnostics, d => d.Id == "MsgPack029" && d.GetMessage().StartsWith("'Extra':"));
+    }
+
     // a type-level attribute DERIVED from MessagePackFormatterAttribute is not what the registration pipeline matches:
     // the type says so (MsgPack014) instead of silently taking the generated object formatter
     [Fact]

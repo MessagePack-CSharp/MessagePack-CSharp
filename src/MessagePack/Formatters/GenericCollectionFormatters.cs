@@ -191,9 +191,12 @@ public sealed class GenericEnumerableFormatter<TWriteBuffer, TReadBuffer, TEleme
     where TCollection : IEnumerable<TElement>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, TElement> formatter = null!;
+    MessagePackFormatterResolver resolver = null!;
+    IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, TElement>? staged; // for sources without a count, see StagedEnumerable
 
     public void Initialize(MessagePackFormatterResolver resolver)
     {
+        this.resolver = resolver;
         formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TElement>();
     }
 
@@ -204,20 +207,21 @@ public sealed class GenericEnumerableFormatter<TWriteBuffer, TReadBuffer, TEleme
             buffer.WriteNil();
             return;
         }
-        // the header needs the count up front: collection views report it, anything else
-        // buffers the elements once (v3 buffered the encoded bytes instead; same wire)
-        IReadOnlyCollection<TElement> counted = value switch
-        {
-            ICollection<TElement> collection => new CollectionCountAdapter(collection),
-            IReadOnlyCollection<TElement> readOnly => readOnly,
-            _ => new List<TElement>(value),
-        };
         var f = formatter;
         state.Enter();
-        buffer.WriteArrayHeader(counted.Count);
-        foreach (var item in counted)
+        // the header needs the count up front: collection views report it, anything else is encoded as it is
+        // enumerated, then the header and the bytes (same wire)
+        if (value.TryGetNonEnumeratedCount(out var count))
         {
-            f.Serialize(ref buffer, ref state, item);
+            buffer.WriteArrayHeader(count);
+            foreach (var item in value)
+            {
+                f.Serialize(ref buffer, ref state, item);
+            }
+        }
+        else
+        {
+            StagedEnumerable.Serialize(ref buffer, ref state, staged ??= StagedEnumerable.Formatter<TElement>(resolver), value);
         }
         state.Exit();
     }
@@ -236,15 +240,6 @@ public sealed class GenericEnumerableFormatter<TWriteBuffer, TReadBuffer, TEleme
         var items = CollectionReads<TWriteBuffer, TReadBuffer, TElement>.ReadArray(ref buffer, ref state, formatter, count);
         state.Exit();
         value = (TCollection)Activator.CreateInstance(typeof(TCollection), items)!;
-    }
-
-    sealed class CollectionCountAdapter(ICollection<TElement> collection) : IReadOnlyCollection<TElement>
-    {
-        public int Count => collection.Count;
-
-        public IEnumerator<TElement> GetEnumerator() => collection.GetEnumerator();
-
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => collection.GetEnumerator();
     }
 }
 

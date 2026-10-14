@@ -1584,9 +1584,12 @@ public sealed partial class ConcurrentBagFormatterFactory<T> : MessagePackFormat
 public sealed partial class InterfaceEnumerableFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IEnumerable<T>?>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
+    MessagePackFormatterResolver resolver = null!;
+    IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>? staged; // for sources without a count, see StagedEnumerable
 
     public void Initialize(MessagePackFormatterResolver resolver)
     {
+        this.resolver = resolver;
         formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
@@ -1611,13 +1614,8 @@ public sealed partial class InterfaceEnumerableFormatter<TWriteBuffer, TReadBuff
         }
         else
         {
-            // TODO: Optimize use of ArrayPool<T> or others
-            var buffered = value.ToArray();
-            buffer.WriteArrayHeader(buffered.Length);
-            foreach (var item in buffered)
-            {
-                f.Serialize(ref buffer, ref state, item);
-            }
+            // no count up front: each element is encoded as it is enumerated, then the header and the bytes
+            StagedEnumerable.Serialize(ref buffer, ref state, staged ??= StagedEnumerable.Formatter<T>(resolver), value);
         }
 
         state.Exit();
