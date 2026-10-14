@@ -1,11 +1,14 @@
+using System.Buffers;
+using System.IO.Pipelines;
 using MessagePack;
 
 #pragma warning disable CS0618 // v3 LZ4 envelopes are obsolete for new data; they are the subject here
 
 namespace MessagePack.Tests.Robustness;
 
-// The shared attack surface: every (target shape x resolver tier) deserialize thunk, plus
-// the valid-payload seed corpus. Extracted from RobustnessTests so the coverage-guided
+// The shared attack surface: every (target shape x resolver tier) deserialize thunk, the entry-point thunks (the
+// async boundary scanner over a PipeReader, the message and element streams, the non-seekable Stream, JSON
+// conversion), plus the valid-payload seed corpus. Extracted from RobustnessTests so the coverage-guided
 // SharpFuzz harness (MessagePack.Tests.Fuzz) drives the exact same surface: the randomized
 // property tests and the fuzzer stay in lockstep by construction, not by copy-paste.
 // Public because this file is compile-linked into MessagePack.Tests.Fuzz.Target, whose
@@ -30,6 +33,17 @@ public static class RobustnessTargets
     static readonly MessagePackSerializerOptions Strict = new(
         new MessagePackFormatterResolver([MessagePackFormatterFactory.Default]) { ValidateNullableAnnotations = true });
 
+    // the .NET-native formats (DateTime as ticks+kind, ...) are a second set of built-in formatters with their own
+    // readers
+    static readonly MessagePackSerializerOptions DotNet = MessagePackSerializerOptions.DotNetOptimized;
+
+    // Typeless: object slots carry a type name the reader resolves through the loader; AllowedTypes is the
+    // production shape, so a forged name must be refused there (and the name decoding itself is attacker input)
+    static readonly MessagePackSerializerOptions Typeless = new(
+        new MessagePackFormatterResolver([MessagePackFormatterFactory.Default.WithContractless().WithTypeless(TypelessTypeLoader.AllowedTypes(
+            typeof(SampleArrayPoco), typeof(SampleMapPoco), typeof(SampleCtorPoco), typeof(SampleCircle), typeof(SampleRectangle), typeof(SampleTriangle),
+            typeof(int[]), typeof(string), typeof(List<SampleArrayPoco>), typeof(Dictionary<string, SampleMapPoco>)))]));
+
     // LZ4 decode is a distinct attack surface: the MessageProcessor.TryDecode path runs
     // before any formatter, so malformed block headers / decompression bombs must be
     // rejected by the ext-envelope parse and the MaxDecompressedSize cap, again only ever
@@ -37,6 +51,12 @@ public static class RobustnessTargets
     // within the generated payload sizes.
     static readonly MessagePackSerializerOptions Lz4Block = MessagePackSerializerOptions.Default.WithLz4Block(maxDecompressedSize: 1 << 20);
     static readonly MessagePackSerializerOptions Lz4Array = MessagePackSerializerOptions.Default.WithLz4BlockArray(maxDecompressedSize: 1 << 20);
+
+    // the container processors (one standard compression frame per message, header walked by the processor itself,
+    // declared content sizes checked against what the compressed bytes could produce) and the envelope processor
+    static readonly MessagePackSerializerOptions Lz4Frame = MessagePackSerializerOptions.Default.WithLz4Frame(maxDecompressedSize: 1 << 20);
+    static readonly MessagePackSerializerOptions Zstd = MessagePackSerializerOptions.Default.WithZstandardFrame(3, maxDecompressedSize: 1 << 20);
+    static readonly MessagePackSerializerOptions Framing = MessagePackSerializerOptions.Default.WithFraming();
 
     // deserialize thunks: one per (target type, tier). Each takes raw bytes and attempts a
     // full deserialize, discarding the result. The caller classifies whatever happens.
@@ -48,7 +68,11 @@ public static class RobustnessTargets
         void Add<T>(string tier, MessagePackSerializerOptions opt)
             => list.Add(($"{typeof(T).Name}/{tier}", bytes => MessagePackSerializer.Deserialize<T>(bytes, opt)));
 
-        foreach (var (tier, opt) in new[] { ("gen", Generated), ("contractless", Contractless), ("lenient", Lenient), ("strict", Strict), ("lz4block", Lz4Block), ("lz4array", Lz4Array) })
+        foreach (var (tier, opt) in new[]
+        {
+            ("gen", Generated), ("contractless", Contractless), ("lenient", Lenient), ("strict", Strict), ("dotnet", DotNet), ("typeless", Typeless),
+            ("lz4block", Lz4Block), ("lz4array", Lz4Array), ("lz4frame", Lz4Frame), ("zstd", Zstd), ("framing", Framing),
+        })
         {
             Add<SampleArrayPoco>(tier, opt);
             Add<SampleMapPoco>(tier, opt);
@@ -64,7 +88,121 @@ public static class RobustnessTargets
             Add<string>(tier, opt);
             Add<object[]>(tier, opt);
         }
+
+        // ---- entry points other than the synchronous byte[] one ----
+        // the async entries find the message boundary first (MessagePackBoundaryScanner over the PipeReader's buffered
+        // bytes, resumed across segments; the processor's own header walk under a frame processor), the message and
+        // element streams repeat that per message, the Stream entry buffers a non-seekable stream to its end. The
+        // bytes arrive in small segments so every resume path runs.
+        void AddEntries<T>(string tier, MessagePackSerializerOptions opt, bool container)
+        {
+            list.Add(($"{typeof(T).Name}/{tier}/pipe", bytes => MessagePackSerializer.DeserializeAsync<T>(Segmented(bytes), opt).AsTask().GetAwaiter().GetResult()));
+            list.Add(($"{typeof(T).Name}/{tier}/messages", bytes => Drain(MessagePackSerializer.DeserializeMessagesAsync<T>(Segmented(bytes), opt))));
+            if (!container)
+            {
+                // a container processor owns the message boundaries, so the element stream is NotSupportedException by
+                // contract there, not an input-dependent outcome
+                list.Add(($"{typeof(T).Name}/{tier}/elements", bytes => Drain(MessagePackSerializer.DeserializeElementsAsync<T>(Segmented(bytes), opt))));
+            }
+            list.Add(($"{typeof(T).Name}/{tier}/stream", bytes => MessagePackSerializer.Deserialize<T>(new NonSeekableStream(bytes), opt)));
+        }
+
+        foreach (var (tier, opt, container) in new[] { ("gen", Generated, false), ("framing", Framing, false), ("lz4frame", Lz4Frame, true), ("zstd", Zstd, true) })
+        {
+            AddEntries<SampleArrayPoco>(tier, opt, container);
+            AddEntries<ISampleShape>(tier, opt, container);
+            AddEntries<int[]>(tier, opt, container);
+            AddEntries<object[]>(tier, opt, container);
+            AddEntries<string>(tier, opt, container);
+        }
+
+        // JSON conversion walks the raw msgpack without a target type (its own depth limit and token reader)
+        list.Add(("json", bytes => MessagePackSerializer.ConvertToJson(bytes)));
+
         return list.ToArray();
+    }
+
+    // the payload as a PipeReader over a multi-segment sequence (5-byte segments), so headers and payloads straddle
+    // segment boundaries and the scanner's resume positions are exercised on every input
+    static PipeReader Segmented(byte[] bytes) => PipeReader.Create(SegmentedSequence(bytes, 5));
+
+    public static ReadOnlySequence<byte> SegmentedSequence(byte[] bytes, int segmentSize)
+    {
+        if (bytes.Length <= segmentSize)
+        {
+            return new ReadOnlySequence<byte>(bytes);
+        }
+        var first = new Segment(bytes.AsMemory(0, segmentSize), 0);
+        var last = first;
+        for (var offset = segmentSize; offset < bytes.Length; offset += segmentSize)
+        {
+            last = last.Append(bytes.AsMemory(offset, Math.Min(segmentSize, bytes.Length - offset)));
+        }
+        return new ReadOnlySequence<byte>(first, 0, last, last.Memory.Length);
+    }
+
+    sealed class Segment : ReadOnlySequenceSegment<byte>
+    {
+        public Segment(ReadOnlyMemory<byte> memory, long runningIndex)
+        {
+            Memory = memory;
+            RunningIndex = runningIndex;
+        }
+
+        public Segment Append(ReadOnlyMemory<byte> memory)
+        {
+            var next = new Segment(memory, RunningIndex + Memory.Length);
+            Next = next;
+            return next;
+        }
+    }
+
+    static void Drain<T>(IAsyncEnumerable<T> source)
+    {
+        var enumerator = source.GetAsyncEnumerator();
+        try
+        {
+            while (enumerator.MoveNextAsync().AsTask().GetAwaiter().GetResult())
+            {
+            }
+        }
+        finally
+        {
+            enumerator.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        }
+    }
+
+    // a network-like stream: no length, no seeking, data in small reads
+    sealed class NonSeekableStream : Stream
+    {
+        readonly byte[] bytes;
+        int position;
+
+        public NonSeekableStream(byte[] bytes) => this.bytes = bytes;
+
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
+        public override int Read(byte[] buffer, int offset, int count) => Read(buffer.AsSpan(offset, count));
+
+        public override int Read(Span<byte> buffer)
+        {
+            var n = Math.Min(Math.Min(buffer.Length, 7), bytes.Length - position);
+            bytes.AsSpan(position, n).CopyTo(buffer);
+            position += n;
+            return n;
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
     // A representative valid payload per target, used as the mutation/truncation seed.
@@ -86,6 +224,7 @@ public static class RobustnessTargets
         var map = new SampleMapPoco { Id = 1, Name = "m", Score = 2.5, Color = SampleColor.Green, Numbers = [4, 5, 6], Child = new SampleMapPoco { Id = 2 } };
         var ctor = new SampleCtorPoco(9, "ctor", SampleColor.Red) { Extra = 100 };
         ISampleShape shape = new SampleTriangle { Base = 1, Height = 2, Inscribed = new SampleCircle { Radius = 0.5 } };
+        var pocos = new List<SampleArrayPoco> { poco, poco, poco, poco };
 
         return
         [
@@ -98,8 +237,32 @@ public static class RobustnessTargets
             MessagePackSerializer.Serialize<object[]>([1, "two", 3.0, true, null!]),
             // valid LZ4 envelopes, so mutation/truncation exercises the decode path with
             // a real block header to corrupt (not just random bytes that fail the ext parse)
-            MessagePackSerializer.Serialize(new List<SampleArrayPoco> { poco, poco, poco, poco }, Lz4Block),
-            MessagePackSerializer.Serialize(new List<SampleArrayPoco> { poco, poco, poco, poco }, Lz4Array),
+            MessagePackSerializer.Serialize(pocos, Lz4Block),
+            MessagePackSerializer.Serialize(pocos, Lz4Array),
+            // the frames and the envelope, the same way: real headers, content sizes and checksums to corrupt
+            MessagePackSerializer.Serialize(pocos, Lz4Frame),
+            MessagePackSerializer.Serialize(pocos, Zstd),
+            MessagePackSerializer.Serialize(poco, Framing),
+            // the .NET-native DateTime form, and typeless payloads carrying type names in the object slots
+            MessagePackSerializer.Serialize(poco, DotNet),
+            MessagePackSerializer.Serialize<object[]>([poco, "two", 3, shape], Typeless),
+            MessagePackSerializer.Serialize<object>(map, Typeless),
+            // a message stream (three messages back to back) and an element stream (header, then one message per
+            // element): the shapes the async entries read
+            [.. MessagePackSerializer.Serialize(poco), .. MessagePackSerializer.Serialize(poco), .. MessagePackSerializer.Serialize(poco)],
+            Elements(pocos, Generated),
+            Elements(pocos, Framing),
         ];
+    }
+
+    static byte[] Elements<T>(IReadOnlyList<T> values, MessagePackSerializerOptions options)
+    {
+        var pipe = new Pipe();
+        MessagePackSerializer.SerializeElementsAsync(pipe.Writer, values, values.Count, options).GetAwaiter().GetResult();
+        pipe.Writer.Complete();
+        var result = pipe.Reader.ReadAtLeastAsync(int.MaxValue).AsTask().GetAwaiter().GetResult();
+        var bytes = result.Buffer.ToArray();
+        pipe.Reader.AdvanceTo(result.Buffer.End);
+        return bytes;
     }
 }

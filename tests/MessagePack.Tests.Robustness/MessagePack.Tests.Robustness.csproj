@@ -40,6 +40,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
     <ProjectReference Include="..\..\src\MessagePack.LZ4\MessagePack.LZ4.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.Zstandard\MessagePack.Zstandard.csproj" />
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 

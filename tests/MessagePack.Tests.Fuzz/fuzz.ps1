@@ -55,6 +55,7 @@ if (-not $SkipBuild) {
     $instrument = @(
         "MessagePack.dll",
         "MessagePack.LZ4.dll",
+        "MessagePack.Zstandard.dll",
         "SerializerFoundation.dll",
         "MessagePack.Tests.Fuzz.Target.dll"
     )

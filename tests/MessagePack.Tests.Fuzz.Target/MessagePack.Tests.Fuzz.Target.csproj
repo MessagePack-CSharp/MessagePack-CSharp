@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!-- The instrumented side of the SharpFuzz split: sharpfuzz rewrites the IL of this
-       assembly (and MessagePack/MessagePack.LZ4/SerializerFoundation) for coverage
+       assembly (and MessagePack/MessagePack.LZ4/MessagePack.Zstandard/SerializerFoundation) for coverage
        feedback, while the harness exe (MessagePack.Tests.Fuzz) must stay uninstrumented.
        Holding the models here (not in the harness) matters: the source-generated
        formatter bodies compile into whichever assembly declares the models, and they are
@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
     <ProjectReference Include="..\..\src\MessagePack.LZ4\MessagePack.LZ4.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.Zstandard\MessagePack.Zstandard.csproj" />
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 

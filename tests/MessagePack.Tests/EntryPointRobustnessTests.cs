@@ -58,6 +58,33 @@ public class EntryPointRobustnessTests
     }
 
     [Fact]
+    public async Task PipeReader_ParseFailureOnTheScannedPath_HandsTheReadBack()
+    {
+        // the boundary scan succeeds (0x0a is a complete value) and the formatter refuses it; the pipe is not completed,
+        // so the scanning path runs, not the single-pass fast path. The advance after the failed parse sat in a finally,
+        // and the outer `catch when (!advanced)` filter (evaluated before inner finally blocks run) advanced again:
+        // ArgumentOutOfRangeException instead of the parse error
+        var pipe = new Pipe();
+        await pipe.Writer.WriteAsync(new byte[] { 0x0A });
+        await pipe.Writer.FlushAsync();
+        await Assert.ThrowsAsync<MessagePackSerializationException>(async () => await V4.DeserializeAsync<string>(pipe.Reader, V4Options.Default));
+
+        // the failed message was consumed; the reader takes the next one
+        await pipe.Writer.WriteAsync(V4.Serialize("next"));
+        await pipe.Writer.CompleteAsync();
+        Assert.Equal("next", await V4.DeserializeAsync<string>(pipe.Reader, V4Options.Default));
+    }
+
+    [Fact]
+    public async Task PipeReader_WithFraming_NonEnvelopeInput_FailsAsAParseError()
+    {
+        // under a processor the fast path is declined even for a completed pipe, so this is the same scanned path
+        var framed = V4Options.Default.WithFraming();
+        var reader = PipeReader.Create(new ReadOnlySequence<byte>(new byte[] { 0x0A, 0xE8, 0xC6, 0x68, 0xF7 }));
+        await Assert.ThrowsAsync<MessagePackSerializationException>(async () => await V4.DeserializeAsync<int[]>(reader, framed));
+    }
+
+    [Fact]
     public async Task PipeReader_MalformedBoundaryScan_HandsTheReadBack()
     {
         var pipe = new Pipe();

@@ -56,3 +56,11 @@ name_tags="\xa4Tags"
 name_child="\xa5Child"
 name_map="\xa3Map"
 name_extra="\xa5Extra"
+
+# container-processor and envelope headers (the frame readers walk these before any formatter runs; the LZ4 frame magic
+# contains 0x22, which this dictionary format cannot spell, so LZ4 frames come from the seed corpus only)
+zstd_frame_magic="\x28\xb5\x2f\xfd"
+zstd_skippable_magic="\x50\x2a\x4d\x18"
+framing_ext32="\xc9\x00\x00\x00\x01\xff"
+lz4block_fixext="\xd6\x63"
+lz4array_ext8="\xc7\x04\x62"

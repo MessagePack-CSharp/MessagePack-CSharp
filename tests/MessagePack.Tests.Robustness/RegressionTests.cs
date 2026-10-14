@@ -14,6 +14,22 @@ public class RegressionTests
 {
     static readonly MessagePackSerializerOptions Lz4Block = MessagePackSerializerOptions.Default.WithLz4Block(maxDecompressedSize: 1 << 20);
 
+    // RobustnessTests (the pipe targets added 2026-10-14), first run. Five bytes that are not a framing envelope, read
+    // with WithFraming through DeserializeAsync(PipeReader): the boundary scan found the value, the formatter refused
+    // it, and the entry threw ArgumentOutOfRangeException('position') instead. The advance after the failed parse sat
+    // in a finally, and the outer `catch when (!advanced)` filter is evaluated in the exception's first pass, before
+    // inner finally blocks run, so it saw `advanced` still false and advanced the read a second time. Fix: a catch that
+    // advances and rethrows, so the filter's second pass sees the flag.
+    [Fact]
+    public void FramingPipe_NonEnvelopeInput_FailsSanctioned()
+    {
+        byte[] payload = [0x0a, 0xe8, 0xc6, 0x68, 0xf7];
+        var target = RobustnessTargets.Targets.Single(static t => t.Name == "SampleArrayPoco/framing/pipe");
+        var ex = Record.Exception(() => target.Deserialize(payload));
+        Assert.NotNull(ex);
+        Assert.True(RobustnessHarness.IsSanctioned(ex), $"expected sanctioned, got {ex}");
+    }
+
     // SharpFuzz, 2026-08-30. An LZ4 BlockArray envelope (ext 98) whose outer array32 header
     // claims ~934M blocks with a 4-byte sizes region behind it. TryDecode sized the per-block
     // owner array straight from the header count - `new byte[]?[blockCount]` - a ~7.5GB

@@ -115,12 +115,18 @@ public static partial class MessagePackSerializer
                         // pass 2: the slice is exactly one value, so the sync entry applies as-is.
                         Deserialize(in message, ref value, options);
                     }
-                    finally
+                    catch
                     {
-                        // the boundary is known even when the parse throws
+                        // the boundary is known even when the parse throws: consume through it. A catch, not a finally:
+                        // exception filters run in the first pass, before any inner finally, so with a finally here the
+                        // outer `catch when (!advanced)` still saw false, and the read was advanced a second time
+                        // (ArgumentOutOfRangeException 'position'; found by the robustness suite's pipe targets)
                         advanced = true;
                         pipeReader.AdvanceTo(message.End);
+                        throw;
                     }
+                    advanced = true;
+                    pipeReader.AdvanceTo(message.End);
                     return value;
                 }
 
