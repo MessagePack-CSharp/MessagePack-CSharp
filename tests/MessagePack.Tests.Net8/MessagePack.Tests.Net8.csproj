@@ -29,6 +29,14 @@
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <!-- the C# 9 / netstandard2.1 consumer library: its generated code runs here on the netstandard2.1 core (CSharp9ConsumerTests) -->
     <ProjectReference Include="..\MessagePack.Tests.CSharp9Consumer\MessagePack.Tests.CSharp9Consumer.csproj" />
+    <!-- the UnityEngine formatters as Unity loads them: a net8.0 consumer takes the netstandard2.1 asset, so the shared
+         UnityShimsTests below run the netstandard bridge, the Compatible buffer pairs and the GetUnreadSpan() fast path
+         (MessagePack.Tests runs the same file on the net9.0+ asset) -->
+    <ProjectReference Include="..\..\src\MessagePack.UnityShims\MessagePack.UnityShims.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\MessagePack.Tests\UnityShimsTests.cs" Link="UnityShimsTests.cs" />
   </ItemGroup>
 
 </Project>
