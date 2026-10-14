@@ -46,5 +46,6 @@
     <Project Path="tests/MessagePack.Tests.Fuzz.Target/MessagePack.Tests.Fuzz.Target.csproj" />
     <Project Path="tests/MessagePack.Tests.Fuzz/MessagePack.Tests.Fuzz.csproj" />
     <Project Path="tests/MessagePack.Tests.AspNetCore/MessagePack.Tests.AspNetCore.csproj" />
+    <Project Path="tests/MessagePack.Tests.CSharp9Consumer/MessagePack.Tests.CSharp9Consumer.csproj" />
   </Folder>
 </Solution>

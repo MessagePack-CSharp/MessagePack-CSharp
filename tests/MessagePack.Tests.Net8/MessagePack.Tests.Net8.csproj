@@ -27,6 +27,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <!-- the C# 9 / netstandard2.1 consumer library: its generated code runs here on the netstandard2.1 core (CSharp9ConsumerTests) -->
+    <ProjectReference Include="..\MessagePack.Tests.CSharp9Consumer\MessagePack.Tests.CSharp9Consumer.csproj" />
   </ItemGroup>
 
 </Project>

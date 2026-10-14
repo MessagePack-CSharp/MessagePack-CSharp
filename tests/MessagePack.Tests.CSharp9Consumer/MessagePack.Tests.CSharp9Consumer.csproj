@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- The Unity compile gate for GENERATED code. Unity 2022.3 compiles against netstandard2.1 at C# 9, and
+         MessagePack.UnityShims pins that level for its hand-written formatters, but no project compiled the output of
+         MessagePackGenerator / BufferConstraintsGenerator / FactoryBridgeGenerator at C# 9 until this one: every shape
+         below (object, map, record, struct, AllowPrivate nested formatter, union, generic, surrogate, callbacks, a
+         partial formatter and a partial factory, a [MessagePackSerializable] root) goes through the generators here.
+         A syntax above C# 9, a `ref` safety rule from C# 11, or a constraint the netstandard surface lacks fails this
+         build instead of the Unity user's. MessagePack.Tests.Net8 references this library and round-trips the types,
+         so the generated code is executed on the netstandard2.1 core too, not only compiled. -->
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- a warning in the consumer's own code is the consumer's; one from a .g.cs would be a generator regression,
+         and the generated files carry a blanket pragma, so this gate is on the hand-written half only -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+</Project>
