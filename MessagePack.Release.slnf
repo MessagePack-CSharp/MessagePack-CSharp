@@ -1,0 +1,34 @@
+{
+  "solution": {
+    "path": "MessagePack.slnx",
+    "projects": [
+      "src\\MessagePack.Annotations\\MessagePack.Annotations.csproj",
+      "src\\MessagePack.AspNetCoreMvcFormatter\\MessagePack.AspNetCoreMvcFormatter.csproj",
+      "src\\MessagePack.LZ4\\MessagePack.LZ4.csproj",
+      "src\\MessagePack.SignalR\\MessagePack.SignalR.csproj",
+      "src\\MessagePack.SourceGenerator.CodeFixes\\MessagePack.SourceGenerator.CodeFixes.csproj",
+      "src\\MessagePack.SourceGenerator\\MessagePack.SourceGenerator.csproj",
+      "src\\MessagePack.UnityShims\\MessagePack.UnityShims.csproj",
+      "src\\MessagePack.Zstandard\\MessagePack.Zstandard.csproj",
+      "src\\MessagePack\\MessagePack.csproj",
+      "tests\\MessagePack.AotCompatibilityTest\\MessagePack.AotCompatibilityTest.csproj",
+      "tests\\MessagePack.Tests.AspNetCore\\MessagePack.Tests.AspNetCore.csproj",
+      "tests\\MessagePack.Tests.CSharp9Consumer\\MessagePack.Tests.CSharp9Consumer.csproj",
+      "tests\\MessagePack.Tests.ForeignSurrogate\\MessagePack.Tests.ForeignSurrogate.csproj",
+      "tests\\MessagePack.Tests.ForeignSurrogateTarget\\MessagePack.Tests.ForeignSurrogateTarget.csproj",
+      "tests\\MessagePack.Tests.Fuzz.Target\\MessagePack.Tests.Fuzz.Target.csproj",
+      "tests\\MessagePack.Tests.Fuzz\\MessagePack.Tests.Fuzz.csproj",
+      "tests\\MessagePack.Tests.LazyModuleTypes\\MessagePack.Tests.LazyModuleTypes.csproj",
+      "tests\\MessagePack.Tests.NativeAot\\MessagePack.Tests.NativeAot.csproj",
+      "tests\\MessagePack.Tests.Net11\\MessagePack.Tests.Net11.csproj",
+      "tests\\MessagePack.Tests.Net8\\MessagePack.Tests.Net8.csproj",
+      "tests\\MessagePack.Tests.Net9\\MessagePack.Tests.Net9.csproj",
+      "tests\\MessagePack.Tests.NetFx\\MessagePack.Tests.NetFx.csproj",
+      "tests\\MessagePack.Tests.Robustness\\MessagePack.Tests.Robustness.csproj",
+      "tests\\MessagePack.Tests.V3CompatGenerated\\MessagePack.Tests.V3CompatGenerated.csproj",
+      "tests\\MessagePack.Tests.V3Compat\\MessagePack.Tests.V3Compat.csproj",
+      "tests\\MessagePack.Tests\\MessagePack.Tests.csproj",
+      "tools\\V3OracleRepack\\V3OracleRepack.csproj"
+    ]
+  }
+}

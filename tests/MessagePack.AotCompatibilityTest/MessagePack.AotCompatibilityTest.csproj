@@ -14,7 +14,8 @@
 		     annotated APIs; ILC does whole-program dataflow over the compiled IL. -->
 		<PublishAot>true</PublishAot>
 		<SelfContained>true</SelfContained>
-		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<!-- the SDK's own RID unless one is passed (-r): CI publishes this on Linux, developers on whatever they run -->
+		<RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
 		<InvariantGlobalization>true</InvariantGlobalization>
 		<!-- One line per warning instead of a single collapsed IL2104 per assembly. -->
 		<TrimmerSingleWarn>false</TrimmerSingleWarn>

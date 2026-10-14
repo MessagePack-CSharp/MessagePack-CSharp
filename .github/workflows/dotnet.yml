@@ -27,6 +27,11 @@ jobs:
       - uses: ./.github/actions/setup-dotnet
       - run: dotnet build -c Release -t:build,pack
       - run: dotnet test -c Release --no-build
+      # the packages as a consumer gets them (tests/PackageSmoke): the packaged source generator, the Annotations shim's
+      # forwarders against a v3-built library, the compression packages' native dependencies. Every other test project
+      # uses ProjectReference, so this is the only place the nupkgs themselves are exercised.
+      - run: dotnet pack MessagePack.Release.slnf -c Release -o ./smoke-feed -p:Version=4.0.0-smoke
+      - run: dotnet run --project tests/PackageSmoke/App/App.csproj -c Release -p:SmokeVersion=4.0.0-smoke -p:SmokeFeed=$GITHUB_WORKSPACE/smoke-feed
 
   # The netstandard2.0 assets of MessagePack, MessagePack.LZ4 and MessagePack.Zstandard are what .NET Framework loads,
   # and the net48 test project is the only thing that executes them; it is Windows-only (IsTestProject is false
@@ -42,3 +47,22 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-dotnet
       - run: dotnet test tests/MessagePack.Tests.NetFx/MessagePack.Tests.NetFx.csproj -c Release
+
+  # Native AOT: MessagePack.Tests.NativeAot runs under the JIT in the job above; only a publish runs ILC's whole-program
+  # analysis (IL2xxx/IL3xxx) and the AOT-compiled tests themselves. MessagePack.AotCompatibilityTest roots every
+  # shipped assembly for the trimmer so the entire API surface is analyzed. IlcTreatWarningsAsErrors makes any IL warning
+  # fail the job (TreatWarningsAsErrors itself would also promote NuGet audit and analyzer warnings of every project).
+  publish-aot:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-dotnet
+      - run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
+      - run: dotnet publish tests/MessagePack.AotCompatibilityTest/MessagePack.AotCompatibilityTest.csproj -c Release -r linux-x64 -p:IlcTreatWarningsAsErrors=true
+      - run: dotnet publish tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj -c Release -r linux-x64 -p:IlcTreatWarningsAsErrors=true
+      - run: ./tests/MessagePack.Tests.NativeAot/bin/Release/net10.0/linux-x64/publish/MessagePack.Tests.NativeAot

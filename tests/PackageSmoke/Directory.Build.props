@@ -1,0 +1,17 @@
+<Project>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- The package smoke test restores the freshly packed nupkgs from a local feed instead of referencing the projects:
+         dotnet pack MessagePack.Release.slnf -c Release -o [feed] -p:Version=[version]
+         dotnet run (project tests/PackageSmoke/App) -c Release -p:SmokeVersion=[version] -p:SmokeFeed=[feed]
+       SmokeFeed is added to the restore sources (nuget.org stays for the third-party dependencies), SmokeVersion is the
+       version the packages were packed with. -->
+  <PropertyGroup>
+    <SmokeVersion Condition="'$(SmokeVersion)' == ''">4.0.0-smoke</SmokeVersion>
+    <RestoreAdditionalProjectSources Condition="'$(SmokeFeed)' != ''">$(SmokeFeed)</RestoreAdditionalProjectSources>
+    <!-- a different version of the packages per run is the point; never take a stale copy from the global cache -->
+    <RestoreNoHttpCache>true</RestoreNoHttpCache>
+  </PropertyGroup>
+
+</Project>

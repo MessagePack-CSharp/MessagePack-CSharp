@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- A library compiled against v3's MessagePack.Annotations, standing in for the pre-built v3 assemblies a migrating
+       application still loads: its attribute references read "MessagePack.Annotations, Version=3.1.8.0" and must bind to
+       the 4.x shim's forwarders at run time. It never references v4 and is not part of the solution. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <!-- not signed, not reproducible: a third-party library -->
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MessagePack.Annotations" Version="3.1.8" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Smoke test over the PACKAGES, not the projects (F130): every other test project uses ProjectReference, so the
+       packaged source generator, the Annotations shim's forwarders and the native-library dependencies of the compression
+       packages were never exercised as a consumer gets them. This exe is restored from the freshly packed feed (see
+       Directory.Build.props next to it) and exits non-zero on the first failure. Not part of the solution: it needs the
+       pack step before it can restore. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <SignAssembly>false</SignAssembly>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- the generator's diagnostics are the consumer's build errors here too -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MessagePack" Version="$(SmokeVersion)" />
+    <PackageReference Include="MessagePack.LZ4" Version="$(SmokeVersion)" />
+    <PackageReference Include="MessagePack.Zstandard" Version="$(SmokeVersion)" />
+    <!-- the explicit 4.x reference the README asks for next to a v3-built library: it lifts V3Library's transitive
+         MessagePack.Annotations 3.1.8 to the shim -->
+    <PackageReference Include="MessagePack.Annotations" Version="$(SmokeVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\V3Library\V3Library.csproj" />
+    <ProjectReference Include="..\AnnotationsOnlyLibrary\AnnotationsOnlyLibrary.csproj" />
+  </ItemGroup>
+
+</Project>

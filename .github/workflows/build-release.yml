@@ -45,10 +45,12 @@ jobs:
           ref: ${{ needs.update-packagejson.outputs.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/setup-dotnet
-      # pack nuget
-      - run: dotnet build -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }}
-      - run: dotnet test -c Release --no-build
-      - run: dotnet pack -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
+      # pack nuget. The release builds the solution filter (src, tests, tools), not the sandbox projects
+      - run: dotnet build MessagePack.Release.slnf -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }}
+      - run: dotnet test MessagePack.Release.slnf -c Release --no-build
+      - run: dotnet pack MessagePack.Release.slnf -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
+      # the packages that are about to be published, restored and run as a consumer (tests/PackageSmoke)
+      - run: dotnet run --project tests/PackageSmoke/App/App.csproj -c Release -p:SmokeVersion=${{ needs.update-packagejson.outputs.normalized_tag }} -p:SmokeFeed=$GITHUB_WORKSPACE/publish
       - name: upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 # must sync with actions/download-artifact@v8 in create-release
         with:
@@ -57,9 +59,42 @@ jobs:
           if-no-files-found: "error" # default 'warn'
           retention-days: 1 # expire in 1 day
 
-  # create release and upload nuget
+  # the netstandard2.0 assets on .NET Framework, from the same commit (Windows only, see dotnet.yml)
+  test-netfx:
+    needs: [update-packagejson]
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+          ref: ${{ needs.update-packagejson.outputs.sha }}
+      - uses: ./.github/actions/setup-dotnet
+      - run: dotnet test tests/MessagePack.Tests.NetFx/MessagePack.Tests.NetFx.csproj -c Release
+
+  # Native AOT publish with IL warnings as errors, and the AOT-compiled tests, from the same commit (see dotnet.yml)
+  publish-aot:
+    needs: [update-packagejson]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+          ref: ${{ needs.update-packagejson.outputs.sha }}
+      - uses: ./.github/actions/setup-dotnet
+      - run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
+      - run: dotnet publish tests/MessagePack.AotCompatibilityTest/MessagePack.AotCompatibilityTest.csproj -c Release -r linux-x64 -p:IlcTreatWarningsAsErrors=true
+      - run: dotnet publish tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj -c Release -r linux-x64 -p:IlcTreatWarningsAsErrors=true
+      - run: ./tests/MessagePack.Tests.NativeAot/bin/Release/net10.0/linux-x64/publish/MessagePack.Tests.NativeAot
+
+  # create release and upload nuget: only after every check above passed on this commit
   create-release:
-    needs: [update-packagejson, build-dotnet]
+    needs: [update-packagejson, build-dotnet, test-netfx, publish-aot]
     uses: ./.github/workflows/_create-release.yaml
     permissions:
       contents: write
