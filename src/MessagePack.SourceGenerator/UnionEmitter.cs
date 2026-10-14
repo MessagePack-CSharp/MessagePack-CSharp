@@ -22,17 +22,16 @@ static class UnionEmitter
         var valueType = model.IsStructRoot ? model.FullTypeName : model.FullTypeName + "?";
 
         writer.FileHeader();
-        writer.Line("using SerializerFoundation;");
-        writer.Line("using MessagePack;");
         writer.Line();
         var ns = writer.Block("namespace MessagePack.Generated");
+        ObjectEmitter.Names.EmitUsings(writer, primitives: false); // inside the block, see ObjectEmitter.Names
 
         var formatterTypeParameters = model.TypeParameterList.Length == 0
             ? "TWriteBuffer, TReadBuffer"
             : "TWriteBuffer, TReadBuffer, " + model.TypeParameterList;
         writer.Line($"internal sealed class {model.FormatterName}<{formatterTypeParameters}> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, {valueType}>");
         writer.Indent();
-        ObjectEmitter.EmitBufferConstraints(writer);
+        ObjectEmitter.EmitBufferConstraints(writer, ObjectEmitter.Names.Simple);
         foreach (var clause in model.WhereClauses)
         {
             writer.Line(clause);

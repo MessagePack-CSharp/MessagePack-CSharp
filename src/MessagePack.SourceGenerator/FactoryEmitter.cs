@@ -75,10 +75,9 @@ static class FactoryEmitter
 
         var writer = CodeWriter.Rent();
         writer.FileHeader();
-        writer.Line("using SerializerFoundation;");
-        writer.Line("using MessagePack;");
         writer.Line();
         var ns = writer.Block("namespace MessagePack.Generated");
+        ObjectEmitter.Names.EmitUsings(writer, primitives: false); // inside the block, see ObjectEmitter.Names
 
         writer.Line("internal sealed class GeneratedMessagePackFormatterFactory : MessagePackFormatterFactory");
         var factory = writer.OpenScope();
@@ -228,8 +227,8 @@ static class FactoryEmitter
         writer.Line("#else");
         writer.Line("public object? CreateFormatter<TWriteBuffer, TReadBuffer>(global::System.Type type)");
         writer.Indent();
-        writer.Line("where TWriteBuffer : struct, IWriteBuffer");
-        writer.Line("where TReadBuffer : struct, IReadBuffer");
+        writer.Line("where TWriteBuffer : struct, global::SerializerFoundation.IWriteBuffer");
+        writer.Line("where TReadBuffer : struct, global::SerializerFoundation.IReadBuffer");
         writer.Unindent();
         writer.Line("#endif");
     }
@@ -263,10 +262,9 @@ static class FactoryEmitter
 
         var writer = CodeWriter.Rent();
         writer.FileHeader();
-        writer.Line("using SerializerFoundation;");
-        writer.Line("using MessagePack;");
         writer.Line();
 
+        // the consumer's own partial type, in their namespace: no using directives, every name in full (ObjectEmitter.Names)
         var declarations = model.Declarations.ToArray();
         var scopes = new List<CodeWriter.BlockScope>(declarations.Length);
         for (int i = 0; i < declarations.Length - 1; i++)

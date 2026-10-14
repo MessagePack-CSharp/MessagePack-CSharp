@@ -40,6 +40,100 @@ static class ObjectEmitter
     // wide seenMembers tier: stackalloc up to this many members, heap array beyond
     const int StackallocSeenMembersLimit = 256;
 
+    /// <summary>
+    /// How the emitted code spells the library and BCL names it uses. A formatter in MessagePack.Generated uses the
+    /// simple names under using directives placed INSIDE the namespace block: C# consults those before the global
+    /// namespace, so a consumer type named Unsafe, IWriteBuffer, BinaryPrimitives or MaxInt32Length cannot hide them
+    /// (the MessagePack namespace itself is reached as the parent namespace, before the global one, for the same
+    /// reason). A formatter nested in the consumer's own type (AllowPrivate) sits in their namespace, where a type of
+    /// theirs wins over any using directive, so it names every type in full; its only directives are the ones the
+    /// buffer extension methods (buffer.WriteNil(), buffer.Skip(), ...) need to be found, and extension lookup is not
+    /// hidden by a type of the same name.
+    /// </summary>
+    internal sealed class Names
+    {
+        public static readonly Names Simple = new(
+            formatter: "IMessagePackFormatter",
+            resolver: "MessagePackFormatterResolver",
+            serializeState: "SerializeState",
+            deserializeState: "DeserializeState",
+            exception: "MessagePackSerializationException",
+            helper: "SourceGeneratorHelper",
+            primitives: "",
+            unsafeType: "Unsafe",
+            binaryPrimitives: "BinaryPrimitives",
+            noInlining: "[MethodImpl(MethodImplOptions.NoInlining)]",
+            writeBuffer: "IWriteBuffer",
+            readBuffer: "IReadBuffer");
+
+        public static readonly Names Qualified = new(
+            formatter: "global::MessagePack.IMessagePackFormatter",
+            resolver: "global::MessagePack.MessagePackFormatterResolver",
+            serializeState: "global::MessagePack.SerializeState",
+            deserializeState: "global::MessagePack.DeserializeState",
+            exception: "global::MessagePack.MessagePackSerializationException",
+            helper: "global::MessagePack.SourceGeneratorHelper",
+            primitives: "global::MessagePack.MessagePackPrimitives.",
+            unsafeType: "global::System.Runtime.CompilerServices.Unsafe",
+            binaryPrimitives: "global::System.Buffers.Binary.BinaryPrimitives",
+            noInlining: "[global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]",
+            writeBuffer: "global::SerializerFoundation.IWriteBuffer",
+            readBuffer: "global::SerializerFoundation.IReadBuffer");
+
+        Names(string formatter, string resolver, string serializeState, string deserializeState, string exception, string helper, string primitives, string unsafeType, string binaryPrimitives, string noInlining, string writeBuffer, string readBuffer)
+        {
+            Formatter = formatter;
+            Resolver = resolver;
+            SerializeState = serializeState;
+            DeserializeState = deserializeState;
+            Exception = exception;
+            Helper = helper;
+            Primitives = primitives;
+            Unsafe = unsafeType;
+            BinaryPrimitives = binaryPrimitives;
+            NoInlining = noInlining;
+            IWriteBuffer = writeBuffer;
+            IReadBuffer = readBuffer;
+        }
+
+        public string Formatter { get; }
+        public string Resolver { get; }
+        public string SerializeState { get; }
+        public string DeserializeState { get; }
+        public string Exception { get; }
+        public string Helper { get; }
+        /// <summary>Prefix of the MessagePackPrimitives statics (the UnsafeWrite* calls and Max*Length constants): empty under the using static.</summary>
+        public string Primitives { get; }
+        public string Unsafe { get; }
+        public string BinaryPrimitives { get; }
+        public string NoInlining { get; }
+        public string IWriteBuffer { get; }
+        public string IReadBuffer { get; }
+
+        /// <summary>The directives the simple names rely on; written inside the MessagePack.Generated block.</summary>
+        public static void EmitUsings(CodeWriter writer, bool primitives)
+        {
+            writer.Line("using SerializerFoundation;");
+            if (primitives)
+            {
+                writer.Line("using System.Buffers.Binary;");
+                writer.Line("using System.Runtime.CompilerServices;");
+            }
+            writer.Line("using MessagePack;");
+            if (primitives)
+            {
+                writer.Line("using static MessagePack.MessagePackPrimitives;");
+            }
+            writer.Line();
+        }
+    }
+
+    // the spelling for the formatter being emitted (one EmitFormatter per thread at a time)
+    [ThreadStatic]
+    static Names? current;
+
+    static Names N => current ?? Names.Simple;
+
     static string ValueType(ObjectModel model) => model.IsValueType ? model.FullTypeName : model.FullTypeName + "?";
 
     static string FormatterTypeParameters(ObjectModel model) => model.TypeParameterList.Length == 0
@@ -52,16 +146,16 @@ static class ObjectEmitter
         var valueType = ValueType(model);
 
         writer.FileHeader();
-        writer.Line("using SerializerFoundation;");
-        writer.Line("using System.Buffers.Binary;");
-        writer.Line("using System.Runtime.CompilerServices;");
-        writer.Line("using MessagePack;");
-        writer.Line("using static MessagePack.MessagePackPrimitives;");
         writer.Line();
 
+        current = model.EmitNested ? Names.Qualified : Names.Simple;
         var containers = new List<CodeWriter.BlockScope>();
         if (model.EmitNested)
         {
+            // extension methods only (every type name below is fully qualified), see Names
+            writer.Line("using SerializerFoundation;");
+            writer.Line("using MessagePack;");
+            writer.Line();
             foreach (var declaration in model.NestedDeclarations)
             {
                 containers.Add(writer.Block(declaration));
@@ -110,11 +204,12 @@ static class ObjectEmitter
         else
         {
             containers.Add(writer.Block("namespace MessagePack.Generated"));
+            Names.EmitUsings(writer, primitives: true);
         }
 
-        writer.Line($"internal sealed class {model.FormatterName}<{FormatterTypeParameters(model)}> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, {valueType}>");
+        writer.Line($"internal sealed class {model.FormatterName}<{FormatterTypeParameters(model)}> : {N.Formatter}<TWriteBuffer, TReadBuffer, {valueType}>");
         writer.Indent();
-        EmitBufferConstraints(writer);
+        EmitBufferConstraints(writer, N);
         foreach (var clause in model.WhereClauses)
         {
             writer.Line(clause);
@@ -126,7 +221,7 @@ static class ObjectEmitter
             {
                 if (member.Direct == DirectKind.None)
                 {
-                    writer.Line($"IMessagePackFormatter<TWriteBuffer, TReadBuffer, {member.TypeName}> f{member.Id} = null!;");
+                    writer.Line($"{N.Formatter}<TWriteBuffer, TReadBuffer, {member.TypeName}> f{member.Id} = null!;");
                 }
             }
             // validation flags snapshot the resolver's configuration: the flags are part of the formatter graph's
@@ -148,7 +243,7 @@ static class ObjectEmitter
             }
 
             writer.Line();
-            writer.Line("public void Initialize(MessagePackFormatterResolver resolver)");
+            writer.Line($"public void Initialize({N.Resolver} resolver)");
             using (writer.OpenScope())
             {
                 foreach (var member in model.Members)
@@ -164,7 +259,7 @@ static class ObjectEmitter
                     {
                         // the cast erases nullability-annotation differences between the formatter's T and the member's
                         // declared type
-                        writer.Line($"f{member.Id} = (IMessagePackFormatter<TWriteBuffer, TReadBuffer, {member.TypeName}>){formatterNew};");
+                        writer.Line($"f{member.Id} = ({N.Formatter}<TWriteBuffer, TReadBuffer, {member.TypeName}>){formatterNew};");
                         writer.Line($"f{member.Id}.Initialize(resolver);");
                     }
                     else if (member.Direct == DirectKind.None)
@@ -202,16 +297,17 @@ static class ObjectEmitter
         {
             containers[i].Dispose();
         }
+        current = null;
         return writer.ToStringAndReturn();
     }
 
-    internal static void EmitBufferConstraints(CodeWriter writer)
+    internal static void EmitBufferConstraints(CodeWriter writer, Names names)
     {
-        writer.Line("where TWriteBuffer : struct, IWriteBuffer");
+        writer.Line($"where TWriteBuffer : struct, {names.IWriteBuffer}");
         writer.Line("#if NET9_0_OR_GREATER");
         writer.Line(", allows ref struct");
         writer.Line("#endif");
-        writer.Line("where TReadBuffer : struct, IReadBuffer");
+        writer.Line($"where TReadBuffer : struct, {names.IReadBuffer}");
         writer.Line("#if NET9_0_OR_GREATER");
         writer.Line(", allows ref struct");
         writer.Line("#endif");
@@ -219,7 +315,8 @@ static class ObjectEmitter
 
     static void EmitSerialize(CodeWriter writer, ObjectModel model, string valueType)
     {
-        writer.Line($"public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, {valueType} value)");
+        var p = N.Primitives;
+        writer.Line($"public void Serialize(ref TWriteBuffer buffer, ref {N.SerializeState} state, {valueType} value)");
         using var body = writer.OpenScope();
         if (!model.IsValueType)
         {
@@ -283,7 +380,7 @@ static class ObjectEmitter
                     writer.Line("var w = 0;");
                     for (int i = 0; i < writes.Count; i++)
                     {
-                        writer.Line($"w += {writes[i].Replace("{DEST}", "ref Unsafe.Add(ref d, w)")};{Trailing(comments[i])}");
+                        writer.Line($"w += {writes[i].Replace("{DEST}", $"ref {N.Unsafe}.Add(ref d, w)")};{Trailing(comments[i])}");
                     }
                     writer.Line("buffer.Advance(w);");
                 }
@@ -296,8 +393,8 @@ static class ObjectEmitter
         if (model.AllowCircularReferences)
         {
             // the envelope joins the same reservation run as the member header that follows
-            Direct("1", "UnsafeWriteFixArrayHeader({DEST}, 2)", "circular-reference envelope [id, body]");
-            Direct("MaxUInt32Length", "UnsafeWriteUInt32({DEST}, circularReferenceId)");
+            Direct("1", $"{p}UnsafeWriteFixArrayHeader({{DEST}}, 2)", "circular-reference envelope [id, body]");
+            Direct($"{p}MaxUInt32Length", $"{p}UnsafeWriteUInt32({{DEST}}, circularReferenceId)");
         }
 
         if (!model.IsStringKey)
@@ -307,22 +404,22 @@ static class ObjectEmitter
             if (model.UnknownMembersName is null)
             {
                 Direct(
-                    count <= 15 ? "1" : "MaxArrayHeaderLength",
-                    count <= 15 ? $"UnsafeWriteFixArrayHeader({{DEST}}, {count})" : $"UnsafeWriteArrayHeader({{DEST}}, {count})");
+                    count <= 15 ? "1" : $"{p}MaxArrayHeaderLength",
+                    count <= 15 ? $"{p}UnsafeWriteFixArrayHeader({{DEST}}, {count})" : $"{p}UnsafeWriteArrayHeader({{DEST}}, {count})");
             }
             else
             {
                 // captured trailing elements extend the array: the count is dynamic,
                 // but the reservation stays a constant worst case and the header simply joins the same fused run with a
                 // runtime count
-                writer.Line($"var arrayCount = SourceGeneratorHelper.GetUnknownArrayCount(unknownMembers, {count});");
+                writer.Line($"var arrayCount = {N.Helper}.GetUnknownArrayCount(unknownMembers, {count});");
                 if (hasKeyHoles)
                 {
                     // captured entries ascend by index, so one cursor serves every hole and hands the trailing replay
                     // its remaining entries
                     writer.Line("var unknownReplayedCount = 0;");
                 }
-                Direct("MaxArrayHeaderLength", "UnsafeWriteArrayHeader({DEST}, arrayCount)");
+                Direct($"{p}MaxArrayHeaderLength", $"{p}UnsafeWriteArrayHeader({{DEST}}, arrayCount)");
             }
 
             var byKey = model.Members.AsArray().ToDictionary(static m => m.IntKey);
@@ -334,7 +431,7 @@ static class ObjectEmitter
                 }
                 else if (model.UnknownMembersName is null)
                 {
-                    Direct("1", "UnsafeWriteNil({DEST})", $"key {key}: no member"); // key hole
+                    Direct("1", $"{p}UnsafeWriteNil({{DEST}})", $"key {key}: no member"); // key hole
                 }
                 else
                 {
@@ -351,13 +448,13 @@ static class ObjectEmitter
             if (model.UnknownMembersName is null)
             {
                 Direct(
-                    count <= 15 ? "1" : "MaxMapHeaderLength",
-                    count <= 15 ? $"UnsafeWriteFixMapHeader({{DEST}}, {count})" : $"UnsafeWriteMapHeader({{DEST}}, {count})");
+                    count <= 15 ? "1" : $"{p}MaxMapHeaderLength",
+                    count <= 15 ? $"{p}UnsafeWriteFixMapHeader({{DEST}}, {count})" : $"{p}UnsafeWriteMapHeader({{DEST}}, {count})");
             }
             else
             {
                 writer.Line($"var mapCount = unknownMembers is null ? {count} : {count} + unknownMembers.Count;");
-                Direct("MaxMapHeaderLength", "UnsafeWriteMapHeader({DEST}, mapCount)");
+                Direct($"{p}MaxMapHeaderLength", $"{p}UnsafeWriteMapHeader({{DEST}}, mapCount)");
             }
 
             foreach (var member in model.Members)
@@ -369,7 +466,7 @@ static class ObjectEmitter
                 var keyBlob = EncodeStringKeyBlob(member.StringKey);
                 Direct(
                     keyBlob.Length.ToString(),
-                    $"UnsafeWriteRaw({{DEST}}, new byte[] {{ {string.Join(", ", keyBlob.Select(static b => $"0x{b:x2}"))} }})",
+                    $"{p}UnsafeWriteRaw({{DEST}}, new byte[] {{ {string.Join(", ", keyBlob.Select(static b => $"0x{b:x2}"))} }})",
                     $"\"{Escape(member.StringKey)}\"");
                 EmitValueWrite(writer, member, (size, call) => Direct(size, call), Flush);
             }
@@ -408,6 +505,7 @@ static class ObjectEmitter
         }
 
         var access = MemberAccess(member, "value");
+        var p = N.Primitives;
         var (writeCall, size) = member.Direct switch
         {
             DirectKind.Int32 => ("UnsafeWriteInt32", "MaxInt32Length"),
@@ -424,14 +522,18 @@ static class ObjectEmitter
             DirectKind.Double => ("UnsafeWriteDouble", "MaxFloat64Length"),
             _ => throw new InvalidOperationException(),
         };
+        if (size != "1")
+        {
+            size = p + size; // a Max*Length constant, not the literal byte count
+        }
         if (member.DirectNullable)
         {
             // nil (1 byte) stays under the primitive's max, so the reservation is the same and the nil-or-value choice
             // is one expression inside the fused run
-            direct(size, $"{access} is {{ }} v{member.Id} ? {writeCall}({{DEST}}, v{member.Id}) : UnsafeWriteNil({{DEST}})");
+            direct(size, $"{access} is {{ }} v{member.Id} ? {p}{writeCall}({{DEST}}, v{member.Id}) : {p}UnsafeWriteNil({{DEST}})");
             return;
         }
-        direct(size, $"{writeCall}({{DEST}}, {access})");
+        direct(size, $"{p}{writeCall}({{DEST}}, {access})");
     }
 
     static void EmitDeserialize(CodeWriter writer, ObjectModel model, string valueType)
@@ -441,15 +543,15 @@ static class ObjectEmitter
         // into the caller, the inline budget starves the body's own callees (BinaryPrimitives reads,
         // Advance, ReadString all stay real calls), costing 1.9x on map deserialize; pinned as a direct call,
         // the body compiles clean and ties the best shape.
-        writer.Line("[MethodImpl(MethodImplOptions.NoInlining)]");
-        writer.Line($"public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref {valueType} value)");
+        writer.Line(N.NoInlining);
+        writer.Line($"public void Deserialize(ref TReadBuffer buffer, ref {N.DeserializeState} state, ref {valueType} value)");
         using (writer.OpenScope())
         {
             using (writer.Block("if (buffer.TryReadNil())"))
             {
                 if (model.IsValueType)
                 {
-                    writer.Line($"throw new MessagePackSerializationException(\"code Nil cannot deserialize into the non-nullable struct '{model.FullTypeName}'.\");");
+                    writer.Line($"throw new {N.Exception}(\"code Nil cannot deserialize into the non-nullable struct '{model.FullTypeName}'.\");");
                 }
                 else
                 {
@@ -472,7 +574,7 @@ static class ObjectEmitter
                     writer.Line("var envelopeCount = buffer.ReadArrayHeader(ref state);");
                     using (writer.Block("if (envelopeCount != 2)"))
                     {
-                        writer.Line($"throw new MessagePackSerializationException(\"Deserializing '{model.FullTypeName}' expected the circular-reference envelope [id, body] (a 2-element array) but the array header claims \" + envelopeCount + \" elements\");");
+                        writer.Line($"throw new {N.Exception}(\"Deserializing '{model.FullTypeName}' expected the circular-reference envelope [id, body] (a 2-element array) but the array header claims \" + envelopeCount + \" elements\");");
                     }
                     writer.Line("var circularReferenceDefinitionId = buffer.ReadUInt32();");
                 }
@@ -803,7 +905,7 @@ static class ObjectEmitter
         using (writer.Block("for (int i = 0; i < count; i++)"))
         {
             writer.Line("var byteCount = buffer.ReadStringHeader();");
-            writer.Line("if (!buffer.TryGetSpan(byteCount, out var key)) SourceGeneratorHelper.ThrowUnexpectedEndOfMapKey();");
+            writer.Line($"if (!buffer.TryGetSpan(byteCount, out var key)) {N.Helper}.ThrowUnexpectedEndOfMapKey();");
             writer.Line("key = key.Slice(0, byteCount);");
             writer.Line();
 
@@ -967,12 +1069,12 @@ static class ObjectEmitter
         writer.Line("buffer.Advance(byteCount);");
         if (wideMemberTable)
         {
-            writer.Line($"if (seenMembers[{memberIndex}]) SourceGeneratorHelper.ThrowDuplicateMapKey();");
+            writer.Line($"if (seenMembers[{memberIndex}]) {N.Helper}.ThrowDuplicateMapKey();");
             writer.Line($"seenMembers[{memberIndex}] = true;");
         }
         else
         {
-            writer.Line($"if ((seenMembers & (1UL << {memberIndex})) != 0) SourceGeneratorHelper.ThrowDuplicateMapKey();");
+            writer.Line($"if ((seenMembers & (1UL << {memberIndex})) != 0) {N.Helper}.ThrowDuplicateMapKey();");
             writer.Line($"seenMembers |= 1UL << {memberIndex};");
         }
         emitMemberRead(writer, member);
@@ -1020,9 +1122,9 @@ static class ObjectEmitter
         var span = offset == 0 ? "key" : $"key.Slice({offset})";
         return width switch
         {
-            8 => $"BinaryPrimitives.ReadUInt64LittleEndian({span})",
-            4 => $"BinaryPrimitives.ReadUInt32LittleEndian({span})",
-            2 => $"BinaryPrimitives.ReadUInt16LittleEndian({span})",
+            8 => $"{N.BinaryPrimitives}.ReadUInt64LittleEndian({span})",
+            4 => $"{N.BinaryPrimitives}.ReadUInt32LittleEndian({span})",
+            2 => $"{N.BinaryPrimitives}.ReadUInt16LittleEndian({span})",
             _ => $"key[{offset}]",
         };
     }
@@ -1063,7 +1165,7 @@ static class ObjectEmitter
     // so the hot loop carries only a flag test and a call
     static void EmitRequiredThrowHelper(CodeWriter writer, ObjectModel model)
     {
-        writer.Line("[MethodImpl(MethodImplOptions.NoInlining)]");
+        writer.Line(N.NoInlining);
         string selector;
         if (!model.IsStringKey)
         {
@@ -1089,7 +1191,7 @@ static class ObjectEmitter
         using (writer.OpenScope())
         {
             writer.Line($"var member = {selector};");
-            writer.Line($"throw new MessagePackSerializationException(\"Required member '\" + member + \"' of '{model.FullTypeName}' is missing from the payload (required member validation, MessagePackFormatterResolver validateRequiredMembers, on by default)\");");
+            writer.Line($"throw new {N.Exception}(\"Required member '\" + member + \"' of '{model.FullTypeName}' is missing from the payload (required member validation, MessagePackFormatterResolver validateRequiredMembers, on by default)\");");
         }
     }
 
@@ -1111,11 +1213,11 @@ static class ObjectEmitter
 
     static void EmitNullThrowHelper(CodeWriter writer, ObjectModel model)
     {
-        writer.Line("[MethodImpl(MethodImplOptions.NoInlining)]");
+        writer.Line(N.NoInlining);
         writer.Line("static void ThrowNullValueForNonNullableMember(string member)");
         using (writer.OpenScope())
         {
-            writer.Line($"throw new MessagePackSerializationException(\"Member '\" + member + \"' of '{model.FullTypeName}' is declared non-nullable but the payload contains nil (nullable annotation validation, MessagePackFormatterResolver validateNullableAnnotations)\");");
+            writer.Line($"throw new {N.Exception}(\"Member '\" + member + \"' of '{model.FullTypeName}' is declared non-nullable but the payload contains nil (nullable annotation validation, MessagePackFormatterResolver validateNullableAnnotations)\");");
         }
     }
 
