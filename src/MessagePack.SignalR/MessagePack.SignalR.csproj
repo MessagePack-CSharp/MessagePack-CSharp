@@ -12,7 +12,7 @@
 	<ItemGroup>
 		<!-- the hub message model and IHubProtocol; a package rather than the shared framework so client-only
 		     applications (HubConnection in a console or desktop app) can reference this too -->
-		<PackageReference Include="Microsoft.AspNetCore.SignalR.Common" Version="10.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Common" Version="10.0.13" />
 	</ItemGroup>
 
 	<ItemGroup>
