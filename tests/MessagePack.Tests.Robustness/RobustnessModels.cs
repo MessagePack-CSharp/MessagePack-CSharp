@@ -89,6 +89,18 @@ public class SampleTriangle : ISampleShape
     [Key(2)] public ISampleShape? Inscribed { get; set; }
 }
 
+// a recursive type that holds collections of itself: the shape of the nested-header allocation amplification (a chain
+// of array headers each claiming the remaining bytes, so every level preallocates before the depth check stops the
+// descent; Nerdbank.MessagePack GHSA-grf3-jgmf-2g5j, bounded here by DeserializeState's declared-element budget)
+[MessagePackObject]
+public class SampleTreePoco
+{
+    [Key(0)] public List<SampleTreePoco>? Children { get; set; }
+    [Key(1)] public SampleTreePoco?[]? Kids { get; set; }
+    [Key(2)] public Dictionary<string, SampleTreePoco>? Named { get; set; }
+    [Key(3)] public int Value { get; set; }
+}
+
 public enum SampleColor : byte
 {
     Red = 0,

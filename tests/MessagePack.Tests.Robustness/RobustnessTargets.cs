@@ -1,6 +1,8 @@
 using System.Buffers;
+using System.Buffers.Binary;
 using System.IO.Pipelines;
 using MessagePack;
+using NativeCompressions;
 
 #pragma warning disable CS0618 // v3 LZ4 envelopes are obsolete for new data; they are the subject here
 
@@ -85,6 +87,7 @@ public static class RobustnessTargets
             Add<int[,,]>(tier, opt);
             Add<List<SampleArrayPoco>>(tier, opt);
             Add<Dictionary<string, SampleMapPoco>>(tier, opt);
+            Add<SampleTreePoco>(tier, opt); // recursive collections: the nested-header amplification shape
             Add<string>(tier, opt);
             Add<object[]>(tier, opt);
         }
@@ -114,6 +117,7 @@ public static class RobustnessTargets
             AddEntries<int[]>(tier, opt, container);
             AddEntries<object[]>(tier, opt, container);
             AddEntries<string>(tier, opt, container);
+            AddEntries<SampleTreePoco>(tier, opt, container);
         }
 
         // JSON conversion walks the raw msgpack without a target type (its own depth limit and token reader)
@@ -252,7 +256,102 @@ public static class RobustnessTargets
             [.. MessagePackSerializer.Serialize(poco), .. MessagePackSerializer.Serialize(poco), .. MessagePackSerializer.Serialize(poco)],
             Elements(pocos, Generated),
             Elements(pocos, Framing),
+            // the nested-header allocation amplification (Nerdbank.MessagePack GHSA-grf3-jgmf-2g5j): a chain of array
+            // or map headers each claiming the bytes that remain, so each level passes the per-header bound and would
+            // preallocate for the whole tail before the depth check ends the descent. DeserializeState's declared-element
+            // budget rejects the chain (DeclaredElementBudgetTest); these seeds put the mutator right at that boundary,
+            // for every tier and entry, and inside the frames (the budget is the decoded length there)
+            NestedArrayBomb(4096, 200),
+            NestedMapBomb(4096, 200),
+            RecursiveTreeBomb(4096, 200),
+            Framed(NestedArrayBomb(4096, 200)),
+            LZ4.Compress(NestedArrayBomb(4096, 200), new LZ4CompressionOptions { ContentSize = 4096 }),
+            Zstandard.Compress(NestedArrayBomb(4096, 200), new ZstandardCompressionOptions { CompressionLevel = 3 }),
+            // and the legitimate deep shapes next to them: a 100-level tree, and 100 nested object arrays with typeless type names
+            MessagePackSerializer.Serialize(DeepTree(100)),
+            MessagePackSerializer.Serialize<object>(DeepObjectArrays(100), Typeless),
         ];
+    }
+
+    /// <summary>`layers` nested array32 headers, each claiming exactly the bytes that remain after it, then nil filler.</summary>
+    public static byte[] NestedArrayBomb(int totalLength, int layers)
+    {
+        var bytes = new byte[totalLength];
+        for (int i = 0; i < layers; i++)
+        {
+            var offset = i * 5;
+            bytes[offset] = MessagePackCode.Array32;
+            BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(offset + 1), (uint)(totalLength - offset - 5));
+        }
+        bytes.AsSpan(layers * 5).Fill(MessagePackCode.Nil);
+        return bytes;
+    }
+
+    /// <summary>The map32 variant: each level claims (remaining / 2) entries, the per-header bound for maps.</summary>
+    public static byte[] NestedMapBomb(int totalLength, int layers)
+    {
+        var bytes = new byte[totalLength];
+        for (int i = 0; i < layers; i++)
+        {
+            var offset = i * 5;
+            bytes[offset] = MessagePackCode.Map32;
+            BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(offset + 1), (uint)((totalLength - offset - 5) / 2));
+        }
+        bytes.AsSpan(layers * 5).Fill(MessagePackCode.Nil);
+        return bytes;
+    }
+
+    /// <summary>
+    /// The typed recursive shape (SampleTreePoco): every level is [ Children: array32(remaining) ] whose first child is
+    /// the next level, so the object header and the collection header both charge the budget.
+    /// </summary>
+    public static byte[] RecursiveTreeBomb(int totalLength, int layers)
+    {
+        var bytes = new byte[totalLength];
+        for (int i = 0; i < layers; i++)
+        {
+            var offset = i * 6;
+            bytes[offset] = MessagePackCode.MinFixArray | 1;
+            bytes[offset + 1] = MessagePackCode.Array32;
+            BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(offset + 2), (uint)(totalLength - offset - 6));
+        }
+        bytes.AsSpan(layers * 6).Fill(MessagePackCode.Nil);
+        return bytes;
+    }
+
+    /// <summary>The WithFraming envelope around a raw message: ext32 header, length, the framing type code.</summary>
+    public static byte[] Framed(byte[] message)
+    {
+        var framed = new byte[message.Length + 6];
+        framed[0] = MessagePackCode.Ext32;
+        BinaryPrimitives.WriteUInt32BigEndian(framed.AsSpan(1), (uint)message.Length);
+        framed[5] = unchecked((byte)ThisLibraryExtensionTypeCodes.Framing);
+        message.CopyTo(framed, 6);
+        return framed;
+    }
+
+    static SampleTreePoco DeepTree(int levels)
+    {
+        var root = new SampleTreePoco { Value = 0 };
+        var current = root;
+        for (int i = 1; i < levels; i++)
+        {
+            var next = new SampleTreePoco { Value = i };
+            current.Children = [next];
+            current.Kids = [null]; // not `next` again: a node reachable twice per level doubles the output per level
+            current = next;
+        }
+        return root;
+    }
+
+    static object DeepObjectArrays(int levels)
+    {
+        object current = new object[] { 1, "leaf" };
+        for (int i = 1; i < levels; i++)
+        {
+            current = new object[] { current, i };
+        }
+        return current;
     }
 
     static byte[] Elements<T>(IReadOnlyList<T> values, MessagePackSerializerOptions options)

@@ -1,4 +1,5 @@
 using MessagePack;
+using NativeCompressions;
 using Xunit;
 
 #pragma warning disable CS0618 // v3 LZ4 envelopes are obsolete for new data; they are the subject here
@@ -20,6 +21,63 @@ public class RegressionTests
     // in a finally, and the outer `catch when (!advanced)` filter is evaluated in the exception's first pass, before
     // inner finally blocks run, so it saw `advanced` still false and advanced the read a second time. Fix: a catch that
     // advances and rethrows, so the filter's second pass sees the flag.
+    // Nerdbank.MessagePack GHSA-grf3-jgmf-2g5j (2026-09-17): nested array/map headers each claiming the remaining bytes
+    // pass the per-header bound at every level and preallocate per level before the depth check stops the descent.
+    // DeclaredElementBudgetTest pins the fix (the declared-element budget) on the Default chain's byte[] entry; this
+    // runs the same bombs through every (type x tier x entry) thunk: each must fail sanctioned, and the synchronous,
+    // processor-less ones must do so without amplifying (allocation measured on this thread, 16x the payload at most,
+    // where the amplified path cost thousands of times the payload)
+    [Fact]
+    public void NestedHeaderBombs_AreRejectedByEveryTarget_WithoutAmplifying()
+    {
+        byte[][] bombs = [RobustnessTargets.NestedArrayBomb(4096, 200), RobustnessTargets.NestedMapBomb(4096, 200), RobustnessTargets.RecursiveTreeBomb(4096, 200)];
+        string[] asyncOrStream = ["/pipe", "/messages", "/elements", "/stream"];
+        string[] processorTiers = ["/lz4block", "/lz4array", "/lz4frame", "/zstd", "/framing"];
+        foreach (var bomb in bombs)
+        {
+            foreach (var (name, deserialize) in RobustnessTargets.Targets)
+            {
+                var violation = RobustnessHarness.RunAttempt($"{name} {RobustnessHarness.Hex(bomb)}", () => deserialize(bomb));
+                Assert.Null(violation);
+
+                if (asyncOrStream.Any(name.Contains) || processorTiers.Any(name.Contains) || name == "json")
+                {
+                    continue; // continuations and pooled decode buffers are not this thread's allocation
+                }
+                Record.Exception(() => deserialize([MessagePackCode.Nil])); // warm the formatter chain
+                var before = GC.GetAllocatedBytesForCurrentThread();
+                var ex = Record.Exception(() => deserialize(bomb));
+                var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+                Assert.NotNull(ex);
+                Assert.True(allocated < 16L * bomb.Length, $"{name}: rejected bomb allocated {allocated:N0} bytes for a {bomb.Length:N0} byte payload");
+            }
+        }
+    }
+
+    [Fact]
+    public void NestedHeaderBomb_InsideAFrame_IsRejectedOnTheDecodedBudget()
+    {
+        // the budget is the decoded message's length, not the compressed frame's: a 4 KB bomb inside a frame must be
+        // rejected the same way once decoded
+        var bomb = RobustnessTargets.NestedArrayBomb(4096, 200);
+        (string Tier, byte[] Payload)[] wrapped =
+        [
+            ("/framing", RobustnessTargets.Framed(bomb)),
+            ("/lz4frame", LZ4.Compress(bomb, new LZ4CompressionOptions { ContentSize = 4096 })),
+            ("/zstd", Zstandard.Compress(bomb, new ZstandardCompressionOptions { CompressionLevel = 3 })),
+        ];
+        foreach (var (tier, payload) in wrapped)
+        {
+            foreach (var (name, deserialize) in RobustnessTargets.Targets.Where(t => t.Name.EndsWith(tier, StringComparison.Ordinal) && (t.Name.StartsWith("Object[]/") || t.Name.StartsWith("SampleTreePoco/"))))
+            {
+                var ex = Record.Exception(() => deserialize(payload));
+                Assert.NotNull(ex);
+                Assert.True(RobustnessHarness.IsSanctioned(ex), $"{name}: {ex}");
+                Assert.Contains("declared", ex.Message);
+            }
+        }
+    }
+
     [Fact]
     public void FramingPipe_NonEnvelopeInput_FailsSanctioned()
     {
