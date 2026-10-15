@@ -4,6 +4,10 @@
     <Nullable>enable</Nullable>
     <SignAssembly>True</SignAssembly>
     <LangVersion>13</LangVersion>
+    <_MessagePackVersionForAssembly Condition="'$(Version)' != ''">$(Version)</_MessagePackVersionForAssembly>
+    <_MessagePackVersionForAssembly Condition="'$(_MessagePackVersionForAssembly)' == '' and '$(VersionPrefix)' != ''">$(VersionPrefix)</_MessagePackVersionForAssembly>
+    <_MessagePackVersionCore Condition="'$(_MessagePackVersionForAssembly)' != ''">$([System.String]::Copy('$(_MessagePackVersionForAssembly)').Split('-')[0].Split('+')[0])</_MessagePackVersionCore>
+    <AssemblyVersion Condition="'$(AssemblyVersion)' == '' and '$(_MessagePackVersionCore)' != ''">$([System.Version]::Parse('$(_MessagePackVersionCore)').ToString(2)).0.0</AssemblyVersion>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\opensource.snk</AssemblyOriginatorKeyFile>
     <EnforceExtendedAnalyzerRules Condition="'$(IsAnalyzerProject)'=='true'">true</EnforceExtendedAnalyzerRules>
   </PropertyGroup>
