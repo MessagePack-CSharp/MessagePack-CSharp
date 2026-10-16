@@ -367,3 +367,5 @@ BenchmarkDotNet.Artifacts/
 
 tests/MessagePack.Tests.Fuzz/corpus/
 tests/MessagePack.Tests.Fuzz/libfuzzer-dotnet-windows.exe
+
+sandbox/DisassembleBenchmark/.bdn/
