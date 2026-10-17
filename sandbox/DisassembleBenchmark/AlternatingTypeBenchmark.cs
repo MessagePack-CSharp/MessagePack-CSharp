@@ -67,6 +67,21 @@ public partial class AlternatingTypeBenchmark
         {
             if (actual != IntValue * 3 + 3) throw new InvalidOperationException($"verify failed: {name} non-generic roundtrip");
         }
+
+        // serialize rows: every pair writes 2 bytes (fixint + bool), and the bytes match the deserialize payloads
+        foreach (var (name, actual) in new (string, int)[]
+        {
+            ("v4", SerIntIntV4() + SerBoolBoolV4() + SerIntBoolV4()), ("v3", SerIntIntMpcs() + SerBoolBoolMpcs() + SerIntBoolMpcs()),
+            ("nerdbank", SerIntIntNerdbank() + SerBoolBoolNerdbank() + SerIntBoolNerdbank()),
+            ("v4 ng", SerIntIntV4Ng() + SerBoolBoolV4Ng() + SerIntBoolV4Ng()), ("v3 ng", SerIntIntMpcsNg() + SerBoolBoolMpcsNg() + SerIntBoolMpcsNg()),
+            ("nerdbank ng", SerIntIntNerdbankNg() + SerBoolBoolNerdbankNg() + SerIntBoolNerdbankNg()),
+        })
+        {
+            if (actual != 6) throw new InvalidOperationException($"verify failed: {name} serialize lengths");
+        }
+        if (!MessagePack.MessagePackSerializer.Serialize(typeof(bool), BoxedBool).AsSpan().SequenceEqual(boolPayload) || !nerdbank.SerializeObject(BoxedInt, nbIntShape).AsSpan().SequenceEqual(intPayload)) throw new InvalidOperationException("verify failed: non-generic serialize bytes");
+        // JSON: "8" is 1 byte, "true" is 4
+        if (SerIntIntStj() != 2 || SerBoolBoolStj() != 8 || SerIntBoolStj() != 5 || SerIntBoolStjTypeInfo() != 5 || SerIntBoolStjNg() != 5 || SerIntBoolStjTypeInfoNg() != 5) throw new InvalidOperationException("verify failed: STJ serialize lengths");
     }
 
     [BenchmarkCategory("V4"), Benchmark(Baseline = true)]
