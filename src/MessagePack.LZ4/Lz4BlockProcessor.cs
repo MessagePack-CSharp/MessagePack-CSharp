@@ -293,7 +293,6 @@ internal static class Lz4BlockEnvelope
 /// Reads both v3 envelopes (ext 99 and ext 98) and passes non-enveloped messages through; messages below
 /// <see cref="CompressionThreshold"/> bytes are written bare. Neither this nor <see cref="Lz4FrameProcessor"/> reads what the other writes.
 /// </summary>
-[Obsolete("v3 wire format (ext 99). Use WithLz4Frame for new data; Block stays for data shared with MessagePack-CSharp v3 readers and writers.")]
 public sealed class Lz4BlockProcessor : MessagePackMessageProcessor
 {
     /// <summary>Messages below this many bytes are written without an envelope.</summary>
@@ -423,7 +422,6 @@ public sealed class Lz4BlockProcessor : MessagePackMessageProcessor
 /// Reads both v3 envelopes (ext 99 and ext 98) and passes non-enveloped messages through; messages below
 /// <see cref="CompressionThreshold"/> bytes are written bare. Neither this nor <see cref="Lz4FrameProcessor"/> reads what the other writes.
 /// </summary>
-[Obsolete("v3 wire format (ext 98). Use WithLz4Frame for new data; BlockArray stays for data shared with MessagePack-CSharp v3 readers and writers.")]
 public sealed class Lz4BlockArrayProcessor : MessagePackMessageProcessor
 {
     /// <summary>Messages below this many bytes are written without an envelope.</summary>

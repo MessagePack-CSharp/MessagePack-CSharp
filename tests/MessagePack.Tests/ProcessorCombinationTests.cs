@@ -4,7 +4,6 @@ using Xunit;
 using V4 = MessagePack.MessagePackSerializer;
 using V4Options = MessagePack.MessagePackSerializerOptions;
 
-#pragma warning disable CS0618 // v3 LZ4 envelopes are obsolete for new data; their reader's behaviour is the subject here
 
 namespace MessagePack.Tests;
 

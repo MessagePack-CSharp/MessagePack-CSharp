@@ -6,7 +6,6 @@ using Oracle = V3::MessagePack.MessagePackSerializer;
 using V4Options = MessagePack.MessagePackSerializerOptions;
 using V4 = MessagePack.MessagePackSerializer;
 
-#pragma warning disable CS0618 // v3 LZ4 envelopes are obsolete for new data; they are the subject here
 
 namespace MessagePack.Tests;
 

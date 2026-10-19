@@ -31,10 +31,8 @@ public class DownlevelCompressionTests
     [Fact]
     public void Lz4V3Envelopes_Roundtrip()
     {
-#pragma warning disable CS0618 // the v3 wire formats stay supported; this exercises them on purpose
         AssertRoundtrip(BigCompressible(), MessagePackSerializerOptions.Default.WithLz4Block());
         AssertRoundtrip(BigCompressible(), MessagePackSerializerOptions.Default.WithLz4BlockArray());
-#pragma warning restore CS0618
     }
 
     [Fact]

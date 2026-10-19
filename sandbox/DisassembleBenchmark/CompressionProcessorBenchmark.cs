@@ -1,5 +1,4 @@
 extern alias V3;
-#pragma warning disable CS0618 // the v3 LZ4 envelopes are benchmarked alongside the frames
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;

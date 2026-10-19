@@ -2,7 +2,6 @@ using System.Buffers;
 using System.IO.Pipelines;
 using MessagePack;
 
-#pragma warning disable CS0618 // v3 LZ4 envelopes are obsolete for new data; they are the subject here
 
 namespace MessagePack.Tests;
 
