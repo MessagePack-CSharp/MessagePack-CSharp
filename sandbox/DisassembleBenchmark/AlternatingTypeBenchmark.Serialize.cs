@@ -23,6 +23,14 @@ using BenchmarkDotNet.Attributes;
 // guesses int at both sites and the failing bool site costs nothing measurable (its body returns a shared box).
 // DOTNET_TieredPGO=0 removes the asymmetry (43.7 / 45.4 / 42.5) and slows every row ~1.8x, so PGO stays on; the
 // penalty is a property of a call site that alternates between exactly two Type arguments, not of the library.
+//
+// IBufferWriter entry (reused ArrayBufferWriter, no result array; same day, same job): V4 19.3 / 18.9 / 18.6
+// | Nerdbank 19.3 / 18.1 / 20.9 | STJ (reused Utf8JsonWriter + JsonTypeInfo) 25.4 / 22.9 / 24.8 | mpcs 28.7 / 28.9 / 28.6.
+// Against the byte[] rows that is only 2.8 ns less for two calls, so the 32 B result array costs ~1.4 ns and the
+// ~9.5 ns per call is the entry itself: Serialize<int>'s Tier1 body (1364 B) keeps an interface call to the formatter
+// (`call [r11] IMessagePackFormatter...:Serialize`, not devirtualized although the site is monomorphic), the write
+// buffer's ctor / GetSpan / Advance / Dispose, and on the byte[] path AllocateUninitializedArray + Memmove in ToArray.
+// The deserialize entry has none of the buffer setup or copy and lands at 3 ns per call.
 public partial class AlternatingTypeBenchmark
 {
     [BenchmarkCategory("V4Ser"), Benchmark(Baseline = true)]
@@ -119,4 +127,54 @@ public partial class AlternatingTypeBenchmark
 
     [BenchmarkCategory("StjTypeInfoNgSer"), Benchmark]
     public int SerIntBoolStjTypeInfoNg() => System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(BoxedInt, stjIntInfo).Length + System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(BoxedBool, stjBoolInfo).Length;
+
+    // ---- IBufferWriter<byte> entry: no result array, the writer is reused across calls, so this is the entry's own
+    // fixed cost (formatter fetch, buffer setup, the write) without the allocation that dominates the byte[] rows ----
+
+    readonly System.Buffers.ArrayBufferWriter<byte> bw = new(256);
+    readonly PolyType.ITypeShape<int> nbIntShapeT = PolyType.Abstractions.TypeShapeResolver.Resolve<int, Witness>();
+    readonly PolyType.ITypeShape<bool> nbBoolShapeT = PolyType.Abstractions.TypeShapeResolver.Resolve<bool, Witness>();
+    // System.Text.Json's no-allocation shape: a Utf8JsonWriter reset onto the same ArrayBufferWriter per call
+    readonly System.Text.Json.Utf8JsonWriter stjWriter;
+
+    public AlternatingTypeBenchmark()
+    {
+        stjWriter = new System.Text.Json.Utf8JsonWriter(bw);
+    }
+
+    [BenchmarkCategory("V4BwSer"), Benchmark(Baseline = true)]
+    public int SerIntIntV4Bw() { bw.ResetWrittenCount(); MessagePack.MessagePackSerializer.Serialize(bw, IntValue); MessagePack.MessagePackSerializer.Serialize(bw, IntValue); return bw.WrittenCount; }
+
+    [BenchmarkCategory("V4BwSer"), Benchmark]
+    public int SerBoolBoolV4Bw() { bw.ResetWrittenCount(); MessagePack.MessagePackSerializer.Serialize(bw, BoolValue); MessagePack.MessagePackSerializer.Serialize(bw, BoolValue); return bw.WrittenCount; }
+
+    [BenchmarkCategory("V4BwSer"), Benchmark]
+    public int SerIntBoolV4Bw() { bw.ResetWrittenCount(); MessagePack.MessagePackSerializer.Serialize(bw, IntValue); MessagePack.MessagePackSerializer.Serialize(bw, BoolValue); return bw.WrittenCount; }
+
+    [BenchmarkCategory("MpcsBwSer"), Benchmark(Baseline = true)]
+    public int SerIntIntMpcsBw() { bw.ResetWrittenCount(); V3::MessagePack.MessagePackSerializer.Serialize(bw, IntValue); V3::MessagePack.MessagePackSerializer.Serialize(bw, IntValue); return bw.WrittenCount; }
+
+    [BenchmarkCategory("MpcsBwSer"), Benchmark]
+    public int SerBoolBoolMpcsBw() { bw.ResetWrittenCount(); V3::MessagePack.MessagePackSerializer.Serialize(bw, BoolValue); V3::MessagePack.MessagePackSerializer.Serialize(bw, BoolValue); return bw.WrittenCount; }
+
+    [BenchmarkCategory("MpcsBwSer"), Benchmark]
+    public int SerIntBoolMpcsBw() { bw.ResetWrittenCount(); V3::MessagePack.MessagePackSerializer.Serialize(bw, IntValue); V3::MessagePack.MessagePackSerializer.Serialize(bw, BoolValue); return bw.WrittenCount; }
+
+    [BenchmarkCategory("NerdbankBwSer"), Benchmark(Baseline = true)]
+    public int SerIntIntNerdbankBw() { bw.ResetWrittenCount(); var i = IntValue; nerdbank.Serialize(bw, in i, nbIntShapeT); nerdbank.Serialize(bw, in i, nbIntShapeT); return bw.WrittenCount; }
+
+    [BenchmarkCategory("NerdbankBwSer"), Benchmark]
+    public int SerBoolBoolNerdbankBw() { bw.ResetWrittenCount(); var b = BoolValue; nerdbank.Serialize(bw, in b, nbBoolShapeT); nerdbank.Serialize(bw, in b, nbBoolShapeT); return bw.WrittenCount; }
+
+    [BenchmarkCategory("NerdbankBwSer"), Benchmark]
+    public int SerIntBoolNerdbankBw() { bw.ResetWrittenCount(); var i = IntValue; var b = BoolValue; nerdbank.Serialize(bw, in i, nbIntShapeT); nerdbank.Serialize(bw, in b, nbBoolShapeT); return bw.WrittenCount; }
+
+    [BenchmarkCategory("StjBwSer"), Benchmark(Baseline = true)]
+    public int SerIntIntStjBw() { bw.ResetWrittenCount(); stjWriter.Reset(bw); System.Text.Json.JsonSerializer.Serialize(stjWriter, IntValue, AltJsonContext.Default.Int32); stjWriter.Reset(bw); System.Text.Json.JsonSerializer.Serialize(stjWriter, IntValue, AltJsonContext.Default.Int32); return bw.WrittenCount; }
+
+    [BenchmarkCategory("StjBwSer"), Benchmark]
+    public int SerBoolBoolStjBw() { bw.ResetWrittenCount(); stjWriter.Reset(bw); System.Text.Json.JsonSerializer.Serialize(stjWriter, BoolValue, AltJsonContext.Default.Boolean); stjWriter.Reset(bw); System.Text.Json.JsonSerializer.Serialize(stjWriter, BoolValue, AltJsonContext.Default.Boolean); return bw.WrittenCount; }
+
+    [BenchmarkCategory("StjBwSer"), Benchmark]
+    public int SerIntBoolStjBw() { bw.ResetWrittenCount(); stjWriter.Reset(bw); System.Text.Json.JsonSerializer.Serialize(stjWriter, IntValue, AltJsonContext.Default.Int32); stjWriter.Reset(bw); System.Text.Json.JsonSerializer.Serialize(stjWriter, BoolValue, AltJsonContext.Default.Boolean); return bw.WrittenCount; }
 }

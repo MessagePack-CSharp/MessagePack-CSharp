@@ -80,6 +80,9 @@ public partial class AlternatingTypeBenchmark
             if (actual != 6) throw new InvalidOperationException($"verify failed: {name} serialize lengths");
         }
         if (!MessagePack.MessagePackSerializer.Serialize(typeof(bool), BoxedBool).AsSpan().SequenceEqual(boolPayload) || !nerdbank.SerializeObject(BoxedInt, nbIntShape).AsSpan().SequenceEqual(intPayload)) throw new InvalidOperationException("verify failed: non-generic serialize bytes");
+        // IBufferWriter rows write the same bytes into the reused writer
+        if (SerIntIntV4Bw() != 2 || SerBoolBoolV4Bw() != 2 || SerIntBoolV4Bw() != 2 || SerIntBoolMpcsBw() != 2 || SerIntBoolNerdbankBw() != 2 || !bw.WrittenSpan.SequenceEqual(new[] { intPayload[0], boolPayload[0] })) throw new InvalidOperationException("verify failed: IBufferWriter serialize");
+        if (SerIntIntStjBw() != 2 || SerBoolBoolStjBw() != 8 || SerIntBoolStjBw() != 5) throw new InvalidOperationException("verify failed: STJ IBufferWriter serialize");
         // JSON: "8" is 1 byte, "true" is 4
         if (SerIntIntStj() != 2 || SerBoolBoolStj() != 8 || SerIntBoolStj() != 5 || SerIntBoolStjTypeInfo() != 5 || SerIntBoolStjNg() != 5 || SerIntBoolStjTypeInfoNg() != 5) throw new InvalidOperationException("verify failed: STJ serialize lengths");
     }
