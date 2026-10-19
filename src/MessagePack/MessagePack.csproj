@@ -44,7 +44,7 @@
 	<!-- The SerializerFoundation package carries its own analyzers (SF001-SF003) under analyzers/dotnet/cs.
 	     PrivateAssets=none lets them flow to MessagePack consumers too; the default would keep them private to this project. -->
 	<ItemGroup>
-		<PackageReference Include="SerializerFoundation" Version="1.1.0" PrivateAssets="none" />
+		<PackageReference Include="SerializerFoundation" Version="1.2.0" PrivateAssets="none" />
 	</ItemGroup>
 
 	<!-- Analyzer -->
