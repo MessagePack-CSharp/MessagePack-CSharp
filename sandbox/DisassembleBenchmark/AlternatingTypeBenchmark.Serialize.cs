@@ -37,6 +37,9 @@ using BenchmarkDotNet.Attributes;
 // and IBufferWriter rows is the write-buffer implementations (ArrayPoolListWriteBuffer's 1 KB scratch setup, ToArray
 // and Dispose; BufferWriterWriteBuffer's GetSpan / Advance interface calls and Flush), which SpanWriteBuffer does not
 // have. For tiny messages the buffer-level entry is 5-8x faster than the whole-message entries.
+//
+// SerializerFoundation 1.2.0 (lighter ArrayPoolListWriteBuffer): byte[] int,int 24.9 -> 12.6 ns, non-generic
+// int,int 30.2 -> 16.0 ns; IBufferWriter 18.6 and SpanWriteBuffer 3.3 unchanged (different buffer types).
 public partial class AlternatingTypeBenchmark
 {
     [BenchmarkCategory("V4Ser"), Benchmark(Baseline = true)]

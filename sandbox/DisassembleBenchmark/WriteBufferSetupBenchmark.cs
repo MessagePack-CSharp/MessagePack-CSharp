@@ -27,6 +27,10 @@ using SerializerFoundation;
 // allocation on either path. The 70 KB overflow path (1 KB scratch, then 64 KB and 128 KB segments, one byte written
 // per segment so only the chain management is timed) costs 22.0 ns current vs 33.4 ns pooled: +11 ns for the four
 // extra pool operations, on a message whose serialization itself is in the microseconds.
+//
+// SerializerFoundation 1.2.0 (2026-10-19) ships a lighter ArrayPoolListWriteBuffer; the Current_ rows on it:
+//   ctor + Dispose 1.15 | + write 2.30 | + ToArray 4.99 | overflow 26.3 (no allocation). The v1/v2 prototype rows
+//   above are kept as the reference points they were measured against (1.1.0: 2.87 / 3.51 / 7.28 / 21.97).
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [CategoriesColumn]
 public class WriteBufferSetupBenchmark
