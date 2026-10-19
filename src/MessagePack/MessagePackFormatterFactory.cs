@@ -85,7 +85,7 @@ public abstract class MessagePackFormatterFactory
     // Every optional capability composes fluently instead, so the preset surface does not explode combinatorially:
     //   MessagePackFormatterFactory.Default.WithContractless()
     //   MessagePackFormatterFactory.Default.WithContractless(allowPrivate: true)
-    //   MessagePackFormatterFactory.Default.WithContractless().WithTypeless(TypelessTypeLoader.LoadAnyType())
+    //   MessagePackFormatterFactory.Default.WithTypeless(TypelessTypeLoader.LoadAnyType())   (v3's MessagePackSerializer.Typeless)
 
     /// <summary>
     /// Appends a tail that serializes objects without attributes as maps of member name to value, the format of v3's ContractlessStandardResolver.
@@ -100,11 +100,15 @@ public abstract class MessagePackFormatterFactory
     }
 
     /// <summary>
-    /// Adds typeless handling, where object slots embed the concrete .NET type name, compatible with v3's Typeless format.
-    /// <paramref name="typeLoader"/> decides how type names in the payload resolve on read.
-    /// The equivalent of v3's TypelessContractlessStandardResolver, wire-compatible with it in both directions, is
-    /// <c>Combine(NativeDateTimeFormatterFactory.Instance, Default).WithContractless(allowPrivate: true).WithTypeless(TypelessTypeLoader.LoadAnyType())</c>:
-    /// v3 wrote DateTime members as ToBinary int64 and included non-public members.
+    /// Adds v3's Typeless mode, where object slots embed the concrete .NET type name, wire-compatible with v3's
+    /// TypelessContractlessStandardResolver (<c>MessagePackSerializer.Typeless</c>) in both directions:
+    /// <c>Default.WithTypeless(TypelessTypeLoader.LoadAnyType())</c> is that resolver. Besides the type-name handling the
+    /// mode carries the two other things v3's chain did: <see cref="DateTime"/> is written as a ToBinary int64
+    /// (<see cref="NativeDateTimeFormatterFactory"/>, placed ahead of this chain), and types without attributes are serialized
+    /// as maps including their non-public members (the contractless tier with allowPrivate, appended to it; a
+    /// <see cref="WithContractless"/> tier added earlier in the chain keeps its own setting, since the first factory wins).
+    /// <paramref name="typeLoader"/> decides how type names in the payload resolve on read; for untrusted input use
+    /// <see cref="TypelessTypeLoader.AllowedTypes"/>.
     /// </summary>
     [RequiresDynamicCode(RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(TypelessMessages.RequiresUnreferencedCode)]
@@ -113,8 +117,15 @@ public abstract class MessagePackFormatterFactory
         // Typeless splits across both ends of the chain. typeof(object) must sit first (before BuiltIn's and the object
         // fallback's claims), while interface/abstract static types sit last so BuiltIn's collection-interface formatters
         // and generated union roots keep their claims. v3 kept its TypelessObjectResolver at the tail for the same reason,
-        // and needed no head because nothing earlier claimed object.
-        return Combine(new TypelessFormatterFactory(typeLoader, omitAssemblyVersion), this, new ForceTypelessFormatterFactory());
+        // and needed no head because nothing earlier claimed object. NativeDateTime goes ahead of the chain's own
+        // DateTime formatter, and the allowPrivate contractless tier is a catch-all for concrete types, so it sits
+        // right before the interface/abstract tail.
+        return Combine(
+            new TypelessFormatterFactory(typeLoader, omitAssemblyVersion),
+            NativeDateTimeFormatterFactory.Instance,
+            this,
+            new ReflectionFormatterFactory(annotatedOnly: false, allowPrivate: true),
+            new ForceTypelessFormatterFactory());
     }
 
     /// <summary>Composes factories into one chain. The first factory that serves a type wins, so put overrides before defaults.</summary>

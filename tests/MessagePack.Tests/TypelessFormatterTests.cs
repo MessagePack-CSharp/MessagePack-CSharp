@@ -106,12 +106,10 @@ public class TypelessFormatterTests
 
     // README's migration row for MessagePackSerializer.Typeless. v3's TypelessContractlessStandardResolver put
     // NativeDateTimeResolver first (DateTime as ToBinary int64, also inside DateTime? / DateTime[] / List<DateTime>)
-    // and ended in the AllowPrivate contractless resolver; the old row (Default.WithContractless().WithTypeless) threw
-    // on every DateTime member in both directions and silently dropped non-public members.
+    // and ended in the AllowPrivate contractless resolver; WithTypeless brings both along, so the row is one call.
+    // Without them every DateTime member threw in both directions and non-public members were silently dropped.
     static readonly MessagePackSerializerOptions v3TypelessEquivalent = new(new MessagePackFormatterResolver(
-        MessagePackFormatterFactory.Combine(NativeDateTimeFormatterFactory.Instance, MessagePackFormatterFactory.Default)
-            .WithContractless(allowPrivate: true)
-            .WithTypeless(TypelessTypeLoader.LoadAnyType())));
+        MessagePackFormatterFactory.Default.WithTypeless(TypelessTypeLoader.LoadAnyType())));
 
     public class DateTimeHolder
     {

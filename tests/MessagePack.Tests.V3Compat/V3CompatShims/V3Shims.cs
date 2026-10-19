@@ -9,7 +9,7 @@
 //   ContractlessStandardResolverAllowPrivate-> allow-private chain .WithContractless(allowPrivate: true)
 //   TypelessObjectResolver                  -> Default.WithContractless().WithTypeless(TypelessTypeLoader.LoadAnyType())
 //   TypelessContractlessStandardResolver /
-//   MessagePackSerializer.Typeless          -> Combine(NativeDateTimeFormatterFactory.Instance, Default).WithContractless(allowPrivate: true).WithTypeless(LoadAnyType())
+//   MessagePackSerializer.Typeless          -> Default.WithTypeless(LoadAnyType()) (WithTypeless brings NativeDateTime and the allow-private contractless tier)
 //   DynamicEnumAsStringResolver             -> GenericEnumAsStringFormatterFactory composed before the chain
 //   BuiltinResolver                         -> BuiltInFormatterFactory alone
 //   options.WithCompression(Lz4*)           -> options.WithLz4Block()/WithLz4BlockArray() (MessagePack.LZ4)
@@ -236,11 +236,9 @@ namespace MessagePack.Resolvers
 
     public static class TypelessContractlessStandardResolver
     {
-        // v3's chain: NativeDateTimeResolver first, DynamicContractlessObjectResolverAllowPrivate before the typeless tail
+        // v3's chain: NativeDateTimeResolver first, DynamicContractlessObjectResolverAllowPrivate before the typeless tail; WithTypeless composes both
         public static MessagePackSerializerOptions Options { get; } = V3CompatChains.ToOptions(
-            MessagePackFormatterFactory.Combine(NativeDateTimeFormatterFactory.Instance, MessagePackFormatterFactory.Default)
-                .WithContractless(allowPrivate: true)
-                .WithTypeless(TypelessTypeLoader.LoadAnyType()));
+            MessagePackFormatterFactory.Default.WithTypeless(TypelessTypeLoader.LoadAnyType()));
 
         public static MessagePackFormatterResolver Instance => Options.Resolver;
     }
