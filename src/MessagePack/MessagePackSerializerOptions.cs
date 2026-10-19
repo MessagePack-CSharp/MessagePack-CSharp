@@ -81,6 +81,16 @@ public sealed record class MessagePackSerializerOptions
     /// </summary>
     public long MaxBufferedMessageSize { get; init; } = 64 * 1024 * 1024;
 
+    /// <summary>
+    /// Creates options over a new <see cref="MessagePackFormatterResolver"/> for <paramref name="factory"/>, with the resolver's default settings.
+    /// To set a resolver property such as <see cref="MessagePackFormatterResolver.HashFloodingResistant"/>, construct the resolver yourself and pass it to the other constructor.
+    /// The resolver owns the formatter cache, so build the options once and reuse them: an instance created per call rebuilds every formatter it uses.
+    /// </summary>
+    public MessagePackSerializerOptions(MessagePackFormatterFactory factory)
+        : this(new MessagePackFormatterResolver(factory))
+    {
+    }
+
     /// <summary>Creates options over <paramref name="resolver"/> with default per-call settings, which a <c>with</c> expression can adjust.</summary>
     public MessagePackSerializerOptions(MessagePackFormatterResolver resolver)
     {

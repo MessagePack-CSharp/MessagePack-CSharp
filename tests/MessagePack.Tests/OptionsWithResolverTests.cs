@@ -48,6 +48,30 @@ public class OptionsWithResolverTests
     [Fact]
     public void Constructor_NullResolver_IsRejected()
     {
-        Assert.Throws<ArgumentNullException>(() => new MessagePackSerializerOptions(null!));
+        Assert.Throws<ArgumentNullException>(() => new MessagePackSerializerOptions((MessagePackFormatterResolver)null!));
+    }
+
+    // the factory constructor creates the resolver with its default settings; the explicit resolver constructor is for
+    // changing those settings
+    [Fact]
+    public void FactoryConstructor_CreatesAResolverWithDefaultSettings()
+    {
+        var factory = MessagePackFormatterFactory.Default.WithContractless();
+
+        var options = new MessagePackSerializerOptions(factory);
+
+        Assert.True(options.Resolver.HashFloodingResistant);
+        Assert.True(options.Resolver.ValidateRequiredMembers);
+        Assert.False(options.Resolver.ValidateNullableAnnotations);
+        Assert.Equal(500, options.MaxDepth);
+        var bytes = MessagePackSerializer.Serialize(new Unannotated { Value = 7 }, options);
+        Assert.Equal(7, MessagePackSerializer.Deserialize<Unannotated>(bytes, options).Value);
+        Assert.NotSame(options.Resolver, new MessagePackSerializerOptions(factory).Resolver); // one resolver (one cache) per call
+    }
+
+    [Fact]
+    public void FactoryConstructor_NullFactory_IsRejected()
+    {
+        Assert.Throws<ArgumentNullException>(() => new MessagePackSerializerOptions((MessagePackFormatterFactory)null!));
     }
 }

@@ -223,7 +223,7 @@ public class AnalyzerFindingsTests
         Assert.Throws<ArgumentNullException>(() => V4.Deserialize<int>(payload, null!));
         Assert.Throws<ArgumentNullException>(() => V4.Serialize(typeof(int), 1, null!));
         Assert.Throws<ArgumentNullException>(() => V4.Deserialize<int>(new MemoryStream(payload), null!));
-        Assert.Throws<ArgumentNullException>(() => new MessagePackSerializerOptions(null!));
+        Assert.Throws<ArgumentNullException>(() => new MessagePackSerializerOptions((MessagePackFormatterResolver)null!));
         Assert.Throws<ArgumentNullException>(() => new MessagePackFormatterResolver((MessagePackFormatterFactory)null!));
         Assert.Throws<ArgumentException>(() => MessagePackFormatterFactory.Combine(BuiltInFormatterFactory.Instance, null!));
         Assert.Throws<ArgumentException>(() => TypelessTypeLoader.AllowedTypes(typeof(int), null!));
