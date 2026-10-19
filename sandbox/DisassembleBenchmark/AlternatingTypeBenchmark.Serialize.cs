@@ -31,6 +31,12 @@ using BenchmarkDotNet.Attributes;
 // (`call [r11] IMessagePackFormatter...:Serialize`, not devirtualized although the site is monomorphic), the write
 // buffer's ctor / GetSpan / Advance / Dispose, and on the byte[] path AllocateUninitializedArray + Memmove in ToArray.
 // The deserialize entry has none of the buffer setup or copy and lands at 3 ns per call.
+//
+// Buffer-level entry (SpanWriteBuffer over stackalloc byte[5], same job): 3.3 ns for the two writes, and the formatter
+// called directly (no entry) 2.2 ns. So the entry logic itself is ~0.6 ns per call and the ~8 ns per call of the byte[]
+// and IBufferWriter rows is the write-buffer implementations (ArrayPoolListWriteBuffer's 1 KB scratch setup, ToArray
+// and Dispose; BufferWriterWriteBuffer's GetSpan / Advance interface calls and Flush), which SpanWriteBuffer does not
+// have. For tiny messages the buffer-level entry is 5-8x faster than the whole-message entries.
 public partial class AlternatingTypeBenchmark
 {
     [BenchmarkCategory("V4Ser"), Benchmark(Baseline = true)]
@@ -177,4 +183,31 @@ public partial class AlternatingTypeBenchmark
 
     [BenchmarkCategory("StjBwSer"), Benchmark]
     public int SerIntBoolStjBw() { bw.ResetWrittenCount(); stjWriter.Reset(bw); System.Text.Json.JsonSerializer.Serialize(stjWriter, IntValue, AltJsonContext.Default.Int32); stjWriter.Reset(bw); System.Text.Json.JsonSerializer.Serialize(stjWriter, BoolValue, AltJsonContext.Default.Boolean); return bw.WrittenCount; }
+
+    // ---- the buffer-level entry: a SpanWriteBuffer over stackalloc byte[5] per call (an int is at most 5 bytes), so no
+    // pool, no copy, no result array; and the floor below the entry, the formatter fetched once and called directly ----
+
+    readonly MessagePack.IMessagePackFormatter<SerializerFoundation.SpanWriteBuffer, SerializerFoundation.ReadOnlySpanReadBuffer, int> spanIntFormatter =
+        MessagePack.MessagePackSerializerOptions.Default.Resolver.GetFormatter<SerializerFoundation.SpanWriteBuffer, SerializerFoundation.ReadOnlySpanReadBuffer, int>();
+
+    [BenchmarkCategory("V4SpanSer"), Benchmark(Baseline = true)]
+    public long SerIntIntV4Span()
+    {
+        var a = new SerializerFoundation.SpanWriteBuffer(stackalloc byte[5]);
+        MessagePack.MessagePackSerializer.Serialize(ref a, IntValue);
+        var b = new SerializerFoundation.SpanWriteBuffer(stackalloc byte[5]);
+        MessagePack.MessagePackSerializer.Serialize(ref b, IntValue);
+        return a.BytesWritten + b.BytesWritten;
+    }
+
+    [BenchmarkCategory("V4SpanSer"), Benchmark]
+    public long SerIntIntV4SpanFormatter()
+    {
+        var state = new MessagePack.SerializeState(500);
+        var a = new SerializerFoundation.SpanWriteBuffer(stackalloc byte[5]);
+        spanIntFormatter.Serialize(ref a, ref state, IntValue);
+        var b = new SerializerFoundation.SpanWriteBuffer(stackalloc byte[5]);
+        spanIntFormatter.Serialize(ref b, ref state, IntValue);
+        return a.BytesWritten + b.BytesWritten;
+    }
 }
