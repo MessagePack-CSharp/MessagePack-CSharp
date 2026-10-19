@@ -6,6 +6,23 @@ using BenchmarkDotNet.Attributes;
 // the all-hit baselines and the int/bool pair as the alternating stream. The row result is the summed length so the
 // arrays are consumed. Categories end in "Ser" so the serialize rows group apart from the deserialize rows; the
 // method names start with "Ser" so `--filter "AlternatingTypeBenchmark.Ser*"` runs this side alone.
+//
+// MEASURED 2026-10-17 (i7-13700KF, .NET 11 RC1, 10 warmup / 20 iterations, ns/op; every row allocates its two 32 B
+// result arrays, so the result array dominates and the generic gap to Nerdbank is only ~10%):
+//   generic:     V4 22.1 / 21.8 / 22.7 (int,int / bool,bool / int,bool) | Nerdbank 1.4.82 24.6 / 24.3 / 26.2
+//                | mpcs 30.5 / 31.0 / 31.0 | STJ 52.8 / 53.5 / 60.6 | STJ TypeInfo 52.8 / 49.8 / 51.7
+//   non-generic: V4 24.6 / 24.3 / 30.2 | mpcs 37.9 / 37.6 / 36.4 | Nerdbank 52.9 / 51.8 / 54.4
+//                | STJ 55.0 / 53.5 / 60.8 | STJ TypeInfo 52.4 / 50.0 / 57.6
+// V4's non-generic int/bool row pays 5.7 ns (23%) over its same-type rows while its deserialize twin pays nothing.
+// Not a cache in the library (Serialize(Type, object) is a TypeKeyHashTable lookup and a virtual NonGenericEntry call,
+// no last-type state): JIT dumps (--jit-alt=SerIntBoolV4Ng) show tiered PGO's guarded devirtualization guessing
+// NonGenericEntry<bool> at BOTH inlined call sites (`call Serialize[bool]` x2, no Serialize[int]). The virtual call
+// sits inside the inlined Serialize(Type, object, options), whose class profile is keyed by the inlinee's IL offset and
+// therefore aggregated across the two call sites (50/50 int/bool), so one type wins the guess and the other site
+// fails its guard on every call: a virtual call plus the lost inlining of Serialize<int>. The deserialize twin
+// guesses int at both sites and the failing bool site costs nothing measurable (its body returns a shared box).
+// DOTNET_TieredPGO=0 removes the asymmetry (43.7 / 45.4 / 42.5) and slows every row ~1.8x, so PGO stays on; the
+// penalty is a property of a call site that alternates between exactly two Type arguments, not of the library.
 public partial class AlternatingTypeBenchmark
 {
     [BenchmarkCategory("V4Ser"), Benchmark(Baseline = true)]
