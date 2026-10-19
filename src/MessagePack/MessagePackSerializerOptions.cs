@@ -50,13 +50,19 @@ public sealed record class MessagePackSerializerOptions
         return Interlocked.CompareExchange(ref slot, created, null) ?? created;
     }
 
-    readonly MessagePackFormatterResolver resolver;
-
     /// <summary>
-    /// Resolver that supplies the formatters.
-    /// Its settings, such as required-member validation, are fixed because the cached formatters capture them. To change one, construct a new resolver and wrap it in new options.
+    /// Resolver that supplies the formatters. A <c>with</c> expression can point a copy of the options at another resolver.
+    /// The resolver's own settings, such as required-member validation, are fixed because its cached formatters capture them: to change one, construct a new resolver.
     /// </summary>
-    public MessagePackFormatterResolver Resolver => resolver;
+    public MessagePackFormatterResolver Resolver
+    {
+        get;
+        init
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            field = value;
+        }
+    }
 
     /// <summary>Optional whole-message transform, such as compression, applied after serialization and undone before deserialization.</summary>
     public MessagePackMessageProcessor? MessageProcessor { get; init; }
@@ -78,7 +84,6 @@ public sealed record class MessagePackSerializerOptions
     /// <summary>Creates options over <paramref name="resolver"/> with default per-call settings, which a <c>with</c> expression can adjust.</summary>
     public MessagePackSerializerOptions(MessagePackFormatterResolver resolver)
     {
-        ArgumentNullException.ThrowIfNull(resolver);
-        this.resolver = resolver;
+        Resolver = resolver; // the init accessor rejects null
     }
 }
