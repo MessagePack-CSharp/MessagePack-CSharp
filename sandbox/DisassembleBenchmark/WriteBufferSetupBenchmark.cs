@@ -21,6 +21,12 @@ using SerializerFoundation;
 // the copy themselves are 1.7 (BytesWritten's loop and WriteTo's sliced CopyTo path are the rest). The slim shape saves
 // 1.6 ns per message as written, up to ~3.5 with a chain-less fast path in ToArray; the remaining ~4 ns of the 11 ns
 // byte[] entry per int are outside the buffer (formatter interface call, resolver lookup, state, processor check).
+//
+// v2 (PooledChainWriteBuffer: the 16 references and 17 lengths rented from ArrayPool<byte[]?> / ArrayPool<int> on the
+// first overflow, returned by Dispose): small path 1.09 / 1.96 / 5.54, the same as the lazily allocated chain, with no
+// allocation on either path. The 70 KB overflow path (1 KB scratch, then 64 KB and 128 KB segments, one byte written
+// per segment so only the chain management is timed) costs 22.0 ns current vs 33.4 ns pooled: +11 ns for the four
+// extra pool operations, on a message whose serialization itself is in the microseconds.
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [CategoriesColumn]
 public class WriteBufferSetupBenchmark
@@ -120,6 +126,219 @@ public class WriteBufferSetupBenchmark
         var result = GC.AllocateUninitializedArray<byte>((int)buffer.BytesWritten);
         scratch.Slice(0, result.Length).CopyTo(result);
         return result.Length;
+    }
+
+    // ---- prototype v2: chain bookkeeping rented from ArrayPool (no allocation on either path) ----
+
+    [BenchmarkCategory("CtorDispose"), Benchmark]
+    [SkipLocalsInit]
+    public long Pooled_CtorDispose()
+    {
+        var buffer = new PooledChainWriteBuffer(stackalloc byte[1024]);
+        var n = buffer.BytesWritten;
+        buffer.Dispose();
+        return n;
+    }
+
+    [BenchmarkCategory("Write"), Benchmark]
+    [SkipLocalsInit]
+    public long Pooled_Write()
+    {
+        var buffer = new PooledChainWriteBuffer(stackalloc byte[1024]);
+        buffer.GetSpan(1)[0] = 0x08;
+        buffer.Advance(1);
+        var n = buffer.BytesWritten;
+        buffer.Dispose();
+        return n;
+    }
+
+    [BenchmarkCategory("WriteToArray"), Benchmark]
+    [SkipLocalsInit]
+    public int Pooled_WriteToArray()
+    {
+        var buffer = new PooledChainWriteBuffer(stackalloc byte[1024]);
+        buffer.GetSpan(1)[0] = 0x08;
+        buffer.Advance(1);
+        var result = buffer.ToArray();
+        buffer.Dispose();
+        return result.Length;
+    }
+
+    // ---- overflow: 70 KB through a 1 KB scratch (two pooled segments: 64 KB, then 128 KB), no ToArray so the chain
+    // management is what differs; Allocated must stay zero for both ----
+
+    const int OverflowBytes = 70 * 1024;
+
+    [BenchmarkCategory("Overflow"), Benchmark(Baseline = true)]
+    [SkipLocalsInit]
+    public long Current_Overflow()
+    {
+        var buffer = new ArrayPoolListWriteBuffer(stackalloc byte[1024]);
+        var left = OverflowBytes;
+        while (left > 0)
+        {
+            var span = buffer.GetSpan(1);
+            var n = Math.Min(span.Length, left);
+            span[0] = 1;
+            buffer.Advance(n);
+            left -= n;
+        }
+        var total = buffer.BytesWritten;
+        buffer.Dispose();
+        return total;
+    }
+
+    [BenchmarkCategory("Overflow"), Benchmark]
+    [SkipLocalsInit]
+    public long Pooled_Overflow()
+    {
+        var buffer = new PooledChainWriteBuffer(stackalloc byte[1024]);
+        var left = OverflowBytes;
+        while (left > 0)
+        {
+            var span = buffer.GetSpan(1);
+            var n = Math.Min(span.Length, left);
+            span[0] = 1;
+            buffer.Advance(n);
+            left -= n;
+        }
+        var total = buffer.BytesWritten;
+        buffer.Dispose();
+        return total;
+    }
+
+    // scratch first; on the first overflow the two bookkeeping arrays (16 segment references, 17 lengths) are rented from
+    // the shared pools next to the 64 KB segment and returned by Dispose: nothing is allocated on either path
+    public ref struct PooledChainWriteBuffer : IWriteBuffer, IDisposable
+    {
+        Span<byte> scratchBuffer;
+        Span<byte> currentBuffer;
+        int currentWritten;
+        byte[]?[]? pooledArrays;   // rented, length >= 16
+        int[]? completedLengths;   // rented, length >= 17: [0] = scratch, [1..] = pooled
+        int pooledCount;
+
+        public long BytesWritten
+        {
+            get
+            {
+                var lengths = completedLengths;
+                if (lengths is null)
+                {
+                    return currentWritten;
+                }
+                long total = 0;
+                for (int i = 0; i < pooledCount; i++)
+                {
+                    total += lengths[i];
+                }
+                return total + currentWritten;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public PooledChainWriteBuffer(Span<byte> scratchBuffer)
+        {
+            this.scratchBuffer = scratchBuffer;
+            currentBuffer = scratchBuffer;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<byte> GetSpan(int sizeHint = 0)
+        {
+            var remaining = currentBuffer.Length - currentWritten;
+            if (remaining == 0 || (uint)remaining < (uint)sizeHint)
+            {
+                return GetSpanSlow(sizeHint);
+            }
+            return MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(currentBuffer), currentWritten), remaining);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        Span<byte> GetSpanSlow(int sizeHint)
+        {
+            if (sizeHint < 0) throw new ArgumentOutOfRangeException(nameof(sizeHint));
+            if (sizeHint == 0) sizeHint = 1;
+            if (currentBuffer.Length - currentWritten < sizeHint)
+            {
+                var arrays = pooledArrays ??= ArrayPool<byte[]?>.Shared.Rent(16);
+                var lengths = completedLengths ??= ArrayPool<int>.Shared.Rent(17);
+                if (pooledCount == 16) throw new InvalidOperationException("insufficient space in buffer");
+                lengths[pooledCount] = currentWritten;
+                var minSize = 65_536 << Math.Min(pooledCount, 14);
+                var newArray = ArrayPool<byte>.Shared.Rent(Math.Max(sizeHint, minSize));
+                arrays[pooledCount++] = newArray;
+                currentBuffer = newArray;
+                currentWritten = 0;
+            }
+            return currentBuffer.Slice(currentWritten);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Advance(int bytesWritten)
+        {
+            if ((uint)bytesWritten > (uint)(currentBuffer.Length - currentWritten))
+            {
+                throw new InvalidOperationException("advanced too far");
+            }
+            currentWritten += bytesWritten;
+        }
+
+        public byte[] ToArray()
+        {
+            var totalLength = checked((int)BytesWritten);
+            if (totalLength == 0) return [];
+            var result = GC.AllocateUninitializedArray<byte>(totalLength);
+            WriteTo(result);
+            return result;
+        }
+
+        public void WriteTo(Span<byte> destination)
+        {
+            var arrays = pooledArrays;
+            if (arrays is null)
+            {
+                scratchBuffer.Slice(0, currentWritten).CopyTo(destination);
+                return;
+            }
+            var lengths = completedLengths!;
+            var scratchLen = lengths[0];
+            scratchBuffer.Slice(0, scratchLen).CopyTo(destination);
+            destination = destination.Slice(scratchLen);
+            for (int i = 0; i < pooledCount; i++)
+            {
+                var len = i < pooledCount - 1 ? lengths[i + 1] : currentWritten;
+                arrays[i]!.AsSpan(0, len).CopyTo(destination);
+                destination = destination.Slice(len);
+            }
+        }
+
+        public void Flush()
+        {
+        }
+
+        public void Dispose()
+        {
+            var arrays = pooledArrays;
+            if (arrays is not null)
+            {
+                for (int i = 0; i < pooledCount; i++)
+                {
+                    if (arrays[i] is { } array)
+                    {
+                        ArrayPool<byte>.Shared.Return(array);
+                        arrays[i] = null; // the reference array goes back clean
+                    }
+                }
+                ArrayPool<byte[]?>.Shared.Return(arrays);
+                ArrayPool<int>.Shared.Return(completedLengths!);
+                pooledArrays = null;
+                completedLengths = null;
+                pooledCount = 0;
+            }
+            currentWritten = 0;
+            currentBuffer = default;
+        }
     }
 
     // the scratch-first chain, with the rented arrays and their lengths behind one reference created on first overflow
