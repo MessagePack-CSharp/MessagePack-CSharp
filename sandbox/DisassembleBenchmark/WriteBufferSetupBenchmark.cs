@@ -12,6 +12,15 @@ using SerializerFoundation;
 // the references are GC-tracked, and Dispose / BytesWritten / WriteTo walk them. SlimPoolListWriteBuffer is a prototype
 // of the same contract with the pooled chain moved behind one lazily created reference, so the struct is two spans, an
 // int and a reference: the cost of the chain is paid only by messages that outgrow the scratch span.
+//
+// MEASURED 2026-10-19 (i7-13700KF, .NET 11 RC1, 10 warmup / 20 iterations, ns per buffer lifetime):
+//   ctor + Dispose:              current 2.90 | slim 1.02
+//   + one 1-byte write:          current 3.50 | slim 2.08 | SpanWriteBuffer 0.99
+//   + ToArray (32 B result):     current 7.07 | slim 5.49 | SpanWriteBuffer + alloc + copy 2.72
+// Zeroing and clearing the ~240-byte struct is ~1.9 ns per message; ToArray adds 3.6 ns of which the allocation and
+// the copy themselves are 1.7 (BytesWritten's loop and WriteTo's sliced CopyTo path are the rest). The slim shape saves
+// 1.6 ns per message as written, up to ~3.5 with a chain-less fast path in ToArray; the remaining ~4 ns of the 11 ns
+// byte[] entry per int are outside the buffer (formatter interface call, resolver lookup, state, processor check).
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [CategoriesColumn]
 public class WriteBufferSetupBenchmark
