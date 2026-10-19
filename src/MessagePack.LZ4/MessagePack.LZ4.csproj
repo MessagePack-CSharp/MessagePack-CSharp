@@ -17,7 +17,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="NativeCompressions.LZ4" Version="1.1.0" />
+		<PackageReference Include="NativeCompressions.LZ4" Version="1.2.0" />
 		<!-- downlevel attributes (DoesNotReturn, scoped) for the netstandard2.0 build, as in the core -->
 		<PackageReference Include="PolySharp" Version="1.16.0">
 			<PrivateAssets>all</PrivateAssets>

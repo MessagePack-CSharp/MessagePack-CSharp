@@ -20,7 +20,7 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' != 'net11.0'">
-		<PackageReference Include="NativeCompressions.Zstandard" Version="1.1.0" />
+		<PackageReference Include="NativeCompressions.Zstandard" Version="1.2.0" />
 	</ItemGroup>
 
 	<ItemGroup>
