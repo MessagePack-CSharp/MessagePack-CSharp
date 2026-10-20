@@ -24,9 +24,9 @@ public sealed class SourceGeneratedFormatterFactory : MessagePackFormatterFactor
     /// <see cref="MessagePackFormatterFactory.DefaultAot"/> composes, so a JIT run of the AOT chain fails exactly where
     /// the Native AOT build would, instead of closing the formatter with <see cref="Type.MakeGenericType"/> and passing.
     /// </summary>
-    public static readonly SourceGeneratedFormatterFactory StaticInstance = new SourceGeneratedFormatterFactory(Instance.registrations, closeOpenGenerics: false);
+    public static readonly SourceGeneratedFormatterFactory AotInstance = new SourceGeneratedFormatterFactory(Instance.registrations, closeOpenGenerics: false);
 
-    // the two instances share one table: generated module initializers register into Instance, StaticInstance reads
+    // the two instances share one table: generated module initializers register into Instance, AotInstance reads
     sealed class Registrations
     {
         public readonly ConcurrentDictionary<Type, MessagePackFormatterFactory> Factories = new();
@@ -57,7 +57,7 @@ public sealed class SourceGeneratedFormatterFactory : MessagePackFormatterFactor
     /// Registers the generated formatter definition for an open generic <see cref="MessagePackObjectAttribute"/> type:
     /// <paramref name="openFormatterType"/> takes the buffer pair and then the value type's own type parameters. An
     /// instantiation the generator did not construct statically is closed here at run time, by <see cref="Instance"/>
-    /// only (<see cref="StaticInstance"/> declines it). Called by generated module initializers.
+    /// only (<see cref="AotInstance"/> declines it). Called by generated module initializers.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public void RegisterOpenGeneric(Type openValueType, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type openFormatterType)
@@ -131,7 +131,7 @@ public sealed class SourceGeneratedFormatterFactory : MessagePackFormatterFactor
     // chain from a JIT run of the Default chain: DefaultAot passed every test on the JIT and failed in the published
     // app. Here the chain decides (closeOpenGenerics), and the trimmer sees RegisterOpenGeneric's constructor
     // requirement instead of a suppression.
-    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "only Instance closes; Default and DotNetOptimized, which compose it, carry RequiresDynamicCode, DefaultAot composes StaticInstance, and a Native AOT runtime returns null through the IsDynamicCodeSupported guard")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "only Instance closes; Default and DotNetOptimized, which compose it, carry RequiresDynamicCode, DefaultAot composes AotInstance, and a Native AOT runtime returns null through the IsDynamicCodeSupported guard")]
     [UnconditionalSuppressMessage("Trimming", "IL2055", Justification = "the open formatter definition arrives through RegisterOpenGeneric, whose parameter requires the public parameterless constructor; its type arguments are the value type's own arguments, rooted by the caller")]
     object? CloseOpenGeneric(Type type, Type writeBufferType, Type readBufferType)
     {

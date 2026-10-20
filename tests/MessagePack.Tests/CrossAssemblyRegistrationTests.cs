@@ -49,7 +49,7 @@ public class CrossAssemblyRegistrationTests
 
     static MessagePackFormatterFactory? Registered(SourceGeneratedFormatterFactory registry, Type type)
     {
-        // the table lives on the Registrations holder the Instance / StaticInstance views share
+        // the table lives on the Registrations holder the Instance / AotInstance views share
         var registrations = typeof(SourceGeneratedFormatterFactory)
             .GetField("registrations", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(registry)!;
