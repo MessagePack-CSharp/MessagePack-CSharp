@@ -5,7 +5,7 @@ namespace MessagePack.Tests;
 
 // MessagePackSerializerOptions.Resolver is init-only: a `with` expression points a copy of the options at another resolver,
 // while the constructor still guarantees a non-null one and the resolver's own settings stay fixed for its lifetime.
-public class OptionsWithResolverTests
+public partial class OptionsWithResolverTests
 {
     public class Unannotated
     {
@@ -73,5 +73,43 @@ public class OptionsWithResolverTests
     public void FactoryConstructor_NullFactory_IsRejected()
     {
         Assert.Throws<ArgumentNullException>(() => new MessagePackSerializerOptions((MessagePackFormatterFactory)null!));
+    }
+
+    // the array constructor is Combine: the first factory that serves a type wins
+    [Fact]
+    public void FactoriesConstructor_CombinesInOrder()
+    {
+        var overriding = new ConstantIntFactory();
+
+        var overridden = new MessagePackSerializerOptions([overriding, MessagePackFormatterFactory.Default]);
+        var shadowed = new MessagePackSerializerOptions([MessagePackFormatterFactory.Default, overriding]);
+
+        Assert.Equal(new byte[] { 0x2a }, MessagePackSerializer.Serialize(1, overridden)); // 42: the override came first
+        Assert.Equal(new byte[] { 0x01 }, MessagePackSerializer.Serialize(1, shadowed));   // Default served int first
+        Assert.True(overridden.Resolver.HashFloodingResistant);
+    }
+
+    [Fact]
+    public void FactoriesConstructor_EmptyOrNull_IsRejected()
+    {
+        Assert.Throws<ArgumentException>(() => new MessagePackSerializerOptions(Array.Empty<MessagePackFormatterFactory>()));
+        Assert.Throws<ArgumentNullException>(() => new MessagePackSerializerOptions((MessagePackFormatterFactory[])null!));
+    }
+
+    public sealed partial class ConstantIntFactory : MessagePackFormatterFactory
+    {
+        public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+            => type == typeof(int) ? new ConstantIntFormatter<TWriteBuffer, TReadBuffer>() : null;
+    }
+
+    public sealed partial class ConstantIntFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, int>
+    {
+        public void Initialize(MessagePackFormatterResolver resolver)
+        {
+        }
+
+        public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, int value) => buffer.WriteInt32(42);
+
+        public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref int value) => value = buffer.ReadInt32();
     }
 }

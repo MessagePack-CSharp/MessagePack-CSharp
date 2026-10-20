@@ -91,6 +91,15 @@ public sealed record class MessagePackSerializerOptions
     {
     }
 
+    /// <summary>
+    /// Creates options over a new <see cref="MessagePackFormatterResolver"/> for <paramref name="factories"/> combined into one chain
+    /// (<see cref="MessagePackFormatterFactory.Combine"/>: the first factory that serves a type wins, so overrides go first), with the resolver's default settings.
+    /// </summary>
+    public MessagePackSerializerOptions(MessagePackFormatterFactory[] factories)
+        : this(new MessagePackFormatterResolver(factories))
+    {
+    }
+
     /// <summary>Creates options over <paramref name="resolver"/> with default per-call settings, which a <c>with</c> expression can adjust.</summary>
     public MessagePackSerializerOptions(MessagePackFormatterResolver resolver)
     {
