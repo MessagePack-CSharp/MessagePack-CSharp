@@ -89,6 +89,11 @@ jobs:
       - uses: ./.github/actions/setup-dotnet
       - run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
       - run: dotnet publish tests/MessagePack.AotCompatibilityTest/MessagePack.AotCompatibilityTest.csproj -c Release -r linux-x64 -p:IlcTreatWarningsAsErrors=true
+      # The plain build first: xunit's MTP props force UseAppHost=true, but under a PublishAot publish the SDK neither
+      # restores the net10.0 host pack nor creates the apphost (ILC makes the executable), so the publish build fails
+      # with MSB3030 unless the host pack version the SDK pins happens to be in the runner's packs folder. The plain
+      # build restores that pack and leaves the apphost in obj, which the publish build then finds.
+      - run: dotnet build tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj -c Release -r linux-x64
       - run: dotnet publish tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj -c Release -r linux-x64 -p:IlcTreatWarningsAsErrors=true
       - run: ./tests/MessagePack.Tests.NativeAot/bin/Release/net10.0/linux-x64/publish/MessagePack.Tests.NativeAot
 
