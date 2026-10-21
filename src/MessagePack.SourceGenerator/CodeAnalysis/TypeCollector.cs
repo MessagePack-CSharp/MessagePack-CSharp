@@ -1043,7 +1043,10 @@ public class TypeCollector
                         {
                             DeclaringType = GetDeclaringTypeIfColliding(item),
                         };
-                        intMembers.Add(member.IntKey, (member, item.Type));
+                        if (!intMembers.ContainsKey(member.IntKey))
+                        {
+                            intMembers.Add(member.IntKey, (member, item.Type));
+                        }
                     }
                     else if (stringKey is not null)
                     {
@@ -1056,7 +1059,10 @@ public class TypeCollector
                         {
                             DeclaringType = GetDeclaringTypeIfColliding(item),
                         };
-                        stringMembers.Add(member.StringKey, (member, item.Type));
+                        if (!stringMembers.ContainsKey(member.StringKey))
+                        {
+                            stringMembers.Add(member.StringKey, (member, item.Type));
+                        }
                     }
 
                     var messagePackFormatter = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0];
@@ -1176,7 +1182,10 @@ public class TypeCollector
                         {
                             DeclaringType = GetDeclaringTypeIfColliding(item),
                         };
-                        intMembers.Add(member.IntKey, (member, item.Type));
+                        if (!intMembers.ContainsKey(member.IntKey))
+                        {
+                            intMembers.Add(member.IntKey, (member, item.Type));
+                        }
                     }
                     else
                     {
@@ -1189,7 +1198,10 @@ public class TypeCollector
                         {
                             DeclaringType = GetDeclaringTypeIfColliding(item),
                         };
-                        stringMembers.Add(member.StringKey, (member, item.Type));
+                        if (!stringMembers.ContainsKey(member.StringKey))
+                        {
+                            stringMembers.Add(member.StringKey, (member, item.Type));
+                        }
                     }
 
                     var messagePackFormatter = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.FormatterAttribute))?.ConstructorArguments[0];

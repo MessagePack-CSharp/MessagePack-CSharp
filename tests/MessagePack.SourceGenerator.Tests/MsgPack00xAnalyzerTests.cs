@@ -93,6 +93,84 @@ public class Foo
     }
 
     [Fact]
+    public async Task DuplicateIntKeyAcrossInheritedTypes_Properties()
+    {
+        string input = Preamble + @"
+[MessagePackObject]
+public class BaseObject
+{
+    {|MsgPack005:[Key(0)]
+    public int ZeroKey { get; set; }|}
+}
+
+[MessagePackObject]
+public class InheritedObject : BaseObject
+{
+    [Key(0)]
+    public int AnotherZeroKey { get; set; }
+}
+";
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+        }.RunAsync();
+    }
+
+    [Fact]
+    public async Task DuplicateIntKeyAcrossInheritedTypes_Fields()
+    {
+        string input = Preamble + @"
+[MessagePackObject]
+public class BaseObject
+{
+    [Key(0)]
+    public int {|MsgPack005:ZeroKey|};
+}
+
+[MessagePackObject]
+public class InheritedObject : BaseObject
+{
+    [Key(0)]
+    public int AnotherZeroKey;
+}
+";
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+        }.RunAsync();
+    }
+
+    [Fact]
+    public async Task DuplicateStringKeyAcrossInheritedTypes_Properties()
+    {
+        string input = Preamble + @"
+[MessagePackObject]
+public class BaseObject
+{
+    {|MsgPack005:[Key(""a"")]
+    public int AKey { get; set; }|}
+}
+
+[MessagePackObject]
+public class InheritedObject : BaseObject
+{
+    [Key(""a"")]
+    public int AnotherAKey { get; set; }
+}
+";
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+            MarkupOptions = MarkupOptions.UseFirstDescriptor,
+        }.RunAsync();
+    }
+
+    [Fact]
     public async Task AddAttributesToMembers()
     {
         string input = Preamble + @"
