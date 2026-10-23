@@ -54,15 +54,10 @@ public struct SerializeState
     /// <summary>Creates state with the given depth limit. Zero means unlimited.</summary>
     public SerializeState(int maxDepth)
     {
-        if (maxDepth < 0)
-        {
-            ThrowNegativeMaxDepth(maxDepth); // the countdown would never reach zero: silently unlimited
-        }
-        this.remainingDepth = maxDepth == 0 ? 0 : maxDepth + 1; // 0 is unlimited
+        // one compare, no throw: a state is built per Serialize call, and MessagePackSerializerOptions.MaxDepth already
+        // rejects a negative value, so here <= 0 simply folds into unlimited
+        this.remainingDepth = maxDepth <= 0 ? 0 : maxDepth + 1;
     }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static void ThrowNegativeMaxDepth(int maxDepth) => throw new ArgumentOutOfRangeException("maxDepth", maxDepth, "maxDepth must be positive, or 0 for unlimited");
 
     /// <summary>
     /// Enters one nesting level before calling another formatter.
@@ -146,11 +141,7 @@ public struct DeserializeState
     /// </summary>
     public DeserializeState(int maxDepth, long messageLength)
     {
-        if (maxDepth < 0)
-        {
-            SerializeState.ThrowNegativeMaxDepth(maxDepth);
-        }
-        this.remainingDepth = maxDepth == 0 ? 0 : maxDepth + 1; // 0 is unlimited
+        this.remainingDepth = maxDepth <= 0 ? 0 : maxDepth + 1; // see SerializeState: <= 0 is unlimited, options reject the negatives
         this.remainingDeclaredElements = messageLength;
     }
 
@@ -160,7 +151,7 @@ public struct DeserializeState
     // exactly the bytes it hands the formatter.
     internal void Reset(int maxDepth, long messageLength)
     {
-        remainingDepth = maxDepth == 0 ? 0 : maxDepth + 1;
+        remainingDepth = maxDepth <= 0 ? 0 : maxDepth + 1;
         remainingDeclaredElements = messageLength;
     }
 

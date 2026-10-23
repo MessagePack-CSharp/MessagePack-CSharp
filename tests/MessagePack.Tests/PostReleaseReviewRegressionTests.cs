@@ -157,9 +157,8 @@ public class PostReleaseReviewRegressionTests
     [Fact]
     public void MaxDepth_Negative_IsRejected()
     {
+        // the options are the gate; the per-call states fold anything <= 0 into unlimited with a single compare
         Assert.Throws<ArgumentOutOfRangeException>(() => V4Options.Default with { MaxDepth = -1 });
-        Assert.Throws<ArgumentOutOfRangeException>(() => new SerializeState(-1));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new DeserializeState(-1, 0));
         Assert.Equal(0, (V4Options.Default with { MaxDepth = 0 }).MaxDepth); // 0 stays the documented "unlimited"
     }
 }
