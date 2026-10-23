@@ -326,7 +326,7 @@ static class ObjectParser
                 : candidates.OrderBy(static c => c.Symbol is IFieldSymbol).ThenByDescending(c => SortDepth(type, c.Symbol)))
             .OrderBy(static c => GetDataMemberOrder(c.Symbol))];
 
-        var entries = new List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable)>();
+        var entries = new List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable, ISymbol Symbol)>();
         var hasIntKey = false;
         var hasStringKey = keyAsPropertyName;
         var intKeys = new HashSet<int>();
@@ -563,7 +563,7 @@ static class ObjectParser
             // v3's inclusion writability (the reflection tier's IsWritableMember): an accessible setter,
             // or a field - under AllowPrivate even a readonly one (v3 counted those)
             var writable = setter != SetterKind.None || (allowPrivate && symbol is IFieldSymbol);
-            entries.Add((symbol.Name, memberType, setter, intKey ?? -1, stringKey ?? "", requiredModifier, memberLocation, custom, shadowedBaseType, explicitKey, writable));
+            entries.Add((symbol.Name, memberType, setter, intKey ?? -1, stringKey ?? "", requiredModifier, memberLocation, custom, shadowedBaseType, explicitKey, writable, symbol));
         }
 
         // every `required` member the formatter will not read, whatever excluded it ([IgnoreMember], [NonSerialized],
@@ -680,7 +680,7 @@ static class ObjectParser
             // name-defaulted member that is not writable and not consumed by the selected constructor does not
             // serialize at all, so a computed getter-only property is never touched.
             // An explicit [Key] always serializes.
-            var kept = new List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable)>(entries.Count);
+            var kept = new List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable, ISymbol Symbol)>(entries.Count);
             var keptParameterIndex = new List<int>(entries.Count);
             for (int i = 0; i < entries.Count; i++)
             {
@@ -739,6 +739,13 @@ static class ObjectParser
                     : null,
                 IsRequired: entry.RequiredModifier || requiredByConstructor,
                 HasRequiredModifier: entry.RequiredModifier,
+                // the object initializer assigns an init-only or required member unconditionally (it cannot be
+                // conditional), overriding the member's own initializer: the generated local starts from that
+                // initializer instead. Reported only for init-only: a required member is validated as present by
+                // default, so its initializer rarely matters
+                InitializerExpression: parameterIndexByEntry[i] < 0 && (entry.Setter == SetterKind.Init || entry.RequiredModifier)
+                    ? ReproducedInitializer(entry.Symbol, context.SemanticModel.Compilation, typeName, report: entry.Setter == SetterKind.Init && !entry.RequiredModifier, diagnostics)
+                    : null,
                 IsNonNullableReference: entry.Type.IsReferenceType
                     && entry.Type.NullableAnnotation == NullableAnnotation.NotAnnotated
                     && entry.Type.TypeKind != TypeKind.TypeParameter,
@@ -1911,8 +1918,9 @@ static class ObjectParser
     static bool IsRequiredMember(ISymbol symbol) => symbol is IPropertySymbol { IsRequired: true } or IFieldSymbol { IsRequired: true };
 
     // The expression a generated `new` assigns to a `required` member it never reads. The object initializer
-    // overrides the member's own initializer, so a constant one is re-emitted as it is (the reflection tier, which
-    // runs the constructor and the initializers, keeps it too); anything else cannot be spelled here and is reported.
+    // overrides the member's own initializer, so one the generator can reproduce (TrySpellInitializer) is re-emitted
+    // as it is (the reflection tier, which runs the constructor and the initializers, keeps it too); anything else
+    // cannot be spelled here and is reported.
     static string RequiredDefaultExpression(ISymbol member, Compilation compilation, string typeName, List<DiagnosticInfo> diagnostics)
     {
         if (member.DeclaringSyntaxReferences.Length == 0)
@@ -1922,10 +1930,50 @@ static class ObjectParser
             diagnostics.Add(new DiagnosticInfo(Diagnostics.RequiredInitializerNotPreserved, $"'{typeName}.{member.Name}' is a required member the generated formatter never reads, declared in another assembly, so the generator cannot see whether it has an initializer: the generated object initializer (which the compiler demands for every required member) assigns default. Use a parameterless constructor marked [SetsRequiredMembers] if the initializer matters.", LocationInfo.From(member)));
             return "default!";
         }
-        EqualsValueClauseSyntax? initializer = null;
+        var initializer = FindInitializer(member);
+        if (initializer is null)
+        {
+            return "default!";
+        }
+        if (TrySpellInitializer(initializer, member, compilation, out var expression))
+        {
+            return expression;
+        }
+        diagnostics.Add(new DiagnosticInfo(Diagnostics.RequiredInitializerNotPreserved, $"'{typeName}.{member.Name}' is a required member the generated formatter never reads, and its initializer is not one the generator can reproduce (a compile-time constant, `new()` without arguments, `[]` or `default`): the generated object initializer (which the compiler demands for every required member) assigns default instead. Use such an initializer, a parameterless constructor marked [SetsRequiredMembers], or drop `required`.", LocationInfo.From(member)));
+        return "default!";
+    }
+
+    // The construction path reads a member into a local and hands it to the object initializer, so the member's own
+    // initializer never takes effect: a payload that omits the member (an older writer's) would leave default where
+    // the reflection tier (and v3) keep the initializer. The local starts from the initializer when the generator can
+    // reproduce it; otherwise null, reported when asked (an init-only member).
+    static string? ReproducedInitializer(ISymbol member, Compilation compilation, string typeName, bool report, List<DiagnosticInfo> diagnostics)
+    {
+        if (member.DeclaringSyntaxReferences.Length == 0)
+        {
+            return null; // a metadata member: no syntax to reproduce, and no initializer to see (or report)
+        }
+        var initializer = FindInitializer(member);
+        if (initializer is null)
+        {
+            return null;
+        }
+        if (TrySpellInitializer(initializer, member, compilation, out var expression))
+        {
+            return expression;
+        }
+        if (report)
+        {
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.InitOnlyInitializerNotPreserved, $"'{typeName}.{member.Name}' is an init-only member whose initializer the generator cannot reproduce: when a payload omits the member (an older writer's), the generated object initializer assigns default instead of it, where the reflection tier and v3 keep the initializer. Use a compile-time constant, `new()` without arguments, `[]` or `default`, or a plain `set` accessor; suppress this warning when the member is always present in the payload.", LocationInfo.From(member)));
+        }
+        return null;
+    }
+
+    static EqualsValueClauseSyntax? FindInitializer(ISymbol member)
+    {
         foreach (var reference in member.DeclaringSyntaxReferences)
         {
-            initializer = reference.GetSyntax() switch
+            var initializer = reference.GetSyntax() switch
             {
                 PropertyDeclarationSyntax property => property.Initializer,
                 VariableDeclaratorSyntax variable => variable.Initializer,
@@ -1933,41 +1981,75 @@ static class ObjectParser
             };
             if (initializer is not null)
             {
-                break;
+                return initializer;
             }
         }
-        if (initializer is null)
-        {
-            return "default!";
-        }
+        return null;
+    }
+
+    // SyntaxKind.CollectionExpression of a Roslyn newer than the one this generator compiles against (4.3.1); the
+    // generator runs inside the host compiler, whose trees carry the newer kinds
+    const int CollectionExpressionRawKind = 9076;
+
+    // What the generator can re-spell inside the formatter (another namespace, none of the type's private members in
+    // reach): a compile-time constant, `default`, an empty collection expression, or a `new` of an accessible type with
+    // no arguments and no initializer.
+    static bool TrySpellInitializer(EqualsValueClauseSyntax initializer, ISymbol member, Compilation compilation, out string expression)
+    {
         var memberType = member is IPropertySymbol property1 ? property1.Type : ((IFieldSymbol)member).Type;
         var semanticModel = compilation.GetSemanticModel(initializer.SyntaxTree);
-        var constant = semanticModel.GetConstantValue(initializer.Value);
+        var value = initializer.Value;
+        var constant = semanticModel.GetConstantValue(value);
         // the constant's own type, not the member's: `object O = DayOfWeek.Friday` must stay a boxed enum, not (object)5
-        var constantType = semanticModel.GetTypeInfo(initializer.Value).Type ?? memberType;
+        var constantType = semanticModel.GetTypeInfo(value).Type ?? memberType;
         if (constant.HasValue)
         {
             switch (constant.Value)
             {
                 case null:
-                    return "default!";
+                    expression = "default!";
+                    return true;
                 case bool b:
-                    return b ? "true" : "false";
+                    expression = b ? "true" : "false";
+                    return true;
                 case string or char:
-                    return SymbolDisplay.FormatPrimitive(constant.Value, quoteStrings: true, useHexadecimalNumbers: false);
+                    expression = SymbolDisplay.FormatPrimitive(constant.Value, quoteStrings: true, useHexadecimalNumbers: false);
+                    return true;
                 case float f:
-                    return float.IsNaN(f) ? "float.NaN" : float.IsPositiveInfinity(f) ? "float.PositiveInfinity" : float.IsNegativeInfinity(f) ? "float.NegativeInfinity" : f.ToString("R", CultureInfo.InvariantCulture) + "f";
+                    expression = float.IsNaN(f) ? "float.NaN" : float.IsPositiveInfinity(f) ? "float.PositiveInfinity" : float.IsNegativeInfinity(f) ? "float.NegativeInfinity" : f.ToString("R", CultureInfo.InvariantCulture) + "f";
+                    return true;
                 case double d:
-                    return double.IsNaN(d) ? "double.NaN" : double.IsPositiveInfinity(d) ? "double.PositiveInfinity" : double.IsNegativeInfinity(d) ? "double.NegativeInfinity" : d.ToString("R", CultureInfo.InvariantCulture) + "d";
+                    expression = double.IsNaN(d) ? "double.NaN" : double.IsPositiveInfinity(d) ? "double.PositiveInfinity" : double.IsNegativeInfinity(d) ? "double.NegativeInfinity" : d.ToString("R", CultureInfo.InvariantCulture) + "d";
+                    return true;
                 case decimal m:
-                    return m.ToString(CultureInfo.InvariantCulture) + "m";
+                    expression = m.ToString(CultureInfo.InvariantCulture) + "m";
+                    return true;
                 default:
                     // integers, and enums (whose constant is the underlying value): the constant's type names the target
-                    return $"({constantType.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}){SymbolDisplay.FormatPrimitive(constant.Value, quoteStrings: false, useHexadecimalNumbers: false)}";
+                    expression = $"({constantType.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}){SymbolDisplay.FormatPrimitive(constant.Value, quoteStrings: false, useHexadecimalNumbers: false)}";
+                    return true;
             }
         }
-        diagnostics.Add(new DiagnosticInfo(Diagnostics.RequiredInitializerNotPreserved, $"'{typeName}.{member.Name}' is a required member the generated formatter never reads, and its initializer is not a compile-time constant: the generated object initializer (which the compiler demands for every required member) assigns default instead. Use a constant initializer, a parameterless constructor marked [SetsRequiredMembers], or drop `required`.", LocationInfo.From(member)));
-        return "default!";
+        if (value.IsKind(SyntaxKind.DefaultLiteralExpression) || value is DefaultExpressionSyntax)
+        {
+            expression = "default!";
+            return true;
+        }
+        if (value.RawKind == CollectionExpressionRawKind && !value.ChildNodes().Any())
+        {
+            expression = "[]"; // target-typed by the local's declared type, as it was by the member's
+            return true;
+        }
+        if (value is BaseObjectCreationExpressionSyntax { Initializer: null } creation
+            && (creation.ArgumentList is null || creation.ArgumentList.Arguments.Count == 0)
+            && semanticModel.GetTypeInfo(value).Type is INamedTypeSymbol { IsAnonymousType: false } created
+            && compilation.IsSymbolAccessibleWithin(created, compilation.Assembly))
+        {
+            expression = $"new {created.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}()";
+            return true;
+        }
+        expression = "";
+        return false;
     }
 
     // A derived KeyAttribute is readable at compile time only when its constructor hands its first parameter to
@@ -2301,7 +2383,7 @@ static class ObjectParser
     static bool TryMatchConstructor(
         Compilation compilation,
         IMethodSymbol constructor,
-        List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable)> entries,
+        List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable, ISymbol Symbol)> entries,
         int[] parameterIndexByEntry)
     {
         var parameters = constructor.Parameters;
@@ -2325,7 +2407,7 @@ static class ObjectParser
 
     static int FindParameterEntry(
         Compilation compilation,
-        List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable)> entries,
+        List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable, ISymbol Symbol)> entries,
         IParameterSymbol parameter,
         bool byStringKey)
     {

@@ -618,7 +618,9 @@ static class ObjectEmitter
         {
             if (!IsSkippedOnConstruction(member))
             {
-                writer.Line($"{member.TypeName} v_{member.Id} = default!;");
+                // an init-only or required member starts from its own initializer where the generator could reproduce it
+                // (the object initializer below assigns it unconditionally, so an omitted member keeps that value)
+                writer.Line($"{member.TypeName} v_{member.Id} = {member.InitializerExpression ?? "default!"};");
             }
             if (IsAssignedWhenPresent(member))
             {
