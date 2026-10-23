@@ -5,8 +5,8 @@ using V4 = MessagePack.MessagePackSerializer;
 namespace MessagePack.Tests;
 
 // constructor path: a plain-set member the payload did not carry (an older writer's shorter array, a map without the
-// key) keeps the value its initializer gave it, as the reflection tier and v3 do; an init-only member goes through the
-// unconditional object initializer, so the generated local it is read into starts from the re-spelled initializer
+// key) keeps the value its initializer gave it, as the reflection tier and v3 do; an init-only member cannot (object
+// initializers are unconditional) and gets its default
 [MessagePackObject]
 public class CtorWithDefaultedMembers
 {
@@ -115,7 +115,7 @@ public class ReviewRound2RegressionTests
         Assert.Equal(1, old.Id);
         Assert.Equal(42, old.Version);
         Assert.Equal("initial", old.Note);
-        Assert.Equal(7, old.InitOnly); // init-only: the object initializer assigns the local, which started from the initializer
+        Assert.Equal(0, old.InitOnly); // init-only: unconditional object initializer, documented
 
         var partial = V4.Deserialize<CtorWithDefaultedMembers>([0x92, 0x01, 0x05])!; // [1, 5]
         Assert.Equal(5, partial.Version);

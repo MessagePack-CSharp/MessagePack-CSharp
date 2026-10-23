@@ -116,16 +116,7 @@ public sealed record MemberModel(
     string? LegacyKeySuffix = null,
     // declared `dynamic`: TypeName is object?, and the serialize side casts the member value to object so no call
     // on it is a dynamic invocation
-    bool IsDynamic = false,
-    // construction path, an init-only or required member the object initializer assigns: the member's own initializer,
-    // re-spelled for the generated local the read loop fills, so a payload that omits the member leaves the
-    // initializer's value in place (as the reflection tier and v3 do). Null when there is none or it cannot be
-    // reproduced (then the local starts from default, and an init-only member was reported with MsgPack030).
-    string? InitializerExpression = null,
-    // InitializerExpression allocates (`new ...()`, `[]`): evaluated only when the payload turned out not to carry the
-    // member, so a present member costs the same as before (the formatter's own, presized allocation) and nothing is
-    // built to be thrown away. A constant is assigned up front instead.
-    bool InitializerAllocates = false)
+    bool IsDynamic = false)
 {
     public string Id => this.UniqueId ?? this.Name;
 }
