@@ -144,7 +144,7 @@ The wire format is the same: v3 and v4 read each other's output, including primi
 | `MessagePack.SignalR` | The SignalR `messagepack` hub protocol, wire-compatible with `Microsoft.AspNetCore.SignalR.Protocols.MessagePack`, which it replaces (`net10.0`). |
 | `MessagePack.Annotations` | Migration shim only: type-forwards the v3 attributes to `MessagePack`. |
 
-- Attributes moved into the `MessagePack` package. `MessagePack.Annotations` is now a type-forwarding shim. Keep referencing it only until the project compiles against v4, then drop it.
+- Attributes moved into the `MessagePack` package. `MessagePack.Annotations` is now a type-forwarding shim. Drop it once nothing else pulls it in: while any dependency built against v3 still references `MessagePack.Annotations`, keep an explicit reference to the 4.x shim, because without it NuGet resolves that dependency's `MessagePack.Annotations` 3.x next to `MessagePack` 4.x and every attribute is defined twice (CS0433).
 - `MessagePackAnalyzer` is gone; the generator and its analyzers ship inside the `MessagePack` package.
 - `[Union(key, typeof(T))]` became `[UnionTag(typeof(T), key)]` / `[UnionTag<T>(key)]` on a root that also carries `[MessagePackObject]`. The string (assembly-qualified name) form is gone. Generic unions can name a type parameter: `[UnionTag("T", 0)]`.
 - `[MessagePackAssumedFormattable]` -> `[assembly: MessagePackKnownType(typeof(T))]`. `[MessagePackKnownFormatter]` and `[ExcludeFormatterFromSourceGeneratedResolver]` are deleted (the generator never collects formatters into a resolver). `GeneratedMessagePackResolver` no longer exists: generated formatters register themselves.

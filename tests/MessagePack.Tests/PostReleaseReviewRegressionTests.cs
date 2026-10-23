@@ -1,4 +1,7 @@
 using MessagePack;
+using MessagePack.SourceGenerator.Generators;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Xunit;
 using V4 = MessagePack.MessagePackSerializer;
 using V4Options = MessagePack.MessagePackSerializerOptions;
@@ -42,6 +45,40 @@ public class ReviewCaseHolderWithDerivedDefault
 {
     [Key(0)]
     public IReviewCase? Case { get; set; } = new ReviewDerivedCase { A = 1, B = 2 };
+}
+
+// init-only members take the construction shape, whose object initializer assigns every one of them: a payload that
+// omits a member (an older writer's) used to leave default where the reflection tier and v3 keep the member's own
+// initializer. The generator now re-spells the initializers it can (constants, `new()` without arguments, `[]`, `default`).
+[MessagePackObject]
+public class ReviewInitDefaults
+{
+    [Key(0)]
+    public int A { get; init; }
+
+    [Key(1)]
+    public int Retries { get; init; } = 3;
+
+    [Key(2)]
+    public string Name { get; init; } = "n";
+
+    [Key(3)]
+    public List<int> Items { get; init; } = new();
+
+    [Key(4)]
+    public int[] Numbers { get; init; } = [];
+
+    [Key(5)]
+    public IDictionary<string, int> Map { get; init; } = new Dictionary<string, int>();
+
+    [Key(6)]
+    public DayOfWeek Day { get; init; } = DayOfWeek.Friday;
+
+    [Key(7)]
+    public double Ratio { get; init; } = 0.5;
+
+    [Key(8)]
+    public Guid Id { get; init; } = default;
 }
 
 // Regressions from the external review of v4.0.0-preview.1 (2026-10-23): the union populate type match and the
@@ -140,5 +177,116 @@ public class PostReleaseReviewRegressionTests
         var narrow = V4.Deserialize<UnkNarrowMap>(bytes)!;
         Assert.Equal(1, narrow.Extra!.Count);
         Assert.Equal(bytes, V4.Serialize(narrow));
+    }
+
+    // ---- init-only initializers survive an omitted member on the generated construction path ----
+
+    [Fact]
+    public void InitOnly_OmittedMembers_KeepTheirInitializers_BothTiers()
+    {
+        byte[] olderWriter = [0x91, 0x07]; // [7]: only key 0
+        foreach (var options in BothTiers())
+        {
+            var back = V4.Deserialize<ReviewInitDefaults>(olderWriter, options)!;
+            Assert.Equal(7, back.A);
+            Assert.Equal(3, back.Retries);
+            Assert.Equal("n", back.Name);
+            Assert.NotNull(back.Items);
+            Assert.Empty(back.Items);
+            Assert.NotNull(back.Numbers);
+            Assert.Empty(back.Numbers);
+            Assert.IsType<Dictionary<string, int>>(back.Map);
+            Assert.Empty(back.Map);
+            Assert.Equal(DayOfWeek.Friday, back.Day);
+            Assert.Equal(0.5, back.Ratio);
+            Assert.Equal(Guid.Empty, back.Id);
+        }
+    }
+
+    [Fact]
+    public void InitOnly_PresentMembers_StillWin()
+    {
+        var bytes = V4.Serialize(new ReviewInitDefaults { A = 1, Retries = 9, Name = "x", Items = [4], Numbers = [5], Map = new Dictionary<string, int> { ["k"] = 6 }, Day = DayOfWeek.Monday, Ratio = 2, Id = Guid.Parse("11111111-1111-1111-1111-111111111111") });
+        foreach (var options in BothTiers())
+        {
+            var back = V4.Deserialize<ReviewInitDefaults>(bytes, options)!;
+            Assert.Equal(9, back.Retries);
+            Assert.Equal("x", back.Name);
+            Assert.Equal([4], back.Items);
+            Assert.Equal([5], back.Numbers);
+            Assert.Equal(6, back.Map["k"]);
+            Assert.Equal(DayOfWeek.Monday, back.Day);
+            Assert.Equal(2, back.Ratio);
+            Assert.Equal(Guid.Parse("11111111-1111-1111-1111-111111111111"), back.Id);
+            Assert.Equal(bytes, V4.Serialize(back, options));
+        }
+    }
+
+    static GeneratorDriverRunResult RunGenerator(string source)
+    {
+        var compilation = AnalyzerTestHost.CreateCompilation(source, "PostReleaseProbe");
+        var parseOptions = (CSharpParseOptions)compilation.SyntaxTrees[0].Options;
+        var driver = CSharpGeneratorDriver.Create([new MessagePackGenerator().AsSourceGenerator()], parseOptions: parseOptions);
+        return driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out _, CancellationToken.None).GetRunResult();
+    }
+
+    [Fact]
+    public void InitOnly_NonReproducibleInitializer_ReportsMsgPack030()
+    {
+        var result = RunGenerator("""
+            using System;
+            using MessagePack;
+            [MessagePackObject]
+            public class Stamped
+            {
+                [Key(0)] public int X { get; init; }
+                [Key(1)] public Guid Id { get; init; } = Guid.NewGuid();
+            }
+            """);
+        Assert.Contains(result.Diagnostics, d => d.Id == "MsgPack030" && d.GetMessage().Contains("Stamped.Id"));
+    }
+
+    [Fact]
+    public void InitOnly_ReproducibleInitializers_NoMsgPack030()
+    {
+        var result = RunGenerator("""
+            using System;
+            using System.Collections.Generic;
+            using MessagePack;
+            [MessagePackObject]
+            public class Quiet
+            {
+                [Key(0)] public int Retries { get; init; } = 3;
+                [Key(1)] public List<int> Items { get; init; } = new();
+                [Key(2)] public int[] Numbers { get; init; } = [];
+                [Key(3)] public Guid Id { get; init; } = default;
+                [Key(4)] public int Plain { get; set; }
+                // a required init-only member is validated as present, so its initializer is not reported either
+                [Key(5)] public required string Label { get; init; } = Guid.NewGuid().ToString();
+            }
+            """);
+        Assert.DoesNotContain(result.Diagnostics, d => d.Id == "MsgPack030");
+        Assert.Contains(result.GeneratedTrees, t => t.ToString().Contains("v_Retries = (int)3") && t.ToString().Contains("v_Numbers = []"));
+    }
+
+    // ---- Tuple`8 with a nil Rest is a serialization error, not the Tuple constructor's ArgumentException ----
+
+    [Fact]
+    public void Tuple8_NilRest_ThrowsSerializationException()
+    {
+        byte[] bytes = [0x98, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0xc0];
+        var ex = Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<Tuple<int, int, int, int, int, int, int, Tuple<int>>>(bytes));
+        Assert.Contains("Rest", ex.Message);
+    }
+
+    // ---- a negative MaxDepth is rejected instead of being silently unlimited ----
+
+    [Fact]
+    public void MaxDepth_Negative_IsRejected()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => V4Options.Default with { MaxDepth = -1 });
+        Assert.Throws<ArgumentOutOfRangeException>(() => new SerializeState(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new DeserializeState(-1, 0));
+        Assert.Equal(0, (V4Options.Default with { MaxDepth = 0 }).MaxDepth); // 0 stays the documented "unlimited"
     }
 }

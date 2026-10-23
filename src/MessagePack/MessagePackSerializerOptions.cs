@@ -70,7 +70,19 @@ public sealed record class MessagePackSerializerOptions
     /// <summary>
     /// Maximum nesting depth in both directions. A level is a formatter descending into another formatter, such as an object, a collection or a union.
     /// </summary>
-    public int MaxDepth { get; init; } = 500;
+    public int MaxDepth
+    {
+        get;
+        init
+        {
+            // the depth check is a countdown to zero: a negative start would never reach it, i.e. silently unlimited
+            if (value < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(MaxDepth), value, "MaxDepth must be positive, or 0 for unlimited");
+            }
+            field = value;
+        }
+    } = 500;
 
     /// <summary>
     /// Maximum number of bytes the Stream and PipeReader entries buffer before parsing, per message, or per element when elements are streamed one by one.
