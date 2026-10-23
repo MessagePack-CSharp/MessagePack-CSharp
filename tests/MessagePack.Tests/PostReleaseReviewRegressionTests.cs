@@ -266,7 +266,11 @@ public class PostReleaseReviewRegressionTests
             }
             """);
         Assert.DoesNotContain(result.Diagnostics, d => d.Id == "MsgPack030");
-        Assert.Contains(result.GeneratedTrees, t => t.ToString().Contains("v_Retries = (int)3") && t.ToString().Contains("v_Numbers = []"));
+        var formatter = Assert.Single(result.GeneratedTrees, t => t.FilePath.Contains("Quiet")).ToString();
+        Assert.Contains("v_Retries = (int)3;", formatter); // a constant is the local's initial value
+        Assert.Contains("if (!has_Items) v_Items = new global::System.Collections.Generic.List<int>();", formatter); // an allocation waits for the payload to omit the member
+        Assert.Contains("if (!has_Numbers) v_Numbers = [];", formatter);
+        Assert.Contains("v_Items = default!;", formatter); // the local itself starts empty: nothing is built up front
     }
 
     // ---- Tuple`8 with a nil Rest is a serialization error, not the Tuple constructor's ArgumentException ----

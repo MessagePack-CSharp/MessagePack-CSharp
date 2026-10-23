@@ -618,11 +618,12 @@ static class ObjectEmitter
         {
             if (!IsSkippedOnConstruction(member))
             {
-                // an init-only or required member starts from its own initializer where the generator could reproduce it
-                // (the object initializer below assigns it unconditionally, so an omitted member keeps that value)
-                writer.Line($"{member.TypeName} v_{member.Id} = {member.InitializerExpression ?? "default!"};");
+                // an init-only or required member with a constant initializer starts from it (the object initializer
+                // below assigns the member unconditionally, so an omitted member keeps that value); an allocating one
+                // is deferred to after the read loop, see below
+                writer.Line($"{member.TypeName} v_{member.Id} = {(member.InitializerExpression is { } constant && !member.InitializerAllocates ? constant : "default!")};");
             }
-            if (IsAssignedWhenPresent(member))
+            if (NeedsPresenceFlag(member))
             {
                 writer.Line($"bool has_{member.Id} = false;");
             }
@@ -631,6 +632,15 @@ static class ObjectEmitter
         writer.Line();
         EmitReadLoop(writer, model, EmitLocalRead);
         writer.Line("state.Exit();");
+        foreach (var member in model.Members)
+        {
+            if (HasDeferredInitializer(member))
+            {
+                // only now is the member known to be absent: a present one was read into the formatter's own (presized)
+                // instance, and nothing was built to be overwritten
+                writer.Line($"if (!has_{member.Id}) v_{member.Id} = {member.InitializerExpression};");
+            }
+        }
 
         var arguments = new string[model.ConstructorParameterCount];
         var initializers = new List<string>();
@@ -715,6 +725,13 @@ static class ObjectEmitter
     static bool IsAssignedWhenPresent(MemberModel member) =>
         member.Setter == SetterKind.Set && member.ConstructorParameterIndex < 0 && !member.HasRequiredModifier;
 
+    // construction path: an init-only or required member whose own initializer allocates is assigned that initializer
+    // after the read loop, only when the payload did not carry it
+    static bool HasDeferredInitializer(MemberModel member) =>
+        member.InitializerExpression is not null && member.InitializerAllocates;
+
+    static bool NeedsPresenceFlag(MemberModel member) => IsAssignedWhenPresent(member) || HasDeferredInitializer(member);
+
     static bool AnyRequired(ObjectModel model) => model.Members.AsArray().Any(static m => m.IsRequired);
 
     // `required` members the formatter never reads ([IgnoreMember], or the MessagePackUnknownMembers packet, which is
@@ -789,7 +806,7 @@ static class ObjectEmitter
             : member.DirectNullable
                 ? $"v_{member.Id} = buffer.TryReadNil() ? default({member.TypeName}) : buffer.{Reader(member.Direct)}();"
                 : $"v_{member.Id} = buffer.{Reader(member.Direct)}();");
-        if (IsAssignedWhenPresent(member))
+        if (NeedsPresenceFlag(member))
         {
             writer.Line($"has_{member.Id} = true;");
         }

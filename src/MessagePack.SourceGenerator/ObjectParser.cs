@@ -717,6 +717,14 @@ static class ObjectParser
                 && !selectedConstructor!.Parameters[parameterIndexByEntry[i]].HasExplicitDefaultValue;
             // a custom formatter overrides even the direct-writable primitives
             var (direct, directNullable) = entry.Custom is null ? ClassifyDirect(entry.Type) : (DirectKind.None, false);
+            // the object initializer assigns an init-only or required member unconditionally (it cannot be
+            // conditional), overriding the member's own initializer: the generated local takes that initializer
+            // instead, when the payload omits the member. Reported only for init-only: a required member is validated
+            // as present by default, so its initializer rarely matters
+            var reproducedInitializerAllocates = false;
+            var reproducedInitializer = parameterIndexByEntry[i] < 0 && (entry.Setter == SetterKind.Init || entry.RequiredModifier)
+                ? ReproducedInitializer(entry.Symbol, context.SemanticModel.Compilation, typeName, report: entry.Setter == SetterKind.Init && !entry.RequiredModifier, diagnostics, out reproducedInitializerAllocates)
+                : null;
             models.Add(new MemberModel(
                 Name: entry.Name,
                 // `dynamic` would make every formatter call on the member a dynamic invocation, which cannot take the
@@ -739,13 +747,8 @@ static class ObjectParser
                     : null,
                 IsRequired: entry.RequiredModifier || requiredByConstructor,
                 HasRequiredModifier: entry.RequiredModifier,
-                // the object initializer assigns an init-only or required member unconditionally (it cannot be
-                // conditional), overriding the member's own initializer: the generated local starts from that
-                // initializer instead. Reported only for init-only: a required member is validated as present by
-                // default, so its initializer rarely matters
-                InitializerExpression: parameterIndexByEntry[i] < 0 && (entry.Setter == SetterKind.Init || entry.RequiredModifier)
-                    ? ReproducedInitializer(entry.Symbol, context.SemanticModel.Compilation, typeName, report: entry.Setter == SetterKind.Init && !entry.RequiredModifier, diagnostics)
-                    : null,
+                InitializerExpression: reproducedInitializer,
+                InitializerAllocates: reproducedInitializerAllocates,
                 IsNonNullableReference: entry.Type.IsReferenceType
                     && entry.Type.NullableAnnotation == NullableAnnotation.NotAnnotated
                     && entry.Type.TypeKind != TypeKind.TypeParameter,
@@ -1935,7 +1938,7 @@ static class ObjectParser
         {
             return "default!";
         }
-        if (TrySpellInitializer(initializer, member, compilation, out var expression))
+        if (TrySpellInitializer(initializer, member, compilation, out var expression, out _))
         {
             return expression;
         }
@@ -1947,8 +1950,9 @@ static class ObjectParser
     // initializer never takes effect: a payload that omits the member (an older writer's) would leave default where
     // the reflection tier (and v3) keep the initializer. The local starts from the initializer when the generator can
     // reproduce it; otherwise null, reported when asked (an init-only member).
-    static string? ReproducedInitializer(ISymbol member, Compilation compilation, string typeName, bool report, List<DiagnosticInfo> diagnostics)
+    static string? ReproducedInitializer(ISymbol member, Compilation compilation, string typeName, bool report, List<DiagnosticInfo> diagnostics, out bool allocates)
     {
+        allocates = false;
         if (member.DeclaringSyntaxReferences.Length == 0)
         {
             return null; // a metadata member: no syntax to reproduce, and no initializer to see (or report)
@@ -1958,7 +1962,7 @@ static class ObjectParser
         {
             return null;
         }
-        if (TrySpellInitializer(initializer, member, compilation, out var expression))
+        if (TrySpellInitializer(initializer, member, compilation, out var expression, out allocates))
         {
             return expression;
         }
@@ -1993,9 +1997,11 @@ static class ObjectParser
 
     // What the generator can re-spell inside the formatter (another namespace, none of the type's private members in
     // reach): a compile-time constant, `default`, an empty collection expression, or a `new` of an accessible type with
-    // no arguments and no initializer.
-    static bool TrySpellInitializer(EqualsValueClauseSyntax initializer, ISymbol member, Compilation compilation, out string expression)
+    // no arguments and no initializer. The last two allocate (an empty collection expression may: a List), which the
+    // emitter defers until the payload has proved the member absent.
+    static bool TrySpellInitializer(EqualsValueClauseSyntax initializer, ISymbol member, Compilation compilation, out string expression, out bool allocates)
     {
+        allocates = false;
         var memberType = member is IPropertySymbol property1 ? property1.Type : ((IFieldSymbol)member).Type;
         var semanticModel = compilation.GetSemanticModel(initializer.SyntaxTree);
         var value = initializer.Value;
@@ -2038,6 +2044,7 @@ static class ObjectParser
         if (value.RawKind == CollectionExpressionRawKind && !value.ChildNodes().Any())
         {
             expression = "[]"; // target-typed by the local's declared type, as it was by the member's
+            allocates = true;
             return true;
         }
         if (value is BaseObjectCreationExpressionSyntax { Initializer: null } creation
@@ -2046,6 +2053,7 @@ static class ObjectParser
             && compilation.IsSymbolAccessibleWithin(created, compilation.Assembly))
         {
             expression = $"new {created.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}()";
+            allocates = true;
             return true;
         }
         expression = "";
