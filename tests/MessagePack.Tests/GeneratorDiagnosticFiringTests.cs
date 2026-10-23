@@ -86,6 +86,75 @@ public class GeneratorDiagnosticFiringTests
         Assert.Contains(duplicates, static d => d.GetMessage().Contains("key 1 more than once"));
     }
 
+    // v3 regression (MessagePack-CSharp#2140 / #2312): a [Key] reused across an inheritance chain made TypeCollector
+    // report MsgPack005 and then Add the member anyway, so the analyzer died with AD0001 and the generator with
+    // CS8785 (no resolver at all). v4 walks base members into the same key set: one MsgPack003 at the derived
+    // member, the derived type gets no formatter, the base keeps its own, and the generator itself never faults.
+    [Fact]
+    public void DuplicateIntKey_AcrossInheritance_IsMsgPack003_NotAGeneratorFault()
+    {
+        var result = Run("""
+            [MessagePackObject] public class Base { [Key(0)] public int A { get; set; } }
+            [MessagePackObject] public class Derived : Base { [Key(0)] public int B { get; set; } }
+            """, out _);
+        AssertNoGeneratorFault(result);
+        var diagnostic = Single(result, "MsgPack003", DiagnosticSeverity.Error);
+        Assert.Contains("'Derived' declares key 0 more than once", diagnostic.GetMessage());
+        // reported at the derived member (source line 2 after the injected using), not at the base's
+        Assert.Equal(2, diagnostic.Location.GetLineSpan().StartLinePosition.Line);
+        NoFormatterFor(result, "Derived");
+        Assert.Contains(result.GeneratedTrees, static t => t.FilePath.Contains("BaseFormatter", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void DuplicateIntKey_AcrossInheritance_OnFields_IsMsgPack003_NotAGeneratorFault()
+    {
+        var result = Run("""
+            [MessagePackObject] public class Base { [Key(0)] public int A; }
+            [MessagePackObject] public class Derived : Base { [Key(0)] public int B; }
+            """, out _);
+        AssertNoGeneratorFault(result);
+        var diagnostic = Single(result, "MsgPack003", DiagnosticSeverity.Error);
+        Assert.Contains("'Derived' declares key 0 more than once", diagnostic.GetMessage());
+        NoFormatterFor(result, "Derived");
+    }
+
+    [Fact]
+    public void DuplicateStringKey_AcrossInheritance_IsMsgPack003_NotAGeneratorFault()
+    {
+        var result = Run("""
+            [MessagePackObject] public class Base { [Key("same")] public int A { get; set; } }
+            [MessagePackObject] public class Derived : Base { [Key("same")] public int B { get; set; } }
+            """, out _);
+        AssertNoGeneratorFault(result);
+        var diagnostic = Single(result, "MsgPack003", DiagnosticSeverity.Error);
+        Assert.Contains("'Derived' declares key \"same\" more than once", diagnostic.GetMessage());
+        NoFormatterFor(result, "Derived");
+    }
+
+    // the two analyzers that run the same parser over user declarations (v3's AD0001 surface)
+    [Fact]
+    public async Task DuplicateIntKey_AcrossInheritance_DoesNotFaultTheAnalyzers()
+    {
+        const string source = """
+            using MessagePack;
+            [MessagePackObject] public class Base { [Key(0)] public int A { get; set; } }
+            [MessagePackObject] public class Derived : Base { [Key(0)] public int B { get; set; } }
+            """;
+        foreach (var analyzer in new Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer[] { new MessagePack.SourceGenerator.Analyzers.IneffectiveAnnotationAnalyzer(), new MessagePack.SourceGenerator.Analyzers.SerializableMemberTypeAnalyzer() })
+        {
+            var diagnostics = await AnalyzerTestHost.RunAnalyzerAsync(analyzer, source);
+            Assert.DoesNotContain(diagnostics, static d => d.Id == "AD0001");
+        }
+    }
+
+    // a generator exception is swallowed by the driver into CS8785 plus the result's Exception: both must stay absent
+    static void AssertNoGeneratorFault(GeneratorDriverRunResult result)
+    {
+        Assert.All(result.Results, static r => Assert.Null(r.Exception));
+        Assert.DoesNotContain(result.Diagnostics, static d => d.Id == "CS8785");
+    }
+
     // ---- MsgPack004 ----
 
     [Fact]

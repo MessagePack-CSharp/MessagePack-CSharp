@@ -221,7 +221,7 @@ public static class WriteBufferExtensions
 
         /// <summary>Writes a bin, header and payload.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void WriteBinary(ReadOnlySpan<byte> value)
+        public void WriteBinary(scoped ReadOnlySpan<byte> value)
         {
             buffer.Advance(UnsafeWriteBinary(ref buffer.GetReference(MaxBinHeaderLength + value.Length), value));
         }
@@ -263,7 +263,7 @@ public static class WriteBufferExtensions
         /// Nothing is validated. An empty span writes nothing.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void WriteRaw(ReadOnlySpan<byte> value)
+        public void WriteRaw(scoped ReadOnlySpan<byte> value)
         {
             if (value.Length > 0)
             {
