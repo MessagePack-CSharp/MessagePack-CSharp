@@ -23,15 +23,20 @@
 		<!--<EnablePackageValidation>true</EnablePackageValidation>-->
 	</PropertyGroup>
 
+	<!-- Floors for the netstandard consumers (.NET Framework, Unity, pre-.NET 9 libraries): as low as the code allows,
+	     the .NET 8 era like v3, so referencing MessagePack does not drag the rest of an application up to the current
+	     major. System.Text.Json is 8.0.5, the first 8.x without a known vulnerability (NU1903 below it). The four
+	     marked "SerializerFoundation" cannot go below what SerializerFoundation 1.2.0 itself requires (NU1605);
+	     lower them together with the SerializerFoundation release that lowers its own. -->
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-		<PackageReference Include="System.Memory" Version="4.6.3" />
-		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0" />
+		<PackageReference Include="System.Memory" Version="4.6.3" /> <!-- SerializerFoundation -->
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0" /> <!-- SerializerFoundation -->
 	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'netstandard2.1'">
-		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
-		<PackageReference Include="System.IO.Pipelines" Version="10.0.0" />
-		<PackageReference Include="System.Collections.Immutable" Version="10.0.0" />
-		<PackageReference Include="System.Text.Json" Version="10.0.0" />
+		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" /> <!-- SerializerFoundation -->
+		<PackageReference Include="System.IO.Pipelines" Version="10.0.0" /> <!-- SerializerFoundation -->
+		<PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
+		<PackageReference Include="System.Text.Json" Version="8.0.5" />
 	</ItemGroup>
 
 	<ItemGroup>
