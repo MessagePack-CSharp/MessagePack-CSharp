@@ -199,9 +199,12 @@ static class UnionEmitter
                         }
                         else
                         {
+                            // populate only an existing instance of exactly this case: `as` would also accept an
+                            // instance of a derived case, fill its base members and keep its type and extra members,
+                            // so the next Serialize would dispatch it under the derived tag
                             writer.Line(unionCase.IsValueType
                                 ? $"var v = value is {unionCase.TypeName} existing ? existing : default;"
-                                : $"var v = value as {unionCase.TypeName};");
+                                : $"var v = value is {unionCase.TypeName} existing && existing.GetType() == typeof({unionCase.TypeName}) ? existing : null;");
                             writer.Line($"{unionCase.FieldName}.Deserialize(ref buffer, ref state, ref v);");
                             writer.Line("value = v;");
                         }

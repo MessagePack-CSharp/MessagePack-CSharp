@@ -782,6 +782,16 @@ static class ObjectParser
             return Invalid(diagnostics);
         }
 
+        if (AllowCircularReferences && unknownMembersName is not null)
+        {
+            // a captured packet replays its bytes verbatim, circular-reference definition ids included; this type's own
+            // serialization numbers its ids from 0 as well, so a replayed definition collides with a live one (the
+            // reader throws on the duplicate id) or, were a back-reference let through, silently binds to another
+            // instance. The reader side also refuses to capture a back-reference (see ReadRaw), whatever the type.
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidCircularReference, $"'{typeName}': AllowCircularReferences cannot combine with a MessagePackUnknownMembers member ('{unknownMembersName}'), because a replayed packet carries the circular-reference ids of the payload it was captured from, which collide with the ids this type assigns when it serializes. Declare the members instead, or drop one of the two.", typeLocation));
+            return Invalid(diagnostics);
+        }
+
         var (onBefore, onAfter) = DetectCallbacks(type);
 
         // AOT harvesting: closed instantiations of this compilation's generic [MessagePackObject] types,

@@ -201,8 +201,10 @@ public sealed partial class ReflectionUnionFormatter<TWriteBuffer, TReadBuffer, 
 
         public override object? Deserialize(ref TReadBuffer buffer, ref DeserializeState state, object? existing)
         {
-            // populate contract, as the generated union formatter: a value of this case is read into in place
-            TCase value = existing is TCase current ? current : default!;
+            // populate contract, as the generated union formatter: a value of exactly this case is read into in place.
+            // An `is TCase` test would also accept an instance of a derived case and populate it as this one,
+            // leaving its type (and so its serialized tag) and extra members behind.
+            TCase value = existing is not null && existing.GetType() == typeof(TCase) ? (TCase)existing : default!;
             formatter.Deserialize(ref buffer, ref state, ref value);
             return value;
         }

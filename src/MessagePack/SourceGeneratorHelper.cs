@@ -227,14 +227,14 @@ public static class SourceGeneratorHelper
         {
             var key = keyUtf8.ToArray();
             buffer.Advance(keyUtf8.Length);
-            (members ??= new MessagePackUnknownMembers(isMap: true)).AddStringKeyed(key, buffer.ReadRaw());
+            (members ??= new MessagePackUnknownMembers(isMap: true)).AddStringKeyed(key, buffer.ReadRaw(rejectCircularReferences: true));
         }
 
         /// <summary>Captures one array element beyond the declared keys into <paramref name="members"/>, creating the packet on first use.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public void CaptureUnknownIntKeyed(ref MessagePackUnknownMembers? members, int index)
         {
-            (members ??= new MessagePackUnknownMembers(isMap: false)).AddIntKeyed(index, buffer.ReadRaw());
+            (members ??= new MessagePackUnknownMembers(isMap: false)).AddIntKeyed(index, buffer.ReadRaw(rejectCircularReferences: true));
         }
 
         /// <summary>
@@ -248,7 +248,7 @@ public static class SourceGeneratorHelper
             {
                 return;
             }
-            (members ??= new MessagePackUnknownMembers(isMap: false)).AddIntKeyed(index, buffer.ReadRaw());
+            (members ??= new MessagePackUnknownMembers(isMap: false)).AddIntKeyed(index, buffer.ReadRaw(rejectCircularReferences: true));
         }
     }
 }

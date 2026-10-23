@@ -593,11 +593,18 @@ public static class ReadBufferExtensions
         /// <summary>
         /// Reads exactly one value including its entire subtree and returns its bytes unchanged.
         /// </summary>
-        public byte[] ReadRaw()
+        public byte[] ReadRaw() => buffer.ReadRaw(rejectCircularReferences: false);
+
+        // The MessagePackUnknownMembers capture: a back-reference (ext 97) inside a captured value points at an
+        // instance defined elsewhere in the payload it came from. Replayed into another serialization it would resolve
+        // against that serialization's ids, to a different instance, silently when the types happen to agree, so the
+        // capture refuses it. (A definition envelope inside the packet is left alone: replayed, its id either stays
+        // unique or the reader throws on the duplicate, never a silent rebinding.)
+        internal byte[] ReadRaw(bool rejectCircularReferences)
         {
             var span = buffer.GetUnreadSpan();
             long length;
-            while (!TryMeasureValue(span, buffer.BytesRemaining, out length))
+            while (!TryMeasureValue(span, buffer.BytesRemaining, rejectCircularReferences, out length))
             {
                 if (span.Length >= buffer.BytesRemaining)
                 {
@@ -1016,7 +1023,7 @@ public static class ReadBufferExtensions
     // False = the window ended mid-value (the caller escalates the window);
     // a payload claim that cannot fit the buffer's remaining bytes throws here,
     // so window escalation only ever chases real data.
-    static bool TryMeasureValue(ReadOnlySpan<byte> window, long bytesRemaining, out long length)
+    static bool TryMeasureValue(ReadOnlySpan<byte> window, long bytesRemaining, bool rejectCircularReferences, out long length)
     {
         long offset = 0;
         long remaining = 1;
@@ -1032,6 +1039,10 @@ public static class ReadBufferExtensions
                 length = 0;
                 return false;
             }
+            if (rejectCircularReferences && IsCircularReferenceToken(window.Slice((int)offset, tokenSize)))
+            {
+                MessagePackSerializationException.ThrowCircularReferenceInCapturedValue();
+            }
             if (payloadLength > bytesRemaining - offset - tokenSize)
             {
                 MessagePackSerializationException.ThrowImplausiblePayloadHeader("captured value", (int)payloadLength, bytesRemaining - offset - tokenSize);
@@ -1046,6 +1057,15 @@ public static class ReadBufferExtensions
         } while (remaining > 0);
         length = offset;
         return true;
+    }
+
+    // the token (code byte, length fields, type byte; TryReadToken proved it complete) of a back-reference: an ext of
+    // this library's circular-reference type code, in any of the ext header widths
+    static bool IsCircularReferenceToken(ReadOnlySpan<byte> token)
+    {
+        var code = token[0];
+        var isExt = (code >= MessagePackCode.FixExt1 && code <= MessagePackCode.FixExt16) || (code >= MessagePackCode.Ext8 && code <= MessagePackCode.Ext32);
+        return isExt && token[token.Length - 1] == unchecked((byte)ThisLibraryExtensionTypeCodes.CircularReference);
     }
 
     // exception factory so the throw statement stays in the (cold) caller and the JIT sees it as unreachable-hot;

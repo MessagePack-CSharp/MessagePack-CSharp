@@ -413,6 +413,8 @@ var packet = MessagePackSerializer.Deserialize<Packet>(bytesFromNewerWriter);
 var bytes = MessagePackSerializer.Serialize(packet); // includes the members the newer writer added
 ```
 
+The packet replays bytes verbatim, so it cannot carry circular-reference wire: a captured value that contains a back-reference is rejected on deserialization (it would point at a different instance once replayed), and a type cannot combine `AllowCircularReferences` with a `MessagePackUnknownMembers` member (MsgPack015).
+
 ## Compression
 
 Compression comes in separate packages.

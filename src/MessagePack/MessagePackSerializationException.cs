@@ -62,6 +62,9 @@ public class MessagePackSerializationException : Exception
     internal static Exception ThrowDuplicateCircularReferenceId(uint referenceId) => throw new MessagePackSerializationException($"The payload defines circular-reference id {referenceId} more than once");
 
     [DoesNotReturn]
+    internal static Exception ThrowCircularReferenceInCapturedValue() => throw new MessagePackSerializationException("A member captured into MessagePackUnknownMembers contains a circular-reference back-reference (ext 97), which points at an instance defined elsewhere in this payload; replayed into another serialization it would bind to a different instance. Declare the member on this type, or serialize that member's type without AllowCircularReferences");
+
+    [DoesNotReturn]
     internal static Exception ThrowCircularReferenceTypeMismatch(uint referenceId, Type actual, Type expected) => throw new MessagePackSerializationException($"The circular-reference back-reference id {referenceId} resolves to an instance of '{actual.FullName}' where '{expected.FullName}' was expected");
 
     [DoesNotReturn]

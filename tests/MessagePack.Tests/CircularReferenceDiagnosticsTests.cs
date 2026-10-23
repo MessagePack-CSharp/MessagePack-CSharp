@@ -140,4 +140,22 @@ public class CircularReferenceDiagnosticsTests
             """);
         Assert.Contains(result.Diagnostics, d => d.Id == "MsgPack015" && d.GetMessage().Contains("union"));
     }
+
+    [Fact]
+    public void UnknownMembersMember_ReportsMsgPack015()
+    {
+        // a replayed packet carries the ids of the payload it was captured from, which collide with the ids this
+        // type assigns when it serializes (the reader throws on the duplicate), so the combination is refused up front
+        var result = RunGenerator("""
+            using MessagePack;
+            [MessagePackObject(AllowCircularReferences = true)]
+            public class RelayNode
+            {
+                [Key(0)] public int Value { get; set; }
+                [Key(1)] public RelayNode? Next { get; set; }
+                public MessagePackUnknownMembers? Unknown { get; set; }
+            }
+            """);
+        Assert.Contains(result.Diagnostics, d => d.Id == "MsgPack015" && d.GetMessage().Contains("MessagePackUnknownMembers"));
+    }
 }
