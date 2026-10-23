@@ -338,9 +338,11 @@ var back = MessagePackSerializer.Deserialize<Node>(bytes);
 // back.Next.Next == back
 ```
 
+Identity is tracked per instance, not per declared type: an instance written first through a member of a base type and again through one of a derived type is written once, in the base type's shape, and the derived-typed read then fails with a type mismatch. In an element stream (`SerializeElementsAsync` / `DeserializeElementsAsync`) the identity table spans the whole array, as it does for `Serialize<T[]>`, so it grows with the number of distinct instances streamed.
+
 ### Deserialize(ref)
 
-Populates an existing instance. Collections are cleared and refilled, and objects are overwritten member by member, so buffers and pooled objects can be reused.
+Populates an existing instance. Collections are cleared and refilled, and objects are overwritten member by member, so buffers and pooled objects can be reused. An instance the target graph holds in several places is populated once per occurrence in the payload, the last one winning.
 
 ```csharp
 var list = new List<int>(capacity: 1024);
