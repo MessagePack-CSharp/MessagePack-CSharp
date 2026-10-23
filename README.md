@@ -1,6 +1,6 @@
 # MessagePack for C# v4 (preview)
 
-v4 is a complete redesign: more than twice the performance, stronger safety, and full Native AOT support. It also supports the new C# 14 language features (`union` / `closed`) and the new .NET 11 types. v4 is built on three principles:
+v4 is a complete redesign: more than twice the performance, stronger safety, and full Native AOT support. It also supports the new C# 15 language features (`union` / `closed`) and the new .NET 11 types. v4 is built on three principles:
 
 * Performant by default
 * Secure by default
