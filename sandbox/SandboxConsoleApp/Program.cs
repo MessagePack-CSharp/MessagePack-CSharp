@@ -15,7 +15,32 @@ Console.WriteLine("a");
 
 
 
-public class Plain { public int X { get; set; } }
+[MessagePackObject]
+public class Plain
+{
+    [Key(0)]
+    public Moge Moge { get; init; } = new Moge(9);
+    [Key(1)] public List<int> MyProperty2 { get; init; } = new List<int>();
+}
+
+
+[MessagePackObject]
+public class Moge
+{
+    [Key(1)]
+    public int MyProperty { get; set; }
+
+    [SerializationConstructor]
+    public Moge()
+    {
+
+    }
+
+    public Moge(int x)
+    {
+        MyProperty = x;
+    }
+}
 
 
 //[UnionTag(typeof(Leaf), 0)]

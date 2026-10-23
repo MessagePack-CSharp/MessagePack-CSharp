@@ -5,8 +5,9 @@
 | Version | Supported | End-of-life date |
 | ------- | --------- | ---------------- |
 | 1.x     | ❌ |
-| 2.x     | ✅ | 2025-12-31 |
+| 2.x     | ✅ | 2026-12-31 (at least) |
 | 3.x     | ✅ | not yet determined |
+| 4.x     | ✅ | not yet determined |
 
 Each supported major version is only serviced for security issues at its tip.
 For example 2.5 will receive updates but 2.4 will not.
