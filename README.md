@@ -7,6 +7,9 @@
 [![Join the chat at https://gitter.im/MessagePack-CSharp/Lobby](https://badges.gitter.im/MessagePack-CSharp/Lobby.svg)](https://gitter.im/MessagePack-CSharp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://dev.azure.com/ils0086/MessagePack-CSharp/_apis/build/status/MessagePack-CSharp-CI?branchName=master)](https://dev.azure.com/ils0086/MessagePack-CSharp/_build/latest?definitionId=2&branchName=master)
 
+> [!IMPORTANT]
+> This README is for v3.x (current stable). [v4.0.0-preview.1](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases/tag/v4.0.0-preview.1) is now available: more than twice the performance, stronger safety, and full Native AOT support, while staying feature- and wire-compatible with v3. Check out the [v4 README](https://github.com/MessagePack-CSharp/MessagePack-CSharp/tree/v4) and join the preview.
+
 The extremely fast [MessagePack](http://msgpack.org/) serializer for C#.
 It is 10x faster than [MsgPack-Cli](https://github.com/msgpack/msgpack-cli) and outperforms other C# serializers. MessagePack for C# also ships with built-in support for LZ4 compression - an extremely fast compression algorithm. Performance is important, particularly in applications like games, distributed computing, microservices, or data caches.
 
