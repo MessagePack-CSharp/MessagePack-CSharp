@@ -3,6 +3,8 @@ namespace MessagePack.Formatters;
 // Enums serialize as their underlying integer value (v3 compatible: smallest-format signed/unsigned int per the underlying type's writer).
 // One formatter per underlying type so the hot path is a reinterpret + direct write with no per-call switch;
 // EnumFormatterFactory<T> picks the variant once at resolve time.
+// The reinterpret moves sizeof(underlying) bytes, so each constructor checks that T really has that underlying type:
+// these classes are public, and `new EnumInt64Formatter<..., ByteBackedEnum>()` would otherwise read past the value.
 
 public sealed class EnumByteFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T>, IBuiltInEnumFormatter
     where TWriteBuffer : struct, IWriteBuffer
@@ -15,6 +17,11 @@ public sealed class EnumByteFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePa
 #endif
     where T : struct, Enum
 {
+    public EnumByteFormatter()
+    {
+        EnumElementCodec.ValidateTypePunning<T, byte>();
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
     }
@@ -42,6 +49,11 @@ public sealed class EnumSByteFormatter<TWriteBuffer, TReadBuffer, T> : IMessageP
 #endif
     where T : struct, Enum
 {
+    public EnumSByteFormatter()
+    {
+        EnumElementCodec.ValidateTypePunning<T, sbyte>();
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
     }
@@ -69,6 +81,11 @@ public sealed class EnumInt16Formatter<TWriteBuffer, TReadBuffer, T> : IMessageP
 #endif
     where T : struct, Enum
 {
+    public EnumInt16Formatter()
+    {
+        EnumElementCodec.ValidateTypePunning<T, short>();
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
     }
@@ -96,6 +113,11 @@ public sealed class EnumUInt16Formatter<TWriteBuffer, TReadBuffer, T> : IMessage
 #endif
     where T : struct, Enum
 {
+    public EnumUInt16Formatter()
+    {
+        EnumElementCodec.ValidateTypePunning<T, ushort>();
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
     }
@@ -123,6 +145,11 @@ public sealed class EnumInt32Formatter<TWriteBuffer, TReadBuffer, T> : IMessageP
 #endif
     where T : struct, Enum
 {
+    public EnumInt32Formatter()
+    {
+        EnumElementCodec.ValidateTypePunning<T, int>();
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
     }
@@ -150,6 +177,11 @@ public sealed class EnumUInt32Formatter<TWriteBuffer, TReadBuffer, T> : IMessage
 #endif
     where T : struct, Enum
 {
+    public EnumUInt32Formatter()
+    {
+        EnumElementCodec.ValidateTypePunning<T, uint>();
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
     }
@@ -177,6 +209,11 @@ public sealed class EnumInt64Formatter<TWriteBuffer, TReadBuffer, T> : IMessageP
 #endif
     where T : struct, Enum
 {
+    public EnumInt64Formatter()
+    {
+        EnumElementCodec.ValidateTypePunning<T, long>();
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
     }
@@ -204,6 +241,11 @@ public sealed class EnumUInt64Formatter<TWriteBuffer, TReadBuffer, T> : IMessage
 #endif
     where T : struct, Enum
 {
+    public EnumUInt64Formatter()
+    {
+        EnumElementCodec.ValidateTypePunning<T, ulong>();
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
     }

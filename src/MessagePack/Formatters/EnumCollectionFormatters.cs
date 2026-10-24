@@ -47,8 +47,8 @@ internal static class EnumElementCodec
         else ThrowUnsupportedUnderlyingType();
     }
 
-    /// <summary>The construction-time check both collection formatters share: the pun is only sound at equal width.</summary>
-    public static void ValidatePun<TEnum, TUnderlying>()
+    /// <summary>The construction-time check the enum formatters share (scalar and collection): type punning is only sound at equal width.</summary>
+    public static void ValidateTypePunning<TEnum, TUnderlying>()
         where TEnum : struct, Enum
         where TUnderlying : unmanaged
     {
@@ -67,7 +67,7 @@ internal static class EnumElementCodec
     [MethodImpl(MethodImplOptions.NoInlining)]
     static void ThrowUnderlyingTypeMismatch(Type enumType, Type underlying)
     {
-        throw new InvalidOperationException($"'{underlying}' is not the underlying type of '{enumType}' ({Enum.GetUnderlyingType(enumType)}); the enum collection formatters reinterpret the storage, so the widths must match.");
+        throw new InvalidOperationException($"'{underlying}' is not the underlying type of '{enumType}' ({Enum.GetUnderlyingType(enumType)}); the enum formatters reinterpret the storage, so the widths must match.");
     }
 }
 
@@ -91,7 +91,7 @@ public sealed class EnumArrayFormatter<TWriteBuffer, TReadBuffer, TEnum, TUnderl
 
     public EnumArrayFormatter()
     {
-        EnumElementCodec.ValidatePun<TEnum, TUnderlying>();
+        EnumElementCodec.ValidateTypePunning<TEnum, TUnderlying>();
     }
 
     public void Initialize(MessagePackFormatterResolver resolver)
@@ -207,7 +207,7 @@ public sealed class EnumListFormatter<TWriteBuffer, TReadBuffer, TEnum, TUnderly
 
     public EnumListFormatter()
     {
-        EnumElementCodec.ValidatePun<TEnum, TUnderlying>();
+        EnumElementCodec.ValidateTypePunning<TEnum, TUnderlying>();
     }
 
     public void Initialize(MessagePackFormatterResolver resolver)
