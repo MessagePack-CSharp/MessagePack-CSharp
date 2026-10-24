@@ -10,6 +10,9 @@
     <Compile Include="..\..\src\MessagePack.Annotations\Attributes.cs">
       <Link>Code\Attributes.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack.Annotations\KeyPolicy.cs">
+      <Link>Code\AttributesKeyPolicy.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack.Annotations\AnalyzerAttributes.cs">
       <Link>Code\AnalyzerAttributes.cs</Link>
     </Compile>
