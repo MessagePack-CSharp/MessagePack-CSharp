@@ -27,9 +27,18 @@ namespace MessagePack
                 where TFrom : struct
                 where TTo : struct
             {
+                // the real BitCast rejects unequal sizes the same way; without it a wider TTo reads past `source` on the
+                // stack. Both sizes are JIT-time constants for structs, so the check folds away at every call site.
+                if (Unsafe.SizeOf<TFrom>() != Unsafe.SizeOf<TTo>())
+                {
+                    ThrowBitCastSizeMismatch();
+                }
                 return Unsafe.As<TFrom, TTo>(ref source);
             }
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowBitCastSizeMismatch() => throw new NotSupportedException("BitCast requires TFrom and TTo to have the same size.");
 
         extension(BitConverter)
         {

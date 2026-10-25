@@ -55,6 +55,23 @@ public class DownlevelReviewTests
         Assert.Equal(^2, MessagePackSerializer.Deserialize<Index>(MessagePackSerializer.Serialize(^2)));
         Assert.Equal(1..^1, MessagePackSerializer.Deserialize<Range>(MessagePackSerializer.Serialize(1..^1)));
     }
+
+    // the netstandard builds carry their own Unsafe.BitCast (Polyfill.cs); like the real one it must refuse unequal
+    // sizes instead of reading past the source on the stack. Internal, so reached by reflection on this asset.
+    [Fact]
+    public void BitCastPolyfill_RejectsUnequalSizes()
+    {
+        var polyfill = typeof(MessagePackSerializer).Assembly.GetType("MessagePack.Polyfill", throwOnError: true)!;
+        var bitCast = polyfill.GetMethods(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)
+            .Single(m => m.Name == "BitCast" && m.IsGenericMethodDefinition);
+
+        Assert.Equal((byte)1, bitCast.MakeGenericMethod(typeof(bool), typeof(byte)).Invoke(null, [true]));
+        Assert.Equal(1u, bitCast.MakeGenericMethod(typeof(int), typeof(uint)).Invoke(null, [1]));
+
+        var thrown = Assert.Throws<System.Reflection.TargetInvocationException>(
+            () => bitCast.MakeGenericMethod(typeof(byte), typeof(long)).Invoke(null, [(byte)1]));
+        Assert.IsType<NotSupportedException>(thrown.InnerException);
+    }
 }
 
 [MessagePackObject]
