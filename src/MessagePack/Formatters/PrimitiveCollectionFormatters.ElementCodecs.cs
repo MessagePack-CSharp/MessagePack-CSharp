@@ -33,6 +33,23 @@ internal interface IElementCodec<T> where T : unmanaged
 
 #region varint
 
+// The wide weaves whose last store runs past their token run. Each region reservation adds that overhang as slack,
+// computed from the same store offset the weave writes at, so moving a store moves the slack with it (floored at 0:
+// a store that ends inside the run must not shrink the worst-case reservation). Outside the NET9 gate because the
+// reservations exist on every target; the weaves themselves are net9+ only.
+internal static class WeaveSlack
+{
+    // int32/uint32 AVX2: 16 five-byte tokens (80B) as three 32B stores at offsets 0/30/50
+    internal const int Token5Avx2LastStore = 50;
+    const int Token5Avx2Overhang = Token5Avx2LastStore + 32 - 16 * MessagePackPrimitives.MaxInt32Length;
+    internal const int Token5Avx2 = Token5Avx2Overhang > 0 ? Token5Avx2Overhang : 0;
+
+    // int64/uint64 VBMI: 8 nine-byte tokens (72B) as two 64B stores at offsets 0/9
+    internal const int Token9Vbmi512SecondStore = 9;
+    const int Token9Vbmi512Overhang = Token9Vbmi512SecondStore + 64 - 8 * MessagePackPrimitives.MaxInt64Length;
+    internal const int Token9Vbmi512 = Token9Vbmi512Overhang > 0 ? Token9Vbmi512Overhang : 0;
+}
+
 #if NET9_0_OR_GREATER
 // Shuffle tables for the wide (multi-byte token) SIMD tiers. Shape tables shared by every
 // family of the same token width carry a Token{3,5,9} prefix (token = [code][BE payload],
@@ -401,9 +418,9 @@ internal readonly struct Int32ElementCodec : IElementCodec<int>
         while (i < length)
         {
             int regionEnd = i + Math.Min(length - i, SerializeRegionElements);
-            // +2: the AVX2 wide weave's last 32B store overhangs the 80-byte token run
-            // by 2 bytes, which lands past the worst case when the block ends the region
-            ref byte d = ref buffer.GetReference(((regionEnd - i) * MessagePackPrimitives.MaxInt32Length) + 2);
+            // slack: the AVX2 wide weave's last 32B store overhangs the 80-byte token run,
+            // which lands past the worst case when the block ends the region
+            ref byte d = ref buffer.GetReference(((regionEnd - i) * MessagePackPrimitives.MaxInt32Length) + WeaveSlack.Token5Avx2);
             int written = 0;
 #if NET9_0_OR_GREATER
             if (Vector512.IsHardwareAccelerated && Avx512F.IsSupported)
@@ -491,7 +508,7 @@ internal readonly struct Int32ElementCodec : IElementCodec<int>
                             var p2 = Avx2.Permute4x64(b.AsUInt64(), 0b11_10_10_01).AsInt32();
                             WeaveWide6(p0).StoreUnsafe(ref Unsafe.Add(ref d, written));
                             WeaveWide6(p1).StoreUnsafe(ref Unsafe.Add(ref d, written + 30));
-                            WeaveWide6(p2).StoreUnsafe(ref Unsafe.Add(ref d, written + 50));
+                            WeaveWide6(p2).StoreUnsafe(ref Unsafe.Add(ref d, written + WeaveSlack.Token5Avx2LastStore));
                         }
                         else
                         {
@@ -1649,9 +1666,9 @@ internal readonly struct UInt32ElementCodec : IElementCodec<uint>
         while (i < length)
         {
             int regionEnd = i + Math.Min(length - i, SerializeRegionElements);
-            // +2: same reservation slack as Int32ElementCodec, for the AVX2 wide weave's
-            // 2-byte store overhang at the region end
-            ref byte d = ref buffer.GetReference(((regionEnd - i) * MessagePackPrimitives.MaxUInt32Length) + 2);
+            // same reservation slack as Int32ElementCodec, for the AVX2 wide weave's
+            // store overhang at the region end
+            ref byte d = ref buffer.GetReference(((regionEnd - i) * MessagePackPrimitives.MaxUInt32Length) + WeaveSlack.Token5Avx2);
             int written = 0;
 #if NET9_0_OR_GREATER
             if (Vector512.IsHardwareAccelerated && Avx512F.IsSupported)
@@ -1715,7 +1732,7 @@ internal readonly struct UInt32ElementCodec : IElementCodec<uint>
                             var p2 = Avx2.Permute4x64(b.AsUInt64(), 0b11_10_10_01).AsByte();
                             (Avx2.Shuffle(p0, WeaveTables.Token5WeaveIndices256) | WeaveTables.UIntCode256).StoreUnsafe(ref Unsafe.Add(ref d, written));
                             (Avx2.Shuffle(p1, WeaveTables.Token5WeaveIndices256) | WeaveTables.UIntCode256).StoreUnsafe(ref Unsafe.Add(ref d, written + 30));
-                            (Avx2.Shuffle(p2, WeaveTables.Token5WeaveIndices256) | WeaveTables.UIntCode256).StoreUnsafe(ref Unsafe.Add(ref d, written + 50));
+                            (Avx2.Shuffle(p2, WeaveTables.Token5WeaveIndices256) | WeaveTables.UIntCode256).StoreUnsafe(ref Unsafe.Add(ref d, written + WeaveSlack.Token5Avx2LastStore));
                         }
                         else
                         {
@@ -1953,9 +1970,9 @@ internal readonly struct Int64ElementCodec : IElementCodec<long>
         while (i < length)
         {
             int regionEnd = i + Math.Min(length - i, SerializeRegionElements);
-            // +1: the VBMI wide weave's second store overhangs the 72-byte token run by
-            // 1 byte, which lands past the worst case when the block ends the region
-            ref byte d = ref buffer.GetReference(((regionEnd - i) * MessagePackPrimitives.MaxInt64Length) + 1);
+            // slack: the VBMI wide weave's second store overhangs the 72-byte token run,
+            // which lands past the worst case when the block ends the region
+            ref byte d = ref buffer.GetReference(((regionEnd - i) * MessagePackPrimitives.MaxInt64Length) + WeaveSlack.Token9Vbmi512);
             int written = 0;
 #if NET9_0_OR_GREATER
             if (Vector512.IsHardwareAccelerated && Avx512F.IsSupported)
@@ -1983,7 +2000,7 @@ internal readonly struct Int64ElementCodec : IElementCodec<long>
                             Avx512Vbmi.PermuteVar64x8x2(v.AsByte(), WeaveTables.Token9WeaveIndices512, codes)
                                 .StoreUnsafe(ref Unsafe.Add(ref d, written));
                             Avx512Vbmi.PermuteVar64x8x2(v.AsByte(), WeaveTables.Token9WeaveShiftedIndices512, codes)
-                                .StoreUnsafe(ref Unsafe.Add(ref d, written + 9));
+                                .StoreUnsafe(ref Unsafe.Add(ref d, written + WeaveSlack.Token9Vbmi512SecondStore));
                         }
                         else
                         {
@@ -2238,9 +2255,9 @@ internal readonly struct UInt64ElementCodec : IElementCodec<ulong>
         while (i < length)
         {
             int regionEnd = i + Math.Min(length - i, SerializeRegionElements);
-            // +1: same reservation slack as Int64ElementCodec, for the VBMI wide
-            // weave's 1-byte store overhang at the region end
-            ref byte d = ref buffer.GetReference(((regionEnd - i) * MessagePackPrimitives.MaxUInt64Length) + 1);
+            // same reservation slack as Int64ElementCodec, for the VBMI wide
+            // weave's store overhang at the region end
+            ref byte d = ref buffer.GetReference(((regionEnd - i) * MessagePackPrimitives.MaxUInt64Length) + WeaveSlack.Token9Vbmi512);
             int written = 0;
 #if NET9_0_OR_GREATER
             if (Vector512.IsHardwareAccelerated && Avx512F.IsSupported)
@@ -2263,7 +2280,7 @@ internal readonly struct UInt64ElementCodec : IElementCodec<ulong>
                             Avx512Vbmi.PermuteVar64x8x2(v.AsByte(), WeaveTables.Token9WeaveIndices512, codeFill)
                                 .StoreUnsafe(ref Unsafe.Add(ref d, written));
                             Avx512Vbmi.PermuteVar64x8x2(v.AsByte(), WeaveTables.Token9WeaveShiftedIndices512, codeFill)
-                                .StoreUnsafe(ref Unsafe.Add(ref d, written + 9));
+                                .StoreUnsafe(ref Unsafe.Add(ref d, written + WeaveSlack.Token9Vbmi512SecondStore));
                         }
                         else
                         {
