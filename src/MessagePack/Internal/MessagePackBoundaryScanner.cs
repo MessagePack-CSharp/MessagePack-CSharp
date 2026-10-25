@@ -51,6 +51,13 @@ internal struct MessagePackBoundaryScanner
     /// </summary>
     public void Rebase(long consumedBytes)
     {
+        if (consumedBytes == 0)
+        {
+            // nothing consumed: the next read returns the same sequence, only grown, so the resume position is still
+            // valid. Dropping it made every read of an incomplete message re-walk the segments buffered so far from
+            // the start (quadratic in the segment count across the reads that buffered one large message)
+            return;
+        }
         consumed -= consumedBytes;
         hasResumePosition = false; // a position into the previous sequence: the next scan re-derives it once
     }

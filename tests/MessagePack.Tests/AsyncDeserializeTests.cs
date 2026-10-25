@@ -607,6 +607,148 @@ public class AsyncDeserializeTests
 
     #endregion
 
+    #region resume across reads
+
+    // One large value that arrives one small segment per read. A read that consumed nothing hands back the same
+    // sequence, only grown, so the scanner must continue at its saved position instead of re-deriving it from the
+    // sequence start: that walk over every segment buffered so far, once per read, made one message spread over many
+    // segments quadratic (DeserializeMessagesAsync/DeserializeElementsAsync dropped the position via Rebase(0);
+    // 80,000 ints over 7-byte segments took 650 ms against 3 ms for DeserializeAsync, which never rebased).
+    // The reader makes the already-scanned history unreachable from the start (the first segment's Next is cut) on
+    // every read after the position is first saved, and relinks it for the final read, where the completed message is
+    // sliced and parsed from the start. Resuming never touches the history; a walk from the start throws.
+    [Theory]
+    [InlineData("single")]
+    [InlineData("messages")]
+    [InlineData("elements")]
+    public async Task IncompleteValue_ResumesScanAtSavedPosition_NoWalkFromStart(string api)
+    {
+        var value = Enumerable.Range(0, 10_000).ToArray();
+        switch (api)
+        {
+            case "single":
+            {
+                var bytes = MessagePackSerializer.Serialize(value, Options);
+                Assert.Equal(value, await MessagePackSerializer.DeserializeAsync<int[]>(new LockStepReader(bytes, 7, cutHistory: true), Options));
+                break;
+            }
+            case "messages":
+            {
+                var bytes = MessagePackSerializer.Serialize(value, Options);
+                var seen = new List<int[]>();
+                await foreach (var message in MessagePackSerializer.DeserializeMessagesAsync<int[]>(new LockStepReader(bytes, 7, cutHistory: true), Options))
+                {
+                    seen.Add(message);
+                }
+                Assert.Equal([value], seen);
+                break;
+            }
+            case "elements":
+            {
+                // one element spanning every read: the array header is consumed, then nothing until the element completes
+                var bytes = MessagePackSerializer.Serialize(new[] { value }, Options);
+                var seen = new List<int[]>();
+                await foreach (var element in MessagePackSerializer.DeserializeElementsAsync<int[]>(new LockStepReader(bytes, 7, cutHistory: true), Options))
+                {
+                    seen.Add(element);
+                }
+                Assert.Equal([value], seen);
+                break;
+            }
+        }
+    }
+
+    // Every ReadAsync appends exactly one segment of chunk bytes to a stable segment chain (the shape the built-in
+    // Pipe and StreamPipeReader have, at a far smaller segment size), and reports completion once all bytes are out.
+    sealed class LockStepReader(byte[] bytes, int chunk, bool cutHistory = false) : PipeReader
+    {
+        Segment? first, second, head, tail;
+        int headIndex;
+        int fed;
+        int reads;
+
+        public override ValueTask<ReadResult> ReadAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var completed = fed == bytes.Length;
+            if (!completed)
+            {
+                var length = Math.Min(chunk, bytes.Length - fed);
+                var memory = bytes.AsMemory(fed, length);
+                if (first is null)
+                {
+                    first = head = tail = new Segment(memory, 0);
+                }
+                else
+                {
+                    tail = tail!.Append(memory);
+                    second ??= tail;
+                }
+                fed += length;
+            }
+            reads++;
+            if (cutHistory && second is not null)
+            {
+                // the first read is a single segment (scanned by index), the second derives the position from the
+                // start once and saves it; from the third read on the history must not be walked. The final read
+                // (every byte out) is sliced and parsed from the start, so the chain is whole again.
+                var cut = reads >= 3 && fed < bytes.Length;
+                first!.SetNext(cut ? null : second);
+            }
+            var buffer = new ReadOnlySequence<byte>(head!, headIndex, tail!, tail!.Memory.Length);
+            return new(new ReadResult(buffer, isCanceled: false, isCompleted: completed));
+        }
+
+        public override void AdvanceTo(SequencePosition consumed) => AdvanceTo(consumed, consumed);
+
+        public override void AdvanceTo(SequencePosition consumed, SequencePosition examined)
+        {
+            var segment = (Segment)consumed.GetObject()!;
+            var index = consumed.GetInteger();
+            if (index == segment.Memory.Length && segment.Next is Segment next)
+            {
+                segment = next;
+                index = 0;
+            }
+            head = segment;
+            headIndex = index;
+        }
+
+        public override bool TryRead(out ReadResult result)
+        {
+            result = default;
+            return false;
+        }
+
+        public override void CancelPendingRead()
+        {
+        }
+
+        public override void Complete(Exception? exception = null)
+        {
+        }
+
+        sealed class Segment : ReadOnlySequenceSegment<byte>
+        {
+            public Segment(ReadOnlyMemory<byte> memory, long runningIndex)
+            {
+                Memory = memory;
+                RunningIndex = runningIndex;
+            }
+
+            public Segment Append(ReadOnlyMemory<byte> memory)
+            {
+                var next = new Segment(memory, RunningIndex + Memory.Length);
+                Next = next;
+                return next;
+            }
+
+            public void SetNext(Segment? next) => Next = next;
+        }
+    }
+
+    #endregion
+
     // writes concurrently with the reader (PipeWriter.WriteAsync flushes each chunk), so
     // small chunk sizes make the deserializer observe incomplete data and resume
     static PipeReader Feed(byte[] bytes, int chunkSize = int.MaxValue, bool complete = true)
