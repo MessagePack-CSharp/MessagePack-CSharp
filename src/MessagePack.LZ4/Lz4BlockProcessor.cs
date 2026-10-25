@@ -378,11 +378,22 @@ public sealed class Lz4BlockProcessor : MessagePackMessageProcessor
         var flat = ArrayPool<byte>.Shared.Rent(messageLength);
         try
         {
+            // Length describes the whole message, but the view is forward-only: one an earlier consumer already walked
+            // yields less, and the unfilled tail of the pooled buffer would be compressed and sent
+            // (the Zstandard processor checks the same)
             var offset = 0;
             while (message.TryGetNext(out var segment))
             {
+                if (segment.Length > messageLength - offset)
+                {
+                    Lz4Throws.InconsistentSegments();
+                }
                 segment.CopyTo(flat.AsSpan(offset));
                 offset += segment.Length;
+            }
+            if (offset != messageLength)
+            {
+                Lz4Throws.InconsistentSegments();
             }
 
             // encode at the max-header offset, then right-align the header so envelope and
@@ -521,10 +532,20 @@ public sealed class Lz4BlockArrayProcessor : MessagePackMessageProcessor
             offset += UnsafeWriteExtHeader(ref span[offset], ThisLibraryExtensionTypeCodes.Lz4BlockArray, 5 * blockCount);
             var sizes = offset;
             offset += 5 * blockCount;
+            var sizesEnd = offset;
 
             // [bin lz4block]...
+            // the headers above and the bound behind maxTotal trust SegmentCount and Length; a view an earlier consumer
+            // already walked yields fewer segments, and every unfilled size slot would carry stale pooled bytes onto
+            // the wire, so the walk must match both exactly (see the single-block EncodeCore)
+            var remaining = messageLength;
             while (message.TryGetNext(out var segment))
             {
+                if (sizes == sizesEnd || segment.Length > remaining)
+                {
+                    Lz4Throws.InconsistentSegments();
+                }
+                remaining -= segment.Length;
                 UnsafeWriteForcedInt32(ref span[sizes], segment.Length);
                 sizes += 5;
                 var lz4Length = LZ4.Block.Compress(segment, span.Slice(offset + 5));
@@ -540,6 +561,10 @@ public sealed class Lz4BlockArrayProcessor : MessagePackMessageProcessor
                     span.Slice(offset + 5, lz4Length).CopyTo(span.Slice(offset + binHeaderLength));
                 }
                 offset += binHeaderLength + lz4Length;
+            }
+            if (sizes != sizesEnd || remaining != 0)
+            {
+                Lz4Throws.InconsistentSegments();
             }
 
             return (rented, offset);

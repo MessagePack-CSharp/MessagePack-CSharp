@@ -245,4 +245,58 @@ public class Lz4Tests
             Assert.Equal(big, V4.Deserialize<byte[]>(payload, uncapped));
         }
     }
+
+    [Fact]
+    public void ConsumedSegmentsView_IsRejected_NotPaddedWithPooledBytes()
+    {
+        // Length and SegmentCount describe the whole message, but the view is forward-only. A composite processor that
+        // walks it before handing it on (without Reset) used to get stale ArrayPool bytes in place of the walked part:
+        // Block compressed the unfilled tail of its flat buffer, BlockArray left size slots unwritten
+        foreach (var processor in new MessagePackMessageProcessor[] { new Lz4BlockProcessor(), new Lz4BlockArrayProcessor() })
+        {
+            var name = processor.GetType().Name;
+            Assert.Null(Encode(processor, consume: 0, out var segmentCount));
+            Assert.True(segmentCount > 2, $"{name}: the fixture must span several segments ({segmentCount})");
+
+            foreach (var consume in new[] { 1, segmentCount })
+            {
+                var ex = Encode(processor, consume, out _);
+                Assert.True(ex is MessagePackSerializationException, $"{name}, {consume} segment(s) walked: {ex?.GetType().Name ?? "no exception"}");
+                Assert.Contains("pass the view unconsumed", ex!.Message);
+            }
+        }
+
+        // ref structs (the buffer and its view) cannot be captured by Assert.Throws, so the encode reports its exception
+        static Exception? Encode(MessagePackMessageProcessor processor, int consume, out int segmentCount)
+        {
+            var buffer = new SerializerFoundation.ArrayPoolListWriteBuffer(new byte[16]);
+            try
+            {
+                for (int i = 0; i < 100_000; i++)
+                {
+                    buffer.GetSpan(1)[0] = (byte)(i % 100);
+                    buffer.Advance(1);
+                }
+                var segments = buffer.GetWrittenSegments();
+                segmentCount = segments.SegmentCount;
+                for (int i = 0; i < consume; i++)
+                {
+                    segments.TryGetNext(out _);
+                }
+                try
+                {
+                    processor.TryEncode(ref segments, new ArrayBufferWriter<byte>());
+                    return null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            }
+            finally
+            {
+                buffer.Dispose();
+            }
+        }
+    }
 }
