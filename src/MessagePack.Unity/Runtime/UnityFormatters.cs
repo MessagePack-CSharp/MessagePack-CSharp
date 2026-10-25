@@ -100,7 +100,9 @@ namespace MessagePack.Unity
             return Unsafe.As<int, float>(ref bits);
         }
 
-        // the tolerant read: fills `values` from the array in order, skipping extra elements.
+        // the tolerant read: fills `values` from the array in order, skipping extra elements and zeroing the slots a
+        // short array leaves unfilled (default, as v3 read a missing member). The callers pass stackalloc spans, which
+        // only locals-init zeroes, so the tail is cleared here rather than trusting the allocation to be zero.
         // `scoped` (C# 11) tells the ref-safety analysis that the caller's stackalloc span never escapes into the
         // buffer, which only matters once TReadBuffer may itself be a ref struct (net9+); Unity's C# 9 never sees it.
         public static void ReadSingles<TReadBuffer>(
@@ -131,6 +133,10 @@ namespace MessagePack.Unity
                     buffer.Skip();
                 }
             }
+            if (count < values.Length)
+            {
+                values.Slice(count).Clear();
+            }
         }
 
         public static void ReadInt32s<TReadBuffer>(
@@ -160,6 +166,10 @@ namespace MessagePack.Unity
                 {
                     buffer.Skip();
                 }
+            }
+            if (count < values.Length)
+            {
+                values.Slice(count).Clear();
             }
         }
 
@@ -946,7 +956,6 @@ namespace MessagePack.Unity
                     Span<float> v = stackalloc float[4];
                     for (var i = 0; i < keyCount; i++)
                     {
-                        v.Clear();
                         UnityCodec.ReadSingles(ref buffer, ref state, v);
                         keys[i] = new Keyframe(v[0], v[1], v[2], v[3]);
                     }
@@ -1048,7 +1057,6 @@ namespace MessagePack.Unity
                         var time = 0f;
                         if (keyCount > 0)
                         {
-                            v.Clear();
                             UnityCodec.ReadSingles(ref buffer, ref state, v);
                             color = new Color(v[0], v[1], v[2], v[3]);
                         }
@@ -1067,7 +1075,6 @@ namespace MessagePack.Unity
                     Span<float> v = stackalloc float[2];
                     for (var i = 0; i < n; i++)
                     {
-                        v.Clear();
                         UnityCodec.ReadSingles(ref buffer, ref state, v);
                         alphaKeys[i] = new GradientAlphaKey(v[0], v[1]);
                     }

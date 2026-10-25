@@ -176,6 +176,24 @@ public class UnityShimsTests
     }
 
     [Fact]
+    public void ShortElement_AfterFullOne_DefaultsTheTail()
+    {
+        // the key loops reuse one stackalloc span per key; a short key after a full one must read its missing members
+        // as default, not as the previous key's values (the read codec clears the unfilled tail of every span)
+        var curve = V4.Deserialize<AnimationCurve>(
+            new byte[] { 0x91, 0x92, 0x94, 0x01, 0x02, 0x03, 0x04, 0x91, 0x05 }, Options)!;
+        Assert.Equal(new Keyframe(5f, 0f, 0f, 0f), curve.keys[1]);
+
+        var alpha = V4.Deserialize<Gradient>(
+            new byte[] { 0x92, 0x90, 0x92, 0x92, 0x01, 0x02, 0x91, 0x03 }, Options)!;
+        Assert.Equal(new GradientAlphaKey(3f, 0f), alpha.alphaKeys[1]);
+
+        var color = V4.Deserialize<Gradient>(
+            new byte[] { 0x91, 0x92, 0x92, 0x94, 0x01, 0x01, 0x01, 0x01, 0x00, 0x92, 0x91, 0x00, 0x01 }, Options)!;
+        Assert.Equal(new GradientColorKey(new Color(0f, 0f, 0f, 0f), 1f), color.colorKeys[1]);
+    }
+
+    [Fact]
     public void Roundtrip_EveryType()
     {
         Roundtrip(new Vector2(1.5f, -2f));
