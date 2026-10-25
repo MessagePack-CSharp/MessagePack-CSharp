@@ -47,6 +47,15 @@ if (args.Contains("--verify"))
     return ok ? 0 : 1;
 }
 
+// runs every RedoxBenchmark dataset's Setup gate in-process (byte identity across the msgpack
+// libraries + roundtrip of every row) and prints the wire sizes; seconds instead of a BDN pilot
+if (args.Contains("--redox-check"))
+{
+    var ok = RedoxCheck.RunAll();
+    Console.WriteLine(ok ? "all OK" : "FAILED");
+    return ok ? 0 : 1;
+}
+
 // opt-in: allocates multi-GB strings/buffers to reach the > 715,827,880-char huge-string
 // paths of GetMaxStringByteCount / WriteString, which --verify cannot exercise
 if (args.Contains("--verify-huge"))
@@ -413,15 +422,29 @@ if (jitDisasmArg is not null)
     args = args.Where(static a => !a.StartsWith("--jitdisasm=", StringComparison.Ordinal)).ToArray();
     job = job.WithEnvironmentVariable("DOTNET_JitDisasm", jitDisasmArg.Substring("--jitdisasm=".Length));
 }
+// --iterations=N widens ShortRun's 3 measured iterations (whole-document rows such as RedoxBenchmark
+// run milliseconds per op, where 3 iterations leave a wide error bar)
+if (args.FirstOrDefault(static a => a.StartsWith("--iterations=", StringComparison.Ordinal)) is { } iterationsArg)
+{
+    args = args.Where(static a => !a.StartsWith("--iterations=", StringComparison.Ordinal)).ToArray();
+    job = job.WithIterationCount(int.Parse(iterationsArg.Substring("--iterations=".Length)));
+}
+// --no-disasm drops the DisassemblyDiagnoser (an extra process per row; pointless for the
+// whole-document rows and for anything whose asm is not the question)
+var noDisasm = args.Contains("--no-disasm");
+args = args.Where(static a => a != "--no-disasm").ToArray();
 var config = ManualConfig.Create(DefaultConfig.Instance)
     .AddJob(job)
     .AddDiagnoser(MemoryDiagnoser.Default)
-    .AddDiagnoser(new DisassemblyDiagnoser(new DisassemblyDiagnoserConfig(
+    .AddExporter(JsonExporter.Full);
+if (!noDisasm)
+{
+    config.AddDiagnoser(new DisassemblyDiagnoser(new DisassemblyDiagnoserConfig(
         maxDepth: 3,
         printSource: true,
         exportGithubMarkdown: true,
-        exportCombinedDisassemblyReport: true)))
-    .AddExporter(JsonExporter.Full);
+        exportCombinedDisassemblyReport: true)));
+}
 
 // ETW kernel session requires elevation; enable counters only when elevated so
 // non-admin runs still work (without the counter columns)

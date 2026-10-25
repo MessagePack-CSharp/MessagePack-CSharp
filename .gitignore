@@ -369,3 +369,6 @@ tests/MessagePack.Tests.Fuzz/corpus/
 tests/MessagePack.Tests.Fuzz/libfuzzer-dotnet-windows.exe
 
 sandbox/DisassembleBenchmark/.bdn/
+
+# RE:Dox benchmark corpus (sandbox/DisassembleBenchmark/fetch-redox-data.ps1)
+sandbox/DisassembleBenchmark/redox-data/
