@@ -51,28 +51,38 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
                     var result = ObjectParser.Parse(ctx);
                     return new TypeParseResult(result.Model, null, result.Diagnostics);
                 }
-            });
+            })
+            .WithTrackingName(TrackingNames.TypeParseResults);
 
         var languageGate = LanguageGate.Create(context);
 
-        // per-type formatter files: incremental per model
-        context.RegisterSourceOutput(results.Combine(languageGate), static (spc, pair) =>
+        // per-type diagnostics and formatter files are separate nodes: diagnostics carry source locations, so a
+        // line-shifting edit above a diagnosed type changes its parse result, and a combined node would re-emit the
+        // formatter (and keep the result alive) on every such keystroke. The models alone are location-free
+        context.RegisterSourceOutput(results.Select(static (r, _) => r.Diagnostics), static (spc, diagnostics) =>
         {
-            var result = pair.Left;
-            foreach (var diagnostic in result.Diagnostics)
+            foreach (var diagnostic in diagnostics)
             {
                 spc.ReportDiagnostic(diagnostic.ToDiagnostic());
             }
+        });
+
+        // per-type formatter files: incremental per model
+        var typeModels = results
+            .Select(static (r, _) => (r.Object, r.Union))
+            .WithTrackingName(TrackingNames.TypeModels);
+        context.RegisterSourceOutput(typeModels.Combine(languageGate), static (spc, pair) =>
+        {
             if (pair.Right.Required != 0)
             {
                 // reported once by the registration node below
                 return;
             }
-            if (result.Object is { } model)
+            if (pair.Left.Object is { } model)
             {
                 spc.AddSource($"{ObjectEmitter.HintName(model)}.g.cs", ObjectEmitter.EmitFormatter(model));
             }
-            else if (result.Union is { } union)
+            else if (pair.Left.Union is { } union)
             {
                 spc.AddSource($"{union.FormatterName}.g.cs", UnionEmitter.EmitFormatter(union));
             }
@@ -182,8 +192,7 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
         // one factory + module-initializer registration over every generated formatter. Models only,
         // deliberately not the whole parse results: diagnostics carry source locations,
         // and collecting them would re-emit the factory on every line-shifting edit near a diagnosed type
-        var models = results
-            .Select(static (r, _) => (r.Object, r.Union))
+        var models = typeModels
             .Where(static pair => pair.Object is not null || pair.Union is not null)
             .Collect();
         var attributeModels = attributeResults
@@ -383,4 +392,11 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
         }
         return accessible != 1;
     }
+}
+
+/// <summary>Step names the incremental-caching tests read off a driver run with step tracking on.</summary>
+static class TrackingNames
+{
+    public const string TypeParseResults = nameof(TypeParseResults);
+    public const string TypeModels = nameof(TypeModels);
 }
