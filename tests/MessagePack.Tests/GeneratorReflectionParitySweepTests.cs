@@ -8,11 +8,11 @@ namespace MessagePack.Tests;
 // The generated formatter and ReflectionObjectFormatter are two implementations of one contract, and
 // GeneratorReflectionParityTests compares them on hand-picked shapes. This sweep takes every concrete [MessagePackObject]
 // type this assembly declares, builds a value for it from a seeded generator (so nulls, empties and nesting vary), and
-// serializes it through both tiers: the bytes must be identical, and each tier must read the other's bytes. The shapes
-// the reflection tier declares generator-only (MessagePackUnknownMembers, AllowCircularReferences, the surrogate and
-// type-level [MessagePackFormatter] registrations the generated factory performs, the generator's expression-form
-// formatter arguments) are skipped by the reflection tier's own refusal, every skip is written to the test output, and
-// the aggregate test keeps the compared share from quietly shrinking.
+// serializes it through both tiers: the bytes must be identical, and each tier must read the other's bytes back to the
+// same value. The shapes the reflection tier declares generator-only (MessagePackUnknownMembers,
+// AllowCircularReferences, the surrogate and type-level [MessagePackFormatter] registrations the generated factory
+// performs, the generator's expression-form formatter arguments) are skipped by the reflection tier's own refusal,
+// every skip is written to the test output, and the aggregate test keeps the compared share from quietly shrinking.
 public class GeneratorReflectionParitySweepTests(ITestOutputHelper output)
 {
     static readonly MessagePackSerializerOptions Generated = MessagePackSerializerOptions.Default;
@@ -130,10 +130,21 @@ public class GeneratorReflectionParitySweepTests(ITestOutputHelper output)
                 $"{type.FullName} (seed {seed}) differs between tiers.{Environment.NewLine}generated:  {V4.ConvertToJson(generated)}{Environment.NewLine}reflection: {V4.ConvertToJson(reflected)}");
 
             // each tier reads what the other wrote (the same bytes, as just asserted)
-            var readByReflection = Record.Exception(() => V4.Deserialize(type, generated, reflection));
-            var readByGenerated = Record.Exception(() => V4.Deserialize(type, reflected, Generated));
+            object? valueByReflection = null, valueByGenerated = null;
+            var readByReflection = Record.Exception(() => valueByReflection = V4.Deserialize(type, generated, reflection));
+            var readByGenerated = Record.Exception(() => valueByGenerated = V4.Deserialize(type, reflected, Generated));
             Assert.True((readByReflection is null) == (readByGenerated is null),
                 $"{type.FullName} (seed {seed}): one tier reads the bytes and the other refuses them.{Environment.NewLine}reflection: {readByReflection?.Message ?? "ok"}{Environment.NewLine}generated:  {readByGenerated?.Message ?? "ok"}");
+
+            // and both read the same value: written back through one tier, the two results agree. Comparing with the
+            // original bytes instead would fail on the fixtures' deliberately lossy member formatters
+            if (readByReflection is null)
+            {
+                var backFromReflection = V4.Serialize(type, valueByReflection, Generated);
+                var backFromGenerated = V4.Serialize(type, valueByGenerated, Generated);
+                Assert.True(backFromReflection.AsSpan().SequenceEqual(backFromGenerated),
+                    $"{type.FullName} (seed {seed}): the tiers read different values from the same bytes.{Environment.NewLine}read by reflection: {V4.ConvertToJson(backFromReflection)}{Environment.NewLine}read by generated:  {V4.ConvertToJson(backFromGenerated)}");
+            }
         }
         return null;
     }
