@@ -425,6 +425,16 @@ public static partial class MessagePackSerializer
         if (type == typeof(ArraySegment<ulong>)) return new NonGenericEntry<ArraySegment<ulong>>();
         if (type == typeof(ArraySegment<float>)) return new NonGenericEntry<ArraySegment<float>>();
         if (type == typeof(ArraySegment<double>)) return new NonGenericEntry<ArraySegment<double>>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<sbyte>)) return new NonGenericEntry<System.Collections.Immutable.ImmutableArray<sbyte>>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<int>)) return new NonGenericEntry<System.Collections.Immutable.ImmutableArray<int>>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<short>)) return new NonGenericEntry<System.Collections.Immutable.ImmutableArray<short>>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<ushort>)) return new NonGenericEntry<System.Collections.Immutable.ImmutableArray<ushort>>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<uint>)) return new NonGenericEntry<System.Collections.Immutable.ImmutableArray<uint>>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<long>)) return new NonGenericEntry<System.Collections.Immutable.ImmutableArray<long>>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<ulong>)) return new NonGenericEntry<System.Collections.Immutable.ImmutableArray<ulong>>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<float>)) return new NonGenericEntry<System.Collections.Immutable.ImmutableArray<float>>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<double>)) return new NonGenericEntry<System.Collections.Immutable.ImmutableArray<double>>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<bool>)) return new NonGenericEntry<System.Collections.Immutable.ImmutableArray<bool>>();
         if (type == typeof(ReadOnlySequence<byte>)) return new NonGenericEntry<ReadOnlySequence<byte>>();
         // the remaining built-in scalars and the non-generic views
         if (type == typeof(object)) return new NonGenericEntry<object>();

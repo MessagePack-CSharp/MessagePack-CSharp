@@ -78,6 +78,49 @@ public class CollectionHarvestTests
         var resolver = new MessagePackFormatterResolver(MessagePackFormatterFactory.DefaultAot);
         var formatter = resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, List<int>>();
         Assert.Contains("PrimitiveListFormatter", formatter.GetType().Name);
+
+        // ImmutableArray<primitive> likewise (HarvestCollectionPoco.Immutable reaches it from the member graph), while
+        // ImmutableArray<byte> stays on the generic element loop
+        Assert.Contains("PrimitiveImmutableArrayFormatter", resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, ImmutableArray<int>>().GetType().Name);
+        var byteFormatter = new MessagePackFormatterResolver(MessagePackFormatterFactory.Default).GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, ImmutableArray<byte>>();
+        Assert.StartsWith("ImmutableArrayFormatter", byteFormatter.GetType().Name);
+    }
+
+    [Fact]
+    public void ImmutableArrayOfPrimitives_MatchesOracle()
+    {
+        AssertImmutable<sbyte>([0, -1, -32, -33, 127, sbyte.MinValue]);
+        AssertImmutable<int>([0, 1, -70000, int.MaxValue, int.MinValue, .. Enumerable.Range(-40, 100)]);
+        AssertImmutable<short>([0, 128, -129, short.MaxValue, short.MinValue]);
+        AssertImmutable<ushort>([0, 127, 128, ushort.MaxValue]);
+        AssertImmutable<uint>([0, 127, 128, uint.MaxValue]);
+        AssertImmutable<long>([0, -1, long.MaxValue, long.MinValue, .. Enumerable.Range(0, 40).Select(static i => (long)i << i)]);
+        AssertImmutable<ulong>([0, 127, ulong.MaxValue]);
+        AssertImmutable<float>([0, 1.5f, float.NaN, float.NegativeInfinity]);
+        AssertImmutable<double>([0, 1.5, double.Epsilon, double.MaxValue]);
+        AssertImmutable<bool>([true, false, .. Enumerable.Range(0, 40).Select(static i => i % 3 == 0)]);
+        // the generic loop: an array of positive fixint/uint8 tokens, not bin; nothing here harvests it, so DefaultAot
+        // has no formatter for it
+        AssertImmutable<byte>([0, 1, 255], aot: false);
+
+        static void AssertImmutable<T>(T[] items, bool aot = true)
+        {
+            foreach (var value in (ImmutableArray<T>[])[default, [], [.. items]])
+            {
+                foreach (var options in aot ? [MessagePackSerializerOptions.Default, MessagePackSerializerOptions.DefaultAot] : (MessagePackSerializerOptions[])[MessagePackSerializerOptions.Default])
+                {
+                    var bytes = V4.Serialize(value, options);
+                    Assert.Equal(Oracle.Serialize(value), bytes);
+                    var back = V4.Deserialize<ImmutableArray<T>>(bytes, options);
+                    Assert.Equal(value.IsDefault, back.IsDefault);
+                    if (!value.IsDefault)
+                    {
+                        Assert.Equal(value, back);
+                    }
+                    Assert.Equal(value.IsDefault, Oracle.Deserialize<ImmutableArray<T>>(bytes).IsDefault);
+                }
+            }
+        }
     }
 }
 

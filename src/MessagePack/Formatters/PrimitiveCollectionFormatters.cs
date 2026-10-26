@@ -1,7 +1,9 @@
-// primitive optimized collection formatters for array / List / Memory / ReadOnlyMemory / ArraySegment.
+// primitive optimized collection formatters for array / List / Memory / ReadOnlyMemory / ArraySegment / ImmutableArray.
 // TCodec is a struct(mimic of static abstract members for netstandard compatibility).
 
 // T is sbyte/int/short/ushort/uint/long/ulong/float/double/bool (byte is bin-format, see ByteArrayFormatters.cs)
+
+using System.Collections.Immutable;
 
 namespace MessagePack.Formatters;
 
@@ -197,6 +199,65 @@ internal sealed class PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer
         var array = GC.AllocateUninitializedArray<T>(count); // the codec writes every element
         default(TCodec).ReadElements(ref buffer, array);
         value = array;
+    }
+}
+
+/// <summary><c>ImmutableArray&lt;T&gt;</c> over a <typeparamref name="TCodec"/> element core.
+/// Same semantics as <see cref="ImmutableArrayFormatter{TWriteBuffer, TReadBuffer, T}"/>
+/// (default array = nil, always a fresh array on read), and like the other codec-backed collections it takes no depth
+/// level of its own.</summary>
+internal sealed class PrimitiveImmutableArrayFormatter<TWriteBuffer, TReadBuffer, T, TCodec> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableArray<T>>
+    where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+    , allows ref struct
+#endif
+    where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+    , allows ref struct
+#endif
+    where T : unmanaged
+    where TCodec : struct, IElementCodec<T>
+{
+    public void Initialize(MessagePackFormatterResolver resolver)
+    {
+    }
+
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ImmutableArray<T> value)
+    {
+        // default(ImmutableArray<T>) round-trips as nil, matching v3
+        if (value.IsDefault)
+        {
+            buffer.WriteNil();
+            return;
+        }
+
+        var span = value.AsSpan();
+        buffer.WriteArrayHeader(span.Length);
+        default(TCodec).WriteElements(ref buffer, span);
+    }
+
+    public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref ImmutableArray<T> value)
+    {
+        if (buffer.TryReadNil())
+        {
+            value = default;
+            return;
+        }
+
+        var count = buffer.ReadArrayHeader(ref state);
+        if (count == 0)
+        {
+            value = ImmutableArray<T>.Empty;
+            return;
+        }
+
+        var array = GC.AllocateUninitializedArray<T>(count); // the codec writes every element
+        default(TCodec).ReadElements(ref buffer, array);
+#if NET9_0_OR_GREATER
+        value = System.Runtime.InteropServices.ImmutableCollectionsMarshal.AsImmutableArray(array); // zero-copy: array never escapes
+#else
+        value = ImmutableArray.Create(array);
+#endif
     }
 }
 

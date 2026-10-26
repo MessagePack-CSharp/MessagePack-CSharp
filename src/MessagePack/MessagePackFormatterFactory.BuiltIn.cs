@@ -248,6 +248,18 @@ public sealed partial class BuiltInFormatterFactory : MessagePackFormatterFactor
         if (type == typeof(ReadOnlyMemory<bool>)) return new PrimitiveReadOnlyMemoryFormatter<TWriteBuffer, TReadBuffer, bool, BooleanElementCodec>();
         if (type == typeof(ArraySegment<bool>)) return new PrimitiveArraySegmentFormatter<TWriteBuffer, TReadBuffer, bool, BooleanElementCodec>();
 
+        // ImmutableArray<T> over the same codecs (ImmutableArray<byte> stays an array of elements, as v3 wrote it: the generic formatter serves it)
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<sbyte>)) return new PrimitiveImmutableArrayFormatter<TWriteBuffer, TReadBuffer, sbyte, SByteElementCodec>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<int>)) return new PrimitiveImmutableArrayFormatter<TWriteBuffer, TReadBuffer, int, Int32ElementCodec>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<short>)) return new PrimitiveImmutableArrayFormatter<TWriteBuffer, TReadBuffer, short, Int16ElementCodec>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<ushort>)) return new PrimitiveImmutableArrayFormatter<TWriteBuffer, TReadBuffer, ushort, UInt16ElementCodec>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<uint>)) return new PrimitiveImmutableArrayFormatter<TWriteBuffer, TReadBuffer, uint, UInt32ElementCodec>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<long>)) return new PrimitiveImmutableArrayFormatter<TWriteBuffer, TReadBuffer, long, Int64ElementCodec>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<ulong>)) return new PrimitiveImmutableArrayFormatter<TWriteBuffer, TReadBuffer, ulong, UInt64ElementCodec>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<float>)) return new PrimitiveImmutableArrayFormatter<TWriteBuffer, TReadBuffer, float, SingleElementCodec>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<double>)) return new PrimitiveImmutableArrayFormatter<TWriteBuffer, TReadBuffer, double, DoubleElementCodec>();
+        if (type == typeof(System.Collections.Immutable.ImmutableArray<bool>)) return new PrimitiveImmutableArrayFormatter<TWriteBuffer, TReadBuffer, bool, BooleanElementCodec>();
+
         // List<T>: the codec-backed shape needs CollectionsMarshal.AsSpan, so downlevel TFMs route to the generic ListFormatter instead.
 #if NET9_0_OR_GREATER
         if (type == typeof(List<sbyte>)) return new PrimitiveListFormatter<TWriteBuffer, TReadBuffer, sbyte, SByteElementCodec>();

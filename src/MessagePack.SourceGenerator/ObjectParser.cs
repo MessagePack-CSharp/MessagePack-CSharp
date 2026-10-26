@@ -1229,7 +1229,7 @@ static class ObjectParser
             if (IsBuiltInServedInstantiation(named))
             {
                 // BuiltInFormatterFactory serves the closed form directly (bin-format byte containers,
-                // codec-backed primitive List/Memory/ArraySegment); registering the plain generic formatter here would
+                // codec-backed primitive List/Memory/ArraySegment/ImmutableArray); registering the plain generic formatter here would
                 // shadow the faster one in every chain
                 return;
             }
@@ -1545,7 +1545,7 @@ static class ObjectParser
     // codec-backed primitive element loops)
     static bool IsBuiltInServedInstantiation(INamedTypeSymbol named)
     {
-        if (named.TypeArguments.Length != 1 || named.ContainingNamespace.ToDisplayString() is not ("System" or "System.Buffers" or "System.Collections.Generic"))
+        if (named.TypeArguments.Length != 1 || named.ContainingNamespace.ToDisplayString() is not ("System" or "System.Buffers" or "System.Collections.Generic" or "System.Collections.Immutable"))
         {
             return false;
         }
@@ -1553,6 +1553,8 @@ static class ObjectParser
         {
             "List`1" or "Memory`1" or "ReadOnlyMemory`1" or "ArraySegment`1" => IsBuiltInPrimitiveElement(named.TypeArguments[0]),
             "ReadOnlySequence`1" => named.TypeArguments[0].SpecialType == SpecialType.System_Byte,
+            // byte is not codec-backed here: ImmutableArray<byte> keeps the generic element-by-element array
+            "ImmutableArray`1" => named.TypeArguments[0].SpecialType != SpecialType.System_Byte && IsBuiltInPrimitiveElement(named.TypeArguments[0]),
             _ => false,
         };
     }
