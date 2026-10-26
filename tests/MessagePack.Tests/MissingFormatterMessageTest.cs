@@ -6,6 +6,15 @@ public struct MissingProbeValue
 {
 }
 
+// a plain [MessagePackObject] type the generator never registers: what a chain without the reflection tier
+// (DefaultAot) sees when the generator skipped a type or did not run
+[MessagePackObject(SuppressSourceGeneration = true)]
+public class UngeneratedProbeObject
+{
+    [Key(0)]
+    public int Value { get; set; }
+}
+
 // probe target: only ever constructed and discarded by the resolver's fallback-pair probe
 // (never serializes anything, so its empty bodies are exempt from the untouched-buffer rule)
 #pragma warning disable MsgPack114
@@ -81,6 +90,33 @@ public class MissingFormatterMessageTest
         Assert.Contains(nameof(ArrayPoolListWriteBuffer), message);
         Assert.Contains(nameof(ReadOnlySpanReadBuffer), message);
         Assert.DoesNotContain("net9.0", message);
+        Assert.DoesNotContain("[MessagePackObject]", message);
+    }
+
+    [Fact]
+    public void UngeneratedObjectPointsAtTheBuild()
+    {
+        // the Type-first advice ([MessagePackSerializable]) is a dead end for a plain annotated type (MsgPack022)
+        var resolver = new MessagePackFormatterResolver(new NullFactory());
+        var formatter = resolver.GetFormatter<ArrayPoolListWriteBuffer, ReadOnlySpanReadBuffer, UngeneratedProbeObject>();
+
+        InvalidOperationException? caught = null;
+        var buffer = default(ArrayPoolListWriteBuffer);
+        var state = new SerializeState();
+        try
+        {
+            formatter.Serialize(ref buffer, ref state, new UngeneratedProbeObject());
+        }
+        catch (InvalidOperationException e)
+        {
+            caught = e;
+        }
+
+        Assert.NotNull(caught);
+        Assert.Contains(nameof(UngeneratedProbeObject), caught.Message);
+        Assert.Contains("SuppressSourceGeneration", caught.Message);
+        Assert.Contains("does not register it", caught.Message);
+        Assert.DoesNotContain("declare it on a partial factory", caught.Message);
     }
 
     [Fact]

@@ -496,6 +496,10 @@ internal sealed partial class MissingMessagePackFormatter<TWriteBuffer, TReadBuf
             var spelled = TypeNames.CSharp(typeof(T));
             message += " If this type appears only as a serialization root under a source-generated-only chain (DefaultAot / Native AOT), declare it on a partial factory class with [MessagePackSerializable(typeof(" + spelled + "))] (or [MessagePackSerializable<" + spelled + ">] on net9.0 and later) so the source generator registers its formatter.";
         }
+        else if (UngeneratedObjectHint.Applies(typeof(T)))
+        {
+            message += UngeneratedObjectHint.Hint;
+        }
         return message;
     }
 }

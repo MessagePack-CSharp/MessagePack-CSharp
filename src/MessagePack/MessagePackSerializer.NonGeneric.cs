@@ -300,6 +300,10 @@ public static partial class MessagePackSerializer
 #if NET9_0_OR_GREATER
         if (!RuntimeFeature.IsDynamicCodeSupported)
         {
+            if (UngeneratedObjectHint.Applies(type))
+            {
+                throw new NotSupportedException($"No Type-based entry exists for '{type}' and this runtime cannot generate one." + UngeneratedObjectHint.Hint);
+            }
             throw new NotSupportedException(
                 $"No Type-based entry exists for '{type}' and this runtime cannot generate one: the type is not a generated type, a harvested closure, a [MessagePackSerializable] root or a built-in scalar. " +
                 "Use the generic entries, or declare the type as a [MessagePackSerializable(typeof(T))] root (or [MessagePackSerializable<T>] on net9.0 and later) on a partial factory so the source generator registers it.");

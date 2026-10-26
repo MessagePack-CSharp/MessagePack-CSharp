@@ -89,6 +89,28 @@ public class NonGenericEntryTests
             Assert.Contains("[MessagePackSerializable<T>]", notSupported.Message);
         }
     }
+
+    [Fact]
+    public void UngeneratedObject_PointsAtTheBuild()
+    {
+        // [MessagePackObject] but no generated formatter: a [MessagePackSerializable] root would be reported redundant
+        // (MsgPack022), so the message must send the reader to the generator's skip report instead
+        var exception = Record.Exception(() => V4.Serialize(typeof(AotUngeneratedPoco), new AotUngeneratedPoco(), Options));
+        Assert.NotNull(exception);
+        if (!RuntimeFeature.IsDynamicCodeSupported)
+        {
+            var notSupported = Assert.IsType<NotSupportedException>(exception);
+            Assert.Contains("SuppressSourceGeneration", notSupported.Message);
+            Assert.DoesNotContain("[MessagePackSerializable<T>]", notSupported.Message);
+        }
+    }
+}
+
+[MessagePackObject(SuppressSourceGeneration = true)]
+public class AotUngeneratedPoco
+{
+    [Key(0)]
+    public int Value { get; set; }
 }
 
 public class AotUnregisteredPoco

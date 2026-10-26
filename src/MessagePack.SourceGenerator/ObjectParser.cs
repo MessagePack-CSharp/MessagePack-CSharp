@@ -153,7 +153,7 @@ static class ObjectParser
         {
             if (allowPrivate)
             {
-                diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}' is skipped: AllowPrivate on generic types is not supported yet (served by the reflection tier).", typeLocation));
+                diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}' is skipped: AllowPrivate on generic types is not supported yet (served by the reflection tier of the Default chain; DefaultAot has none).", typeLocation));
                 return Invalid(diagnostics);
             }
             foreach (var typeParameter in type.TypeParameters)
@@ -178,7 +178,7 @@ static class ObjectParser
             // assemblies strip them, and even an implementation assembly is imported without them
             // (MetadataImportOptions.Public). A member table built here would silently drop base state,
             // so the type is left to the reflection tier, which reads the loaded assembly.
-            diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}' is skipped: AllowPrivate covers the base chain, but base type '{externalBase.ToDisplayString()}' lives in another assembly, whose non-public members the generator cannot see, so its member table cannot be trusted. Expose the base state through public/protected members (and drop AllowPrivate), or leave the type to the reflection tier.", typeLocation));
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}' is skipped: AllowPrivate covers the base chain, but base type '{externalBase.ToDisplayString()}' lives in another assembly, whose non-public members the generator cannot see, so its member table cannot be trusted. Expose the base state through public/protected members (and drop AllowPrivate), or leave the type to the reflection tier (the Default chain; DefaultAot has none).", typeLocation));
             return Invalid(diagnostics);
         }
 
@@ -370,7 +370,7 @@ static class ObjectParser
                     {
                         if (attributeName != KeyAttributeName)
                         {
-                            diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}.{symbol.Name}': '[{attribute.AttributeClass!.Name}]' derives from KeyAttribute, and the generator can only read a derived key that is passed unchanged from the first constructor parameter to KeyAttribute's own constructor (`: base(key)`, declared in this compilation); the reflection tier serves the type as-is. Forward the key as it is, or apply [Key] directly.", LocationInfo.From(symbol)));
+                            diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}.{symbol.Name}': '[{attribute.AttributeClass!.Name}]' derives from KeyAttribute, and the generator can only read a derived key that is passed unchanged from the first constructor parameter to KeyAttribute's own constructor (`: base(key)`, declared in this compilation); the reflection tier of the Default chain serves the type as-is (DefaultAot has none). Forward the key as it is, or apply [Key] directly.", LocationInfo.From(symbol)));
                             unreadableDerivedKey = true;
                         }
                         continue;
@@ -425,7 +425,7 @@ static class ObjectParser
                 // private (or, across assemblies, private protected /internal)
                 // member or accessor would not compile (CS0122, CS0271/CS0272),
                 // while the reflection tier reads them, so the type is left to that tier
-                diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}' is skipped: '{symbol.ContainingType.Name}.{symbol.Name}' (or one of its accessors) is not accessible from '{type.Name}', so the nested generated formatter cannot reach it; make it protected or internal, or [IgnoreMember] it. The reflection tier serves the type as-is.", LocationInfo.From(symbol)));
+                diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}' is skipped: '{symbol.ContainingType.Name}.{symbol.Name}' (or one of its accessors) is not accessible from '{type.Name}', so the nested generated formatter cannot reach it; make it protected or internal, or [IgnoreMember] it. The reflection tier of the Default chain serves the type as-is (DefaultAot has none).", LocationInfo.From(symbol)));
                 valid = false;
                 continue;
             }
