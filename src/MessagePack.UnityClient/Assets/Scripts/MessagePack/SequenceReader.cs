@@ -55,7 +55,7 @@ namespace MessagePack
         /// over the given <see cref="ReadOnlySequence{T}"/>.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public SequenceReader(in ReadOnlySequence<T> sequence)
+        public SequenceReader(scoped in ReadOnlySequence<T> sequence)
         {
             this.usingSequence = true;
             this.CurrentSpanIndex = 0;

@@ -87,7 +87,7 @@ try {
         }
 
         Write-Host "Restoring NuGet packages" -ForegroundColor $HeaderColor
-        dotnet restore @RestoreArguments
+        dotnet restore @RestoreArguments -warnAsError -warnNotAsError:NU1901,NU1902,NU1903,NU1904,NETSDK1138
         if ($lastexitcode -ne 0) {
             throw "Failure while restoring packages."
         }
