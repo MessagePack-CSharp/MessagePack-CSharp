@@ -9,6 +9,15 @@
 		<NoWarn>$(NoWarn);CS1591</NoWarn>
 	</PropertyGroup>
 
+	<!-- Package validation (runs on pack, so only the IsPackable projects): each package's public surface is compared
+	     with 4.0.0-preview.1, the first published v4, and across its own target frameworks. Intended differences are
+	     recorded in the project's CompatibilitySuppressions.xml; after an intended break, regenerate it with
+	     -p:ApiCompatGenerateSuppressionFile=true and review the diff like any API change. -->
+	<PropertyGroup>
+		<EnablePackageValidation>true</EnablePackageValidation>
+		<PackageValidationBaselineVersion>4.0.0-preview.1</PackageValidationBaselineVersion>
+	</PropertyGroup>
+
 	<!-- Every shipped assembly is strong-name signed with the key v3 used (opensource.snk, PublicKeyToken b4a0369545f0a1be).
 	     This is a contract on the assembly identity, not a formality. Assemblies built against v3 reference
 	     "MessagePack, PublicKeyToken=b4a0369545f0a1be" and "MessagePack.Annotations, PublicKeyToken=b4a0369545f0a1be",

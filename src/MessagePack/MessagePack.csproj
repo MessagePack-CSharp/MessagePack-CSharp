@@ -19,8 +19,8 @@
 
 		<PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
 		<IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
-		<!-- After library released, we should keep and validate api compatiblity -->
-		<!--<EnablePackageValidation>true</EnablePackageValidation>-->
+
+
 	</PropertyGroup>
 
 	<!-- Floors for the netstandard consumers (.NET Framework, Unity, pre-.NET 9 libraries): as low as the code allows,
