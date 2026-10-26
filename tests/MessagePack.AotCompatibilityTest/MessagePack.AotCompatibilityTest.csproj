@@ -6,7 +6,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
-		<!-- Unlike AotSmokeTest (which exercises only the AOT-safe surface at runtime),
+		<!-- Unlike MessagePack.Tests.NativeAot (which exercises the AOT-safe surface at runtime),
 		     this project exists purely for `dotnet publish`: TrimmerRootAssembly makes the
 		     ILC/trimmer treat every member of the libraries as referenced, so it analyzes
 		     the entire API surface and surfaces IL2xxx/IL3xxx warnings that the Roslyn
@@ -25,6 +25,8 @@
 		<TrimmerRootAssembly Include="MessagePack" />
 		<TrimmerRootAssembly Include="SerializerFoundation" />
 		<TrimmerRootAssembly Include="MessagePack.LZ4" />
+		<TrimmerRootAssembly Include="MessagePack.Zstandard" />
+		<TrimmerRootAssembly Include="MessagePack.UnityShims" />
 		<TrimmerRootAssembly Include="MessagePack.SignalR" />
 		<TrimmerRootAssembly Include="MessagePack.AspNetCoreMvcFormatter" />
 	</ItemGroup>
@@ -32,6 +34,8 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
 		<ProjectReference Include="..\..\src\MessagePack.LZ4\MessagePack.LZ4.csproj" />
+		<ProjectReference Include="..\..\src\MessagePack.Zstandard\MessagePack.Zstandard.csproj" />
+		<ProjectReference Include="..\..\src\MessagePack.UnityShims\MessagePack.UnityShims.csproj" />
 		<ProjectReference Include="..\..\src\MessagePack.SignalR\MessagePack.SignalR.csproj" />
 		<ProjectReference Include="..\..\src\MessagePack.AspNetCoreMvcFormatter\MessagePack.AspNetCoreMvcFormatter.csproj" />
 	</ItemGroup>

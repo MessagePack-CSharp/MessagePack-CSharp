@@ -5,13 +5,10 @@ on:
   push:
     branches:
       - master
-      - develop
       - v4
+  # Deliberately not filtered by branch: the filter matches the PR's base, so a PR into any other branch (a feature
+  # branch cut from v4, a future release branch) would get no checks at all and look clean rather than broken.
   pull_request:
-    branches:
-      - master
-      - develop
-      - v4
 
 jobs:
   build-dotnet:
@@ -50,7 +47,7 @@ jobs:
 
   # Native AOT: MessagePack.Tests.NativeAot runs under the JIT in the job above; only a publish runs ILC's whole-program
   # analysis (IL2xxx/IL3xxx) and the AOT-compiled tests themselves. MessagePack.AotCompatibilityTest roots every
-  # shipped assembly for the trimmer so the entire API surface is analyzed. IlcTreatWarningsAsErrors makes any IL warning
+  # IsAotCompatible shipped assembly (all but the netstandard2.0-only Annotations shim) for the trimmer so the entire API surface is analyzed. IlcTreatWarningsAsErrors makes any IL warning
   # fail the job (TreatWarningsAsErrors itself would also promote NuGet audit and analyzer warnings of every project).
   publish-aot:
     runs-on: ubuntu-24.04
