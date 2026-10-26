@@ -209,9 +209,8 @@ public class WritePrimitiveTests
     [Fact]
     public void StringPrimitive_DirectCall_MatchOracle()
     {
-        // the primitive standalone (no MessagePackWriter): caller provides the 3L+5 window.
-        // includes >= 65536 chars, which the Writer never routes here (it takes the
-        // exact-reservation path) but the primitive must handle for direct callers
+        // the primitive standalone (no write buffer): the caller provides the 3L+5 window, the same one
+        // buffer.WriteString reserves (GetMaxStringByteCount). >= 65536 chars covers the str32 header class.
         string?[] values =
         [
             null, "", "a", "こんにちは", new string('x', 20), new string('あ', 20),

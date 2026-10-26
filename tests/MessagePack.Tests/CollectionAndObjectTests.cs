@@ -63,15 +63,20 @@ public class CollectionAndObjectTests
     [Fact]
     public void Int32Array_SimdChunkEdges()
     {
-        // a fixint run that turns non-fixint exactly at every offset within a 16-lane chunk
-        for (int breakAt = 0; breakAt < 48; breakAt++)
+        // a fixint run (both ends of the range included) that turns non-fixint exactly at every offset within a
+        // 16-lane chunk; the breakers include the values just past each end of the fixint range, so a gate widened by
+        // one on either side fails here
+        foreach (var breaker in (int[])[100_000, 128, -33])
         {
-            var value = new int[48];
-            for (int i = 0; i < value.Length; i++) value[i] = i % 100; // fixint range
-            value[breakAt] = 100_000; // force a non-fixint lane
-            var ours = MessagePackSerializer.Serialize(value);
-            Assert.Equal(Oracle.Serialize(value), ours);
-            Assert.Equal(value, MessagePackSerializer.Deserialize<int[]>(ours));
+            for (int breakAt = 0; breakAt < 48; breakAt++)
+            {
+                var value = new int[48];
+                for (int i = 0; i < value.Length; i++) value[i] = (i % 3) switch { 0 => 127, 1 => -32, _ => i % 100 }; // fixint range
+                value[breakAt] = breaker; // force a non-fixint lane
+                var ours = MessagePackSerializer.Serialize(value);
+                Assert.Equal(Oracle.Serialize(value), ours);
+                Assert.Equal(value, MessagePackSerializer.Deserialize<int[]>(ours));
+            }
         }
     }
 
