@@ -57,6 +57,34 @@ public class GeneratedFormatterTests
     }
 
     [Fact]
+    public void StringMember_ChainSuppliedFormatter_MissesTheStockStringFastPath()
+    {
+        // string members call WriteString/ReadString directly when the field holds the stock StringFormatter; a
+        // chain-supplied one must still own every site: the write, the populate read, and the construction read
+        var options = new MessagePack.MessagePackSerializerOptions(new MessagePack.MessagePackFormatterResolver(
+            [MarkingStringFactory.Instance, MessagePackFormatterFactory.Default]));
+
+        var bytes = V4.Serialize(new GenStringPopulatePoco { A = "a", B = "b" }, options);
+        Assert.Equal("[\"~a\",\"~b\"]", V4.ConvertToJson(bytes));
+
+        var plain = V4.Serialize(new GenStringPopulatePoco { A = "a", B = "b" });
+        Assert.Equal("[\"a\",\"b\"]", V4.ConvertToJson(plain));
+
+        var populated = V4.Deserialize<GenStringPopulatePoco>(plain, options)!;
+        Assert.Equal("<a>", populated.A);
+        Assert.Equal("<b>", populated.B);
+
+        var constructed = V4.Deserialize<GenStringCtorPoco>(plain, options)!;
+        Assert.Equal("<a>", constructed.A);
+        Assert.Equal("<b>", constructed.B);
+
+        // and the stock chain takes the fast path to the same values the formatter would give
+        var stock = V4.Deserialize<GenStringCtorPoco>(plain)!;
+        Assert.Equal("a", stock.A);
+        Assert.Equal("b", stock.B);
+    }
+
+    [Fact]
     public void IntKey_ContiguousKeys()
     {
         AssertBytesAndRoundtrip(new GenIntKeyPoco { Id = 42, Name = "山岡士郎", Score = 98.5, Flag = true, Ticks = 5_000_000_000L });
@@ -476,6 +504,57 @@ public struct GenStructPoco
 {
     [V3::MessagePack.Key(0)] public int A { get; set; }
     [V3::MessagePack.Key(1)] public double B { get; set; }
+}
+
+// string members on both deserialize shapes: populate (settable, one non-nullable) and construction
+[V3::MessagePack.MessagePackObject]
+public class GenStringPopulatePoco
+{
+    [V3::MessagePack.Key(0)] public string? A { get; set; }
+    [V3::MessagePack.Key(1)] public string B { get; set; } = "";
+}
+
+[V3::MessagePack.MessagePackObject]
+public class GenStringCtorPoco
+{
+    public GenStringCtorPoco(string? a)
+    {
+        A = a;
+    }
+
+    [V3::MessagePack.Key(0)] public string? A { get; }
+    [V3::MessagePack.Key(1)] public string? B { get; init; }
+}
+
+// a string tier with its own wire: "~" prefixed on write, bracketed on read, so every site it owns is visible
+sealed partial class MarkingStringFactory : MessagePackFormatterFactory
+{
+    public static readonly MarkingStringFactory Instance = new MarkingStringFactory();
+
+    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(Type type)
+    {
+        return type == typeof(string) ? new MarkingStringFormatter<TWriteBuffer, TReadBuffer>() : null;
+    }
+}
+
+sealed class MarkingStringFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, string?>
+    where TWriteBuffer : struct, SerializerFoundation.IWriteBuffer, allows ref struct
+    where TReadBuffer : struct, SerializerFoundation.IReadBuffer, allows ref struct
+{
+    public void Initialize(MessagePackFormatterResolver resolver)
+    {
+    }
+
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, string? value)
+    {
+        buffer.WriteString(value is null ? null : "~" + value);
+    }
+
+    public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref string? value)
+    {
+        var read = buffer.ReadString();
+        value = read is null ? null : "<" + read + ">";
+    }
 }
 
 // the motivating custom string tier: same wire as the default, interned on read

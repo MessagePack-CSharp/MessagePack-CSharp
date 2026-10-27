@@ -723,6 +723,7 @@ static class ObjectParser
                 // ref struct buffers (CS1978): the formatter is object's, and the member is read and written as object
                 TypeName: entry.Type is IDynamicTypeSymbol ? "object?" : entry.Type.ToDisplayString(FullyQualifiedWithNullability),
                 IsDynamic: entry.Type is IDynamicTypeSymbol,
+                IsString: entry.Custom is null && entry.Type.SpecialType == SpecialType.System_String,
                 IntKey: entry.IntKey,
                 StringKey: entry.StringKey,
                 Direct: direct,

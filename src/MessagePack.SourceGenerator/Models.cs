@@ -18,6 +18,14 @@ namespace MessagePack.SourceGenerator;
 /// is the lost fused reservation rather than the callvirt: PGO devirtualizes the callsite,
 /// so hand-removing the dispatch buys nothing. An Initialize-time "is this the stock
 /// formatter" flag was measured and rejected; see DateTimeFormatterDispatchBenchmark.
+///
+/// That verdict needs PGO. Native AOT (and TieredPGO=0) never devirtualizes the field, so
+/// every member call stays an interface dispatch. String members, the most numerous on real
+/// payloads, therefore test their existing field for the sealed StringFormatter at the call
+/// site (no flag, no extra field) and call WriteString/ReadString directly on a hit; a
+/// chain-supplied string formatter misses the test and keeps its encoding. Measured on Answer
+/// (11 string members, .NET 10, against the unguarded shape): about -5% on both directions
+/// under Native AOT and TieredPGO=0, within 2% (noise) on the PGO JIT.
 /// </summary>
 public enum DirectKind
 {
@@ -116,7 +124,11 @@ public sealed record MemberModel(
     string? LegacyKeySuffix = null,
     // declared `dynamic`: TypeName is object?, and the serialize side casts the member value to object so no call
     // on it is a dynamic invocation
-    bool IsDynamic = false)
+    bool IsDynamic = false,
+    // declared string with no member-level [MessagePackFormatter]: it still rides the formatter field (the chain picks
+    // its encoding), but each call site tests the field for the stock StringFormatter and calls the buffer's
+    // WriteString/ReadString directly on a hit (see DirectKind)
+    bool IsString = false)
 {
     public string Id => this.UniqueId ?? this.Name;
 }

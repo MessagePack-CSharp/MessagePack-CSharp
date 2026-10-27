@@ -64,7 +64,8 @@ static class ObjectEmitter
             binaryPrimitives: "BinaryPrimitives",
             noInlining: "[MethodImpl(MethodImplOptions.NoInlining)]",
             writeBuffer: "IWriteBuffer",
-            readBuffer: "IReadBuffer");
+            readBuffer: "IReadBuffer",
+            stringFormatter: "Formatters.StringFormatter");
 
         public static readonly Names Qualified = new(
             formatter: "global::MessagePack.IMessagePackFormatter",
@@ -78,9 +79,10 @@ static class ObjectEmitter
             binaryPrimitives: "global::System.Buffers.Binary.BinaryPrimitives",
             noInlining: "[global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]",
             writeBuffer: "global::SerializerFoundation.IWriteBuffer",
-            readBuffer: "global::SerializerFoundation.IReadBuffer");
+            readBuffer: "global::SerializerFoundation.IReadBuffer",
+            stringFormatter: "global::MessagePack.Formatters.StringFormatter");
 
-        Names(string formatter, string resolver, string serializeState, string deserializeState, string exception, string helper, string primitives, string unsafeType, string binaryPrimitives, string noInlining, string writeBuffer, string readBuffer)
+        Names(string formatter, string resolver, string serializeState, string deserializeState, string exception, string helper, string primitives, string unsafeType, string binaryPrimitives, string noInlining, string writeBuffer, string readBuffer, string stringFormatter)
         {
             Formatter = formatter;
             Resolver = resolver;
@@ -94,6 +96,7 @@ static class ObjectEmitter
             NoInlining = noInlining;
             IWriteBuffer = writeBuffer;
             IReadBuffer = readBuffer;
+            StringFormatter = stringFormatter;
         }
 
         public string Formatter { get; }
@@ -109,6 +112,8 @@ static class ObjectEmitter
         public string NoInlining { get; }
         public string IWriteBuffer { get; }
         public string IReadBuffer { get; }
+        /// <summary>The stock string formatter a string member's field is tested against (reached through the parent MessagePack namespace in simple form).</summary>
+        public string StringFormatter { get; }
 
         /// <summary>The directives the simple names rely on; written inside the MessagePack.Generated block.</summary>
         public static void EmitUsings(CodeWriter writer, bool primitives)
@@ -500,6 +505,18 @@ static class ObjectEmitter
         {
             flush();
             var valueAccess = member.IsDynamic ? $"(object?){MemberAccess(member, "value")}" : MemberAccess(member, "value");
+            if (member.IsString)
+            {
+                using (writer.Block($"if ({IsStockString(member)})"))
+                {
+                    writer.Line($"buffer.WriteString({valueAccess});");
+                }
+                using (writer.Block("else"))
+                {
+                    writer.Line($"f{member.Id}.Serialize(ref buffer, ref state, {valueAccess});");
+                }
+                return;
+            }
             writer.Line($"f{member.Id}.Serialize(ref buffer, ref state, {valueAccess});");
             return;
         }
@@ -758,15 +775,32 @@ static class ObjectEmitter
         }
         if (member.Direct == DirectKind.None)
         {
+            if (member.IsString)
+            {
+                // the stock formatter's read is exactly buffer.ReadString(): the member's current value only matters to
+                // a chain-supplied formatter, which gets it through the else branch
+                using (writer.Block($"if ({IsStockString(member)})"))
+                {
+                    if (NeedsNullCheckOnPopulate(member))
+                    {
+                        writer.Line("var v = buffer.ReadString();");
+                        writer.Line($"if (validateNull && v is null) {{ ThrowNullValueForNonNullableMember(\"{member.Name}\"); }}");
+                        writer.Line($"{MemberAccess(member, "result")} = v;");
+                    }
+                    else
+                    {
+                        writer.Line($"{MemberAccess(member, "result")} = buffer.ReadString();");
+                    }
+                }
+                using (writer.Block("else"))
+                {
+                    EmitFormatterPopulate(writer, member);
+                }
+                return;
+            }
             using (writer.OpenScope())
             {
-                writer.Line($"{(member.IsDynamic ? "object?" : "var")} v = {MemberAccess(member, "result")};");
-                writer.Line($"f{member.Id}.Deserialize(ref buffer, ref state, ref v);");
-                if (NeedsNullCheckOnPopulate(member))
-                {
-                    writer.Line($"if (validateNull && v is null) {{ ThrowNullValueForNonNullableMember(\"{member.Name}\"); }}");
-                }
-                writer.Line($"{MemberAccess(member, "result")} = v;");
+                EmitFormatterPopulate(writer, member);
             }
             return;
         }
@@ -775,6 +809,21 @@ static class ObjectEmitter
             : $"{MemberAccess(member, "result")} = buffer.{Reader(member.Direct)}();");
     }
 
+    static void EmitFormatterPopulate(CodeWriter writer, MemberModel member)
+    {
+        writer.Line($"{(member.IsDynamic ? "object?" : "var")} v = {MemberAccess(member, "result")};");
+        writer.Line($"f{member.Id}.Deserialize(ref buffer, ref state, ref v);");
+        if (NeedsNullCheckOnPopulate(member))
+        {
+            writer.Line($"if (validateNull && v is null) {{ ThrowNullValueForNonNullableMember(\"{member.Name}\"); }}");
+        }
+        writer.Line($"{MemberAccess(member, "result")} = v;");
+    }
+
+    // a sealed type test on the existing field: no extra state, and on a hit the call is direct (inlinable) on every
+    // code generator, PGO or not (see DirectKind)
+    static string IsStockString(MemberModel member) => $"f{member.Id} is {N.StringFormatter}<TWriteBuffer, TReadBuffer>";
+
     static void EmitLocalRead(CodeWriter writer, MemberModel member)
     {
         if (IsSkippedOnConstruction(member))
@@ -782,11 +831,25 @@ static class ObjectEmitter
             writer.Line("buffer.Skip();");
             return;
         }
-        writer.Line(member.Direct == DirectKind.None
-            ? $"f{member.Id}.Deserialize(ref buffer, ref state, ref v_{member.Id});"
-            : member.DirectNullable
-                ? $"v_{member.Id} = buffer.TryReadNil() ? default({member.TypeName}) : buffer.{Reader(member.Direct)}();"
-                : $"v_{member.Id} = buffer.{Reader(member.Direct)}();");
+        if (member.Direct == DirectKind.None && member.IsString)
+        {
+            using (writer.Block($"if ({IsStockString(member)})"))
+            {
+                writer.Line($"v_{member.Id} = buffer.ReadString();");
+            }
+            using (writer.Block("else"))
+            {
+                writer.Line($"f{member.Id}.Deserialize(ref buffer, ref state, ref v_{member.Id});");
+            }
+        }
+        else
+        {
+            writer.Line(member.Direct == DirectKind.None
+                ? $"f{member.Id}.Deserialize(ref buffer, ref state, ref v_{member.Id});"
+                : member.DirectNullable
+                    ? $"v_{member.Id} = buffer.TryReadNil() ? default({member.TypeName}) : buffer.{Reader(member.Direct)}();"
+                    : $"v_{member.Id} = buffer.{Reader(member.Direct)}();");
+        }
         if (IsAssignedWhenPresent(member))
         {
             writer.Line($"has_{member.Id} = true;");

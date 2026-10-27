@@ -32,6 +32,8 @@ public class GeneratedNameShadowingTests
         public class SerializeState { }
         public class DeserializeState { }
         public class ModuleInitializer { }
+        public class Formatters { }
+        public class StringFormatter { }
         """;
 
     [Fact]
@@ -81,7 +83,7 @@ public class GeneratedNameShadowingTests
             {
             """ + Shadows + """
 
-                [MessagePackObject(true, AllowPrivate = true)] public partial class Hidden { [Key("secret")] private int secret = 7; [Key("shown")] public int Shown { get; set; } [IgnoreMember] public int Secret => secret; }
+                [MessagePackObject(true, AllowPrivate = true)] public partial class Hidden { [Key("secret")] private int secret = 7; [Key("shown")] public int Shown { get; set; } [Key("label")] public string? Label { get; set; } [IgnoreMember] public int Secret => secret; }
                 [MessagePackSerializable<Hidden[]>] public partial class Roots { }
             }
             """, withGenerator: true);
@@ -90,10 +92,12 @@ public class GeneratedNameShadowingTests
         var hidden = assembly.GetType("Ns.Hidden")!;
         var instance = Activator.CreateInstance(hidden)!;
         hidden.GetProperty("Shown")!.SetValue(instance, 1);
+        hidden.GetProperty("Label")!.SetValue(instance, "l");
         var bytes = V4.Serialize(hidden, instance, options);
-        Assert.Equal("{\"shown\":1,\"secret\":7}", V4.ConvertToJson(bytes));
+        Assert.Equal("{\"shown\":1,\"label\":\"l\",\"secret\":7}", V4.ConvertToJson(bytes));
         var back = V4.Deserialize(hidden, bytes, options)!;
         Assert.Equal(7, hidden.GetProperty("Secret")!.GetValue(back));
         Assert.Equal(1, hidden.GetProperty("Shown")!.GetValue(back));
+        Assert.Equal("l", hidden.GetProperty("Label")!.GetValue(back));
     }
 }
