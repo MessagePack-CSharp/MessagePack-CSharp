@@ -198,6 +198,7 @@ public static partial class MessagePackSerializer
     /// Serializes <paramref name="value"/> as <paramref name="type"/> straight into a write buffer without flushing, the non-generic form of
     /// <see cref="Serialize{TWriteBuffer, T}(ref TWriteBuffer, T, MessagePackSerializerOptions)"/> for embedding MessagePack inside another protocol.
     /// Options with a MessageProcessor are rejected, since the processor needs the complete message and this entry never sees it.
+    /// A type whose formatter comes from a netstandard-only library throws here instead of rerouting to the Compatible buffers as the whole-message entries do; multi-target that library with net9.0.
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]
@@ -221,6 +222,7 @@ public static partial class MessagePackSerializer
     /// Deserializes one value of <paramref name="type"/> straight from a read buffer and leaves the following bytes unconsumed, the non-generic form of
     /// <see cref="Deserialize{TReadBuffer, T}(ref TReadBuffer, MessagePackSerializerOptions)"/> for reading MessagePack embedded inside another protocol.
     /// Options with a MessageProcessor are rejected, since the processor needs the complete message and this entry never sees it.
+    /// A type whose formatter comes from a netstandard-only library throws here instead of rerouting to the Compatible buffers as the whole-message entries do; multi-target that library with net9.0.
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]

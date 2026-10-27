@@ -169,5 +169,27 @@ public class CompatibilityFallbackRoutingTests
         Assert.Contains("net9.0", ex.Message);
         Assert.Empty(fallbackTypes);
     }
+
+    [Fact]
+    public void RefBufferEntriesDoNotReroute()
+    {
+        // the caller chose its own buffer for speed; staging through the Compatible pair would silently defeat it
+        var options = MakeOptions(out var fallbackTypes);
+
+        var writeEx = Assert.Throws<InvalidOperationException>(() =>
+        {
+            var buffer = new BufferWriterWriteBuffer(new ArrayBufferWriter<byte>());
+            MessagePackSerializer.Serialize(ref buffer, new RoutedValue { X = 1 }, options);
+        });
+        Assert.Contains("netstandard2.1;net9.0", writeEx.Message);
+
+        var payload = MessagePackSerializer.Serialize(new RoutedValue { X = 1 }, options);
+        var readEx = Assert.Throws<InvalidOperationException>(() =>
+        {
+            var buffer = new ReadOnlySpanReadBuffer(payload);
+            MessagePackSerializer.Deserialize<ReadOnlySpanReadBuffer, RoutedValue>(ref buffer, options);
+        });
+        Assert.Contains("netstandard2.1;net9.0", readEx.Message);
+    }
 #endif
 }

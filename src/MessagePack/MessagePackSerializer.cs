@@ -140,6 +140,7 @@ public static partial class MessagePackSerializer
     /// <summary>
     /// Serializes <paramref name="value"/> straight into a write buffer without flushing, for embedding MessagePack inside another protocol.
     /// Options with a MessageProcessor are rejected, since the processor needs the complete message and this entry never sees it.
+    /// A type whose formatter comes from a netstandard-only library throws here instead of rerouting to the Compatible buffers as the whole-message entries do; multi-target that library with net9.0.
     /// </summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(MessagePackFormatterFactory.RequiresUnreferencedCodeMessage)]

@@ -448,7 +448,7 @@ internal sealed partial class CompatiblePairRequiredFormatter<TWriteBuffer, TRea
     InvalidOperationException Error()
     {
         return new InvalidOperationException(
-            $"Type '{typeof(T).FullName}' in {factoryType} can only be served over the Compatible (non-ref-struct) buffer pair (requested TWriteBuffer: {typeof(TWriteBuffer).FullName}, TReadBuffer: {typeof(TReadBuffer).FullName}): its formatter comes from a library compiled against a netstandard build of MessagePack. Serialize through the MessagePackSerializer entry points (which reroute automatically), or resolve with the Compatible buffer types directly. Multi-target that library with net9.0 for full speed.");
+            $"Type '{typeof(T).FullName}' in {factoryType} can only be served over the Compatible (non-ref-struct) buffer pair (requested TWriteBuffer: {typeof(TWriteBuffer).FullName}, TReadBuffer: {typeof(TReadBuffer).FullName}): its formatter comes from a library compiled against a netstandard build of MessagePack. Multi-target that library with net9.0 (for example <TargetFrameworks>netstandard2.1;net9.0</TargetFrameworks>). The ref-buffer entry points and direct resolution do not reroute, since staging through the Compatible pair would defeat the custom buffer; the byte[], IBufferWriter<byte>, Stream and ReadOnlySequence<byte> entry points do.");
     }
 }
 
