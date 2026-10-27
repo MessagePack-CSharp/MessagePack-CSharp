@@ -11,7 +11,8 @@ using MessagePack;
 // single-loop emission, unaffected by the change) is the drift control between the runs.
 //
 //   DeserializeFresh    - value=null entry: the construction loop, the hot case the split targets
-//   DeserializePopulate - caller-supplied instance: the populate loop (init-only members skip)
+//   DeserializePopulate - caller-supplied instance: the populate loop (init-only members skip); since 5cc6bc6f a
+//                         construction-shape type is constructed afresh even here, so this row now runs the fresh path
 //   DeserializeControl  - the settable twin, must not move between runs
 [MessagePackObject(true)]
 public class ConstructionOrder
@@ -82,12 +83,13 @@ public class ConstructionMapDeserializeBenchmark
             throw new InvalidOperationException("ConstructionOrder fresh roundtrip mismatch");
         }
 
-        // populate semantics: a caller-supplied instance is kept by reference, and get-only
-        // (construction-only) members are unreachable through setters, so they must survive unchanged
+        // populate semantics (PopulateContractTests, since 5cc6bc6f): a construction-shape type is always constructed
+        // afresh, so the caller-supplied instance is replaced and left untouched
         var target = new ConstructionOrder("KEEP", -1, -2, "KEEP", -3, false, "KEEP", -4);
         var byRef = target;
         MessagePackSerializer.Deserialize(payload, ref byRef);
-        if (!ReferenceEquals(byRef, target) || target.OrderId != "KEEP" || target.Quantity != -1)
+        if (ReferenceEquals(byRef, target) || byRef!.OrderId != expected.OrderId || byRef.Priority != expected.Priority
+            || target.OrderId != "KEEP" || target.Quantity != -1)
         {
             throw new InvalidOperationException("ConstructionOrder populate semantics violated");
         }

@@ -1038,7 +1038,10 @@ static bool VerifyDictSlotWrite()
                 Console.WriteLine($"NG DictSlotWrite {name} n={n} fresh");
             }
 
-            // populate: stale entries must vanish, instance must be reused
+            // populate: stale entries must vanish, instance must be reused. The shipping formatter follows the
+            // hash-flooding rule (since eb77e720, README): a default-comparer target whose key type has a resistant
+            // comparer (int here) is replaced by a fresh dictionary; string on .NET 9+ has none, so it is reused.
+            // The Indexer/SlotCondClear rows predate that rule and always reuse
             var intTarget = new Dictionary<int, int> { [-999] = 1, [-998] = 2 };
             var intPopulated = intTarget;
             MessagePack.MessagePackSerializer.Deserialize(intPayload, ref intPopulated, intOptions);
@@ -1048,9 +1051,9 @@ static bool VerifyDictSlotWrite()
             var strTarget = new Dictionary<string, string> { ["stale"] = "x" };
             var strPopulated = strTarget;
             MessagePack.MessagePackSerializer.Deserialize(strPayload, ref strPopulated, strOptions);
-            if (!ReferenceEquals(intPopulated, intTarget) || !DictEquals(intPopulated!, ints)
-                || !ReferenceEquals(bigPopulated, bigTarget) || !DictEquals(bigPopulated!, bigs)
-                || !ReferenceEquals(strPopulated, strTarget) || !DictEquals(strPopulated!, strs))
+            if (ReferenceEquals(intPopulated, intTarget) != ExpectReuse(name, intTarget) || !DictEquals(intPopulated!, ints)
+                || ReferenceEquals(bigPopulated, bigTarget) != ExpectReuse(name, bigTarget) || !DictEquals(bigPopulated!, bigs)
+                || ReferenceEquals(strPopulated, strTarget) != ExpectReuse(name, strTarget) || !DictEquals(strPopulated!, strs))
             {
                 ok = false;
                 Console.WriteLine($"NG DictSlotWrite {name} n={n} populate");
@@ -1085,6 +1088,11 @@ static bool VerifyDictSlotWrite()
         }
     }
     return ok;
+
+    static bool ExpectReuse<TKey, TValue>(string name, Dictionary<TKey, TValue> target)
+        where TKey : notnull
+        => name != "Shipping"
+            || !MessagePack.HashFloodingResistantEqualityComparer.ReplacesDefault(MessagePack.HashFloodingResistantEqualityComparer.Get<TKey>(), target.Comparer);
 
     static bool DictEquals<TKey, TValue>(Dictionary<TKey, TValue> actual, Dictionary<TKey, TValue> expected)
         where TKey : notnull
