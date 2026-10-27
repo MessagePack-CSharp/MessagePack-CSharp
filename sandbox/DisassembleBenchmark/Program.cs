@@ -36,6 +36,7 @@ if (args.Contains("--verify"))
     ok &= VerifyInt32WideWeave();
     ok &= VerifyLadderWideWeave();
     ok &= VerifyMapKeyMatch();
+    ok &= VerifyMapKeyCompareFold();
     ok &= VerifyMapKeyEmitShape();
     ok &= VerifyArrayDeserializeShape();
     ok &= VerifyCursorReadProbe();
@@ -637,6 +638,22 @@ static bool VerifyMapKeyMatch()
     catch (Exception ex)
     {
         Console.WriteLine($"NG MapKeyMatch: {ex.Message}");
+        return false;
+    }
+}
+
+// the && chain and XOR-OR fold matchers must agree with the string oracle on adversarial keys (truncations, NUL
+// paddings, every single-byte flip, extensions) for both key sets, and on every generated distribution
+static bool VerifyMapKeyCompareFold()
+{
+    try
+    {
+        MapKeyCompareFoldBenchmark.VerifyCandidates();
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"NG MapKeyCompareFold: {ex.Message}");
         return false;
     }
 }

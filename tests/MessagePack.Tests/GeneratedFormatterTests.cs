@@ -198,6 +198,59 @@ public class GeneratedFormatterTests
     }
 
     [Fact]
+    public void StringKey_FoldedMultiChunkCompare()
+    {
+        AssertBytesAndRoundtrip(new GenKeyFoldPoco
+        {
+            Abc = 1,
+            Email = 2,
+            Address = 3,
+            CreatedAtUtc = 4,
+            UpdatedAtUtc = 5,
+            ShippingLine1 = 6,
+            ShippingLine2 = 7,
+        });
+        AssertBytesAndRoundtrip(new GenKeyFoldPoco());
+    }
+
+    // each near-miss differs from a member in exactly one read of the folded compare, so a fold that dropped or
+    // mis-shifted any term would bind it to that member (a duplicate-key throw or a clobbered value)
+    [Fact]
+    public void StringKey_FoldedMultiChunkCompare_NearMissKeysAreSkipped()
+    {
+        var newer = new GenKeyFoldPocoV2
+        {
+            Abc = 1,
+            Abd = -1,
+            Xbc = -2,
+            Email = 2,
+            EmaiL = -3,
+            Fmail = -4,
+            Address = 3,
+            AddresS = -5,
+            Bddress = -6,
+            CreatedAtUtc = 4,
+            CreatedAtUtcLast = -7,
+            CreatedAtUtcMiddle = -8,
+            UpdatedAtUtc = 5,
+            ShippingLine1 = 6,
+            ShippingLine3 = -9,
+            ShippingMiddle = -10,
+            ShippingLine2 = 7,
+        };
+        var bytes = Oracle.Serialize(newer);
+
+        var older = V4.Deserialize<GenKeyFoldPoco>(bytes)!;
+        Assert.Equal(1, older.Abc);
+        Assert.Equal(2, older.Email);
+        Assert.Equal(3, older.Address);
+        Assert.Equal(4, older.CreatedAtUtc);
+        Assert.Equal(5, older.UpdatedAtUtc);
+        Assert.Equal(6, older.ShippingLine1);
+        Assert.Equal(7, older.ShippingLine2);
+    }
+
+    [Fact]
     public void Nested_FormatterFieldsResolveThroughDefaultChain()
     {
         var value = new GenNestedPoco
@@ -487,6 +540,47 @@ public class GenKeyBucketPocoV2
     [V3::MessagePack.Key("createdAt2")] public long CreatedAt2 { get; set; }
     [V3::MessagePack.Key("createdAt1")] public long CreatedAt1 { get; set; }
     [V3::MessagePack.Key("aVeryLongMemberName")] public string? LongName { get; set; }
+}
+
+// every key needs two or more reads after the bucket dispatch, so its compare is the XOR-OR fold, at each read width:
+// ushort (abc: [0,2) [1,3)), uint (email: [0,4) [1,5); address: [0,4) [3,7)), and ulong inside a shared bucket, both
+// with distinct first chunks (21 bytes: [0,8) [8,16) [13,21)) and with a shared first chunk that leaves two folded
+// compares in one case (20 bytes: [0,8) [8,16) [12,20))
+[V3::MessagePack.MessagePackObject]
+public class GenKeyFoldPoco
+{
+    [V3::MessagePack.Key("abc")] public int Abc { get; set; }
+    [V3::MessagePack.Key("email")] public int Email { get; set; }
+    [V3::MessagePack.Key("address")] public int Address { get; set; }
+    [V3::MessagePack.Key("createdAtUtcTimestamp")] public int CreatedAtUtc { get; set; }
+    [V3::MessagePack.Key("updatedAtUtcTimestamp")] public int UpdatedAtUtc { get; set; }
+    [V3::MessagePack.Key("shippingAddressLine1")] public int ShippingLine1 { get; set; }
+    [V3::MessagePack.Key("shippingAddressLine2")] public int ShippingLine2 { get; set; }
+}
+
+// the newer-writer twin: each extra key matches a GenKeyFoldPoco member in every read but one, the first or the last
+// term of that member's fold (the 3/5/7-byte keys fold all their reads; the 20/21-byte ones fold the two reads after
+// the first-chunk switch)
+[V3::MessagePack.MessagePackObject]
+public class GenKeyFoldPocoV2
+{
+    [V3::MessagePack.Key("abc")] public int Abc { get; set; }
+    [V3::MessagePack.Key("abd")] public int Abd { get; set; }
+    [V3::MessagePack.Key("xbc")] public int Xbc { get; set; }
+    [V3::MessagePack.Key("email")] public int Email { get; set; }
+    [V3::MessagePack.Key("emaiL")] public int EmaiL { get; set; }
+    [V3::MessagePack.Key("fmail")] public int Fmail { get; set; }
+    [V3::MessagePack.Key("address")] public int Address { get; set; }
+    [V3::MessagePack.Key("addresS")] public int AddresS { get; set; }
+    [V3::MessagePack.Key("bddress")] public int Bddress { get; set; }
+    [V3::MessagePack.Key("createdAtUtcTimestamp")] public int CreatedAtUtc { get; set; }
+    [V3::MessagePack.Key("createdAtUtcTimestamq")] public int CreatedAtUtcLast { get; set; }
+    [V3::MessagePack.Key("createdAtUtXTimestamp")] public int CreatedAtUtcMiddle { get; set; }
+    [V3::MessagePack.Key("updatedAtUtcTimestamp")] public int UpdatedAtUtc { get; set; }
+    [V3::MessagePack.Key("shippingAddressLine1")] public int ShippingLine1 { get; set; }
+    [V3::MessagePack.Key("shippingAddressLine3")] public int ShippingLine3 { get; set; }
+    [V3::MessagePack.Key("shippingAdXressLine1")] public int ShippingMiddle { get; set; }
+    [V3::MessagePack.Key("shippingAddressLine2")] public int ShippingLine2 { get; set; }
 }
 
 [V3::MessagePack.MessagePackObject]

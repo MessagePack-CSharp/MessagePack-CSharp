@@ -1167,8 +1167,20 @@ static class ObjectEmitter
         return reads;
     }
 
-    static string KeyCondition(byte[] utf8, List<(int Offset, int Width)> reads, int fromRead) =>
-        string.Join(" && ", reads.Skip(fromRead).Select(r => $"{KeyReadExpr(r.Offset, r.Width)} == {KeyConstLiteral(KeyConst(utf8, r.Offset, r.Width), r.Width)}"));
+    // two or more remaining reads fold into one zero test, ((a ^ C1) | (b ^ C2) | ...) == 0: one branch instead of an
+    // && chain's one per read (MapKeyCompareFoldBenchmark: 0.92x on 19-26 byte keys, never slower, near-miss keys
+    // included). Every read of a key shares one width; a ushort xor promotes to int, so it is cast back to uint.
+    static string KeyCondition(byte[] utf8, List<(int Offset, int Width)> reads, int fromRead)
+    {
+        var rest = reads.Skip(fromRead).ToList();
+        if (rest.Count == 1)
+        {
+            var (offset, width) = rest[0];
+            return $"{KeyReadExpr(offset, width)} == {KeyConstLiteral(KeyConst(utf8, offset, width), width)}";
+        }
+        var cast = rest[0].Width == 2 ? "(uint)" : "";
+        return "(" + string.Join(" | ", rest.Select(r => $"{cast}({KeyReadExpr(r.Offset, r.Width)} ^ {KeyConstLiteral(KeyConst(utf8, r.Offset, r.Width), r.Width)})")) + ") == 0";
+    }
 
     static ulong KeyConst(byte[] utf8, int offset, int width)
     {
