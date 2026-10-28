@@ -196,6 +196,25 @@ namespace MessagePack.Unity
             }
         }
 
+        // the key arrays of AnimationCurve and Gradient: the header guards bound the count by the bytes of the message,
+        // but a key is 8-32 bytes in memory behind a 1-byte fixarray(0), so the array starts at what
+        // ReadBufferExtensions.PresizeCapacity justifies and EnsureSlot doubles it as the keys arrive, ending at exactly
+        // count (the same path as the core collections, see CollectionReads)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T[] NewKeyArray<T>(int count, long bytesRemaining)
+        {
+            return new T[ReadBufferExtensions.PresizeCapacity<T>(count, bytesRemaining)];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void EnsureSlot<T>(ref T[] array, int index, int count)
+        {
+            if (index == array.Length)
+            {
+                Array.Resize(ref array, (int)Math.Min(2L * Math.Max(array.Length, 1), count));
+            }
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNilForStruct()
         {
@@ -952,11 +971,12 @@ namespace MessagePack.Unity
                 var keyCount = UnityCodec.ReadNestedArrayHeader(ref buffer, ref state);
                 if (keyCount >= 0)
                 {
-                    keys = new Keyframe[keyCount];
+                    keys = UnityCodec.NewKeyArray<Keyframe>(keyCount, buffer.BytesRemaining);
                     Span<float> v = stackalloc float[4];
                     for (var i = 0; i < keyCount; i++)
                     {
                         UnityCodec.ReadSingles(ref buffer, ref state, v);
+                        UnityCodec.EnsureSlot(ref keys, i, keyCount);
                         keys[i] = new Keyframe(v[0], v[1], v[2], v[3]);
                     }
                 }
@@ -1044,7 +1064,7 @@ namespace MessagePack.Unity
                 var n = UnityCodec.ReadNestedArrayHeader(ref buffer, ref state);
                 if (n >= 0)
                 {
-                    colorKeys = new GradientColorKey[n];
+                    colorKeys = UnityCodec.NewKeyArray<GradientColorKey>(n, buffer.BytesRemaining);
                     Span<float> v = stackalloc float[4];
                     for (var i = 0; i < n; i++)
                     {
@@ -1062,7 +1082,8 @@ namespace MessagePack.Unity
                         }
                         if (keyCount > 1) time = buffer.ReadSingle();
                         UnityCodec.SkipRest(ref buffer, keyCount, 2);
-                        colorKeys[i] = new GradientColorKey(color, time);
+                        UnityCodec.EnsureSlot(ref colorKeys, i, n);
+                        colorKeys[i] =new GradientColorKey(color, time);
                     }
                 }
             }
@@ -1071,11 +1092,12 @@ namespace MessagePack.Unity
                 var n = UnityCodec.ReadNestedArrayHeader(ref buffer, ref state);
                 if (n >= 0)
                 {
-                    alphaKeys = new GradientAlphaKey[n];
+                    alphaKeys = UnityCodec.NewKeyArray<GradientAlphaKey>(n, buffer.BytesRemaining);
                     Span<float> v = stackalloc float[2];
                     for (var i = 0; i < n; i++)
                     {
                         UnityCodec.ReadSingles(ref buffer, ref state, v);
+                        UnityCodec.EnsureSlot(ref alphaKeys, i, n);
                         alphaKeys[i] = new GradientAlphaKey(v[0], v[1]);
                     }
                 }

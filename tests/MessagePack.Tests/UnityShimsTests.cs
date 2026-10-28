@@ -193,6 +193,59 @@ public class UnityShimsTests
         Assert.Equal(new GradientColorKey(new Color(0f, 0f, 0f, 0f), 1f), color.colorKeys[1]);
     }
 
+    // [array32(one per remaining byte)] then zero filler: the claim passes the byte guards, the first key (a fixint
+    // where a fixarray is expected) is rejected. Sized from the header, the key array was 16-20x the payload.
+    static byte[] KeyArrayBomb(int payloadLength = 1_000_006)
+    {
+        var bytes = new byte[payloadLength];
+        bytes[0] = MessagePackCode.MinFixArray | 1;
+        bytes[1] = MessagePackCode.Array32;
+        BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(2), (uint)(payloadLength - 6));
+        return bytes;
+    }
+
+    static void AssertAllocationBounded(byte[] payload, Func<byte[], object?> deserialize)
+    {
+        Assert.Null(deserialize([MessagePackCode.Nil])); // warms the formatter chain up, so the measurement is the payload alone
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var ex = Record.Exception(() => deserialize(payload));
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.IsType<MessagePackSerializationException>(ex);
+        Assert.True(allocated < 10L * payload.Length, $"rejected input allocated {allocated:N0} bytes for a {payload.Length:N0} byte payload (sizeof amplification not capped)");
+    }
+
+    [Fact]
+    public void KeyArrays_LyingHeader_AllocateAtMostEightTimesThePayload()
+    {
+        AssertAllocationBounded(KeyArrayBomb(), bytes => V4.Deserialize<AnimationCurve>(bytes, Options));
+        AssertAllocationBounded(KeyArrayBomb(), bytes => V4.Deserialize<Gradient>(bytes, Options));
+    }
+
+    [Fact]
+    public void KeyArrays_GrowingPath_ReadsBackExactly()
+    {
+        // fixarray(0) keys: 1 wire byte for 16-20 in memory, past the 8x cap, so the arrays grow while reading and
+        // must end at exactly the declared count with the last key in place
+        const int count = 70_001;
+        var curveBytes = new byte[1 + 5 + count];
+        curveBytes[0] = MessagePackCode.MinFixArray | 1;
+        curveBytes[1] = MessagePackCode.Array32;
+        BinaryPrimitives.WriteUInt32BigEndian(curveBytes.AsSpan(2), count);
+        curveBytes.AsSpan(6).Fill(MessagePackCode.MinFixArray);
+        var last = V4.Serialize(new Keyframe(1f, 2f, 3f, 4f), Options);
+        var curve = V4.Deserialize<AnimationCurve>(Concat(curveBytes.AsSpan(0, curveBytes.Length - 1).ToArray(), last), Options)!;
+        Assert.Equal(count, curve.keys.Length);
+        Assert.Equal(default, curve.keys[0]);
+        Assert.Equal(new Keyframe(1f, 2f, 3f, 4f), curve.keys[count - 1]);
+
+        var gradientBytes = curveBytes.ToArray();
+        var gradient = V4.Deserialize<Gradient>(Concat(gradientBytes.AsSpan(0, gradientBytes.Length - 1).ToArray(), [0x92, 0x90, 0xca, 0x3f, 0x80, 0x00, 0x00]), Options)!;
+        Assert.Equal(count, gradient.colorKeys.Length);
+        Assert.Equal(new GradientColorKey(default, 1f), gradient.colorKeys[count - 1]);
+    }
+
     [Fact]
     public void Roundtrip_EveryType()
     {
