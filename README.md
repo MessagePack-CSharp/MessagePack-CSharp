@@ -251,6 +251,49 @@ The generator supplies the buffer constraints only when the formatter declares n
 
 A formatter is attached either with `[MessagePackFormatter(typeof(...))]` on the type (an open generic formatter, or a `MessagePackFormatterFactory` for anything that needs arguments or serves several types) or by putting a factory in front of the chain. When a formatter calls into another formatter it brackets the call with `state.Enter()` / `state.Exit()` (an analyzer enforces it). Nested formatters come from `resolver.GetFormatter<TWriteBuffer, TReadBuffer, TNested>()` inside `Initialize`.
 
+A type-level attribute needs no factory: the source generator registers it, and the built-in chains consult those registrations first (the type's assembly must be built with the generator; without it the type fails with a message naming the attribute). For example, a type that keeps a str payload as its UTF-8 bytes instead of decoding it:
+
+```csharp
+[MessagePackFormatter(typeof(Utf8StringFormatter<,>))]
+public readonly struct Utf8String(ReadOnlyMemory<byte> utf8Bytes)
+{
+    public ReadOnlyMemory<byte> Memory => utf8Bytes;
+    public ReadOnlySpan<byte> Span => utf8Bytes.Span;
+
+    public override string ToString() => Encoding.UTF8.GetString(Span);
+}
+
+public sealed partial class Utf8StringFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Utf8String>
+{
+    public void Initialize(MessagePackFormatterResolver resolver) { }
+
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Utf8String value)
+    {
+        buffer.WriteString(value.Span); // writes the bytes as they are; the caller guarantees valid UTF-8
+    }
+
+    public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Utf8String value)
+    {
+        if (buffer.TryReadNil())
+        {
+            value = default;
+            return;
+        }
+        var byteCount = buffer.ReadStringHeader(); // advances past the header only, and rejects a count larger than the remaining data
+        if (byteCount == 0)
+        {
+            value = default;
+            return;
+        }
+        // copy out: the read buffer may be pooled, so a span over it must not outlive the call
+        var bytes = GC.AllocateUninitializedArray<byte>(byteCount);
+        buffer.CopyTo(bytes);
+        buffer.Advance(byteCount);
+        value = new Utf8String(bytes);
+    }
+}
+```
+
 The buffer is valid only for the duration of the call that received it: use it through the `ref` parameter and never copy it into a local, a field, a static or a box. On netstandard the buffers are plain structs over pinned or pooled memory (a `ref struct` cannot be a type argument there), so a copy that outlives the call reads memory that has been moved, returned to the pool or popped off the stack, and a copied write buffer returns its pooled array twice. SerializerFoundation's SF002 analyzer (an error, flowing to your project with the MessagePack package) reports such copies; a formatter compiled without it, or with it suppressed, is not checked at run time.
 
 A factory is written once for every target framework. On `net9.0` and later the base class has a virtual generic `CreateFormatter<TWriteBuffer, TReadBuffer>(Type)` to override; the netstandard builds have no such member, so the same method is declared there without `override` and with the buffer constraints spelled out. The `Type`-based `CreateFormatter(Type, Type, Type)` is abstract on every target: a `partial` factory that writes the generic method gets it generated (the Type-based call maps the buffer types back onto the generic one), otherwise write it yourself.

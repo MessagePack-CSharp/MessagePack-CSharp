@@ -6,6 +6,7 @@ using SerializerFoundation.CodeAnalysis;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Security.Principal;
+using System.Text;
 using System.Text.Json.Serialization;
 
 
@@ -517,3 +518,46 @@ namespace Huga
 }
 
 
+[MessagePackFormatter(typeof(Utf8StringFormatter<,>))]
+public readonly struct Utf8String(ReadOnlyMemory<byte> utf8bytes)
+{
+    public ReadOnlyMemory<byte> Memory => utf8bytes;
+    public ReadOnlySpan<byte> Span => utf8bytes.Span;
+
+    public override string ToString() => Encoding.UTF8.GetString(Span);
+}
+
+public partial class Utf8StringFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Utf8String>
+{
+    public void Initialize(MessagePackFormatterResolver resolver)
+    {
+    }
+
+    public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Utf8String value)
+    {
+        buffer.WriteString(value.Span);
+    }
+
+    public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Utf8String value)
+    {
+        if (buffer.TryReadNil()) // nil as empty-string
+        {
+            value = default;
+            return;
+        }
+
+        var byteCount = buffer.ReadStringHeader();
+        if (byteCount == 0)
+        {
+            value = default;
+            return;
+        }
+
+        // keep the UTF-8 bytes as they are, no decoding; copy because the read buffer may be pooled
+        var bytes = GC.AllocateUninitializedArray<byte>(byteCount);
+        buffer.CopyTo(bytes);
+        buffer.Advance(byteCount);
+
+        value = new Utf8String(bytes);
+    }
+}
