@@ -521,6 +521,8 @@ namespace Huga
 [MessagePackFormatter(typeof(Utf8StringFormatter<,>))]
 public readonly struct Utf8String(ReadOnlyMemory<byte> utf8bytes)
 {
+    public Utf8String(string value) : this(Encoding.UTF8.GetBytes(value)) { }
+
     public ReadOnlyMemory<byte> Memory => utf8bytes;
     public ReadOnlySpan<byte> Span => utf8bytes.Span;
 

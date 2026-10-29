@@ -257,6 +257,8 @@ A type-level attribute needs no factory: the source generator registers it, and 
 [MessagePackFormatter(typeof(Utf8StringFormatter<,>))]
 public readonly struct Utf8String(ReadOnlyMemory<byte> utf8Bytes)
 {
+    public Utf8String(string value) : this(Encoding.UTF8.GetBytes(value)) { }
+
     public ReadOnlyMemory<byte> Memory => utf8Bytes;
     public ReadOnlySpan<byte> Span => utf8Bytes.Span;
 
