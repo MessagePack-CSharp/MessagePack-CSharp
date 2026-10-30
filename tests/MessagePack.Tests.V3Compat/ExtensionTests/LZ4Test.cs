@@ -15,6 +15,10 @@ using Xunit;
 
 namespace MessagePack.Tests.ExtensionTests
 {
+    // V3COMPAT-EDIT: v4 declares MessagePack.MessagePackReader / MessagePackWriter, which shadow the global aliases inside namespace MessagePack; these restore the v3 oracle types (V3OracleAliases.cs)
+    using MessagePackReader = V3::MessagePack.MessagePackReader;
+    using MessagePackWriter = V3::MessagePack.MessagePackWriter;
+
     public class LZ4Test
     {
         private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Default.WithCompression(MessagePackCompression.Lz4Block);

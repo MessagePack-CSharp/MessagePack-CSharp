@@ -163,13 +163,14 @@ public static partial class MessagePackSerializer
         options.Resolver.GetFormatter<TWriteBuffer, ReadOnlySpanReadBuffer, T>().Serialize(ref buffer, ref state, value);
     }
 
+#endif
+
+    // also reached from MessagePackWriter and MessagePackReader, which embed values the same way
     [MethodImpl(MethodImplOptions.NoInlining)]
     internal static void ThrowMessageProcessorNotApplicable()
     {
         throw new ArgumentException("The buffer-level entry cannot apply the options' MessageProcessor; the processor needs the complete message, which this entry never sees. Use a whole-message entry such as byte[] or IBufferWriter<byte>, or pass options without a MessageProcessor.", "options");
     }
-
-#endif
 
     [SkipLocalsInit]
     static void SerializeEncoded<T>(IBufferWriter<byte> output, T value, MessagePackSerializerOptions options, MessagePackMessageProcessor processor, ref SerializeState state)

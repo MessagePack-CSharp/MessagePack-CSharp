@@ -1,6 +1,8 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+extern alias V3;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,6 +14,10 @@ using Xunit;
 
 namespace MessagePack.Tests
 {
+    // V3COMPAT-EDIT: v4 declares MessagePack.MessagePackReader / MessagePackWriter, which shadow the global aliases inside namespace MessagePack; these restore the v3 oracle types (V3OracleAliases.cs)
+    using MessagePackReader = V3::MessagePack.MessagePackReader;
+    using MessagePackWriter = V3::MessagePack.MessagePackWriter;
+
     public class ToJsonTest
     {
         private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Default.WithCompression(MessagePackCompression.Lz4Block);

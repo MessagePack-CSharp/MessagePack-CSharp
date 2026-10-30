@@ -5,6 +5,8 @@
 #define DYNAMIC_GENERATION
 #endif
 
+extern alias V3;
+
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -23,6 +25,10 @@ using Xunit;
 
 namespace MessagePack.Tests
 {
+    // V3COMPAT-EDIT: v4 declares MessagePack.MessagePackReader / MessagePackWriter, which shadow the global aliases inside namespace MessagePack; these restore the v3 oracle types (V3OracleAliases.cs)
+    using MessagePackReader = V3::MessagePack.MessagePackReader;
+    using MessagePackWriter = V3::MessagePack.MessagePackWriter;
+
     public class MessagePackSerializerTest
     {
         [Fact]
@@ -209,7 +215,7 @@ namespace MessagePack.Tests
             Assert.Equal(3, await MessagePackSerializer.DeserializeAsync<int>(stream));
         }
 
-#if V3COMPAT_EXCLUDED // V3COMPAT-EDIT: hand-built nested payloads via v3 MessagePackWriter; v4 has no public writer struct
+#if V3COMPAT_EXCLUDED // V3COMPAT-EDIT: hand-built nested payloads checked against v3's WithSecurity depth limit; v4's is MaxDepth on the options
         [Fact]
         [Trait("CWE", "674")]
         public void StackDepthCheck_ConvertToJsonTypelessExtension()

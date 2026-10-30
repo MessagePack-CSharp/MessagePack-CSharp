@@ -242,6 +242,19 @@ public static partial class MessagePackSerializer
 
 #endif
 
+    // the Type-based members of MessagePackWriter and MessagePackReader, which run on every target
+    internal static void SerializeToWriter(Type type, ref MessagePackWriter writer, object? value, MessagePackSerializerOptions options)
+    {
+        var entry = GetNonGenericEntry(type);
+        ValidateValue(type, value);
+        entry.Serialize(ref writer, value, options);
+    }
+
+    internal static object? DeserializeFromReader(Type type, ref MessagePackReader reader, MessagePackSerializerOptions options)
+    {
+        return GetNonGenericEntry(type).Deserialize(ref reader, options);
+    }
+
     // API misuse (a value that is not an instance of the declared type) throws ArgumentException here, before any
     // output is written. Malformed data keeps throwing MessagePackSerializationException from the entries, per the
     // exception policy.
@@ -495,6 +508,8 @@ public static partial class MessagePackSerializer
         public abstract Task SerializeAsync(Stream stream, object? value, MessagePackSerializerOptions options, CancellationToken cancellationToken);
         public abstract ValueTask<object?> DeserializeAsync(PipeReader pipeReader, MessagePackSerializerOptions options, CancellationToken cancellationToken);
         public abstract ValueTask<object?> DeserializeAsync(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken);
+        public abstract void Serialize(ref MessagePackWriter writer, object? value, MessagePackSerializerOptions options);
+        public abstract object? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options);
 #if NET9_0_OR_GREATER
         public abstract void Serialize<TWriteBuffer>(ref TWriteBuffer buffer, object? value, MessagePackSerializerOptions options)
             where TWriteBuffer : struct, IWriteBuffer, allows ref struct;
@@ -570,6 +585,16 @@ public static partial class MessagePackSerializer
         public override async ValueTask<object?> DeserializeAsync(PipeReader pipeReader, MessagePackSerializerOptions options, CancellationToken cancellationToken)
         {
             return Box(await MessagePackSerializer.DeserializeAsync<T>(pipeReader, options, cancellationToken).ConfigureAwait(false));
+        }
+
+        public override void Serialize(ref MessagePackWriter writer, object? value, MessagePackSerializerOptions options)
+        {
+            writer.Serialize<T>((T)value!, options);
+        }
+
+        public override object? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return Box(reader.Deserialize<T>(options));
         }
 
 #if NET9_0_OR_GREATER

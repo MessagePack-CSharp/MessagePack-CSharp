@@ -208,7 +208,7 @@ The expensive operations (formatter construction, reflection) are isolated in th
 
 ### 4. Custom formatters
 
-`MessagePackWriter` and `MessagePackReader` are removed. The formatter interface is generic over the buffers, and the reader/writer structs are replaced by extension methods on the buffer:
+Formatters no longer take `MessagePackWriter` and `MessagePackReader`. The formatter interface is generic over the buffers, and the token methods are extension methods on the buffer (code that builds a message by hand outside a formatter keeps the two types, with v4's method names: see [MessagePackWriter / MessagePackReader](#messagepackwriter--messagepackreader)):
 
 ```csharp
 // v3
@@ -465,6 +465,30 @@ var bytes = MessagePackSerializer.Serialize(packet); // includes the members the
 ```
 
 The packet replays bytes verbatim, so it cannot carry circular-reference wire: a captured value that contains a back-reference is rejected on deserialization (it would point at a different instance once replayed), and a type cannot combine `AllowCircularReferences` with a `MessagePackUnknownMembers` member (MsgPack015).
+
+### MessagePackWriter / MessagePackReader
+
+Builds or takes apart a message by hand outside a formatter, such as a protocol envelope around serialized values. The token methods are the ones formatters call on their buffer, `Serialize` / `Deserialize` embed one value through its formatter, and both types are available on every target framework, Unity included.
+
+```csharp
+using var writer = new MessagePackWriter();
+writer.WriteArrayHeader(3);
+writer.WriteString("Add");
+writer.WriteInt32(requestId);
+writer.Serialize(arguments, options);
+byte[] bytes = writer.ToArray(); // or writer.WriteTo(span) / writer.WriteTo(bufferWriter) / writer.WriteTo(stream)
+
+using var reader = new MessagePackReader(bytes); // ReadOnlyMemory<byte>, ReadOnlySequence<byte>, or ReadOnlySpan<byte> on net9.0 and later
+var count = reader.ReadArrayHeader();
+var method = reader.ReadString();
+var id = reader.ReadInt32();
+var args = reader.Deserialize<Arguments>(options);
+```
+
+- The writer stages the message in pooled memory and nothing reaches the output before `ToArray` or `WriteTo`, so there is no `Flush` to forget (v3's writer lost what it had not flushed). Writing straight into an `IBufferWriter<byte>` without that copy is the buffer level: a `BufferWriterWriteBuffer` with the same token methods and `MessagePackSerializer.Serialize(ref buffer, ...)` (net9.0 and later).
+- The reader reads its source in place. A `ReadOnlySpan<byte>` (stack memory, for one) is accepted on net9.0 and later only, since the netstandard read buffers cannot hold one. `ReadRaw()` copies the next value into a new array and `ReadRaw(length)` the payload after a str, bin or ext header; `ReadRaw(destination)` copies that payload into your own span instead, and to slice your own source without copying, note `BytesConsumed` before and after `Skip()`.
+- Both are ref structs that are disposed: the writer owns pooled memory, and the reader rents only for a token that straddles two segments of a `ReadOnlySequence<byte>`. Never copy one: `var copy = writer;` returns the same arrays to the pool twice. A `using` local cannot be passed by `ref`, so one that is handed to a helper method is declared without `using` and disposed in a `finally`.
+- `Serialize` / `Deserialize` behave as the buffer-level entries do: options with a `MessageProcessor` are rejected (the processor needs a complete message), and a formatter from a netstandard-only library throws on net9.0 and later.
 
 ## Compression
 

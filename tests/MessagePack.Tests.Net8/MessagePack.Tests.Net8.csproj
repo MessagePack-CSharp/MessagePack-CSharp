@@ -37,6 +37,9 @@
 
   <ItemGroup>
     <Compile Include="..\MessagePack.Tests\UnityShimsTests.cs" Link="UnityShimsTests.cs" />
+    <!-- MessagePackWriter / MessagePackReader over the Compatible buffers of the netstandard2.1 core -->
+    <Compile Include="..\MessagePack.Tests\MessagePackWriterTests.cs" Link="MessagePackWriterTests.cs" />
+    <Compile Include="..\MessagePack.Tests\MessagePackReaderTests.cs" Link="MessagePackReaderTests.cs" />
   </ItemGroup>
 
 </Project>

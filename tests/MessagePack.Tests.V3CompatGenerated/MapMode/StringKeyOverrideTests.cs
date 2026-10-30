@@ -41,10 +41,9 @@ public class StringKeyOverrideTests(ITestOutputHelper logger)
 
         logger.WriteLine(MessagePackSerializer.ConvertToJson(msgpack));
 
-        // V3COMPAT-EDIT: v3 walked the wire with MessagePackReader; v4 has no standalone reader
-        // struct, so assert the same shape (a 1-entry map keyed "message") through a map deserialize
-        var asMap = MessagePackSerializer.Deserialize<Dictionary<string, string>>(msgpack, MessagePackSerializerOptions.Default);
-        Assert.Equal("message", Assert.Single(asMap).Key);
+        MessagePackReader reader = new(msgpack);
+        Assert.Equal(1, reader.ReadMapHeader());
+        Assert.Equal("message", reader.ReadString());
         return MessagePackSerializer.Deserialize<T>(msgpack, MessagePackSerializerOptions.Default);
     }
 

@@ -7,6 +7,8 @@
 
 #if DYNAMIC_GENERATION
 
+extern alias V3;
+
 using System;
 using System.Runtime.Serialization;
 using MessagePack.Resolvers;
@@ -16,6 +18,10 @@ using Xunit.Abstractions;
 
 namespace MessagePack.Tests
 {
+    // V3COMPAT-EDIT: v4 declares MessagePack.MessagePackReader / MessagePackWriter, which shadow the global aliases inside namespace MessagePack; these restore the v3 oracle types (V3OracleAliases.cs)
+    using MessagePackReader = V3::MessagePack.MessagePackReader;
+    using MessagePackWriter = V3::MessagePack.MessagePackWriter;
+
     public class DynamicObjectResolverTests
     {
         private readonly ITestOutputHelper logger;
