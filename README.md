@@ -517,7 +517,7 @@ Zstandard uses the codec bundled with the BCL on .NET 11 and NativeCompressions'
 The minimum Unity version is 2022.3.12f1, the first release whose Roslyn runs the source generator. The serializer core (`MessagePack`, `SerializerFoundation` and their dependencies) comes from NuGet, for example through [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity); the formatters for the UnityEngine types (`Vector3` and friends) are a separate UPM install:
 
 ```
-https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.Unity#v4.0.0-preview.1
+https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.Unity#v4.0.0-preview.2
 ```
 
 Then build a `MessagePackSerializerOptions` explicitly, with the formatters added through `WithUnity()`:
