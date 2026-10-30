@@ -35,7 +35,9 @@ public partial class OptionsWithResolverTests
         Assert.Equal(42, MessagePackSerializer.Deserialize<Unannotated>(bytes, contractless).Value);
 
         // the default chain has no formatter for the unannotated type, so the swap is what made the round trip work
+#pragma warning disable MsgPack108 // the missing formatter is what this call asserts
         Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(new Unannotated(), MessagePackSerializerOptions.Default));
+#pragma warning restore MsgPack108
     }
 
     [Fact]

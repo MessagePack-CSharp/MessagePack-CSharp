@@ -1,4 +1,8 @@
+using System.Collections.Immutable;
 using MessagePack.SourceGenerator.Analyzers;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MessagePack.Tests;
 
@@ -276,6 +280,71 @@ public class DepthTrackingAnalyzerTest
             inner.Serialize(ref buffer, ref state, value[0]);
             """));
         Assert.Empty(diagnostics);
+    }
+
+    // a container formatter whose descent is split into a helper of its own (the element loop), declared in the
+    // formatter's file or in another file of the partial type
+    const string HelperEntry = """
+        using System;
+        using MessagePack;
+        using SerializerFoundation;
+        public sealed partial class ProbeFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Inner[]>
+            where TWriteBuffer : struct, IWriteBuffer
+            where TReadBuffer : struct, IReadBuffer
+        {
+            IMessagePackFormatter<TWriteBuffer, TReadBuffer, Inner> inner = null!;
+            public void Initialize(MessagePackFormatterResolver resolver)
+            {
+                inner = resolver.GetFormatter<TWriteBuffer, TReadBuffer, Inner>();
+            }
+            public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Inner[] value)
+            {
+                buffer.WriteArrayHeader(value.Length);
+                WriteElements(ref buffer, ref state, value);
+            }
+            public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Inner[] value)
+            {
+            }
+        }
+        """ + Shell;
+
+    const string HelperPart = """
+        public sealed partial class ProbeFormatter<TWriteBuffer, TReadBuffer>
+            where TWriteBuffer : struct, IWriteBuffer
+            where TReadBuffer : struct, IReadBuffer
+        {
+            void WriteElements(ref TWriteBuffer buffer, ref SerializeState state, Inner[] value)
+            {
+                foreach (var item in value)
+                {
+                    inner.Serialize(ref buffer, ref state, item);
+                }
+            }
+        }
+        """;
+
+    [Fact]
+    public async Task ContainerDescendingThroughHelper_ReportsMissingEnter()
+    {
+        var diagnostics = await RunAsync(HelperEntry + Environment.NewLine + HelperPart);
+        Assert.Equal(DepthTrackingAnalyzer.MissingEnterDiagnosticId, Assert.Single(diagnostics).Id);
+    }
+
+    [Fact]
+    public async Task ContainerDescendingThroughHelperInAnotherFile_ReportsMissingEnter()
+    {
+        // the helper's body is in another syntax tree, read through a semantic model of its own
+        var diagnostics = await RunAsync(HelperEntry, "using MessagePack;" + Environment.NewLine + "using SerializerFoundation;" + Environment.NewLine + HelperPart);
+        Assert.Equal(DepthTrackingAnalyzer.MissingEnterDiagnosticId, Assert.Single(diagnostics).Id);
+    }
+
+    static async Task<ImmutableArray<Diagnostic>> RunAsync(params string[] sources)
+    {
+        var compilation = AnalyzerTestHost.CreateCompilation(sources[0]);
+        var parseOptions = (CSharpParseOptions)compilation.SyntaxTrees.First().Options;
+        compilation = compilation.AddSyntaxTrees(sources.Skip(1).Select(source => CSharpSyntaxTree.ParseText(source, parseOptions)));
+        Assert.Empty(compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error));
+        return await compilation.WithAnalyzers([new DepthTrackingAnalyzer()]).GetAnalyzerDiagnosticsAsync(CancellationToken.None);
     }
 
     [Fact]

@@ -186,6 +186,7 @@ public class BridgeNamingTest
 
 // SIMULATION of a factory from a library compiled against a netstandard build of MessagePack: it serves int (as a
 // string, so the wire tells which factory won) but only over the Compatible (non-ref-struct) buffer pairs.
+#pragma warning disable MsgPack104 // the string is this formatter's own marker, not a value the chain's string formatter should shape
 public sealed partial class StringifyingIntFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, int>
 {
     public void Initialize(MessagePackFormatterResolver resolver)
@@ -196,6 +197,7 @@ public sealed partial class StringifyingIntFormatter<TWriteBuffer, TReadBuffer> 
 
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref int value) => value = int.Parse(buffer.ReadString()!);
 }
+#pragma warning restore MsgPack104
 
 #pragma warning disable MsgPack102
 sealed class CompatOnlyIntFactory : MessagePackFormatterFactory

@@ -188,7 +188,7 @@ public class HashFloodingResistantChainTests
         }
         Assert.True(hashes.Count > 900, $"{hashes.Count} distinct hashes for 999 default-colliding keys");
 
-        Assert.Equal(0, comparer.GetHashCode(null));
+        Assert.Equal(0, comparer.GetHashCode(null!)); // IEqualityComparer<T>.GetHashCode is [DisallowNull]; the comparer handles null anyway
         Assert.True(comparer.Equals(null, null));
         Assert.False(comparer.Equals(null, 1));
         Assert.False(comparer.Equals(1, null));

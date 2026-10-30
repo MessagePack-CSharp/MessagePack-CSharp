@@ -22,7 +22,9 @@ jobs:
           persist-credentials: false
           fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
       - uses: ./.github/actions/setup-dotnet
-      - run: dotnet build -c Release -t:build,pack
+      # pack runs package validation against 4.0.0-preview.1, which rejects an assembly version below the baseline's
+      # 4.0.0.0 (CP0003); without a Version the packages build as 1.0.0
+      - run: dotnet build -c Release -t:build,pack -p:Version=4.0.0-ci
       - run: dotnet test -c Release --no-build
       # the packages as a consumer gets them (tests/PackageSmoke): the packaged source generator, the Annotations shim's
       # forwarders against a v3-built library, the compression packages' native dependencies. Every other test project

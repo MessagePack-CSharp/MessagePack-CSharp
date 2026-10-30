@@ -258,7 +258,7 @@ public class ReviewFindingsRegressionTests
             ObjectFallbackFormatterFactory.Instance,
             BuiltInFormatterFactory.Instance,
             GenericFormatterFactory.Instance);
-        return new V4Options(new MessagePackFormatterResolver(typeless ? factory.WithTypeless(TypelessTypeLoader.LoadAnyType()) : factory));
+        return new V4Options(new MessagePackFormatterResolver(typeless ? factory.WithTypeless(TypelessTypeLoader.AllowedTypes(typeof(RoutedValue))) : factory));
     }
 
     [Fact]

@@ -15,6 +15,10 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\..\opensource.snk</AssemblyOriginatorKeyFile>
     <NoWarn>$(NoWarn);CS8002</NoWarn>
+    <!-- Fixtures with the shapes the source generator reports, on purpose: MsgPack005 (a type nested in a generic type)
+         and MsgPack007 (a keyed member with no setter). Generator diagnostics do not honour #pragma, so they are
+         silenced here; the tests that assert them run the generator on their own compilations. -->
+    <NoWarn>$(NoWarn);MsgPack005;MsgPack007</NoWarn>
     <!-- the pointer-tier buffer tests pass stackalloc scratch via byte* -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>

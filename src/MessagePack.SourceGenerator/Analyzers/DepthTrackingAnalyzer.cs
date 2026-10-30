@@ -369,7 +369,7 @@ public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
         foreach (var reference in invocation.TargetMethod.DeclaringSyntaxReferences)
         {
             var syntax = reference.GetSyntax();
-            if (compilation.GetSemanticModel(syntax.SyntaxTree).GetOperation(syntax) is not { } body)
+            if (SemanticModelOf(syntax.SyntaxTree, invocation, compilation).GetOperation(syntax) is not { } body)
             {
                 continue;
             }
@@ -382,6 +382,20 @@ public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
             }
         }
         return false;
+    }
+
+    // A helper usually sits in the formatter's own file, whose model the analysis already built. One in another file of
+    // a partial type needs a model of its own: RS1030 asks analyzers not to create one (it is not cached), so that
+    // happens only in this case.
+    static SemanticModel SemanticModelOf(SyntaxTree tree, IOperation operation, Compilation compilation)
+    {
+        if (operation.SemanticModel is { } model && model.SyntaxTree == tree)
+        {
+            return model;
+        }
+#pragma warning disable RS1030 // the helper's body is in another file, which no analysis context hands a model for
+        return compilation.GetSemanticModel(tree);
+#pragma warning restore RS1030
     }
 
     static bool ForwardsBufferAndState(IInvocationOperation invocation)

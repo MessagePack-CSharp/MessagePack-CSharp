@@ -10,7 +10,8 @@ namespace MessagePack.Tests;
 // a DTO holding its closed form must not take the harvest down with it (`new string(',', -1)` at every DTO's expense)
 public class HarvestOuter<T>
 {
-#pragma warning disable MsgPack005
+    // MsgPack005 (nested in a generic type) is expected here; it is a generator diagnostic, which #pragma does not
+    // reach, so the test project's NoWarn silences it
     [MessagePackObject]
     public class Inner
     {
@@ -18,7 +19,6 @@ public class HarvestOuter<T>
 
         [Key(1)] public T? Value { get; set; }
     }
-#pragma warning restore MsgPack005
 }
 
 [MessagePackObject]
