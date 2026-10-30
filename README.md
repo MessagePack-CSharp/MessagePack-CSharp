@@ -390,6 +390,8 @@ Identity is tracked per instance, not per declared type: an instance written fir
 
 ### Enums as names
 
+> Not in `4.0.0-preview.2`; it ships with the next preview.
+
 `EnumAsString = true` writes the enums of a type's members as their names instead of their integers, the form other languages usually expect next to a map of member names. Like the key mode, it is declared on the type, as part of its schema, not configured on the resolver.
 
 ```csharp
