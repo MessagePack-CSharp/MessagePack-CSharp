@@ -23,6 +23,26 @@ namespace MessagePack.Tests.CSharp9Consumer
         Blue,
     }
 
+    [Flags]
+    public enum Access
+    {
+        None = 0,
+        Read = 1,
+        [System.Runtime.Serialization.EnumMember(Value = "write-access")]
+        Write = 2,
+    }
+
+    // EnumAsString: the member trees and the generated name formatters (with the [Flags] rename translation)
+    [MessagePackObject(true, EnumAsString = true)]
+    public class NamedEnums
+    {
+        public Color Color { get; set; }
+        public Access Access { get; set; }
+        public List<Color>? Colors { get; set; }
+        public Dictionary<Color, Access>? ByColor { get; set; }
+        public IEnumerable<Color>? Sequence { get; set; }
+    }
+
     [MessagePackObject]
     public class IntKeyed
     {

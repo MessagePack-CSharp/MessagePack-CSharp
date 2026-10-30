@@ -65,7 +65,9 @@ static class ObjectEmitter
             noInlining: "[MethodImpl(MethodImplOptions.NoInlining)]",
             writeBuffer: "IWriteBuffer",
             readBuffer: "IReadBuffer",
-            stringFormatter: "Formatters.StringFormatter");
+            stringFormatter: "Formatters.StringFormatter",
+            messagePack: "",
+            serializerFoundation: "");
 
         public static readonly Names Qualified = new(
             formatter: "global::MessagePack.IMessagePackFormatter",
@@ -80,9 +82,11 @@ static class ObjectEmitter
             noInlining: "[global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]",
             writeBuffer: "global::SerializerFoundation.IWriteBuffer",
             readBuffer: "global::SerializerFoundation.IReadBuffer",
-            stringFormatter: "global::MessagePack.Formatters.StringFormatter");
+            stringFormatter: "global::MessagePack.Formatters.StringFormatter",
+            messagePack: "global::MessagePack.",
+            serializerFoundation: "global::SerializerFoundation.");
 
-        Names(string formatter, string resolver, string serializeState, string deserializeState, string exception, string helper, string primitives, string unsafeType, string binaryPrimitives, string noInlining, string writeBuffer, string readBuffer, string stringFormatter)
+        Names(string formatter, string resolver, string serializeState, string deserializeState, string exception, string helper, string primitives, string unsafeType, string binaryPrimitives, string noInlining, string writeBuffer, string readBuffer, string stringFormatter, string messagePack, string serializerFoundation)
         {
             Formatter = formatter;
             Resolver = resolver;
@@ -97,6 +101,8 @@ static class ObjectEmitter
             IWriteBuffer = writeBuffer;
             IReadBuffer = readBuffer;
             StringFormatter = stringFormatter;
+            MessagePack = messagePack;
+            SerializerFoundation = serializerFoundation;
         }
 
         public string Formatter { get; }
@@ -114,6 +120,11 @@ static class ObjectEmitter
         public string IReadBuffer { get; }
         /// <summary>The stock string formatter a string member's field is tested against (reached through the parent MessagePack namespace in simple form).</summary>
         public string StringFormatter { get; }
+        /// <summary>Prefix of the other MessagePack types (the EnumAsString trees): empty under the using, and the
+        /// parent namespace reaches Formatters.</summary>
+        public string MessagePack { get; }
+        /// <summary>Prefix of the SerializerFoundation types: empty under the using.</summary>
+        public string SerializerFoundation { get; }
 
         /// <summary>The directives the simple names rely on; written inside the MessagePack.Generated block.</summary>
         public static void EmitUsings(CodeWriter writer, bool primitives)
@@ -164,6 +175,16 @@ static class ObjectEmitter
             foreach (var declaration in model.NestedDeclarations)
             {
                 containers.Add(writer.Block(declaration));
+            }
+            // EnumAsString name formatters of the private enums only this type can name (the others are shared, in
+            // MessagePack.Generated)
+            foreach (var enumNames in model.EnumNames)
+            {
+                if (enumNames.Nested)
+                {
+                    EmitEnumNamesClass(writer, enumNames);
+                    writer.Line();
+                }
             }
             if (model.PrivateHarvestedBuiltIns.Length > 0)
             {
@@ -251,9 +272,18 @@ static class ObjectEmitter
             writer.Line($"public void Initialize({N.Resolver} resolver)");
             using (writer.OpenScope())
             {
+                // EnumAsString leaves, one EnumAsStringFormatter per enum and buffer pair across the members
+                var enumLeaves = new Dictionary<string, string>(StringComparer.Ordinal);
+                var enumLocals = 0;
                 foreach (var member in model.Members)
                 {
-                    if (member.CustomFormatter is { FactoryNew: { } factoryNew })
+                    if (member.EnumNames is { } enumNames)
+                    {
+                        var built = EmitEnumNameNode(writer, enumNames, "TWriteBuffer", "TReadBuffer", enumLeaves, ref enumLocals);
+                        // the cast erases nullability-annotation differences between the tree's types and the member's
+                        writer.Line($"f{member.Id} = ({N.Formatter}<TWriteBuffer, TReadBuffer, {member.TypeName}>){built};");
+                    }
+                    else if (member.CustomFormatter is { FactoryNew: { } factoryNew })
                     {
                         // through the resolver: the factory is treated like one of the chain, so a factory serving the
                         // member only over the Compatible buffers (a netstandard-built library) reroutes the whole graph
@@ -316,6 +346,242 @@ static class ObjectEmitter
         writer.Line("#if NET9_0_OR_GREATER");
         writer.Line(", allows ref struct");
         writer.Line("#endif");
+    }
+
+    // EnumAsString: builds a member's formatter tree bottom-up and returns the local holding its root. A container is
+    // created here (never the resolver's shared instance), takes its enum-bearing slots through the initializer
+    // interface, then Initialize resolves the slots left null. Leaves are shared per enum and buffer pair.
+    static string EmitEnumNameNode(CodeWriter writer, EnumNameNode node, string writeBuffer, string readBuffer, Dictionary<string, string> leaves, ref int locals)
+    {
+        if (node.FormatterName is null)
+        {
+            var key = writeBuffer + "|" + node.TypeName;
+            if (!leaves.TryGetValue(key, out var leaf))
+            {
+                leaf = "enumNames" + locals++;
+                writer.Line(node.NameFormatter is { } generated
+                    ? $"var {leaf} = new {generated}<{writeBuffer}, {readBuffer}>();"
+                    : $"var {leaf} = new {N.MessagePack}Formatters.EnumAsStringFormatter<{writeBuffer}, {readBuffer}, {node.TypeName}>();");
+                writer.Line($"{leaf}.Initialize(resolver);");
+                leaves.Add(key, leaf);
+            }
+            return leaf;
+        }
+
+        var first = node.First is { } firstNode ? EmitEnumNameNode(writer, firstNode, writeBuffer, readBuffer, leaves, ref locals) : null;
+        var second = node.Second is { } secondNode ? EmitEnumNameNode(writer, secondNode, writeBuffer, readBuffer, leaves, ref locals) : null;
+        // a staged IEnumerable<T> source writes its elements over the Compatible pair, through the same tree over those buffers
+        var staged = node.Staged && node.First is { } stagedNode
+            ? EmitEnumNameNode(writer, stagedNode, N.SerializerFoundation + "CompatibleArrayPoolListWriteBuffer", N.SerializerFoundation + "CompatibleReadOnlySpanReadBuffer", leaves, ref locals)
+            : null;
+
+        var local = "enumNames" + locals++;
+        var typeArguments = string.Join(", ", node.TypeArguments.AsArray());
+        writer.Line($"var {local} = new {N.MessagePack}Formatters.{node.FormatterName}<{writeBuffer}, {readBuffer}, {typeArguments}>({node.ConstructorArguments});");
+        if (node.KeyValue)
+        {
+            writer.Line($"(({N.MessagePack}IKeyValueFormatterInitializer<{writeBuffer}, {readBuffer}, {typeArguments}>){local}).Initialize({first ?? "null"}, {second ?? "null"});");
+        }
+        else
+        {
+            writer.Line($"(({N.MessagePack}ICollectionFormatterInitializer<{writeBuffer}, {readBuffer}, {typeArguments}>){local}).Initialize({first});");
+            if (staged is not null)
+            {
+                writer.Line($"(({N.MessagePack}IStagedCollectionFormatterInitializer<{typeArguments}>){local}).InitializeStaged({staged});");
+            }
+        }
+        writer.Line($"{local}.Initialize(resolver);");
+        return local;
+    }
+
+    /// <summary>The shared file of one enum's EnumAsString name formatter, in MessagePack.Generated.</summary>
+    public static string EmitEnumNames(EnumNamesModel model)
+    {
+        var writer = CodeWriter.Rent();
+        writer.FileHeader();
+        writer.Line();
+        current = Names.Simple;
+        using (writer.Block("namespace MessagePack.Generated"))
+        {
+            Names.EmitUsings(writer, primitives: true);
+            EmitEnumNamesClass(writer, model);
+        }
+        current = null;
+        return writer.ToStringAndReturn();
+    }
+
+    // EnumAsStringFormatter's wire with the names compiled in. A declared value writes its pre-encoded str, and a str that
+    // lies whole in the current window is compared as UTF-8 in place. Everything else (an undeclared value, a [Flags]
+    // combination, a str across the window's end, nil, any other name) takes EnumAsStringFormatter's own path through
+    // Enum.ToString / Enum.TryParse, with the [EnumMember] renames translated inside a [Flags] combination.
+    static void EmitEnumNamesClass(CodeWriter writer, EnumNamesModel model)
+    {
+        var enumType = model.EnumTypeName;
+        var writes = model.Writes.AsArray();
+        var reads = model.Reads.AsArray();
+        var translates = model.Renames.Length > 0;
+
+        // a nested one serves a private enum (CS0051 above private) and only its containing type's formatter uses it
+        writer.Line($"{(model.Nested ? "private" : "internal")} sealed class {model.FormatterName}<TWriteBuffer, TReadBuffer> : {N.Formatter}<TWriteBuffer, TReadBuffer, {enumType}>");
+        writer.Indent();
+        EmitBufferConstraints(writer, N);
+        writer.Unindent();
+        using (writer.OpenScope())
+        {
+            // one str token (header + UTF-8) per name, shared by the write switch and the read compare
+            var tokens = new Dictionary<string, (string Field, int HeaderLength, int Utf8Length)>(StringComparer.Ordinal);
+            foreach (var name in writes.Select(static w => w.Name).Concat(reads.Select(static r => r.Name)))
+            {
+                if (tokens.ContainsKey(name))
+                {
+                    continue;
+                }
+                var blob = EncodeStringKeyBlob(name);
+                var utf8Length = Encoding.UTF8.GetByteCount(name);
+                var field = "Name" + tokens.Count;
+                tokens.Add(name, (field, blob.Length - utf8Length, utf8Length));
+                writer.Line($"static global::System.ReadOnlySpan<byte> {field} => new byte[] {{ {string.Join(", ", blob.Select(static b => $"0x{b:x2}"))} }}; // \"{Escape(name)}\"");
+            }
+            writer.Line();
+
+            writer.Line($"public void Initialize({N.Resolver} resolver)");
+            using (writer.OpenScope())
+            {
+            }
+            writer.Line();
+
+            writer.Line($"public void Serialize(ref TWriteBuffer buffer, ref {N.SerializeState} state, {enumType} value)");
+            using (writer.OpenScope())
+            {
+                using (writer.Block("switch (value)"))
+                {
+                    foreach (var write in writes)
+                    {
+                        writer.Line($"case {write.Member}:");
+                        writer.Indent();
+                        writer.Line($"buffer.WriteRaw({tokens[write.Name].Field});");
+                        writer.Line("return;");
+                        writer.Unindent();
+                    }
+                }
+                writer.Line("// an undeclared value, or a [Flags] combination");
+                writer.Line("buffer.WriteString(UndeclaredName(value));");
+            }
+            writer.Line();
+
+            writer.Line($"public void Deserialize(ref TReadBuffer buffer, ref {N.DeserializeState} state, ref {enumType} value)");
+            using (writer.OpenScope())
+            {
+                writer.Line("// a str that lies whole in the current window: the declared names compare in place, with no string");
+                using (writer.Block($"if ({N.Primitives}TryReadStringSpan(buffer.GetUnreadSpan(), out var utf8, out var tokenSize) == {N.MessagePack}DecodeResult.Success)"))
+                {
+                    using (writer.Block("switch (utf8.Length)"))
+                    {
+                        foreach (var group in reads.GroupBy(r => tokens[r.Name].Utf8Length).OrderBy(static g => g.Key))
+                        {
+                            writer.Line($"case {group.Key}:");
+                            writer.Indent();
+                            foreach (var read in group)
+                            {
+                                var token = tokens[read.Name];
+                                using (writer.Block($"if (global::System.MemoryExtensions.SequenceEqual(utf8, {token.Field}.Slice({token.HeaderLength})))"))
+                                {
+                                    writer.Line($"value = {read.Member};");
+                                    writer.Line("buffer.Advance(tokenSize);");
+                                    writer.Line("return;");
+                                }
+                            }
+                            writer.Line("break;");
+                            writer.Unindent();
+                        }
+                    }
+                }
+                writer.Line("// nil, a str across the window's end, or another name");
+                writer.Line("value = Parse(buffer.ReadString());");
+            }
+            writer.Line();
+
+            writer.Line($"static {enumType} Parse(string? name)");
+            using (writer.OpenScope())
+            {
+                using (writer.Block("if (name is null)"))
+                {
+                    writer.Line($"{N.Helper}.ThrowUnexpectedNilWhileDeserializing<{enumType}>();");
+                }
+                using (writer.Block("switch (name)"))
+                {
+                    foreach (var read in reads)
+                    {
+                        writer.Line($"case \"{Escape(read.Name)}\":");
+                        writer.Indent();
+                        writer.Line($"return {read.Member};");
+                        writer.Unindent();
+                    }
+                }
+                writer.Line("// numeric text or a combination of names");
+                writer.Line(translates
+                    ? "var clrNames = name.IndexOf(\", \", global::System.StringComparison.Ordinal) >= 0 ? TranslateNames(name, toClr: true) : name;"
+                    : "var clrNames = name;");
+                using (writer.Block($"if (!global::System.Enum.TryParse<{enumType}>(clrNames, false, out var parsed))"))
+                {
+                    writer.Line($"{N.Helper}.ThrowInvalidEnumName<{enumType}>(name);");
+                }
+                writer.Line("return parsed;");
+            }
+            writer.Line();
+
+            writer.Line($"static string UndeclaredName({enumType} value)");
+            using (writer.OpenScope())
+            {
+                writer.Line("var names = value.ToString();");
+                writer.Line(translates
+                    ? "return names.IndexOf(\", \", global::System.StringComparison.Ordinal) >= 0 ? TranslateNames(names, toClr: false) : names;"
+                    : "return names;");
+            }
+
+            if (translates)
+            {
+                // a [Flags] combination: Enum spells it in CLR names, the wire in the renamed ones
+                writer.Line();
+                writer.Line("static string TranslateNames(string items, bool toClr)");
+                using (writer.OpenScope())
+                {
+                    writer.Line("var elements = items.Split(',');");
+                    using (writer.Block("for (int i = 0; i < elements.Length; i++)"))
+                    {
+                        writer.Line("var element = elements[i];");
+                        using (writer.Block("if (i > 0 && element.Length > 0 && element[0] == ' ')"))
+                        {
+                            writer.Line("element = element.Substring(1);");
+                        }
+                        writer.Line("elements[i] = toClr ? ToClrName(element) : ToSerializedName(element);");
+                    }
+                    writer.Line("return string.Join(\", \", elements);");
+                }
+                EmitNameSwitch(writer, "ToClrName", model.Renames.AsArray().GroupBy(static r => r.Name, StringComparer.Ordinal).Select(static g => (From: g.Key, To: g.Last().Member)));
+                EmitNameSwitch(writer, "ToSerializedName", model.Renames.AsArray().Select(static r => (From: r.Member, To: r.Name)));
+            }
+        }
+
+        static void EmitNameSwitch(CodeWriter writer, string method, IEnumerable<(string From, string To)> pairs)
+        {
+            writer.Line();
+            writer.Line($"static string {method}(string name)");
+            using (writer.OpenScope())
+            {
+                using (writer.Block("switch (name)"))
+                {
+                    foreach (var (from, to) in pairs)
+                    {
+                        writer.Line($"case \"{Escape(from)}\":");
+                        writer.Indent();
+                        writer.Line($"return \"{Escape(to)}\";");
+                        writer.Unindent();
+                    }
+                }
+                writer.Line("return name;");
+            }
+        }
     }
 
     static void EmitSerialize(CodeWriter writer, ObjectModel model, string valueType)

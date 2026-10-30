@@ -36,6 +36,25 @@ public class CSharp9ConsumerTests
     }
 
     [Fact]
+    public void EnumAsString_GeneratedNameFormatters()
+    {
+        var value = new NamedEnums
+        {
+            Color = Color.Blue,
+            Access = Access.Read | Access.Write,
+            Colors = [Color.Red],
+            ByColor = new() { [Color.Green] = Access.Write },
+            Sequence = new[] { Color.Green },
+        };
+        var bytes = MessagePackSerializer.Serialize(value, Options);
+        const string Json = "{\"Color\":\"Blue\",\"Access\":\"Read, write-access\",\"Colors\":[\"Red\"],\"ByColor\":{\"Green\":\"write-access\"},\"Sequence\":[\"Green\"]}";
+        Assert.Equal(Json, MessagePackSerializer.ConvertToJson(bytes));
+        var back = RoundTrip(value);
+        Assert.Equal(Access.Read | Access.Write, back.Access);
+        Assert.Equal(Json, MessagePackSerializer.ConvertToJson(MessagePackSerializer.Serialize(back, Options)));
+    }
+
+    [Fact]
     public void StringKeyedObject_WithInitAccessor()
     {
         var back = RoundTrip(new StringKeyed { Id = 5, Name = "s", Values = [1.5, 2.5] });

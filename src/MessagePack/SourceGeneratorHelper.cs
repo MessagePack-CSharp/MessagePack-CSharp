@@ -165,6 +165,16 @@ public static class SourceGeneratorHelper
     [DoesNotReturn]
     public static void ThrowUnexpectedEndOfMapKey() => throw new MessagePackSerializationException("Unexpected end of data while reading a map key.");
 
+    /// <summary>Throws the nil error of <see cref="Formatters.EnumAsStringFormatter{TWriteBuffer, TReadBuffer, T}"/> for a generated enum name formatter.</summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [DoesNotReturn]
+    public static void ThrowUnexpectedNilWhileDeserializing<T>() => MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<T>();
+
+    /// <summary>Throws the unknown-name error of <see cref="Formatters.EnumAsStringFormatter{TWriteBuffer, TReadBuffer, T}"/> for a generated enum name formatter.</summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [DoesNotReturn]
+    public static void ThrowInvalidEnumName<T>(string name) => MessagePackSerializationException.ThrowInvalidEnumName<T>(name);
+
     // No-box bridges to explicit IMessagePackSerializationCallbackReceiver implementations on structs. The constrained
     // call through the type parameter dispatches on the value's address, so callback mutations land in the caller's
     // local without the box round-trip.

@@ -388,6 +388,25 @@ var back = MessagePackSerializer.Deserialize<Node>(bytes);
 
 Identity is tracked per instance, not per declared type: an instance written first through a member of a base type and again through one of a derived type is written once, in the base type's shape, and the derived-typed read then fails with a type mismatch. In an element stream (`SerializeElementsAsync` / `DeserializeElementsAsync`) the identity table spans the whole array, as it does for `Serialize<T[]>`, so it grows with the number of distinct instances streamed.
 
+### Enums as names
+
+`EnumAsString = true` writes the enums of a type's members as their names instead of their integers, the form other languages usually expect next to a map of member names. Like the key mode, it is declared on the type, as part of its schema, not configured on the resolver.
+
+```csharp
+[MessagePackObject(KeyNamingPolicy.CamelCase, EnumAsString = true)]
+public class Order
+{
+    public Status Status { get; set; }                   // "Shipped"
+    public List<Status>? History { get; set; }           // ["Created", "Shipped"]
+    public Dictionary<Status, int>? Counts { get; set; } // {"Created": 1}
+    public Customer? Customer { get; set; }              // Customer's own [MessagePackObject] decides its enums
+}
+```
+
+It reaches an enum member and the enums inside a member's arrays, `Nullable<T>`, `Lazy<T>`, `KeyValuePair`, lists, sets, dictionaries (keys and values) and the other built-in collections, nested to any depth. The names are those of `EnumAsStringFormatter`: `[EnumMember(Value = "...")]` renames a value, a `[Flags]` combination is written as `"A, B"`, and reading requires a name (an integer throws). The source generator compiles each such enum's names into a formatter of its own, so writing a declared value copies its encoded name and reading one compares the UTF-8 in place, without a string; the reflection tier uses `EnumAsStringFormatter` itself, on the same wire. A member-level `[MessagePackFormatter]` and an enum's type-level `[MessagePackFormatter]` take precedence, and a nested type with its own `[MessagePackObject]` keeps its own declaration. In a generic declaration, a member typed by a type parameter (`T Payload`, `List<T>`) is left to the use site and stays an integer even when `T` is an enum.
+
+The formatters the resolver shares do not change: each such member builds its own formatter tree (the built-in containers take their element formatters through `ICollectionFormatterInitializer` / `IKeyValueFormatterInitializer` before `Initialize`), so `Serialize(Status.Shipped)` and a `List<Status>` anywhere else still write integers. An enum inside a container that cannot take a nested formatter (a tuple, `ILookup`, a multi-dimensional array, a custom collection type) is a compile-time error, MsgPack030 (the reflection tier throws the same message): annotate the enum itself with `[MessagePackFormatter(typeof(EnumAsStringFormatterFactory<Status>))]` to write it by name everywhere, or give the member a `[MessagePackFormatter]` of its own.
+
 ### Deserialize(ref)
 
 Populates an existing instance. Collections are cleared and refilled, and objects are overwritten member by member, so buffers and pooled objects can be reused. An instance the target graph holds in several places is populated once per occurrence in the payload, the last one winning.
@@ -544,7 +563,7 @@ builder.Services.AddSignalR().AddMessagePackProtocol();       // SignalR: the "m
 // both take a MessagePackSerializerOptions overload; the SignalR one is also the overload for trimmed / Native AOT apps
 ```
 
-For SignalR on Native AOT, mind the enums: the defaults (like the official protocol) send enum *names*, and `DefaultAot` sends integers, which the official .NET, JavaScript and Java clients then fail to read. Compose `EnumAsStringFormatterFactory<TEnum>` for each enum in front of `DefaultAot` (`MessagePackFormatterFactory.Combine(new EnumAsStringFormatterFactory<Status>(), MessagePackFormatterFactory.DefaultAot)`), and annotate the hub argument types, since the contractless tier is not available on that chain.
+For SignalR on Native AOT, mind the enums: the defaults (like the official protocol) send enum *names*, and `DefaultAot` sends integers, which the official .NET, JavaScript and Java clients then fail to read. Compose `EnumAsStringFormatterFactory<TEnum>` for each enum in front of `DefaultAot` (`MessagePackFormatterFactory.Combine(new EnumAsStringFormatterFactory<Status>(), MessagePackFormatterFactory.DefaultAot)`), and annotate the hub argument types, since the contractless tier is not available on that chain. For the enums inside those argument types, `EnumAsString = true` on their `[MessagePackObject]` (see [Enums as names](#enums-as-names)) does the same without the per-enum composition; an enum passed as a hub argument by itself still needs the factory.
 
 ## For library authors
 

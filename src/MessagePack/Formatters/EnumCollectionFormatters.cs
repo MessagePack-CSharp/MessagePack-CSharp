@@ -73,7 +73,7 @@ internal static class EnumElementCodec
 
 /// <summary><c>TEnum[]</c> as the underlying integer array on the wire, over the primitive element codecs.
 /// Same wire and Populate contract as <see cref="ArrayFormatter{TWriteBuffer, TReadBuffer, T}"/> over the built-in enum formatter.</summary>
-public sealed class EnumArrayFormatter<TWriteBuffer, TReadBuffer, TEnum, TUnderlying> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, TEnum[]?>
+public sealed class EnumArrayFormatter<TWriteBuffer, TReadBuffer, TEnum, TUnderlying> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, TEnum[]?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, TEnum>
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -85,8 +85,8 @@ public sealed class EnumArrayFormatter<TWriteBuffer, TReadBuffer, TEnum, TUnderl
     where TEnum : struct, Enum
     where TUnderlying : unmanaged
 {
-    // non-null only when the resolver serves TEnum with a wire other than the underlying
-    // integer; the element formatter owns the wire then and the array goes element by element
+    // non-null only when the element formatter owns the wire (the resolver serves TEnum with a wire other than the
+    // underlying integer, or an owner supplied the element formatter); the array goes element by element then
     ArrayFormatter<TWriteBuffer, TReadBuffer, TEnum>? fallback;
 
     public EnumArrayFormatter()
@@ -94,9 +94,19 @@ public sealed class EnumArrayFormatter<TWriteBuffer, TReadBuffer, TEnum, TUnderl
         EnumElementCodec.ValidateTypePunning<TEnum, TUnderlying>();
     }
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, TEnum>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, TEnum> elementFormatter)
+    {
+        fallback = new ArrayFormatter<TWriteBuffer, TReadBuffer, TEnum>();
+        ((ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, TEnum>)fallback).Initialize(elementFormatter);
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        if (resolver.GetFormatter<TWriteBuffer, TReadBuffer, TEnum>() is not IBuiltInEnumFormatter)
+        if (fallback != null)
+        {
+            fallback.Initialize(resolver); // keeps the supplied element formatter
+        }
+        else if (resolver.GetFormatter<TWriteBuffer, TReadBuffer, TEnum>() is not IBuiltInEnumFormatter)
         {
             fallback = new ArrayFormatter<TWriteBuffer, TReadBuffer, TEnum>();
             fallback.Initialize(resolver);
@@ -197,22 +207,32 @@ public sealed partial class EnumArrayFormatterFactory<T> : MessagePackFormatterF
 // span access to the List's backing array. Downlevel routes List<TEnum> to ListFormatter.
 /// <summary><c>List&lt;TEnum&gt;</c> as the underlying integer array on the wire, over the primitive element codecs.
 /// Same wire and Populate contract as <see cref="ListFormatter{TWriteBuffer, TReadBuffer, T}"/> over the built-in enum formatter.</summary>
-public sealed class EnumListFormatter<TWriteBuffer, TReadBuffer, TEnum, TUnderlying> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, List<TEnum>?>
+public sealed class EnumListFormatter<TWriteBuffer, TReadBuffer, TEnum, TUnderlying> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, List<TEnum>?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, TEnum>
     where TWriteBuffer : struct, IWriteBuffer, allows ref struct
     where TReadBuffer : struct, IReadBuffer, allows ref struct
     where TEnum : struct, Enum
     where TUnderlying : unmanaged
 {
-    ListFormatter<TWriteBuffer, TReadBuffer, TEnum>? fallback;
+    ListFormatter<TWriteBuffer, TReadBuffer, TEnum>? fallback; // see EnumArrayFormatter
 
     public EnumListFormatter()
     {
         EnumElementCodec.ValidateTypePunning<TEnum, TUnderlying>();
     }
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, TEnum>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, TEnum> elementFormatter)
+    {
+        fallback = new ListFormatter<TWriteBuffer, TReadBuffer, TEnum>();
+        ((ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, TEnum>)fallback).Initialize(elementFormatter);
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        if (resolver.GetFormatter<TWriteBuffer, TReadBuffer, TEnum>() is not IBuiltInEnumFormatter)
+        if (fallback != null)
+        {
+            fallback.Initialize(resolver); // keeps the supplied element formatter
+        }
+        else if (resolver.GetFormatter<TWriteBuffer, TReadBuffer, TEnum>() is not IBuiltInEnumFormatter)
         {
             fallback = new ListFormatter<TWriteBuffer, TReadBuffer, TEnum>();
             fallback.Initialize(resolver);

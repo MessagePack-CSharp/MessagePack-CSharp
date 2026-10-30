@@ -88,6 +88,23 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
             }
         });
 
+        // EnumAsString name formatters: one per enum across the models (several types may reach the same enum), in
+        // MessagePack.Generated; the ones for a private enum are nested in their AllowPrivate type by the formatter file
+        var enumNames = typeModels
+            .SelectMany(static (pair, _) => pair.Object is { } model ? model.EnumNames.AsArray().Where(static e => !e.Nested) : [])
+            .Collect();
+        context.RegisterSourceOutput(enumNames.Combine(languageGate), static (spc, pair) =>
+        {
+            if (pair.Right.Required != 0)
+            {
+                return;
+            }
+            foreach (var model in pair.Left.GroupBy(static m => m.FormatterName, StringComparer.Ordinal).Select(static g => g.First()).OrderBy(static m => m.FormatterName, StringComparer.Ordinal))
+            {
+                spc.AddSource($"{model.FormatterName}.g.cs", ObjectEmitter.EmitEnumNames(model));
+            }
+        });
+
         // Type-level [MessagePackFormatter]: bound at compile time so the generated factory constructs the
         // attribute-directed formatter directly, and registered through the same module-initializer path as generated
         // object formatters, the annotation is sugar over the registry tier,

@@ -6,13 +6,18 @@ namespace MessagePack.Formatters;
 
 #region ImmutableArray, ImmutableList, ImmutableHashSet, ImmutableSortedSet, ImmutableQueue, ImmutableStack
 
-public sealed partial class ImmutableArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableArray<T>>
+public sealed partial class ImmutableArrayFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableArray<T>>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ImmutableArray<T> value)
@@ -85,13 +90,18 @@ public sealed partial class ImmutableArrayFormatterFactory<T> : MessagePackForma
     }
 }
 
-public sealed partial class ImmutableListFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableList<T>?>
+public sealed partial class ImmutableListFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableList<T>?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ImmutableList<T>? value)
@@ -159,7 +169,7 @@ public sealed partial class ImmutableListFormatterFactory<T> : MessagePackFormat
     }
 }
 
-public sealed partial class ImmutableHashSetFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableHashSet<T>?>
+public sealed partial class ImmutableHashSetFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableHashSet<T>?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
     IEqualityComparer<T>? comparer;
@@ -169,9 +179,14 @@ public sealed partial class ImmutableHashSetFormatter<TWriteBuffer, TReadBuffer,
         this.comparer = comparer;
     }
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
         if (comparer == null && resolver.HashFloodingResistant)
         {
             comparer = HashFloodingResistantEqualityComparer.Get<T>();
@@ -255,13 +270,18 @@ public sealed partial class ImmutableHashSetFormatterFactory<T> : MessagePackFor
     }
 }
 
-public sealed partial class ImmutableSortedSetFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableSortedSet<T>?>
+public sealed partial class ImmutableSortedSetFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableSortedSet<T>?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ImmutableSortedSet<T>? value)
@@ -338,13 +358,18 @@ public sealed partial class ImmutableSortedSetFormatterFactory<T> : MessagePackF
     }
 }
 
-public sealed partial class ImmutableQueueFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableQueue<T>?>
+public sealed partial class ImmutableQueueFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableQueue<T>?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ImmutableQueue<T>? value)
@@ -407,13 +432,18 @@ public sealed partial class ImmutableQueueFormatterFactory<T> : MessagePackForma
     }
 }
 
-public sealed partial class ImmutableStackFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableStack<T>?>
+public sealed partial class ImmutableStackFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableStack<T>?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ImmutableStack<T>? value)
@@ -482,7 +512,7 @@ public sealed partial class ImmutableStackFormatterFactory<T> : MessagePackForma
 
 #region ImmutableDictionary, ImmutableSortedDictionary
 
-public sealed class ImmutableDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableDictionary<TKey, TValue>?>
+public sealed class ImmutableDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableDictionary<TKey, TValue>?>, IKeyValueFormatterInitializer<TWriteBuffer, TReadBuffer, TKey, TValue>
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -502,10 +532,16 @@ public sealed class ImmutableDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey
         this.comparer = comparer;
     }
 
+    void IKeyValueFormatterInitializer<TWriteBuffer, TReadBuffer, TKey, TValue>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, TKey>? keyFormatter, IMessagePackFormatter<TWriteBuffer, TReadBuffer, TValue>? valueFormatter)
+    {
+        this.keyFormatter = keyFormatter!;
+        this.valueFormatter = valueFormatter!;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        keyFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TKey>();
-        valueFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TValue>();
+        keyFormatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, TKey>();
+        valueFormatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, TValue>();
         if (comparer == null && resolver.HashFloodingResistant)
         {
             comparer = HashFloodingResistantEqualityComparer.Get<TKey>();
@@ -603,7 +639,7 @@ public sealed partial class ImmutableDictionaryFormatterFactory<TKey, TValue> : 
     }
 }
 
-public sealed class ImmutableSortedDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableSortedDictionary<TKey, TValue>?>
+public sealed class ImmutableSortedDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, ImmutableSortedDictionary<TKey, TValue>?>, IKeyValueFormatterInitializer<TWriteBuffer, TReadBuffer, TKey, TValue>
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -617,10 +653,16 @@ public sealed class ImmutableSortedDictionaryFormatter<TWriteBuffer, TReadBuffer
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, TKey> keyFormatter = null!;
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, TValue> valueFormatter = null!;
 
+    void IKeyValueFormatterInitializer<TWriteBuffer, TReadBuffer, TKey, TValue>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, TKey>? keyFormatter, IMessagePackFormatter<TWriteBuffer, TReadBuffer, TValue>? valueFormatter)
+    {
+        this.keyFormatter = keyFormatter!;
+        this.valueFormatter = valueFormatter!;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        keyFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TKey>();
-        valueFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TValue>();
+        keyFormatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, TKey>();
+        valueFormatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, TValue>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, ImmutableSortedDictionary<TKey, TValue>? value)
@@ -713,13 +755,18 @@ public sealed partial class ImmutableSortedDictionaryFormatterFactory<TKey, TVal
 
 #region IImmutableList, IImmutableSet, IImmutableQueue, IImmutableStack, IImmutableDictionary
 
-public sealed partial class InterfaceImmutableListFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IImmutableList<T>?>
+public sealed partial class InterfaceImmutableListFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IImmutableList<T>?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, IImmutableList<T>? value)
@@ -787,7 +834,7 @@ public sealed partial class InterfaceImmutableListFormatterFactory<T> : MessageP
     }
 }
 
-public sealed partial class InterfaceImmutableSetFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IImmutableSet<T>?>
+public sealed partial class InterfaceImmutableSetFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IImmutableSet<T>?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
     IEqualityComparer<T>? comparer;
@@ -797,9 +844,14 @@ public sealed partial class InterfaceImmutableSetFormatter<TWriteBuffer, TReadBu
         this.comparer = comparer;
     }
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
         if (comparer == null && resolver.HashFloodingResistant)
         {
             comparer = HashFloodingResistantEqualityComparer.Get<T>();
@@ -883,13 +935,18 @@ public sealed partial class InterfaceImmutableSetFormatterFactory<T> : MessagePa
     }
 }
 
-public sealed partial class InterfaceImmutableQueueFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IImmutableQueue<T>?>
+public sealed partial class InterfaceImmutableQueueFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IImmutableQueue<T>?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, IImmutableQueue<T>? value)
@@ -951,13 +1008,18 @@ public sealed partial class InterfaceImmutableQueueFormatterFactory<T> : Message
     }
 }
 
-public sealed partial class InterfaceImmutableStackFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IImmutableStack<T>?>
+public sealed partial class InterfaceImmutableStackFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IImmutableStack<T>?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, IImmutableStack<T>? value)
@@ -1019,7 +1081,7 @@ public sealed partial class InterfaceImmutableStackFormatterFactory<T> : Message
     }
 }
 
-public sealed class InterfaceImmutableDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IImmutableDictionary<TKey, TValue>?>
+public sealed class InterfaceImmutableDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IImmutableDictionary<TKey, TValue>?>, IKeyValueFormatterInitializer<TWriteBuffer, TReadBuffer, TKey, TValue>
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -1039,10 +1101,16 @@ public sealed class InterfaceImmutableDictionaryFormatter<TWriteBuffer, TReadBuf
         this.comparer = comparer;
     }
 
+    void IKeyValueFormatterInitializer<TWriteBuffer, TReadBuffer, TKey, TValue>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, TKey>? keyFormatter, IMessagePackFormatter<TWriteBuffer, TReadBuffer, TValue>? valueFormatter)
+    {
+        this.keyFormatter = keyFormatter!;
+        this.valueFormatter = valueFormatter!;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        keyFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TKey>();
-        valueFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TValue>();
+        keyFormatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, TKey>();
+        valueFormatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, TValue>();
         if (comparer == null && resolver.HashFloodingResistant)
         {
             comparer = HashFloodingResistantEqualityComparer.Get<TKey>();

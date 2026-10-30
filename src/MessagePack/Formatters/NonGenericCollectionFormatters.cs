@@ -7,13 +7,12 @@ namespace MessagePack.Formatters;
 public sealed partial class NonGenericInterfaceEnumerableFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, IEnumerable?>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, object?> formatter = null!;
-    MessagePackFormatterResolver resolver = null!;
-    IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, object?>? staged; // for sources without a count, see StagedEnumerable
+    IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, object?> staged = null!; // for sources without a count, see StagedEnumerable
 
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        this.resolver = resolver;
         formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, object?>();
+        staged = resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, object?>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, IEnumerable? value)
@@ -35,7 +34,7 @@ public sealed partial class NonGenericInterfaceEnumerableFormatter<TWriteBuffer,
         else
         {
             // no count up front: each element is encoded as it is enumerated, then the header and the bytes
-            StagedEnumerable.Serialize(ref buffer, ref state, staged ??= StagedEnumerable.Formatter<object?>(resolver), value);
+            StagedEnumerable.Serialize(ref buffer, ref state, staged, value);
         }
         state.Exit();
     }

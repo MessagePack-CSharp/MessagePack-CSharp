@@ -191,13 +191,12 @@ public sealed class GenericEnumerableFormatter<TWriteBuffer, TReadBuffer, TEleme
     where TCollection : IEnumerable<TElement>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, TElement> formatter = null!;
-    MessagePackFormatterResolver resolver = null!;
-    IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, TElement>? staged; // for sources without a count, see StagedEnumerable
+    IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, TElement> staged = null!; // for sources without a count, see StagedEnumerable
 
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        this.resolver = resolver;
         formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TElement>();
+        staged = resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, TElement>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, TCollection? value)
@@ -221,7 +220,7 @@ public sealed class GenericEnumerableFormatter<TWriteBuffer, TReadBuffer, TEleme
         }
         else
         {
-            StagedEnumerable.Serialize(ref buffer, ref state, staged ??= StagedEnumerable.Formatter<TElement>(resolver), value);
+            StagedEnumerable.Serialize(ref buffer, ref state, staged, value);
         }
         state.Exit();
     }

@@ -697,6 +697,33 @@ static class ObjectParser
             }
         }
 
+        // EnumAsString: a member-level [MessagePackFormatter] owns the member's wire, so it is neither walked nor reported
+        var enumNames = new EnumNameNode?[entries.Count];
+        var enumNamesModels = new Dictionary<string, EnumNamesModel>(StringComparer.Ordinal);
+        if (ReadNamedBool(objectAttribute, "EnumAsString"))
+        {
+            var unreachable = false;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (entries[i].Custom is not null)
+                {
+                    continue;
+                }
+                (string Container, string Enum)? blocked = null;
+                enumNames[i] = BuildEnumNameNode(entries[i].Type, context.SemanticModel.Compilation, allowPrivate ? type : null, enumNamesModels, ref blocked);
+                if (blocked is { } at)
+                {
+                    var enumName = at.Enum.Replace("global::", "");
+                    diagnostics.Add(new DiagnosticInfo(Diagnostics.EnumAsStringUnreachable, $"'{typeName}.{entries[i].Name}': EnumAsString cannot reach the enum '{enumName}' inside '{at.Container.Replace("global::", "")}', whose formatter takes no nested formatter from outside (tuples, ILookup, multi-dimensional arrays and custom collections do not), so it would stay an integer. Annotate the enum with [MessagePackFormatter(typeof(EnumAsStringFormatterFactory<{enumName}>))] to write it by name everywhere, or give the member a [MessagePackFormatter] of its own.", entries[i].Location));
+                    unreachable = true;
+                }
+            }
+            if (unreachable)
+            {
+                return Invalid(diagnostics);
+            }
+        }
+
         var anyInit = false;
         var anyRequiredModifier = false;
         var constructorSetsRequiredMembers = selectedConstructor is not null && HasAttribute(selectedConstructor, SetsRequiredMembersAttributeName);
@@ -744,6 +771,7 @@ static class ObjectParser
                     && entry.Type.NullableAnnotation == NullableAnnotation.NotAnnotated
                     && entry.Type.TypeKind != TypeKind.TypeParameter,
                 CustomFormatter: entry.Custom,
+                EnumNames: enumNames[i],
                 BaseCastType: entry.ShadowedBaseType,
                 UniqueId: entry.ShadowedBaseType is null ? null : entry.Name + "_" + Sanitize(entry.ShadowedBaseType),
                 LegacyKeyPrefix: legacyKeyByKey.TryGetValue(entry.StringKey, out var legacyKey) ? legacyKey.Prefix : null,
@@ -914,7 +942,8 @@ static class ObjectParser
             UnknownMembersName: unknownMembersName,
             UnknownMembersRequired: unknownMembersRequired,
             RequiredDefaultedMembers: new EquatableArray<RequiredDefaultModel>([.. requiredDefaultedMembers]),
-            PrivateHarvestedBuiltIns: new EquatableArray<HarvestedBuiltInModel>([.. privateHarvestedBuiltIns.OrderBy(static h => h.ClosedTypeName, StringComparer.Ordinal)]));
+            PrivateHarvestedBuiltIns: new EquatableArray<HarvestedBuiltInModel>([.. privateHarvestedBuiltIns.OrderBy(static h => h.ClosedTypeName, StringComparer.Ordinal)]),
+            EnumNames: new EquatableArray<EnumNamesModel>([.. enumNamesModels.Values.OrderBy(static m => m.FormatterName, StringComparer.Ordinal)]));
         return new ParseResult(model, new EquatableArray<DiagnosticInfo>([.. diagnostics]));
     }
 
@@ -1571,6 +1600,220 @@ static class ObjectParser
     static bool FormatterTypeExists(Compilation compilation, string formatterName, int valueArity) =>
         compilation.GetTypeByMetadataName("MessagePack.Formatters." + formatterName + "`" + (2 + valueArity)) is not null;
 
+    // EnumAsString: the formatter tree of a member type whose enums are written by name, or null when no such enum is
+    // reachable (the member then keeps the resolver's formatter). The walk follows array elements and the type arguments
+    // of the built-in containers below, and stops at a type with a schema of its own (a [MessagePackObject] or
+    // [DataContract] type, or one with a type-level [MessagePackFormatter]: its enums follow its own declaration), at an
+    // enum with a type-level [MessagePackFormatter], at a non-generic type and at a type parameter (the enum a use site
+    // substitutes is not part of this declaration). ReflectionObjectFormatter walks the same way at run time.
+    // `blocked` receives the first container that holds such an enum where the walk cannot pass, MsgPack030.
+    // Each enum leaf registers its generated name formatter in `names` (see EnumNamesFormatter).
+    internal static EnumNameNode? BuildEnumNameNode(ITypeSymbol type, Compilation compilation, INamedTypeSymbol? privateScope, Dictionary<string, EnumNamesModel> names, ref (string Container, string Enum)? blocked)
+    {
+        switch (type)
+        {
+            case INamedTypeSymbol { TypeKind: TypeKind.Enum } enumType:
+                return HasAttribute(enumType, FormatterAttributeName)
+                    ? null
+                    : new EnumNameNode(enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), null, new EquatableArray<string>([]), "", false, false, null, null,
+                        NameFormatter: EnumNamesFormatter(enumType, compilation, privateScope, names));
+            case IArrayTypeSymbol array:
+            {
+                var element = BuildEnumNameNode(array.ElementType, compilation, privateScope, names, ref blocked);
+                if (element is null)
+                {
+                    return null;
+                }
+                if (array.Rank != 1)
+                {
+                    blocked ??= (array.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), FirstEnum(element));
+                    return null;
+                }
+                return new EnumNameNode(array.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), "ArrayFormatter", new EquatableArray<string>([array.ElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)]), "", false, false, element, null);
+            }
+            case INamedTypeSymbol { IsGenericType: true } named when !HasSchemaOfItsOwn(named):
+            {
+                var slots = new EnumNameNode?[named.TypeArguments.Length];
+                EnumNameNode? reached = null;
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    slots[i] = BuildEnumNameNode(named.TypeArguments[i], compilation, privateScope, names, ref blocked);
+                    reached ??= slots[i];
+                }
+                if (reached is null)
+                {
+                    return null;
+                }
+                var formatterName = named.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T ? "NullableFormatter" : BuiltInGenericFormatterName(named);
+                var closedName = named.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                if (formatterName is null
+                    || !(slots.Length == 1 ? SingleSlotFormatters.Contains(formatterName) : slots.Length == 2 && KeyValueFormatters.Contains(formatterName))
+                    || !FormatterTypeExists(compilation, formatterName, slots.Length))
+                {
+                    blocked ??= (closedName, FirstEnum(reached));
+                    return null;
+                }
+                return new EnumNameNode(
+                    closedName,
+                    formatterName,
+                    new EquatableArray<string>([.. named.TypeArguments.Select(static a => a.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))]),
+                    FormatterTakesComparer(formatterName) ? "comparer: null" : "",
+                    KeyValue: slots.Length == 2,
+                    Staged: formatterName == "InterfaceEnumerableFormatter",
+                    slots[0],
+                    slots.Length == 2 ? slots[1] : null);
+            }
+            default:
+                return null;
+        }
+
+        static string FirstEnum(EnumNameNode node) =>
+            node.FormatterName is null ? node.TypeName : FirstEnum(node.First ?? node.Second!);
+    }
+
+    // The generated name formatter of an enum leaf, registered in `names` on first sight: in MessagePack.Generated, or
+    // inside the AllowPrivate type for an enum only that type can name. Null where none is emitted, an enum reached through
+    // a type parameter of its containing type (Outer<T>.E), whose leaf keeps EnumAsStringFormatter.
+    static string? EnumNamesFormatter(INamedTypeSymbol enumType, Compilation compilation, INamedTypeSymbol? privateScope, Dictionary<string, EnumNamesModel> names)
+    {
+        if (ContainsTypeParameter(enumType))
+        {
+            return null;
+        }
+        var nested = !IsAccessibleToGeneratedCode(enumType, compilation);
+        if (nested && privateScope is null)
+        {
+            return null;
+        }
+        var enumTypeName = enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        // never ends in "Formatter", the suffix of every object and union formatter, so Sanitize's injectivity keeps it apart
+        var formatterName = Sanitize(enumTypeName) + "EnumNames";
+        if (!names.ContainsKey(enumTypeName))
+        {
+            names.Add(enumTypeName, BuildEnumNamesModel(enumType, enumTypeName, formatterName, nested));
+        }
+        return nested
+            ? privateScope!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + "." + formatterName
+            : "global::MessagePack.Generated." + formatterName;
+    }
+
+    // EnumAsStringFormatter's tables, built the way its constructor builds them: the declared fields in order, a value
+    // keeping its last declared name, a serialized name its last declared member
+    static EnumNamesModel BuildEnumNamesModel(INamedTypeSymbol enumType, string enumTypeName, string formatterName, bool nested)
+    {
+        var writes = new List<EnumNameValue>();
+        var writeIndex = new Dictionary<object, int>();
+        var reads = new List<EnumNameValue>();
+        var readIndex = new Dictionary<string, int>(StringComparer.Ordinal);
+        var renames = new List<EnumNameValue>();
+        foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>())
+        {
+            if (!field.IsStatic || !field.HasConstantValue || field.ConstantValue is not { } constant)
+            {
+                continue;
+            }
+            var member = enumTypeName + "." + Identifier(field.Name);
+            var name = EnumMemberValue(field) ?? field.Name;
+            if (name != field.Name)
+            {
+                renames.Add(new EnumNameValue(field.Name, name));
+            }
+            if (writeIndex.TryGetValue(constant, out var at))
+            {
+                writes[at] = new EnumNameValue(member, name);
+            }
+            else
+            {
+                writeIndex.Add(constant, writes.Count);
+                writes.Add(new EnumNameValue(member, name));
+            }
+            if (readIndex.TryGetValue(name, out at))
+            {
+                reads[at] = new EnumNameValue(member, name);
+            }
+            else
+            {
+                readIndex.Add(name, reads.Count);
+                reads.Add(new EnumNameValue(member, name));
+            }
+        }
+        var isFlags = HasAttribute(enumType, "System.FlagsAttribute");
+        return new EnumNamesModel(
+            enumTypeName,
+            formatterName,
+            nested,
+            isFlags,
+            new EquatableArray<EnumNameValue>([.. writes]),
+            new EquatableArray<EnumNameValue>([.. reads]),
+            new EquatableArray<EnumNameValue>(isFlags ? [.. renames] : []));
+    }
+
+    // [EnumMember(Value = "...")] with a non-null value, the rename EnumAsStringFormatter honors
+    static string? EnumMemberValue(IFieldSymbol field)
+    {
+        foreach (var attribute in field.GetAttributes())
+        {
+            if (attribute.AttributeClass?.ToDisplayString() != "System.Runtime.Serialization.EnumMemberAttribute")
+            {
+                continue;
+            }
+            foreach (var argument in attribute.NamedArguments)
+            {
+                if (argument.Key == "Value" && argument.Value.Value is string value)
+                {
+                    return value;
+                }
+            }
+        }
+        return null;
+    }
+
+    // [MessagePackObject] counts from base types too (Inherited = true), [DataContract] on the type itself, the claim
+    // rule of ReflectionFormatterFactory.HasObjectClaim
+    static bool HasSchemaOfItsOwn(INamedTypeSymbol named)
+    {
+        var definition = named.OriginalDefinition;
+        if (HasAttribute(definition, FormatterAttributeName) || HasAttribute(definition, DataContractAttributeName))
+        {
+            return true;
+        }
+        for (var declaring = definition; declaring is not null; declaring = declaring.BaseType)
+        {
+            if (HasMessagePackObjectAttribute(declaring))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    const string DataContractAttributeName = "System.Runtime.Serialization.DataContractAttribute";
+
+    // the built-in formatters that take their nested formatters from outside: ICollectionFormatterInitializer
+    // (one slot) and IKeyValueFormatterInitializer (two); the names are BuiltInGenericFormatterName's (plus the array
+    // and Nullable forms), and every class named here implements the interface
+    static readonly HashSet<string> SingleSlotFormatters = new(StringComparer.Ordinal)
+    {
+        "ArrayFormatter", "NullableFormatter", "LazyFormatter",
+        "ListFormatter", "LinkedListFormatter", "QueueFormatter", "StackFormatter", "HashSetFormatter", "SortedSetFormatter",
+        "ReadOnlySetFormatter", "ReadOnlyCollectionFormatter", "ObservableCollectionFormatter", "ReadOnlyObservableCollectionFormatter",
+        "ArraySegmentFormatter", "MemoryFormatter", "ReadOnlyMemoryFormatter", "ReadOnlySequenceFormatter",
+        "ConcurrentQueueFormatter", "ConcurrentStackFormatter", "ConcurrentBagFormatter",
+        "InterfaceEnumerableFormatter", "InterfaceCollectionFormatter", "InterfaceListFormatter", "InterfaceReadOnlyCollectionFormatter",
+        "InterfaceReadOnlyListFormatter", "InterfaceSetFormatter", "InterfaceReadOnlySetFormatter",
+        "ImmutableArrayFormatter", "ImmutableListFormatter", "ImmutableHashSetFormatter", "ImmutableSortedSetFormatter",
+        "ImmutableQueueFormatter", "ImmutableStackFormatter", "InterfaceImmutableListFormatter", "InterfaceImmutableSetFormatter",
+        "InterfaceImmutableQueueFormatter", "InterfaceImmutableStackFormatter", "FrozenSetFormatter",
+    };
+
+    static readonly HashSet<string> KeyValueFormatters = new(StringComparer.Ordinal)
+    {
+        "DictionaryFormatter", "InterfaceDictionaryFormatter", "InterfaceReadOnlyDictionaryFormatter", "ReadOnlyDictionaryFormatter",
+        "SortedListFormatter", "SortedDictionaryFormatter", "ConcurrentDictionaryFormatter", "OrderedDictionaryFormatter",
+        "PriorityQueueFormatter", "KeyValuePairFormatter",
+        "ImmutableDictionaryFormatter", "ImmutableSortedDictionaryFormatter", "InterfaceImmutableDictionaryFormatter", "FrozenDictionaryFormatter",
+    };
+
     // these formatters preserve the collection's comparer semantics through an explicit constructor parameter (no
     // parameterless constructor exists on them)
     static bool FormatterTakesComparer(string formatterName) => formatterName is
@@ -1848,7 +2091,8 @@ static class ObjectParser
     // `using static`) would shadow it inside the formatter and break the generated code.
     internal static bool CollidesWithGeneratedCode(string name, Compilation compilation)
     {
-        if (name is "TWriteBuffer" or "TReadBuffer" || GeneratedNames.Contains(name))
+        // enumNames{n}: the locals of the EnumAsString trees in Initialize
+        if (name is "TWriteBuffer" or "TReadBuffer" || GeneratedNames.Contains(name) || name.StartsWith("enumNames", StringComparison.Ordinal))
         {
             return true;
         }

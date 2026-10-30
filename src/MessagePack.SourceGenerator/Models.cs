@@ -82,6 +82,54 @@ public sealed record CustomFormatterModel(
     string? TypeOfExpr,
     string? FormatterNew);
 
+/// <summary>
+/// [MessagePackObject(EnumAsString = true)]: the formatter tree a member builds itself so that the enums inside its type
+/// are written by name (the resolver's formatters are shared by every use site, so they keep the integers). A leaf
+/// (FormatterName null) is the enum, served by its generated name formatter (EnumNamesModel). A container is a built-in formatter that takes
+/// its nested formatters through ICollectionFormatterInitializer / IKeyValueFormatterInitializer before Initialize; a
+/// null slot holds no such enum and stays the resolver's.
+/// </summary>
+public sealed record EnumNameNode(
+    // the enum of a leaf (fully qualified)
+    string TypeName,
+    // the MessagePack.Formatters class that serves the container, null for a leaf
+    string? FormatterName,
+    // the container formatter's type arguments after the buffer pair
+    EquatableArray<string> TypeArguments,
+    string ConstructorArguments,
+    // two slots (key and value, or element and priority) through IKeyValueFormatterInitializer
+    bool KeyValue,
+    // IEnumerable<T>: a source without a count stages its elements over the Compatible pair, which takes the element
+    // tree a second time over those buffers (IStagedCollectionFormatterInitializer)
+    bool Staged,
+    EnumNameNode? First,
+    EnumNameNode? Second,
+    // a leaf's generated name formatter (fully qualified, without the buffer arguments), null where none is emitted
+    // (an enum reached through a type parameter of its containing type) and EnumAsStringFormatter serves the leaf
+    string? NameFormatter = null);
+
+/// <summary>A declared member of an enum and its serialized name, or a CLR name and its [EnumMember] rename.</summary>
+public sealed record EnumNameValue(string Member, string Name);
+
+/// <summary>
+/// The generated name formatter of one enum reached by EnumAsString: the wire of EnumAsStringFormatter (ordinal names,
+/// [EnumMember] renames, the undeclared values and [Flags] combinations through Enum.ToString / Enum.TryParse) with the
+/// declared names compiled in, so a write copies a pre-encoded str and a read compares UTF-8 in place.
+/// </summary>
+public sealed record EnumNamesModel(
+    string EnumTypeName,
+    string FormatterName,
+    // the enum is not reachable from MessagePack.Generated (a private nested enum of an AllowPrivate type): the formatter
+    // is emitted inside that type instead of in the shared file
+    bool Nested,
+    bool IsFlags,
+    // one per distinct value, with the last declared name of that value (EnumAsStringFormatter's value table)
+    EquatableArray<EnumNameValue> Writes,
+    // one per serialized name, with the last declared member of that name (its name table)
+    EquatableArray<EnumNameValue> Reads,
+    // [Flags] only: CLR name (Member) to serialized name (Name) of the renamed members, for the combinations
+    EquatableArray<EnumNameValue> Renames);
+
 public sealed record MemberModel(
     string Name,
     string TypeName,
@@ -128,7 +176,10 @@ public sealed record MemberModel(
     // declared string with no member-level [MessagePackFormatter]: it still rides the formatter field (the chain picks
     // its encoding), but each call site tests the field for the stock StringFormatter and calls the buffer's
     // WriteString/ReadString directly on a hit (see DirectKind)
-    bool IsString = false)
+    bool IsString = false,
+    // EnumAsString with an enum reachable in the member type: Initialize builds this tree instead of
+    // resolver.GetFormatter (never set together with CustomFormatter, which wins)
+    EnumNameNode? EnumNames = null)
 {
     public string Id => this.UniqueId ?? this.Name;
 }
@@ -194,7 +245,10 @@ public sealed record ObjectModel(
     // AllowPrivate: the closed built-in forms (a private nested enum, Nullable / array / List / Dictionary over it, ...)
     // the generated factory cannot name; a factory nested in the partial type constructs and registers them so the
     // source-generated-only chain resolves them
-    EquatableArray<HarvestedBuiltInModel> PrivateHarvestedBuiltIns = default);
+    EquatableArray<HarvestedBuiltInModel> PrivateHarvestedBuiltIns = default,
+    // EnumAsString: the name formatters of the enums the members reach; the shared ones are emitted once per compilation
+    // in MessagePack.Generated, the Nested ones inside this (AllowPrivate) type
+    EquatableArray<EnumNamesModel> EnumNames = default);
 
 public sealed record ParseResult(
     ObjectModel? Model,

@@ -213,3 +213,21 @@ sealed class SplitSegment : ReadOnlySequenceSegment<byte>
         return new ReadOnlySequence<byte>(first, 0, second, data.Length - splitAt);
     }
 }
+
+public enum AotShade
+{
+    Red,
+    Green,
+    Blue,
+}
+
+[MessagePackObject(true, EnumAsString = true)]
+public class AotEnumAsStringPoco
+{
+    public AotShade Single { get; set; }
+    public AotShade? Maybe { get; set; }
+    public AotShade[]? Array { get; set; }
+    public List<AotShade>? List { get; set; }
+    public Dictionary<string, AotShade>? ByValue { get; set; }
+    public IEnumerable<AotShade>? Items { get; set; }
+}

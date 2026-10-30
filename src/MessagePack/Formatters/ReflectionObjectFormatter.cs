@@ -386,6 +386,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     void BuildAttributedTable(List<MemberCandidate> candidates, List<MemberCandidate> perLevelCandidates, object objectAttribute)
     {
         var keyAsPropertyName = ReadBoolProperty(objectAttribute, "KeyAsPropertyName");
+        var enumAsString = ReadBoolProperty(objectAttribute, "EnumAsString");
         var namingPolicy = ReadKeyNamingPolicyProperty(objectAttribute);
         if (keyAsPropertyName)
         {
@@ -493,7 +494,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             }
 
             var slot = CreateSlot(candidate);
-            ApplyMemberMetadata(slot, candidate);
+            ApplyMemberMetadata(slot, candidate, enumAsString);
             memberSlots.Add(slot);
             names.Add(name);
             memberIntKeys.Add(intKey ?? -1);
@@ -661,7 +662,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         return (MemberSlot)createFieldSlot.MakeGenericMethod(candidate.MemberType).InvokeUnwrapped(null, [(FieldInfo)candidate.Member, allowPrivate])!;
     }
 
-    static void ApplyMemberMetadata(MemberSlot slot, in MemberCandidate candidate)
+    static void ApplyMemberMetadata(MemberSlot slot, in MemberCandidate candidate, bool enumAsString = false)
     {
         slot.MemberName = candidate.Member.Name;
         slot.DeclaringType = candidate.Member.DeclaringType;
@@ -678,6 +679,38 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         {
             slot.CustomFormatter = CreateCustomFormatter(formatterAttribute, candidate.MemberType, candidate.Member.Name);
         }
+        else if (enumAsString)
+        {
+            // a member-level [MessagePackFormatter] owns the member's wire, so EnumAsString leaves it alone
+            slot.EnumNames = EnumNameFormatterTree.Build(candidate.MemberType, DeclaredMemberType(candidate.Member, candidate.MemberType));
+        }
+    }
+
+    // The member's type as the open definition of a generic T declares it. A type parameter of T stays open there, which
+    // is where the source generator's EnumAsString walk stops (the enum a use site substitutes is not part of the
+    // declaration), so the closed member type alone would write by name what the generated tier writes as an integer.
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "the open definition's members mirror the closed T's, which member discovery already enumerated under the same RequiresUnreferencedCode gate")]
+    static Type DeclaredMemberType(MemberInfo member, Type memberType)
+    {
+        if (!typeof(T).IsGenericType || member.DeclaringType is not { } declaring)
+        {
+            return memberType;
+        }
+        for (var level = typeof(T).GetGenericTypeDefinition(); level is not null && level != typeof(object); level = level.BaseType)
+        {
+            if (level.MetadataToken != declaring.MetadataToken || level.Module != declaring.Module)
+            {
+                continue;
+            }
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+            return member switch
+            {
+                PropertyInfo => Array.Find(level.GetProperties(flags), p => p.MetadataToken == member.MetadataToken)?.PropertyType ?? memberType,
+                FieldInfo => Array.Find(level.GetFields(flags), f => f.MetadataToken == member.MetadataToken)?.FieldType ?? memberType,
+                _ => memberType,
+            };
+        }
+        return memberType;
     }
 
     // member-level [MessagePackFormatter]: the v3-form interpretation (and the rejection of the source generator's
@@ -694,6 +727,11 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
     static IMessagePackFormatter<TWriteBuffer, TReadBuffer, TMember> ResolveSlotFormatter<TMember>(MessagePackFormatterResolver resolver, MemberSlot slot)
     {
+        if (slot.EnumNames is { } enumNames)
+        {
+            // EnumAsString: the member's own tree, never the resolver's shared formatter (see EnumNameFormatterTree)
+            return (IMessagePackFormatter<TWriteBuffer, TReadBuffer, TMember>)enumNames.Create<TWriteBuffer, TReadBuffer>(resolver, $"{typeof(T).FullName}.{slot.MemberName}");
+        }
         if (slot.CustomFormatter is { } custom)
         {
             if (custom is MessagePackFormatterFactory memberFactory)
@@ -1440,6 +1478,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         public bool IsInitOnly;    // an `init` accessor: settable only while constructing
         public bool ValidateNull;  // non-nullable annotated and the resolver enforces the annotation
         public object? CustomFormatter; // [MessagePackFormatter] instance, overrides resolver resolution
+        public EnumNameFormatterTree? EnumNames; // EnumAsString with an enum in the member type: the member builds its own formatter
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         protected void ThrowNullValue()

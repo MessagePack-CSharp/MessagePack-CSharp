@@ -2,7 +2,7 @@ using SerializerFoundation;
 
 namespace MessagePack.Formatters;
 
-public sealed class NullableFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T?>
+public sealed class NullableFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, T?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -15,9 +15,14 @@ public sealed class NullableFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePa
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, T? value)

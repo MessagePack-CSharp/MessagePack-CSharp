@@ -345,6 +345,30 @@ public class AotSerializationTests
         }
     }
 
+    static IEnumerable<AotShade> IterateShades()
+    {
+        yield return AotShade.Green;
+    }
+
+    // [MessagePackObject(EnumAsString = true)]: the generated member trees construct their containers and the
+    // EnumAsStringFormatter leaves directly, so the AOT chain serves them (the staged IEnumerable source included)
+    [Fact]
+    public void EnumAsStringRoundtrip()
+    {
+        const string Json = """{"Single":"Blue","Maybe":"Red","Array":["Green"],"List":["Red","Blue"],"ByValue":{"x":"Blue"},"Items":["Green"]}""";
+        var bytes = V4.Serialize(new AotEnumAsStringPoco
+        {
+            Single = AotShade.Blue,
+            Maybe = AotShade.Red,
+            Array = [AotShade.Green],
+            List = [AotShade.Red, AotShade.Blue],
+            ByValue = new() { ["x"] = AotShade.Blue },
+            Items = IterateShades(),
+        }, Options);
+        Assert.Equal(Json, V4.ConvertToJson(bytes));
+        Assert.Equal(Json, V4.ConvertToJson(V4.Serialize(V4.Deserialize<AotEnumAsStringPoco>(bytes, Options), Options)));
+    }
+
     // unregistered type must fail with the resolver's exception, not an AOT crash
     // (List<int> no longer qualifies: primitive Lists are hardwired in BuiltIn since the
     // collection-family work; a List of a user type still needs GenericFormatterFactory)

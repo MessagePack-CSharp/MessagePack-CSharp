@@ -6,13 +6,18 @@ namespace MessagePack.Formatters;
 /// Serializes <see cref="Lazy{T}"/> transparently as its value.
 /// Serializing FORCES the lazy evaluation, and deserializing produces an already-evaluated instance.
 /// </summary>
-public sealed partial class LazyFormatter<TWriteBuffer, TReadBuffer, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Lazy<T>?>
+public sealed partial class LazyFormatter<TWriteBuffer, TReadBuffer, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Lazy<T>?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, Lazy<T>? value)

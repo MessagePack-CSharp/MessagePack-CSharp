@@ -6,13 +6,11 @@ namespace MessagePack.Formatters;
 // element), and the wire then holds the last value repeated, with no error. v3 encoded each element as it was
 // enumerated into a staging buffer and wrote the header and the bytes afterwards, which captures every element at the
 // moment it is yielded; this is that. The staging buffer is the Compatible pair's (a plain struct, so the element
-// formatter for it exists on every target and the staging nests when the elements stage too), resolved once per
-// formatter on first use. The wire is identical to the counted path, and the source is enumerated once.
+// formatter for it exists on every target and the staging nests when the elements stage too); the calling formatter
+// resolves that element formatter in Initialize, with its other nested formatters, so Serialize never reaches the
+// resolver. The wire is identical to the counted path, and the source is enumerated once.
 internal static class StagedEnumerable
 {
-    public static IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T> Formatter<T>(MessagePackFormatterResolver resolver)
-        => resolver.GetFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T>();
-
     public static void Serialize<TWriteBuffer, T>(ref TWriteBuffer buffer, ref SerializeState state, IMessagePackFormatter<CompatibleArrayPoolListWriteBuffer, CompatibleReadOnlySpanReadBuffer, T> formatter, IEnumerable<T> source)
         where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER

@@ -45,6 +45,18 @@ public sealed class MessagePackObjectAttribute : Attribute
     /// The serialized format gains a library-specific envelope that other MessagePack readers do not understand.
     /// </summary>
     public bool AllowCircularReferences { get; set; }
+
+    /// <summary>
+    /// Whether the enums of this type's members are written as their names instead of their underlying integers, the
+    /// wire form of <see cref="Formatters.EnumAsStringFormatter{TWriteBuffer, TReadBuffer, T}"/> (names follow
+    /// <c>[EnumMember]</c>, and reading requires a name).
+    /// It reaches an enum member and the enums inside a member's arrays, collections, dictionaries (keys and values),
+    /// <see cref="Nullable{T}"/> and <see cref="Lazy{T}"/>, but not a nested type with a schema of its own (a
+    /// <see cref="MessagePackObjectAttribute"/> type, or one with a type-level <see cref="MessagePackFormatterAttribute"/>),
+    /// an enum with a type-level <see cref="MessagePackFormatterAttribute"/>, or a member with a member-level one.
+    /// The source generator reports an enum it cannot reach (inside a tuple, for example) as an error (MsgPack030).
+    /// </summary>
+    public bool EnumAsString { get; set; }
 }
 
 /// <summary>Assigns the array index or map key of a member in a <see cref="MessagePackObjectAttribute"/> type.</summary>

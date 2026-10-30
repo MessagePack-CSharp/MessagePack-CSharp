@@ -1,15 +1,21 @@
 namespace MessagePack.Formatters;
 
 /// <summary>Serializes <see cref="KeyValuePair{TKey, TValue}"/> as [key, value].</summary>
-public sealed partial class KeyValuePairFormatter<TWriteBuffer, TReadBuffer, TKey, TValue> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, KeyValuePair<TKey, TValue>>
+public sealed partial class KeyValuePairFormatter<TWriteBuffer, TReadBuffer, TKey, TValue> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, KeyValuePair<TKey, TValue>>, IKeyValueFormatterInitializer<TWriteBuffer, TReadBuffer, TKey, TValue>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, TKey> keyFormatter = null!;
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, TValue> valueFormatter = null!;
 
+    void IKeyValueFormatterInitializer<TWriteBuffer, TReadBuffer, TKey, TValue>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, TKey>? keyFormatter, IMessagePackFormatter<TWriteBuffer, TReadBuffer, TValue>? valueFormatter)
+    {
+        this.keyFormatter = keyFormatter!;
+        this.valueFormatter = valueFormatter!;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        keyFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TKey>();
-        valueFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TValue>();
+        keyFormatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, TKey>();
+        valueFormatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, TValue>();
     }
 
     public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, KeyValuePair<TKey, TValue> value)

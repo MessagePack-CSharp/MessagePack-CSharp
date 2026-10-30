@@ -2,7 +2,7 @@ using System.Collections.Frozen;
 
 namespace MessagePack.Formatters;
 
-public sealed class FrozenDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, FrozenDictionary<TKey, TValue>?>
+public sealed class FrozenDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, TValue> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, FrozenDictionary<TKey, TValue>?>, IKeyValueFormatterInitializer<TWriteBuffer, TReadBuffer, TKey, TValue>
     where TWriteBuffer : struct, IWriteBuffer
 #if NET9_0_OR_GREATER
     , allows ref struct
@@ -22,10 +22,16 @@ public sealed class FrozenDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, T
         this.comparer = comparer;
     }
 
+    void IKeyValueFormatterInitializer<TWriteBuffer, TReadBuffer, TKey, TValue>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, TKey>? keyFormatter, IMessagePackFormatter<TWriteBuffer, TReadBuffer, TValue>? valueFormatter)
+    {
+        this.keyFormatter = keyFormatter!;
+        this.valueFormatter = valueFormatter!;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        keyFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TKey>();
-        valueFormatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, TValue>();
+        keyFormatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, TKey>();
+        valueFormatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, TValue>();
         if (comparer == null && resolver.HashFloodingResistant)
         {
             comparer = HashFloodingResistantEqualityComparer.Get<TKey>();
@@ -123,7 +129,7 @@ public sealed partial class FrozenDictionaryFormatterFactory<TKey, TValue> : Mes
     }
 }
 
-public sealed partial class FrozenSetFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, FrozenSet<T>?>
+public sealed partial class FrozenSetFormatter<TWriteBuffer, TReadBuffer, T> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, FrozenSet<T>?>, ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>
 {
     IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> formatter = null!;
     IEqualityComparer<T>? comparer;
@@ -133,9 +139,14 @@ public sealed partial class FrozenSetFormatter<TWriteBuffer, TReadBuffer, T> : I
         this.comparer = comparer;
     }
 
+    void ICollectionFormatterInitializer<TWriteBuffer, TReadBuffer, T>.Initialize(IMessagePackFormatter<TWriteBuffer, TReadBuffer, T> elementFormatter)
+    {
+        formatter = elementFormatter;
+    }
+
     public void Initialize(MessagePackFormatterResolver resolver)
     {
-        formatter = resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
+        formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
         if (comparer == null && resolver.HashFloodingResistant)
         {
             comparer = HashFloodingResistantEqualityComparer.Get<T>();
