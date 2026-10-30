@@ -26,7 +26,7 @@
 	<!-- Floors for the netstandard consumers (.NET Framework, Unity, pre-.NET 9 libraries): as low as the code allows,
 	     the .NET 8 era like v3, so referencing MessagePack does not drag the rest of an application up to the current
 	     major. System.Text.Json is 8.0.5, the first 8.x without a known vulnerability (NU1903 below it). The four
-	     marked "SerializerFoundation" cannot go below what SerializerFoundation 1.2.0 itself requires (NU1605);
+	     marked "SerializerFoundation" cannot go below what SerializerFoundation 1.4.0 itself requires (NU1605);
 	     lower them together with the SerializerFoundation release that lowers its own. -->
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
 		<PackageReference Include="System.Memory" Version="4.6.3" /> <!-- SerializerFoundation -->
@@ -49,7 +49,7 @@
 	<!-- The SerializerFoundation package carries its own analyzers (SF001-SF003) under analyzers/dotnet/cs.
 	     PrivateAssets=none lets them flow to MessagePack consumers too; the default would keep them private to this project. -->
 	<ItemGroup>
-		<PackageReference Include="SerializerFoundation" Version="1.2.0" PrivateAssets="none" />
+		<PackageReference Include="SerializerFoundation" Version="1.4.0" PrivateAssets="none" />
 	</ItemGroup>
 
 	<!-- Analyzer -->
