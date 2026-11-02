@@ -109,6 +109,33 @@ public class GeneratorRobustnessTests
         Assert.DoesNotContain(output.GetDiagnostics(), static d => d.Id == "CS0619");
     }
 
+    // the fix MsgPack026 names: an [IgnoreMember] member (and a non-public one without [Key]) is never referenced
+    [Fact]
+    public void ObsoleteErrorMember_Ignored_Generates()
+    {
+        var (diagnostics, output, run) = Generate("""
+            using System;
+            using MessagePack;
+            [MessagePackObject]
+            public class Legacy
+            {
+                [Key(0)] public int Id { get; set; }
+                [IgnoreMember, Obsolete("gone", error: true)] public int Old { get; set; }
+                [Obsolete("gone", error: true)] internal int Hidden { get; set; }
+            }
+            [MessagePackObject(true)]
+            public class LegacyMap
+            {
+                public int Id { get; set; }
+                [IgnoreMember, Obsolete("gone", error: true)] public int Old { get; set; }
+            }
+            """);
+        Assert.DoesNotContain(diagnostics, static d => d.Id == "MsgPack026");
+        Assert.Contains(run.GeneratedTrees, static t => t.FilePath.Contains("LegacyFormatter", StringComparison.Ordinal));
+        Assert.Contains(run.GeneratedTrees, static t => t.FilePath.Contains("LegacyMapFormatter", StringComparison.Ordinal));
+        AssertCompiles(output);
+    }
+
     // ---- F58: a partial formatter / factory nested in a non-partial type ----
 
     [Fact]

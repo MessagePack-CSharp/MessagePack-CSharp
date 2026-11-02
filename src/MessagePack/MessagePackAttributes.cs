@@ -54,7 +54,8 @@ public sealed class MessagePackObjectAttribute : Attribute
     /// <see cref="Nullable{T}"/> and <see cref="Lazy{T}"/>, but not a nested type with a schema of its own (a
     /// <see cref="MessagePackObjectAttribute"/> type, or one with a type-level <see cref="MessagePackFormatterAttribute"/>),
     /// an enum with a type-level <see cref="MessagePackFormatterAttribute"/>, or a member with a member-level one.
-    /// The source generator reports an enum it cannot reach (inside a tuple, for example) as an error (MsgPack030).
+    /// The source generator reports an enum it cannot reach (inside a tuple, for example) as an error (MsgPack030), and
+    /// an enum whose members share one <c>[EnumMember]</c> name (MsgPack031), which EnumAsStringFormatter refuses as well.
     /// </summary>
     public bool EnumAsString { get; set; }
 }

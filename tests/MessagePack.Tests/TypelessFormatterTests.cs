@@ -409,6 +409,50 @@ public class TypelessFormatterTests
             BuildTypelessPayload(drifted, inner), allowed)).Age);
     }
 
+    // AllowedTypes takes any assembly suffix on a registered name, so a payload can make every spelling unique and as long
+    // as the message: such a spelling still reads, but the name cache never keeps it (1024 of them pinned ~2 GB)
+    [Fact]
+    public unsafe void AllowedTypes_LongSpellingsReadButAreNotCached()
+    {
+        var resolver = new MessagePackFormatterResolver([MessagePackFormatterFactory.Default.WithContractless().WithTypeless(TypelessTypeLoader.AllowedTypes(typeof(TypelessPerson)))]);
+        var formatter = resolver.GetFormatter<SerializerFoundation.CompatibleArrayPoolListWriteBuffer, SerializerFoundation.CompatibleReadOnlySpanReadBuffer, object?>();
+        var cache = (System.Collections.ICollection)formatter.GetType()
+            .GetField("serializersByName", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .GetValue(formatter)!;
+        var inner = MessagePackSerializer.Serialize(new TypelessPerson { Age = 9 },
+            new MessagePackSerializerOptions(new MessagePackFormatterResolver([MessagePackFormatterFactory.Default.WithContractless()])));
+
+        object? Read(string typeName)
+        {
+            var nameUtf8 = System.Text.Encoding.UTF8.GetBytes(typeName);
+            var body = 5 + nameUtf8.Length + inner.Length;
+            var payload = new byte[6 + body];
+            payload[0] = 0xC9; // ext32
+            System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(payload.AsSpan(1), body);
+            payload[5] = 0x64; // code 100
+            payload[6] = 0xDB; // str32
+            System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(payload.AsSpan(7), nameUtf8.Length);
+            nameUtf8.CopyTo(payload, 11);
+            inner.CopyTo(payload, 11 + nameUtf8.Length);
+            fixed (byte* pointer = payload)
+            {
+                var buffer = new SerializerFoundation.CompatibleReadOnlySpanReadBuffer(pointer, payload.Length);
+                var state = new DeserializeState(maxDepth: 0, payload.Length);
+                object? value = null;
+                formatter.Deserialize(ref buffer, ref state, ref value);
+                return value;
+            }
+        }
+
+        Assert.Equal(9, Assert.IsType<TypelessPerson>(Read(typeof(TypelessPerson).FullName + ", Elsewhere")).Age);
+        Assert.Equal(1, cache.Count);
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.Equal(9, Assert.IsType<TypelessPerson>(Read(typeof(TypelessPerson).FullName + ", " + i + new string('x', 4096))).Age);
+        }
+        Assert.Equal(1, cache.Count);
+    }
+
     [Fact]
     public void OmitAssemblyVersion_MatchesV3AndCrossReads()
     {

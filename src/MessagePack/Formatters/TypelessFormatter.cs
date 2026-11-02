@@ -242,6 +242,11 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
     // parse, nothing accumulates.
     const int MaxCachedTypeNameCount = 1024;
 
+    // ... and on the length of each one: AllowedTypes accepts any assembly suffix (", " + whatever the payload likes) on a
+    // registered name, so without it 1024 entries could each pin a key as long as the message (up to 64 MB by default).
+    // A longer spelling still resolves, it is just never cached; 1024 x 4096 chars bounds the table at about 8 MB.
+    const int MaxCachedTypeNameLength = 4096;
+
     [MethodImpl(MethodImplOptions.NoInlining)]
     TypelessSerializer CreateSerializerForName(string typeName)
     {
@@ -255,7 +260,7 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
         ThrowIfDisallowed(type);
 
         var serializer = GetSerializerByType(type);
-        if (serializersByName.Count < MaxCachedTypeNameCount)
+        if (typeName.Length <= MaxCachedTypeNameLength && serializersByName.Count < MaxCachedTypeNameCount)
         {
             serializersByName.TryAdd(typeName, serializer); // the payload spelling may differ from our own
         }

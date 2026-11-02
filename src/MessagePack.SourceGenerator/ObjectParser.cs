@@ -264,17 +264,6 @@ static class ObjectParser
             }
         }
 
-        // the generated formatter reads and writes every candidate by name: a member under [Obsolete(error: true)] makes
-        // that CS0619 inside the generated file, which no pragma lifts, so the type is refused with the fix spelled out
-        foreach (var candidate in candidates)
-        {
-            if (IsObsoleteError(candidate.Symbol))
-            {
-                diagnostics.Add(new DiagnosticInfo(Diagnostics.ObsoleteErrorMember, $"'{typeName}.{candidate.Symbol.Name}' is marked [Obsolete(error: true)], which the generated formatter cannot reference; add [IgnoreMember] to it, or drop error: true.", LocationInfo.From(candidate.Symbol)));
-                return Invalid(diagnostics);
-            }
-        }
-
         // shadow annotation: among same-named candidates, the declaration nearest the leaf keeps the plain name (that
         // is what `value.Name` binds to); every declaration above it accesses through a cast to its declarer
         foreach (var nameGroup in candidates
@@ -434,6 +423,12 @@ static class ObjectParser
             // [IgnoreMember] above still opts it out entirely (the type then keeps skip-only tolerance).
             if (IsUnknownMembersType(memberType))
             {
+                if (IsObsoleteError(symbol))
+                {
+                    diagnostics.Add(ObsoleteErrorDiagnostic(typeName, symbol));
+                    valid = false;
+                    continue;
+                }
                 var unknownLocation = LocationInfo.From(symbol);
                 if (shadowedBaseType is not null || IsHiddenInDerivedType(type, symbol, allowPrivate))
                 {
@@ -521,6 +516,16 @@ static class ObjectParser
                 {
                     continue; // non-public members participate only by explicit [Key]
                 }
+            }
+
+            // the generated formatter reads and writes this member by name: under [Obsolete(error: true)] that is CS0619
+            // inside the generated file, which no pragma lifts, so the type is refused with the fix spelled out. Checked
+            // only here, once [IgnoreMember] and the non-keyed non-public members have left (neither is referenced)
+            if (IsObsoleteError(symbol))
+            {
+                diagnostics.Add(ObsoleteErrorDiagnostic(typeName, symbol));
+                valid = false;
+                continue;
             }
 
             if (intKey is { } key)
@@ -710,11 +715,17 @@ static class ObjectParser
                     continue;
                 }
                 (string Container, string Enum)? blocked = null;
-                enumNames[i] = BuildEnumNameNode(entries[i].Type, context.SemanticModel.Compilation, allowPrivate ? type : null, enumNamesModels, ref blocked);
+                (string Enum, string Name)? duplicated = null;
+                enumNames[i] = BuildEnumNameNode(entries[i].Type, context.SemanticModel.Compilation, allowPrivate ? type : null, enumNamesModels, ref blocked, ref duplicated);
                 if (blocked is { } at)
                 {
                     var enumName = at.Enum.Replace("global::", "");
                     diagnostics.Add(new DiagnosticInfo(Diagnostics.EnumAsStringUnreachable, $"'{typeName}.{entries[i].Name}': EnumAsString cannot reach the enum '{enumName}' inside '{at.Container.Replace("global::", "")}', whose formatter takes no nested formatter from outside (tuples, ILookup, multi-dimensional arrays and custom collections do not), so it would stay an integer. Annotate the enum with [MessagePackFormatter(typeof(EnumAsStringFormatterFactory<{enumName}>))] to write it by name everywhere, or give the member a [MessagePackFormatter] of its own.", entries[i].Location));
+                    unreachable = true;
+                }
+                if (duplicated is { } twice)
+                {
+                    diagnostics.Add(new DiagnosticInfo(Diagnostics.EnumAsStringDuplicateName, $"'{typeName}.{entries[i].Name}': EnumAsString cannot write the enum '{twice.Enum.Replace("global::", "")}' by name: more than one of its members carries [EnumMember(Value = \"{twice.Name}\")], so that name would read back as only one of them (EnumAsStringFormatter refuses the enum). Give each member its own name.", entries[i].Location));
                     unreachable = true;
                 }
             }
@@ -1608,18 +1619,24 @@ static class ObjectParser
     // substitutes is not part of this declaration). ReflectionObjectFormatter walks the same way at run time.
     // `blocked` receives the first container that holds such an enum where the walk cannot pass, MsgPack030.
     // Each enum leaf registers its generated name formatter in `names` (see EnumNamesFormatter).
-    internal static EnumNameNode? BuildEnumNameNode(ITypeSymbol type, Compilation compilation, INamedTypeSymbol? privateScope, Dictionary<string, EnumNamesModel> names, ref (string Container, string Enum)? blocked)
+    internal static EnumNameNode? BuildEnumNameNode(ITypeSymbol type, Compilation compilation, INamedTypeSymbol? privateScope, Dictionary<string, EnumNamesModel> names, ref (string Container, string Enum)? blocked, ref (string Enum, string Name)? duplicated)
     {
         switch (type)
         {
             case INamedTypeSymbol { TypeKind: TypeKind.Enum } enumType:
-                return HasAttribute(enumType, FormatterAttributeName)
-                    ? null
-                    : new EnumNameNode(enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), null, new EquatableArray<string>([]), "", false, false, null, null,
-                        NameFormatter: EnumNamesFormatter(enumType, compilation, privateScope, names));
+                if (HasAttribute(enumType, FormatterAttributeName))
+                {
+                    return null;
+                }
+                if (DuplicatedEnumMemberValue(enumType) is { } name)
+                {
+                    duplicated ??= (enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), name);
+                }
+                return new EnumNameNode(enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), null, new EquatableArray<string>([]), "", false, false, null, null,
+                    NameFormatter: EnumNamesFormatter(enumType, compilation, privateScope, names));
             case IArrayTypeSymbol array:
             {
-                var element = BuildEnumNameNode(array.ElementType, compilation, privateScope, names, ref blocked);
+                var element = BuildEnumNameNode(array.ElementType, compilation, privateScope, names, ref blocked, ref duplicated);
                 if (element is null)
                 {
                     return null;
@@ -1637,7 +1654,7 @@ static class ObjectParser
                 EnumNameNode? reached = null;
                 for (int i = 0; i < slots.Length; i++)
                 {
-                    slots[i] = BuildEnumNameNode(named.TypeArguments[i], compilation, privateScope, names, ref blocked);
+                    slots[i] = BuildEnumNameNode(named.TypeArguments[i], compilation, privateScope, names, ref blocked, ref duplicated);
                     reached ??= slots[i];
                 }
                 if (reached is null)
@@ -1712,7 +1729,11 @@ static class ObjectParser
             {
                 continue;
             }
-            var member = enumTypeName + "." + Identifier(field.Name);
+            // a member under [Obsolete(error: true)] keeps its names (EnumAsStringFormatter reads every declared field),
+            // but generated code spells it as its value: naming it would be CS0619, which no pragma lifts
+            var member = IsObsoleteError(field)
+                ? $"({enumTypeName})({SymbolDisplay.FormatPrimitive(constant, quoteStrings: false, useHexadecimalNumbers: false)})"
+                : enumTypeName + "." + Identifier(field.Name);
             var name = EnumMemberValue(field) ?? field.Name;
             if (name != field.Name)
             {
@@ -1746,6 +1767,22 @@ static class ObjectParser
             new EquatableArray<EnumNameValue>([.. writes]),
             new EquatableArray<EnumNameValue>([.. reads]),
             new EquatableArray<EnumNameValue>(isFlags ? [.. renames] : []));
+    }
+
+    // an [EnumMember] value two members share: EnumAsStringFormatter refuses the enum at construction (ArgumentException,
+    // as v3 did), where a generated table would quietly read the name back as the last of them, so the generator refuses
+    // it too (MsgPack031). A rename that equals another member's own name passes in both tiers, last declared wins.
+    static string? DuplicatedEnumMemberValue(INamedTypeSymbol enumType)
+    {
+        var values = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>())
+        {
+            if (field.IsStatic && field.HasConstantValue && EnumMemberValue(field) is { } value && !values.Add(value))
+            {
+                return value;
+            }
+        }
+        return null;
     }
 
     // [EnumMember(Value = "...")] with a non-null value, the rename EnumAsStringFormatter honors
@@ -2030,6 +2067,9 @@ static class ObjectParser
         }
         return false;
     }
+
+    static DiagnosticInfo ObsoleteErrorDiagnostic(string typeName, ISymbol member) =>
+        new(Diagnostics.ObsoleteErrorMember, $"'{typeName}.{member.Name}' is marked [Obsolete(error: true)], which the generated formatter cannot reference; add [IgnoreMember] to it, or drop error: true.", LocationInfo.From(member));
 
     internal static bool IsAccessibleToGeneratedCode(ITypeSymbol type, Compilation compilation) => type switch
     {

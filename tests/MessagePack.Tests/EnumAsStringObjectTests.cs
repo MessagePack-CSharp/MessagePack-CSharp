@@ -126,6 +126,19 @@ public class EnumAsStringObjectTests
     }
 
     [Fact]
+    public void ObsoleteErrorMember_KeepsItsName()
+    {
+        // naming Legacy in generated code would be CS0619 (this assembly would not compile); its value is spelled instead
+        const string Json = """{"Value":"Legacy"}""";
+        var retired = (EnumAsStringRetired)(-2);
+        var generated = V4.Serialize(new EnumAsStringRetiredHolder { Value = retired });
+        Assert.Equal(Json, V4.ConvertToJson(generated));
+        Assert.Equal(generated, V4.Serialize<EnumAsStringRetiredHolder>(new EnumAsStringRetiredHolderReflected { Value = retired }));
+        Assert.Equal(retired, V4.Deserialize<EnumAsStringRetiredHolder>(generated).Value);
+        Assert.Equal(retired, V4.Deserialize<EnumAsStringRetiredHolderReflected>(generated).Value);
+    }
+
+    [Fact]
     public void Reflection_UnreachableEnum_Throws()
     {
         // the generator reports the same shape as MsgPack030; the SuppressSourceGeneration type reaches the reflection tier
@@ -277,6 +290,45 @@ public class EnumAsStringObjectTests
         Assert.Contains($"inside '{container}'", message);
         Assert.Contains("[MessagePackFormatter(typeof(EnumAsStringFormatterFactory<Shade>))]", message);
         Assert.DoesNotContain(result.GeneratedTrees, static t => t.FilePath.Contains("ProbeFormatter", StringComparison.Ordinal));
+    }
+
+    // EnumAsStringFormatter refuses the enum at construction; a generated table would read "same" back as B
+    [Theory]
+    [InlineData("Dup")]
+    [InlineData("List<Dup?>")]
+    [InlineData("Dictionary<Dup, int>")]
+    public void DuplicateEnumMemberValue_IsMsgPack031(string memberType)
+    {
+        var result = Run($$"""
+            using System.Runtime.Serialization;
+            public enum Dup { [EnumMember(Value = "same")] A = 1, [EnumMember(Value = "same")] B = 2 }
+            [MessagePackObject(true, EnumAsString = true)] public class Probe { public {{memberType}} Value { get; set; } }
+            """);
+
+        var diagnostic = Assert.Single(result.Diagnostics, static d => d.Id == "MsgPack031");
+        Assert.Equal(DiagnosticSeverity.Error, diagnostic.Severity);
+        Assert.Contains("'Probe.Value'", diagnostic.GetMessage());
+        Assert.Contains("[EnumMember(Value = \"same\")]", diagnostic.GetMessage());
+        Assert.DoesNotContain(result.GeneratedTrees, static t => t.FilePath.Contains("ProbeFormatter", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void DuplicateEnumMemberValue_ReflectionTierThrows()
+    {
+        Assert.Throws<ArgumentException>(() => new EnumAsStringFormatter<SerializerFoundation.CompatibleArrayPoolListWriteBuffer, SerializerFoundation.CompatibleReadOnlySpanReadBuffer, EnumAsStringDuplicated>());
+    }
+
+    // a rename that equals another member's own name is accepted by both tiers (last declared wins, as in v3)
+    [Fact]
+    public void RenameOntoAnotherMembersName_IsNotReported()
+    {
+        var result = Run("""
+            using System.Runtime.Serialization;
+            public enum Overlap { [EnumMember(Value = "B")] A = 1, B = 2 }
+            [MessagePackObject(true, EnumAsString = true)] public class Probe { public Overlap Value { get; set; } }
+            """);
+
+        Assert.DoesNotContain(result.Diagnostics, static d => d.Id == "MsgPack031");
     }
 
     [Theory]
@@ -437,4 +489,31 @@ public class EnumAsStringTrickyHolder
 {
     [Key(0)]
     public EnumAsStringTricky Value { get; set; }
+}
+
+// a member retired with [Obsolete(error: true)] still has its name in both tiers; generated code spells it by value
+public enum EnumAsStringRetired : long
+{
+    Active = 1,
+    [Obsolete("Removed", error: true)]
+    Legacy = -2,
+}
+
+[MessagePackObject(true, EnumAsString = true)]
+public class EnumAsStringRetiredHolder
+{
+    public EnumAsStringRetired Value { get; set; }
+}
+
+[MessagePackObject(true, EnumAsString = true, SuppressSourceGeneration = true)]
+public class EnumAsStringRetiredHolderReflected : EnumAsStringRetiredHolder
+{
+}
+
+public enum EnumAsStringDuplicated
+{
+    [EnumMember(Value = "same")]
+    A = 1,
+    [EnumMember(Value = "same")]
+    B = 2,
 }
