@@ -91,10 +91,26 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
     // the header and applies its cap before decompressing anything. Block boundaries follow the block size, not the
     // segment boundaries, so the frame is the one the one-shot compress would write. The native context is cached
     // in a single slot (see ZstandardCodec): uncontended use never allocates, a second thread creates its own.
-    // Every window is sized by the encoder's own bounds (GetMaxCompressedLength for a segment, GetMaxFlushBufferLength
-    // for the close), so each call takes its whole input and returns Done at once; anything else is a codec fault. The
-    // encoder reports failure as InvalidData instead of throwing, and the segments are checked against the declared
-    // length here, because a mismatch would otherwise surface only as that InvalidData from Close.
+    //
+    // Windows: every encoder call writes into a window the output provides at the size asked for, so that size is what
+    // an IBufferWriter allocates or rents.
+    // - A message under one block never completes a block before the frame ends, so every call fits the whole frame's
+    //   one-shot bound (LZ4.GetMaxCompressedLength), tens of bytes over the message. The encoder's own bound would ask
+    //   ~64KB for any input, because it assumes a nearly full block is already buffered.
+    // - A larger message gets one call per staging segment, in windows from the encoder's bound for that segment. These
+    //   hold at least a block, which keeps every block full: a call that completes a block in a fresh window smaller
+    //   than that makes the encoder flush a partial block instead, and the frame changes. A segment is not cut into
+    //   smaller calls to bound the window (as LZ4Stream does at 1MB), although the staging buffer's segments double up
+    //   to 1GB: lz4 can drop its history at a call boundary, and on repetitive data each extra boundary then costs a
+    //   period of literals (1MB pieces made an int[4M] of i%1000*1000 compress to 99,682 B against 89,948 B a call
+    //   per segment; NativeCompressions 1.2.0 and 1.3.0 alike).
+    // The call that takes the last byte also ends the frame (isFinalBlock), the frame ending counted in its window.
+    // Sized this way every call returns Done at once; DestinationTooSmall is still followed by another window, and
+    // InvalidData or a call without progress is a codec fault (the encoder reports failure instead of throwing). The
+    // segments are checked against the declared length, which a mismatch would otherwise reach only as InvalidData at
+    // the frame's end.
+    const int BlockSize = 64 * 1024; // EncodeOptions leaves BlockSizeId at Default, which lz4 reads as 64KB
+
     sealed class EncoderBox
     {
         public LZ4Encoder Encoder = new();
@@ -118,9 +134,9 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
         try
         {
             var encoder = box.Encoder;
-            var options = EncodeOptions(message.Length);
-            encoder.Reset(in options); // a new frame declaring this message's length
+            var frameBound = BeginFrame(encoder, message.Length);
             var remaining = message.Length;
+            var ended = false;
             while (message.TryGetNext(out var segment))
             {
                 remaining -= segment.Length;
@@ -128,25 +144,32 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
                 {
                     Lz4Throws.InconsistentSegments(); // the segments hold more than the declared message
                 }
-                var destination = output.GetSpan(encoder.GetMaxCompressedLength(segment.Length, includingHeader: true, includingFooter: false));
-                var status = encoder.Compress(segment, destination, out _, out var written, isFinalBlock: false);
-                if (status != OperationStatus.Done)
+                // the segment that completes the declared length ends the frame; the view never yields an empty
+                // segment, so it is the last one (a further segment would overshoot above)
+                ended = remaining == 0;
+                bool done;
+                do
                 {
-                    Lz4Throws.EncoderFailed(status);
+                    var destination = output.GetSpan(Window(encoder, frameBound, segment.Length, ended));
+                    output.Advance(Step(encoder, ref segment, destination, ended, out done));
                 }
-                output.Advance(written);
+                while (!done);
             }
-            if (remaining != 0)
+            if (!ended)
             {
-                Lz4Throws.InconsistentSegments(); // the segments hold less than the declared message
+                if (remaining != 0)
+                {
+                    Lz4Throws.InconsistentSegments(); // the segments hold less than the declared message
+                }
+                var empty = ReadOnlySpan<byte>.Empty; // the empty message: a frame with no content
+                bool done;
+                do
+                {
+                    var destination = output.GetSpan(Window(encoder, frameBound, 0, isFinalBlock: true));
+                    output.Advance(Step(encoder, ref empty, destination, isFinalBlock: true, out done));
+                }
+                while (!done);
             }
-            var tail = output.GetSpan(encoder.GetMaxFlushBufferLength(includingFooter: true));
-            var closed = encoder.Close(tail, out var tailWritten);
-            if (closed != OperationStatus.Done)
-            {
-                Lz4Throws.EncoderFailed(closed);
-            }
-            output.Advance(tailWritten);
             ReturnEncoder(box);
             return true;
         }
@@ -164,9 +187,9 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
         try
         {
             var encoder = box.Encoder;
-            var options = EncodeOptions(message.Length);
-            encoder.Reset(in options);
+            var frameBound = BeginFrame(encoder, message.Length);
             var remaining = message.Length;
+            var ended = false;
             while (message.TryGetNext(out var segment))
             {
                 remaining -= segment.Length;
@@ -174,25 +197,30 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
                 {
                     Lz4Throws.InconsistentSegments();
                 }
-                var destination = output.GetSpan(encoder.GetMaxCompressedLength(segment.Length, includingHeader: true, includingFooter: false));
-                var status = encoder.Compress(segment, destination, out _, out var written, isFinalBlock: false);
-                if (status != OperationStatus.Done)
+                ended = remaining == 0;
+                bool done;
+                do
                 {
-                    Lz4Throws.EncoderFailed(status);
+                    var destination = output.GetSpan(Window(encoder, frameBound, segment.Length, ended));
+                    output.Advance(Step(encoder, ref segment, destination, ended, out done));
                 }
-                output.Advance(written);
+                while (!done);
             }
-            if (remaining != 0)
+            if (!ended)
             {
-                Lz4Throws.InconsistentSegments();
+                if (remaining != 0)
+                {
+                    Lz4Throws.InconsistentSegments();
+                }
+                var empty = ReadOnlySpan<byte>.Empty;
+                bool done;
+                do
+                {
+                    var destination = output.GetSpan(Window(encoder, frameBound, 0, isFinalBlock: true));
+                    output.Advance(Step(encoder, ref empty, destination, isFinalBlock: true, out done));
+                }
+                while (!done);
             }
-            var tail = output.GetSpan(encoder.GetMaxFlushBufferLength(includingFooter: true));
-            var closed = encoder.Close(tail, out var tailWritten);
-            if (closed != OperationStatus.Done)
-            {
-                Lz4Throws.EncoderFailed(closed);
-            }
-            output.Advance(tailWritten);
             ReturnEncoder(box);
             return true;
         }
@@ -203,6 +231,33 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
         }
     }
 #endif
+
+    // Starts a frame declaring the message length. Returns the whole frame's bound for a message under one block, the
+    // window every call of that message uses, and 0 for a larger one, whose windows the encoder sizes piece by piece.
+    int BeginFrame(LZ4Encoder encoder, long messageLength)
+    {
+        var options = EncodeOptions(messageLength);
+        encoder.Reset(in options);
+        return messageLength < BlockSize ? LZ4.GetMaxCompressedLength((int)messageLength, in options) : 0;
+    }
+
+    static int Window(LZ4Encoder encoder, int frameBound, int pieceLength, bool isFinalBlock)
+        => frameBound != 0 ? frameBound : encoder.GetMaxCompressedLength(pieceLength, includingHeader: true, includingFooter: isFinalBlock);
+
+    // One encoder call into the window the caller holds, returning the bytes written and whether the caller is done with
+    // the piece: all of it taken (and, for the final block, the frame complete). DestinationTooSmall is followed by another
+    // window; InvalidData, or a call that neither takes nor writes anything, is a codec fault.
+    static int Step(LZ4Encoder encoder, ref ReadOnlySpan<byte> source, Span<byte> destination, bool isFinalBlock, out bool done)
+    {
+        var status = encoder.Compress(source, destination, out var consumed, out var written, isFinalBlock);
+        source = source.Slice(consumed);
+        done = status == OperationStatus.Done;
+        if (!done && (status != OperationStatus.DestinationTooSmall || (consumed == 0 && written == 0)))
+        {
+            Lz4Throws.EncoderFailed(status);
+        }
+        return written;
+    }
 
     // ---- read side ----
 

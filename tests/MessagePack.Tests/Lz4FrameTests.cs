@@ -40,6 +40,123 @@ public class Lz4FrameTests
         Assert.Equal(plain, LZ4.Decompress(expected)); // and the binding's own decoder reads it back
     }
 
+    // The windows the processor asks the output for. A message under one block (64KB) asks for the whole frame's
+    // one-shot bound, tens of bytes over the message, instead of the encoder's streaming bound, which assumes a nearly
+    // full block is buffered and is ~64KB for any input. A larger message gets one encoder call per staging segment, in
+    // windows from the encoder's bound for that segment (the last one counting the frame ending). Every window is handed
+    // over at exactly the requested size, so the processor's windows alone must finish each call, and the frame must be
+    // the one the encoder writes a call per segment and then Close: a window that made the encoder flush a partial block
+    // would change it, and so would an extra call boundary (lz4 can drop its history there, which the periodic payload
+    // here turns into extra bytes).
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(30, false)]
+    [InlineData(5_000, false)] // two staging segments, still under one block
+    [InlineData(65_535, false)]
+    [InlineData(65_536, false)]
+    [InlineData(200_000, false)]
+    [InlineData(6_000_000, false)] // staging segments up to 4MB
+    [InlineData(6_000_000, true)] // one segment
+    public void Encode_WindowSizes(int length, bool oneSegment)
+    {
+        var options = new LZ4CompressionOptions { ContentSize = (ulong)length };
+        var staging = new SerializerFoundation.ArrayPoolListWriteBuffer(new byte[16]);
+        try
+        {
+            for (int written = 0; written < length;)
+            {
+                var span = staging.GetSpan(oneSegment ? length : Math.Min(4096, length - written));
+                var count = Math.Min(span.Length, length - written);
+                for (int i = 0; i < count; i++) span[i] = (byte)((written + i) % 100);
+                staging.Advance(count);
+                written += count;
+            }
+            var segments = staging.GetWrittenSegments();
+            var reference = ReferenceFrame(ref segments, in options, out var largestSegment);
+
+            segments.Reset();
+            var writer = new ExactWindowWriter();
+            Assert.True(new Lz4FrameProcessor().TryEncode(ref segments, writer));
+            Assert.Equal(reference, writer.WrittenSpan.ToArray());
+            if (length < 64 * 1024)
+            {
+                Assert.Equal(LZ4.GetMaxCompressedLength(length, in options), writer.MaxHint);
+            }
+            else
+            {
+                using var probe = new LZ4Encoder(in options);
+                Assert.InRange(writer.MaxHint, 1, probe.GetMaxCompressedLength(largestSegment, includingHeader: true, includingFooter: true));
+            }
+            if (length == 6_000_000)
+            {
+                Assert.Equal(oneSegment, largestSegment == length); // the fixture has the shape the case names
+            }
+
+            segments.Reset();
+            var target = new SerializerFoundation.ArrayPoolListWriteBuffer(new byte[16]);
+            try
+            {
+                Assert.True(new Lz4FrameProcessor().TryEncode(ref segments, ref target)); // the write-buffer overload
+                Assert.Equal(reference, target.ToArray());
+            }
+            finally
+            {
+                target.Dispose();
+            }
+
+            var decoded = LZ4.Decompress(reference);
+            Assert.Equal(length, decoded.Length);
+            for (int i = 0; i < decoded.Length; i++)
+            {
+                if (decoded[i] != (byte)(i % 100)) Assert.Fail($"byte {i} differs");
+            }
+        }
+        finally
+        {
+            staging.Dispose();
+        }
+
+        // the frame as the encoder writes it with windows from its own streaming bounds
+        static byte[] ReferenceFrame(ref SerializerFoundation.BufferSegments segments, in LZ4CompressionOptions options, out int largestSegment)
+        {
+            using var encoder = new LZ4Encoder(in options);
+            var output = new ArrayBufferWriter<byte>();
+            largestSegment = 0;
+            while (segments.TryGetNext(out var segment))
+            {
+                largestSegment = Math.Max(largestSegment, segment.Length);
+                var destination = output.GetSpan(encoder.GetMaxCompressedLength(segment.Length, includingHeader: true, includingFooter: false));
+                Assert.Equal(OperationStatus.Done, encoder.Compress(segment, destination, out var consumed, out var written, isFinalBlock: false));
+                Assert.Equal(segment.Length, consumed);
+                output.Advance(written);
+            }
+            Assert.Equal(OperationStatus.Done, encoder.Close(output.GetSpan(encoder.GetMaxFlushBufferLength()), out var tailWritten));
+            output.Advance(tailWritten);
+            return output.WrittenSpan.ToArray();
+        }
+    }
+
+    // hands out exactly the requested window and records the largest request
+    sealed class ExactWindowWriter : IBufferWriter<byte>
+    {
+        readonly ArrayBufferWriter<byte> inner = new();
+
+        public int MaxHint { get; private set; }
+
+        public ReadOnlySpan<byte> WrittenSpan => inner.WrittenSpan;
+
+        public void Advance(int count) => inner.Advance(count);
+
+        public Span<byte> GetSpan(int sizeHint = 0)
+        {
+            Assert.True(sizeHint > 0, "the processor names the window it needs");
+            MaxHint = Math.Max(MaxHint, sizeHint);
+            return inner.GetSpan(sizeHint).Slice(0, sizeHint);
+        }
+
+        public Memory<byte> GetMemory(int sizeHint = 0) => throw new NotSupportedException();
+    }
+
     [Fact]
     public void Message_IsAStandardLz4Frame()
     {

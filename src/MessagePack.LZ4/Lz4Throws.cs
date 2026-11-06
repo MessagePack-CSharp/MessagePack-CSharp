@@ -20,7 +20,7 @@ static class Lz4Throws
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     [System.Diagnostics.CodeAnalysis.DoesNotReturn]
-    public static void EncoderFailed(OperationStatus status) => throw new MessagePackSerializationException($"The LZ4 frame encoder returned {status} for a destination sized by its own bound.");
+    public static void EncoderFailed(OperationStatus status) => throw new MessagePackSerializationException($"The LZ4 frame encoder failed ({status}).");
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     [System.Diagnostics.CodeAnalysis.DoesNotReturn]
