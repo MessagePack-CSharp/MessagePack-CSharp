@@ -152,9 +152,14 @@ public sealed record MemberModel(
     // the language-level required modifier alone; drives the construction-shape emission (object-initializer coverage
     // for CS9035), not the wire validation
     bool HasRequiredModifier,
-    // declared as a non-nullable reference type (top level only; type parameters and generic arguments are out of
-    // scope). Enforced when ValidateNullableAnnotations is on.
-    bool IsNonNullableReference,
+    // nullable annotation validation, enforced when the resolver's ValidateNullableAnnotations is on (the default), per
+    // direction: deserialization checks what it hands the setter, field or bound constructor parameter, serialization
+    // what the getter returns (a constructor-bound `required` member without [SetsRequiredMembers] must meet the
+    // parameter's and the member's input contracts, since the object initializer assigns it too). A non-nullable reference type rejects nil unless [AllowNull] (input) / [MaybeNull]
+    // (output) relaxes it, a nullable one accepts it unless [DisallowNull] / [NotNull] tightens it. Top level only:
+    // type parameters and generic arguments are out of scope.
+    bool RejectsNullOnDeserialize,
+    bool RejectsNullOnSerialize,
     // member-level [MessagePackFormatter]: replaces the resolver.GetFormatter call in Initialize (and forces Direct =
     // None, so the member always rides the formatter field)
     CustomFormatterModel? CustomFormatter = null,

@@ -42,4 +42,5 @@ public static class Diagnostics
     public static readonly DiagnosticDescriptor ClosureHarvestStopped = Make("MsgPack029", "Generic closure left unregistered where an expanding definition was cut", DiagnosticSeverity.Warning);
     public static readonly DiagnosticDescriptor EnumAsStringUnreachable = Make("MsgPack030", "EnumAsString cannot reach an enum of the member", DiagnosticSeverity.Error);
     public static readonly DiagnosticDescriptor EnumAsStringDuplicateName = Make("MsgPack031", "EnumAsString enum gives one serialized name to more than one member", DiagnosticSeverity.Error);
+    public static readonly DiagnosticDescriptor RequiredMemberReassigned = Make("MsgPack032", "Required member bound to a constructor without SetsRequiredMembers is assigned again", DiagnosticSeverity.Warning);
 }

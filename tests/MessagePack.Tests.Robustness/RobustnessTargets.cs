@@ -29,8 +29,9 @@ public static class RobustnessTargets
         new MessagePackFormatterResolver([MessagePackFormatterFactory.Default.WithContractless()]));
 
     static readonly MessagePackSerializerOptions Lenient = new(
-        new MessagePackFormatterResolver([MessagePackFormatterFactory.Default]) { ValidateRequiredMembers = false });
+        new MessagePackFormatterResolver([MessagePackFormatterFactory.Default]) { ValidateRequiredMembers = false, ValidateNullableAnnotations = false });
 
+    // both validations are on by default; spelled out so the target keeps its meaning if a default changes
     static readonly MessagePackSerializerOptions Strict = new(
         new MessagePackFormatterResolver([MessagePackFormatterFactory.Default]) { ValidateNullableAnnotations = true });
 

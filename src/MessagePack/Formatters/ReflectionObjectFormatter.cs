@@ -24,6 +24,7 @@ static class MessagePackAttributeNames
     public const string IgnoreMember = "MessagePack.IgnoreMemberAttribute";
     public const string SerializationConstructor = "MessagePack.SerializationConstructorAttribute";
     public const string RequiredMember = "System.Runtime.CompilerServices.RequiredMemberAttribute";
+    public const string SetsRequiredMembers = "System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute";
     public const string Formatter = "MessagePack.MessagePackFormatterAttribute";
     public const string DataContract = "System.Runtime.Serialization.DataContractAttribute";
     public const string DataMember = "System.Runtime.Serialization.DataMemberAttribute";
@@ -123,9 +124,10 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         validateRequired = resolver.ValidateRequiredMembers;
         for (int i = 0; i < slots.Length; i++)
         {
-            // ValidateNull was pre-set to the member's non-nullable annotation;
+            // the ValidateNullOn* flags were pre-set to the member's annotation per direction;
             // the resolver flag gates whether that annotation is actually enforced
-            slots[i].ValidateNull &= resolver.ValidateNullableAnnotations;
+            slots[i].ValidateNullOnRead &= resolver.ValidateNullableAnnotations;
+            slots[i].ValidateNullOnWrite &= resolver.ValidateNullableAnnotations;
             hasRequiredSlots |= slots[i].IsRequired;
             slots[i].Initialize(resolver);
             var specialized = slots[i].Specialize();
@@ -135,7 +137,9 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 specialized.MemberName = slots[i].MemberName;
                 specialized.DeclaringType = slots[i].DeclaringType;
                 specialized.IsRequired = slots[i].IsRequired;
-                specialized.ValidateNull = slots[i].ValidateNull;
+                specialized.ReassignAfterConstruction = slots[i].ReassignAfterConstruction;
+                specialized.ValidateNullOnRead = slots[i].ValidateNullOnRead;
+                specialized.ValidateNullOnWrite = slots[i].ValidateNullOnWrite;
                 slots[i] = specialized;
             }
         }
@@ -674,7 +678,9 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         slot.IsRequired = FindAttribute(attributes, MessagePackAttributeNames.RequiredMember) is not null;
         slot.IsInitOnly = candidate.Member is PropertyInfo { SetMethod: { } setMethod }
             && Array.Exists(setMethod.ReturnParameter.GetRequiredCustomModifiers(), static modifier => modifier.FullName == "System.Runtime.CompilerServices.IsExternalInit");
-        slot.ValidateNull = NullableAnnotationReader.IsNonNullableReference(candidate.Member, candidate.MemberType);
+        // a constructor-bound slot's read side is replaced by the parameter's contract in SelectConstructor
+        slot.ValidateNullOnRead = NullableAnnotationReader.RejectsNullOnSet(candidate.Member, candidate.MemberType);
+        slot.ValidateNullOnWrite = NullableAnnotationReader.RejectsNullOnGet(candidate.Member, candidate.MemberType);
         if (FindAttribute(attributes, MessagePackAttributeNames.Formatter) is { } formatterAttribute)
         {
             slot.CustomFormatter = CreateCustomFormatter(formatterAttribute, candidate.MemberType, candidate.Member.Name);
@@ -989,11 +995,22 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             mode = ConstructionMode.Arguments;
             argumentConstructor = candidate;
             argumentCount = parameters.Length;
+            var setsRequiredMembers = FindAttribute(candidate.GetCustomAttributes(inherit: false), MessagePackAttributeNames.SetsRequiredMembers) is not null;
             for (int i = 0; i < slotIndices.Length; i++)
             {
-                slots[slotIndices[i]].ConstructorParameterIndex = i;
+                var slot = slots[slotIndices[i]];
+                slot.ConstructorParameterIndex = i;
+                // A `required` member (IsRequired still holds the modifier alone here) of a constructor without
+                // [SetsRequiredMembers] is assigned the payload value again after the constructor ran, as any C# caller
+                // must through an object initializer (CS9035) and as the generated tier does: whatever the constructor
+                // made of the argument is overwritten (the generator reports the shape, MsgPack032)
+                slot.ReassignAfterConstruction = slot.IsRequired && !setsRequiredMembers && slot.CanSet;
+                // the payload value goes to the parameter, so the parameter's annotation is the contract it must meet,
+                // and a reassigned member's own input contract as well
+                slot.ValidateNullOnRead = NullableAnnotationReader.RejectsNull(parameters[i])
+                    || (slot.ReassignAfterConstruction && slot.ValidateNullOnRead);
                 // a parameter without a default value is a required part of the contract
-                slots[slotIndices[i]].IsRequired |= !parameters[i].HasDefaultValue;
+                slot.IsRequired |= !parameters[i].HasDefaultValue;
             }
             return;
         }
@@ -1241,6 +1258,15 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
 
         value = (T)argumentConstructor!.InvokeUnwrapped(arguments);
+        for (int i = 0; i < memberSlots.Length; i++)
+        {
+            // the object initializer's assignments come first, as in the generated `new T(args) { Member = arg }`; an
+            // absent argument reassigns the member's default, as the generated initializer does with its local
+            if (memberSlots[i].ReassignAfterConstruction)
+            {
+                memberSlots[i].SetBoxed(ref value, arguments[memberSlots[i].ConstructorParameterIndex]);
+            }
+        }
         for (int i = 0; i < pendingSet.Length; i++)
         {
             if (pendingSet[i])
@@ -1476,7 +1502,9 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         public Type? DeclaringType; // the declaration's type: a `new` member and the one it hides share MemberName
         public bool IsRequired;    // required modifier, or a no-default constructor parameter
         public bool IsInitOnly;    // an `init` accessor: settable only while constructing
-        public bool ValidateNull;  // non-nullable annotated and the resolver enforces the annotation
+        public bool ReassignAfterConstruction; // a constructor-bound `required` member whose constructor lacks [SetsRequiredMembers]: assigned again, see SelectConstructor
+        public bool ValidateNullOnRead;  // deserialization: the setter, field or bound parameter rejects null, and the resolver enforces it
+        public bool ValidateNullOnWrite; // serialization: the getter or field is declared never null, and the resolver enforces it
         public object? CustomFormatter; // [MessagePackFormatter] instance, overrides resolver resolution
         public EnumNameFormatterTree? EnumNames; // EnumAsString with an enum in the member type: the member builds its own formatter
 
@@ -1484,6 +1512,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         protected void ThrowNullValue()
         {
             MessagePackSerializationException.ThrowNullValueForNonNullableMember(typeof(T).FullName, MemberName);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        protected void ThrowNullValueOnWrite()
+        {
+            MessagePackSerializationException.ThrowNullValueForNonNullableMemberOnSerialize(typeof(T).FullName, MemberName);
         }
 
         public abstract Type MemberType { get; }
@@ -1536,7 +1570,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         public override void Write(ref TWriteBuffer buffer, ref SerializeState state, ref T obj)
         {
-            formatter.Serialize(ref buffer, ref state, getter(obj));
+            var member = getter(obj);
+            if (ValidateNullOnWrite && member is null)
+            {
+                ThrowNullValueOnWrite();
+            }
+            formatter.Serialize(ref buffer, ref state, member);
         }
 
         public override void Read(ref TReadBuffer buffer, ref DeserializeState state, ref T obj)
@@ -1550,7 +1589,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             // nested object can be populated in place instead of replaced
             TMember member = getter(obj);
             formatter.Deserialize(ref buffer, ref state, ref member);
-            if (ValidateNull && member is null)
+            if (ValidateNullOnRead && member is null)
             {
                 ThrowNullValue();
             }
@@ -1561,7 +1600,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         {
             TMember member = default!;
             formatter.Deserialize(ref buffer, ref state, ref member);
-            if (ValidateNull && member is null)
+            if (ValidateNullOnRead && member is null)
             {
                 ThrowNullValue();
             }
@@ -1570,7 +1609,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         public override void SetBoxed(ref T obj, object? value)
         {
-            setter!(obj, (TMember)value!);
+            setter!(obj, value is null ? default! : (TMember)value);
         }
     }
 
@@ -1609,7 +1648,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         public override void Write(ref TWriteBuffer buffer, ref SerializeState state, ref T obj)
         {
-            formatter.Serialize(ref buffer, ref state, getter(ref obj));
+            var member = getter(ref obj);
+            if (ValidateNullOnWrite && member is null)
+            {
+                ThrowNullValueOnWrite();
+            }
+            formatter.Serialize(ref buffer, ref state, member);
         }
 
         public override void Read(ref TReadBuffer buffer, ref DeserializeState state, ref T obj)
@@ -1623,7 +1667,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             // nested object can be populated in place instead of replaced
             TMember member = getter(ref obj);
             formatter.Deserialize(ref buffer, ref state, ref member);
-            if (ValidateNull && member is null)
+            if (ValidateNullOnRead && member is null)
             {
                 ThrowNullValue();
             }
@@ -1634,7 +1678,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         {
             TMember member = default!;
             formatter.Deserialize(ref buffer, ref state, ref member);
-            if (ValidateNull && member is null)
+            if (ValidateNullOnRead && member is null)
             {
                 ThrowNullValue();
             }
@@ -1643,7 +1687,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         public override void SetBoxed(ref T obj, object? value)
         {
-            setter!(ref obj, (TMember)value!);
+            setter!(ref obj, value is null ? default! : (TMember)value);
         }
     }
 
@@ -1690,7 +1734,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         public override void SetBoxed(ref T obj, object? value)
         {
-            setter!(obj, (int)value!);
+            setter!(obj, value is null ? 0 : (int)value);
         }
     }
 
@@ -1706,7 +1750,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         public override void Write(ref TWriteBuffer buffer, ref SerializeState state, ref T obj)
         {
-            buffer.WriteString(getter(obj));
+            var member = getter(obj);
+            if (ValidateNullOnWrite && member is null)
+            {
+                ThrowNullValueOnWrite();
+            }
+            buffer.WriteString(member);
         }
 
         public override void Read(ref TReadBuffer buffer, ref DeserializeState state, ref T obj)
@@ -1717,7 +1766,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 return;
             }
             var member = buffer.ReadString();
-            if (ValidateNull && member is null)
+            if (ValidateNullOnRead && member is null)
             {
                 ThrowNullValue();
             }
@@ -1727,7 +1776,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         public override object? ReadBoxed(ref TReadBuffer buffer, ref DeserializeState state)
         {
             var member = buffer.ReadString();
-            if (ValidateNull && member is null)
+            if (ValidateNullOnRead && member is null)
             {
                 ThrowNullValue();
             }
@@ -1772,7 +1821,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         public override void SetBoxed(ref T obj, object? value)
         {
-            setter!(ref obj, (int)value!);
+            setter!(ref obj, value is null ? 0 : (int)value);
         }
     }
 
@@ -1788,7 +1837,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         public override void Write(ref TWriteBuffer buffer, ref SerializeState state, ref T obj)
         {
-            buffer.WriteString(getter(ref obj));
+            var member = getter(ref obj);
+            if (ValidateNullOnWrite && member is null)
+            {
+                ThrowNullValueOnWrite();
+            }
+            buffer.WriteString(member);
         }
 
         public override void Read(ref TReadBuffer buffer, ref DeserializeState state, ref T obj)
@@ -1799,7 +1853,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 return;
             }
             var member = buffer.ReadString();
-            if (ValidateNull && member is null)
+            if (ValidateNullOnRead && member is null)
             {
                 ThrowNullValue();
             }
@@ -1809,7 +1863,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         public override object? ReadBoxed(ref TReadBuffer buffer, ref DeserializeState state)
         {
             var member = buffer.ReadString();
-            if (ValidateNull && member is null)
+            if (ValidateNullOnRead && member is null)
             {
                 ThrowNullValue();
             }
@@ -1850,7 +1904,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         public override void Write(ref TWriteBuffer buffer, ref SerializeState state, ref T obj)
         {
-            formatter.Serialize(ref buffer, ref state, (TMember)field.GetValue(obj)!);
+            var member = (TMember)field.GetValue(obj)!;
+            if (ValidateNullOnWrite && member is null)
+            {
+                ThrowNullValueOnWrite();
+            }
+            formatter.Serialize(ref buffer, ref state, member);
         }
 
         public override void Read(ref TReadBuffer buffer, ref DeserializeState state, ref T obj)
@@ -1864,7 +1923,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             // nested object can be populated in place instead of replaced
             TMember member = (TMember)field.GetValue(obj)!;
             formatter.Deserialize(ref buffer, ref state, ref member);
-            if (ValidateNull && member is null)
+            if (ValidateNullOnRead && member is null)
             {
                 ThrowNullValue();
             }
@@ -1875,7 +1934,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         {
             TMember member = default!;
             formatter.Deserialize(ref buffer, ref state, ref member);
-            if (ValidateNull && member is null)
+            if (ValidateNullOnRead && member is null)
             {
                 ThrowNullValue();
             }
@@ -1961,7 +2020,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         public override void Write(ref TWriteBuffer buffer, ref SerializeState state, ref T obj)
         {
-            formatter.Serialize(ref buffer, ref state, getter(ref obj));
+            var member = getter(ref obj);
+            if (ValidateNullOnWrite && member is null)
+            {
+                ThrowNullValueOnWrite();
+            }
+            formatter.Serialize(ref buffer, ref state, member);
         }
 
         public override void Read(ref TReadBuffer buffer, ref DeserializeState state, ref T obj)
@@ -1975,7 +2039,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             // nested object can be populated in place instead of replaced
             TMember member = getter(ref obj);
             formatter.Deserialize(ref buffer, ref state, ref member);
-            if (ValidateNull && member is null)
+            if (ValidateNullOnRead && member is null)
             {
                 ThrowNullValue();
             }
@@ -1986,7 +2050,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         {
             TMember member = default!;
             formatter.Deserialize(ref buffer, ref state, ref member);
-            if (ValidateNull && member is null)
+            if (ValidateNullOnRead && member is null)
             {
                 ThrowNullValue();
             }
@@ -1995,7 +2059,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
         public override void SetBoxed(ref T obj, object? value)
         {
-            setter!(ref obj, (TMember)value!);
+            setter!(ref obj, value is null ? default! : (TMember)value);
         }
     }
 #endif

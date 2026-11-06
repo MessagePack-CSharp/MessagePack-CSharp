@@ -315,7 +315,7 @@ static class ObjectParser
                 : candidates.OrderBy(static c => c.Symbol is IFieldSymbol).ThenByDescending(c => SortDepth(type, c.Symbol)))
             .OrderBy(static c => GetDataMemberOrder(c.Symbol))];
 
-        var entries = new List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable)>();
+        var entries = new List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable, bool NullRejectedOnSet, bool NullRejectedOnGet)>();
         var hasIntKey = false;
         var hasStringKey = keyAsPropertyName;
         var intKeys = new HashSet<int>();
@@ -568,7 +568,9 @@ static class ObjectParser
             // v3's inclusion writability (the reflection tier's IsWritableMember): an accessible setter,
             // or a field - under AllowPrivate even a readonly one (v3 counted those)
             var writable = setter != SetterKind.None || (allowPrivate && symbol is IFieldSymbol);
-            entries.Add((symbol.Name, memberType, setter, intKey ?? -1, stringKey ?? "", requiredModifier, memberLocation, custom, shadowedBaseType, explicitKey, writable));
+            entries.Add((symbol.Name, memberType, setter, intKey ?? -1, stringKey ?? "", requiredModifier, memberLocation, custom, shadowedBaseType, explicitKey, writable,
+                NullRejectedOnSet: !IsDeclaredAsTypeParameter(symbol) && RejectsNull(memberType, MemberInputAttributes(symbol), relax: AllowNullAttributeName, tighten: DisallowNullAttributeName),
+                NullRejectedOnGet: !IsDeclaredAsTypeParameter(symbol) && RejectsNull(memberType, MemberOutputAttributes(symbol), relax: MaybeNullAttributeName, tighten: NotNullAttributeName)));
         }
 
         // every `required` member the formatter will not read, whatever excluded it ([IgnoreMember], [NonSerialized],
@@ -685,7 +687,7 @@ static class ObjectParser
             // name-defaulted member that is not writable and not consumed by the selected constructor does not
             // serialize at all, so a computed getter-only property is never touched.
             // An explicit [Key] always serializes.
-            var kept = new List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable)>(entries.Count);
+            var kept = new List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable, bool NullRejectedOnSet, bool NullRejectedOnGet)>(entries.Count);
             var keptParameterIndex = new List<int>(entries.Count);
             for (int i = 0; i < entries.Count; i++)
             {
@@ -753,6 +755,14 @@ static class ObjectParser
             }
             var requiredByConstructor = parameterIndexByEntry[i] >= 0
                 && !selectedConstructor!.Parameters[parameterIndexByEntry[i]].HasExplicitDefaultValue;
+            if (parameterIndexByEntry[i] >= 0 && entry.RequiredModifier && !constructorSetsRequiredMembers && entry.Setter != SetterKind.None)
+            {
+                // the generated `new T(arg) { Member = arg }` (CS9035 demands the initializer) overwrites whatever the
+                // constructor made of the argument; the reflection tier reassigns the same way, so both tiers agree,
+                // but a normalizing constructor is silently undone
+                var parameterName = selectedConstructor!.Parameters[parameterIndexByEntry[i]].Name;
+                diagnostics.Add(new DiagnosticInfo(Diagnostics.RequiredMemberReassigned, $"'{typeName}.{entry.Name}' is required and also bound to the constructor parameter '{parameterName}', and the constructor does not declare [SetsRequiredMembers]: like any C# caller, the generated code assigns the member again through an object initializer, so it holds the payload value, not what the constructor made of it. Declare [SetsRequiredMembers] on the constructor if it sets the member, or drop `required`.", entry.Location));
+            }
             // a custom formatter overrides even the direct-writable primitives
             var (direct, directNullable) = entry.Custom is null ? ClassifyDirect(entry.Type) : (DirectKind.None, false);
             models.Add(new MemberModel(
@@ -778,9 +788,19 @@ static class ObjectParser
                     : null,
                 IsRequired: entry.RequiredModifier || requiredByConstructor,
                 HasRequiredModifier: entry.RequiredModifier,
-                IsNonNullableReference: entry.Type.IsReferenceType
-                    && entry.Type.NullableAnnotation == NullableAnnotation.NotAnnotated
-                    && entry.Type.TypeKind != TypeKind.TypeParameter,
+                // deserialization hands the value to the constructor parameter when one is bound (its own annotation
+                // and [AllowNull]/[DisallowNull]), otherwise to the setter or field; serialization reads the getter.
+                // A constructor-bound `required` member whose constructor lacks [SetsRequiredMembers] is ALSO assigned
+                // through the object initializer (CS9035), so the value must meet both contracts; the reflection tier
+                // applies the same rule (ReflectionObjectFormatter.SelectConstructor) so the tiers refuse alike
+                RejectsNullOnDeserialize: parameterIndexByEntry[i] >= 0
+                    ? CanHoldNull(entry.Type)
+                        && ((selectedConstructor!.Parameters[parameterIndexByEntry[i]] is var parameter
+                                && parameter.OriginalDefinition.Type.TypeKind != TypeKind.TypeParameter
+                                && RejectsNull(parameter.Type, parameter.GetAttributes(), relax: AllowNullAttributeName, tighten: DisallowNullAttributeName))
+                            || (entry.RequiredModifier && !constructorSetsRequiredMembers && entry.Setter != SetterKind.None && entry.NullRejectedOnSet))
+                    : entry.NullRejectedOnSet,
+                RejectsNullOnSerialize: entry.NullRejectedOnGet,
                 CustomFormatter: entry.Custom,
                 EnumNames: enumNames[i],
                 BaseCastType: entry.ShadowedBaseType,
@@ -2153,18 +2173,19 @@ static class ObjectParser
     static readonly HashSet<string> GeneratedNames = new(StringComparer.Ordinal)
     {
         "Initialize", "Serialize", "Deserialize", "DeserializePopulate", "DeserializeConstruct", "ThrowMissingRequiredMember", "ThrowNullValueForNonNullableMember",
+        "ThrowNullValueForNonNullableMemberOnSerialize",
         "declaredKeysUtf8", "validateRequired", "validateNull", "MessagePackRegisterPrivateTypes", "MessagePackPrivateTypesFactory", "GeneratedMessagePackFormatter", "Instance",
         "buffer", "state", "value", "resolver", "result", "constructed", "unknownMembers", "seenMembers", "heldValue", "length", "count", "key", "tag", "type", "i",
         "arrayCount", "byteCount", "mapCount", "envelopeCount", "unknownReplayedCount", "circularReferenceId", "circularReferenceDefinitionId", "member", "runtimeType", "d", "w", "v",
     };
 
-    // f{id}, has_{id}, v_{id}: the per-member formatter fields and locals (id = the member's name, or its
+    // f{id}, has_{id}, v_{id}, nn_{id}: the per-member formatter fields and locals (id = the member's name, or its
     // shadow-qualified form), known only once the members are
     internal static bool CollidesWithGeneratedSlot(string name, IEnumerable<string> memberIds)
     {
         foreach (var id in memberIds)
         {
-            if (name == "f" + id || name == "v_" + id || name == "has_" + id)
+            if (name == "f" + id || name == "v_" + id || name == "has_" + id || name == "nn_" + id)
             {
                 return true;
             }
@@ -2196,6 +2217,74 @@ static class ObjectParser
     }
 
     static bool IsRequiredMember(ISymbol symbol) => symbol is IPropertySymbol { IsRequired: true } or IFieldSymbol { IsRequired: true };
+
+    const string AllowNullAttributeName = "System.Diagnostics.CodeAnalysis.AllowNullAttribute";
+    const string DisallowNullAttributeName = "System.Diagnostics.CodeAnalysis.DisallowNullAttribute";
+    const string MaybeNullAttributeName = "System.Diagnostics.CodeAnalysis.MaybeNullAttribute";
+    const string NotNullAttributeName = "System.Diagnostics.CodeAnalysis.NotNullAttribute";
+
+    // Nullable annotation validation, one direction of one member: a reference type declared non-nullable rejects null
+    // unless the direction's relaxing attribute applies ([AllowNull] on input, [MaybeNull] on output); one declared
+    // nullable accepts it unless the tightening attribute applies ([DisallowNull], [NotNull]). Oblivious declarations and
+    // type parameters are never checked, nor are value types (Nullable<T> included). This is the read/write state
+    // System.Text.Json's NullabilityInfoContext derives, which the reflection tier's NullableAnnotationReader mirrors.
+    // The attributes are matched by name: downlevel targets declare their own internal copies.
+    static bool RejectsNull(ITypeSymbol type, IEnumerable<AttributeData> attributes, string relax, string tighten)
+    {
+        if (!type.IsReferenceType || type.TypeKind == TypeKind.TypeParameter)
+        {
+            return false;
+        }
+        return type.NullableAnnotation switch
+        {
+            NullableAnnotation.NotAnnotated => !HasAttributeNamed(attributes, relax),
+            NullableAnnotation.Annotated => HasAttributeNamed(attributes, tighten),
+            _ => false,
+        };
+    }
+
+    // whether the member's local can hold null at all: a reference type, Nullable<T>, or a type parameter not
+    // constrained to a non-nullable value type. A constructor parameter's contract (a boxing `object` parameter bound
+    // to an int? member) is checked against the local, and `v is null` does not compile on a non-nullable struct
+    static bool CanHoldNull(ITypeSymbol type) =>
+        !type.IsValueType || type.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
+
+    // a member a generic declaration types by its type parameter (`T Value` of Base<T>, reached through Derived : Base<string?>)
+    // is out of scope even where this compilation sees the substituted type: the reflection tier sees only the
+    // definition's annotation of T (and for a closed generic root, the use site's annotation is not in metadata at all),
+    // so checking the substitution here would make the two tiers disagree
+    static bool IsDeclaredAsTypeParameter(ISymbol member) => member.OriginalDefinition switch
+    {
+        IPropertySymbol property => property.Type.TypeKind == TypeKind.TypeParameter,
+        IFieldSymbol field => field.Type.TypeKind == TypeKind.TypeParameter,
+        _ => false,
+    };
+
+    static bool HasAttributeNamed(IEnumerable<AttributeData> attributes, string fullName)
+    {
+        foreach (var attribute in attributes)
+        {
+            if (attribute.AttributeClass?.ToDisplayString() == fullName)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // where C# puts a member's input flow attributes: on the property or field itself, or `[param: ...]` on the setter
+    static IEnumerable<AttributeData> MemberInputAttributes(ISymbol member) => member switch
+    {
+        IPropertySymbol { SetMethod: { Parameters.Length: > 0 } setter } property => property.GetAttributes().Concat(setter.Parameters[setter.Parameters.Length - 1].GetAttributes()),
+        _ => member.GetAttributes(),
+    };
+
+    // and its output ones: on the property or field itself, or `[return: ...]` on the getter
+    static IEnumerable<AttributeData> MemberOutputAttributes(ISymbol member) => member switch
+    {
+        IPropertySymbol { GetMethod: { } getter } property => property.GetAttributes().Concat(getter.GetReturnTypeAttributes()),
+        _ => member.GetAttributes(),
+    };
 
     // The expression a generated `new` assigns to a `required` member it never reads. The object initializer
     // overrides the member's own initializer, so a constant one is re-emitted as it is (the reflection tier, which
@@ -2588,7 +2677,7 @@ static class ObjectParser
     static bool TryMatchConstructor(
         Compilation compilation,
         IMethodSymbol constructor,
-        List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable)> entries,
+        List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable, bool NullRejectedOnSet, bool NullRejectedOnGet)> entries,
         int[] parameterIndexByEntry)
     {
         var parameters = constructor.Parameters;
@@ -2612,7 +2701,7 @@ static class ObjectParser
 
     static int FindParameterEntry(
         Compilation compilation,
-        List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable)> entries,
+        List<(string Name, ITypeSymbol Type, SetterKind Setter, int IntKey, string StringKey, bool RequiredModifier, LocationInfo? Location, CustomFormatterModel? Custom, string? ShadowedBaseType, bool ExplicitKey, bool Writable, bool NullRejectedOnSet, bool NullRejectedOnGet)> entries,
         IParameterSymbol parameter,
         bool byStringKey)
     {

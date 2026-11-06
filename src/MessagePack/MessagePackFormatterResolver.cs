@@ -83,10 +83,13 @@ public sealed class MessagePackFormatterResolver
     public bool ValidateRequiredMembers { get; init; } = true;
 
     /// <summary>
-    /// Whether deserialization fails when the payload assigns nil to a member declared as a non-nullable reference type.
-    /// Off by default. Only directly declared member types are checked; generic type arguments and collection elements are not, since their nullability is erased at runtime.
+    /// Whether the nullable reference annotations of an object's members are enforced: deserialization fails when the payload assigns nil to a member (or the constructor parameter it binds to) declared non-nullable,
+    /// and serialization fails when such a member holds null. <c>[AllowNull]</c> / <c>[DisallowNull]</c> adjust the deserialization side and <c>[MaybeNull]</c> / <c>[NotNull]</c> the serialization side, as they do for the compiler.
+    /// On by default. Only directly declared member types are checked; oblivious (nullable-disabled) declarations, type parameters, generic type arguments and collection elements are not.
+    /// The check runs as each member is read, before <c>OnAfterDeserialize</c>; a member that the callback normalizes should be declared <c>[AllowNull]</c>.
+    /// Turn it off to accept data that does not follow the annotations, for example payloads written by v3 or by another language.
     /// </summary>
-    public bool ValidateNullableAnnotations { get; init; }
+    public bool ValidateNullableAnnotations { get; init; } = true;
 
     /// <summary>
     /// Raised with the root type when serialization fell back to the compatible buffers because a formatter built without ref struct buffer support was involved.

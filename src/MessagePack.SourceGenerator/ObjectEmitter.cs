@@ -321,10 +321,15 @@ static class ObjectEmitter
                 writer.Line();
                 EmitRequiredThrowHelper(writer, model);
             }
-            if (AnyNullCheck(model))
+            if (AnyDeserializeNullCheck(model))
             {
                 writer.Line();
                 EmitNullThrowHelper(writer, model);
+            }
+            if (AnySerializeNullCheck(model))
+            {
+                writer.Line();
+                EmitSerializeNullThrowHelper(writer, model);
             }
         }
 
@@ -771,22 +776,45 @@ static class ObjectEmitter
         {
             flush();
             var valueAccess = member.IsDynamic ? $"(object?){MemberAccess(member, "value")}" : MemberAccess(member, "value");
-            if (member.IsString)
+            if (NeedsNullCheckOnSerialize(member))
             {
-                using (writer.Block($"if ({IsStockString(member)})"))
+                // the getter is read once into a local the check and the write share
+                using (writer.OpenScope())
                 {
-                    writer.Line($"buffer.WriteString({valueAccess});");
-                }
-                using (writer.Block("else"))
-                {
-                    writer.Line($"f{member.Id}.Serialize(ref buffer, ref state, {valueAccess});");
+                    writer.Line($"var nn_{member.Id} = {valueAccess};");
+                    writer.Line($"if (nn_{member.Id} is null && validateNull) {{ ThrowNullValueForNonNullableMemberOnSerialize(\"{member.Name}\"); }}");
+                    EmitMemberWrite(writer, member, $"nn_{member.Id}");
                 }
                 return;
             }
-            writer.Line($"f{member.Id}.Serialize(ref buffer, ref state, {valueAccess});");
+            EmitMemberWrite(writer, member, valueAccess);
             return;
         }
 
+        EmitDirectWrite(member, direct);
+    }
+
+    // a member that goes through its formatter field (or, for string, the stock formatter's inlined write)
+    static void EmitMemberWrite(CodeWriter writer, MemberModel member, string valueAccess)
+    {
+        if (member.IsString)
+        {
+            using (writer.Block($"if ({IsStockString(member)})"))
+            {
+                writer.Line($"buffer.WriteString({valueAccess});");
+            }
+            using (writer.Block("else"))
+            {
+                writer.Line($"f{member.Id}.Serialize(ref buffer, ref state, {valueAccess});");
+            }
+            return;
+        }
+        writer.Line($"f{member.Id}.Serialize(ref buffer, ref state, {valueAccess});");
+    }
+
+    // a direct-writable primitive joins the fused reservation run
+    static void EmitDirectWrite(MemberModel member, Action<string, string> direct)
+    {
         var access = MemberAccess(member, "value");
         var p = N.Primitives;
         var (writeCall, size) = member.Direct switch
@@ -1019,16 +1047,26 @@ static class ObjectEmitter
     }
 
     // a member gets a null check only where its value is actually observed: through the setter on the populate path,
-    // through the local on the construction path
+    // through the local on the construction path, through the getter on serialization
     static bool NeedsNullCheckOnPopulate(MemberModel member) =>
-        member.Direct == DirectKind.None && member.IsNonNullableReference && member.Setter == SetterKind.Set;
+        member.Direct == DirectKind.None && member.RejectsNullOnDeserialize && member.Setter == SetterKind.Set;
 
+    // a directly read Nullable<T> member counts here: its local feeds a constructor parameter that may reject null (a
+    // boxing `object` parameter), while a direct non-nullable primitive never holds null (the parser already left
+    // those out)
     static bool NeedsNullCheckOnLocal(MemberModel member) =>
-        member.Direct == DirectKind.None && member.IsNonNullableReference && !IsSkippedOnConstruction(member);
+        (member.Direct == DirectKind.None || member.DirectNullable) && member.RejectsNullOnDeserialize && !IsSkippedOnConstruction(member);
 
-    static bool AnyNullCheck(ObjectModel model) => model.UseConstruction
+    static bool NeedsNullCheckOnSerialize(MemberModel member) =>
+        member.Direct == DirectKind.None && member.RejectsNullOnSerialize;
+
+    static bool AnyDeserializeNullCheck(ObjectModel model) => model.UseConstruction
         ? model.Members.AsArray().Any(NeedsNullCheckOnLocal)
         : model.Members.AsArray().Any(NeedsNullCheckOnPopulate);
+
+    static bool AnySerializeNullCheck(ObjectModel model) => model.Members.AsArray().Any(NeedsNullCheckOnSerialize);
+
+    static bool AnyNullCheck(ObjectModel model) => AnyDeserializeNullCheck(model) || AnySerializeNullCheck(model);
 
     // populate path (the parameterless-settable shape): assign through the setter; a member without one skips its
     // payload (the reflection tier's relaxation for serialize-only members)
@@ -1558,7 +1596,17 @@ static class ObjectEmitter
         writer.Line("static void ThrowNullValueForNonNullableMember(string member)");
         using (writer.OpenScope())
         {
-            writer.Line($"throw new {N.Exception}(\"Member '\" + member + \"' of '{model.FullTypeName}' is declared non-nullable but the payload contains nil (nullable annotation validation, MessagePackFormatterResolver validateNullableAnnotations)\");");
+            writer.Line($"throw new {N.Exception}(\"Member '\" + member + \"' of '{model.FullTypeName}' is declared non-nullable but the payload contains nil (nullable annotation validation, MessagePackFormatterResolver validateNullableAnnotations, on by default)\");");
+        }
+    }
+
+    static void EmitSerializeNullThrowHelper(CodeWriter writer, ObjectModel model)
+    {
+        writer.Line(N.NoInlining);
+        writer.Line("static void ThrowNullValueForNonNullableMemberOnSerialize(string member)");
+        using (writer.OpenScope())
+        {
+            writer.Line($"throw new {N.Exception}(\"Member '\" + member + \"' of '{model.FullTypeName}' is declared non-nullable but its value is null (nullable annotation validation, MessagePackFormatterResolver validateNullableAnnotations, on by default)\");");
         }
     }
 

@@ -128,7 +128,10 @@ public class MessagePackSerializationException : Exception
     internal static Exception ThrowMissingRequiredMember(string? typeName, string memberName) => throw new MessagePackSerializationException($"Required member '{memberName}' of '{typeName}' is missing from the payload (required member validation, MessagePackFormatterResolver validateRequiredMembers, on by default)");
 
     [DoesNotReturn]
-    internal static Exception ThrowNullValueForNonNullableMember(string? typeName, string memberName) => throw new MessagePackSerializationException($"Member '{memberName}' of '{typeName}' is declared non-nullable but the payload contains nil (nullable annotation validation, MessagePackFormatterResolver validateNullableAnnotations)");
+    internal static Exception ThrowNullValueForNonNullableMember(string? typeName, string memberName) => throw new MessagePackSerializationException($"Member '{memberName}' of '{typeName}' is declared non-nullable but the payload contains nil (nullable annotation validation, MessagePackFormatterResolver validateNullableAnnotations, on by default)");
+
+    [DoesNotReturn]
+    internal static Exception ThrowNullValueForNonNullableMemberOnSerialize(string? typeName, string memberName) => throw new MessagePackSerializationException($"Member '{memberName}' of '{typeName}' is declared non-nullable but its value is null (nullable annotation validation, MessagePackFormatterResolver validateNullableAnnotations, on by default)");
 
     [DoesNotReturn]
     internal static Exception ThrowAsyncElementsMissing(long declaredCount, long producedCount) => throw new MessagePackSerializationException($"SerializeElementsAsync declared {declaredCount} elements but the source completed after {producedCount}");

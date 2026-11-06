@@ -29,6 +29,25 @@ public class GeneratorDiagnosticFiringTests
     static void NoFormatterFor(GeneratorDriverRunResult result, string typeName)
         => Assert.DoesNotContain(result.GeneratedTrees, t => t.FilePath.Contains(typeName + "Formatter", StringComparison.Ordinal));
 
+    // ---- MsgPack032 ----
+
+    [Fact]
+    public void RequiredMemberBoundToAConstructorWithoutSetsRequiredMembers_IsMsgPack032()
+    {
+        var result = Run("""
+            using System.Diagnostics.CodeAnalysis;
+            [MessagePackObject] public class Reassigned { [Key(0)] public required string Name { get; set; } public Reassigned(string name) { Name = name.Trim(); } }
+            [MessagePackObject] public class Declared { [Key(0)] public required string Name { get; set; } [SetsRequiredMembers] public Declared(string name) { Name = name.Trim(); } }
+            [MessagePackObject] public class NotRequired { [Key(0)] public string Name { get; set; } public NotRequired(string name) { Name = name.Trim(); } }
+            """, out var updated);
+        var diagnostic = Single(result, "MsgPack032", DiagnosticSeverity.Warning);
+        Assert.Contains("'Reassigned.Name' is required and also bound to the constructor parameter 'name'", diagnostic.GetMessage());
+        Assert.Contains("[SetsRequiredMembers]", diagnostic.GetMessage());
+        // a warning: the formatter is still generated, and compiles
+        Assert.Contains(result.GeneratedTrees, static t => t.FilePath.Contains("ReassignedFormatter", StringComparison.Ordinal));
+        Assert.Empty(updated.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error).Select(static d => d.ToString()));
+    }
+
     // ---- MsgPack002 ----
 
     [Fact]

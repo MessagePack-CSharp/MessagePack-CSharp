@@ -343,10 +343,12 @@ public class GeneratedNameCollisionTests
             [MessagePackObject] public class Method<Initialize> { [Key(0)] public int X { get; set; } }
             [MessagePackObject] public class Slot<fItem> { [Key(0)] public string? Item { get; set; } }
             [MessagePackObject] public class Local<v_Item> { [Key(0)] public string? Item { get; set; } }
+            [MessagePackObject] public class Helper<ThrowNullValueForNonNullableMemberOnSerialize> { [Key(0)] public string Name { get; set; } = ""; }
+            [MessagePackObject] public class SerializeLocal<nn_Name> { [Key(0)] public string Name { get; set; } = ""; }
             [MessagePackObject] public class Fine<TResolver> { [Key(0)] public int X { get; set; } }
             [MessagePackObject] public class AlsoFine<fOther> { [Key(0)] public int Item { get; set; } }
             """, out var updated);
-        Assert.Equal(5, result.Diagnostics.Count(static d => d.Id == "MsgPack005"));
+        Assert.Equal(7, result.Diagnostics.Count(static d => d.Id == "MsgPack005"));
         Assert.Contains(result.GeneratedTrees, static t => System.IO.Path.GetFileName(t.FilePath).StartsWith("AlsoFine") && t.FilePath.EndsWith("Formatter.g.cs"));
         Assert.Empty(updated.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error).Select(static d => d.ToString()));
         Assert.Contains(result.GeneratedTrees, static t => System.IO.Path.GetFileName(t.FilePath).StartsWith("Fine") && t.FilePath.EndsWith("Formatter.g.cs"));

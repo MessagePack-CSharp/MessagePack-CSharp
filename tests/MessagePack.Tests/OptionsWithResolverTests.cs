@@ -64,7 +64,7 @@ public partial class OptionsWithResolverTests
 
         Assert.True(options.Resolver.HashFloodingResistant);
         Assert.True(options.Resolver.ValidateRequiredMembers);
-        Assert.False(options.Resolver.ValidateNullableAnnotations);
+        Assert.True(options.Resolver.ValidateNullableAnnotations);
         Assert.Equal(500, options.MaxDepth);
         var bytes = MessagePackSerializer.Serialize(new Unannotated { Value = 7 }, options);
         Assert.Equal(7, MessagePackSerializer.Deserialize<Unannotated>(bytes, options).Value);
