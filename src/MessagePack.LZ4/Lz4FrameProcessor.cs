@@ -91,6 +91,10 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
     // the header and applies its cap before decompressing anything. Block boundaries follow the block size, not the
     // segment boundaries, so the frame is the one the one-shot compress would write. The native context is cached
     // in a single slot (see ZstandardCodec): uncontended use never allocates, a second thread creates its own.
+    // Every window is sized by the encoder's own bounds (GetMaxCompressedLength for a segment, GetMaxFlushBufferLength
+    // for the close), so each call takes its whole input and returns Done at once; anything else is a codec fault. The
+    // encoder reports failure as InvalidData instead of throwing, and the segments are checked against the declared
+    // length here, because a mismatch would otherwise surface only as that InvalidData from Close.
     sealed class EncoderBox
     {
         public LZ4Encoder Encoder = new();
@@ -116,19 +120,39 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
             var encoder = box.Encoder;
             var options = EncodeOptions(message.Length);
             encoder.Reset(in options); // a new frame declaring this message's length
+            var remaining = message.Length;
             while (message.TryGetNext(out var segment))
             {
+                remaining -= segment.Length;
+                if (remaining < 0)
+                {
+                    Lz4Throws.InconsistentSegments(); // the segments hold more than the declared message
+                }
                 var destination = output.GetSpan(encoder.GetMaxCompressedLength(segment.Length, includingHeader: true, includingFooter: false));
-                output.Advance(encoder.Compress(segment, destination));
+                var status = encoder.Compress(segment, destination, out _, out var written, isFinalBlock: false);
+                if (status != OperationStatus.Done)
+                {
+                    Lz4Throws.EncoderFailed(status);
+                }
+                output.Advance(written);
+            }
+            if (remaining != 0)
+            {
+                Lz4Throws.InconsistentSegments(); // the segments hold less than the declared message
             }
             var tail = output.GetSpan(encoder.GetMaxFlushBufferLength(includingFooter: true));
-            output.Advance(encoder.Close(tail));
+            var closed = encoder.Close(tail, out var tailWritten);
+            if (closed != OperationStatus.Done)
+            {
+                Lz4Throws.EncoderFailed(closed);
+            }
+            output.Advance(tailWritten);
             ReturnEncoder(box);
             return true;
         }
         catch
         {
-            box.Encoder.Dispose(); // a context that threw is not trusted back into the cache
+            box.Encoder.Dispose(); // a context that failed is not trusted back into the cache
             throw;
         }
     }
@@ -142,13 +166,33 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
             var encoder = box.Encoder;
             var options = EncodeOptions(message.Length);
             encoder.Reset(in options);
+            var remaining = message.Length;
             while (message.TryGetNext(out var segment))
             {
+                remaining -= segment.Length;
+                if (remaining < 0)
+                {
+                    Lz4Throws.InconsistentSegments();
+                }
                 var destination = output.GetSpan(encoder.GetMaxCompressedLength(segment.Length, includingHeader: true, includingFooter: false));
-                output.Advance(encoder.Compress(segment, destination));
+                var status = encoder.Compress(segment, destination, out _, out var written, isFinalBlock: false);
+                if (status != OperationStatus.Done)
+                {
+                    Lz4Throws.EncoderFailed(status);
+                }
+                output.Advance(written);
+            }
+            if (remaining != 0)
+            {
+                Lz4Throws.InconsistentSegments();
             }
             var tail = output.GetSpan(encoder.GetMaxFlushBufferLength(includingFooter: true));
-            output.Advance(encoder.Close(tail));
+            var closed = encoder.Close(tail, out var tailWritten);
+            if (closed != OperationStatus.Done)
+            {
+                Lz4Throws.EncoderFailed(closed);
+            }
+            output.Advance(tailWritten);
             ReturnEncoder(box);
             return true;
         }

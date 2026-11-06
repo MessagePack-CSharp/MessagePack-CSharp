@@ -404,8 +404,10 @@ public class Lz4FrameTests
             int written;
             try
             {
-                written = encoder.Compress(plain, unsized);
-                written += encoder.Close(unsized.AsSpan(written));
+                Assert.Equal(OperationStatus.Done, encoder.Compress(plain, unsized, out var consumed, out written, isFinalBlock: false));
+                Assert.Equal(plain.Length, consumed);
+                Assert.Equal(OperationStatus.Done, encoder.Close(unsized.AsSpan(written), out var tailWritten));
+                written += tailWritten;
             }
             finally
             {

@@ -251,8 +251,10 @@ public class Lz4Tests
     {
         // Length and SegmentCount describe the whole message, but the view is forward-only. A composite processor that
         // walks it before handing it on (without Reset) used to get stale ArrayPool bytes in place of the walked part:
-        // Block compressed the unfilled tail of its flat buffer, BlockArray left size slots unwritten
-        foreach (var processor in new MessagePackMessageProcessor[] { new Lz4BlockProcessor(), new Lz4BlockArrayProcessor() })
+        // Block compressed the unfilled tail of its flat buffer, BlockArray left size slots unwritten. Frame streams the
+        // segments, so lz4 caught the shortfall against the declared ContentSize at Close; since NativeCompressions 1.3.0
+        // the encoder reports that as a status instead of throwing, and the processor checks the segments itself
+        foreach (var processor in new MessagePackMessageProcessor[] { new Lz4BlockProcessor(), new Lz4BlockArrayProcessor(), new Lz4FrameProcessor() })
         {
             var name = processor.GetType().Name;
             Assert.Null(Encode(processor, consume: 0, out var segmentCount));

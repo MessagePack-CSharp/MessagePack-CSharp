@@ -115,10 +115,13 @@ public class FrameWalkerDifferentialTests
         {
             var chunk = payload.AsSpan(offset, Math.Min(piece, payload.Length - offset));
             var destination = output.GetSpan(encoder.GetMaxCompressedLength(chunk.Length, includingHeader: true, includingFooter: false));
-            output.Advance(encoder.Compress(chunk, destination));
+            Assert.Equal(OperationStatus.Done, encoder.Compress(chunk, destination, out var consumed, out var written, isFinalBlock: false));
+            Assert.Equal(chunk.Length, consumed);
+            output.Advance(written);
         }
         var tail = output.GetSpan(encoder.GetMaxFlushBufferLength(includingFooter: true));
-        output.Advance(encoder.Close(tail));
+        Assert.Equal(OperationStatus.Done, encoder.Close(tail, out var tailWritten));
+        output.Advance(tailWritten);
         return output.WrittenSpan.ToArray();
     }
 

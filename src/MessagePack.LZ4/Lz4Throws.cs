@@ -20,5 +20,9 @@ static class Lz4Throws
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    public static void EncoderFailed(OperationStatus status) => throw new MessagePackSerializationException($"The LZ4 frame encoder returned {status} for a destination sized by its own bound.");
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
     public static void InconsistentSegments() => throw new MessagePackSerializationException("The message segments do not add up to the Length and SegmentCount their BufferSegments view reports; pass the view unconsumed (call Reset after iterating it).");
 }
