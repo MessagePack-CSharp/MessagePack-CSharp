@@ -76,7 +76,7 @@ public static class CodeAnalysisUtilities
         {
             INamedTypeSymbol namedType => namedType.Arity,
             IArrayTypeSymbol arrayType => GetArity(arrayType.ElementType),
-            ITypeParameterSymbol => 0,
+            ITypeParameterSymbol or IDynamicTypeSymbol => 0,
             _ => throw new NotSupportedException(),
         };
 
@@ -85,7 +85,7 @@ public static class CodeAnalysisUtilities
         {
             INamedTypeSymbol namedType => namedType.TypeParameters.Select(t => GenericTypeParameterInfo.Create(t, recursionGuard)).ToImmutableArray(),
             IArrayTypeSymbol arrayType => GetTypeParameters(arrayType.ElementType, recursionGuard),
-            ITypeParameterSymbol => ImmutableArray<GenericTypeParameterInfo>.Empty,
+            ITypeParameterSymbol or IDynamicTypeSymbol => ImmutableArray<GenericTypeParameterInfo>.Empty,
             _ => throw new NotSupportedException(),
         };
 
@@ -94,7 +94,7 @@ public static class CodeAnalysisUtilities
         {
             INamedTypeSymbol namedType => namedType.TypeArguments.Select(t => QualifiedTypeName.Create(t, recursionGuard)).ToImmutableArray(),
             IArrayTypeSymbol arrayType => GetTypeArguments(arrayType.ElementType, recursionGuard),
-            ITypeParameterSymbol => ImmutableArray<QualifiedTypeName>.Empty,
+            ITypeParameterSymbol or IDynamicTypeSymbol => ImmutableArray<QualifiedTypeName>.Empty,
             _ => throw new NotSupportedException(),
         };
 }

@@ -1,4 +1,4 @@
-// Copyright (c) All contributors. All rights reserved.
+﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma warning disable SA1402 // File may only contain a single type
@@ -48,6 +48,7 @@ public class TypeCollector
         "char",
         "string",
         "object",
+        "dynamic",
         "System.Guid",
         "System.TimeSpan",
         "System.DateTime",
@@ -71,6 +72,7 @@ public class TypeCollector
         "char[]",
         "string[]",
         "object[]",
+        "dynamic[]",
         "System.DateTime[]",
         "System.ArraySegment<byte>",
         "System.Memory<byte>",

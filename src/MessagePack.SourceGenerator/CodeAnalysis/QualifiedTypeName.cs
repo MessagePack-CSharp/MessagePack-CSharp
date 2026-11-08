@@ -12,6 +12,15 @@ namespace MessagePack.SourceGenerator.CodeAnalysis;
 public abstract record QualifiedTypeName : IComparable<QualifiedTypeName>
 {
     /// <summary>
+    /// The name used for <c>dynamic</c>, which is <see cref="object"/> at runtime.
+    /// </summary>
+    private static readonly QualifiedNamedTypeName DynamicTypeName = new(TypeKind.Class)
+    {
+        Name = "Object",
+        Container = new NamespaceTypeContainer("System"),
+    };
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="QualifiedTypeName"/> class.
     /// </summary>
     /// <param name="symbol">The symbol this instance will identify.</param>
@@ -23,6 +32,7 @@ public abstract record QualifiedTypeName : IComparable<QualifiedTypeName>
             IArrayTypeSymbol arrayType => new QualifiedArrayTypeName(arrayType),
             INamedTypeSymbol namedType => new QualifiedNamedTypeName(namedType, recursionGuard),
             ITypeParameterSymbol typeParam => new TypeParameter(typeParam),
+            IDynamicTypeSymbol => DynamicTypeName,
             _ => throw new NotSupportedException(),
         };
     }
