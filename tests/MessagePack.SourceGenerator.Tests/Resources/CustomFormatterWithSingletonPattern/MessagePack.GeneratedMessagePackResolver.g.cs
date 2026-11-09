@@ -54,7 +54,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 0: return new global::MessagePack.GeneratedMessagePackResolver.GFormatter();
 					case 1: return global::F.Instance;
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;

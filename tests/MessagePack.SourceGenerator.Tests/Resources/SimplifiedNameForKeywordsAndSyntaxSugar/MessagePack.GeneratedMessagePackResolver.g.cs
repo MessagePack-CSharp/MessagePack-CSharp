@@ -62,7 +62,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 4: return new MsgPack::Formatters.ValueTupleFormatter<long, ulong, float, double>();
 					case 5: return new global::MessagePack.GeneratedMessagePackResolver.SampleObjectFormatter();
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;

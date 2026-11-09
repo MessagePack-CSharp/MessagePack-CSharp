@@ -54,7 +54,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 0: return new global::MessagePack.GeneratedMessagePackResolver.MyEnumFormatter();
 					case 1: return new global::MessagePack.GeneratedMessagePackResolver.MyMessagePackObjectFormatter();
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;

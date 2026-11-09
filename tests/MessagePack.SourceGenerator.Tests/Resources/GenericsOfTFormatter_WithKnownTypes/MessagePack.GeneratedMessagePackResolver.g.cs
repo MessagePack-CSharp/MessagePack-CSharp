@@ -62,7 +62,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 2: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObjectFormatter();
 					case 3: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.MyObject2Formatter();
 					default: return null; // unreachable
-				};
+				}
 			}
 			if (t.IsGenericType && openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))
 			{
@@ -70,7 +70,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 				{
 					case 0: return global::System.Activator.CreateInstance(typeof(global::MessagePack.GeneratedMessagePackResolver.TempProject.MyGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments));
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;

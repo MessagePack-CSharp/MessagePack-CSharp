@@ -54,7 +54,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 0: return new MsgPack::Formatters.ArrayFormatter<int[]>();
 					case 1: return new global::MessagePack.GeneratedMessagePackResolver.ContainerObjectFormatter();
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;

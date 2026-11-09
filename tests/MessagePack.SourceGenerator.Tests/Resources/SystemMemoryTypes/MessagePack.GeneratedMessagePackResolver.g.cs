@@ -58,7 +58,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 2: return new MsgPack::Formatters.ReadOnlySequenceFormatter<int>();
 					case 3: return new global::MessagePack.GeneratedMessagePackResolver.AFormatter();
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;

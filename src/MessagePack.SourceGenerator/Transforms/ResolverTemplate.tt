@@ -72,7 +72,7 @@ partial class <#= ResolverName.Name #> : MsgPack::IFormatterResolver
 					case <#= i #>: return <#= x.GetFormatterInstanceForResolver() #>;
 <# } #>
 					default: return null; // unreachable
-				};
+				}
 			}
 <# }
 
@@ -85,7 +85,7 @@ partial class <#= ResolverName.Name #> : MsgPack::IFormatterResolver
 					case <#= i #>: return global::System.Activator.CreateInstance(typeof(<#= x.GetFormatterNameForResolver(GenericParameterStyle.TypeDefinition) #>).MakeGenericType(t.GenericTypeArguments));
 <#     } #>
 					default: return null; // unreachable
-				};
+				}
 			}
 <# } #>
 

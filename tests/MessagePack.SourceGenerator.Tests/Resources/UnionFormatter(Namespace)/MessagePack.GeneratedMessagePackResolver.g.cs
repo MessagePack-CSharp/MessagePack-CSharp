@@ -58,7 +58,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 2: return new global::MessagePack.GeneratedMessagePackResolver.MyTestNamespace.Derived2Formatter();
 					case 3: return new global::MessagePack.GeneratedMessagePackResolver.MyTestNamespace.MyMessagePackObjectFormatter();
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;

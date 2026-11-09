@@ -56,7 +56,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 0: return new global::MessagePack.GeneratedMessagePackResolver.IMyTypeFormatter();
 					case 1: return new global::MessagePack.GeneratedMessagePackResolver.UnionContainerFormatter();
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;

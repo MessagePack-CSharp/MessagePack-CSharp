@@ -54,7 +54,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 0: return global::System.Activator.CreateInstance(typeof(global::HasPrivateSerializedMemberAndIsGenericNamed<>.HasPrivateSerializedMemberAndIsGenericNamedFormatter).MakeGenericType(t.GenericTypeArguments));
 					case 1: return global::System.Activator.CreateInstance(typeof(global::HasPrivateSerializedMemberAndIsGenericOrdinal<>.HasPrivateSerializedMemberAndIsGenericOrdinalFormatter).MakeGenericType(t.GenericTypeArguments));
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;
