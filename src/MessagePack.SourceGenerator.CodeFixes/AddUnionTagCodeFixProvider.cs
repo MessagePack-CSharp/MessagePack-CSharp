@@ -37,6 +37,12 @@ public sealed class AddUnionTagCodeFixProvider : CodeFixProvider
             {
                 continue;
             }
+            // a generic case has no typeof this fix could write: its own type parameters are not in scope on the root,
+            // and an attribute argument cannot name the root's either (CS0416). Which closed cases to tag is the author's call
+            if (caseType.IsGenericType)
+            {
+                continue;
+            }
             Document? rootDocument = null;
             TypeDeclarationSyntax? rootDeclaration = null;
             foreach (var syntaxReference in root.DeclaringSyntaxReferences)

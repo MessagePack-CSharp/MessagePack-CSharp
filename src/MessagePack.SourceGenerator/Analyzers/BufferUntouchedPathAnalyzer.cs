@@ -15,7 +15,7 @@ namespace MessagePack.SourceGenerator.Analyzers;
 /// reach the end without ever touching the buffer parameter. Any use of the buffer counts as touching it (a write,
 /// a read, a header, a ref forward to a helper or a nested formatter),
 /// so the analysis only ever flags a path that provably does nothing with the stream;
-/// a throw ends the operation and is not a path.
+/// a throw ends the operation and is not a path, and neither is a call to a [DoesNotReturn] method (a throw helper).
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class BufferUntouchedPathAnalyzer : DiagnosticAnalyzer
@@ -60,7 +60,8 @@ public sealed class BufferUntouchedPathAnalyzer : DiagnosticAnalyzer
                 continue;
             }
 
-            var message = method.Name == "Serialize"
+            // an explicit implementation's Name carries the interface, so the name alone would call a Serialize a Deserialize
+            var message = FormatterSymbols.IsSerializeEntry(method)
                 ? $"'{method.ContainingType.ToDisplayString()}.Serialize' can return without writing anything to the buffer; the stream is then missing this value and every later element shifts (write nil for the null case, or throw)."
                 : $"'{method.ContainingType.ToDisplayString()}.Deserialize' can return without reading anything from the buffer; this value stays in the stream and every later read shifts (consume the value, or throw).";
             context.ReportDiagnostic(Diagnostic.Create(Rule, method.Locations[0], message));
@@ -83,6 +84,10 @@ public sealed class BufferUntouchedPathAnalyzer : DiagnosticAnalyzer
         while (work.Count > 0)
         {
             var block = blocks[work.Dequeue()];
+            if (NeverReturns(block))
+            {
+                continue; // the graph does not know [DoesNotReturn]: the block's successors are not reached through it
+            }
             var stillUntouched = untouched[block.Ordinal] && !Touches(block, bufferParameter);
             Propagate(block.FallThroughSuccessor, stillUntouched);
             Propagate(block.ConditionalSuccessor, stillUntouched);
@@ -118,6 +123,39 @@ public sealed class BufferUntouchedPathAnalyzer : DiagnosticAnalyzer
                 work.Enqueue(destination.Ordinal);
             }
         }
+    }
+
+    // a block that calls a [DoesNotReturn] method ends there, like a throw
+    static bool NeverReturns(BasicBlock block)
+    {
+        foreach (var operation in block.Operations)
+        {
+            if (CallsDoesNotReturn(operation))
+            {
+                return true;
+            }
+        }
+        return block.BranchValue is { } branchValue && CallsDoesNotReturn(branchValue);
+    }
+
+    static bool CallsDoesNotReturn(IOperation operation)
+    {
+        foreach (var descendant in operation.DescendantsAndSelf())
+        {
+            if (descendant is not IInvocationOperation invocation)
+            {
+                continue;
+            }
+            foreach (var attribute in invocation.TargetMethod.GetAttributes())
+            {
+                if (attribute.AttributeClass is { Name: "DoesNotReturnAttribute" } attributeClass
+                    && attributeClass.ContainingNamespace.ToDisplayString() == "System.Diagnostics.CodeAnalysis")
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     static bool Touches(BasicBlock block, IParameterSymbol bufferParameter)

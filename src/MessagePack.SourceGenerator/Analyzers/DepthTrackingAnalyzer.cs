@@ -25,6 +25,12 @@ namespace MessagePack.SourceGenerator.Analyzers;
 /// is a container level and must charge the budget. Wrappers that only delegate (Nullable, surrogates)
 /// and flat shapes that write a header around primitives never descend, so they stay silent on purpose;
 /// so does a header with a constant count of 0, which opens nothing.
+/// The descent, or the whole container (header and descent), may sit in a helper the entry hands its buffer and
+/// state to (one level down): the entry is reported unless it, or that helper, charges the budget. A helper's header
+/// is never paired with a descent somewhere else in the entry: a wrapper that delegates on one path and reads a flat
+/// shape through a helper on another is not a level. A body that opens a container and calls
+/// itself with the state for the nested values is a level at every turn of the recursion, formatter entry or not,
+/// and is reported on its own: nothing a caller charges once covers it.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
@@ -81,6 +87,10 @@ public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
             var callsDepthTracking = false;
             var opensContainer = false;
             var descends = false;
+            var recurses = false;
+            var chargedByHelper = false;
+            var containerInHelper = false;
+            string? helperName = null;
             foreach (var operation in block.Descendants())
             {
                 if (operation is not IInvocationOperation invocation)
@@ -95,9 +105,24 @@ public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
                 {
                     opensContainer = true;
                 }
-                else if (ForwardsStateToFormatter(invocation) || ForwardsStateThroughHelper(invocation, context.Compilation))
+                else if (ForwardsStateToFormatter(invocation))
                 {
                     descends = true;
+                }
+                else if (ForwardsState(invocation) && IsCallToEnclosingFunction(invocation))
+                {
+                    recurses = true;
+                }
+                else if (ForwardsBufferAndState(invocation))
+                {
+                    var helper = SummarizeHelper(invocation, context.Compilation);
+                    descends |= helper.Descends;
+                    containerInHelper |= helper.OpensContainer && helper.Descends;
+                    chargedByHelper |= helper.Charges;
+                    if (helper.Descends)
+                    {
+                        helperName ??= invocation.TargetMethod.Name;
+                    }
                 }
             }
 
@@ -105,12 +130,20 @@ public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
             {
                 AnalyzeGraph(context.GetControlFlowGraph(block), method.Locations[0], context.ReportDiagnostic);
             }
-            else if (opensContainer && descends && FormatterSymbols.IsFormatterEntry(method))
+            else if (opensContainer && recurses)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
                     MissingEnterRule,
                     method.Locations[0],
-                    $"'{method.ContainingType.ToDisplayString()}.{method.Name}' writes or reads a container header and descends into nested formatters without state.Enter(); wrap the nested calls in state.Enter() / state.Exit() so the depth limit counts this level."));
+                    $"'{method.ContainingType.ToDisplayString()}.{method.Name}' writes or reads a container header and calls itself for the nested values without state.Enter(); every turn of the recursion is a nesting level, so wrap the nested call in state.Enter() / state.Exit() or the depth limit never sees it."));
+            }
+            else if (((opensContainer && descends) || containerInHelper) && !chargedByHelper && FormatterSymbols.IsFormatterEntry(method))
+            {
+                var through = helperName is null ? "" : $" (through its helper '{helperName}')";
+                context.ReportDiagnostic(Diagnostic.Create(
+                    MissingEnterRule,
+                    method.Locations[0],
+                    $"'{method.ContainingType.ToDisplayString()}.{method.Name}' writes or reads a container header and descends into nested formatters{through} without state.Enter(); wrap the nested calls in state.Enter() / state.Exit() so the depth limit counts this level."));
             }
         }
     }
@@ -356,16 +389,14 @@ public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
     static string TrimPrefix(string name, string prefix) =>
         name.StartsWith(prefix, StringComparison.Ordinal) ? name.Substring(prefix.Length) : name;
 
-    // a descent split into a helper: the entry hands both its buffer and its state on by ref to a method of its own, and
-    // that method's body forwards the state to a Serialize/Deserialize (one level down, the helper that reads the
-    // elements). A helper that only skips or reads scalars with the state (version-tolerance tails, float readers) is
-    // not a descent
-    static bool ForwardsStateThroughHelper(IInvocationOperation invocation, Compilation compilation)
+    // A container split into a helper: the entry hands both its buffer and its state on by ref to a method of its own.
+    // What that method's body does counts for the entry, one level down: a container header it reads or writes, a
+    // descent (the state forwarded to a Serialize/Deserialize, or to itself), and a charge of its own (Enter/Exit there
+    // covers the level, and MsgPack112 balances it in that body). A helper that only skips or reads scalars with the
+    // state (version-tolerance tails, float readers) is none of the three.
+    static HelperSummary SummarizeHelper(IInvocationOperation invocation, Compilation compilation)
     {
-        if (!ForwardsBufferAndState(invocation))
-        {
-            return false;
-        }
+        var summary = default(HelperSummary);
         foreach (var reference in invocation.TargetMethod.DeclaringSyntaxReferences)
         {
             // a helper in another project is a source symbol of THAT compilation in the IDE (project references are
@@ -375,33 +406,75 @@ public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
                 continue;
             }
             var syntax = reference.GetSyntax();
-            if (SemanticModelOf(syntax.SyntaxTree, invocation, compilation).GetOperation(syntax) is not { } body)
+            if (FormatterSymbols.SemanticModelOf(syntax.SyntaxTree, invocation, compilation).GetOperation(syntax) is not { } body)
             {
                 continue;
             }
             foreach (var operation in body.Descendants())
             {
-                if (operation is IInvocationOperation nested && ForwardsStateToFormatter(nested))
+                if (operation is not IInvocationOperation nested)
                 {
-                    return true;
+                    continue;
                 }
+                if (ClassifyDepthCall(nested) != DepthCall.None)
+                {
+                    summary.Charges = true;
+                }
+                else if (IsContainerHeaderCall(nested))
+                {
+                    summary.OpensContainer = true;
+                }
+                else if (ForwardsStateToFormatter(nested) || (ForwardsState(nested) && IsCallToEnclosingFunction(nested)))
+                {
+                    summary.Descends = true;
+                }
+            }
+        }
+        return summary;
+    }
+
+    struct HelperSummary
+    {
+        public bool OpensContainer;
+        public bool Descends;
+        public bool Charges;
+    }
+
+    // a call written inside the body of the function it calls (a method or a local function): direct recursion
+    static bool IsCallToEnclosingFunction(IInvocationOperation invocation)
+    {
+        var target = invocation.TargetMethod.OriginalDefinition;
+        if (target.MethodKind is not (MethodKind.Ordinary or MethodKind.LocalFunction))
+        {
+            return false;
+        }
+        foreach (var reference in target.DeclaringSyntaxReferences)
+        {
+            if (reference.SyntaxTree == invocation.Syntax.SyntaxTree && reference.Span.Contains(invocation.Syntax.Span))
+            {
+                return true;
             }
         }
         return false;
     }
 
-    // A helper usually sits in the formatter's own file, whose model the analysis already built. One in another file of
-    // a partial type needs a model of its own: RS1030 asks analyzers not to create one (it is not cached), so that
-    // happens only in this case.
-    static SemanticModel SemanticModelOf(SyntaxTree tree, IOperation operation, Compilation compilation)
+    // the state parameter handed on by ref to anything but a formatter's Serialize/Deserialize
+    static bool ForwardsState(IInvocationOperation invocation)
     {
-        if (operation.SemanticModel is { } model && model.SyntaxTree == tree)
+        if (invocation.TargetMethod.Name is "Serialize" or "Deserialize")
         {
-            return model;
+            return false;
         }
-#pragma warning disable RS1030 // the helper's body is in another file, which no analysis context hands a model for
-        return compilation.GetSemanticModel(tree);
-#pragma warning restore RS1030
+        foreach (var argument in invocation.Arguments)
+        {
+            if (argument.Parameter?.RefKind == RefKind.Ref
+                && argument.Value is IParameterReferenceOperation { Parameter.Type: { } type }
+                && type.ToDisplayString() is SerializeStateName or DeserializeStateName)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     static bool ForwardsBufferAndState(IInvocationOperation invocation)

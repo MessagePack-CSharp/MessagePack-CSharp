@@ -18,6 +18,8 @@ namespace MessagePack.SourceGenerator.Analyzers;
 ///
 /// MsgPack115 reports a parameterless ReadArrayHeader() / ReadMapHeader() call in a body that has a DeserializeState
 /// parameter to pass: the formatter is inside a deserialization with a budget and skips charging it.
+/// The same read moved into a helper that is handed the buffer but not the state is reported at the call that leaves
+/// the state behind: the helper itself has nothing to pass, so only its caller can be told.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class DeclaredElementBudgetAnalyzer : DiagnosticAnalyzer
@@ -47,16 +49,25 @@ public sealed class DeclaredElementBudgetAnalyzer : DiagnosticAnalyzer
     static void AnalyzeInvocation(OperationAnalysisContext context)
     {
         var invocation = (IInvocationOperation)context.Operation;
-        if (!IsStatelessHeaderRead(invocation))
-        {
-            return;
-        }
 
         // the state that should have been passed: a DeserializeState parameter of the function whose body holds the
         // call (a local function or lambda has its own parameters; a ref parameter cannot be captured from the outside)
         var function = EnclosingFunction(invocation, context.ContainingSymbol);
         if (function is null || !HasDeserializeStateParameter(function))
         {
+            return;
+        }
+
+        if (!IsStatelessHeaderRead(invocation))
+        {
+            if (StatelessHeaderReadIn(invocation, context.Compilation) is { } header)
+            {
+                var overload = header.Contains("Array") ? "ReadArrayHeader" : "ReadMapHeader";
+                context.ReportDiagnostic(Diagnostic.Create(
+                    Rule,
+                    invocation.Syntax.GetLocation(),
+                    $"'{function.ContainingType.ToDisplayString()}.{function.Name}' hands its buffer to '{invocation.TargetMethod.Name}', which reads a container header with {header}() and is not given the DeserializeState in scope here; pass the state on and call buffer.{overload}(ref state) there so the claimed count is charged against the message's declared-element budget."));
+            }
             return;
         }
 
@@ -96,6 +107,54 @@ public sealed class DeclaredElementBudgetAnalyzer : DiagnosticAnalyzer
             }
         }
         return true;
+    }
+
+    // A call that hands the buffer (a by-ref parameter of a type-parameter type, as the formatter interface declares
+    // it) to a method or local function of this compilation that takes no DeserializeState and reads a container header
+    // in its own body: the name of that header read. One level down, like the depth analyzer's helper look.
+    static string? StatelessHeaderReadIn(IInvocationOperation invocation, Compilation compilation)
+    {
+        var target = invocation.TargetMethod;
+        if (target.MethodKind is not (MethodKind.Ordinary or MethodKind.LocalFunction)
+            || target.Name is "ReadArrayHeader" or "ReadMapHeader"
+            || HasDeserializeStateParameter(target)
+            || !ForwardsBuffer(invocation))
+        {
+            return null;
+        }
+        foreach (var reference in target.OriginalDefinition.DeclaringSyntaxReferences)
+        {
+            if (!compilation.ContainsSyntaxTree(reference.SyntaxTree))
+            {
+                continue; // a helper of another project: not this compilation's tree
+            }
+            var syntax = reference.GetSyntax();
+            if (FormatterSymbols.SemanticModelOf(syntax.SyntaxTree, invocation, compilation).GetOperation(syntax) is not { } body)
+            {
+                continue;
+            }
+            foreach (var operation in body.Descendants())
+            {
+                if (operation is IInvocationOperation nested && IsStatelessHeaderRead(nested))
+                {
+                    return nested.TargetMethod.Name;
+                }
+            }
+        }
+        return null;
+    }
+
+    static bool ForwardsBuffer(IInvocationOperation invocation)
+    {
+        foreach (var argument in invocation.Arguments)
+        {
+            if (argument.Parameter?.RefKind == RefKind.Ref
+                && argument.Value is IParameterReferenceOperation { Parameter: { RefKind: RefKind.Ref, Type: ITypeParameterSymbol } })
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     static IMethodSymbol? EnclosingFunction(IOperation operation, ISymbol containingSymbol)

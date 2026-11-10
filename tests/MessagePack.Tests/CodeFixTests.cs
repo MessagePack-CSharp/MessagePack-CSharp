@@ -19,6 +19,16 @@ public class CodeFixTests
     static async Task<string> ApplyFixAsync(CodeFixProvider fixer, DiagnosticAnalyzer? analyzer, string source, string diagnosticId)
     {
         using var workspace = new AdhocWorkspace();
+        var (document, actions) = await CollectFixesAsync(workspace, fixer, analyzer, source, diagnosticId);
+        var action = Assert.Single(actions.GroupBy(a => a.EquivalenceKey).Select(g => g.First()));
+
+        var operations = await action.GetOperationsAsync(CancellationToken.None);
+        var solution = operations.OfType<ApplyChangesOperation>().Single().ChangedSolution;
+        return (await solution.GetDocument(document.Id)!.GetTextAsync()).ToString();
+    }
+
+    static async Task<(Document Document, List<CodeAction> Actions)> CollectFixesAsync(AdhocWorkspace workspace, CodeFixProvider fixer, DiagnosticAnalyzer? analyzer, string source, string diagnosticId)
+    {
         var project = workspace.AddProject("FixProbe", LanguageNames.CSharp)
             .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
             .WithParseOptions(CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest))
@@ -41,11 +51,7 @@ public class CodeFixTests
         var actions = new List<CodeAction>();
         var context = new CodeFixContext(document, diagnostic, (action, _) => actions.Add(action), CancellationToken.None);
         await fixer.RegisterCodeFixesAsync(context);
-        var action = Assert.Single(actions.GroupBy(a => a.EquivalenceKey).Select(g => g.First()));
-
-        var operations = await action.GetOperationsAsync(CancellationToken.None);
-        var solution = operations.OfType<ApplyChangesOperation>().Single().ChangedSolution;
-        return (await solution.GetDocument(document.Id)!.GetTextAsync()).ToString();
+        return (document, actions);
     }
 
     [Fact]
@@ -205,5 +211,49 @@ public class CodeFixTests
             }
             """, "MsgPack106");
         Assert.Contains("UnionTag(typeof(Square), 1)", fixedSource);
+    }
+
+    [Fact]
+    public async Task AddUnionTag_GenericCase_OffersNoFix()
+    {
+        // typeof(Box<T>) is not something an attribute on Shape can say: the fix used to write exactly that
+        using var workspace = new AdhocWorkspace();
+        var (_, actions) = await CollectFixesAsync(workspace, new AddUnionTagCodeFixProvider(), new ClosedUnionCoverageAnalyzer(), """
+            using MessagePack;
+            using System.Runtime.CompilerServices;
+            [MessagePackObject]
+            [UnionTag(typeof(Circle), 0)]
+            [IsClosedType(DerivedTypes = new[] { typeof(Circle), typeof(Box<>) })]
+            public abstract class Shape { }
+            [MessagePackObject] public class Circle : Shape { [Key(0)] public double R { get; set; } }
+            [MessagePackObject] public class Box<T> : Shape { [Key(0)] public T? Content { get; set; } }
+            namespace System.Runtime.CompilerServices
+            {
+                internal sealed class IsClosedTypeAttribute : System.Attribute
+                {
+                    public System.Type[]? DerivedTypes { get; set; }
+                }
+            }
+            """, "MsgPack106");
+        Assert.Empty(actions);
+    }
+
+    [Fact]
+    public async Task AddKeyAttributes_InANamespaceWithAMessagePackSegment_BindsToTheLibrary()
+    {
+        // `MessagePack.Key` written here would be Contoso.MessagePack.Key; the fix has to stay on the global name
+        var fixedSource = await ApplyFixAsync(new AddKeyAttributesCodeFixProvider(), analyzer: null, """
+            namespace Contoso.MessagePack.Models
+            {
+                [global::MessagePack.MessagePackObject]
+                public class Holder
+                {
+                    public int Id { get; set; }
+                }
+            }
+            """, "MsgPack001");
+        Assert.Contains("[global::MessagePack.Key(0)]", fixedSource);
+        var compilation = CSharpCompilation.Create("Fixed", [CSharpSyntaxTree.ParseText(fixedSource)], AnalyzerTestHost.References, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        Assert.Empty(compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error));
     }
 }

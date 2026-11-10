@@ -27,12 +27,14 @@ public class ExpandoObjectFormatterTests
         dynamic expando = new ExpandoObject();
         expando.Name = "expando";
 
+#pragma warning disable MsgPack108 // the default chain's refusal is what these calls pin
         var serializeMiss = Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize((ExpandoObject)expando));
         Assert.Contains(nameof(ExpandoObject), serializeMiss.Message);
 
         var payload = MessagePackSerializer.Serialize((ExpandoObject)expando, OptIn);
         var deserializeMiss = Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Deserialize<ExpandoObject>(payload));
         Assert.Contains(nameof(ExpandoObject), deserializeMiss.Message);
+#pragma warning restore MsgPack108
     }
 
     [Fact]

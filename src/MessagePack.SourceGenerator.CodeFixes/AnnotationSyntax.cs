@@ -33,9 +33,15 @@ static class AnnotationSyntax
         return false;
     }
 
+    // The attribute by its global name, left to the simplifier: `MessagePack.Key` written as such binds to the nearest
+    // MessagePack, which inside `namespace Contoso.MessagePack` is the user's own namespace. The simplifier drops the
+    // qualification down to what still binds to the library's attribute there ([Key] under `using MessagePack;`).
+    static SyntaxNode Attribute(SyntaxGenerator generator, string name, params SyntaxNode[] arguments) =>
+        generator.Attribute(SyntaxFactory.ParseName("global::MessagePack." + name), arguments.Length == 0 ? null : arguments); // null: no `()`
+
     public static void AddMessagePackObject(DocumentEditor editor, TypeDeclarationSyntax declaration)
     {
-        editor.AddAttribute(declaration, editor.Generator.Attribute("MessagePack.MessagePackObject").WithAdditionalAnnotations(Simplifier.Annotation));
+        editor.AddAttribute(declaration, Attribute(editor.Generator, "MessagePackObject").WithAdditionalAnnotations(Simplifier.Annotation));
     }
 
     // annotates every unannotated serialized member of this declaration with [Key(n)],
@@ -62,7 +68,7 @@ static class AnnotationSyntax
                 {
                     continue;
                 }
-                var attribute = (AttributeListSyntax)editor.Generator.Attribute("MessagePack.Key", stringKeys ? editor.Generator.LiteralExpression(property.Name) : editor.Generator.LiteralExpression(nextKey));
+                var attribute = (AttributeListSyntax)Attribute(editor.Generator, "Key", stringKeys ? editor.Generator.LiteralExpression(property.Name) : editor.Generator.LiteralExpression(nextKey));
                 attribute = attribute.WithTarget(SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.PropertyKeyword)));
                 editor.AddAttribute(parameter, attribute.WithAdditionalAnnotations(Simplifier.Annotation));
                 nextKey++;
@@ -94,14 +100,14 @@ static class AnnotationSyntax
                         .WithLeadingTrivia(multiple.GetLeadingTrivia())
                         .WithTrailingTrivia(multiple.GetTrailingTrivia());
                     var key = stringKeys ? editor.Generator.LiteralExpression(variable.Identifier.ValueText) : editor.Generator.LiteralExpression(nextKey);
-                    replacements.Add(editor.Generator.AddAttributes(single, editor.Generator.Attribute("MessagePack.Key", key).WithAdditionalAnnotations(Simplifier.Annotation)));
+                    replacements.Add(editor.Generator.AddAttributes(single, Attribute(editor.Generator, "Key", key).WithAdditionalAnnotations(Simplifier.Annotation)));
                     nextKey++;
                 }
                 editor.InsertAfter(multiple, replacements.Skip(1));
                 editor.ReplaceNode(multiple, replacements[0]);
                 continue;
             }
-            editor.AddAttribute(member, editor.Generator.Attribute("MessagePack.Key", stringKeys ? editor.Generator.LiteralExpression(symbol.Name) : editor.Generator.LiteralExpression(nextKey)).WithAdditionalAnnotations(Simplifier.Annotation));
+            editor.AddAttribute(member, Attribute(editor.Generator, "Key", stringKeys ? editor.Generator.LiteralExpression(symbol.Name) : editor.Generator.LiteralExpression(nextKey)).WithAdditionalAnnotations(Simplifier.Annotation));
             nextKey++;
         }
     }
@@ -109,8 +115,9 @@ static class AnnotationSyntax
     public static void AddUnionTag(DocumentEditor editor, TypeDeclarationSyntax rootDeclaration, INamedTypeSymbol root, INamedTypeSymbol caseType)
     {
         var nextTag = MaxExistingTag(root) + 1;
-        var attribute = editor.Generator.Attribute(
-            "MessagePack.UnionTag",
+        var attribute = Attribute(
+            editor.Generator,
+            "UnionTag",
             editor.Generator.TypeOfExpression(editor.Generator.TypeExpression(caseType)),
             editor.Generator.LiteralExpression(nextTag));
         editor.AddAttribute(rootDeclaration, attribute.WithAdditionalAnnotations(Simplifier.Annotation));

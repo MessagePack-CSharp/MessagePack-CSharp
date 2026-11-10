@@ -94,6 +94,8 @@ public class DownlevelCultureTests
         Assert.Equal(ja, MessagePackSerializer.Deserialize<System.Globalization.CultureInfo>(MessagePackSerializer.Serialize(ja, Globalization), Globalization));
         Assert.Equal(System.Globalization.CultureInfo.InvariantCulture, MessagePackSerializer.Deserialize<System.Globalization.CultureInfo>(MessagePackSerializer.Serialize(System.Globalization.CultureInfo.InvariantCulture, Globalization), Globalization));
         Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<System.Globalization.CultureInfo>(MessagePackSerializer.Serialize("zz-Zzzz-ZZ"), Globalization));
+#pragma warning disable MsgPack108 // the refusal is what this line pins
         Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(ja)); // not on the default chain
+#pragma warning restore MsgPack108
     }
 }

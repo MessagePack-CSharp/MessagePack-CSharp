@@ -19,6 +19,9 @@ namespace MessagePack.SourceGenerator.Analyzers;
 ///   - [MessagePackObject]/[UnionTag] annotated types pass (generated or reflection tier)
 ///   - [MessagePackFormatter] on the member, or type-level on a non-generic member type, passes
 ///   - [assembly: MessagePackKnownType(typeof(X))] passes X
+///   - the library's opt-in formatters (CultureInfo, TimeZoneInfo, System.Type, ExpandoObject) are in the assembly but
+///     in no default chain, so their patterns are taken back out of the harvest: the one place a name table is needed,
+///     because nothing in metadata says which factory a chain composes
 /// Severity is Warning, not Error: the factory chain is composable at runtime, and the
 /// analyzer can only approximate the default chain, the assembly attribute above is
 /// the sanctioned way to tell it about custom tiers (harvested from every referenced
@@ -42,7 +45,7 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
     static readonly DiagnosticDescriptor Rule = new(
         DiagnosticId,
         "Serialized member type has no resolvable formatter",
-        "'{0}' (reached from '{1}') has no formatter the default chain can resolve: annotate it with [MessagePackObject] (plus [UnionTag] for a polymorphic base), point at a custom formatter with [MessagePackFormatter], or declare coverage with [assembly: MessagePackKnownType]",
+        "'{0}' (reached from '{1}') has no formatter the default chain can resolve: annotate it with [MessagePackObject] (plus [UnionTag] for a polymorphic base), point at a custom formatter with [MessagePackFormatter], or declare coverage with [assembly: MessagePackKnownType]{2}",
         "MessagePack.SourceGenerator",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
@@ -61,7 +64,7 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
     static readonly DiagnosticDescriptor UsageRule = new(
         UsageDiagnosticId,
         "Serialized payload type has no resolvable formatter",
-        "'{0}' (the payload of this {1} call) has no formatter the default chain can resolve: annotate it with [MessagePackObject] (plus [UnionTag] for a polymorphic base), point at a custom formatter with [MessagePackFormatter], or declare coverage with [assembly: MessagePackKnownType]",
+        "'{0}' (the payload of this {1} call) has no formatter the default chain can resolve: annotate it with [MessagePackObject] (plus [UnionTag] for a polymorphic base), point at a custom formatter with [MessagePackFormatter], or declare coverage with [assembly: MessagePackKnownType]{2}",
         "MessagePack.SourceGenerator",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
@@ -89,7 +92,7 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                 context => AnalyzeType(context, registry),
                 SymbolKind.NamedType);
             startContext.RegisterOperationAction(
-                context => AnalyzeInvocation(context, registry),
+                context => AnalyzeInvocation(context, registry, formatterInterface.ContainingAssembly),
                 OperationKind.Invocation);
         });
     }
@@ -130,18 +133,22 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                     PickLocation(member),
                     OffenderProperties(offender),
                     offender.ToDisplayString(),
-                    $"{type.ToDisplayString()}.{member.Name}"));
+                    $"{type.ToDisplayString()}.{member.Name}",
+                    registry.Value.OptInHint(offender)));
             }
         }
     }
 
-    static void AnalyzeInvocation(OperationAnalysisContext context, Lazy<Registry> registry)
+    static void AnalyzeInvocation(OperationAnalysisContext context, Lazy<Registry> registry, IAssemblySymbol library)
     {
         var invocation = (IInvocationOperation)context.Operation;
         var method = invocation.TargetMethod;
         if (!method.IsGenericMethod
             || method.ContainingType?.Name != "MessagePackSerializer" // the cheap test first: this runs on every call in the project
-            || method.ContainingType.ToDisplayString() != SerializerTypeName)
+            || method.ContainingType.ToDisplayString() != SerializerTypeName
+            // a v3 MessagePackSerializer referenced side by side (extern alias, during a migration) has the same name and
+            // another chain altogether
+            || !SymbolEqualityComparer.Default.Equals(method.ContainingAssembly, library))
         {
             return;
         }
@@ -157,7 +164,8 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                 invocation.Syntax.GetLocation(),
                 OffenderProperties(offender),
                 offender.ToDisplayString(),
-                method.Name));
+                method.Name,
+                registry.Value.OptInHint(offender)));
         }
     }
 
@@ -167,7 +175,9 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
     // IWriteBuffer / IReadBuffer, never a payload
     static ITypeSymbol? PayloadTypeArgument(IMethodSymbol method)
     {
-        if (method.Parameters.Length > 0 && method.Parameters[0].Type is { Name: "Type", ContainingNamespace.Name: "System" })
+        // as declared: Serialize<T>(T value) closed over System.Type has a Type parameter too, and is a payload entry
+        var declared = method.OriginalDefinition;
+        if (declared.Parameters.Length > 0 && declared.Parameters[0].Type is { Name: "Type", ContainingNamespace.Name: "System" })
         {
             return null;
         }
@@ -253,7 +263,8 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                     PickLocation(type),
                     OffenderProperties(offender),
                     offender.ToDisplayString(),
-                    $"[UnionTag] of {type.ToDisplayString()}"));
+                    $"[UnionTag] of {type.ToDisplayString()}",
+                    registry.OptInHint(offender)));
             }
         }
     }
@@ -404,16 +415,32 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
 
     sealed class Registry
     {
-
         const int MaxDepth = 8; // ObjectParser.MaxClosureDepth
 
-        // the registry is shared across the analyzer's concurrent callbacks (memo is concurrent); the walk is
+        // The library's formatters that no default chain composes: each is served only by the factory named here, which
+        // the caller puts into a chain of its own. Their TValues leave the library's harvest (a formatter for one of
+        // them in the user's own assembly still counts, like any hand-written formatter).
+        static readonly (string MetadataName, string Factory)[] OptInFormatters =
+        [
+            ("System.Globalization.CultureInfo", "CultureInfoFormatterFactory"),
+            ("System.TimeZoneInfo", "TimeZoneInfoFormatterFactory"),
+            ("System.Type", "TypeFormatterFactory"),
+            ("System.Dynamic.ExpandoObject", "ExpandoObjectFormatterFactory"),
+        ];
 
-        // synchronous per thread, so its depth is per thread
+        // the registry is shared across the analyzer's concurrent callbacks (memo is concurrent); the walk is
+        // synchronous per thread, so its state is per thread
+        [ThreadStatic]
+        static int depth;
+
+        // the named types the walk is inside of, each with the depth it was entered at: a type met again inside its own
+        // walk is taken as serializable there (a self-referencing shape is fine), and `lowestAssumption` remembers the
+        // outermost type such an assumption was made about (int.MaxValue: none; -1: the depth bound, which no frame owns)
+        [ThreadStatic]
+        static Dictionary<ITypeSymbol, int>? inProgress;
 
         [ThreadStatic]
-
-        static int depth;
+        static int lowestAssumption;
 
         // patterns indexed by the served named type's original definition; array patterns (T[], T[,], ...)
         // keyed by rank instead
@@ -421,6 +448,7 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
         readonly HashSet<int> arrayRanks = [];
         readonly HashSet<ITypeSymbol> knownTypes = new(SymbolEqualityComparer.Default);
         readonly HashSet<ITypeSymbol> surrogateTargets = new(SymbolEqualityComparer.Default);
+        readonly Dictionary<ITypeSymbol, string> optInFactories = new(SymbolEqualityComparer.Default);
         readonly ConcurrentDictionary<ITypeSymbol, bool> memo = new(SymbolEqualityComparer.Default);
         Compilation compilation = null!;
 
@@ -432,6 +460,14 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
             // the MessagePack assembly is the default-chain surface; the user's own assembly makes hand-written
             // formatters count without any declaration
             HarvestNamespace(formatterInterface.ContainingAssembly.GlobalNamespace, interfaceDefinition, registry);
+            foreach (var (metadataName, factory) in OptInFormatters)
+            {
+                if (compilation.GetTypeByMetadataName(metadataName) is { } optIn)
+                {
+                    registry.namedPatterns.Remove(optIn);
+                    registry.optInFactories[optIn] = factory;
+                }
+            }
             HarvestNamespace(compilation.Assembly.GlobalNamespace, interfaceDefinition, registry);
 
             // IMessagePackSurrogate implementations auto-register their targets through the generated factory,
@@ -570,7 +606,16 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
         public bool TryFindUnserializable(ITypeSymbol type, out ITypeSymbol offender)
         {
             offender = type;
+            lowestAssumption = int.MaxValue;
             return !IsSerializable(type, ref offender);
+        }
+
+        /// <summary>The message tail for an offender the library serves through an opt-in factory only; empty otherwise.</summary>
+        public string OptInHint(ITypeSymbol offender)
+        {
+            return optInFactories.TryGetValue(offender, out var factory)
+                ? $" ('{offender.Name}' is opt-in: no default chain serves it. Put new {factory}() ahead of the default chain in the options the type is serialized with, and declare that coverage with [assembly: MessagePackKnownType(typeof({offender.Name}))])"
+                : "";
         }
 
         bool IsSerializable(ITypeSymbol type, ref ITypeSymbol offender)
@@ -610,16 +655,30 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                 }
                 return known;
             }
-            // optimistic seed breaks cycles (a self-referencing annotated type is fine)
-            memo[type] = true;
 
-            // a self-expanding shape (class C<T> : List<C<T[]>> opens C<int>, C<int[]>, C<int[][]>, ...) is never
-            // the same type twice, so the memo cannot stop it: past the generator's own closure depth the rest is
-            // taken as serializable, the same bound the harvest applies
-            if (depth >= MaxDepth)
+            // The memo holds verdicts only, never an assumption: an optimistic entry there would be read by another
+            // thread (or by a later member of the same type) as a verdict, and what was concluded from it would stay.
+            // A type met inside its own walk breaks the cycle optimistically (a self-referencing shape is fine)
+            var walk = inProgress ??= new(SymbolEqualityComparer.Default);
+            if (walk.TryGetValue(type, out var enteredAt))
             {
+                lowestAssumption = Math.Min(lowestAssumption, enteredAt);
                 return true;
             }
+
+            // a self-expanding shape (class C<T> : List<C<T[]>> opens C<int>, C<int[]>, C<int[][]>, ...) is never
+            // the same type twice, so the cycle check cannot stop it: past the generator's own closure depth the rest
+            // is taken as serializable, the same bound the harvest applies
+            if (depth >= MaxDepth)
+            {
+                lowestAssumption = -1;
+                return true;
+            }
+
+            var mine = depth;
+            var outer = lowestAssumption;
+            lowestAssumption = int.MaxValue;
+            walk.Add(type, mine);
             depth++;
             bool result;
             try
@@ -629,8 +688,19 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
             finally
             {
                 depth--;
+                walk.Remove(type);
             }
-            memo[type] = result;
+
+            // "not serializable" stands whatever was assumed on the way (an assumption only ever helps a type pass).
+            // "serializable" is a verdict when it leaned on nothing still open: on no assumption at all, or only on
+            // assumptions about this very type, which this result now settles. Leaning on an outer type's assumption
+            // (or on the depth bound) it is good for this walk only, and the outer frame is told so.
+            var leansOnOuter = result && lowestAssumption < mine;
+            if (!leansOnOuter)
+            {
+                memo[type] = result;
+            }
+            lowestAssumption = leansOnOuter ? Math.Min(outer, lowestAssumption) : outer;
             return result;
         }
 

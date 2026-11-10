@@ -65,6 +65,33 @@ static class FormatterSymbols
         return false;
     }
 
+    /// <summary>True for the type's implementation of IMessagePackFormatter.Serialize, implicit or explicit (whose Name carries the interface).</summary>
+    public static bool IsSerializeEntry(IMethodSymbol method)
+    {
+        foreach (var implemented in method.ExplicitInterfaceImplementations)
+        {
+            return implemented.Name == "Serialize";
+        }
+        return method.Name == "Serialize";
+    }
+
+    /// <summary>
+    /// The model to read the body of a helper through. A helper usually sits in the formatter's own file, whose model the
+    /// analysis already built. One in another file of a partial type needs a model of its own: RS1030 asks analyzers not
+    /// to create one (it is not cached), so that happens only in this case. The caller has checked that the tree belongs
+    /// to this compilation (a helper in another project is a source symbol of that compilation in the IDE).
+    /// </summary>
+    public static SemanticModel SemanticModelOf(SyntaxTree tree, Microsoft.CodeAnalysis.IOperation operation, Compilation compilation)
+    {
+        if (operation.SemanticModel is { } model && model.SyntaxTree == tree)
+        {
+            return model;
+        }
+#pragma warning disable RS1030 // the helper's body is in another file, which no analysis context hands a model for
+        return compilation.GetSemanticModel(tree);
+#pragma warning restore RS1030
+    }
+
     static bool IsFormatterInterface(INamedTypeSymbol type)
     {
         return type.OriginalDefinition is { MetadataName: "IMessagePackFormatter`3" } original

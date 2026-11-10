@@ -132,10 +132,12 @@ public class ExtendedFormatterTests
     [Fact]
     public void CultureInfoAndTimeZoneInfo_AreNotOnTheDefaultChain()
     {
+#pragma warning disable MsgPack108 // the default chain's refusal is what these calls pin
         var culture = Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(CultureInfo.InvariantCulture));
         Assert.Contains("CultureInfoFormatterFactory", culture.Message, StringComparison.Ordinal);
         var zone = Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(TimeZoneInfo.Utc));
         Assert.Contains("TimeZoneInfoFormatterFactory", zone.Message, StringComparison.Ordinal);
+#pragma warning restore MsgPack108
 
         // a contractless tail does not claim them as member maps either
         var contractless = new MessagePackSerializerOptions(new MessagePackFormatterResolver(MessagePackFormatterFactory.Default.WithContractless()));

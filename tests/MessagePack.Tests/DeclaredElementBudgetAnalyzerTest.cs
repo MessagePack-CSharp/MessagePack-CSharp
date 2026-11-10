@@ -130,4 +130,53 @@ public class DeclaredElementBudgetAnalyzerTest
             """));
         Assert.Empty(diagnostics);
     }
+
+    [Fact]
+    public async Task StatelessHeader_InHelperLeftWithoutTheState_ReportsAtTheCall()
+    {
+        // the helper has no state to pass, so nothing in its body can be told; the call that left the state behind is
+        var diagnostics = await RunAsync(Formatter("""
+            value = ReadTree(ref buffer);
+            """, """
+            static Inner[] ReadTree(ref TReadBuffer buffer)
+            {
+                var count = buffer.ReadArrayHeader();
+                var result = new Inner[count];
+                for (int i = 0; i < count; i++)
+                {
+                    ReadTree(ref buffer);
+                }
+                return result;
+            }
+            """));
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Equal(DeclaredElementBudgetAnalyzer.DiagnosticId, diagnostic.Id);
+        Assert.Contains("'ReadTree'", diagnostic.GetMessage());
+        Assert.Contains("ReadArrayHeader(ref state)", diagnostic.GetMessage());
+        Assert.Equal("ReadTree(ref buffer)", diagnostic.Location.SourceTree!.GetText().ToString(diagnostic.Location.SourceSpan));
+    }
+
+    [Fact]
+    public async Task StatelessHeader_InLocalFunctionLeftWithoutTheState_ReportsAtTheCall()
+    {
+        var diagnostics = await RunAsync(Formatter("""
+            value = new Inner[ReadCount(ref buffer)];
+            static int ReadCount(ref TReadBuffer buffer) => buffer.ReadMapHeader();
+            """));
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Contains("'ReadCount'", diagnostic.GetMessage());
+        Assert.Contains("ReadMapHeader(ref state)", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task HelperWithoutAHeader_Silent()
+    {
+        var diagnostics = await RunAsync(Formatter("""
+            var count = buffer.ReadArrayHeader(ref state);
+            value = new Inner[count + ReadExtra(ref buffer)];
+            """, """
+            static int ReadExtra(ref TReadBuffer buffer) => buffer.ReadInt32();
+            """));
+        Assert.Empty(diagnostics);
+    }
 }

@@ -142,4 +142,72 @@ public class BufferUntouchedPathAnalyzerTest
             """));
         Assert.Single(diagnostics);
     }
+
+    // a throw helper: the control flow graph does not know [DoesNotReturn], the analyzer has to
+    static string WithThrowHelper(string source) => source.Replace(
+        "static void WriteAll(",
+        """
+        [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+            static void Refuse() => throw new MessagePackSerializationException("refused");
+            static void WriteAll(
+        """);
+
+    [Fact]
+    public async Task DoesNotReturnHelper_Silent()
+    {
+        var diagnostics = await AnalyzerTestHost.RunAnalyzerAsync(new BufferUntouchedPathAnalyzer(), WithThrowHelper(Formatter("""
+            if (value == null)
+            {
+                Refuse();
+            }
+            buffer.WriteArrayHeader(value.Length);
+            """, "Refuse();")));
+        Assert.Empty(diagnostics);
+    }
+
+    [Fact]
+    public async Task ReturnAfterAnOrdinaryHelper_StillReports()
+    {
+        // only the attribute ends the path: a helper that may return leaves the value unwritten
+        var diagnostics = await AnalyzerTestHost.RunAnalyzerAsync(new BufferUntouchedPathAnalyzer(), WithThrowHelper(Formatter("""
+            if (value == null)
+            {
+                Refuse();
+                return;
+            }
+            buffer.WriteArrayHeader(value.Length);
+            """)).Replace("[System.Diagnostics.CodeAnalysis.DoesNotReturn]", ""));
+        Assert.Single(diagnostics);
+    }
+
+    [Fact]
+    public async Task ExplicitImplementation_NamesTheRightSide()
+    {
+        // an explicit implementation's Name is the interface-qualified one; the Serialize defect must not read as a Deserialize one
+        var diagnostics = await AnalyzerTestHost.RunAnalyzerAsync(new BufferUntouchedPathAnalyzer(), """
+            using MessagePack;
+            using SerializerFoundation;
+            public sealed class ProbeFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, Inner[]>
+                where TWriteBuffer : struct, IWriteBuffer
+                where TReadBuffer : struct, IReadBuffer
+            {
+                void IMessagePackFormatter<TWriteBuffer, TReadBuffer, Inner[]>.Initialize(MessagePackFormatterResolver resolver) { }
+                void IMessagePackFormatter<TWriteBuffer, TReadBuffer, Inner[]>.Serialize(ref TWriteBuffer buffer, ref SerializeState state, Inner[] value)
+                {
+                    if (value == null)
+                    {
+                        return;
+                    }
+                    buffer.WriteArrayHeader(0);
+                }
+                void IMessagePackFormatter<TWriteBuffer, TReadBuffer, Inner[]>.Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Inner[] value)
+                {
+                    buffer.ReadArrayHeader(ref state);
+                }
+            }
+            """ + Shell);
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Contains("without writing", diagnostic.GetMessage());
+        Assert.Contains("ProbeFormatter<TWriteBuffer, TReadBuffer>.Serialize'", diagnostic.GetMessage());
+    }
 }

@@ -357,4 +357,131 @@ public class SerializableMemberTypeAnalyzerTest
             """);
         Assert.Empty(diagnostics);
     }
+
+    // The library ships formatters for these four, but no default chain composes them (ExtendedFormatterTests pins the
+    // run-time refusal): a member of one fails under MessagePackSerializerOptions.Default like any unserved type.
+    [Theory]
+    [InlineData("System.Globalization.CultureInfo", "CultureInfoFormatterFactory")]
+    [InlineData("System.TimeZoneInfo", "TimeZoneInfoFormatterFactory")]
+    [InlineData("System.Type", "TypeFormatterFactory")]
+    [InlineData("System.Dynamic.ExpandoObject", "ExpandoObjectFormatterFactory")]
+    public async Task OptInFormatterTypes_Report_WithTheFactoryToCompose(string typeName, string factory)
+    {
+        var diagnostics = await RunAnalyzerAsync($$"""
+            using MessagePack;
+            [MessagePackObject]
+            public class Holder
+            {
+                [Key(0)] public {{typeName}} Value { get; set; }
+                [Key(1)] public System.Collections.Generic.List<{{typeName}}> Values { get; set; }
+            }
+            """);
+        Assert.Equal(2, diagnostics.Length);
+        Assert.All(diagnostics, diagnostic =>
+        {
+            Assert.Equal(SerializableMemberTypeAnalyzer.DiagnosticId, diagnostic.Id);
+            Assert.Contains($"'{typeName}'", diagnostic.GetMessage());
+            Assert.Contains($"new {factory}()", diagnostic.GetMessage());
+            Assert.Contains("MessagePackKnownType(typeof(", diagnostic.GetMessage());
+        });
+    }
+
+    [Fact]
+    public async Task OptInFormatterType_AtTheUsageSite_Reports()
+    {
+        var diagnostics = await RunAnalyzerAsync("""
+            using MessagePack;
+            public static class Program
+            {
+                public static byte[] Run() => MessagePackSerializer.Serialize(System.Globalization.CultureInfo.InvariantCulture);
+            }
+            """);
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Equal(SerializableMemberTypeAnalyzer.UsageDiagnosticId, diagnostic.Id);
+        Assert.Contains("CultureInfoFormatterFactory", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task OptInFormatterType_DeclaredKnown_Silent()
+    {
+        // the opt-in factory is composed at run time, where the analyzer cannot see it: the declaration says so
+        var diagnostics = await RunAnalyzerAsync("""
+            using MessagePack;
+            [assembly: MessagePackKnownType(typeof(System.Globalization.CultureInfo))]
+            [MessagePackObject]
+            public class Holder
+            {
+                [Key(0)] public System.Globalization.CultureInfo Value { get; set; }
+            }
+            """);
+        Assert.Empty(diagnostics);
+    }
+
+    [Fact]
+    public async Task OptInFormatterType_WithAFormatterOfTheUsersOwn_Silent()
+    {
+        // only the library's own pattern leaves the harvest
+        var diagnostics = await RunAnalyzerAsync("""
+            using System;
+            using MessagePack;
+            using SerializerFoundation;
+            [MessagePackObject]
+            public class Holder
+            {
+                [Key(0)] public TimeZoneInfo Value { get; set; }
+            }
+            public sealed class ZoneFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, TimeZoneInfo>
+                where TWriteBuffer : struct, IWriteBuffer
+                where TReadBuffer : struct, IReadBuffer
+            {
+                public void Initialize(MessagePackFormatterResolver resolver) { }
+                public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, TimeZoneInfo value) { }
+                public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref TimeZoneInfo value) { }
+            }
+            """);
+        Assert.Empty(diagnostics);
+    }
+
+    // Two collection types that hold each other, one of them over a type nothing serves. Whichever member the analyzer
+    // looks at first, both are unserializable: the verdict on the inner one must not be what was assumed about the
+    // outer one while it was still being decided.
+    [Theory]
+    [InlineData("Outer", "Inner")]
+    [InlineData("Inner", "Outer")]
+    public async Task MutuallyNestedCollections_SameVerdictInEitherOrder(string first, string second)
+    {
+        var diagnostics = await RunAnalyzerAsync($$"""
+            using System.Collections.Generic;
+            using MessagePack;
+            [MessagePackObject]
+            public class Holder
+            {
+                [Key(0)] public {{first}} A { get; set; }
+                [Key(1)] public {{second}} B { get; set; }
+            }
+            public class Outer : Dictionary<Inner, Plain> { }
+            public class Inner : List<Outer> { }
+            public class Plain { }
+            """);
+        Assert.Equal(2, diagnostics.Length);
+        Assert.Contains(diagnostics, d => d.GetMessage().Contains("Holder.A"));
+        Assert.Contains(diagnostics, d => d.GetMessage().Contains("Holder.B"));
+    }
+
+    [Fact]
+    public async Task SelfReferencingCollection_Silent()
+    {
+        var diagnostics = await RunAnalyzerAsync("""
+            using System.Collections.Generic;
+            using MessagePack;
+            [MessagePackObject]
+            public class Holder
+            {
+                [Key(0)] public Tree Value { get; set; }
+                [Key(1)] public Tree Again { get; set; }
+            }
+            public class Tree : List<Tree> { }
+            """);
+        Assert.Empty(diagnostics);
+    }
 }

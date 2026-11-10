@@ -188,10 +188,12 @@ public class BclFormatterTests
     {
         // default chain: resolving Type throws the instructive error naming the opt-in,
         // not the generic missing-formatter message (v4 break from v3, security stance)
+#pragma warning disable MsgPack108 // the default chain's refusal is what these two calls pin
         var ex = Assert.Throws<InvalidOperationException>(() => MessagePackSerializer.Serialize(typeof(int)));
         Assert.Contains("TypeFormatterFactory", ex.Message);
         Assert.Throws<InvalidOperationException>(
             () => MessagePackSerializer.Deserialize<Type?>(MessagePackSerializer.Serialize("System.Int32")));
+#pragma warning restore MsgPack108
 
         // opt-in: factory composed before the default chain; wire stays v3-compatible.
         // the pragma is the intended consumption model — suppressing CS0618 IS the

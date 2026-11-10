@@ -70,7 +70,9 @@ public class NonGenericSerializerTests
         var bytes = MessagePackSerializer.Serialize(typeof(string), (object?)null);
         Assert.Equal(MessagePackSerializer.Serialize<string?>(null), bytes);
 
+#pragma warning disable MsgPack108 // the analyzer sees the same edge: this call serializes a System.Type
         Assert.Throws<ArgumentNullException>("options", () => MessagePackSerializer.Serialize(typeof(string), null!));
+#pragma warning restore MsgPack108
     }
 
     [Fact]

@@ -358,4 +358,123 @@ public class DepthTrackingAnalyzerTest
             """));
         Assert.Empty(diagnostics);
     }
+
+    // the whole container (header and element loop) moved into a helper the entry hands its buffer and state to
+    static string ContainerInHelper(string deserializeBody, string helperBody) => Formatter("buffer.WriteNil();", deserializeBody).Replace(
+        "    public void Deserialize(",
+        $$"""
+            Inner[] ReadItems(ref TReadBuffer buffer, ref DeserializeState state)
+            {
+                {{helperBody}}
+            }
+            public void Deserialize(
+        """);
+
+    const string HelperReadsItems = """
+        var count = buffer.ReadArrayHeader(ref state);
+        var result = new Inner[count];
+        for (int i = 0; i < count; i++)
+        {
+            inner.Deserialize(ref buffer, ref state, ref result[i]);
+        }
+        return result;
+        """;
+
+    [Fact]
+    public async Task ContainerMovedIntoHelper_ReportsMissingEnter()
+    {
+        // the entry itself reads no header: the level is the helper's, one call down
+        var diagnostic = await SingleAsync(ContainerInHelper("value = ReadItems(ref buffer, ref state);", HelperReadsItems), DepthTrackingAnalyzer.MissingEnterDiagnosticId);
+        Assert.Contains("Deserialize", diagnostic.GetMessage());
+        Assert.Contains("'ReadItems'", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task ContainerMovedIntoHelper_ChargedByTheEntry_Silent()
+    {
+        var diagnostics = await AnalyzerTestHost.RunAnalyzerAsync(new DepthTrackingAnalyzer(), ContainerInHelper("""
+            state.Enter();
+            value = ReadItems(ref buffer, ref state);
+            state.Exit();
+            """, HelperReadsItems));
+        Assert.Empty(diagnostics);
+    }
+
+    [Fact]
+    public async Task ContainerMovedIntoHelper_ChargedByTheHelper_Silent()
+    {
+        var diagnostics = await AnalyzerTestHost.RunAnalyzerAsync(new DepthTrackingAnalyzer(), ContainerInHelper("value = ReadItems(ref buffer, ref state);", """
+            var count = buffer.ReadArrayHeader(ref state);
+            var result = new Inner[count];
+            state.Enter();
+            for (int i = 0; i < count; i++)
+            {
+                inner.Deserialize(ref buffer, ref state, ref result[i]);
+            }
+            state.Exit();
+            return result;
+            """));
+        Assert.Empty(diagnostics);
+    }
+
+    [Fact]
+    public async Task HelperThatOnlyReadsScalars_Silent()
+    {
+        // a header in the entry, a helper that takes the state but descends nowhere: a flat shape
+        var diagnostics = await AnalyzerTestHost.RunAnalyzerAsync(new DepthTrackingAnalyzer(), ContainerInHelper("""
+            var count = buffer.ReadArrayHeader(ref state);
+            value = ReadItems(ref buffer, ref state);
+            """, """
+            buffer.ReadInt32();
+            return new Inner[0];
+            """));
+        Assert.Empty(diagnostics);
+    }
+
+    // a tree read by a helper that calls itself: every turn is a level, whatever the entry charges once
+    static string RecursiveHelper(string deserializeBody, string nestedCall) => Formatter("buffer.WriteNil();", deserializeBody).Replace(
+        "    public void Deserialize(",
+        $$"""
+            static int CountLeaves(ref TReadBuffer buffer, ref DeserializeState state)
+            {
+                if (buffer.TryReadNil())
+                {
+                    return 1;
+                }
+                var count = buffer.ReadArrayHeader(ref state);
+                var leaves = 0;
+                for (int i = 0; i < count; i++)
+                {
+                    {{nestedCall}}
+                }
+                return leaves;
+            }
+            public void Deserialize(
+        """);
+
+    [Fact]
+    public async Task RecursiveHelperWithoutEnter_ReportsTheHelper()
+    {
+        var diagnostic = await SingleAsync(RecursiveHelper("""
+            state.Enter();
+            value = new Inner[CountLeaves(ref buffer, ref state)];
+            state.Exit();
+            """, "leaves += CountLeaves(ref buffer, ref state);"), DepthTrackingAnalyzer.MissingEnterDiagnosticId);
+        Assert.Contains("CountLeaves", diagnostic.GetMessage());
+        Assert.Contains("calls itself", diagnostic.GetMessage());
+        Assert.Contains("CountLeaves", diagnostic.Location.SourceTree!.GetText().ToString(diagnostic.Location.SourceSpan));
+    }
+
+    [Fact]
+    public async Task RecursiveHelperThatCharges_Silent()
+    {
+        var diagnostics = await AnalyzerTestHost.RunAnalyzerAsync(new DepthTrackingAnalyzer(), RecursiveHelper(
+            "value = new Inner[CountLeaves(ref buffer, ref state)];",
+            """
+            state.Enter();
+            leaves += CountLeaves(ref buffer, ref state);
+            state.Exit();
+            """));
+        Assert.Empty(diagnostics);
+    }
 }
