@@ -39,9 +39,9 @@ public class RegressionTests
                 var violation = RobustnessHarness.RunAttempt($"{name} {RobustnessHarness.Hex(bomb)}", () => deserialize(bomb));
                 Assert.Null(violation);
 
-                if (asyncOrStream.Any(name.Contains) || processorTiers.Any(name.Contains) || name == "json")
+                if (asyncOrStream.Any(name.Contains) || processorTiers.Any(name.Contains) || name is "json" or "fromjson")
                 {
-                    continue; // continuations and pooled decode buffers are not this thread's allocation
+                    continue; // continuations and pooled decode buffers are not this thread's allocation (and fromjson refuses non-JSON as JsonException inside its thunk)
                 }
                 Record.Exception(() => deserialize([MessagePackCode.Nil])); // warm the formatter chain
                 var before = GC.GetAllocatedBytesForCurrentThread();

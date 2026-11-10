@@ -90,6 +90,10 @@ public static class RobustnessTargets
             Add<SampleTreePoco>(tier, opt); // recursive collections: the nested-header amplification shape
             Add<string>(tier, opt);
             Add<object[]>(tier, opt);
+            // enum names (generated and reflection tier) and back-reference ids as attacker input
+            Add<SampleEnumNamesPoco>(tier, opt);
+            Add<SampleEnumNamesReflectedPoco>(tier, opt);
+            Add<SampleGraphNode>(tier, opt);
         }
 
         // ---- entry points other than the synchronous byte[] one ----
@@ -118,10 +122,24 @@ public static class RobustnessTargets
             AddEntries<object[]>(tier, opt, container);
             AddEntries<string>(tier, opt, container);
             AddEntries<SampleTreePoco>(tier, opt, container);
+            AddEntries<SampleEnumNamesPoco>(tier, opt, container);
+            AddEntries<SampleGraphNode>(tier, opt, container); // the identity table spans an element stream
         }
 
         // JSON conversion walks the raw msgpack without a target type (its own depth limit and token reader)
         list.Add(("json", bytes => MessagePackSerializer.ConvertToJson(bytes)));
+        // and the other direction: JSON text in, MessagePack out. Invalid JSON is JsonException by contract (the
+        // parse is System.Text.Json's, depth limit included); anything else must be sanctioned like every other target
+        list.Add(("fromjson", bytes =>
+        {
+            try
+            {
+                MessagePackSerializer.ConvertFromJson((ReadOnlySpan<byte>)bytes);
+            }
+            catch (System.Text.Json.JsonException)
+            {
+            }
+        }));
 
         return list.ToArray();
     }
@@ -229,6 +247,20 @@ public static class RobustnessTargets
         var ctor = new SampleCtorPoco(9, "ctor", SampleColor.Red) { Extra = 100 };
         ISampleShape shape = new SampleTriangle { Base = 1, Height = 2, Inscribed = new SampleCircle { Radius = 0.5 } };
         var pocos = new List<SampleArrayPoco> { poco, poco, poco, poco };
+        var enumNames = new SampleEnumNamesPoco
+        {
+            Color = SampleColor.Blue,
+            MaybeColor = SampleColor.Ultraviolet,
+            Permission = SamplePermission.Read | SamplePermission.Execute,
+            Colors = [SampleColor.Red, SampleColor.Green],
+            Counts = new Dictionary<SampleColor, int> { [SampleColor.Red] = 1, [SampleColor.Blue] = 2 },
+            Permissions = [SamplePermission.None, SamplePermission.Read | SamplePermission.Write | SamplePermission.Execute],
+        };
+        // a cycle (a -> b -> a), an instance shared by two members, and a self-reference
+        var graphA = new SampleGraphNode { Value = 1 };
+        var graphB = new SampleGraphNode { Value = 2, Next = graphA };
+        graphA.Next = graphB;
+        graphA.Others = [graphB, graphB, graphA];
 
         return
         [
@@ -239,6 +271,12 @@ public static class RobustnessTargets
             MessagePackSerializer.Serialize<int[]>([1, 2, 3, 4, 5]),
             MessagePackSerializer.Serialize(new List<SampleArrayPoco> { poco, poco }),
             MessagePackSerializer.Serialize<object[]>([1, "two", 3.0, true, null!]),
+            // enum names (both tiers read this wire) and a graph with back-references
+            MessagePackSerializer.Serialize(enumNames),
+            MessagePackSerializer.Serialize(graphA),
+            MessagePackSerializer.Serialize(new List<SampleGraphNode> { graphA, graphB, graphA }),
+            // JSON text for the fromjson target: nesting, escapes, number forms
+            """{"a":[1,-2,3.5,1e300,18446744073709551615,true,false,null,"sé\n"],"b":{"c":{"d":[[[[]]]]}},"":""}"""u8.ToArray(),
             // valid LZ4 envelopes, so mutation/truncation exercises the decode path with
             // a real block header to corrupt (not just random bytes that fail the ext parse)
             MessagePackSerializer.Serialize(pocos, Lz4Block),

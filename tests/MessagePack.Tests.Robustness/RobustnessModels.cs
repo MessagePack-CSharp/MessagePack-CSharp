@@ -108,3 +108,49 @@ public enum SampleColor : byte
     Blue = 2,
     Ultraviolet = 200,
 }
+
+[Flags]
+public enum SamplePermission
+{
+    None = 0,
+    Read = 1,
+    Write = 2,
+    Execute = 4,
+}
+
+// enums by name: the payload's strings are attacker input matched against the declared names (in place over the UTF-8
+// in the generated name formatters, through EnumAsStringFormatter in the reflection tier), and a [Flags] value is a
+// comma-separated list of them. The Reflected twin runs the same members through the reflection tier's formatter tree.
+[MessagePackObject(true, EnumAsString = true)]
+public class SampleEnumNamesPoco
+{
+    public SampleColor Color { get; set; }
+    public SampleColor? MaybeColor { get; set; }
+    public SamplePermission Permission { get; set; }
+    public List<SampleColor>? Colors { get; set; }
+    public Dictionary<SampleColor, int>? Counts { get; set; }
+    public SamplePermission[]? Permissions { get; set; }
+}
+
+[MessagePackObject(true, EnumAsString = true, SuppressSourceGeneration = true)]
+public class SampleEnumNamesReflectedPoco
+{
+    public SampleColor Color { get; set; }
+    public SampleColor? MaybeColor { get; set; }
+    public SamplePermission Permission { get; set; }
+    public List<SampleColor>? Colors { get; set; }
+    public Dictionary<SampleColor, int>? Counts { get; set; }
+    public SamplePermission[]? Permissions { get; set; }
+}
+
+// circular references: an instance already written goes on the wire as a back-reference (an ext carrying its id), so
+// the ids are attacker input: one that points nowhere, at a later instance, at itself mid-construction, or at an
+// instance of another type. Source-generated only: the reflection tier does not read this wire (MsgPack015).
+[MessagePackObject(AllowCircularReferences = true)]
+public class SampleGraphNode
+{
+    [Key(0)] public int Value { get; set; }
+    [Key(1)] public SampleGraphNode? Next { get; set; }
+    [Key(2)] public List<SampleGraphNode>? Others { get; set; }
+}
+
