@@ -168,6 +168,34 @@ public class RequiredAndNullableValidationTests
     }
 
     [Fact]
+    public void ConstructorParameterDefaults_NativeAndSmallIntegers()
+    {
+        // the small integer types must arrive as themselves in both tiers
+        byte[] empty = [0x90];
+        foreach (var options in new[] { Options(), ReflectionOptions() })
+        {
+            var value = V4.Deserialize<CtorSmallDefaultsPoco>(empty, options)!;
+            Assert.Equal((short)-7, value.Small);
+            Assert.Equal((byte)8, value.Tiny);
+            Assert.Equal((sbyte)-3, value.Signed);
+            Assert.Equal((ushort)65535, value.Wide);
+            Assert.Equal(1.5f, value.Ratio);
+            Assert.Equal(ulong.MaxValue, value.Huge);
+        }
+
+        // metadata stores a native-integer default as Int32 / UInt32, which reflection does not convert when it binds
+        // the argument, so the reflection tier converts it (it threw ArgumentException for `nint handle = 5`). nint has
+        // no formatter on the default chain (a type holding one brings its own), so the members stay absent here: an
+        // empty map through the contractless reflection tier
+        var contractless = new MessagePackSerializerOptions(new MessagePackFormatterResolver(
+            [BuiltInFormatterFactory.Instance, GenericFormatterFactory.Instance, new ReflectionFormatterFactory(annotatedOnly: false)]));
+        var native = V4.Deserialize<CtorNativeDefaultsContractless>([0x80], contractless)!;
+        Assert.Equal((nint)5, native.Handle);
+        Assert.Equal((nuint)6, native.Size);
+        Assert.Equal((nint)(-9), native.MaybeHandle);
+    }
+
+    [Fact]
     public void ConstructorParameterDefaults_PresentValuesWin_AndExplicitNilIsNotAbsence()
     {
         foreach (var options in new[] { Options(), ReflectionOptions() })
@@ -617,6 +645,41 @@ public class CtorDefaultsPoco
         MaybeSign = maybeSign;
         Wide = wide;
         Note = note;
+    }
+}
+
+public class CtorNativeDefaultsContractless
+{
+    public nint Handle { get; }
+    public nuint Size { get; }
+    public nint? MaybeHandle { get; }
+
+    public CtorNativeDefaultsContractless(nint handle = 5, nuint size = 6, nint? maybeHandle = -9)
+    {
+        Handle = handle;
+        Size = size;
+        MaybeHandle = maybeHandle;
+    }
+}
+
+[MessagePackObject]
+public class CtorSmallDefaultsPoco
+{
+    [Key(0)] public short Small { get; }
+    [Key(1)] public byte Tiny { get; }
+    [Key(2)] public sbyte Signed { get; }
+    [Key(3)] public ushort Wide { get; }
+    [Key(4)] public float Ratio { get; }
+    [Key(5)] public ulong Huge { get; }
+
+    public CtorSmallDefaultsPoco(short small = -7, byte tiny = 8, sbyte signed = -3, ushort wide = 65535, float ratio = 1.5f, ulong huge = ulong.MaxValue)
+    {
+        Small = small;
+        Tiny = tiny;
+        Signed = signed;
+        Wide = wide;
+        Ratio = ratio;
+        Huge = huge;
     }
 }
 

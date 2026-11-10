@@ -1229,7 +1229,27 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             return null;
         }
         var parameterType = Nullable.GetUnderlyingType(parameter.ParameterType) ?? parameter.ParameterType;
-        return parameterType.IsEnum && value.GetType() != parameterType ? Enum.ToObject(parameterType, value) : value;
+        if (value.GetType() == parameterType)
+        {
+            return value;
+        }
+        if (parameterType.IsEnum)
+        {
+            return Enum.ToObject(parameterType, value);
+        }
+        // metadata has no native-integer constants: `nint h = 5` is stored as an Int32 and `nuint` as a UInt32, which
+        // reflection does not convert when it binds the argument (ArgumentException from Invoke)
+        if (parameterType == typeof(nint) && value is int or long)
+        {
+            return (nint)Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture);
+        }
+        if (parameterType == typeof(nuint) && value is uint or ulong)
+        {
+            return (nuint)Convert.ToUInt64(value, System.Globalization.CultureInfo.InvariantCulture);
+        }
+        // anything else reflection would have to convert (a constant of another primitive type, from metadata a C#
+        // compiler would not write): default(TParam), the behaviour before declared defaults were honoured
+        return parameterType.IsInstanceOfType(value) ? value : null;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)] // keep the boxed argument-state machinery out of the populate hot path
