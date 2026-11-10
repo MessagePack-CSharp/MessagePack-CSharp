@@ -368,6 +368,12 @@ public sealed class DepthTrackingAnalyzer : DiagnosticAnalyzer
         }
         foreach (var reference in invocation.TargetMethod.DeclaringSyntaxReferences)
         {
+            // a helper in another project is a source symbol of THAT compilation in the IDE (project references are
+            // compilations there): its tree is not ours, and asking this compilation for its model throws (AD0001)
+            if (!compilation.ContainsSyntaxTree(reference.SyntaxTree))
+            {
+                continue;
+            }
             var syntax = reference.GetSyntax();
             if (SemanticModelOf(syntax.SyntaxTree, invocation, compilation).GetOperation(syntax) is not { } body)
             {

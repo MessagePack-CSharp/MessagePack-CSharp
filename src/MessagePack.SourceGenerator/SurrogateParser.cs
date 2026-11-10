@@ -68,6 +68,12 @@ static class SurrogateParser
             diagnostics.Add(new DiagnosticInfo(Diagnostics.SurrogateNotRegistered, $"'{typeName}': a generic surrogate cannot be auto-registered (the factory needs a closed instantiation); compose SurrogateFormatterFactory into an explicit chain instead.", typeLocation));
             return Result(sites, diagnostics);
         }
+        if (ObjectParser.IsFileLocal(type))
+        {
+            // internal by accessibility, but nameable only inside its own file: the generated factory is another one
+            diagnostics.Add(new DiagnosticInfo(Diagnostics.SurrogateNotRegistered, $"'{typeName}': a file-local surrogate cannot be auto-registered (the generated factory, in another file, cannot name it); drop the `file` modifier or compose SurrogateFormatterFactory yourself.", typeLocation));
+            return Result(sites, diagnostics);
+        }
         if (!ObjectParser.IsAccessibleToGeneratedCode(type, compilation))
         {
             diagnostics.Add(new DiagnosticInfo(Diagnostics.SurrogateNotRegistered, $"'{typeName}': the surrogate type must be public or internal for the generated factory to construct it; compose SurrogateFormatterFactory into an explicit chain instead.", typeLocation));

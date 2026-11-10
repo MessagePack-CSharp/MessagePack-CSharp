@@ -93,6 +93,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     bool arrayFormat;             // [Key(int)] (or an empty annotated type): array wire form
     int[] arraySlotByKey = [];    // wire index -> slot index, -1 = key hole (array mode only)
     ConstructionMode mode;
+    const int MaxIntKeyValue = 65535; // ObjectParser.MaxIntKeyValue
+
     ConstructorInfo? argumentConstructor; // Arguments mode only
     int argumentCount;
     object?[]? argumentDefaults;  // Arguments mode: the parameters' declared non-null defaults, null when none has one
@@ -472,6 +474,11 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 if (key < 0)
                 {
                     throw new MessagePackSerializationException($"'{typeof(T).FullName}.{name}' has a negative key ({key}).");
+                }
+                if (key > MaxIntKeyValue)
+                {
+                    // the generator's limit (MsgPack008): the slot table and every written array have key + 1 entries
+                    throw new MessagePackSerializationException($"'{typeof(T).FullName}.{name}' has the key {key}; an int key goes up to {MaxIntKeyValue} (the type is written as an array of its highest key + 1 elements).");
                 }
                 if (seenIntKeys.TryGetValue(key, out var conflicting))
                 {

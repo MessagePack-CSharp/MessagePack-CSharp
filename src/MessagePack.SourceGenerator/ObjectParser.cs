@@ -354,7 +354,7 @@ static class ObjectParser
                 {
                     // a derived KeyAttribute (the attribute is not sealed, and the reflection tier reads the key off
                     // the instance) is readable here only when the key is its first constructor argument
-                    var argument = attribute.ConstructorArguments.Length > 0 ? attribute.ConstructorArguments[0].Value : null;
+                    var argument = attribute.ConstructorArguments.Length > 0 && attribute.ConstructorArguments[0].Kind != TypedConstantKind.Array ? attribute.ConstructorArguments[0].Value : null; // Value throws for an array (`params int[]`)
                     if (argument is not (int or string) || (attributeName != KeyAttributeName && !ForwardsKeyToBase(attribute)))
                     {
                         if (attributeName != KeyAttributeName)
@@ -536,6 +536,14 @@ static class ObjectParser
                     valid = false;
                     continue;
                 }
+                if (key > MaxIntKeyValue)
+                {
+                    // an int-keyed type is an array of (highest key + 1) elements on the wire and that many lines in
+                    // its formatter: a key in the millions is a typo, and int.MaxValue never finished generating
+                    diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidKey, $"'{typeName}.{symbol.Name}' has the key {key.ToString(CultureInfo.InvariantCulture)}; an int key goes up to {MaxIntKeyValue.ToString(CultureInfo.InvariantCulture)} (the type is written as an array of its highest key + 1 elements).", memberLocation));
+                    valid = false;
+                    continue;
+                }
                 if (!intKeys.Add(key))
                 {
                     diagnostics.Add(new DiagnosticInfo(Diagnostics.DuplicateKey, $"'{typeName}' declares key {key} more than once.", memberLocation));
@@ -575,7 +583,9 @@ static class ObjectParser
 
         // every `required` member the formatter will not read, whatever excluded it ([IgnoreMember], [NonSerialized],
         // an accessor the generated code cannot reach): the compiler demands it in each generated `new` all the same
-        var readNames = new HashSet<string>(entries.Select(static e => e.Name), StringComparer.Ordinal);
+        // (a keyed one without a setter the generated code uses counts as unread: MsgPack007 said so; the object initializer
+        // still has to mention it, CS9035)
+        var readNames = new HashSet<string>(entries.Where(static e => !(e.RequiredModifier && e.Setter == SetterKind.None)).Select(static e => e.Name), StringComparer.Ordinal);
         if (unknownMembersName is not null)
         {
             readNames.Add(unknownMembersName);
@@ -1124,7 +1134,7 @@ static class ObjectParser
                 var target = named.OriginalDefinition;
                 // BCL generics (List<T>, Dictionary<,>) are harvested by their arguments, never closed through their
                 // own members, so they are not nodes; everything else may be
-                var isNode = target.SpecialType == SpecialType.None && !target.ContainingNamespace.ToDisplayString().StartsWith("System", StringComparison.Ordinal);
+                var isNode = target.SpecialType == SpecialType.None && !IsSystemNamespace(target.ContainingNamespace); // System and System.*, not Systems.Game
                 for (var k = 0; k < named.TypeArguments.Length; k++)
                 {
                     var argument = named.TypeArguments[k];
@@ -1733,7 +1743,9 @@ static class ObjectParser
         static string? EnumOfCollectionElement(INamedTypeSymbol collection, Compilation compilation, INamedTypeSymbol? privateScope, ref HashSet<ISymbol>? probing)
         {
             probing ??= new HashSet<ISymbol>(SymbolEqualityComparer.Default);
-            if (!probing.Add(collection))
+            // (the count bounds a type whose element is a larger instantiation of itself, `C<T> : IEnumerable<C<List<T>>>`:
+            // every level is a new symbol the set has not seen, without end)
+            if (probing.Count >= MaxElementProbeDepth || !probing.Add(collection))
             {
                 return null;
             }
@@ -2237,13 +2249,40 @@ static class ObjectParser
         "arrayCount", "byteCount", "mapCount", "envelopeCount", "unknownReplayedCount", "circularReferenceId", "circularReferenceDefinitionId", "member", "runtimeType", "d", "w", "v",
     };
 
-    // f{id}, has_{id}, v_{id}, nn_{id}: the per-member formatter fields and locals (id = the member's name, or its
-    // shadow-qualified form), known only once the members are
+    const int MaxElementProbeDepth = 32;
+
+    /// <summary>The highest int key a type may declare (MsgPack008 above it; the reflection tier refuses the same).</summary>
+    internal const int MaxIntKeyValue = 65535;
+
+    // a namespace's dotted name without keyword escaping (`Acme.event`, where the default format gives `Acme.@event`)
+    internal static readonly SymbolDisplayFormat MetadataNamespaceFormat = new(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
+
+    static bool IsSystemNamespace(INamespaceSymbol? ns)
+    {
+        if (ns is null || ns.IsGlobalNamespace)
+        {
+            return false;
+        }
+        while (ns.ContainingNamespace is { IsGlobalNamespace: false } parent)
+        {
+            ns = parent;
+        }
+        return ns.Name == "System";
+    }
+
+    // the same type for a formatter's purposes: an identity conversion, which ignores tuple element names, dynamic
+    // against object and nullable annotations (the symbol comparer tells `(int, int)` from `(int X, int Y)`)
+    static bool IsSameType(Compilation compilation, ITypeSymbol left, ITypeSymbol right) =>
+        SymbolEqualityComparer.Default.Equals(left, right) || compilation.ClassifyConversion(left, right).IsIdentity;
+
+    // f_{id}, has_{id}, v_{id}, nv_{id}, nn_{id}: the per-member formatter fields and locals (id = the member's name,
+    // or its shadow-qualified form), known only once the members are. Every prefix ends in an underscore: a bare
+    // letter in front of a member name spells keywords (`f` + `or`, `v` + `oid`) and the parameter `value`.
     internal static bool CollidesWithGeneratedSlot(string name, IEnumerable<string> memberIds)
     {
         foreach (var id in memberIds)
         {
-            if (name == "f" + id || name == "v_" + id || name == "has_" + id || name == "nn_" + id)
+            if (name == "f_" + id || name == "v_" + id || name == "nv_" + id || name == "has_" + id || name == "nn_" + id)
             {
                 return true;
             }
@@ -2349,9 +2388,10 @@ static class ObjectParser
     // runs the constructor and the initializers, keeps it too); anything else cannot be spelled here and is reported.
     static string RequiredDefaultExpression(ISymbol member, Compilation compilation, string typeName, List<DiagnosticInfo> diagnostics)
     {
-        if (member.DeclaringSyntaxReferences.Length == 0)
+        if (member.DeclaringSyntaxReferences.Length == 0 || !compilation.ContainsSyntaxTree(member.DeclaringSyntaxReferences[0].SyntaxTree))
         {
-            // declared in another assembly (a required member of a metadata base class): whether it has an initializer
+            // declared in another assembly (a required member of a metadata base class, or of another project the IDE
+            // references as a compilation, whose syntax trees are not this compilation's): whether it has an initializer
             // is not visible here, so the assignment is default and the author is told
             diagnostics.Add(new DiagnosticInfo(Diagnostics.RequiredInitializerNotPreserved, $"'{typeName}.{member.Name}' is a required member the generated formatter never reads, declared in another assembly, so the generator cannot see whether it has an initializer: the generated object initializer (which the compiler demands for every required member) assigns default. Use a parameterless constructor marked [SetsRequiredMembers] if the initializer matters.", LocationInfo.From(member)));
             return "default!";
@@ -2876,7 +2916,10 @@ static class ObjectParser
         var compilation = context.SemanticModel.Compilation;
         SemanticModel? semanticModel = null;
         var position = 0;
-        if (attribute.ApplicationSyntaxReference is { } application)
+        // (an attribute on a member inherited from another project is a source symbol of THAT compilation in the IDE,
+        // where project references are compilations: its tree is not ours, GetSemanticModel throws for it, and it is
+        // bound like the metadata it is in a command-line build)
+        if (attribute.ApplicationSyntaxReference is { } application && compilation.ContainsSyntaxTree(application.SyntaxTree))
         {
             semanticModel = application.SyntaxTree == context.SemanticModel.SyntaxTree
                 ? context.SemanticModel
@@ -2929,11 +2972,11 @@ static class ObjectParser
             {
                 // a formatter may implement the interface for several types: the one for the member's type is the
                 // match, the first one is the diagnostic's subject when none matches
-                if (formatterInterface is null || SymbolEqualityComparer.Default.Equals(implemented.TypeArguments[2], memberType))
+                if (formatterInterface is null || IsSameType(compilation, implemented.TypeArguments[2], memberType))
                 {
                     formatterInterface = implemented;
                 }
-                if (SymbolEqualityComparer.Default.Equals(implemented.TypeArguments[2], memberType))
+                if (IsSameType(compilation, implemented.TypeArguments[2], memberType))
                 {
                     break;
                 }
@@ -2956,7 +2999,7 @@ static class ObjectParser
             return false;
         }
 
-        if (!SymbolEqualityComparer.Default.Equals(formatterInterface.TypeArguments[2], memberType))
+        if (!IsSameType(compilation, formatterInterface.TypeArguments[2], memberType))
         {
             diagnostics.Add(new DiagnosticInfo(Diagnostics.InvalidFormatterAttribute, $"'{member}': '{formatterType.ToDisplayString()}' serializes '{formatterInterface.TypeArguments[2].ToDisplayString()}', but the member type is '{memberType.ToDisplayString()}'.", location));
             return false;
@@ -3564,8 +3607,10 @@ static class ObjectParser
             parts.Add(current.MetadataName);
         }
         parts.Reverse();
+        // the metadata spelling, as Type.FullName gives it to the reflection tier and to v3: the default display
+        // format escapes a keyword segment (`Acme.@event`), which would make the generated tier's key its own
         var ns = type.ContainingNamespace is { IsGlobalNamespace: false } containingNamespace
-            ? containingNamespace.ToDisplayString() + "."
+            ? containingNamespace.ToDisplayString(MetadataNamespaceFormat) + "."
             : "";
         return ns + string.Join("+", parts);
     }

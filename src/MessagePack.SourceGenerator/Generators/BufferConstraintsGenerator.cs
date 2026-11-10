@@ -246,7 +246,7 @@ public sealed class BufferConstraintsGenerator : IIncrementalGenerator
         }
         if (symbol.ContainingNamespace is { IsGlobalNamespace: false } containingNamespace)
         {
-            hintName.Insert(0, containingNamespace.ToDisplayString() + ".");
+            hintName.Insert(0, containingNamespace.ToDisplayString(ObjectParser.MetadataNamespaceFormat) + "."); // unescaped: `@event` is not a legal hint name
         }
         hintName.Append(symbol.Name).Append('_').Append(symbol.Arity).Append(".BufferConstraints.g.cs");
 

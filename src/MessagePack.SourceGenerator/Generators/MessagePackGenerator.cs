@@ -71,20 +71,43 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
         var typeModels = results
             .Select(static (r, _) => (r.Object, r.Union))
             .WithTrackingName(TrackingNames.TypeModels);
-        context.RegisterSourceOutput(typeModels.Combine(languageGate), static (spc, pair) =>
+        // Hint names are compared without regard to case, type names are not: App.Dto.User and App.DTO.User would add
+        // one hint twice, which fails the whole generator (CS8785, a warning: the build goes on without any generated
+        // file). The names that have such a twin get a hash of their exact spelling appended. Collected once; the
+        // array is empty (and so unchanged) in every ordinary compilation, which keeps the per-type outputs cached.
+        var caseTwins = typeModels
+            .Select(static (pair, _) => HintNameOf(pair.Object, pair.Union))
+            .Collect()
+            .Select(static (names, _) => new EquatableArray<string>([.. names
+                .Where(static n => n is not null)
+                .Distinct(StringComparer.Ordinal)
+                .GroupBy(static n => n!, StringComparer.OrdinalIgnoreCase)
+                .Where(static g => g.Count() > 1)
+                .SelectMany(static g => g)
+                .OrderBy(static n => n, StringComparer.Ordinal)!]));
+        context.RegisterSourceOutput(typeModels.Combine(caseTwins).Combine(languageGate), static (spc, pair) =>
         {
             if (pair.Right.Required != 0)
             {
                 // reported once by the registration node below
                 return;
             }
-            if (pair.Left.Object is { } model)
+            var ((typeModel, twins), _) = pair;
+            if (HintNameOf(typeModel.Object, typeModel.Union) is not { } hintName)
             {
-                spc.AddSource($"{ObjectEmitter.HintName(model)}.g.cs", ObjectEmitter.EmitFormatter(model));
+                return;
             }
-            else if (pair.Left.Union is { } union)
+            if (twins.AsArray().Contains(hintName, StringComparer.Ordinal))
             {
-                spc.AddSource($"{union.FormatterName}.g.cs", UnionEmitter.EmitFormatter(union));
+                hintName += "_" + StableHash(hintName);
+            }
+            if (typeModel.Object is { } model)
+            {
+                spc.AddSource($"{hintName}.g.cs", ObjectEmitter.EmitFormatter(model));
+            }
+            else if (typeModel.Union is { } union)
+            {
+                spc.AddSource($"{hintName}.g.cs", UnionEmitter.EmitFormatter(union));
             }
         });
 
@@ -99,9 +122,11 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
             {
                 return;
             }
+            var hints = new HashSet<string>(StringComparer.OrdinalIgnoreCase); // enums whose names differ only in case, as above
             foreach (var model in pair.Left.GroupBy(static m => m.FormatterName, StringComparer.Ordinal).Select(static g => g.First()).OrderBy(static m => m.FormatterName, StringComparer.Ordinal))
             {
-                spc.AddSource($"{model.FormatterName}.g.cs", ObjectEmitter.EmitEnumNames(model));
+                var hintName = hints.Add(model.FormatterName) ? model.FormatterName : model.FormatterName + "_" + StableHash(model.FormatterName);
+                spc.AddSource($"{hintName}.g.cs", ObjectEmitter.EmitEnumNames(model));
             }
         });
 
@@ -355,6 +380,21 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
 
     // the first declaration (in declaration order) whose attribute lists spell the object attribute: a type declared
     // once is trivially it, and when no declaration spells it (an alias) every declaration counts, as before
+    // the hint name of a type's formatter file, before any case-twin suffix
+    static string? HintNameOf(ObjectModel? model, UnionModel? union) =>
+        model is not null ? ObjectEmitter.HintName(model) : union?.FormatterName;
+
+    // FNV-1a over the exact spelling: stable across runs and machines (string.GetHashCode is neither)
+    static string StableHash(string text)
+    {
+        var hash = 2166136261;
+        foreach (var c in text)
+        {
+            hash = unchecked((hash ^ c) * 16777619);
+        }
+        return hash.ToString("x8", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     static bool IsFirstAttributedDeclaration(INamedTypeSymbol symbol, SyntaxNode node, System.Threading.CancellationToken cancellationToken)
     {
         var references = symbol.DeclaringSyntaxReferences;

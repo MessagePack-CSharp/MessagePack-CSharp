@@ -177,4 +177,269 @@ public class GeneratorRobustnessTests
         Assert.DoesNotContain("\u2028", formatter, StringComparison.Ordinal);
         Assert.Contains("\\u2028", formatter, StringComparison.Ordinal);
     }
+
+    // ---- line-by-line audit before rc.1 (2026-11-10): each shape broke the consumer's build or the generator ----
+
+    // negative numbers were written into source with the build machine's culture: under sv-SE, nb-NO or fi-FI (ICU) the
+    // sign is U+2212, so a union tag of -1 generated a `case` label the compiler rejects (CS1056), and so did an
+    // array-mode type whose only member is MessagePackUnknownMembers (its highest key is -1)
+    [Fact]
+    public void NegativeNumbers_AreSpelledWithTheInvariantCulture()
+    {
+        const char MinusSign = (char)0x2212;
+        var saved = System.Globalization.CultureInfo.CurrentCulture;
+        var minus = (System.Globalization.CultureInfo)System.Globalization.CultureInfo.InvariantCulture.Clone();
+        minus.NumberFormat.NegativeSign = MinusSign.ToString();
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = minus;
+            var (diagnostics, output, run) = Generate("""
+                using MessagePack;
+                [MessagePackObject, UnionTag(typeof(A), -1), UnionTag(typeof(B), -2147483648)] public interface IRoot { }
+                [MessagePackObject] public class A : IRoot { [Key(0)] public int X { get; set; } }
+                [MessagePackObject] public class B : IRoot { [Key(0)] public int X { get; set; } }
+                [MessagePackObject] public class Bag { public MessagePackUnknownMembers? Rest { get; set; } }
+                """);
+            Assert.DoesNotContain(diagnostics, static d => d.Severity == DiagnosticSeverity.Error);
+            AssertCompiles(output);
+            Assert.DoesNotContain(run.GeneratedTrees, static t => t.ToString().Contains(MinusSign));
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = saved;
+        }
+    }
+
+    // a one-letter prefix in front of a member name spells keywords: the field of `or` was `for`, the pattern variable
+    // of a nullable `oid` was `void`, and that of `alue` was the parameter `value`
+    [Fact]
+    public void MemberNamesThatSpelledKeywordsBehindAPrefix_Compile()
+    {
+        var (diagnostics, output, _) = Generate("""
+            using MessagePack;
+            [MessagePackObject(true)]
+            public class Rule
+            {
+                public string[]? or { get; set; }
+                public string[]? ixed { get; set; }
+                public string[]? alse { get; set; }
+                public int? oid { get; set; }
+                public int? alue { get; set; }
+                public long? irtual { get; set; }
+            }
+            """);
+        Assert.DoesNotContain(diagnostics, static d => d.Severity == DiagnosticSeverity.Error);
+        AssertCompiles(output);
+    }
+
+    // hint names are compared without regard to case: two types whose full names differ only in case added one hint
+    // twice, which fails the generator as a whole (CS8785 is a warning, the build went on without generated files)
+    [Fact]
+    public void TypeNamesDifferingOnlyInCase_BothGetAFormatter()
+    {
+        var (diagnostics, output, run) = Generate("""
+            using MessagePack;
+            namespace App.Dto { [MessagePackObject] public class User { [Key(0)] public int X { get; set; } public enum Kind { A } } }
+            namespace App.DTO { [MessagePackObject] public class User { [Key(0)] public int X { get; set; } public enum Kind { A } } }
+            namespace App { [MessagePackObject(true, EnumAsString = true)] public class Holder { public Dto.User.Kind One { get; set; } public DTO.User.Kind Two { get; set; } } }
+            """);
+        Assert.DoesNotContain(diagnostics, static d => d.Id == "CS8785");
+        AssertCompiles(output);
+        Assert.Equal(2, run.GeneratedTrees.Count(static t => System.IO.Path.GetFileName(t.FilePath).StartsWith("App_Dto_UserFormatter", StringComparison.OrdinalIgnoreCase)));
+        // an ordinary compilation keeps its plain hint names
+        var (_, _, plain) = Generate("using MessagePack; [MessagePackObject] public class Solo { [Key(0)] public int X { get; set; } }");
+        Assert.Contains(plain.GeneratedTrees, static t => System.IO.Path.GetFileName(t.FilePath) == "SoloFormatter.g.cs");
+    }
+
+    // an int key had no upper bound: [Key(3000000)] was still generating after a minute at 1.7 GB, and the loop
+    // variable wrapped for int.MaxValue. Above 65,535 it is MsgPack008 (the reflection tier refuses the same)
+    [Theory]
+    [InlineData(65536)]
+    [InlineData(3000000)]
+    [InlineData(int.MaxValue)]
+    public void IntKeyAboveTheLimit_IsMsgPack008(int key)
+    {
+        var (diagnostics, _, run) = Generate($$"""
+            using MessagePack;
+            [MessagePackObject] public class Huge { [Key({{key}})] public int X { get; set; } }
+            [MessagePackObject] public class Fine { [Key(0)] public int Id { get; set; } }
+            """);
+        Assert.Contains(diagnostics, static d => d.Id == "MsgPack008" && d.Severity == DiagnosticSeverity.Error);
+        Assert.DoesNotContain(run.GeneratedTrees, static t => t.FilePath.Contains("Huge", StringComparison.Ordinal));
+        Assert.Contains(run.GeneratedTrees, static t => t.FilePath.Contains("Fine", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void IntKeyAboveTheLimit_ReflectionTierRefusesItToo()
+    {
+        // compiled without the generator, so the reflection tier serves it
+        var assembly = AnalyzerTestHost.CompileAndLoad("using MessagePack; [MessagePackObject] public class HugeKey { [Key(70000)] public int X { get; set; } }", withGenerator: false);
+        var type = assembly.GetType("HugeKey")!;
+        var exception = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Serialize(type, Activator.CreateInstance(type)));
+        Assert.Contains("65535", exception.Message);
+    }
+
+    // TypedConstant.Value throws for an array argument: a derived KeyAttribute taking `params int[]` crashed the generator
+    [Fact]
+    public void DerivedKeyAttributeWithAnArrayArgument_IsADiagnostic_NotAGeneratorCrash()
+    {
+        var (diagnostics, _, run) = Generate("""
+            using MessagePack;
+            public class PathKeyAttribute : KeyAttribute { public PathKeyAttribute(params int[] path) : base(path[0]) { } }
+            [MessagePackObject] public class Odd { [PathKey(0)] public int X { get; set; } }
+            [MessagePackObject] public class Fine { [Key(0)] public int Id { get; set; } }
+            """);
+        Assert.DoesNotContain(diagnostics, static d => d.Id == "CS8785");
+        Assert.Contains(diagnostics, static d => d.Id == "MsgPack005");
+        Assert.Contains(run.GeneratedTrees, static t => t.FilePath.Contains("Fine", StringComparison.Ordinal));
+    }
+
+    // a keyed required member whose setter the generated code does not use (internal, on an internal type) was left
+    // out of the object initializer the compiler demands: CS9035 in the generated file
+    [Fact]
+    public void RequiredMemberWithANonPublicSetter_Compiles()
+    {
+        var (_, output, _) = Generate("""
+            using MessagePack;
+            [MessagePackObject] internal class Hidden { [Key(0)] public required int X { get; internal set; } [Key(1)] public int Y { get; set; } }
+            [MessagePackObject(true)] internal class HiddenMap { public required int X { get; internal set; } public int Y { get; set; } }
+            [MessagePackObject] internal class HiddenCtor { public HiddenCtor(int x) { X = x; } [Key(0)] public required int X { get; internal set; } }
+            """);
+        AssertCompiles(output);
+    }
+
+    // a file-local surrogate is internal by accessibility but nameable only in its own file: the generated factory
+    // referred to it from another one (CS0400)
+    [Fact]
+    public void FileLocalSurrogate_IsMsgPack019_NotCS0400()
+    {
+        var (diagnostics, output, _) = Generate("""
+            using MessagePack;
+            public class Target { public int X; }
+            [MessagePackObject]
+            file struct TargetSurrogate : IMessagePackSurrogate<Target, TargetSurrogate>
+            {
+                [Key(0)] public int X { get; set; }
+                public TargetSurrogate ToSurrogate(Target value) => new() { X = value.X };
+                public Target ToTarget() => new() { X = X };
+            }
+            """);
+        Assert.Contains(diagnostics, static d => d.Id == "MsgPack019");
+        AssertCompiles(output);
+    }
+
+    // the expanding-generic guard took any namespace starting with "System" for the BCL: in `Systems.Game` a type
+    // whose member is a larger instantiation of itself was closed without end
+    [Fact]
+    public async Task ExpandingGenericInANamespaceThatStartsWithSystem_IsCut()
+    {
+        var finished = Task.Run(() => Generate("""
+            using System.Collections.Generic;
+            using MessagePack;
+            namespace Systems.Game
+            {
+                [MessagePackObject] public class Node<T> { [Key(0)] public Node<List<T>>? Next; }
+                [MessagePackObject] public class Root { [Key(0)] public Node<int>? N; }
+            }
+            """), TestContext.Current.CancellationToken);
+        Assert.Same(finished, await Task.WhenAny(finished, Task.Delay(TimeSpan.FromSeconds(60), TestContext.Current.CancellationToken)));
+        Assert.Contains((await finished).GeneratorDiagnostics, static d => d.Id == "MsgPack029");
+    }
+
+    // a keyword as a namespace segment: the default display format escapes it (`Acme.@event`), which is not a legal
+    // hint name (the factory bridge failed with CS8785) and not the key the reflection tier and v3 use for a
+    // shadowing member (Type.FullName: `Acme.event.Derived.Id`)
+    [Fact]
+    public void KeywordNamespaceSegment_IsSpelledAsInMetadata()
+    {
+        var (diagnostics, output, run) = Generate("""
+            using MessagePack;
+            namespace Acme.@event
+            {
+                public sealed partial class F : MessagePackFormatterFactory
+                {
+                    public override object? CreateFormatter<TWriteBuffer, TReadBuffer>(global::System.Type type) => null;
+                }
+                [MessagePackObject(true)] public class Base { public int Id { get; set; } }
+                [MessagePackObject(true)] public class Derived : Base { public new int Id { get; set; } }
+            }
+            """);
+        Assert.DoesNotContain(diagnostics, static d => d.Id == "CS8785");
+        AssertCompiles(output);
+        var derived = run.GeneratedTrees.Single(static t => t.FilePath.Contains("DerivedFormatter", StringComparison.Ordinal)).ToString();
+        Assert.Contains("0x65, 0x2e, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x2e", derived, StringComparison.Ordinal); // "e.event."
+        Assert.DoesNotContain("0x2e, 0x40, 0x65", derived, StringComparison.Ordinal); // ".@e"
+    }
+
+    // tuple element names are not part of the type a formatter serves
+    [Fact]
+    public void MemberFormatterForATupleWithOtherElementNames_IsAccepted()
+    {
+        var (diagnostics, output, _) = Generate("""
+            using MessagePack;
+            using SerializerFoundation;
+            public sealed partial class PairFormatter<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, (int, int)>
+            {
+                public void Initialize(MessagePackFormatterResolver resolver) { }
+                public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, (int, int) value) { buffer.WriteNil(); }
+                public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref (int, int) value) { buffer.Skip(); }
+            }
+            [MessagePackObject] public class Holder { [Key(0), MessagePackFormatter(typeof(PairFormatter<,>))] public (int X, int Y) Pair { get; set; } }
+            """);
+        Assert.DoesNotContain(diagnostics, static d => d.Id == "MsgPack012");
+        AssertCompiles(output);
+    }
+
+    // In the IDE a project reference is a compilation: a base member's [MessagePackFormatter] and a helper method of
+    // another project are source symbols whose syntax trees belong to THAT compilation, and asking this one for their
+    // semantic model throws (CS8785 for the generator, AD0001 for the analyzer). A command-line build sees metadata.
+    [Fact]
+    public async Task SymbolsOfAnotherProject_AreNotAskedForASemanticModel()
+    {
+        var shared = AnalyzerTestHost.CreateCompilation("""
+            using System;
+            using MessagePack;
+            using SerializerFoundation;
+            public sealed class StampFormatter<TW, TR> : IMessagePackFormatter<TW, TR, DateTime>
+                where TW : struct, IWriteBuffer, allows ref struct
+                where TR : struct, IReadBuffer, allows ref struct
+            {
+                public void Initialize(MessagePackFormatterResolver resolver) { }
+                public void Serialize(ref TW buffer, ref SerializeState state, DateTime value) { buffer.WriteNil(); }
+                public void Deserialize(ref TR buffer, ref DeserializeState state, ref DateTime value) { buffer.Skip(); }
+            }
+            [MessagePackObject] public class Base { [Key(0), MessagePackFormatter(typeof(StampFormatter<,>))] public DateTime Created { get; set; } }
+            public static class Helpers
+            {
+                public static void WriteAll<TW>(ref TW buffer, ref SerializeState state, int n) where TW : struct, IWriteBuffer { }
+            }
+            """, "SharedProject");
+        Assert.Empty(shared.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error));
+
+        var app = AnalyzerTestHost.CreateCompilation("""
+            using MessagePack;
+            using SerializerFoundation;
+            [MessagePackObject] public class Derived : Base { [Key(1)] public int X { get; set; } }
+            public sealed class Probe<TWriteBuffer, TReadBuffer> : IMessagePackFormatter<TWriteBuffer, TReadBuffer, int[]>
+                where TWriteBuffer : struct, IWriteBuffer
+                where TReadBuffer : struct, IReadBuffer
+            {
+                public void Initialize(MessagePackFormatterResolver resolver) { }
+                public void Serialize(ref TWriteBuffer buffer, ref SerializeState state, int[] value) { Helpers.WriteAll(ref buffer, ref state, value.Length); }
+                public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref int[] value) { buffer.Skip(); }
+            }
+            """, "AppProject").AddReferences(shared.ToMetadataReference());
+        Assert.Empty(app.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error));
+
+        var driver = CSharpGeneratorDriver.Create([new MessagePackGenerator().AsSourceGenerator()], parseOptions: (CSharpParseOptions)app.SyntaxTrees.First().Options);
+        var run = driver.RunGeneratorsAndUpdateCompilation(app, out var output, out var generatorDiagnostics).GetRunResult();
+        Assert.DoesNotContain(generatorDiagnostics, static d => d.Id == "CS8785");
+        Assert.Contains(run.GeneratedTrees, static t => t.FilePath.Contains("DerivedFormatter", StringComparison.Ordinal));
+        AssertCompiles(output);
+
+        var analyzerDiagnostics = await Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzerExtensions
+            .WithAnalyzers(app, [new MessagePack.SourceGenerator.Analyzers.DepthTrackingAnalyzer()])
+            .GetAllDiagnosticsAsync(TestContext.Current.CancellationToken);
+        Assert.DoesNotContain(analyzerDiagnostics, static d => d.Id == "AD0001");
+    }
 }

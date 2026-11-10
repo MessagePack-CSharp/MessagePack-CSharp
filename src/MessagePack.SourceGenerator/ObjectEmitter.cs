@@ -247,7 +247,7 @@ static class ObjectEmitter
             {
                 if (member.Direct == DirectKind.None)
                 {
-                    writer.Line($"{N.Formatter}<TWriteBuffer, TReadBuffer, {member.TypeName}> f{member.Id} = null!;");
+                    writer.Line($"{N.Formatter}<TWriteBuffer, TReadBuffer, {member.TypeName}> f_{member.Id} = null!;");
                 }
             }
             // validation flags snapshot the resolver's configuration: the flags are part of the formatter graph's
@@ -281,25 +281,25 @@ static class ObjectEmitter
                     {
                         var built = EmitEnumNameNode(writer, enumNames, "TWriteBuffer", "TReadBuffer", enumLeaves, ref enumLocals);
                         // the cast erases nullability-annotation differences between the tree's types and the member's
-                        writer.Line($"f{member.Id} = ({N.Formatter}<TWriteBuffer, TReadBuffer, {member.TypeName}>){built};");
+                        writer.Line($"f_{member.Id} = ({N.Formatter}<TWriteBuffer, TReadBuffer, {member.TypeName}>){built};");
                     }
                     else if (member.CustomFormatter is { FactoryNew: { } factoryNew })
                     {
                         // through the resolver: the factory is treated like one of the chain, so a factory serving the
                         // member only over the Compatible buffers (a netstandard-built library) reroutes the whole graph
                         // there instead of failing here (MessagePackFormatterResolver.CreateFormatterWith)
-                        writer.Line($"f{member.Id} = resolver.CreateFormatterWith<TWriteBuffer, TReadBuffer, {member.TypeName}>({factoryNew});");
+                        writer.Line($"f_{member.Id} = resolver.CreateFormatterWith<TWriteBuffer, TReadBuffer, {member.TypeName}>({factoryNew});");
                     }
                     else if (member.CustomFormatter is { FormatterNew: { } formatterNew })
                     {
                         // the cast erases nullability-annotation differences between the formatter's T and the member's
                         // declared type
-                        writer.Line($"f{member.Id} = ({N.Formatter}<TWriteBuffer, TReadBuffer, {member.TypeName}>){formatterNew};");
-                        writer.Line($"f{member.Id}.Initialize(resolver);");
+                        writer.Line($"f_{member.Id} = ({N.Formatter}<TWriteBuffer, TReadBuffer, {member.TypeName}>){formatterNew};");
+                        writer.Line($"f_{member.Id}.Initialize(resolver);");
                     }
                     else if (member.Direct == DirectKind.None)
                     {
-                        writer.Line($"f{member.Id} = resolver.GetFormatter<TWriteBuffer, TReadBuffer, {member.TypeName}>();");
+                        writer.Line($"f_{member.Id} = resolver.GetFormatter<TWriteBuffer, TReadBuffer, {member.TypeName}>();");
                     }
                 }
                 if (AnyRequired(model))
@@ -805,11 +805,11 @@ static class ObjectEmitter
             }
             using (writer.Block("else"))
             {
-                writer.Line($"f{member.Id}.Serialize(ref buffer, ref state, {valueAccess});");
+                writer.Line($"f_{member.Id}.Serialize(ref buffer, ref state, {valueAccess});");
             }
             return;
         }
-        writer.Line($"f{member.Id}.Serialize(ref buffer, ref state, {valueAccess});");
+        writer.Line($"f_{member.Id}.Serialize(ref buffer, ref state, {valueAccess});");
     }
 
     // a direct-writable primitive joins the fused reservation run
@@ -841,7 +841,7 @@ static class ObjectEmitter
         {
             // nil (1 byte) stays under the primitive's max, so the reservation is the same and the nil-or-value choice
             // is one expression inside the fused run
-            direct(size, $"{access} is {{ }} v{member.Id} ? {p}{writeCall}({{DEST}}, v{member.Id}) : {p}UnsafeWriteNil({{DEST}})");
+            direct(size, $"{access} is {{ }} nv_{member.Id} ? {p}{writeCall}({{DEST}}, nv_{member.Id}) : {p}UnsafeWriteNil({{DEST}})");
             return;
         }
         direct(size, $"{p}{writeCall}({{DEST}}, {access})");
@@ -982,7 +982,10 @@ static class ObjectEmitter
         {
             if (!model.ConstructorSetsRequiredMembers)
             {
-                initializers.Add($"{Identifier(required.Name)} = {required.Expression}");
+                // a keyed required member without a setter the generated code uses is here too: when the constructor
+                // takes it, the initializer the compiler demands repeats the value it was given
+                var bound = model.Members.AsArray().FirstOrDefault(m => m.Name == required.Name && m.ConstructorParameterIndex >= 0);
+                initializers.Add($"{Identifier(required.Name)} = {(bound is null ? required.Expression : "v_" + bound.Id)}");
             }
         }
         if (model.UnknownMembersName is { } unknownName)
@@ -1127,7 +1130,7 @@ static class ObjectEmitter
     static void EmitFormatterPopulate(CodeWriter writer, MemberModel member)
     {
         writer.Line($"{(member.IsDynamic ? "object?" : "var")} v = {MemberAccess(member, "result")};");
-        writer.Line($"f{member.Id}.Deserialize(ref buffer, ref state, ref v);");
+        writer.Line($"f_{member.Id}.Deserialize(ref buffer, ref state, ref v);");
         if (NeedsNullCheckOnPopulate(member))
         {
             writer.Line($"if (validateNull && v is null) {{ ThrowNullValueForNonNullableMember(\"{member.Name}\"); }}");
@@ -1137,7 +1140,7 @@ static class ObjectEmitter
 
     // a sealed type test on the existing field: no extra state, and on a hit the call is direct (inlinable) on every
     // code generator, PGO or not (see DirectKind)
-    static string IsStockString(MemberModel member) => $"f{member.Id} is {N.StringFormatter}<TWriteBuffer, TReadBuffer>";
+    static string IsStockString(MemberModel member) => $"f_{member.Id} is {N.StringFormatter}<TWriteBuffer, TReadBuffer>";
 
     static void EmitLocalRead(CodeWriter writer, MemberModel member)
     {
@@ -1154,13 +1157,13 @@ static class ObjectEmitter
             }
             using (writer.Block("else"))
             {
-                writer.Line($"f{member.Id}.Deserialize(ref buffer, ref state, ref v_{member.Id});");
+                writer.Line($"f_{member.Id}.Deserialize(ref buffer, ref state, ref v_{member.Id});");
             }
         }
         else
         {
             writer.Line(member.Direct == DirectKind.None
-                ? $"f{member.Id}.Deserialize(ref buffer, ref state, ref v_{member.Id});"
+                ? $"f_{member.Id}.Deserialize(ref buffer, ref state, ref v_{member.Id});"
                 : member.DirectNullable
                     ? $"v_{member.Id} = buffer.TryReadNil() ? default({member.TypeName}) : buffer.{Reader(member.Direct)}();"
                     : $"v_{member.Id} = buffer.{Reader(member.Direct)}();");
@@ -1216,7 +1219,7 @@ static class ObjectEmitter
                 writer.Indent();
                 if (model.UnknownMembersName is not null)
                 {
-                    using (writer.Block($"if (i > {model.MaxIntKey})"))
+                    using (writer.Block($"if (i > {model.MaxIntKey.ToString(System.Globalization.CultureInfo.InvariantCulture)})")) // -1 for a type with no keyed member: the current culture may spell the sign U+2212
                     {
                         writer.Line("buffer.CaptureUnknownIntKeyed(ref unknownMembers, i);");
                     }

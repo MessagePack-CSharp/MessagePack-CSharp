@@ -90,7 +90,7 @@ internal sealed class EnumNameFormatterTree
             return null;
         }
         probing ??= [];
-        if (!probing.Add(collection))
+        if (probing.Count >= 32 || !probing.Add(collection)) // the generator's bound, MaxElementProbeDepth
         {
             return null;
         }

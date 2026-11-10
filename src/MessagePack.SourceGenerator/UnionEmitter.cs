@@ -16,6 +16,10 @@ namespace MessagePack.SourceGenerator;
 /// </summary>
 static class UnionEmitter
 {
+    // a tag written into source: with the invariant culture, since a negative one formatted with the build machine's
+    // culture can carry U+2212 for its sign (sv-SE, nb-NO, fi-FI under ICU), which is CS1056
+    static string Tag(UnionCaseModel unionCase) => unionCase.Tag.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
     public static string EmitFormatter(UnionModel model)
     {
         var writer = CodeWriter.Rent();
@@ -84,7 +88,7 @@ static class UnionEmitter
                     using (writer.Block($"{keyword} ({access}.TryGetValue(out {unionCase.TypeName} case{caseIndex}))"))
                     {
                         writer.Line("buffer.WriteArrayHeader(2);");
-                        writer.Line($"buffer.WriteInt32({unionCase.Tag});");
+                        writer.Line($"buffer.WriteInt32({Tag(unionCase)});");
                         writer.Line($"{unionCase.FieldName}.Serialize(ref buffer, ref state, case{caseIndex});");
                     }
                     caseIndex++;
@@ -131,7 +135,7 @@ static class UnionEmitter
                         using (writer.Block($"{keyword} ({heldValue} is {patternType} case{caseIndex})"))
                         {
                             writer.Line("buffer.WriteArrayHeader(2);");
-                            writer.Line($"buffer.WriteInt32({unionCase.Tag});");
+                            writer.Line($"buffer.WriteInt32({Tag(unionCase)});");
                             writer.Line($"{unionCase.FieldName}.Serialize(ref buffer, ref state, case{caseIndex});");
                         }
                         caseIndex++;
@@ -152,7 +156,7 @@ static class UnionEmitter
                         using (writer.Block($"{keyword} (runtimeType == typeof({unionCase.TypeName}))"))
                         {
                             writer.Line("buffer.WriteArrayHeader(2);");
-                            writer.Line($"buffer.WriteInt32({unionCase.Tag});");
+                            writer.Line($"buffer.WriteInt32({Tag(unionCase)});");
                             writer.Line($"{unionCase.FieldName}.Serialize(ref buffer, ref state, ({unionCase.TypeName}){heldValue});");
                         }
                     }
@@ -184,7 +188,7 @@ static class UnionEmitter
             {
                 foreach (var unionCase in model.Cases)
                 {
-                    writer.Line($"case {unionCase.Tag}:");
+                    writer.Line($"case {Tag(unionCase)}:");
                     using (writer.OpenScope())
                     {
                         if (model.IsPatternUnion)
