@@ -19,7 +19,8 @@ public sealed class MessagePackHubProtocolOptions
     /// <summary>
     /// The serializer options for arguments, results and stream items. The default matches the official protocol's
     /// defaults: attribute-less types as maps of member names (contractless), enums as their names, hash-flooding
-    /// resistant collections.
+    /// resistant collections, and no nullable annotation validation (a null in a member declared non-nullable is
+    /// sent and received as nil, as the official protocol does; MessagePack's own default refuses it).
     /// </summary>
     public MessagePackSerializerOptions SerializerOptions
     {
@@ -29,11 +30,17 @@ public sealed class MessagePackHubProtocolOptions
         set => serializerOptions = value;
     }
 
-    /// <summary>The default options: enum names first, then the default chain with the contractless tier appended.</summary>
+    /// <summary>
+    /// The default options: enum names first, then the default chain with the contractless tier appended, with
+    /// <see cref="MessagePackFormatterResolver.ValidateNullableAnnotations"/> off. Hub argument and result types are
+    /// mostly attribute-less DTOs shared with clients in other languages, and the official protocol passes a null in a
+    /// non-nullable member through as nil; refusing it here would turn a hub that works on the official protocol into
+    /// failed invocations. Pass options built on a resolver of your own to validate.
+    /// </summary>
     [RequiresDynamicCode(RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
     public static MessagePackSerializerOptions CreateDefaultSerializerOptions()
-        => new MessagePackSerializerOptions(new MessagePackFormatterResolver([new GenericEnumAsStringFormatterFactory(), MessagePackFormatterFactory.Default.WithContractless()]));
+        => new MessagePackSerializerOptions(new MessagePackFormatterResolver([new GenericEnumAsStringFormatterFactory(), MessagePackFormatterFactory.Default.WithContractless()]) { ValidateNullableAnnotations = false });
 }
 
 /// <summary>Registers the protocol with a SignalR server or client builder.</summary>

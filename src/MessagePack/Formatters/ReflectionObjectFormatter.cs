@@ -95,6 +95,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     ConstructionMode mode;
     ConstructorInfo? argumentConstructor; // Arguments mode only
     int argumentCount;
+    object?[]? argumentDefaults;  // Arguments mode: the parameters' declared non-null defaults, null when none has one
     bool validateRequired;        // resolver.ValidateRequiredMembers, snapshot at Initialize
     bool hasRequiredSlots;
     int requiredArrayCount;       // array mode: smallest count that still carries every required slot
@@ -1011,6 +1012,13 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                     || (slot.ReassignAfterConstruction && slot.ValidateNullOnRead);
                 // a parameter without a default value is a required part of the contract
                 slot.IsRequired |= !parameters[i].HasDefaultValue;
+                // one with a default gets it when the payload does not carry the member (an older writer's shorter
+                // array, a map without the key), as it would from a C# caller that omits the argument; the generated
+                // tier passes the same constant
+                if (DeclaredDefault(parameters[i]) is { } declaredDefault)
+                {
+                    (argumentDefaults ??= new object?[parameters.Length])[i] = declaredDefault;
+                }
             }
             return;
         }
@@ -1211,11 +1219,27 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
     }
 
+    // A constructor parameter's declared default, when it is a non-null constant the generated tier can spell as a
+    // literal too (bool, char, string, the numeric types, decimal, an enum): null for no default, a null / default(T)
+    // default, and a [DateTimeConstant], all of which stay default(TParam). An enum default is boxed as the enum.
+    static object? DeclaredDefault(ParameterInfo parameter)
+    {
+        if (!parameter.HasDefaultValue || parameter.DefaultValue is not { } value || value is DBNull or Missing or DateTime)
+        {
+            return null;
+        }
+        var parameterType = Nullable.GetUnderlyingType(parameter.ParameterType) ?? parameter.ParameterType;
+        return parameterType.IsEnum && value.GetType() != parameterType ? Enum.ToObject(parameterType, value) : value;
+    }
+
     [MethodImpl(MethodImplOptions.NoInlining)] // keep the boxed argument-state machinery out of the populate hot path
     void DeserializeWithArguments(ref TReadBuffer buffer, ref DeserializeState state, ref T value, int count)
     {
         var memberSlots = slots;
-        var arguments = new object?[argumentCount]; // absent parameters: reflection turns null into default(TParam)
+        // absent parameters: the declared default when there is one, otherwise null, which reflection turns into
+        // default(TParam)
+        var arguments = new object?[argumentCount];
+        argumentDefaults?.CopyTo(arguments, 0);
         var pendingValues = new object?[memberSlots.Length];
         var pendingSet = new bool[memberSlots.Length];
 
@@ -1238,6 +1262,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             if (slot.ConstructorParameterIndex >= 0)
             {
                 arguments[slot.ConstructorParameterIndex] = slot.ReadBoxed(ref buffer, ref state);
+                pendingSet[slotIndex] = true; // "the payload carried it", for the reassignment below
             }
             else if (slot.CanSet)
             {
@@ -1261,15 +1286,16 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         for (int i = 0; i < memberSlots.Length; i++)
         {
             // the object initializer's assignments come first, as in the generated `new T(args) { Member = arg }`; an
-            // absent argument reassigns the member's default, as the generated initializer does with its local
+            // absent argument reassigns the member's default, as the generated initializer does with its local (not
+            // the parameter's declared default, which is the constructor's alone and may be of another type)
             if (memberSlots[i].ReassignAfterConstruction)
             {
-                memberSlots[i].SetBoxed(ref value, arguments[memberSlots[i].ConstructorParameterIndex]);
+                memberSlots[i].SetBoxed(ref value, pendingSet[i] ? arguments[memberSlots[i].ConstructorParameterIndex] : null);
             }
         }
         for (int i = 0; i < pendingSet.Length; i++)
         {
-            if (pendingSet[i])
+            if (pendingSet[i] && memberSlots[i].ConstructorParameterIndex < 0)
             {
                 memberSlots[i].SetBoxed(ref value, pendingValues[i]);
             }

@@ -803,6 +803,10 @@ static class ObjectParser
                 RejectsNullOnSerialize: entry.NullRejectedOnGet,
                 CustomFormatter: entry.Custom,
                 EnumNames: enumNames[i],
+                ConstructorParameterDefault: parameterIndexByEntry[i] >= 0
+                    && selectedConstructor!.Parameters[parameterIndexByEntry[i]] is { HasExplicitDefaultValue: true } defaulted
+                    ? ConstantExpression(defaulted.ExplicitDefaultValue, defaulted.Type)
+                    : null,
                 BaseCastType: entry.ShadowedBaseType,
                 UniqueId: entry.ShadowedBaseType is null ? null : entry.Name + "_" + Sanitize(entry.ShadowedBaseType),
                 LegacyKeyPrefix: legacyKeyByKey.TryGetValue(entry.StringKey, out var legacyKey) ? legacyKey.Prefix : null,
@@ -1637,9 +1641,12 @@ static class ObjectParser
     // [DataContract] type, or one with a type-level [MessagePackFormatter]: its enums follow its own declaration), at an
     // enum with a type-level [MessagePackFormatter], at a non-generic type and at a type parameter (the enum a use site
     // substitutes is not part of this declaration). ReflectionObjectFormatter walks the same way at run time.
-    // `blocked` receives the first container that holds such an enum where the walk cannot pass, MsgPack030.
+    // `blocked` receives the first container that holds such an enum where the walk cannot pass, MsgPack030: a
+    // container whose formatter takes no nested formatter, and a collection type whose elements hold the enum without
+    // any type argument of its own saying so (`class StatusList : List<Status>`), which the walk cannot enter at all.
     // Each enum leaf registers its generated name formatter in `names` (see EnumNamesFormatter).
-    internal static EnumNameNode? BuildEnumNameNode(ITypeSymbol type, Compilation compilation, INamedTypeSymbol? privateScope, Dictionary<string, EnumNamesModel> names, ref (string Container, string Enum)? blocked, ref (string Enum, string Name)? duplicated)
+    // `probing` is the recursion guard of that element probe (a type that enumerates itself, `Node : IEnumerable<Node>`).
+    internal static EnumNameNode? BuildEnumNameNode(ITypeSymbol type, Compilation compilation, INamedTypeSymbol? privateScope, Dictionary<string, EnumNamesModel> names, ref (string Container, string Enum)? blocked, ref (string Enum, string Name)? duplicated, HashSet<ISymbol>? probing = null)
     {
         switch (type)
         {
@@ -1656,7 +1663,7 @@ static class ObjectParser
                     NameFormatter: EnumNamesFormatter(enumType, compilation, privateScope, names));
             case IArrayTypeSymbol array:
             {
-                var element = BuildEnumNameNode(array.ElementType, compilation, privateScope, names, ref blocked, ref duplicated);
+                var element = BuildEnumNameNode(array.ElementType, compilation, privateScope, names, ref blocked, ref duplicated, probing);
                 if (element is null)
                 {
                     return null;
@@ -1674,11 +1681,16 @@ static class ObjectParser
                 EnumNameNode? reached = null;
                 for (int i = 0; i < slots.Length; i++)
                 {
-                    slots[i] = BuildEnumNameNode(named.TypeArguments[i], compilation, privateScope, names, ref blocked, ref duplicated);
+                    slots[i] = BuildEnumNameNode(named.TypeArguments[i], compilation, privateScope, names, ref blocked, ref duplicated, probing);
                     reached ??= slots[i];
                 }
                 if (reached is null)
                 {
+                    // no type argument reaches an enum, but the elements may all the same: `Tagged<T> : List<Status>`
+                    if (blocked is null && EnumOfCollectionElement(named, compilation, privateScope, ref probing) is { } elementEnum)
+                    {
+                        blocked = (named.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), elementEnum);
+                    }
                     return null;
                 }
                 var formatterName = named.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T ? "NullableFormatter" : BuiltInGenericFormatterName(named);
@@ -1700,12 +1712,58 @@ static class ObjectParser
                     slots[0],
                     slots.Length == 2 ? slots[1] : null);
             }
+            case INamedTypeSymbol { SpecialType: SpecialType.None } plain when !HasSchemaOfItsOwn(plain):
+                // a non-generic type: nothing to walk, but a collection of the enum (`StatusList : List<Status>`) would
+                // write it through the element formatter the resolver shares, as an integer
+                if (blocked is null && EnumOfCollectionElement(plain, compilation, privateScope, ref probing) is { } plainElementEnum)
+                {
+                    blocked = (plain.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), plainElementEnum);
+                }
+                return null;
             default:
                 return null;
         }
 
         static string FirstEnum(EnumNameNode node) =>
             node.FormatterName is null ? node.TypeName : FirstEnum(node.First ?? node.Second!);
+
+        // The enum the elements of a collection type hold, when the type's own type arguments do not lead to it: the
+        // element type of each IEnumerable<T> it implements is walked like a member type (a dictionary's is its
+        // KeyValuePair). Probed on the side: nothing is registered or reported for the element itself.
+        static string? EnumOfCollectionElement(INamedTypeSymbol collection, Compilation compilation, INamedTypeSymbol? privateScope, ref HashSet<ISymbol>? probing)
+        {
+            probing ??= new HashSet<ISymbol>(SymbolEqualityComparer.Default);
+            if (!probing.Add(collection))
+            {
+                return null;
+            }
+            try
+            {
+                foreach (var implemented in collection.AllInterfaces)
+                {
+                    if (implemented.OriginalDefinition.SpecialType != SpecialType.System_Collections_Generic_IEnumerable_T)
+                    {
+                        continue;
+                    }
+                    (string Container, string Enum)? elementBlocked = null;
+                    (string Enum, string Name)? elementDuplicated = null;
+                    var element = BuildEnumNameNode(implemented.TypeArguments[0], compilation, privateScope, new Dictionary<string, EnumNamesModel>(StringComparer.Ordinal), ref elementBlocked, ref elementDuplicated, probing);
+                    if (element is not null)
+                    {
+                        return FirstEnum(element);
+                    }
+                    if (elementBlocked is { } inner)
+                    {
+                        return inner.Enum;
+                    }
+                }
+                return null;
+            }
+            finally
+            {
+                probing.Remove(collection);
+            }
+        }
     }
 
     // The generated name formatter of an enum leaf, registered in `names` on first sight: in MessagePack.Generated, or
@@ -2339,11 +2397,48 @@ static class ObjectParser
                     return m.ToString(CultureInfo.InvariantCulture) + "m";
                 default:
                     // integers, and enums (whose constant is the underlying value): the constant's type names the target
-                    return $"({constantType.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}){SymbolDisplay.FormatPrimitive(constant.Value, quoteStrings: false, useHexadecimalNumbers: false)}";
+                    // (the value parenthesized: `(global::E)-1` is CS0075)
+                    return $"({constantType.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)})({SymbolDisplay.FormatPrimitive(constant.Value, quoteStrings: false, useHexadecimalNumbers: false)})";
             }
         }
         diagnostics.Add(new DiagnosticInfo(Diagnostics.RequiredInitializerNotPreserved, $"'{typeName}.{member.Name}' is a required member the generated formatter never reads, and its initializer is not a compile-time constant: the generated object initializer (which the compiler demands for every required member) assigns default instead. Use a constant initializer, a parameterless constructor marked [SetsRequiredMembers], or drop `required`.", LocationInfo.From(member)));
         return "default!";
+    }
+
+    // A constructor parameter's declared default as a C# expression of the parameter's type; null for a null /
+    // default(T) default and for the constants C# cannot spell as a literal (a [DateTimeConstant] DateTime), which the
+    // reflection tier leaves at default(T) as well. The value arrives already converted to the parameter's type
+    // (`long x = 5` is a boxed long), an enum as its underlying integer.
+    static string? ConstantExpression(object? value, ITypeSymbol targetType)
+    {
+        var literal = value switch
+        {
+            bool b => b ? "true" : "false",
+            string or char => SymbolDisplay.FormatPrimitive(value, quoteStrings: true, useHexadecimalNumbers: false),
+            float f => float.IsNaN(f) ? "float.NaN" : float.IsPositiveInfinity(f) ? "float.PositiveInfinity" : float.IsNegativeInfinity(f) ? "float.NegativeInfinity" : f.ToString("R", CultureInfo.InvariantCulture) + "f",
+            double d => double.IsNaN(d) ? "double.NaN" : double.IsPositiveInfinity(d) ? "double.PositiveInfinity" : double.IsNegativeInfinity(d) ? "double.NegativeInfinity" : d.ToString("R", CultureInfo.InvariantCulture) + "d",
+            decimal m => m.ToString(CultureInfo.InvariantCulture) + "m",
+            sbyte v => $"(sbyte)({v.ToString(CultureInfo.InvariantCulture)})",
+            byte v => $"(byte)({v.ToString(CultureInfo.InvariantCulture)})",
+            short v => $"(short)({v.ToString(CultureInfo.InvariantCulture)})",
+            ushort v => $"(ushort)({v.ToString(CultureInfo.InvariantCulture)})",
+            int v => v.ToString(CultureInfo.InvariantCulture),
+            uint v => v.ToString(CultureInfo.InvariantCulture) + "U",
+            long v => v.ToString(CultureInfo.InvariantCulture) + "L",
+            ulong v => v.ToString(CultureInfo.InvariantCulture) + "UL",
+            _ => null,
+        };
+        if (literal is null)
+        {
+            return null;
+        }
+        var unwrapped = targetType is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
+            ? nullable.TypeArguments[0]
+            : targetType;
+        // parenthesized: `(global::E)-1` is CS0075
+        return unwrapped.TypeKind == TypeKind.Enum
+            ? $"({unwrapped.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)})({literal})"
+            : literal;
     }
 
     // A derived KeyAttribute is readable at compile time only when its constructor hands its first parameter to

@@ -132,10 +132,88 @@ public class RequiredAndNullableValidationTests
     public void ConstructorParameterWithDefault_IsNotRequired()
     {
         byte[] empty = [0x90];
-        // both tiers pass default(int) for the absent argument (not the declared default:
-        // the argument state starts from default, the declared 42 never enters play)
-        Assert.Equal(0, V4.Deserialize<OptCtorPoco>(empty)!.A);
-        Assert.Equal(0, V4.Deserialize<OptCtorPoco>(empty, ReflectionOptions())!.A);
+        // both tiers pass the declared default for the absent argument, as a C# caller omitting it would
+        Assert.Equal(42, V4.Deserialize<OptCtorPoco>(empty)!.A);
+        Assert.Equal(42, V4.Deserialize<OptCtorPoco>(empty, ReflectionOptions())!.A);
+    }
+
+    [Fact]
+    public void ConstructorParameterDefaults_AbsentMembersGetTheDeclaredDefaults()
+    {
+        // an older writer's [Id]: every later constructor parameter is positionally absent
+        byte[] old = [0x91, 0x07];
+
+        foreach (var options in new[] { Options(), ReflectionOptions() })
+        {
+            var value = V4.Deserialize<CtorDefaultsPoco>(old, options)!;
+            Assert.Equal(7, value.Id);
+            Assert.Equal("", value.Nick);
+            Assert.Equal(DayOfWeek.Friday, value.Day);
+            Assert.Equal(5, value.Maybe);
+            Assert.Equal(1.5m, value.Rate);
+            Assert.True(value.Flag);
+            Assert.Equal(-0.5, value.Ratio);
+            Assert.Equal(',', value.Separator);
+            Assert.Equal(CtorDefaultSign.Minus, value.Sign);
+            Assert.Equal(CtorDefaultSign.Minus, value.MaybeSign);
+            Assert.Equal(-3L, value.Wide);
+            Assert.Null(value.Note);
+
+            // the point of the default: what the reader produced, the writer accepts (a non-nullable Nick left null
+            // would be refused by the serialize-side nullable check)
+            var again = V4.Deserialize<CtorDefaultsPoco>(V4.Serialize(value, options), options)!;
+            Assert.Equal("", again.Nick);
+            Assert.Equal(DayOfWeek.Friday, again.Day);
+        }
+    }
+
+    [Fact]
+    public void ConstructorParameterDefaults_PresentValuesWin_AndExplicitNilIsNotAbsence()
+    {
+        foreach (var options in new[] { Options(), ReflectionOptions() })
+        {
+            var bytes = V4.Serialize(new CtorDefaultsPoco(1, "nick", DayOfWeek.Monday, null, 2m, false, 3d, ';', CtorDefaultSign.Plus, null, 4, "note"), options);
+            var value = V4.Deserialize<CtorDefaultsPoco>(bytes, options)!;
+            Assert.Equal("nick", value.Nick);
+            Assert.Equal(DayOfWeek.Monday, value.Day);
+            Assert.Null(value.Maybe); // an explicit nil for a nullable parameter stays null, the default 5 is for absence
+            Assert.Equal(2m, value.Rate);
+            Assert.False(value.Flag);
+            Assert.Equal(3d, value.Ratio);
+            Assert.Equal(';', value.Separator);
+            Assert.Equal(CtorDefaultSign.Plus, value.Sign);
+            Assert.Null(value.MaybeSign);
+            Assert.Equal(4L, value.Wide);
+            Assert.Equal("note", value.Note);
+        }
+
+        // [7, nil]: an explicit nil for the non-nullable Nick is a contract violation, not a request for the default
+        byte[] explicitNil = [0x92, 0x07, 0xc0];
+        Assert.Contains("'Nick'", Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<CtorDefaultsPoco>(explicitNil)).Message);
+        Assert.Contains("'Nick'", Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<CtorDefaultsPoco>(explicitNil, ReflectionOptions())).Message);
+        Assert.Null(V4.Deserialize<CtorDefaultsPoco>(explicitNil, Options(validateNull: false))!.Nick);
+        Assert.Null(V4.Deserialize<CtorDefaultsPoco>(explicitNil, ReflectionOptions(validateNull: false))!.Nick);
+    }
+
+    [Fact]
+    public void ConstructorParameterDefaults_RecordAndMapMode()
+    {
+        // ["a"]: the record's optional Nick is absent
+        byte[] oldArray = [0x91, 0xa1, (byte)'a'];
+        // {"Name":"a"}
+        byte[] oldMap = [0x81, 0xa4, (byte)'N', (byte)'a', (byte)'m', (byte)'e', 0xa1, (byte)'a'];
+
+        foreach (var options in new[] { Options(), ReflectionOptions() })
+        {
+            var record = V4.Deserialize<CtorDefaultsRecord>(oldArray, options)!;
+            Assert.Equal(new CtorDefaultsRecord("a"), record);
+            Assert.Equal(record, V4.Deserialize<CtorDefaultsRecord>(V4.Serialize(record, options), options));
+
+            var map = V4.Deserialize<CtorDefaultsMapRecord>(oldMap, options)!;
+            Assert.Equal(new CtorDefaultsMapRecord("a"), map);
+            Assert.Equal("anon", map.Nick);
+            Assert.Equal(map, V4.Deserialize<CtorDefaultsMapRecord>(V4.Serialize(map, options), options));
+        }
     }
 
     // ---- required: contractless (map of member names, reflection only) ----
@@ -489,6 +567,64 @@ public class OptCtorPoco
         A = a;
     }
 }
+
+public enum CtorDefaultSign
+{
+    Minus = -1,
+    Zero = 0,
+    Plus = 1,
+}
+
+[MessagePackObject]
+public class CtorDefaultsPoco
+{
+    [Key(0)] public int Id { get; }
+    [Key(1)] public string Nick { get; }
+    [Key(2)] public DayOfWeek Day { get; }
+    [Key(3)] public int? Maybe { get; }
+    [Key(4)] public decimal Rate { get; }
+    [Key(5)] public bool Flag { get; }
+    [Key(6)] public double Ratio { get; }
+    [Key(7)] public char Separator { get; }
+    [Key(8)] public CtorDefaultSign Sign { get; }
+    [Key(9)] public CtorDefaultSign? MaybeSign { get; }
+    [Key(10)] public long Wide { get; }
+    [Key(11)] public string? Note { get; }
+
+    public CtorDefaultsPoco(
+        int id,
+        string nick = "",
+        DayOfWeek day = DayOfWeek.Friday,
+        int? maybe = 5,
+        decimal rate = 1.5m,
+        bool flag = true,
+        double ratio = -0.5,
+        char separator = ',',
+        CtorDefaultSign sign = CtorDefaultSign.Minus,
+        CtorDefaultSign? maybeSign = CtorDefaultSign.Minus,
+        long wide = -3,
+        string? note = null)
+    {
+        Id = id;
+        Nick = nick;
+        Day = day;
+        Maybe = maybe;
+        Rate = rate;
+        Flag = flag;
+        Ratio = ratio;
+        Separator = separator;
+        Sign = sign;
+        MaybeSign = maybeSign;
+        Wide = wide;
+        Note = note;
+    }
+}
+
+[MessagePackObject]
+public record CtorDefaultsRecord([property: Key(0)] string Name, [property: Key(1)] string Nick = "");
+
+[MessagePackObject(true)]
+public record CtorDefaultsMapRecord(string Name, string Nick = "anon");
 
 public class ContractlessReqPoco
 {

@@ -151,6 +151,27 @@ public class HubProtocolFixtureTests
         Assert.Equal((7, Level.High), (back.Id, back.Level));
     }
 
+    [Fact]
+    public void DefaultOptions_NullInNonNullableMember_IsNilLikeTheOfficialProtocol()
+    {
+        // the `= null!` DTO idiom: the official protocol writes nil and reads nil back, so the hub defaults do too
+        // (MessagePack's own default, ValidateNullableAnnotations, refuses both directions)
+        var options = MessagePackHubProtocolOptions.CreateDefaultSerializerOptions();
+        var bytes = MessagePackSerializer.Serialize(new NullBangDto { Id = 7 }, options);
+        Assert.Equal("""{"Id":7,"Name":null}""", MessagePackSerializer.ConvertToJson(bytes));
+        var back = MessagePackSerializer.Deserialize<NullBangDto>(bytes, options)!;
+        Assert.Equal(7, back.Id);
+        Assert.Null(back.Name);
+
+        // and through the protocol itself, as an invocation argument
+        var message = Protocol.GetMessageBytes(new InvocationMessage("Echo", [new NullBangDto { Id = 7 }])).ToArray();
+        Assert.True(message.AsSpan().IndexOf(bytes) > 0);
+
+        // the contrast: the serializer's own defaults with the same contractless tier refuse the null
+        var strict = new MessagePackSerializerOptions(MessagePackFormatterFactory.Default.WithContractless());
+        Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Serialize(new NullBangDto { Id = 7 }, strict));
+    }
+
     static byte[] Frame(byte[] payload)
     {
         // 7-bit varint length prefix, the SignalR binary framing
@@ -248,6 +269,12 @@ public class PlainDto
 {
     public int Id { get; set; }
     public Level Level { get; set; }
+}
+
+public class NullBangDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = null!;
 }
 
 public enum Level

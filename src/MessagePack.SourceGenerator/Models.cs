@@ -184,7 +184,12 @@ public sealed record MemberModel(
     bool IsString = false,
     // EnumAsString with an enum reachable in the member type: Initialize builds this tree instead of
     // resolver.GetFormatter (never set together with CustomFormatter, which wins)
-    EnumNameNode? EnumNames = null)
+    EnumNameNode? EnumNames = null,
+    // the bound constructor parameter's declared default (`string nick = ""`), as an expression, when it is a non-null
+    // constant: the argument the generated `new` passes when the payload did not carry the member (an older writer's
+    // shorter array, a map without the key). Null without a default, or when the default is null / default(T), which
+    // is what the local already holds. The reflection tier passes ParameterInfo.DefaultValue the same way.
+    string? ConstructorParameterDefault = null)
 {
     public string Id => this.UniqueId ?? this.Name;
 }

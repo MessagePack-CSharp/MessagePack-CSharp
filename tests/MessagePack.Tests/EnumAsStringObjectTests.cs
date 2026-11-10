@@ -148,6 +148,31 @@ public class EnumAsStringObjectTests
         Assert.Contains("EnumAsStringFormatterFactory<EnumAsStringShade>", exception.ToString());
     }
 
+    [Fact]
+    public void Reflection_CollectionTypeHoldingTheEnum_Throws()
+    {
+        // no type argument of the member type names the enum, so the walk cannot enter it and the elements would stay
+        // integers next to members written by name: refused like any custom collection (MsgPack030 in the generator)
+        foreach (var value in new object[]
+        {
+            new EnumAsStringNamedListReflected { History = [EnumAsStringShade.Red] },
+            new EnumAsStringNamedDictionaryReflected { Counts = new() { [EnumAsStringShade.Red] = 1 } },
+            new EnumAsStringNestedNamedListReflected { Histories = [[EnumAsStringShade.Red]] },
+        })
+        {
+            var exception = Record.Exception(() => V4.Serialize(value.GetType(), value));
+            Assert.NotNull(exception);
+            Assert.Contains("EnumAsString cannot reach the enum", exception.ToString());
+            Assert.Contains("EnumAsStringFormatterFactory<EnumAsStringShade>", exception.ToString());
+        }
+
+        // a collection type that does not hold an enum, and one that enumerates itself, are left alone
+        var plain = V4.Deserialize<EnumAsStringPlainCollectionsReflected>(V4.Serialize(new EnumAsStringPlainCollectionsReflected { Shade = EnumAsStringShade.Green, Numbers = [1, 2], Tree = [[]] }))!;
+        Assert.Equal(EnumAsStringShade.Green, plain.Shade);
+        Assert.Equal([1, 2], plain.Numbers);
+        Assert.Single(plain.Tree!);
+    }
+
     // ---- the generated name formatters against EnumAsStringFormatter ----
 
     static readonly MessagePackSerializerOptions ByEnumAsStringFormatter = new(new MessagePackFormatterResolver(
@@ -276,11 +301,22 @@ public class EnumAsStringObjectTests
     [InlineData("List<(int, Shade)>", "(int, Shade)")]
     [InlineData("Shade[,]", "Shade[,]")]
     [InlineData("Bag<Shade>", "Bag<Shade>")]
+    // collection types whose own type arguments do not name the enum their elements hold
+    [InlineData("ShadeList", "ShadeList")]
+    [InlineData("ShadeCounts", "ShadeCounts")]
+    [InlineData("IShades", "IShades")]
+    [InlineData("Tagged<int>", "Tagged<int>")]
+    [InlineData("List<ShadeList>", "ShadeList")]
+    [InlineData("Dictionary<string, ShadeList[]>", "ShadeList")]
     public void UnreachableEnum_IsMsgPack030(string memberType, string container)
     {
         var result = Run($$"""
             public enum Shade { Red }
             public class Bag<T> : List<T> { }
+            public class ShadeList : List<Shade> { }
+            public class ShadeCounts : Dictionary<Shade, int> { }
+            public interface IShades : IEnumerable<Shade> { }
+            public class Tagged<T> : List<Shade> { }
             [MessagePackObject(true, EnumAsString = true)] public class Probe { public {{memberType}} Value { get; set; } }
             """);
 
@@ -338,10 +374,22 @@ public class EnumAsStringObjectTests
     [InlineData("public (Pinned, int) Value { get; set; }")]
     // no enum inside (and Generic<T> below: the enum a use site substitutes for T is not the declaration's)
     [InlineData("public (string, int) Value { get; set; }")]
+    // collection types without an enum in their elements, one that enumerates itself, and a plain class with an enum
+    // member (its own declaration decides that enum)
+    [InlineData("public IntList Value { get; set; }")]
+    [InlineData("public Tree Value { get; set; }")]
+    [InlineData("public List<Tree> Value { get; set; }")]
+    [InlineData("public Holder Value { get; set; }")]
+    // a collection the declaration leaves to a type parameter (Open<T> below)
+    [InlineData("public Open<Shade> Value { get; set; }")]
     public void ReachableOrOwnedShapes_AreNotReported(string member)
     {
         var result = Run($$"""
             public enum Shade { Red }
+            public class IntList : List<int> { }
+            public class Tree : List<Tree> { }
+            public class Holder { public Shade Shade { get; set; } }
+            [MessagePackObject(true, EnumAsString = true)] public class Open<T> { public List<T> Items { get; set; } }
             [MessagePackFormatter(typeof(EnumFormatterFactory<Pinned>))] public enum Pinned { A }
             [MessagePackObject(true, EnumAsString = true)] public class Probe { {{member}} }
             [MessagePackObject(true, EnumAsString = true)] public class Generic<T> { public (T, int) Value { get; set; } }
@@ -466,6 +514,50 @@ public partial class EnumAsStringPrivate
 public class EnumAsStringTupleReflected
 {
     public (EnumAsStringShade, int) Pair { get; set; }
+}
+
+public class EnumAsStringShadeList : List<EnumAsStringShade>
+{
+}
+
+public class EnumAsStringShadeCounts : Dictionary<EnumAsStringShade, int>
+{
+}
+
+public class EnumAsStringIntList : List<int>
+{
+}
+
+public class EnumAsStringTree : List<EnumAsStringTree>
+{
+}
+
+[MessagePackObject(true, EnumAsString = true, SuppressSourceGeneration = true)]
+public class EnumAsStringNamedListReflected
+{
+    public EnumAsStringShadeList? History { get; set; }
+}
+
+[MessagePackObject(true, EnumAsString = true, SuppressSourceGeneration = true)]
+public class EnumAsStringNamedDictionaryReflected
+{
+    public EnumAsStringShadeCounts? Counts { get; set; }
+}
+
+[MessagePackObject(true, EnumAsString = true, SuppressSourceGeneration = true)]
+public class EnumAsStringNestedNamedListReflected
+{
+    public List<EnumAsStringShadeList>? Histories { get; set; }
+}
+
+[MessagePackObject(true, EnumAsString = true, SuppressSourceGeneration = true)]
+public class EnumAsStringPlainCollectionsReflected
+{
+    public EnumAsStringShade Shade { get; set; }
+
+    public EnumAsStringIntList? Numbers { get; set; }
+
+    public EnumAsStringTree? Tree { get; set; }
 }
 
 [Flags]

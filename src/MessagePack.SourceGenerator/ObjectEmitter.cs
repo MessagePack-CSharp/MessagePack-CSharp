@@ -931,7 +931,7 @@ static class ObjectEmitter
             {
                 writer.Line($"{member.TypeName} v_{member.Id} = default!;");
             }
-            if (IsAssignedWhenPresent(member))
+            if (TracksPresence(member))
             {
                 writer.Line($"bool has_{member.Id} = false;");
             }
@@ -948,9 +948,15 @@ static class ObjectEmitter
         {
             if (member.ConstructorParameterIndex >= 0)
             {
-                arguments[member.ConstructorParameterIndex] = member.ConstructorParameterTypeName is { } parameterType
+                var argument = member.ConstructorParameterTypeName is { } parameterType
                     ? $"({parameterType})v_{member.Id}"
                     : $"v_{member.Id}";
+                // a parameter the payload did not carry (an older writer's shorter array, a map without the key) gets
+                // its declared default, as it would from a C# caller that omits the argument; the reflection tier
+                // passes ParameterInfo.DefaultValue the same way
+                arguments[member.ConstructorParameterIndex] = member.ConstructorParameterDefault is { } declaredDefault
+                    ? $"has_{member.Id} ? {argument} : {declaredDefault}"
+                    : argument;
                 if (member.HasRequiredModifier && !model.ConstructorSetsRequiredMembers && member.Setter != SetterKind.None)
                 {
                     // the constructor consumes the value but does not declare [SetsRequiredMembers]: the compiler still
@@ -1023,6 +1029,11 @@ static class ObjectEmitter
     // construction, and only when the payload carried it (init-only and required members need the object initializer)
     static bool IsAssignedWhenPresent(MemberModel member) =>
         member.Setter == SetterKind.Set && member.ConstructorParameterIndex < 0 && !member.HasRequiredModifier;
+
+    // members whose construction-path local needs a "the payload carried it" flag: the plain-set ones above, and a
+    // constructor argument that falls back to its parameter's declared default
+    static bool TracksPresence(MemberModel member) =>
+        IsAssignedWhenPresent(member) || member.ConstructorParameterDefault is not null;
 
     static bool AnyRequired(ObjectModel model) => model.Members.AsArray().Any(static m => m.IsRequired);
 
@@ -1154,7 +1165,7 @@ static class ObjectEmitter
                     ? $"v_{member.Id} = buffer.TryReadNil() ? default({member.TypeName}) : buffer.{Reader(member.Direct)}();"
                     : $"v_{member.Id} = buffer.{Reader(member.Direct)}();");
         }
-        if (IsAssignedWhenPresent(member))
+        if (TracksPresence(member))
         {
             writer.Line($"has_{member.Id} = true;");
         }
