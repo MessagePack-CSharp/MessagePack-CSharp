@@ -106,6 +106,16 @@ public class MessagePackSerializationException : Exception
     [DoesNotReturn]
     internal static Exception ThrowDuplicateMapKey() => throw new MessagePackSerializationException("The map in the payload defines the same key more than once");
 
+    // What a collection the formatters did not build themselves (a user type, an instance reused for populate behind an
+    // interface) throws when it refuses a value from the payload: a duplicate key (KeyedCollection, a Dictionary behind
+    // ICollection<KeyValuePair>), an element its comparer cannot order (a SortedSet<object> of mixed runtime types), an
+    // element of the wrong runtime type through a non-generic view (StringCollection, List<int> as IList). Data errors,
+    // reported as one.
+    internal static bool IsRefusedByCollection(Exception exception) => exception is ArgumentException or InvalidCastException or InvalidOperationException;
+
+    [DoesNotReturn]
+    internal static Exception ThrowRefusedByCollection(Type collection, Exception inner) => throw new MessagePackSerializationException($"Invalid data: '{collection}' refused a value from the payload ({inner.GetType().Name}: {inner.Message})", inner);
+
     [DoesNotReturn]
     internal static Exception ThrowNullMapKey() => throw new MessagePackSerializationException("The map in the payload contains a nil key, which the target dictionary cannot store");
 

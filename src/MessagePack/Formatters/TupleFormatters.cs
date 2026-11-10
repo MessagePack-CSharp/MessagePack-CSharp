@@ -584,7 +584,16 @@ public sealed class TupleFormatter<TWriteBuffer, TReadBuffer, T1, T2, T3, T4, T5
             // the Tuple constructor rejects a null Rest with ArgumentException; a payload shape stays a serialization error
             throw new MessagePackSerializationException("Invalid Tuple data: the eighth element (Rest) is nil, and a Tuple's Rest must be a Tuple");
         }
-        value = new Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>(item1, item2, item3, item4, item5, item6, item7, rest);
+        try
+        {
+            value = new Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>(item1, item2, item3, item4, item5, item6, item7, rest);
+        }
+        catch (ArgumentException ex)
+        {
+            // the same constructor check for a Rest that is not a Tuple: a TRest that is not a tuple type at all
+            // (Tuple<..., int>), or an object / interface TRest whose payload value is something else
+            throw new MessagePackSerializationException($"Invalid Tuple data: the eighth element (Rest) must be a Tuple, and it is a '{rest.GetType()}'", ex);
+        }
         state.Exit();
     }
 }

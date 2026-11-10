@@ -26,6 +26,29 @@ static class ReflectionInvoke
         }
     }
 
+    /// <summary><c>new T()</c> through the <c>new()</c> constraint is Activator.CreateInstance&lt;T&gt;(), which wraps too.</summary>
+    public static T New<T>()
+        where T : new()
+    {
+        try
+        {
+            return new T();
+        }
+        catch (TargetInvocationException ex) when (ex.InnerException is { } inner)
+        {
+            ExceptionDispatchInfo.Capture(inner).Throw();
+            throw; // not reached: Throw does not return
+        }
+    }
+
+    /// <summary>For a catch block around an Activator.CreateInstance call: rethrows what the constructor threw.</summary>
+    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    public static void Rethrow(Exception inner)
+    {
+        ExceptionDispatchInfo.Capture(inner).Throw();
+        throw inner; // not reached: Throw does not return
+    }
+
     public static object InvokeUnwrapped(this ConstructorInfo constructor, object?[]? arguments)
     {
         try

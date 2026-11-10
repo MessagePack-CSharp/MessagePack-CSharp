@@ -55,7 +55,7 @@ public sealed class GenericCollectionFormatter<TWriteBuffer, TReadBuffer, TEleme
         }
         else
         {
-            result = new TCollection();
+            result = ReflectionInvoke.New<TCollection>();
         }
         var f = formatter;
         state.Enter();
@@ -63,7 +63,14 @@ public sealed class GenericCollectionFormatter<TWriteBuffer, TReadBuffer, TEleme
         {
             TElement item = default!;
             f.Deserialize(ref buffer, ref state, ref item);
-            result.Add(item);
+            try
+            {
+                result.Add(item); // a user collection may refuse it (a KeyedCollection's duplicate key): a data error
+            }
+            catch (Exception ex) when (MessagePackSerializationException.IsRefusedByCollection(ex))
+            {
+                MessagePackSerializationException.ThrowRefusedByCollection(typeof(TCollection), ex);
+            }
         }
         state.Exit();
         value = result;
@@ -124,7 +131,7 @@ public sealed class GenericDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, 
         }
         else
         {
-            result = new TDictionary();
+            result = ReflectionInvoke.New<TDictionary>();
         }
         state.Enter();
 #pragma warning disable CS8714 // TKey carries no notnull constraint here; a nil key is refused by the read itself
@@ -248,7 +255,14 @@ public sealed class GenericEnumerableFormatter<TWriteBuffer, TReadBuffer, TEleme
         // allocation is count * sizeof(TElement), which CollectionReads bounds by the bytes actually present
         var items = CollectionReads<TWriteBuffer, TReadBuffer, TElement>.ReadArray(ref buffer, ref state, formatter, count);
         state.Exit();
-        value = (TCollection)Activator.CreateInstance(typeof(TCollection), items)!;
+        try
+        {
+            value = (TCollection)Activator.CreateInstance(typeof(TCollection), items)!;
+        }
+        catch (System.Reflection.TargetInvocationException ex) when (ex.InnerException is { } inner)
+        {
+            ReflectionInvoke.Rethrow(inner); // the constructor's own exception, not the reflection wrapper
+        }
     }
 }
 
@@ -321,7 +335,14 @@ public sealed class GenericReadOnlyDictionaryFormatter<TWriteBuffer, TReadBuffer
             }
         }
         state.Exit();
-        value = (TDictionary)Activator.CreateInstance(typeof(TDictionary), intermediate)!;
+        try
+        {
+            value = (TDictionary)Activator.CreateInstance(typeof(TDictionary), intermediate)!;
+        }
+        catch (System.Reflection.TargetInvocationException ex) when (ex.InnerException is { } inner)
+        {
+            ReflectionInvoke.Rethrow(inner); // the constructor's own exception, not the reflection wrapper
+        }
     }
 }
 

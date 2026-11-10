@@ -1472,7 +1472,15 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         {
             throw new MessagePackSerializationException($"Type '{typeof(T).FullName}' has no usable constructor: neither a parameterless one nor an accessible one whose parameters all match serialized members by [Key] name or member name (case-insensitive); v3 bound int-keyed parameters by position, v4 binds by name only. Deserialize into an existing instance instead.");
         }
-        return (T)Activator.CreateInstance(typeof(T), nonPublic: true)!;
+        try
+        {
+            return (T)Activator.CreateInstance(typeof(T), nonPublic: true)!;
+        }
+        catch (TargetInvocationException ex) when (ex.InnerException is { } inner)
+        {
+            ReflectionInvoke.Rethrow(inner); // the constructor's own exception, as the argument path and the generated tier give it
+            throw;
+        }
     }
 
     static MemberSlot CreatePropertySlot<TMember>(PropertyInfo property, bool allowPrivate)

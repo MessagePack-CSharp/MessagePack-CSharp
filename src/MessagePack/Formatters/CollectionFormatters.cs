@@ -1831,13 +1831,34 @@ public sealed partial class InterfaceCollectionFormatter<TWriteBuffer, TReadBuff
 
         var f = formatter;
 
-        for (int i = 0; i < count; i++)
+        if (!ReferenceEquals(result, value))
         {
-            T item = default!;
-            f.Deserialize(ref buffer, ref state, ref item);
-            result.Add(item);
+            // a collection built here takes anything
+            for (int i = 0; i < count; i++)
+            {
+                T item = default!;
+                f.Deserialize(ref buffer, ref state, ref item);
+                result.Add(item);
+            }
         }
-
+        else
+        {
+            // the caller's instance, of whatever type: it may refuse a value (a duplicate key in a Dictionary behind
+            // ICollection<KeyValuePair>, an element a SortedSet<object> cannot order), which is a data error
+            for (int i = 0; i < count; i++)
+            {
+                T item = default!;
+                f.Deserialize(ref buffer, ref state, ref item);
+                try
+                {
+                    result.Add(item);
+                }
+                catch (Exception ex) when (MessagePackSerializationException.IsRefusedByCollection(ex))
+                {
+                    MessagePackSerializationException.ThrowRefusedByCollection(result.GetType(), ex);
+                }
+            }
+        }
         value = result;
         state.Exit();
     }
@@ -2190,12 +2211,33 @@ public sealed partial class InterfaceSetFormatter<TWriteBuffer, TReadBuffer, T> 
         }
 
         var f = formatter;
-
-        for (int i = 0; i < count; i++)
+        if (!ReferenceEquals(result, value))
         {
-            T item = default!;
-            f.Deserialize(ref buffer, ref state, ref item);
-            result.Add(item);
+            // a collection built here takes anything
+            for (int i = 0; i < count; i++)
+            {
+                T item = default!;
+                f.Deserialize(ref buffer, ref state, ref item);
+                result.Add(item);
+            }
+        }
+        else
+        {
+            // the caller's instance, of whatever type: it may refuse a value (a duplicate key in a Dictionary behind
+            // ICollection<KeyValuePair>, an element a SortedSet<object> cannot order), which is a data error
+            for (int i = 0; i < count; i++)
+            {
+                T item = default!;
+                f.Deserialize(ref buffer, ref state, ref item);
+                try
+                {
+                    result.Add(item);
+                }
+                catch (Exception ex) when (MessagePackSerializationException.IsRefusedByCollection(ex))
+                {
+                    MessagePackSerializationException.ThrowRefusedByCollection(result.GetType(), ex);
+                }
+            }
         }
 
         value = result;

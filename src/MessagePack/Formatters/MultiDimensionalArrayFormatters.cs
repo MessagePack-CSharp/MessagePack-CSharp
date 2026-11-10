@@ -9,6 +9,16 @@ namespace MessagePack.Formatters;
 // The element count must equal the product of the dimension lengths.
 static class DimensionProduct
 {
+    // the write side of the same limit: the runtime builds shapes of more than int.MaxValue elements (a byte[50000,
+    // 50000]), whose Length throws OverflowException, after the outer header and the dimension lengths were written
+    public static void ThrowIfTooManyElements(Array value)
+    {
+        if (value.LongLength > int.MaxValue)
+        {
+            throw new MessagePackSerializationException($"A multi-dimensional array of {value.LongLength} elements cannot be written: an array header carries at most {int.MaxValue}.");
+        }
+    }
+
     // A cheap pre-filter, not the authority. It mirrors CoreCLR's rule for what it will construct (probed on
     // .NET 11): every dimension at most Array.MaxLength (0x7FFFFFC7) and the running product, taken left to right, at
     // most uint.MaxValue, a zero dimension zeroing it. So int[50000, 50000, 0] and int[2147483591, 0] exist there
@@ -111,6 +121,7 @@ public sealed partial class TwoDimensionalArrayFormatter<TWriteBuffer, TReadBuff
         var len1 = value.GetLength(1);
         var lb1 = value.GetLowerBound(1); // a COM / Excel array can start at 1; the wire carries lengths only, and the loops add the bound to an offset so an upper bound of int.MaxValue cannot overflow
 
+        DimensionProduct.ThrowIfTooManyElements(value);
         var f = formatter;
         state.Enter();
 
@@ -163,7 +174,10 @@ public sealed partial class TwoDimensionalArrayFormatter<TWriteBuffer, TReadBuff
 
         // Populate contract: reuse only when every dimension matches (then nothing is allocated and the elements are
         // read into in place below)
-        var reusable = value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1;
+        // (a covariant array behind the declared type, `object[,] = new string[1, 2]`, is replaced like a mismatched shape:
+        // a ref into it for a T that is not its element type is ArrayTypeMismatchException; ArrayFormatter does the same)
+        var reusable = value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1
+            && (typeof(T).IsValueType || value.GetType() == typeof(T[,]));
 
         // a fresh array whose count passes the byte guards can still claim more memory than its bytes justify (see
         // PresizeCapacity): read the elements through a growing flat array first, then place them, so the allocation
@@ -257,6 +271,7 @@ public sealed partial class ThreeDimensionalArrayFormatter<TWriteBuffer, TReadBu
         var len2 = value.GetLength(2);
         var lb2 = value.GetLowerBound(2); // a COM / Excel array can start at 1; the wire carries lengths only, and the loops add the bound to an offset so an upper bound of int.MaxValue cannot overflow
 
+        DimensionProduct.ThrowIfTooManyElements(value);
         var f = formatter;
         state.Enter();
 
@@ -314,7 +329,8 @@ public sealed partial class ThreeDimensionalArrayFormatter<TWriteBuffer, TReadBu
 
         // Populate contract: reuse only when every dimension matches (then nothing is allocated and the elements are
         // read into in place below)
-        var reusable = value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1 && value.GetLength(2) == len2;
+        var reusable = value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1 && value.GetLength(2) == len2
+            && (typeof(T).IsValueType || value.GetType() == typeof(T[,,])); // a covariant array is replaced, see the 2D formatter
 
         // a fresh array whose count passes the byte guards can still claim more memory than its bytes justify (see
         // PresizeCapacity): read the elements through a growing flat array first, then place them, so the allocation
@@ -413,6 +429,7 @@ public sealed partial class FourDimensionalArrayFormatter<TWriteBuffer, TReadBuf
         var len3 = value.GetLength(3);
         var lb3 = value.GetLowerBound(3); // a COM / Excel array can start at 1; the wire carries lengths only, and the loops add the bound to an offset so an upper bound of int.MaxValue cannot overflow
 
+        DimensionProduct.ThrowIfTooManyElements(value);
         var f = formatter;
         state.Enter();
 
@@ -475,7 +492,8 @@ public sealed partial class FourDimensionalArrayFormatter<TWriteBuffer, TReadBuf
 
         // Populate contract: reuse only when every dimension matches (then nothing is allocated and the elements are
         // read into in place below)
-        var reusable = value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1 && value.GetLength(2) == len2 && value.GetLength(3) == len3;
+        var reusable = value != null && value.GetLength(0) == len0 && value.GetLength(1) == len1 && value.GetLength(2) == len2 && value.GetLength(3) == len3
+            && (typeof(T).IsValueType || value.GetType() == typeof(T[,,,])); // a covariant array is replaced, see the 2D formatter
 
         // a fresh array whose count passes the byte guards can still claim more memory than its bytes justify (see
         // PresizeCapacity): read the elements through a growing flat array first, then place them, so the allocation

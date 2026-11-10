@@ -218,7 +218,11 @@ internal static class Lz4BlockEnvelope
         // our envelope: flatten and reuse the span logic (LZ4 block decompression needs
         // contiguous compressed bytes anyway; per-block stitching for ext 98 could avoid
         // the whole-message flatten, deferred until demanded)
-        var length = checked((int)source.Length);
+        if (source.Length > int.MaxValue)
+        {
+            Lz4Throws.InvalidEnvelope(); // more than one array holds: nothing this processor could decode
+        }
+        var length = (int)source.Length;
         var flat = ArrayPool<byte>.Shared.Rent(length);
         try
         {

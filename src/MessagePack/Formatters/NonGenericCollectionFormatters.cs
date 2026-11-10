@@ -97,7 +97,7 @@ public sealed partial class NonGenericInterfaceListFormatter<TWriteBuffer, TRead
             {
                 object? element = null;
                 formatter.Deserialize(ref buffer, ref state, ref element);
-                existing.Add(element);
+                NonGenericCollectionFormatterHelper.Add(existing, element);
             }
             state.Exit();
             return;
@@ -211,14 +211,14 @@ public sealed class NonGenericListFormatter<TWriteBuffer, TReadBuffer, T> : IMes
         }
         else
         {
-            list = new T();
+            list = ReflectionInvoke.New<T>();
         }
         state.Enter();
         for (int i = 0; i < count; i++)
         {
             object? item = null;
             formatter.Deserialize(ref buffer, ref state, ref item);
-            list.Add(item);
+            NonGenericCollectionFormatterHelper.Add(list, item);
         }
         state.Exit();
         value = list;
@@ -266,7 +266,7 @@ public sealed class NonGenericDictionaryFormatter<TWriteBuffer, TReadBuffer, T> 
         }
         else
         {
-            dictionary = new T();
+            dictionary = ReflectionInvoke.New<T>();
         }
         state.Enter();
         if (dictionary is SortedList sortedList)
@@ -490,9 +490,29 @@ file static class NonGenericCollectionFormatterHelper
         {
             dictionary.Add(key!, value); // nil or duplicate keys are data errors
         }
-        catch (ArgumentException ex)
+        catch (Exception ex) when (ex is ArgumentNullException || (ex is ArgumentException && dictionary.Contains(key!)))
         {
             throw new MessagePackSerializationException("Invalid map key in payload (nil or duplicate).", ex);
+        }
+        catch (Exception ex) when (MessagePackSerializationException.IsRefusedByCollection(ex))
+        {
+            // not a nil or a duplicate: a typed dictionary behind the non-generic view (Dictionary<string, int> as
+            // IDictionary) that does not take the key or value type the wire holds, or a sorted one that cannot order it
+            MessagePackSerializationException.ThrowRefusedByCollection(dictionary.GetType(), ex);
+        }
+    }
+
+    // a typed list behind the non-generic view (List<int> as IList, StringCollection) takes only its own element type,
+    // while the object formatter hands over what the wire holds (a byte for a small integer): a data error
+    internal static void Add(IList list, object? item)
+    {
+        try
+        {
+            list.Add(item);
+        }
+        catch (Exception ex) when (MessagePackSerializationException.IsRefusedByCollection(ex))
+        {
+            MessagePackSerializationException.ThrowRefusedByCollection(list.GetType(), ex);
         }
     }
 }

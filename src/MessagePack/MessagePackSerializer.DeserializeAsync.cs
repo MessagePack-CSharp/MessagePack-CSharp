@@ -50,6 +50,10 @@ public static partial class MessagePackSerializer
             {
                 if (result.IsCanceled)
                 {
+                    // nothing was looked at: hand the bytes back unexamined, so the next read returns them at once
+                    // (examined to the end, a Pipe waits for more data although a complete message may be buffered)
+                    advanced = true;
+                    pipeReader.AdvanceTo(buffer.Start);
                     throw new OperationCanceledException("The PipeReader read was canceled");
                 }
 

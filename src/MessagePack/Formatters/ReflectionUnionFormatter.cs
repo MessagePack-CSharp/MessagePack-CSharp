@@ -95,7 +95,15 @@ public sealed partial class ReflectionUnionFormatter<TWriteBuffer, TReadBuffer, 
         }
         if (caseByTag.TryGetValue(buffer.ReadInt32(), out var slot))
         {
-            value = (T?)slot.Deserialize(ref buffer, ref state, value); // populate: an existing instance of the case is read into
+            // populate: an existing instance of the case is read into. A declared case need not be assignable to T
+            // (v3 allowed it, and a versioned pair of union interfaces declares the other's cases): its tag in a payload
+            // read as T is a data error, not an InvalidCastException
+            var read = slot.Deserialize(ref buffer, ref state, value);
+            if (read is not null and not T)
+            {
+                throw new MessagePackSerializationException($"The payload holds the union case '{read.GetType().FullName}', which is declared on '{typeof(T).FullName}' but is not assignable to it.");
+            }
+            value = (T?)read;
         }
         else
         {

@@ -306,6 +306,11 @@ public sealed partial class PackedBitArrayFormatter<TWriteBuffer, TReadBuffer> :
         }
 
         var bitLength = value.Length;
+        if (bitLength > int.MaxValue - 7)
+        {
+            // (bitLength + 7) wraps negative; the reader refuses these lengths as well
+            throw new MessagePackSerializationException($"A BitArray of {bitLength} bits cannot be written in the packed form.");
+        }
         var byteCount = (bitLength + 7) >> 3;
         buffer.WriteFixArrayHeader(2);
         buffer.WriteInt32(bitLength);

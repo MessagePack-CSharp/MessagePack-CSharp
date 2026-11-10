@@ -296,7 +296,11 @@ public sealed class ZstandardFrameProcessor : MessagePackMessageProcessor
             return TryDecode(source.FirstSpan, out message);
         }
         // the decoder wants the frame contiguous
-        var length = checked((int)source.Length);
+        if (source.Length > int.MaxValue)
+        {
+            ZstandardThrows.InvalidFrame(); // more than one array holds: nothing this processor could decode
+        }
+        var length = (int)source.Length;
         var flat = ArrayPool<byte>.Shared.Rent(length);
         try
         {

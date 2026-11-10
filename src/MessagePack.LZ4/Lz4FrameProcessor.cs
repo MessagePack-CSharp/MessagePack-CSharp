@@ -336,7 +336,11 @@ public sealed class Lz4FrameProcessor : MessagePackMessageProcessor
             return TryDecode(source.FirstSpan, out message);
         }
         // the decoder wants the frame contiguous
-        var length = checked((int)source.Length);
+        if (source.Length > int.MaxValue)
+        {
+            Lz4Throws.InvalidEnvelope(); // more than one array holds: nothing this processor could decode
+        }
+        var length = (int)source.Length;
         var flat = ArrayPool<byte>.Shared.Rent(length);
         try
         {

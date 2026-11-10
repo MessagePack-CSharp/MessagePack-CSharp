@@ -129,6 +129,9 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="SerializeElementsAsync{T}(PipeWriter, IAsyncEnumerable{T}, long, CancellationToken)"/>
     public static async Task SerializeElementsAsync<T>(PipeWriter pipeWriter, IAsyncEnumerable<T> source, long count, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(pipeWriter);
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(options);
         ThrowIfElementsHiddenByContainer(options);
         WriteArrayHeader(pipeWriter, count);
         // one state for the whole array, as Serialize(array) has: circular-reference ids span the elements
@@ -204,6 +207,9 @@ public static partial class MessagePackSerializer
     /// <inheritdoc cref="SerializeElementsAsync{T}(PipeWriter, IAsyncEnumerable{T}, long, CancellationToken)"/>
     public static async Task SerializeElementsAsync<T>(PipeWriter pipeWriter, IEnumerable<T> source, long count, MessagePackSerializerOptions options, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(pipeWriter);
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(options);
         ThrowIfElementsHiddenByContainer(options);
         WriteArrayHeader(pipeWriter, count);
         var state = new SerializeState(options.MaxDepth); // see the IAsyncEnumerable overload

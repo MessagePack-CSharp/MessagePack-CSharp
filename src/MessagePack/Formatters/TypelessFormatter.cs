@@ -247,6 +247,26 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
     // A longer spelling still resolves, it is just never cached; 1024 x 4096 chars bounds the table at about 8 MB.
     const int MaxCachedTypeNameLength = 4096;
 
+    static bool IsInstantiable(Type type)
+    {
+        if (type == typeof(void) || type.IsPointer || type.IsByRef || type.ContainsGenericParameters)
+        {
+            return false;
+        }
+#if NETSTANDARD2_0
+        foreach (var attribute in type.CustomAttributes)
+        {
+            if (attribute.AttributeType.FullName == "System.Runtime.CompilerServices.IsByRefLikeAttribute")
+            {
+                return false;
+            }
+        }
+        return true;
+#else
+        return !type.IsByRefLike;
+#endif
+    }
+
     [MethodImpl(MethodImplOptions.NoInlining)]
     TypelessSerializer CreateSerializerForName(string typeName)
     {
@@ -258,6 +278,12 @@ public sealed partial class TypelessFormatter<TWriteBuffer, TReadBuffer> : IMess
             throw new MessagePackSerializationException($"Can't load type '{typeName}'.");
         }
         ThrowIfDisallowed(type);
+        if (!IsInstantiable(type))
+        {
+            // void, a pointer, a by-ref, a ref struct, an open generic: names a loader that accepts anything resolves,
+            // but no value of such a type exists to read (closing a serializer over one is ArgumentException)
+            throw new MessagePackSerializationException($"Typeless type '{type}' cannot be the type of a value.");
+        }
 
         var serializer = GetSerializerByType(type);
         if (typeName.Length <= MaxCachedTypeNameLength && serializersByName.Count < MaxCachedTypeNameCount)

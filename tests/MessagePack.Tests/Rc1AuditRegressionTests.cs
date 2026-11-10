@@ -288,8 +288,190 @@ public class Rc1AuditRegressionTests
             return false;
         }
     }
+    // ---- B: only the serializer's own exception for data a target refuses ----
+    // the stated contract: a payload fails as MessagePackSerializationException (or InvalidOperationException /
+    // EndOfStreamException), and a user constructor's exception surfaces as itself, not wrapped by reflection
+
+    static readonly V4Options Contractless = new(new MessagePackFormatterResolver([MessagePackFormatterFactory.Default.WithContractless()]));
+
+    [Fact]
+    public void CollectionsThatRefuseAValue_ThrowTheSerializationException()
+    {
+        // a KeyedCollection-derived type with a duplicate key (ArgumentException from Add)
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<AuditItemsById>([0x92, 0x91, 0x01, 0x91, 0x01]));
+        Assert.Equal(2, V4.Deserialize<AuditItemsById>([0x92, 0x91, 0x01, 0x91, 0x02])!.Count);
+
+        // StringCollection handed a boxed byte (InvalidCastException)
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<System.Collections.Specialized.StringCollection>([0x91, 0x01]));
+        Assert.Equal("a", V4.Deserialize<System.Collections.Specialized.StringCollection>([0x91, 0xa1, 0x61])![0]);
+
+        // a caller's sorted set that cannot order what the payload holds (ArgumentException from the comparer)
+        ISet<object> sortedSet = new SortedSet<object>();
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize([0x92, 0x01, 0xa1, 0x61], ref sortedSet!));
+
+        // a caller's Dictionary behind ICollection<KeyValuePair>, with a duplicate key
+        ICollection<KeyValuePair<string, int>> pairs = new Dictionary<string, int>();
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize([0x92, 0x92, 0xa1, 0x61, 0x01, 0x92, 0xa1, 0x61, 0x02], ref pairs!));
+
+        // a caller's sorted dictionary behind IDictionary<object, object>
+        IDictionary<object, object?> sortedDictionary = new SortedDictionary<object, object?>();
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize([0x82, 0x01, 0xc0, 0xa1, 0x61, 0xc0], ref sortedDictionary!));
+
+        // a typed list or dictionary behind the non-generic view takes only its own element type: the object formatter
+        // hands a small integer over as a byte
+        IList typedList = new List<int>();
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize([0x91, 0x01], ref typedList!));
+        IDictionary typedDictionary = new Dictionary<string, int>();
+        var refused = Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize([0x81, 0xa1, 0x6b, 0x02], ref typedDictionary!));
+        Assert.DoesNotContain("nil or duplicate", refused.Message); // it is neither
+        IDictionary duplicated = new Hashtable();
+        Assert.Contains("nil or duplicate", Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize([0x82, 0x01, 0xc0, 0x01, 0xc0], ref duplicated!)).Message);
+    }
+
+    [Fact]
+    public void ConstructorsThatThrow_SurfaceTheirOwnException()
+    {
+        Assert.Equal("list says no", Assert.Throws<InvalidOperationException>(() => V4.Deserialize<AuditThrowingList>([0x91, 0x01])).Message);
+        Assert.Equal("type says no", Assert.Throws<InvalidOperationException>(() => V4.Deserialize<AuditThrowingCtor>([0x81, 0xa1, 0x41, 0x01], Contractless)).Message);
+    }
+
+    [Fact]
+    public void Tuple8_RestThatIsNotATuple_ThrowsTheSerializationException()
+    {
+        var exception = Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<Tuple<int, int, int, int, int, int, int, int>>([0x98, 1, 2, 3, 4, 5, 6, 7, 8]));
+        Assert.Contains("Rest", exception.Message);
+    }
+
+    [Fact]
+    public void MultiDimensionalArray_CovariantInitializer_IsReplaced()
+    {
+        // object[,] = new string[1, 2]: a ref into it for T = object is ArrayTypeMismatchException, and only when the
+        // payload's dimensions equal the initializer's (another shape already took the fresh-array path)
+        var board = V4.Deserialize<AuditBoard>([0x91, 0x93, 0x01, 0x02, 0x92, 0x01, 0x02])!;
+        Assert.IsType<object[,]>(board.Cells);
+        Assert.Equal(2, Convert.ToInt32(board.Cells[0, 1]));
+
+        object[,,]? three = new string[1, 1, 1];
+        V4.Deserialize([0x94, 0x01, 0x01, 0x01, 0x91, 0x07], ref three);
+        Assert.IsType<object[,,]>(three);
+
+        object[,,,]? four = new string[1, 1, 1, 1];
+        V4.Deserialize([0x95, 0x01, 0x01, 0x01, 0x01, 0x91, 0x07], ref four);
+        Assert.IsType<object[,,,]>(four);
+
+        // an array of the exact type is still refilled in place
+        var same = new object[1, 2];
+        object[,]? reused = same;
+        V4.Deserialize([0x93, 0x01, 0x02, 0x92, 0x01, 0x02], ref reused);
+        Assert.Same(same, reused);
+    }
+
+    [Theory]
+    [InlineData("System.Void")]
+    [InlineData("System.Int32*")]
+    [InlineData("System.Int32&")]
+    [InlineData("System.Span`1[[System.Byte]]")]
+    [InlineData("System.Collections.Generic.List`1")]
+    public void Typeless_NamesThatAreNotTheTypeOfAValue_ThrowTheSerializationException(string typeName)
+    {
+#pragma warning disable CS0618 // LoadAnyType is the opt-in, [Obsolete]-gated loader this test is about
+        var options = new V4Options(new MessagePackFormatterResolver([MessagePackFormatterFactory.Default.WithContractless().WithTypeless(TypelessTypeLoader.LoadAnyType())]));
+#pragma warning restore CS0618
+        var name = System.Text.Encoding.UTF8.GetBytes(typeName);
+        byte[] payload = name.Length <= 31
+            ? [0xc7, (byte)(name.Length + 1), 0x64, (byte)(0xa0 | name.Length), .. name]
+            : [0xc7, (byte)(name.Length + 2), 0x64, 0xd9, (byte)name.Length, .. name];
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<object>(payload, options));
+    }
+
+    [Fact]
+    public void TypeFormatter_RefusesAnImplausiblyLongName()
+    {
+#pragma warning disable CS0618 // TypeFormatterFactory is opt-in and [Obsolete]-gated
+        var options = new V4Options(new MessagePackFormatterResolver([new TypeFormatterFactory(), MessagePackFormatterFactory.Default]));
+#pragma warning restore CS0618
+        Assert.Equal(typeof(int), V4.Deserialize<Type>(V4.Serialize(typeof(int), options), options));
+        var nested = string.Concat(Enumerable.Repeat("A`1[[", 400)); // 2,000 characters of generic nesting
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<Type>(V4.Serialize(nested), options));
+    }
+
+    [Fact]
+    public void MemoryStream_PositionedPastItsLength_ReadsAsEmptyInput()
+    {
+        var stream = new MemoryStream();
+        stream.WriteByte(1);
+        stream.Position = 5;
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<int>(stream));
+
+        // at its length it is an empty stream too, and one byte before it the value is read
+        stream.Position = 1;
+        Assert.Throws<MessagePackSerializationException>(() => V4.Deserialize<int>(stream));
+        stream.Position = 0;
+        Assert.Equal(1, V4.Deserialize<int>(stream));
+    }
+
+    [Fact]
+    public async Task SerializeElementsAsync_NullOptions_IsArgumentNull()
+    {
+        var pipe = new Pipe();
+        await Assert.ThrowsAsync<ArgumentNullException>(() => V4.SerializeElementsAsync(pipe.Writer, (IEnumerable<int>)[1], 1, null!, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => V4.SerializeElementsAsync(pipe.Writer, AsyncOne(), 1, null!, TestContext.Current.CancellationToken));
+
+        static async IAsyncEnumerable<int> AsyncOne()
+        {
+            await Task.Yield();
+            yield return 1;
+        }
+    }
+
+    // a canceled read used to be advanced as "everything examined": a Pipe then waits for more data, so the next
+    // DeserializeAsync did not return although a complete message was buffered
+    [Fact]
+    public async Task DeserializeAsync_AfterACanceledRead_ReturnsTheBufferedMessage()
+    {
+        var pipe = new Pipe();
+        pipe.Writer.Write(new byte[] { 0x2a });
+        await pipe.Writer.FlushAsync(TestContext.Current.CancellationToken);
+        pipe.Reader.CancelPendingRead();
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => await V4.DeserializeAsync<int>(pipe.Reader, TestContext.Current.CancellationToken));
+
+        var second = V4.DeserializeAsync<int>(pipe.Reader, TestContext.Current.CancellationToken).AsTask();
+        Assert.Same(second, await Task.WhenAny(second, Task.Delay(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken)));
+        Assert.Equal(42, await second);
+    }
 }
 
 public class AuditSortedList : SortedList<int, object?>
 {
+}
+
+[MessagePackObject]
+public class AuditItem
+{
+    [Key(0)]
+    public int Id { get; set; }
+}
+
+public class AuditItemsById : System.Collections.ObjectModel.KeyedCollection<int, AuditItem>
+{
+    protected override int GetKeyForItem(AuditItem item) => item.Id;
+}
+
+public class AuditThrowingList : List<int>
+{
+    public AuditThrowingList() => throw new InvalidOperationException("list says no");
+}
+
+public class AuditThrowingCtor
+{
+    public AuditThrowingCtor() => throw new InvalidOperationException("type says no");
+
+    public int A { get; set; }
+}
+
+[MessagePackObject]
+public class AuditBoard
+{
+    [Key(0)]
+    public object[,] Cells { get; set; } = new string[1, 2];
 }

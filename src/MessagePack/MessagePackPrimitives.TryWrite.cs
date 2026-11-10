@@ -490,7 +490,31 @@ public static partial class MessagePackPrimitives
             bytesWritten = UnsafeWriteString(ref MemoryMarshal.GetReference(destination), value);
             return true;
         }
-        int byteCount = Encoding.UTF8.GetByteCount(value);
+        // a destination holds at most int.MaxValue bytes, a string of more than that many characters' worth of UTF-8
+        // never fits (and GetByteCount throws ArgumentException when the count overflows int)
+        if (length > destination.Length)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+        int byteCount;
+        if (length <= MaxWorstCaseStringLength)
+        {
+            byteCount = Encoding.UTF8.GetByteCount(value);
+        }
+        else
+        {
+            try
+            {
+                byteCount = Encoding.UTF8.GetByteCount(value);
+            }
+            catch (ArgumentException)
+            {
+                // more than int.MaxValue bytes of UTF-8: no span is that long
+                bytesWritten = 0;
+                return false;
+            }
+        }
         int headerSize = byteCount <= MessagePackRange.MaxFixStringLength ? 1 : byteCount <= byte.MaxValue ? 2 : byteCount <= ushort.MaxValue ? 3 : 5;
         // subtraction form so headerSize + byteCount can't overflow int
         if (destination.Length - headerSize >= byteCount)

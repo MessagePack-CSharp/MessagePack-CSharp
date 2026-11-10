@@ -151,7 +151,8 @@ public static partial class MessagePackSerializer
 
     static T DeserializeFromMemoryStream<T>(MemoryStream stream, ArraySegment<byte> exposed, MessagePackSerializerOptions options)
     {
-        var position = checked((int)stream.Position);
+        // a Position past the Length (legal for a MemoryStream) reads as an empty stream, as it does for every other one
+        var position = (int)Math.Min(stream.Position, stream.Length);
         var source = exposed.AsSpan(position, (int)(stream.Length - position));
         T value = default!;
 

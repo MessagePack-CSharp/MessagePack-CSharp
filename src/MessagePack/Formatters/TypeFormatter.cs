@@ -21,6 +21,8 @@ public sealed partial class TypeFormatter<TWriteBuffer, TReadBuffer> : IMessageP
         buffer.WriteString(value?.AssemblyQualifiedName);
     }
 
+    const int MaxTypeNameLength = 1024;
+
     [UnconditionalSuppressMessage("Trimming", "IL2057", Justification = "Type round-trips by AssemblyQualifiedName carried in the payload; trimmed apps must keep the named types rooted themselves (inherent to serializing Type, same as v3)")]
     public void Deserialize(ref TReadBuffer buffer, ref DeserializeState state, ref Type? value)
     {
@@ -29,6 +31,13 @@ public sealed partial class TypeFormatter<TWriteBuffer, TReadBuffer> : IMessageP
         {
             value = null;
             return;
+        }
+
+        // the same cap the typeless loader puts in front of Type.GetType: the name parser is recursive in the nesting
+        // of generic arguments, and no real type name is this long
+        if (name.Length > MaxTypeNameLength)
+        {
+            throw new MessagePackSerializationException($"Type name is implausibly long ({name.Length} chars; up to {MaxTypeNameLength} are accepted).");
         }
 
         // no Try variant exists for Type.GetType, so this is the one catch-based wrap

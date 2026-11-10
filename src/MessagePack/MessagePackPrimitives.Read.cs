@@ -1626,8 +1626,34 @@ public static partial class MessagePackPrimitives
             return DecodeResult.InsufficientBuffer;
         }
 
-        value = Encoding.UTF8.GetString(source.Slice(headerSize, byteCount));
+        var utf8 = source.Slice(headerSize, byteCount);
+        if (byteCount > MaxStringLength && Utf8CharCount(utf8) > MaxStringLength)
+        {
+            // more characters than a string can hold (GetString would fail with OutOfMemoryException): not a value this
+            // reader can produce
+            tokenSize = 0;
+            return DecodeResult.TokenMismatch;
+        }
+        value = Encoding.UTF8.GetString(utf8);
         return DecodeResult.Success;
+    }
+
+    // the longest string the runtime allocates (0x3FFFFFDF characters); a str of more bytes may still decode to fewer
+    const int MaxStringLength = 0x3FFFFFDF;
+
+    static int Utf8CharCount(ReadOnlySpan<byte> utf8)
+    {
+#if NETSTANDARD2_0
+        unsafe
+        {
+            fixed (byte* p = utf8)
+            {
+                return Encoding.UTF8.GetCharCount(p, utf8.Length);
+            }
+        }
+#else
+        return Encoding.UTF8.GetCharCount(utf8);
+#endif
     }
 
     /// <summary>Reads a str payload as a UTF-8 slice of source without copying. Nil is a mismatch. On InsufficientBuffer, tokenSize reports header plus payload.</summary>

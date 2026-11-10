@@ -267,14 +267,38 @@ public sealed class InterfaceDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey
             return;
         }
 
-        for (int i = 0; i < count; i++)
+        if (!ReferenceEquals(result, value))
         {
-            TKey k = default!;
-            TValue v = default!;
-            kf.Deserialize(ref buffer, ref state, ref k);
-            vf.Deserialize(ref buffer, ref state, ref v);
-            MessagePackSerializationException.ThrowIfNullMapKey(k);
-            result[k] = v;
+            for (int i = 0; i < count; i++)
+            {
+                TKey k = default!;
+                TValue v = default!;
+                kf.Deserialize(ref buffer, ref state, ref k);
+                vf.Deserialize(ref buffer, ref state, ref v);
+                MessagePackSerializationException.ThrowIfNullMapKey(k);
+                result[k] = v;
+            }
+        }
+        else
+        {
+            // the caller's dictionary, of whatever type: it may refuse a key (a SortedDictionary<object, ...> that
+            // cannot order mixed runtime types), which is a data error
+            for (int i = 0; i < count; i++)
+            {
+                TKey k = default!;
+                TValue v = default!;
+                kf.Deserialize(ref buffer, ref state, ref k);
+                vf.Deserialize(ref buffer, ref state, ref v);
+                MessagePackSerializationException.ThrowIfNullMapKey(k);
+                try
+                {
+                    result[k] = v;
+                }
+                catch (Exception ex) when (MessagePackSerializationException.IsRefusedByCollection(ex))
+                {
+                    MessagePackSerializationException.ThrowRefusedByCollection(result.GetType(), ex);
+                }
+            }
         }
         // a duplicate key collapsed into one slot: reject (cheapest possible detection)
         if (result.Count != count)
