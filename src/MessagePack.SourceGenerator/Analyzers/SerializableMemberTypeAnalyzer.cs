@@ -281,7 +281,7 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
                     }
                     // map-by-name mode leaves a non-writable member out unless a constructor parameter consumes it
                     // (ObjectParser's FilterNonContractSlots rule): a computed getter-only property is never serialized
-                    var writable = property.SetMethod is { } setter && (allowPrivate || setter.DeclaredAccessibility == Accessibility.Public);
+                    var writable = ObjectParser.SetterOf(property) is { } setter && (allowPrivate || setter.DeclaredAccessibility == Accessibility.Public);
                     if (seenOverrideRoots.Add(root)
                         && Participates(property, keyAsPropertyName)
                         && (!keyAsPropertyName || writable || IsConsumedByAConstructor(type, property.Name, allowPrivate))

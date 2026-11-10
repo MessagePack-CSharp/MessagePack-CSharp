@@ -187,7 +187,11 @@ public static class WriteBufferExtensions
             buffer.Advance(UnsafeWriteFixArrayHeader(ref buffer.GetReference(MaxArrayHeaderLength), count));
         }
 
-        /// <summary>Writes an array header in the smallest format.</summary>
+        /// <summary>
+        /// Writes an array header in the smallest format. <paramref name="count"/> must not be negative: it is not
+        /// validated here, and a negative value is written as an array32 header of its unsigned value (-1 claims
+        /// 4,294,967,295 elements), which no reader accepts.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WriteArrayHeader(int count)
         {
@@ -201,7 +205,10 @@ public static class WriteBufferExtensions
             buffer.Advance(UnsafeWriteFixMapHeader(ref buffer.GetReference(MaxMapHeaderLength), count));
         }
 
-        /// <summary>Writes a map header in the smallest format.</summary>
+        /// <summary>
+        /// Writes a map header in the smallest format. <paramref name="count"/> must not be negative: it is not
+        /// validated here, and a negative value is written as a map32 header of its unsigned value.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WriteMapHeader(int count)
         {
@@ -212,6 +219,8 @@ public static class WriteBufferExtensions
         /// Writes a bin header, as bin8, bin16 or bin32 for byteCount.
         /// The caller then writes exactly byteCount payload bytes through <see cref="WriteRaw{TWriteBuffer}(ref TWriteBuffer, ReadOnlySpan{byte})"/> or GetSpan and Advance.
         /// Use <see cref="WriteBinary{TWriteBuffer}(ref TWriteBuffer, ReadOnlySpan{byte})"/> when the payload is already a single span.
+        /// <paramref name="byteCount"/> must not be negative: it is not validated here, and a negative value is written as
+        /// a bin32 header of its unsigned value.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WriteBinHeader(int byteCount)

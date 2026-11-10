@@ -231,6 +231,17 @@ static class ObjectParser
                     && property.GetMethod is { } getter
                     && (allowPrivate || (property.DeclaredAccessibility == Accessibility.Public && getter.DeclaredAccessibility == Accessibility.Public)))
                 {
+                    if (!CanBeAMemberType(property.Type) || property.ReturnsByRef || property.ReturnsByRefReadonly)
+                    {
+                        // a ref struct, a pointer or a by-ref cannot be a type argument, so no formatter exists for it:
+                        // not a member of the contract (a `ReadOnlySpan<byte> Payload => Data` view), in the reflection
+                        // tier neither. Said aloud when the member was annotated as one.
+                        if (HasAttribute(property, KeyAttributeName))
+                        {
+                            diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}.{property.Name}' is of type '{property.Type.ToDisplayString()}', which no formatter can serialize (a ref struct, pointer or by-ref cannot be a type argument); the member is left out.", LocationInfo.From(property)));
+                        }
+                        continue;
+                    }
                     var root = (IPropertySymbol)property.OriginalDefinition;
                     while (root.OverriddenProperty is { } overridden)
                     {
@@ -240,7 +251,7 @@ static class ObjectParser
                     {
                         continue;
                     }
-                    var setter = property.SetMethod is { } set && (allowPrivate || set.DeclaredAccessibility == Accessibility.Public)
+                    var setter = SetterOf(property) is { } set && (allowPrivate || set.DeclaredAccessibility == Accessibility.Public)
                         ? (set.IsInitOnly ? SetterKind.Init : SetterKind.Set)
                         : SetterKind.None;
                     candidates.Add(new Candidate(property, property.Type, setter));
@@ -259,6 +270,14 @@ static class ObjectParser
                     && (allowPrivate || field.DeclaredAccessibility == Accessibility.Public)
                     && !HasAttribute(field, NonSerializedAttributeName))
                 {
+                    if (!CanBeAMemberType(field.Type) || field.IsFixedSizeBuffer)
+                    {
+                        if (HasAttribute(field, KeyAttributeName))
+                        {
+                            diagnostics.Add(new DiagnosticInfo(Diagnostics.UnsupportedType, $"'{typeName}.{field.Name}' is of type '{field.Type.ToDisplayString()}', which no formatter can serialize (a ref struct, pointer or by-ref cannot be a type argument); the member is left out.", LocationInfo.From(field)));
+                        }
+                        continue;
+                    }
                     candidates.Add(new Candidate(field, field.Type, field.IsReadOnly ? SetterKind.None : SetterKind.Set));
                 }
             }
@@ -2256,6 +2275,23 @@ static class ObjectParser
 
     // a namespace's dotted name without keyword escaping (`Acme.event`, where the default format gives `Acme.@event`)
     internal static readonly SymbolDisplayFormat MetadataNamespaceFormat = new(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
+
+    // The setter a property is written through: its own, or, for an override that declares only `get`, the one it
+    // inherits (`derived.X = value` compiles). Such a member was written and then skipped on the way back.
+    internal static IMethodSymbol? SetterOf(IPropertySymbol property)
+    {
+        for (var current = property; current is not null; current = current.OverriddenProperty)
+        {
+            if (current.SetMethod is { } setter)
+            {
+                return setter;
+            }
+        }
+        return null;
+    }
+
+    static bool CanBeAMemberType(ITypeSymbol type) =>
+        !type.IsRefLikeType && type.TypeKind is not (TypeKind.Pointer or TypeKind.FunctionPointer);
 
     static bool IsSystemNamespace(INamespaceSymbol? ns)
     {

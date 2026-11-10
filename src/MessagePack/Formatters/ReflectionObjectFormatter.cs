@@ -236,7 +236,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 if (property.GetIndexParameters().Length != 0 ||
                     getMethod is null ||
                     (!allowPrivate && !getMethod.IsPublic) ||
-                    (objectAttribute is not null && property.Name.IndexOf('.') >= 0))
+                    (objectAttribute is not null && property.Name.IndexOf('.') >= 0) ||
+                    !CanBeAMemberType(property.PropertyType))
                 {
                     continue;
                 }
@@ -253,7 +254,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 // in every mode (v3's shared rule)
                 if (field.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false) ||
                     field.Name.Length > 0 && field.Name[0] is '<' or '$' ||
-                    field.IsDefined(typeof(NonSerializedAttribute), inherit: true))
+                    field.IsDefined(typeof(NonSerializedAttribute), inherit: true) ||
+                    !CanBeAMemberType(field.FieldType))
                 {
                     continue;
                 }
@@ -277,9 +279,15 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 || property.GetMethod is not { } getMethod
                 || seenRootGetters.Add(getMethod.GetBaseDefinition());
         }
+        // An override sorts at the level of the declaration it overrides, ahead of that level's own members, and
+        // within a level properties come before fields: the generator's order (ObjectParser: a stable sort by
+        // SortDepth over its derived-first candidate list). Sorting an override at its own level, as this did, wrote
+        // {"Y","X"} where the generated formatter of the same type writes {"X","Y"}.
         var perLevelCandidates = candidates
             .Where((c, i) => keepForPerLevel[i])
-            .OrderBy(static c => c.Member.DeclaringType, BaseTypesFirstComparer.Instance)
+            .OrderBy(static c => SortLevel(c.Member), BaseTypesFirstComparer.Instance)
+            .ThenBy(static c => c.Member is FieldInfo)
+            .ThenByDescending(static c => c.Member.DeclaringType, BaseTypesFirstComparer.Instance)
             .ToList();
         var namesInBaseOrder = new HashSet<string>();
         for (int i = 0; i < perLevelCandidates.Count; i++)
@@ -293,7 +301,12 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         // v3 sorts string-keyed members by [DataMember(Order)] last of all (absent members sort as int.MaxValue,
         // present-without-Order as -1, ties stay stable); the int-keyed wire is positioned by key,
         // so applying it uniformly is harmless there
-        candidates = [.. candidates.OrderBy(static c => GetDataMemberOrder(c.Member))];
+        // (the kind-major list of the explicit-key branch gets the same override placement first)
+        candidates = [.. candidates
+            .OrderBy(static c => c.Member is FieldInfo)
+            .ThenBy(static c => SortLevel(c.Member), BaseTypesFirstComparer.Instance)
+            .ThenByDescending(static c => c.Member.DeclaringType, BaseTypesFirstComparer.Instance)
+            .OrderBy(static c => GetDataMemberOrder(c.Member))];
         perLevelCandidates = [.. perLevelCandidates.OrderBy(static c => GetDataMemberOrder(c.Member))];
 
         foreach (var candidate in candidates)
@@ -775,7 +788,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     // (initonly fields included).
     static bool IsWritableMember(in MemberCandidate candidate, bool allowPrivate) => candidate.Member switch
     {
-        PropertyInfo property => property.SetMethod is { } setMethod && (allowPrivate || setMethod.IsPublic),
+        PropertyInfo property => SetterOf(property) is { } setMethod && (allowPrivate || setMethod.IsPublic),
         FieldInfo field => allowPrivate || !field.IsInitOnly, // v3: AllowPrivate counted even initonly fields
         _ => false,
     };
@@ -883,12 +896,77 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         return superseded;
     }
 
+    // the level a member sorts at on a string-keyed wire: an override at its root declaration's (see perLevelCandidates)
+    static Type? SortLevel(MemberInfo member) =>
+        member is PropertyInfo { GetMethod: { IsVirtual: true } getter } ? getter.GetBaseDefinition().DeclaringType : member.DeclaringType;
+
+    // The setter a property is written through: its own, or, for an override that declares only `get`, the one it
+    // inherits. Reflection gives such an override no SetMethod although `derived.X = value` compiles, so the member was
+    // written and then skipped on the way back (X = 5 read as 0).
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "base types of a type this tier already reflects over, behind ReflectionFormatterFactory's RequiresUnreferencedCode gate")]
+    static MethodInfo? SetterOf(PropertyInfo property)
+    {
+        if (property.SetMethod is { } own)
+        {
+            return own;
+        }
+        if (property.GetMethod is not { IsVirtual: true } getter)
+        {
+            return null;
+        }
+        var root = getter.GetBaseDefinition();
+        for (var type = property.DeclaringType?.BaseType; type is not null; type = type.BaseType)
+        {
+            PropertyInfo? inherited;
+            try
+            {
+                inherited = type.GetProperty(property.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            }
+            catch (AmbiguousMatchException)
+            {
+                continue;
+            }
+            if (inherited?.GetMethod?.GetBaseDefinition() == root && inherited.SetMethod is { } setter)
+            {
+                return setter;
+            }
+        }
+        return null;
+    }
+
+    // A ref struct, a pointer or a by-ref cannot be a type argument, so no formatter exists for a member of such a
+    // type: it is no member of the contract (a `ReadOnlySpan<byte> Payload => Data` view next to the data it views).
+    // Building a slot for one failed in MakeGenericMethod and took the whole type down with ArgumentException.
+    static bool CanBeAMemberType(Type type)
+    {
+        if (type.IsByRef || type.IsPointer)
+        {
+            return false;
+        }
+#if NETSTANDARD2_0
+        foreach (var attribute in type.CustomAttributes)
+        {
+            if (attribute.AttributeType.FullName == "System.Runtime.CompilerServices.IsByRefLikeAttribute")
+            {
+                return false;
+            }
+        }
+        return true;
+#else
+        return !type.IsByRefLike;
+#endif
+    }
+
     static bool IsQuietOverrideCollapse(MemberCandidate added, MemberCandidate later)
     {
-        return added.Member is PropertyInfo existing && later.Member is PropertyInfo
+        // the same storage only when both are declarations of one override chain: a `new` property that reuses the
+        // name and key of a virtual base property is separate storage (the generator reports it, MsgPack003), and
+        // collapsing it dropped the derived member without a word
+        return added.Member is PropertyInfo existing && later.Member is PropertyInfo laterProperty
             && existing.Name == later.Member.Name
             && (existing.GetMethod is { IsVirtual: true, IsFinal: false }
-                || existing.SetMethod is { IsVirtual: true, IsFinal: false });
+                || existing.SetMethod is { IsVirtual: true, IsFinal: false })
+            && (existing.GetMethod ?? existing.SetMethod)?.GetBaseDefinition() == ((existing.GetMethod is not null ? laterProperty.GetMethod : laterProperty.SetMethod))?.GetBaseDefinition();
     }
 
     static object? FindAttribute(object[] attributes, string fullName) =>
@@ -1603,7 +1681,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         public ClassPropertySlot(PropertyInfo property, bool allowPrivate)
         {
             getter = property.GetMethod!.CreateDelegate<Func<T, TMember>>();
-            setter = property.SetMethod is { } setMethod && (setMethod.IsPublic || allowPrivate)
+            setter = SetterOf(property) is { } setMethod && (setMethod.IsPublic || allowPrivate)
                 ? setMethod.CreateDelegate<Action<T, TMember>>()
                 : null;
         }
@@ -1683,7 +1761,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         public StructPropertySlot(PropertyInfo property, bool allowPrivate)
         {
             getter = property.GetMethod!.CreateDelegate<MemberGetter<TMember>>();
-            setter = property.SetMethod is { } setMethod && (setMethod.IsPublic || allowPrivate)
+            setter = SetterOf(property) is { } setMethod && (setMethod.IsPublic || allowPrivate)
                 ? setMethod.CreateDelegate<MemberSetter<TMember>>()
                 : null;
         }

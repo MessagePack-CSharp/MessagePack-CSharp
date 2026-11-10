@@ -57,6 +57,14 @@ public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
         }
         if (type.IsEnum)
         {
+            // A type-level [MessagePackFormatter] on an enum that got this far was not compiled by the source generator
+            // (the generated registration sits in front of this tier). Serving the enum with the integer formatter
+            // would ignore the declaration without a word (EnumAsStringFormatterFactory: names on one side, integers
+            // on this one), where a class in the same position fails with the message naming the attribute.
+            if (AttributeFormatterActivator.FindAttribute(type.GetCustomAttributes(inherit: false), MessagePackAttributeNames.Formatter) is { } formatterAttribute)
+            {
+                throw AttributeFormatterActivator.TypeLevelNotCompiled(formatterAttribute, type);
+            }
             typeArguments = [type];
             return typeof(EnumFormatterFactory<>);
         }

@@ -439,10 +439,219 @@ public class Rc1AuditRegressionTests
         Assert.Same(second, await Task.WhenAny(second, Task.Delay(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken)));
         Assert.Equal(42, await second);
     }
+    // ---- C: the two tiers agree, and nothing is dropped without a word ----
+
+    // An overridden property sorts at the level of the declaration it overrides in both tiers. The reflection tier
+    // sorted it at its own level and wrote {"Y","X"} where the generated formatter of the same shape writes {"X","Y"}.
+    [Fact]
+    public void OverriddenProperty_MapKeyOrder_IsTheSameInBothTiers()
+    {
+        var generated = V4.Serialize(new AuditOverrideGenerated { X = 1, Y = 2, Z = 3 });
+        var reflected = V4.Serialize(new AuditOverrideReflected { X = 1, Y = 2, Z = 3 });
+        Assert.Equal("""{"X":1,"Y":2,"Z":3}""", V4.ConvertToJson(generated));
+        Assert.Equal(generated, reflected);
+
+        var generatedKeyed = V4.Serialize(new AuditOverrideKeyedGenerated { X = 1, Y = 2 });
+        var reflectedKeyed = V4.Serialize(new AuditOverrideKeyedReflected { X = 1, Y = 2 });
+        Assert.Equal("""{"x":1,"y":2}""", V4.ConvertToJson(generatedKeyed));
+        Assert.Equal(generatedKeyed, reflectedKeyed);
+
+        // either order reads in either tier
+        byte[] swapped = [0x83, 0xa1, (byte)'Z', 0x03, 0xa1, (byte)'Y', 0x02, 0xa1, (byte)'X', 0x01];
+        Assert.Equal(1, V4.Deserialize<AuditOverrideGenerated>(swapped)!.X);
+        Assert.Equal(1, V4.Deserialize<AuditOverrideReflected>(swapped)!.X);
+    }
+
+    // an override that declares only `get` inherits its setter (`derived.X = 5` compiles); both tiers wrote the member
+    // and skipped it on the way back (X = 5 read as 0)
+    [Fact]
+    public void OverrideDeclaringOnlyGet_IsReadBackThroughTheInheritedSetter()
+    {
+        Assert.Equal(5, V4.Deserialize<AuditGetOnlyOverrideGenerated>(V4.Serialize(new AuditGetOnlyOverrideGenerated { X = 5 }))!.X);
+        Assert.Equal(5, V4.Deserialize<AuditGetOnlyOverrideReflected>(V4.Serialize(new AuditGetOnlyOverrideReflected { X = 5 }))!.X);
+        Assert.Equal(V4.Serialize(new AuditGetOnlyOverrideGenerated { X = 5 }), V4.Serialize(new AuditGetOnlyOverrideReflected { X = 5 }));
+    }
+
+    // a `new` property on the key of a virtual base property is separate storage: the generator reports the duplicate
+    // key (MsgPack003), and the reflection tier dropped the derived member without a word
+    [Fact]
+    public void NewPropertyOnTheKeyOfAVirtualBaseProperty_IsADuplicateKeyInTheReflectionTier()
+    {
+        var exception = Assert.Throws<MessagePackSerializationException>(() => V4.Serialize(new AuditNewKeyReflected()));
+        Assert.Contains("more than once", exception.Message);
+    }
+
+    // a ref struct (or pointer, or by-ref) cannot be a type argument, so no formatter exists for a member of such a
+    // type: a `ReadOnlySpan<byte> Payload => Data` view made the reflection tier fail the whole type with
+    // ArgumentException, and the generated tier emit code that does not compile when the member was keyed
+    [Fact]
+    public void MemberOfARefStructType_IsNoMemberOfTheContract()
+    {
+        Assert.Equal("""{"Data":"AQI="}""", V4.ConvertToJson(V4.Serialize(new AuditSpanViewContractless { Data = [1, 2] }, Contractless)));
+        Assert.Equal("""{"Data":"AQI="}""", V4.ConvertToJson(V4.Serialize(new AuditSpanViewReflected { Data = [1, 2] })));
+        Assert.Equal("""{"Data":"AQI="}""", V4.ConvertToJson(V4.Serialize(new AuditSpanViewGenerated { Data = [1, 2] })));
+        Assert.Equal([1, 2], V4.Deserialize<AuditSpanViewGenerated>(V4.Serialize(new AuditSpanViewReflected { Data = [1, 2] }))!.Data);
+    }
+
+    // a type-level [MessagePackFormatter] on an enum in an assembly the generator did not process was ignored: the
+    // enum was written as an integer, where a class in the same position fails with the message naming the attribute
+    [Fact]
+    public void EnumWithATypeLevelFormatter_NotCompiledByTheGenerator_FailsLikeAClass()
+    {
+        var assembly = AnalyzerTestHost.CompileAndLoad("""
+            using MessagePack;
+            using MessagePack.Formatters;
+            [MessagePackFormatter(typeof(EnumAsStringFormatterFactory<Fruit>))] public enum Fruit { Apple = 1, Banana = 7 }
+            public enum Plain { A = 1 }
+            """, withGenerator: false);
+        var fruit = assembly.GetType("Fruit")!;
+        var exception = Assert.Throws<MessagePackSerializationException>(() => V4.Serialize(fruit, Enum.ToObject(fruit, 7)));
+        Assert.Contains("[MessagePackFormatter]", exception.Message);
+        // an enum without the attribute is the integer it always was
+        var plain = assembly.GetType("Plain")!;
+        Assert.Equal([0x01], V4.Serialize(plain, Enum.ToObject(plain, 1)));
+    }
+
+    // 0 (or a negative value) made every Stream and PipeReader read fail; MaxDepth = 0 means unlimited, this does not
+    [Fact]
+    public void MaxBufferedMessageSize_MustBePositive()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => V4Options.Default with { MaxBufferedMessageSize = 0 });
+        Assert.Throws<ArgumentOutOfRangeException>(() => V4Options.Default with { MaxBufferedMessageSize = -1 });
+        var unlimited = V4Options.Default with { MaxBufferedMessageSize = long.MaxValue };
+        Assert.Equal(1, V4.Deserialize<int>(new MemoryStream([0x01]), unlimited));
+    }
 }
 
 public class AuditSortedList : SortedList<int, object?>
 {
+}
+
+[MessagePackObject(true)]
+public class AuditOverrideBaseGenerated
+{
+    public virtual int X { get; set; }
+
+    public int Y { get; set; }
+}
+
+[MessagePackObject(true)]
+public class AuditOverrideGenerated : AuditOverrideBaseGenerated
+{
+    public override int X { get; set; }
+
+    public int Z { get; set; }
+}
+
+[MessagePackObject(true, SuppressSourceGeneration = true)]
+public class AuditOverrideBaseReflected
+{
+    public virtual int X { get; set; }
+
+    public int Y { get; set; }
+}
+
+[MessagePackObject(true, SuppressSourceGeneration = true)]
+public class AuditOverrideReflected : AuditOverrideBaseReflected
+{
+    public override int X { get; set; }
+
+    public int Z { get; set; }
+}
+
+[MessagePackObject]
+public class AuditOverrideKeyedBaseGenerated
+{
+    [Key("x")]
+    public virtual int X { get; set; }
+
+    [Key("y")]
+    public int Y { get; set; }
+}
+
+[MessagePackObject]
+public class AuditOverrideKeyedGenerated : AuditOverrideKeyedBaseGenerated
+{
+    public override int X { get; set; }
+}
+
+[MessagePackObject(SuppressSourceGeneration = true)]
+public class AuditOverrideKeyedBaseReflected
+{
+    [Key("x")]
+    public virtual int X { get; set; }
+
+    [Key("y")]
+    public int Y { get; set; }
+}
+
+[MessagePackObject(SuppressSourceGeneration = true)]
+public class AuditOverrideKeyedReflected : AuditOverrideKeyedBaseReflected
+{
+    public override int X { get; set; }
+}
+
+[MessagePackObject]
+public class AuditGetOnlyOverrideBaseGenerated
+{
+    [Key(0)]
+    public virtual int X { get; set; }
+}
+
+[MessagePackObject]
+public class AuditGetOnlyOverrideGenerated : AuditGetOnlyOverrideBaseGenerated
+{
+    public override int X { get => base.X; }
+}
+
+[MessagePackObject(SuppressSourceGeneration = true)]
+public class AuditGetOnlyOverrideBaseReflected
+{
+    [Key(0)]
+    public virtual int X { get; set; }
+}
+
+[MessagePackObject(SuppressSourceGeneration = true)]
+public class AuditGetOnlyOverrideReflected : AuditGetOnlyOverrideBaseReflected
+{
+    public override int X { get => base.X; }
+}
+
+[MessagePackObject(SuppressSourceGeneration = true)]
+public class AuditNewKeyBaseReflected
+{
+    [Key(0)]
+    public virtual int X { get; set; }
+}
+
+[MessagePackObject(SuppressSourceGeneration = true)]
+public class AuditNewKeyReflected : AuditNewKeyBaseReflected
+{
+    [Key(0)]
+    public new int X { get; set; }
+}
+
+public class AuditSpanViewContractless
+{
+    public byte[] Data { get; set; } = [];
+
+    public ReadOnlySpan<byte> Payload => Data;
+}
+
+[MessagePackObject(true, SuppressSourceGeneration = true)]
+public class AuditSpanViewReflected
+{
+    public byte[] Data { get; set; } = [];
+
+    public ReadOnlySpan<byte> Payload => Data;
+}
+
+[MessagePackObject(true)]
+public class AuditSpanViewGenerated
+{
+    public byte[] Data { get; set; } = [];
+
+    public ReadOnlySpan<byte> Payload => Data;
 }
 
 [MessagePackObject]

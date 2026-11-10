@@ -89,9 +89,23 @@ public sealed record class MessagePackSerializerOptions
     /// It bounds the memory an oversized or hostile stream can pin. The span and sequence entries are unaffected, since the caller owns the buffer there.
     /// Under a compressing <see cref="MessageProcessor"/> this counts the compressed bytes; the decoded size is bounded by that processor's own
     /// MaxDecompressedSize, so set both for untrusted input (a 2 KB frame may legitimately decode to the processor's full cap).
-    /// Defaults to 64 MiB.
+    /// Defaults to 64 MiB. Must be positive: unlike <see cref="MaxDepth"/>, 0 is not "unlimited" (it would refuse every
+    /// message); pass <see cref="long.MaxValue"/> to buffer without a bound.
     /// </summary>
-    public long MaxBufferedMessageSize { get; init; } = 64 * 1024 * 1024;
+    public long MaxBufferedMessageSize
+    {
+        get;
+        init
+        {
+            // 0 and below made every Stream and PipeReader read fail with "exceeds MaxBufferedMessageSize (0)": a
+            // misconfiguration, reported where it is made. A memory guard has no value that silently means "none".
+            if (value <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(MaxBufferedMessageSize), value, "MaxBufferedMessageSize must be positive; use long.MaxValue for no limit");
+            }
+            field = value;
+        }
+    } = 64 * 1024 * 1024;
 
     /// <summary>
     /// Creates options over a new <see cref="MessagePackFormatterResolver"/> for <paramref name="factory"/>, with the resolver's default settings.
