@@ -41,6 +41,24 @@ internal static class HashFloodingResistantEqualityComparer
     public static bool ReplacesDefault<T>(IEqualityComparer<T>? resistant, IEqualityComparer<T> instanceComparer)
         => resistant is not null && ReferenceEquals(instanceComparer, EqualityComparer<T>.Default);
 
+    /// <summary>
+    /// <see cref="Get{T}"/> for the frozen collections, which differ in one case: string keys on .NET 9+. Dictionary
+    /// and HashSet defend the default string comparer themselves (they switch to a randomized hash once a bucket
+    /// chain grows), which is why Get returns null for string there. FrozenDictionary and FrozenSet do not: with the
+    /// default comparer they pick an ordinal-string strategy that hashes with a fixed seed, so colliding keys can be
+    /// computed ahead (28,900 of them made 28,900 lookups take 759 ms instead of 14), and that rents a table sized
+    /// by the spread of the key lengths (two keys, one of them 10 MB: 288 MB). A comparer of our own sends the BCL
+    /// to its comparer-driven implementation, which has neither property.
+    /// </summary>
+    internal static IEqualityComparer<T>? GetForFrozen<T>()
+    {
+        if (typeof(T) == typeof(string))
+        {
+            return (IEqualityComparer<T>)(object)StringHashComparer.Instance;
+        }
+        return Cache<T>.Instance;
+    }
+
     static class Cache<T>
     {
         internal static readonly IEqualityComparer<T>? Instance = Create();

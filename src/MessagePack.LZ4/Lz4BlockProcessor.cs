@@ -100,6 +100,57 @@ internal static class Lz4BlockEnvelope
             {
                 Lz4Throws.InvalidEnvelope();
             }
+
+            // Each block decoded on its own costs a rented array (16 bytes at least), a segment object and a slot in
+            // the owner array, whatever its size: an envelope of one-byte blocks held 19 times its own length. The
+            // writers cut blocks of tens of kilobytes, where that overhead is nothing; when the declared sizes average
+            // under SmallBlockAverage, the blocks are decoded side by side into one buffer instead. The headers are
+            // walked first for that (no allocation), with the same guards the decode loop applies.
+            {
+                var probeSizes = sizes;
+                var probeBlocks = blocks;
+                long probeTotal = 0;
+                for (int i = 0; i < blockCount; i++)
+                {
+                    if (TryReadInt32(probeSizes, out var uncompressedLength, out var intSize) != DecodeResult.Success || uncompressedLength < 0)
+                    {
+                        Lz4Throws.InvalidEnvelope();
+                    }
+                    probeSizes = probeSizes.Slice(intSize);
+                    if (TryReadBinHeader(probeBlocks, out var binLength, out var binSize) != DecodeResult.Success || binLength > probeBlocks.Length - binSize)
+                    {
+                        Lz4Throws.InvalidEnvelope();
+                    }
+                    probeTotal += uncompressedLength;
+                    GuardDeclaredLength(uncompressedLength, binLength, probeTotal, maxDecompressedSize);
+                    probeBlocks = probeBlocks.Slice(binSize + binLength);
+                }
+                if (blockCount > 0 && probeTotal < (long)blockCount * SmallBlockAverage && probeTotal <= MaxSingleBufferLength)
+                {
+                    var single = ArrayPool<byte>.Shared.Rent((int)probeTotal);
+                    try
+                    {
+                        var written = 0;
+                        for (int i = 0; i < blockCount; i++)
+                        {
+                            TryReadInt32(sizes, out var uncompressedLength, out var intSize);
+                            sizes = sizes.Slice(intSize);
+                            TryReadBinHeader(blocks, out var binLength, out var binSize);
+                            DecodeBlockInto(blocks.Slice(binSize, binLength), single.AsSpan(written, uncompressedLength));
+                            written += uncompressedLength;
+                            blocks = blocks.Slice(binSize + binLength);
+                        }
+                        message = new DecodedMessage(new ReadOnlySequence<byte>(single, 0, written), new RentedSingleOwner(single));
+                        return true;
+                    }
+                    catch
+                    {
+                        ArrayPool<byte>.Shared.Return(single);
+                        throw;
+                    }
+                }
+            }
+
             var rentedBlocks = new byte[]?[blockCount];
             try
             {
@@ -194,6 +245,29 @@ internal static class Lz4BlockEnvelope
             && count >= 1
             && TryReadExtHeader(prefix.Slice(tokenSize), out typeCode, out _, out _) == DecodeResult.Success
             && typeCode == ThisLibraryExtensionTypeCodes.Lz4BlockArray;
+    }
+
+    // blocks whose declared sizes average less than this are decoded into one buffer (see TryDecode)
+    const int SmallBlockAverage = 1024;
+
+    // the single buffer is one array: above this the per-block path takes over (as it does for ordinary block sizes)
+    const int MaxSingleBufferLength = 0x7FFFFFC7;
+
+    static void DecodeBlockInto(ReadOnlySpan<byte> lz4, Span<byte> destination)
+    {
+        int decoded;
+        try
+        {
+            decoded = LZ4.Block.Decompress(lz4, destination);
+        }
+        catch (LZ4Exception)
+        {
+            decoded = -1; // malformed input: the same domain exception as any other envelope corruption
+        }
+        if (decoded != destination.Length)
+        {
+            Lz4Throws.InvalidEnvelope();
+        }
     }
 
     static ReadOnlySequence<byte> DecodeBlock(ReadOnlySpan<byte> lz4, int uncompressedLength, out byte[]? rented)

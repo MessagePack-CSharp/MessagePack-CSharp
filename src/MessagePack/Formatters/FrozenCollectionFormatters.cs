@@ -34,7 +34,7 @@ public sealed class FrozenDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, T
         valueFormatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, TValue>();
         if (comparer == null && resolver.HashFloodingResistant)
         {
-            comparer = HashFloodingResistantEqualityComparer.Get<TKey>();
+            comparer = HashFloodingResistantEqualityComparer.GetForFrozen<TKey>(); // string keys included, on every target
         }
     }
 
@@ -149,7 +149,7 @@ public sealed partial class FrozenSetFormatter<TWriteBuffer, TReadBuffer, T> : I
         formatter ??= resolver.GetFormatter<TWriteBuffer, TReadBuffer, T>();
         if (comparer == null && resolver.HashFloodingResistant)
         {
-            comparer = HashFloodingResistantEqualityComparer.Get<T>();
+            comparer = HashFloodingResistantEqualityComparer.GetForFrozen<T>(); // string keys included, on every target
         }
     }
 

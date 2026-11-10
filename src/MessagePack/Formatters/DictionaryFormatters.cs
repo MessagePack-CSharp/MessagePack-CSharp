@@ -258,6 +258,15 @@ public sealed class InterfaceDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey
         var kf = keyFormatter;
         var vf = valueFormatter;
 
+        if (result is SortedList<TKey, TValue> sortedList)
+        {
+            // a reused SortedList is filled in key order, not in payload order (quadratic for descending keys)
+            SortedListReads.ReadInto(ref buffer, ref state, count, sortedList, kf, vf);
+            value = result;
+            state.Exit();
+            return;
+        }
+
         for (int i = 0; i < count; i++)
         {
             TKey k = default!;
@@ -625,7 +634,6 @@ public sealed class SortedListFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
         var count = buffer.ReadMapHeader(ref state);
         state.Enter();
 
-        var capacity = ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining);
         SortedList<TKey, TValue> result;
         if (value != null)
         {
@@ -634,17 +642,45 @@ public sealed class SortedListFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
         }
         else
         {
-            result = new SortedList<TKey, TValue>(capacity);
+            result = new SortedList<TKey, TValue>(ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining));
         }
 
+        SortedListReads.ReadInto(ref buffer, ref state, count, result, keyFormatter, valueFormatter);
+
+        value = result;
+        state.Exit();
+    }
+}
+
+// Reading a map into a SortedList<TKey, TValue>, shared by every formatter that can meet one: this one for the exact
+// type, GenericDictionaryFormatter for a class derived from it, InterfaceDictionaryFormatter for an IDictionary member
+// that holds one. The list must be empty.
+internal static class SortedListReads
+{
+    public static void ReadInto<TWriteBuffer, TReadBuffer, TKey, TValue>(
+        ref TReadBuffer buffer,
+        ref DeserializeState state,
+        int count,
+        SortedList<TKey, TValue> result,
+        IMessagePackFormatter<TWriteBuffer, TReadBuffer, TKey> keyFormatter,
+        IMessagePackFormatter<TWriteBuffer, TReadBuffer, TValue> valueFormatter)
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+        where TKey : notnull
+    {
         // SortedList inserts by binary search plus an Array.Copy shift of everything after the slot, so keys arriving
         // in descending order (a Dictionary producer, another language's map) cost O(n) each, O(n^2) in all: 1M entries
         // took over a minute. Read into parallel arrays, sort once with the list's own comparer, then insert ascending,
         // where every insert lands at the end and shifts nothing.
+        var capacity = ReadBufferExtensions.PresizeCapacity<KeyValuePair<TKey, TValue>>(count, buffer.BytesRemaining);
         var keys = new TKey[capacity];
         var values = new TValue[capacity];
-        var kf = keyFormatter;
-        var vf = valueFormatter;
         for (int i = 0; i < count; i++)
         {
             if (i == keys.Length)
@@ -656,8 +692,8 @@ public sealed class SortedListFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
             }
             TKey k = default!;
             TValue v = default!;
-            kf.Deserialize(ref buffer, ref state, ref k);
-            vf.Deserialize(ref buffer, ref state, ref v);
+            keyFormatter.Deserialize(ref buffer, ref state, ref k);
+            valueFormatter.Deserialize(ref buffer, ref state, ref v);
             MessagePackSerializationException.ThrowIfNullMapKey(k);
             keys[i] = k;
             values[i] = v;
@@ -682,9 +718,6 @@ public sealed class SortedListFormatter<TWriteBuffer, TReadBuffer, TKey, TValue>
         {
             MessagePackSerializationException.ThrowDuplicateMapKey();
         }
-
-        value = result;
-        state.Exit();
     }
 }
 

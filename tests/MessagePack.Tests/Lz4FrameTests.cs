@@ -311,14 +311,53 @@ public class Lz4FrameTests
         {
             Assert.False(processor.TryFindMessageEnd(new ReadOnlySequence<byte>(bytes, 0, delivered), ref position, out var lowerBound));
             Assert.True(lowerBound > delivered);
-            Assert.True(position >= previous);
-            Assert.True(delivered - position <= 5 || delivered < 7, $"position {position} lags {delivered} bytes");
-            previous = position;
+            var offset = position & ((1L << 56) - 1); // the bits above carry the walker's phase and the header flags
+            Assert.True(offset >= previous);
+            Assert.True(delivered - offset <= 5 || delivered < 7, $"position {offset} lags {delivered} bytes");
+            previous = offset;
         }
         Assert.True(processor.TryFindMessageEnd(new ReadOnlySequence<byte>(bytes), ref position, out var length));
         Assert.Equal(bytes.Length, length);
         Assert.True(processor.TryFindMessageEnd(new ReadOnlySequence<byte>(bytes), out var whole));
         Assert.Equal(bytes.Length, whole);
+    }
+    // the same for the skippable frames in front of the frame: the walk used to start over at offset 0 on every
+    // call until the frame header had been read, so a prefix of many empty skippable frames received in small reads
+    // cost reads x frames (160,000 of them, 64 bytes per read: 12 seconds)
+    [Fact]
+    public void BoundaryWalk_ResumesInsideTheSkippablePrefix()
+    {
+        var bytes = new List<byte>();
+        for (var i = 0; i < 2000; i++)
+        {
+            bytes.AddRange([0x50, 0x2A, 0x4D, 0x18, 0x00, 0x00, 0x00, 0x00]); // an empty skippable frame
+        }
+        bytes.AddRange([0x04, 0x22, 0x4D, 0x18, 0x60, 0x40, 0x00, 0x01, 0x00, 0x00, 0x80, 0x2A, 0x00, 0x00, 0x00, 0x00]); // header, one stored 1-byte block, end mark
+        var all = bytes.ToArray();
+        var processor = V4Options.Default.WithLz4Frame().MessageProcessor!;
+
+        long position = 0;
+        var previous = 0L;
+        for (var delivered = 1; delivered < all.Length; delivered++)
+        {
+            Assert.False(processor.TryFindMessageEnd(new ReadOnlySequence<byte>(all, 0, delivered), ref position, out var lowerBound));
+            Assert.True(lowerBound > delivered);
+            var offset = position & ((1L << 56) - 1); // the bits above carry the walker's phase and the header flags
+            Assert.True(offset >= previous);
+            Assert.True(delivered - offset <= 8, $"position {offset} lags {delivered} bytes");
+            previous = offset;
+        }
+        Assert.True(processor.TryFindMessageEnd(new ReadOnlySequence<byte>(all), ref position, out var length));
+        Assert.Equal(all.Length, length);
+        Assert.True(processor.TryFindMessageEnd(new ReadOnlySequence<byte>(all), out var whole));
+        Assert.Equal(all.Length, whole);
+
+        // a position left in the prefix by a shorter delivery is a valid starting point for the whole message
+        long midway = 0;
+        Assert.False(processor.TryFindMessageEnd(new ReadOnlySequence<byte>(all, 0, 8 * 1000 + 3), ref midway, out _));
+        Assert.Equal(8 * 1000, midway);
+        Assert.True(processor.TryFindMessageEnd(new ReadOnlySequence<byte>(all), ref midway, out var resumed));
+        Assert.Equal(all.Length, resumed);
     }
 
     [Fact]

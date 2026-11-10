@@ -127,6 +127,16 @@ public sealed class GenericDictionaryFormatter<TWriteBuffer, TReadBuffer, TKey, 
             result = new TDictionary();
         }
         state.Enter();
+#pragma warning disable CS8714 // TKey carries no notnull constraint here; a nil key is refused by the read itself
+        if (result is SortedList<TKey, TValue> sortedList)
+        {
+            // a class derived from SortedList<,>: filled in key order, not in payload order (quadratic for descending keys)
+            SortedListReads.ReadInto(ref buffer, ref state, count, sortedList, keyFormatter, valueFormatter);
+            state.Exit();
+            value = result;
+            return;
+        }
+#pragma warning restore CS8714
         for (int i = 0; i < count; i++)
         {
             TKey key = default!;

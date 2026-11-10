@@ -394,6 +394,10 @@ public class FrameWalkerDifferentialTests
 
     // ---- the sweep ----
 
+    // the walk position is the processor's own value: the frame walkers keep a phase bit and the header's flags above
+    // the offset (bits 56 and up), so that neither the skippable prefix nor the frame header is walked again
+    static long WalkOffset(long position) => position & ((1L << 56) - 1);
+
     static void Sweep(MessagePackMessageProcessor processor, byte[] message, int expectedLength, string label)
     {
         Assert.True(processor.DefinesMessageBoundaries);
@@ -430,13 +434,13 @@ public class FrameWalkerDifferentialTests
                 processor.TryFindMessageEnd(new ReadOnlySequence<byte>(behind, 0, at), ref probe, out _);
                 for (var d = -4; d <= 4; d++)
                 {
-                    var c = (int)probe + d;
+                    var c = (int)WalkOffset(probe) + d;
                     if (c >= 0 && c < message.Length)
                     {
                         cuts.Add(c);
                     }
                 }
-                at = (int)Math.Max(at + 1, probe + 5);
+                at = (int)Math.Max(at + 1, WalkOffset(probe) + 5);
             }
         }
 
@@ -455,8 +459,8 @@ public class FrameWalkerDifferentialTests
                 Assert.True(stateless > cut && stateless <= expectedLength, $"{label}: lower bound {stateless} at cut {cut} of {expectedLength}");
                 Assert.False(processor.TryFindMessageEnd(in prefix, ref position, out var resumed), $"{label}: resumed walk at cut {cut}");
                 Assert.Equal(stateless, resumed);
-                Assert.True(position >= previousPosition && position <= expectedLength, $"{label}: position {position} after {previousPosition} at cut {cut}");
-                previousPosition = position;
+                Assert.True(WalkOffset(position) >= previousPosition && WalkOffset(position) <= expectedLength, $"{label}: position {WalkOffset(position)} after {previousPosition} at cut {cut}");
+                previousPosition = WalkOffset(position);
             }
             foreach (var length in new[] { expectedLength, expectedLength + 1, behind.Length })
             {

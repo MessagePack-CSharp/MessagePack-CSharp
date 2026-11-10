@@ -491,75 +491,106 @@ static class Lz4FrameWalker
         return TryFindEnd(in buffer, ref position, out length);
     }
 
-    // position: the offset of the next block header to read, left here by the previous call over the same message
-    // (0 for a fresh walk). The frame header is re-read on every call (a few bytes, it carries the flags the block
-    // walk needs), the blocks already walked are not.
+    // position: where the previous call over the same message stopped (0 for a fresh walk), so that nothing is walked
+    // twice: neither the block headers of a frame received in small reads, nor the skippable frames in front of it
+    // (re-walking either on every read costs reads x headers; 160,000 empty skippable frames arriving 64 bytes at a
+    // time took 12 seconds). Before the frame header has been read it is the offset of the next magic number. After,
+    // it is the offset of the next block header with InFrame set and the header's three facts the block walk needs in
+    // the bits above the offset, so the header is not read again either. OffsetOf gives the offset in both phases.
+    const long InFrame = 1L << 62;
+    const int FrameFlagsShift = 56;
+    const long OffsetMask = (1L << FrameFlagsShift) - 1;
+
+    /// <summary>The byte offset a walk position stands at, without the phase and flag bits.</summary>
+    public static long OffsetOf(long position) => position & OffsetMask;
+
     public static bool TryFindEnd(in ReadOnlySequence<byte> buffer, ref long position, out long length)
     {
         var reader = new FrameHeaderReader(in buffer);
         Span<byte> scratch = stackalloc byte[4];
-        long offset = 0;
-        while (true)
+        long offset;
+        bool blockChecksum;
+        bool contentChecksum;
+        int blockSizeId;
+        if ((position & InFrame) != 0)
         {
-            if (!reader.TryRead(offset, scratch))
+            // resume at the block header the previous call stopped in front of
+            var saved = (int)((position >> FrameFlagsShift) & 0x3F);
+            blockChecksum = (saved & 1) != 0;
+            contentChecksum = (saved & 2) != 0;
+            blockSizeId = saved >> 2;
+            offset = position & OffsetMask;
+        }
+        else
+        {
+            // resume at the magic number the previous call stopped in front of
+            offset = position;
+            while (true)
             {
-                length = offset + 4;
-                return false;
-            }
-            var magic = BinaryPrimitives.ReadUInt32LittleEndian(scratch);
-            if ((magic & SkippableMask) == SkippableMagic)
-            {
-                if (!reader.TryRead(offset + 4, scratch))
+                if (offset <= OffsetMask)
                 {
-                    length = offset + 8;
+                    position = offset;
+                }
+                if (!reader.TryRead(offset, scratch))
+                {
+                    length = offset + 4;
                     return false;
                 }
-                offset += 8L + BinaryPrimitives.ReadUInt32LittleEndian(scratch); // 8L: int + uint is uint and wraps at 0xFFFFFFF8
-                continue;
+                var magic = BinaryPrimitives.ReadUInt32LittleEndian(scratch);
+                if ((magic & SkippableMask) == SkippableMagic)
+                {
+                    if (!reader.TryRead(offset + 4, scratch))
+                    {
+                        length = offset + 8;
+                        return false;
+                    }
+                    offset += 8L + BinaryPrimitives.ReadUInt32LittleEndian(scratch); // 8L: int + uint is uint and wraps at 0xFFFFFFF8
+                    continue;
+                }
+                if (magic == LegacyMagic)
+                {
+                    throw new MessagePackSerializationException("The legacy LZ4 frame format is not supported.");
+                }
+                if (magic != FrameMagic)
+                {
+                    Lz4Throws.NotAFrame();
+                }
+                break;
             }
-            if (magic == LegacyMagic)
-            {
-                throw new MessagePackSerializationException("The legacy LZ4 frame format is not supported.");
-            }
-            if (magic != FrameMagic)
-            {
-                Lz4Throws.NotAFrame();
-            }
-            break;
-        }
 
-        // frame descriptor: FLG, BD, optional content size (8) and dictionary id (4), header checksum (1)
-        Span<byte> descriptor = stackalloc byte[2];
-        if (!reader.TryRead(offset + 4, descriptor))
-        {
-            length = offset + 7;
-            return false;
-        }
-        var flags = descriptor[0];
-        if ((flags >> 6) != 0b01 || (flags & 0b10) != 0)
-        {
-            throw new MessagePackSerializationException("Unsupported LZ4 frame version.");
-        }
-        var blockChecksum = (flags & 0x10) != 0;
-        var contentSize = (flags & 0x08) != 0;
-        var contentChecksum = (flags & 0x04) != 0;
-        var dictionaryId = (flags & 0x01) != 0;
-        var blockSizeId = (descriptor[1] >> 4) & 0x07;
-        if (blockSizeId < 4)
-        {
-            throw new MessagePackSerializationException("Invalid LZ4 frame block size.");
+            // frame descriptor: FLG, BD, optional content size (8) and dictionary id (4), header checksum (1)
+            Span<byte> descriptor = stackalloc byte[2];
+            if (!reader.TryRead(offset + 4, descriptor))
+            {
+                length = offset + 7;
+                return false;
+            }
+            var flags = descriptor[0];
+            if ((flags >> 6) != 0b01 || (flags & 0b10) != 0)
+            {
+                throw new MessagePackSerializationException("Unsupported LZ4 frame version.");
+            }
+            blockChecksum = (flags & 0x10) != 0;
+            var contentSize = (flags & 0x08) != 0;
+            contentChecksum = (flags & 0x04) != 0;
+            var dictionaryId = (flags & 0x01) != 0;
+            blockSizeId = (descriptor[1] >> 4) & 0x07;
+            if (blockSizeId < 4)
+            {
+                throw new MessagePackSerializationException("Invalid LZ4 frame block size.");
+            }
+            offset += 6 + (contentSize ? 8 : 0) + (dictionaryId ? 4 : 0) + 1;
         }
         var maxBlockSize = 1L << (8 + 2 * blockSizeId); // 4: 64KB, 5: 256KB, 6: 1MB, 7: 4MB
-        offset += 6 + (contentSize ? 8 : 0) + (dictionaryId ? 4 : 0) + 1;
-        if (position > offset)
-        {
-            offset = position; // resume at the block header the previous call stopped in front of
-        }
+        var inFrame = InFrame | ((long)((blockChecksum ? 1 : 0) | (contentChecksum ? 2 : 0) | (blockSizeId << 2)) << FrameFlagsShift);
 
         // blocks: a 4-byte size (top bit = stored uncompressed), data, optional block checksum; 0 ends the frame
         while (true)
         {
-            position = offset;
+            if (offset <= OffsetMask)
+            {
+                position = inFrame | offset;
+            }
             if (!reader.TryRead(offset, scratch))
             {
                 length = offset + 4;

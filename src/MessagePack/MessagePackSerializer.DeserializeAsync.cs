@@ -215,6 +215,11 @@ public static partial class MessagePackSerializer
                 }
 
                 var batchStart = 0L;
+                // the part of the buffer behind the messages already yielded: each message is sliced off its start, so
+                // the segments in front are not walked again (buffer.Slice(batchStart, ...) starts at the first segment
+                // every time, messages x segments in a large many-segment buffer: 4 MiB of one-byte messages in 4 KB
+                // segments took 2.4 seconds)
+                var rest = buffer;
                 while (finder.TryFindEnd(buffer))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -224,7 +229,7 @@ public static partial class MessagePackSerializer
                         MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(messageEnd - batchStart, maxMessageSize);
                     }
 
-                    var message = buffer.Slice(batchStart, messageEnd - batchStart);
+                    var message = rest.Slice(0, messageEnd - batchStart);
                     T value = default!;
                     try
                     {
@@ -234,10 +239,11 @@ public static partial class MessagePackSerializer
                     {
                         // the boundary is known even when the parse throws: consume through it
                         reading = false;
-                        pipeReader.AdvanceTo(buffer.GetPosition(messageEnd));
+                        pipeReader.AdvanceTo(message.End);
                         throw;
                     }
                     finder.StartNextValue();
+                    rest = rest.Slice(message.End);
                     batchStart = messageEnd;
                     consumed = batchStart;
                     yield return value;
@@ -260,7 +266,7 @@ public static partial class MessagePackSerializer
                 }
 
                 reading = false;
-                pipeReader.AdvanceTo(buffer.GetPosition(batchStart), buffer.End);
+                pipeReader.AdvanceTo(rest.Start, buffer.End);
                 finder.Rebase(batchStart);
             }
         }
@@ -353,6 +359,7 @@ public static partial class MessagePackSerializer
                 }
 
                 var batchStart = 0L;
+                var rest = buffer; // see DeserializeMessagesAsync: elements are sliced off the start of what is left
                 while (produced < count && finder.TryFindEnd(buffer))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -362,7 +369,7 @@ public static partial class MessagePackSerializer
                         MessagePackSerializationException.ThrowBufferedMessageSizeExceeded(elementEnd - batchStart, maxMessageSize);
                     }
 
-                    var element = buffer.Slice(batchStart, elementEnd - batchStart);
+                    var element = rest.Slice(0, elementEnd - batchStart);
                     T value = default!;
                     try
                     {
@@ -371,10 +378,11 @@ public static partial class MessagePackSerializer
                     catch
                     {
                         reading = false;
-                        pipeReader.AdvanceTo(buffer.GetPosition(elementEnd));
+                        pipeReader.AdvanceTo(element.End);
                         throw;
                     }
                     finder.StartNextValue();
+                    rest = rest.Slice(element.End);
                     batchStart = elementEnd;
                     produced++;
                     consumed = batchStart;
@@ -384,7 +392,7 @@ public static partial class MessagePackSerializer
                 if (produced == count)
                 {
                     reading = false;
-                    pipeReader.AdvanceTo(buffer.GetPosition(batchStart)); // trailing data stays
+                    pipeReader.AdvanceTo(rest.Start); // trailing data stays
                     yield break;
                 }
 
@@ -403,7 +411,7 @@ public static partial class MessagePackSerializer
                 }
 
                 reading = false;
-                pipeReader.AdvanceTo(buffer.GetPosition(batchStart), buffer.End);
+                pipeReader.AdvanceTo(rest.Start, buffer.End);
                 finder.Rebase(batchStart);
             }
         }

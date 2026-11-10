@@ -583,67 +583,94 @@ static class ZstandardFrameWalker
         return TryFindEnd(in buffer, ref position, out length);
     }
 
-    // position: the offset of the next block header to read, left here by the previous call over the same message
-    // (0 for a fresh walk). The frame header is re-read on every call (a few bytes, it carries the flags the block
-    // walk needs), the blocks already walked are not.
+    // position: where the previous call over the same message stopped (0 for a fresh walk), so that nothing is walked
+    // twice: neither the block headers of a frame received in small reads, nor the skippable frames in front of it
+    // (re-walking either on every read costs reads x headers; 160,000 empty skippable frames arriving 64 bytes at a
+    // time took 11 seconds). Before the frame header has been read it is the offset of the next magic number. After,
+    // it is the offset of the next block header with InFrame set and the one header fact the block walk needs (the
+    // content checksum flag) in the bits above the offset, so the header is not read again either. OffsetOf gives the
+    // offset in both phases.
+    const long InFrame = 1L << 62;
+    const int FrameFlagsShift = 56;
+    const long OffsetMask = (1L << FrameFlagsShift) - 1;
+
+    /// <summary>The byte offset a walk position stands at, without the phase and flag bits.</summary>
+    public static long OffsetOf(long position) => position & OffsetMask;
+
     public static bool TryFindEnd(in ReadOnlySequence<byte> buffer, ref long position, out long length)
     {
         var reader = new FrameHeaderReader(in buffer);
         Span<byte> scratch = stackalloc byte[4];
-        long offset = 0;
-        while (true)
+        long offset;
+        bool contentChecksum;
+        if ((position & InFrame) != 0)
         {
-            if (!reader.TryRead(offset, scratch))
+            // resume at the block header the previous call stopped in front of
+            contentChecksum = ((position >> FrameFlagsShift) & 1) != 0;
+            offset = position & OffsetMask;
+        }
+        else
+        {
+            // resume at the magic number the previous call stopped in front of
+            offset = position;
+            while (true)
             {
-                length = offset + 4;
-                return false;
-            }
-            var magic = BinaryPrimitives.ReadUInt32LittleEndian(scratch);
-            if ((magic & SkippableMask) == SkippableMagic)
-            {
-                if (!reader.TryRead(offset + 4, scratch))
+                if (offset <= OffsetMask)
                 {
-                    length = offset + 8;
+                    position = offset;
+                }
+                if (!reader.TryRead(offset, scratch))
+                {
+                    length = offset + 4;
                     return false;
                 }
-                offset += 8L + BinaryPrimitives.ReadUInt32LittleEndian(scratch); // 8L: int + uint is uint and wraps at 0xFFFFFFF8
-                continue;
+                var magic = BinaryPrimitives.ReadUInt32LittleEndian(scratch);
+                if ((magic & SkippableMask) == SkippableMagic)
+                {
+                    if (!reader.TryRead(offset + 4, scratch))
+                    {
+                        length = offset + 8;
+                        return false;
+                    }
+                    offset += 8L + BinaryPrimitives.ReadUInt32LittleEndian(scratch); // 8L: int + uint is uint and wraps at 0xFFFFFFF8
+                    continue;
+                }
+                if (magic != FrameMagic)
+                {
+                    ZstandardThrows.NotAFrame();
+                }
+                break;
             }
-            if (magic != FrameMagic)
-            {
-                ZstandardThrows.NotAFrame();
-            }
-            break;
-        }
 
-        // frame header: descriptor byte, then optional window descriptor (absent for single-segment frames),
-        // dictionary id (0/1/2/4) and frame content size (0/1/2/4/8)
-        Span<byte> descriptor = stackalloc byte[1];
-        if (!reader.TryRead(offset + 4, descriptor))
-        {
-            length = offset + 5;
-            return false;
+            // frame header: descriptor byte, then optional window descriptor (absent for single-segment frames),
+            // dictionary id (0/1/2/4) and frame content size (0/1/2/4/8)
+            Span<byte> descriptor = stackalloc byte[1];
+            if (!reader.TryRead(offset + 4, descriptor))
+            {
+                length = offset + 5;
+                return false;
+            }
+            var fhd = descriptor[0];
+            if ((fhd & 0x08) != 0)
+            {
+                throw new MessagePackSerializationException("Invalid Zstandard frame header.");
+            }
+            var singleSegment = (fhd & 0x20) != 0;
+            contentChecksum = (fhd & 0x04) != 0;
+            var contentSizeBytes = (fhd >> 6) switch { 0 => singleSegment ? 1 : 0, 1 => 2, 2 => 4, _ => 8 };
+            var dictionaryIdBytes = (fhd & 0x03) switch { 0 => 0, 1 => 1, 2 => 2, _ => 4 };
+            offset += 5 + (singleSegment ? 0 : 1) + dictionaryIdBytes + contentSizeBytes;
         }
-        var fhd = descriptor[0];
-        if ((fhd & 0x08) != 0)
-        {
-            throw new MessagePackSerializationException("Invalid Zstandard frame header.");
-        }
-        var singleSegment = (fhd & 0x20) != 0;
-        var contentChecksum = (fhd & 0x04) != 0;
-        var contentSizeBytes = (fhd >> 6) switch { 0 => singleSegment ? 1 : 0, 1 => 2, 2 => 4, _ => 8 };
-        var dictionaryIdBytes = (fhd & 0x03) switch { 0 => 0, 1 => 1, 2 => 2, _ => 4 };
-        offset += 5 + (singleSegment ? 0 : 1) + dictionaryIdBytes + contentSizeBytes;
-        if (position > offset)
-        {
-            offset = position; // resume at the block header the previous call stopped in front of
-        }
+        var inFrame = InFrame | ((contentChecksum ? 1L : 0L) << FrameFlagsShift);
 
         // blocks: 3-byte header = last flag (bit 0), type (bits 1-2), size (bits 3-23); an RLE block carries one byte
         Span<byte> blockHeader = stackalloc byte[3];
         while (true)
         {
-            position = offset;
+            if (offset <= OffsetMask)
+            {
+                position = inFrame | offset;
+            }
             if (!reader.TryRead(offset, blockHeader))
             {
                 length = offset + 3;

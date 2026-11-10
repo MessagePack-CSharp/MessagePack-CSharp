@@ -13,6 +13,12 @@ struct MessageBoundaryFinder
     long consumed;
     long minimum;
     long position;
+    // where `start` is in the buffer the last TryFindEnd saw, so the next message of the same buffer is sliced from
+    // there instead of from the buffer's first segment (messages x segments otherwise); dropped by Rebase, after
+    // which the buffer is a new one and start is at or near its beginning
+    SequencePosition startPosition;
+    SequencePosition nextStartPosition;
+    bool hasStartPosition;
 
     public MessageBoundaryFinder(MessagePackMessageProcessor? processor)
     {
@@ -32,7 +38,7 @@ struct MessageBoundaryFinder
         {
             return scanner.TryFindEnd(in buffer);
         }
-        var message = buffer.Slice(start);
+        var message = hasStartPosition ? buffer.Slice(startPosition) : buffer.Slice(start);
         if (processor.TryFindMessageEnd(in message, ref position, out var length))
         {
             if (length < 0 || length > message.Length)
@@ -41,10 +47,13 @@ struct MessageBoundaryFinder
             }
             consumed = start + length;
             minimum = consumed;
+            nextStartPosition = message.GetPosition(length);
             return true;
         }
-        // a lower bound below the bytes already examined carries no information
-        minimum = start + Math.Max(length, message.Length);
+        // a lower bound below the bytes already examined carries no information; saturated, since a processor may
+        // report a length it read off the wire (start + long.MaxValue would wrap negative and pass every size cap)
+        var bound = Math.Max(length, message.Length);
+        minimum = bound > long.MaxValue - start ? long.MaxValue : start + bound;
         return false;
     }
 
@@ -58,6 +67,8 @@ struct MessageBoundaryFinder
         {
             start = consumed;
             position = 0;
+            startPosition = nextStartPosition;
+            hasStartPosition = true;
         }
     }
 
@@ -72,6 +83,7 @@ struct MessageBoundaryFinder
             start -= consumedBytes;
             consumed -= consumedBytes;
             minimum -= consumedBytes;
+            hasStartPosition = false;
         }
     }
 }

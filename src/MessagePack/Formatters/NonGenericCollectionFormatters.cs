@@ -151,6 +151,13 @@ public sealed partial class NonGenericInterfaceDictionaryFormatter<TWriteBuffer,
                 ? new Dictionary<object, object?>(capacity)
                 : new Dictionary<object, object?>(capacity, comparer);
         }
+        if (dictionary is SortedList sortedList)
+        {
+            NonGenericCollectionFormatterHelper.ReadIntoSortedList(formatter, ref buffer, ref state, count, sortedList);
+            state.Exit();
+            value = dictionary;
+            return;
+        }
         for (int i = 0; i < count; i++)
         {
             object? key = null;
@@ -262,6 +269,13 @@ public sealed class NonGenericDictionaryFormatter<TWriteBuffer, TReadBuffer, T> 
             dictionary = new T();
         }
         state.Enter();
+        if (dictionary is SortedList sortedList)
+        {
+            NonGenericCollectionFormatterHelper.ReadIntoSortedList(formatter, ref buffer, ref state, count, sortedList);
+            state.Exit();
+            value = dictionary;
+            return;
+        }
         for (int i = 0; i < count; i++)
         {
             object? key = null;
@@ -392,6 +406,82 @@ file static class NonGenericCollectionFormatterHelper
         }
         state.Exit();
         return array;
+    }
+
+    // System.Collections.SortedList (the type, a class derived from it, an IDictionary that holds one) inserts by binary
+    // search plus a shift of everything after the slot: keys in descending order cost O(n) each (200,000 took 5 seconds).
+    // So the pairs are read first, sorted, and added in the order the list keeps them, where each Add shifts at most one
+    // element. The list does not expose its comparer: the sort uses the default one, and the first two Adds (the
+    // smallest and the largest) show whether the list runs the same way or reversed. A list on a comparer unrelated to
+    // the default order gets no help from this, and keys the default comparer cannot compare (mixed runtime types) are
+    // added in payload order, where the list itself refuses them.
+    internal static void ReadIntoSortedList<TWriteBuffer, TReadBuffer>(IMessagePackFormatter<TWriteBuffer, TReadBuffer, object?> formatter, ref TReadBuffer buffer, ref DeserializeState state, int count, SortedList list)
+        where TWriteBuffer : struct, IWriteBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        var capacity = ReadBufferExtensions.PresizeCapacity<KeyValuePair<object, object?>>(count, buffer.BytesRemaining);
+        var keys = new object?[capacity];
+        var values = new object?[capacity];
+        for (int i = 0; i < count; i++)
+        {
+            if (i == keys.Length)
+            {
+                // the header claimed more than its bytes justify (see PresizeCapacity): grow as the bytes arrive
+                var grown = (int)Math.Min(Math.Max(4L, keys.Length * 2L), count);
+                Array.Resize(ref keys, grown);
+                Array.Resize(ref values, grown);
+            }
+            formatter.Deserialize(ref buffer, ref state, ref keys[i]);
+            formatter.Deserialize(ref buffer, ref state, ref values[i]);
+        }
+
+        if (count > 2)
+        {
+            // on copies: a comparer failure part-way leaves the originals in payload order
+            var sortedKeys = (object?[])keys.Clone();
+            var sortedValues = (object?[])values.Clone();
+            try
+            {
+                Array.Sort(sortedKeys, sortedValues, 0, count, Comparer.Default);
+                keys = sortedKeys;
+                values = sortedValues;
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+            {
+                // not comparable by the default comparer
+            }
+        }
+
+        if (count == 0)
+        {
+            return;
+        }
+        Add(list, keys[0], values[0]);
+        if (count == 1)
+        {
+            return;
+        }
+        Add(list, keys[count - 1], values[count - 1]);
+        if (ReferenceEquals(list.GetKey(0), keys[0]))
+        {
+            for (int i = 1; i < count - 1; i++)
+            {
+                Add(list, keys[i], values[i]);
+            }
+        }
+        else
+        {
+            for (int i = count - 2; i >= 1; i--)
+            {
+                Add(list, keys[i], values[i]);
+            }
+        }
     }
 
     internal static void Add(IDictionary dictionary, object? key, object? value)

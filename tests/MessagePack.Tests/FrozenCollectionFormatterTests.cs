@@ -51,20 +51,56 @@ public class FrozenCollectionFormatterTests
         Assert.Same(HashFloodingResistantEqualityComparer.Get<long>(), set.Comparer);
     }
 
-    // string keys on net9+: HashFloodingResistantEqualityComparer.Get<string>() is deliberately null, because the BCL's
-    // default string comparer already hashes with a per-process random Marvin seed (no precomputable collisions), and a
-    // custom comparer would cost FrozenDictionary/FrozenSet their optimized ordinal-string strategies. Pinned here so a
-    // future "fix" does not inject one (a review once mistook the default comparer for a deterministic hash).
+    // string keys: HashFloodingResistantEqualityComparer.Get<string>() is null on net9+, because Dictionary and HashSet
+    // defend the default string comparer themselves (a randomized hash once a bucket chain grows). The frozen
+    // collections do not: on the default comparer they pick an ordinal-string strategy that hashes with a FIXED seed,
+    // so colliding keys can be computed ahead, and that rents a table sized by the spread of the key lengths. Measured
+    // through the serializer on 2026-11-10 (.NET 10): 28,900 crafted 24-char keys made 28,900 lookups take 759 ms
+    // against 14 ms for ordinary keys (HashSet<string>: no difference), and two keys, "" and 10 MB of 'a', allocated
+    // 288 MB (HashSet<string>: 20 MB). An earlier version of this test pinned the default comparer here, on the premise
+    // that it hashes with a per-process seed; that holds for Dictionary, not for the frozen types. So frozen string
+    // keys get the keyed comparer on every target, at the cost of the BCL's ordinal-string strategies.
     [Fact]
-    public void StringKeys_KeepTheBclOrdinalStrategy()
+    public void StringKeys_GetTheKeyedComparer()
     {
         var dict = MessagePackSerializer.Deserialize<FrozenDictionary<string, int>>(
             MessagePackSerializer.Serialize(new Dictionary<string, int> { ["a"] = 1, ["bb"] = 2 }.ToFrozenDictionary()))!;
-        Assert.Same(EqualityComparer<string>.Default, dict.Comparer);
+        Assert.NotSame(EqualityComparer<string>.Default, dict.Comparer);
+        Assert.Equal(2, dict["bb"]);
+        Assert.False(dict.ContainsKey("BB")); // still ordinal
 
         var set = MessagePackSerializer.Deserialize<FrozenSet<string>>(
             MessagePackSerializer.Serialize(new[] { "a", "bb" }.ToFrozenSet()))!;
-        Assert.Same(EqualityComparer<string>.Default, set.Comparer);
+        Assert.NotSame(EqualityComparer<string>.Default, set.Comparer);
+        Assert.Same(dict.Comparer, set.Comparer);
+        Assert.Contains("bb", (IReadOnlySet<string>)set);
+
+        // trusted data keeps the BCL's own strategy
+        var trusted = new MessagePackSerializerOptions(
+            new MessagePackFormatterResolver(MessagePackFormatterFactory.Default) { HashFloodingResistant = false });
+        var plain = MessagePackSerializer.Deserialize<FrozenSet<string>>(MessagePackSerializer.Serialize(new[] { "a", "bb" }, trusted), trusted)!;
+        Assert.Same(EqualityComparer<string>.Default, plain.Comparer);
+    }
+
+    // the allocation half of the same finding: with the default comparer, two keys whose lengths are far apart made
+    // the BCL rent 5 ints per unit of length difference (23x to 36x the payload). On the keyed comparer the frozen set
+    // costs what a HashSet costs.
+    [Fact]
+    public void StringKeys_FarApartLengths_DoNotAmplify()
+    {
+        var bytes = new byte[2 + 5 + 1_000_000];
+        bytes[0] = 0x92;
+        bytes[1] = 0xa0;
+        bytes[2] = 0xdb;
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(3), 1_000_000);
+        bytes.AsSpan(7).Fill((byte)'a');
+
+        MessagePackSerializer.Deserialize<FrozenSet<string>>([0x91, 0xa1, 0x61]); // warm the formatter
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var set = MessagePackSerializer.Deserialize<FrozenSet<string>>(bytes)!;
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(2, set.Count);
+        Assert.True(allocated < 8L * bytes.Length, $"a {bytes.Length:N0}-byte payload allocated {allocated:N0} bytes");
     }
 
     [Fact]
