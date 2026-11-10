@@ -38,6 +38,11 @@ on:
         required: false
         type: boolean
         default: false
+    # named, not `secrets: inherit`: the caller hands over only what this workflow reads
+    secrets:
+      NUGET_USER:
+        description: "nuget.org user (profile name) of the trusted publishing policy; needed when nuget-push is true."
+        required: false
 
 jobs:
   create-release:
@@ -154,7 +159,8 @@ jobs:
         if: ${{ !inputs.dry-run }}
         run: |
           sleep 5s
-          actual=$(gh api --paginate /repos/${{ github.repository }}/releases?per_page=100 --jq '.[] | select(.tag_name == "${{ inputs.tag }}") | .name')
+          # the tag is compared as a jq variable, not pasted into the jq program
+          actual=$(gh api --paginate "/repos/${GH_REPO}/releases?per_page=100" | jq -r --arg tag "${TAG}" '.[] | select(.tag_name == $tag) | .name')
           expected="${TAG}"
           if [[ "$actual" != "$expected" ]]; then
             echo "Release name is not as expected. expected: $expected, actual: $actual"
@@ -187,7 +193,7 @@ jobs:
       - name: NuGet login (OIDC)
         id: nuget-login
         if: ${{ inputs.nuget-push }}
-        uses: NuGet/login@v1
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
         with:
           user: ${{ secrets.NUGET_USER }}
 
@@ -204,14 +210,18 @@ jobs:
               continue
             fi
 
-            if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+            if [[ "${DRY_RUN}" == "true" ]]; then
               echo "(dry run) dotnet nuget push \"${nuget_path}\" --skip-duplicate -s https://api.nuget.org/v3/index.json -k \"***\""
             else
               # from the first push on, packages of this version may be public: the cleanup keeps the tag and release
               echo "started=true" >> "$GITHUB_OUTPUT"
-              dotnet nuget push "${nuget_path}" --skip-duplicate -s https://api.nuget.org/v3/index.json -k "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+              dotnet nuget push "${nuget_path}" --skip-duplicate -s https://api.nuget.org/v3/index.json -k "${NUGET_API_KEY}"
             fi
-          done <<< "${{ inputs.nuget-path }}"
+          done <<< "${NUGET_PATH}"
+        env:
+          DRY_RUN: ${{ inputs.dry-run }}
+          NUGET_PATH: ${{ inputs.nuget-path }}
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
 
       # Clean up
       # only what this run created is deleted (a dry run creates nothing; a run that failed before its tag or release

@@ -52,6 +52,16 @@ jobs:
           fi
         env:
           TAG: ${{ inputs.tag }}
+      # the tag becomes a git ref, a package version, a sed replacement and part of later command lines: only the
+      # characters of a version are let through (v1.2.3, v1.2.3-preview.4, v1.2.3-rc.1)
+      - name: tag must be a version
+        run: |
+          if [[ ! "${TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+            echo "Tag must look like v1.2.3 or v1.2.3-preview.4. Current tag: ${TAG}"
+            exit 1
+          fi
+        env:
+          TAG: ${{ inputs.tag }}
       - name: Set version without "v" prefix
         id: trim
         run: |
@@ -92,7 +102,7 @@ jobs:
       # TIPS: `grep -v "^$"` is used to remove empty line.
       - name: Update files to version ${{ needs.validate.outputs.normalized_tag }}
         run: |
-          expected="${{ needs.validate.outputs.normalized_tag }}"
+          expected="${NORMALIZED_TAG}"
           while read -r file_path; do
             if [[ "$file_path" == "" ]]; then continue; fi
 
@@ -106,10 +116,10 @@ jobs:
             echo "::group::Updating"
               if [[ "${file_name}" == "package.json" ]]; then
                 # Unity `"version": "VersionString",`
-                sed -i -e "s/\(\"version\":\) \"\(.*\)\",/\1 \"${{ needs.validate.outputs.normalized_tag }}\",/" "${file_path}"
+                sed -i -e "s/\(\"version\":\) \"\(.*\)\",/\1 \"${NORMALIZED_TAG}\",/" "${file_path}"
               elif [[ "${file_name}" == "Directory.Build.props" ]]; then
                 # .NET `<VersionPrefix>VersionString</VersionPrefix>`
-                sed -i -e 's|<VersionPrefix>.*</VersionPrefix>|<VersionPrefix>${{ needs.validate.outputs.normalized_tag }}</VersionPrefix>|g' "${file_path}"
+                sed -i -e "s|<VersionPrefix>.*</VersionPrefix>|<VersionPrefix>${NORMALIZED_TAG}</VersionPrefix>|g" "${file_path}"
               else
                 echo "Unknown file name ${file_name} is specified."
                 exit 1
@@ -142,6 +152,7 @@ jobs:
 
         env:
           FILE_PATH: ${{ inputs.file-path }}
+          NORMALIZED_TAG: ${{ needs.validate.outputs.normalized_tag }}
       - name: Check update on git
         id: check_update
         run: git diff --exit-code || echo "changed=1" | tee -a "$GITHUB_OUTPUT"
@@ -149,10 +160,10 @@ jobs:
       - name: Commit files (updated? = ${{ steps.check_update.outputs.changed == '1' }})
         id: commit
         run: |
-          if [[ "${{ steps.check_update.outputs.changed }}" == "1" ]]; then
+          if [[ "${CHANGED}" == "1" ]]; then
             git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git config --local user.name "github-actions[bot]"
-            git commit -m "feat: Update package.json to ${{ needs.validate.outputs.normalized_tag }}" -m "Commit by [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" -a
+            git commit -m "feat: Update package.json to ${NORMALIZED_TAG}" -m "Commit by [GitHub Actions](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})" -a
             echo "sha=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
             echo "is-branch-created=${DRY_RUN}" | tee -a "$GITHUB_OUTPUT"
           else
@@ -162,9 +173,11 @@ jobs:
 
         env:
           DRY_RUN: ${{ inputs.dry-run }}
+          CHANGED: ${{ steps.check_update.outputs.changed }}
+          NORMALIZED_TAG: ${{ needs.validate.outputs.normalized_tag }}
       - name: Create Tag
         if: ${{ steps.check_update.outputs.changed == '1' && inputs.push-tag }}
-        run: git tag ${TAG}
+        run: git tag "${TAG}"
 
         env:
           TAG: ${{ inputs.tag }}

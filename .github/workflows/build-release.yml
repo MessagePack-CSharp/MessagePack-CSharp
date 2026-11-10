@@ -37,8 +37,12 @@ jobs:
     permissions:
       contents: read
     timeout-minutes: 20
+    env:
+      # the version reaches the command lines below as a variable, not as text pasted into them
+      VERSION: ${{ needs.update-packagejson.outputs.normalized_tag }}
+      COMMIT: ${{ needs.update-packagejson.outputs.sha }}
     steps:
-      - run: echo ${{ needs.update-packagejson.outputs.sha }}
+      - run: echo "${COMMIT}"
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
@@ -46,11 +50,11 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup-dotnet
       # pack nuget. The release builds the solution filter (src, tests, tools), not the sandbox projects
-      - run: dotnet build MessagePack.Release.slnf -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }}
+      - run: dotnet build MessagePack.Release.slnf -c Release -p:Version="${VERSION}"
       - run: dotnet test MessagePack.Release.slnf -c Release --no-build
-      - run: dotnet pack MessagePack.Release.slnf -c Release -p:Version=${{ needs.update-packagejson.outputs.normalized_tag }} -o ./publish -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
+      - run: dotnet pack MessagePack.Release.slnf -c Release -p:Version="${VERSION}" -o ./publish -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
       # the packages that are about to be published, restored and run as a consumer (tests/PackageSmoke)
-      - run: dotnet run --project tests/PackageSmoke/App/App.csproj -c Release -p:SmokeVersion=${{ needs.update-packagejson.outputs.normalized_tag }} -p:SmokeFeed=$GITHUB_WORKSPACE/publish
+      - run: dotnet run --project tests/PackageSmoke/App/App.csproj -c Release -p:SmokeVersion="${VERSION}" -p:SmokeFeed="$GITHUB_WORKSPACE/publish"
       - name: upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 # must sync with actions/download-artifact@v8 in create-release
         with:
@@ -113,7 +117,8 @@ jobs:
         ./nuget/*.nupkg
         ./nuget/*.snupkg
       tag: ${{ inputs.tag }}
-    secrets: inherit
+    secrets:
+      NUGET_USER: ${{ secrets.NUGET_USER }}
 
   # delete dry-run created git branch
   cleanup:

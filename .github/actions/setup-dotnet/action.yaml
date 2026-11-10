@@ -16,7 +16,7 @@ runs:
     # see: https://github.com/actions/setup-dotnet
     # the SDK comes from global.json; the test projects also target net8.0 / net9.0 / net10.0, whose runtimes the
     # image happens to preinstall today, so name them instead of relying on that
-    - uses: actions/setup-dotnet@v5
+    - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
       with:
         global-json-file: ${{ inputs.global-json-file }}
         dotnet-version: |

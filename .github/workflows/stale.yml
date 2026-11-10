@@ -9,9 +9,13 @@ jobs:
   stale:
 
     runs-on: ubuntu-latest
+    # what the action does: label, comment on and close issues and pull requests
+    permissions:
+      issues: write
+      pull-requests: write
 
     steps:
-    - uses: actions/stale@v5.2.0
+    - uses: actions/stale@99b6c709598e2b0d0841cd037aaf1ba07a4410bd # v5.2.0
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         days-before-stale: 90
