@@ -28,15 +28,15 @@
 	     major. System.Text.Json is 8.0.5, the first 8.x without a known vulnerability (NU1903 below it). The two
 	     marked "SerializerFoundation" cannot go below what SerializerFoundation 1.4.1 itself requires (NU1605);
 	     lower them together with the SerializerFoundation release that lowers its own. Microsoft.Bcl.AsyncInterfaces
-	     and System.IO.Pipelines were in that group until 1.4.1, which no longer references them: what holds them at
-	     10.0.0 now is this project alone. -->
+	     and System.IO.Pipelines were in that group until SerializerFoundation 1.4.1 stopped referencing them, and are
+	     at the 8.0.0 line with the rest since. -->
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
 		<PackageReference Include="System.Memory" Version="4.6.3" /> <!-- SerializerFoundation -->
-		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'netstandard2.1'">
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" /> <!-- SerializerFoundation -->
-		<PackageReference Include="System.IO.Pipelines" Version="10.0.0" />
+		<PackageReference Include="System.IO.Pipelines" Version="8.0.0" />
 		<PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
 		<PackageReference Include="System.Text.Json" Version="8.0.5" />
 	</ItemGroup>
