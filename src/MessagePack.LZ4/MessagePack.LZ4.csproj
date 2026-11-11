@@ -4,7 +4,7 @@
 		<!-- netstandard2.0 like the core: NativeCompressions 1.0.1 ships that asset strong-named, which .NET Framework
 		     requires of everything a strong-named assembly such as this one references. -->
 		<TargetFrameworks>netstandard2.0;net9.0</TargetFrameworks>
-		<LangVersion>preview</LangVersion>
+		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>

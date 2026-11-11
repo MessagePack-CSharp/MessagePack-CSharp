@@ -5,7 +5,7 @@
 		     must not be removed in the future. It matches SerializerFoundation's own tier line (NET9_0_OR_GREATER).
 		     net10.0 and net11.0 exist for the BCL APIs gated by NET10_0_OR_GREATER / NET11_0_OR_GREATER; the public surface is the same as net9.0's. -->
 		<TargetFrameworks>netstandard2.0;netstandard2.1;net9.0;net10.0;net11.0</TargetFrameworks>
-		<LangVersion>preview</LangVersion>
+		<LangVersion>latest</LangVersion>
 		
 		<!-- Unsafe Evolution is not mature yet, so we will not apply it. -->
 		<!--<Features>$(Features);updated-memory-safety-rules</Features>-->

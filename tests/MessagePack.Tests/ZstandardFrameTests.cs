@@ -544,12 +544,7 @@ public class ZstandardFrameTests
         var samples = Enumerable.Range(0, 500).Select(static i => V4.Serialize(DictionaryPayload(i * 13), V4Options.Default)).ToArray();
         var lengths = samples.Select(static s => s.Length).ToArray();
         var all = samples.SelectMany(static s => s).ToArray();
-#if NET11_0_OR_GREATER
-        using var dictionary = FrameDictionary.Train(all, lengths, 16 * 1024);
-        return dictionary.Data.ToArray();
-#else
         return FrameDictionary.Train(all, lengths, 16 * 1024);
-#endif
     });
 
     static V4Options DictionaryOptions { get; } = V4Options.Default.WithZstandardFrame(Trained.Value);

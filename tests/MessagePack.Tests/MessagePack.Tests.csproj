@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <!-- C# union declarations (GeneratedUnionStructTests): compiler-only feature, works on
          net10 with the IUnion/UnionAttribute polyfill in UnionPolyfill.cs -->
-    <LangVersion>preview</LangVersion>
+    <LangVersion>latest</LangVersion>
     <!-- xunit v3+ test projects are self-hosting executables -->
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -37,9 +37,9 @@
     <PackageReference Include="MessagePack.Annotations" Version="3.1.8" Aliases="V3" />
     <!-- the oracle's runtime dependency (string interning paths) -->
     <PackageReference Include="Microsoft.NET.StringTools" Version="17.11.4" />
-    <!-- KeyNamingPolicyTests' conversion oracle: JsonNamingPolicy.PascalCase is .NET 11 preview
+    <!-- KeyNamingPolicyTests' conversion oracle: JsonNamingPolicy.PascalCase is .NET 11
          surface, so the in-box .NET 10 System.Text.Json is not enough -->
-    <PackageReference Include="System.Text.Json" Version="11.0.0-preview.7.26381.103" />
+    <PackageReference Include="System.Text.Json" Version="11.0.0" />
     <!-- pinned to the generator project's Roslyn floor so analyzer tests exercise the
          same API surface that ships -->
     <!-- the probe harness must BIND C# 14 extension members from MessagePack.dll metadata
