@@ -679,6 +679,8 @@ MessagePackSerializer.DefaultOptions = options;
 ```
 
 You should also avoid the Typeless serializer/formatters/resolvers for untrusted data as that opens the door for the untrusted data to potentially deserialize unanticipated types that can compromise security.
+While the deserializer in untrusted data mode has a list of types to disallow deserializing in typeless mode, the list is not and cannot be exhaustive.
+It only blocks direct typeless-deserialized types, while allowing other types that might wrap those disallowed types.
 
 The `UntrustedData` mode merely hardens against some common attacks, but is no fully secure solution in itself.
 
