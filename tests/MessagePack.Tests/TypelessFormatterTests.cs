@@ -694,4 +694,143 @@ public class TypelessFormatterTests
         Assert.Null(loader.LoadType(hostile));
         Assert.True(stopwatch.ElapsedMilliseconds < 2000, $"took {stopwatch.ElapsedMilliseconds} ms");
     }
+
+    // Issue 2321. v3 asked a non-generic class for its non-generic views before its generic ones, so a class derived
+    // from Collection<T> / List<T> / KeyedCollection<K,T> / Dictionary<K,V> wrote its elements through the object
+    // formatter: in typeless mode each with its type name, a derived element coming back as itself. The default chain
+    // asks for the generic views first (declared element type); a typeless chain keeps v3's order and wire.
+    static readonly V3::MessagePack.MessagePackSerializerOptions v3Typeless = V3::MessagePack.Resolvers.TypelessContractlessStandardResolver.Options;
+
+    static TlOrderBook NewBook() => [new TlOrder { Id = 1 }, new TlRushOrder { Id = 2, Fee = 9 }];
+
+    [Fact]
+    public void CollectionClass_ElementsKeepTheirType_LikeV3_BothDirections()
+    {
+        var v3Bytes = V3::MessagePack.MessagePackSerializer.Serialize(NewBook(), v3Typeless);
+        var v4Bytes = MessagePackSerializer.Serialize(NewBook(), v3TypelessEquivalent);
+        Assert.Equal(v3Bytes, v4Bytes);
+
+        var fromV3 = MessagePackSerializer.Deserialize<TlOrderBook>(v3Bytes, v3TypelessEquivalent)!;
+        Assert.IsType<TlOrder>(fromV3[1]);
+        Assert.Equal(9, Assert.IsType<TlRushOrder>(fromV3[2]).Fee);
+
+        var toV3 = V3::MessagePack.MessagePackSerializer.Deserialize<TlOrderBook>(v4Bytes, v3Typeless);
+        Assert.IsType<TlOrder>(toV3[1]);
+        Assert.Equal(9, Assert.IsType<TlRushOrder>(toV3[2]).Fee);
+    }
+
+    [Fact]
+    public void CollectionClass_AsAMember_AndBehindObject_LikeV3()
+    {
+        var desk = new TlDesk { Book = NewBook(), Ids = [3, 4], ByName = new TlOrdersByName { ["rush"] = new TlRushOrder { Id = 5, Fee = 1 } } };
+
+        var v3Bytes = V3::MessagePack.MessagePackSerializer.Typeless.Serialize(desk);
+        var v4Bytes = MessagePackSerializer.Serialize<object?>(desk, v3TypelessEquivalent);
+        Assert.Equal(v3Bytes, v4Bytes);
+
+        Check(Assert.IsType<TlDesk>(MessagePackSerializer.Deserialize<object?>(v3Bytes, v3TypelessEquivalent)));
+        Check(Assert.IsType<TlDesk>(V3::MessagePack.MessagePackSerializer.Typeless.Deserialize(v4Bytes)));
+
+        static void Check(TlDesk back)
+        {
+            Assert.IsType<TlRushOrder>(back.Book![2]);
+            Assert.Equal([3, 4], back.Ids!);
+            Assert.Equal(1, Assert.IsType<TlRushOrder>(back.ByName!["rush"]).Fee);
+        }
+    }
+
+    [Fact]
+    public void CollectionClass_AsAMemberOfAGeneratedType_IsNotServedByTheGeneratedCollectionFormatter()
+    {
+        // the generator registers the generic-view formatter for a member of such a type in its own factory, which is
+        // first in every preset: the typeless order has to be ahead of it
+        var bytes = MessagePackSerializer.Serialize(new TlGeneratedDesk { Book = NewBook() }, v3TypelessEquivalent);
+        var back = MessagePackSerializer.Deserialize<TlGeneratedDesk>(bytes, v3TypelessEquivalent)!;
+        Assert.IsType<TlRushOrder>(back.Book![2]);
+    }
+
+    [Fact]
+    public void CollectionClass_WithoutTypeless_KeepsTheDeclaredElementType()
+    {
+        // the default chain: elements by their declared type, no type names, and it reads back (v3 could not read it)
+        var contractless = new MessagePackSerializerOptions(new MessagePackFormatterResolver(MessagePackFormatterFactory.Default.WithContractless()));
+        var bytes = MessagePackSerializer.Serialize(NewBook(), contractless);
+        var back = MessagePackSerializer.Deserialize<TlOrderBook>(bytes, contractless)!;
+        Assert.IsType<TlOrder>(back[2]);
+        Assert.True(bytes.Length < 40, $"{bytes.Length} bytes: {Convert.ToHexString(bytes)}");
+    }
+
+    [Fact]
+    public void CollectionShapesV3ServedByTheirGenericView_AreUnchanged()
+    {
+        // a closed generic collection, and a class without a non-generic view: typed elements in v3 and here
+        var collection = new System.Collections.ObjectModel.Collection<TlOrder> { new TlOrder { Id = 1 }, new TlRushOrder { Id = 2, Fee = 9 } };
+        Assert.Equal(
+            V3::MessagePack.MessagePackSerializer.Serialize(collection, v3Typeless),
+            MessagePackSerializer.Serialize(collection, v3TypelessEquivalent));
+
+        var tags = new TlTags { "a", "b" };
+        Assert.Equal(
+            V3::MessagePack.MessagePackSerializer.Serialize(tags, v3Typeless),
+            MessagePackSerializer.Serialize(tags, v3TypelessEquivalent));
+    }
+
+    [Fact]
+    public void CollectionClass_WithAFormatterOfItsOwn_KeepsIt()
+    {
+        // the way to ask for declared-type elements inside a typeless chain
+        var book = new TlTypedBook { new TlOrder { Id = 1 }, new TlRushOrder { Id = 2, Fee = 9 } };
+        var bytes = MessagePackSerializer.Serialize(book, v3TypelessEquivalent);
+        var back = MessagePackSerializer.Deserialize<TlTypedBook>(bytes, v3TypelessEquivalent)!;
+        Assert.IsType<TlOrder>(back[1]);
+        Assert.DoesNotContain("TlRushOrder", System.Text.Encoding.UTF8.GetString(bytes));
+    }
+}
+
+public class TlOrder
+{
+    public int Id { get; set; }
+}
+
+public class TlRushOrder : TlOrder
+{
+    public int Fee { get; set; }
+}
+
+public sealed class TlOrderBook : System.Collections.ObjectModel.KeyedCollection<int, TlOrder>
+{
+    protected override int GetKeyForItem(TlOrder item) => item.Id;
+}
+
+public sealed class TlIds : List<int>
+{
+}
+
+public sealed class TlOrdersByName : Dictionary<string, TlOrder>
+{
+}
+
+public sealed class TlTags : HashSet<string>
+{
+}
+
+public class TlDesk
+{
+    public TlOrderBook? Book { get; set; }
+    public TlIds? Ids { get; set; }
+    public TlOrdersByName? ByName { get; set; }
+}
+
+#pragma warning disable MsgPack101 // TlOrder has no formatter in the default chain: the typeless chain these tests use serves it
+[MessagePackObject]
+public class TlGeneratedDesk
+{
+    [Key(0)]
+    public TlOrderBook? Book { get; set; }
+}
+#pragma warning restore MsgPack101
+
+[MessagePackFormatter(typeof(GenericCollectionFormatterFactory<TlOrder, TlTypedBook>))]
+public sealed class TlTypedBook : System.Collections.ObjectModel.Collection<TlOrder>
+{
 }

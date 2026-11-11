@@ -107,6 +107,10 @@ public abstract class MessagePackFormatterFactory
     /// (<see cref="NativeDateTimeFormatterFactory"/>, placed ahead of this chain), and types without attributes are serialized
     /// as maps including their non-public members (the contractless tier with allowPrivate, appended to it; a
     /// <see cref="WithContractless"/> tier added earlier in the chain keeps its own setting, since the first factory wins).
+    /// A non-generic class that implements <see cref="System.Collections.IList"/> or <see cref="System.Collections.IDictionary"/>
+    /// next to its generic interfaces (one derived from <c>Collection&lt;T&gt;</c>, <c>List&lt;T&gt;</c>, <c>Dictionary&lt;K,V&gt;</c>)
+    /// is written the way v3 wrote it, each element as an <c>object</c> with its type name, where the chain without this mode
+    /// writes the elements by their declared type; a type-level [MessagePackFormatter] on the class decides otherwise.
     /// <paramref name="typeLoader"/> decides how type names in the payload resolve on read; for untrusted input use
     /// <see cref="TypelessTypeLoader.AllowedTypes"/>.
     /// </summary>
@@ -119,10 +123,13 @@ public abstract class MessagePackFormatterFactory
         // and generated union roots keep their claims. v3 kept its TypelessObjectResolver at the tail for the same reason,
         // and needed no head because nothing earlier claimed object. NativeDateTime goes ahead of the chain's own
         // DateTime formatter, and the allowPrivate contractless tier is a catch-all for concrete types, so it sits
-        // right before the interface/abstract tail.
+        // right before the interface/abstract tail. v3's order for collection classes (non-generic views first) goes
+        // ahead of the chain too: the source-generated factory, first in every preset, registers the generic-view
+        // formatter for a member of such a type.
         return Combine(
             new TypelessFormatterFactory(typeLoader, omitAssemblyVersion),
             NativeDateTimeFormatterFactory.Instance,
+            new TypelessNonGenericCollectionFormatterFactory(),
             this,
             new ReflectionFormatterFactory(annotatedOnly: false, allowPrivate: true),
             new ForceTypelessFormatterFactory());

@@ -425,8 +425,12 @@ public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
                 }
             }
 
-            // v3 priority: IDictionary+new (above), then IReadOnlyDictionary+ctor, ICollection+new, non-generic views+new,
-            // and IEnumerable<T>+ctor last, so it only catches shapes nothing else claims
+            // v3's order for a generic type: IDictionary+new (above), then IReadOnlyDictionary+ctor, ICollection+new,
+            // non-generic views+new, and IEnumerable<T>+ctor last, so it only catches shapes nothing else claims.
+            // For a non-generic class v3 asked for the non-generic views first, which wrote the elements of
+            // `class Orders : Collection<Order>` as objects: by their runtime type and unreadable without typeless.
+            // Here the generic views win for every type, so such a class round-trips; a typeless chain keeps v3's
+            // order and wire for it (TypelessNonGenericCollectionFormatterFactory).
             if (readOnlyDictionaryInterface != null)
             {
                 var args = readOnlyDictionaryInterface.GetGenericArguments();
