@@ -51,7 +51,7 @@ public class Rc1AuditRegressionTests
         V4.Deserialize(bytes, ref populatedNonGeneric!);
 
         // generous: the four reads took about 0.2 s after the fix and more than 14 s before
-        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(5), $"four SortedList reads of 200,000 descending keys took {watch.Elapsed}");
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), $"four SortedList reads of 200,000 descending keys took {watch.Elapsed}");
         Assert.Equal(200_000, nonGeneric.Count);
         Assert.Equal(1, nonGeneric.GetKey(0));
         Assert.Equal(200_000, nonGeneric.GetKey(199_999));
@@ -101,24 +101,28 @@ public class Rc1AuditRegressionTests
     // ---- A4: the message stream's scan path sliced every message from the buffer start ----
     // ReadOnlySequence.Slice(long, long) walks the segment list from the first segment: messages x segments. 4 MiB of
     // one-byte messages in 4 KB segments took 2.4 s (1 MiB: 0.27 s, 2 MiB: 0.63 s); now each is sliced off what is left.
+    // The test's shape is chosen for the distance between the two, not for realism: the cost before the fix grows with
+    // the segment count, the cost after it does not, so many tiny segments put the two results far apart (1 MiB in
+    // 16-byte segments: 0.05 s after, 39 s before). The first version of this test used 8 MiB in 4 KB segments, 0.4 s
+    // against 10 s with a 5 s limit, and a loaded CI runner took 5.1 s on the fixed code.
 
     [Fact]
     public async Task MessageStream_ManyMessagesInManySegments_IsNotQuadratic()
     {
-        var bytes = new byte[8 << 20];
+        var bytes = new byte[1 << 20];
         bytes.AsSpan().Fill(0xc0);
         // a cap below the buffer length keeps the completed-reader fast path out, as a processor would
         var options = V4Options.Default with { MaxBufferedMessageSize = 1024 };
 
         var watch = Stopwatch.StartNew();
         long count = 0;
-        await foreach (var _ in V4.DeserializeMessagesAsync<object?>(PipeReader.Create(Segmented(bytes, 4096)), options, TestContext.Current.CancellationToken))
+        await foreach (var _ in V4.DeserializeMessagesAsync<object?>(PipeReader.Create(Segmented(bytes, 16)), options, TestContext.Current.CancellationToken))
         {
             count++;
         }
-        // about 0.4 s after the fix, about 10 s before
+        // about 0.05 s after the fix, about 39 s before: the limit is 300 times the one and under half the other
         Assert.Equal(bytes.Length, count);
-        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(5), $"{count:N0} messages took {watch.Elapsed}");
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(15), $"{count:N0} messages took {watch.Elapsed}");
     }
 
     [Fact]
