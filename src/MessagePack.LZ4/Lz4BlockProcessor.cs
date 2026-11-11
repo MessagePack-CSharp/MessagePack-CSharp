@@ -257,6 +257,32 @@ internal static class Lz4BlockEnvelope
     // the single buffer is one array: above this the per-block path takes over (as it does for ordinary block sizes)
     const int MaxSingleBufferLength = 0x7FFFFFC7;
 
+    // LZ4_MAX_INPUT_SIZE: the most one LZ4 block compresses, and the most the codec gives a bound for. For a longer
+    // input NativeCompressions' GetMaxCompressedLength throws ArgumentOutOfRangeException (it returned 0 up to 1.3.1,
+    // and the encode then failed on a target of no room). Both envelopes size their output from that bound over the
+    // whole message, so the message length is looked at before anything is rented or asked of the codec; a length
+    // above int.MaxValue, which the cast would not survive, is the same refusal.
+    internal const int MaxEncodableMessageLength = 0x7E000000;
+
+    internal static int EncodableLength(long messageLength)
+    {
+        if (messageLength > MaxEncodableMessageLength)
+        {
+            Lz4Throws.MessageTooLarge(messageLength, MaxEncodableMessageLength);
+        }
+        return (int)messageLength;
+    }
+
+    // the output of an encode is one array
+    internal static int SingleBufferLength(long outputBound, long messageLength)
+    {
+        if (outputBound > MaxSingleBufferLength)
+        {
+            Lz4Throws.MessageTooLarge(messageLength, MaxEncodableMessageLength);
+        }
+        return (int)outputBound;
+    }
+
     static void DecodeBlockInto(ReadOnlySpan<byte> lz4, Span<byte> destination)
     {
         int decoded;
@@ -414,7 +440,7 @@ public sealed class Lz4BlockProcessor : MessagePackMessageProcessor
         {
             return false;
         }
-        var (rented, start, length) = EncodeCore(ref message, checked((int)message.Length));
+        var (rented, start, length) = EncodeCore(ref message, Lz4BlockEnvelope.EncodableLength(message.Length));
         try
         {
             output.Write(rented.AsSpan(start, length));
@@ -433,7 +459,7 @@ public sealed class Lz4BlockProcessor : MessagePackMessageProcessor
         {
             return false;
         }
-        var (rented, start, length) = EncodeCore(ref message, checked((int)message.Length));
+        var (rented, start, length) = EncodeCore(ref message, Lz4BlockEnvelope.EncodableLength(message.Length));
         try
         {
             rented.AsSpan(start, length).CopyTo(output.GetSpan(length));
@@ -593,12 +619,13 @@ public sealed class Lz4BlockArrayProcessor : MessagePackMessageProcessor
         // LZ4_COMPRESSBOUND is linear plus a constant (n + n/255 + 16), so the sum of the per-block bounds is at most
         // the bound of the whole message plus that constant (GetMaxCompressedLength(0)) once per extra block
         var blockCount = message.SegmentCount;
-        var messageLength = checked((int)message.Length);
+        var messageLength = Lz4BlockEnvelope.EncodableLength(message.Length);
         long maxTotal = MaxArrayHeaderLength + 6 /* ext header */ + 5L * blockCount /* forced int32 sizes */
             + 5L * blockCount /* bin32 headers */ + LZ4.Block.GetMaxCompressedLength(messageLength)
             + (long)LZ4.Block.GetMaxCompressedLength(0) * Math.Max(blockCount - 1, 0);
 
-        var rented = ArrayPool<byte>.Shared.Rent(checked((int)maxTotal));
+        // many small segments: the per-block headers and bound constants alone can outgrow an array
+        var rented = ArrayPool<byte>.Shared.Rent(Lz4BlockEnvelope.SingleBufferLength(maxTotal, messageLength));
         try
         {
             var span = rented.AsSpan();

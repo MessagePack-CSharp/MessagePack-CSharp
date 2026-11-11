@@ -8,6 +8,10 @@ static class Lz4Throws
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    public static void MessageTooLarge(long messageLength, int maxLength) => throw new MessagePackSerializationException($"A message of {messageLength} bytes is too large for an LZ4 block envelope, which compresses at most {maxLength} bytes (LZ4_MAX_INPUT_SIZE) into one array.");
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
     public static void NotAFrame() => throw new MessagePackSerializationException("The message is not an LZ4 frame; the LZ4 frame processor accepts nothing else.");
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
