@@ -52,7 +52,7 @@ partial class MyResolver : MsgPack::IFormatterResolver
 				{
 					case 0: return global::System.Activator.CreateInstance(typeof(global::TempProject.MyResolver.TempProject.MyGenericObjectFormatter<>).MakeGenericType(t.GenericTypeArguments));
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;

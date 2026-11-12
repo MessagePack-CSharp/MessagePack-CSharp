@@ -52,7 +52,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 				{
 					case 0: return new MsgPack::Formatters.ListFormatter<int?>();
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;

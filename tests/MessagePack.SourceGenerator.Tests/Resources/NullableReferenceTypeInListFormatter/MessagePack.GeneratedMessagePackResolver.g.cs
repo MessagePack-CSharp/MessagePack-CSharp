@@ -54,7 +54,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 0: return new MsgPack::Formatters.ListFormatter<global::TempProject.SomeClass?>();
 					case 1: return new global::MessagePack.GeneratedMessagePackResolver.TempProject.SomeClassFormatter();
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;

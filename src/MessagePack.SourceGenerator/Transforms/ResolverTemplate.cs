@@ -109,7 +109,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(this.ToStringHelper.ToStringWithCulture(x.GetFormatterInstanceForResolver()));
             this.Write(";\r\n");
  } 
-            this.Write("\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n");
+            this.Write("\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t}\r\n\t\t\t}\r\n");
  }
 
    if (openGenericRegistrations.Length > 0) { 
@@ -122,7 +122,7 @@ namespace MessagePack.SourceGenerator.Transforms
             this.Write(this.ToStringHelper.ToStringWithCulture(x.GetFormatterNameForResolver(GenericParameterStyle.TypeDefinition)));
             this.Write(").MakeGenericType(t.GenericTypeArguments));\r\n");
      } 
-            this.Write("\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n");
+            this.Write("\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t}\r\n\t\t\t}\r\n");
  } 
             this.Write("\r\n\t\t\treturn null;\r\n\t\t}\r\n\t}\r\n}\r\n\r\n");
  } 

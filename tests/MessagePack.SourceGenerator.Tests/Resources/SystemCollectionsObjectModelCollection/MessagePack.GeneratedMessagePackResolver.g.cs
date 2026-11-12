@@ -54,7 +54,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 0: return new MsgPack::Formatters.GenericCollectionFormatter<int, global::System.Collections.ObjectModel.Collection<int>>();
 					case 1: return new global::MessagePack.GeneratedMessagePackResolver.AFormatter();
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;

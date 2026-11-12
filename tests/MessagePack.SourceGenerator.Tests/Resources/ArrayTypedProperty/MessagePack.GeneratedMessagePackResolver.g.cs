@@ -60,7 +60,7 @@ partial class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 					case 3: return new global::MessagePack.GeneratedMessagePackResolver.ContainerObjectFormatter();
 					case 4: return new global::MessagePack.GeneratedMessagePackResolver.SubObjectFormatter();
 					default: return null; // unreachable
-				};
+				}
 			}
 
 			return null;
