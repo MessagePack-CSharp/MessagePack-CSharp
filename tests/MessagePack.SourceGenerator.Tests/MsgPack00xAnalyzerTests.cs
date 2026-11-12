@@ -1109,4 +1109,26 @@ public class {|MsgPack003:Foo|}
             MarkupOptions = MarkupOptions.UseFirstDescriptor,
         }.RunAsync();
     }
+
+    [Fact]
+    public async Task DynamicTypedMembers()
+    {
+        string input = Preamble + @"
+using System.Collections.Generic;
+
+[MessagePackObject(keyAsPropertyName: true)]
+public class AnObject
+{
+    public dynamic Value;
+
+    public dynamic[] Values { get; set; }
+
+    public List<dynamic> ValueList { get; set; }
+
+    public Dictionary<string, dynamic> ValueMap { get; set; }
+}
+";
+
+        await VerifyCS.VerifyAnalyzerAsync(input);
+    }
 }
