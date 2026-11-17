@@ -587,7 +587,10 @@ public sealed class SerializableMemberTypeAnalyzer : DiagnosticAnalyzer
             foreach (var attribute in assembly.GetAttributes())
             {
                 var name = attribute.AttributeClass?.ToDisplayString();
-                if (attribute.ConstructorArguments.Length != 1 || attribute.ConstructorArguments[0].Value is not ITypeSymbol argument)
+                // Value throws for an array argument (`params string[]`), so check the kind first
+                if (attribute.ConstructorArguments.Length != 1
+                    || attribute.ConstructorArguments[0].Kind != TypedConstantKind.Type
+                    || attribute.ConstructorArguments[0].Value is not ITypeSymbol argument)
                 {
                     continue;
                 }
