@@ -47,6 +47,10 @@
     <Using Include="MessagePack" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="TestData/msgpack-test-suite/dist/msgpack-test-suite.json" LogicalName="MessagePackTestSuite.json" />
+    <EmbeddedResource Include="TestData/msgpack-test-suite/LICENSE" LogicalName="MessagePackTestSuite.LICENSE" />
+  </ItemGroup>
+  <ItemGroup>
     <None Update="MessagePackReaderTests.ReadInt.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>MessagePackReaderTests.ReadInt.cs</LastGenOutput>
