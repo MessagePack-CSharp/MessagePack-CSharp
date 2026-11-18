@@ -986,7 +986,7 @@ Also, `DateTime` is serialized using the MessagePack timestamp format. By using 
 
 ### Be careful when copying buffers
 
-`MessagePackSerializer.Serialize` returns `byte[]` in default. The final `byte[]` is copied from an internal buffer pool. That is an extra cost.  You can use `IBufferWriter<T>` or the `Stream` API to write to buffers directly. If you want to use a buffer pool outside of the serializer, you should implement custom `IBufferWriter<byte>` or use an existing one such as [`Sequence<T>`](https://github.com/AArnott/Nerdbank.Streams/blob/master/doc/Sequence.md) from the [Nerdbank.Streams](https://nuget.org/packages/Nerdbank.Streams) package.
+`MessagePackSerializer.Serialize` returns `byte[]` in default. The final `byte[]` is copied from an internal buffer pool. That is an extra cost.  You can use `IBufferWriter<T>` or the `Stream` API to write to buffers directly. If you want to use a buffer pool outside of the serializer, you should implement custom `IBufferWriter<byte>` or use an existing one such as [`Sequence<T>`](https://dotnet.github.io/Nerdbank.Streams/docs/Sequence.html) from the [Nerdbank.Streams](https://nuget.org/packages/Nerdbank.Streams) package.
 
 During deserialization, `MessagePackSerializer.Deserialize(ReadOnlyMemory<byte> buffer)` is better than the `Deserialize(Stream stream)` overload. This is because the Stream API version starts by reading the data, generating a `ReadOnlySequence<byte>`, and only then starts the deserialization.
 
@@ -1645,7 +1645,7 @@ Learn more about using a mix of your own custom formatters and automatically gen
 
 ### StreamJsonRpc
 
-The StreamJsonRpc library is based on [JSON-RPC](https://www.jsonrpc.org/) and includes [a pluggable formatter architecture](https://github.com/microsoft/vs-streamjsonrpc/blob/master/doc/extensibility.md#alternative-formatters) and as of v2.3 includes [MessagePack support](https://github.com/microsoft/vs-streamjsonrpc/blob/master/doc/extensibility.md#message-formatterss).
+The StreamJsonRpc library is based on [JSON-RPC](https://www.jsonrpc.org/) and includes [a pluggable formatter architecture](https://microsoft.github.io/vs-streamjsonrpc/docs/extensibility.html#message-formatters) and as of v2.3 includes [MessagePack support](https://microsoft.github.io/vs-streamjsonrpc/docs/extensibility.html#choosing-your-formatter).
 
 ## How to build
 See our [contributor's guide](CONTRIBUTING.md).
