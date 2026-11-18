@@ -155,4 +155,25 @@ public class Foo
             FixedCode = output,
         }.RunAsync();
     }
+
+    [Fact]
+    public async Task NotRequiredWhenOnlyNonPublicMembersAreIgnored()
+    {
+        string input = Preamble + @"
+[MessagePackObject]
+public class Foo
+{
+    [IgnoreMember]
+    private int irrelevant;
+
+    [Key(0)]
+    public int Bar { get; set; }
+}
+";
+
+        await new VerifyCS.Test
+        {
+            TestCode = input,
+        }.RunAsync();
+    }
 }
