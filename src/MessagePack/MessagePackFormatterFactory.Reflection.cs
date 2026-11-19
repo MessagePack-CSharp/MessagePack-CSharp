@@ -34,6 +34,9 @@ public sealed class ReflectionFormatterFactory : GenericFormatterFactoryBase
     }
 
     /// <inheritdoc/>
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "the return annotation keeps the RequiresUnreferencedCode constructors of the reflection object/union factories for Activator; this factory's own constructor carries the same RequiresUnreferencedCode, so the caller has already been warned")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "the return annotation keeps the RequiresDynamicCode constructors of the reflection object/union factories for Activator; this factory's own constructor carries the same RequiresDynamicCode, so the caller has already been warned")]
+    [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     protected override Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments)
     {
         typeArguments = [type];

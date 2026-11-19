@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <!-- A trimmed publish that keeps the JIT (no Native AOT), the shape of a Blazor WebAssembly app. Unlike
+             MessagePack.AotCompatibilityTest (a publish-only analysis) this one runs: publish with
+             `dotnet publish -c Release` and run the produced executable, which exits non-zero on a failure.
+             The default chain is RequiresUnreferencedCode by design, so the trim warnings it raises are expected here;
+             the test is that the generic tiers still construct their formatters once trimmed. -->
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>full</TrimMode>
+        <SelfContained>true</SelfContained>
+        <!-- the SDK's own RID unless one is passed (-r): CI publishes this on Linux, developers on whatever they run -->
+        <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+        <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+        <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+</Project>

@@ -291,12 +291,19 @@ public abstract class GenericFormatterFactoryBase : MessagePackFormatterFactory
     /// Maps a type to the open generic factory definition that serves it, such as <c>typeof(ListFormatterFactory&lt;&gt;)</c>,
     /// the type arguments to close it with, and the constructor arguments (null for parameterless). Return null to decline.
     /// </summary>
+    /// <remarks>
+    /// The returned definition is constructed through <see cref="Activator"/>, so the return value carries
+    /// <see cref="DynamicallyAccessedMembersAttribute"/>: without it a <c>typeof</c> reference keeps the definition but the
+    /// trimmer removes its constructors, and the first use fails with <see cref="MissingMethodException"/>.
+    /// Overrides must carry the same annotation.
+    /// </remarks>
+    [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     protected abstract Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments);
 
     [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "instances only exist behind the RequiresDynamicCode protected constructor; the caller has already opted into dynamic code")]
-    [UnconditionalSuppressMessage("Trimming", "IL2055", Justification = "open factory definitions reach here as typeof references from overrides, which roots them; the type arguments derive from the value type being resolved, which the caller roots")]
+    [UnconditionalSuppressMessage("Trimming", "IL2055", Justification = "open factory definitions reach here from GetOpenFactoryType, whose return annotation keeps their public constructors; the type arguments derive from the value type being resolved, which the caller roots")]
     [UnconditionalSuppressMessage("Trimming", "IL2071", Justification = "the override's pattern match guarantees the type arguments satisfy the open definition's constraints; factory constructors are bound by the explicit argument array")]
-    [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "same flow as IL2071 seen from ILC's dataflow: the closed type comes from MakeGenericType over a typeof'd open definition, whose constructors the typeof reference roots")]
+    [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "same flow as IL2071 seen from ILC's dataflow: MakeGenericType drops the annotation, but the closed type's constructors are its open definition's, which the [return: DynamicallyAccessedMembers] on GetOpenFactoryType keeps")]
     MessagePackFormatterFactory? CreateElementFactory(Type type)
     {
         var openFactoryType = GetOpenFactoryType(type, out var typeArguments, out var constructorArguments);

@@ -100,6 +100,8 @@ jobs:
       - run: dotnet build tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj -c Release -r linux-x64
       - run: dotnet publish tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj -c Release -r linux-x64 -p:IlcTreatWarningsAsErrors=true
       - run: ./tests/MessagePack.Tests.NativeAot/bin/Release/net10.0/linux-x64/publish/MessagePack.Tests.NativeAot
+      - run: dotnet publish tests/MessagePack.TrimmedTest/MessagePack.TrimmedTest.csproj -c Release -r linux-x64
+      - run: ./tests/MessagePack.TrimmedTest/bin/Release/net10.0/linux-x64/publish/MessagePack.TrimmedTest
 
   # create release and upload nuget: only after every check above passed on this commit
   create-release:

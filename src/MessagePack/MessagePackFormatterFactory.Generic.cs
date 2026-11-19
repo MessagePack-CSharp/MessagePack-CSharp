@@ -35,6 +35,7 @@ public sealed class GenericFormatterFactory : GenericFormatterFactoryBase
     /// <inheritdoc/>
     [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "the default-ctor probe only refines routing for the non-generic IList/IDictionary catch-all; this whole tier is gated by RequiresDynamicCode at acquisition, and a trimmed-away ctor just means the type falls through to the missing-formatter path")]
     [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "the interface instantiations (IEnumerable<KVP<K,V>> etc.) exist only to probe constructor parameters; this whole tier is gated by RequiresDynamicCode at acquisition")]
+    [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     protected override Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments)
     {
         constructorArguments = null;
