@@ -43,6 +43,8 @@ if (args.Contains("--verify"))
     ok &= VerifyConstructionMapDeserialize();
     ok &= VerifyElementGuardHoist();
     ok &= VerifyFixedHeaderFuse();
+    ok &= VerifyFloatRunFuse();
+    ok &= VerifyNullableRead();
     ok &= VerifyEnumArray();
     Console.WriteLine(ok ? "all OK" : "FAILED");
     return ok ? 0 : 1;
@@ -229,6 +231,34 @@ if (args.FirstOrDefault(a => a.StartsWith("--jit-int32-de=")) is { } jitInt32De)
     static int JitInt32V3(Int32ValueBenchmark b) => b.DeserializeMpcs();
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     static int JitInt32Nb(Int32ValueBenchmark b) => b.DeserializeNerdbank();
+}
+
+// hot-loops AnswerBenchmark.DeserializeV4 for a fixed wall time so a sampling profiler has one steady workload to
+// look at (BDN's own process spends most of its time outside the measured call). The NoInlining wrapper is the frame
+// to filter stacks on. No tool needed for the capture, the runtime writes the trace itself. Usage:
+//   $env:DOTNET_EnableEventPipe = "1"; $env:DOTNET_EventPipeOutputPath = "answer-de.nettrace"
+//   dotnet run -c Release -- --profile-answer-de=20      (seconds)
+// The .nettrace opens in PerfView or Visual Studio. Read it as a method-level view only: the sample profiler walks
+// managed frames at suspension points, so allocation helpers and inlined reads are charged to the caller, and short
+// leaf calls are under-counted. AnswerDeserializeBreakdownBenchmark splits what this cannot.
+if (args.FirstOrDefault(a => a.StartsWith("--profile-answer-de=")) is { } profileAnswerDe)
+{
+    var seconds = int.Parse(profileAnswerDe.Substring("--profile-answer-de=".Length));
+    var b = new AnswerBenchmark();
+    b.Setup();
+    for (int i = 0; i < 200_000; i++) ProfileAnswerDeserialize(b); // tier up before the clock starts
+    var watch = System.Diagnostics.Stopwatch.StartNew();
+    long iterations = 0;
+    while (watch.Elapsed.TotalSeconds < seconds)
+    {
+        for (int i = 0; i < 10_000; i++) ProfileAnswerDeserialize(b);
+        iterations += 10_000;
+    }
+    Console.WriteLine($"{iterations} iterations, {watch.Elapsed.TotalMilliseconds * 1_000_000 / iterations:F1} ns/op");
+    return 0;
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    static Answer ProfileAnswerDeserialize(AnswerBenchmark b) => b.DeserializeV4();
 }
 
 // same NoInlining-wrapper hot-loop for one AlternatingTypeBenchmark row, picked by method name. Usage:
@@ -623,6 +653,40 @@ static bool VerifyFixedHeaderFuse()
     catch (Exception ex)
     {
         Console.WriteLine($"NG FixedHeaderFuse: {ex.Message}");
+        return false;
+    }
+}
+
+// the fused float-run read shapes must match the shipped loop on arity 0..N+3, on members coded as float64 / int,
+// and on every truncation (same fields, same consumption, same exception)
+static bool VerifyFloatRunFuse()
+{
+    try
+    {
+        FloatRunFuseBenchmark.VerifyCandidates();
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"NG FloatRunFuse: {ex.Message}");
+        return false;
+    }
+}
+
+// the one-window nullable int / bool readers must agree with `TryReadNil() ? null : Read()` on every first byte,
+// payload pattern and truncation (same value, same consumption, same exception), and the Answer twins built on
+// them must roundtrip the Answer payload
+static bool VerifyNullableRead()
+{
+    try
+    {
+        NullableReadBenchmark.VerifyCandidates();
+        new AnswerNullableReadEndToEndBenchmark().Setup();
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"NG NullableRead: {ex.Message}");
         return false;
     }
 }
