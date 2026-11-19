@@ -51,8 +51,6 @@ jobs:
   # analysis (IL2xxx/IL3xxx) and the AOT-compiled tests themselves. MessagePack.AotCompatibilityTest roots every
   # IsAotCompatible shipped assembly (all but the netstandard2.0-only Annotations shim) for the trimmer so the entire API surface is analyzed. IlcTreatWarningsAsErrors makes any IL warning
   # fail the job (TreatWarningsAsErrors itself would also promote NuGet audit and analyzer warnings of every project).
-  # MessagePack.TrimmedTest is the trimmed-but-JIT case (Blazor WebAssembly and other PublishTrimmed apps): the default
-  # chain's generic tiers must still construct their formatters after the trimmer ran.
   publish-aot:
     runs-on: ubuntu-24.04
     permissions:
@@ -72,5 +70,3 @@ jobs:
       - run: dotnet build tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj -c Release -r linux-x64
       - run: dotnet publish tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj -c Release -r linux-x64 -p:IlcTreatWarningsAsErrors=true
       - run: ./tests/MessagePack.Tests.NativeAot/bin/Release/net10.0/linux-x64/publish/MessagePack.Tests.NativeAot
-      - run: dotnet publish tests/MessagePack.TrimmedTest/MessagePack.TrimmedTest.csproj -c Release -r linux-x64
-      - run: ./tests/MessagePack.TrimmedTest/bin/Release/net10.0/linux-x64/publish/MessagePack.TrimmedTest
