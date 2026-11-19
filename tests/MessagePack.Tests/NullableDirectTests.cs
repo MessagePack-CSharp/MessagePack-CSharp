@@ -12,7 +12,7 @@ namespace MessagePack.Tests;
 
 // Nullable<primitive> members ride the DIRECT emit tier now: the write is a nil-or-value
 // expression inside the same fused reservation (nil is 1 byte, under every primitive's
-// max), the read is TryReadNil-or-ReadX, and no formatter field exists. The wire is
+// max), the read is one ReadNullableX call (TryReadNil-or-ReadX, see NullableReaderTests), and no formatter field exists. The wire is
 // unchanged — byte-checked against the reflection tier (NullableFormatter) and the v3
 // oracle.
 public class NullableDirectTests
@@ -80,7 +80,9 @@ public class NullableDirectTests
         var source = Assert.Single(result.Results[0].GeneratedSources, s => s.HintName.Contains("Probe")).SourceText.ToString();
         Assert.DoesNotContain("GetFormatter<TWriteBuffer, TReadBuffer, int?>", source);
         Assert.Contains("UnsafeWriteNil", source);
-        Assert.Contains("buffer.TryReadNil() ? default(int?) : buffer.ReadInt32()", source);
+        Assert.Contains("= buffer.ReadNullableInt32();", source);
+        Assert.Contains("= buffer.ReadNullableDouble();", source);
+        Assert.DoesNotContain("TryReadNil() ?", source); // the nil-or-value pair lives in the readers now
         Assert.Empty(updated.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error));
     }
 }

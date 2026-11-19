@@ -124,6 +124,54 @@ public ref struct MessagePackReader : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public double ReadDouble() => buffer.ReadDouble();
 
+    /// <summary>Reads an int32 from any msgpack int format, or null when the next value is nil.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int? ReadNullableInt32() => buffer.ReadNullableInt32();
+
+    /// <summary>Reads a uint32 from any msgpack int format, or null when the next value is nil.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public uint? ReadNullableUInt32() => buffer.ReadNullableUInt32();
+
+    /// <summary>Reads an int64 from any msgpack int format, or null when the next value is nil.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long? ReadNullableInt64() => buffer.ReadNullableInt64();
+
+    /// <summary>Reads a uint64 from any msgpack int format, or null when the next value is nil.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ulong? ReadNullableUInt64() => buffer.ReadNullableUInt64();
+
+    /// <summary>Reads an int16 from any msgpack int format, or null when the next value is nil.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public short? ReadNullableInt16() => buffer.ReadNullableInt16();
+
+    /// <summary>Reads a uint16 from any msgpack int format, or null when the next value is nil.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ushort? ReadNullableUInt16() => buffer.ReadNullableUInt16();
+
+    /// <summary>Reads a byte from any msgpack int format, or null when the next value is nil.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public byte? ReadNullableByte() => buffer.ReadNullableByte();
+
+    /// <summary>Reads an sbyte from any msgpack int format, or null when the next value is nil.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public sbyte? ReadNullableSByte() => buffer.ReadNullableSByte();
+
+    /// <summary>Reads a boolean, or null when the next value is nil.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool? ReadNullableBoolean() => buffer.ReadNullableBoolean();
+
+    /// <summary>Reads a char encoded as a uint16, or null when the next value is nil.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public char? ReadNullableChar() => buffer.ReadNullableChar();
+
+    /// <summary>Reads a float32 (a float64 or an int format is converted), or null when the next value is nil.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float? ReadNullableSingle() => buffer.ReadNullableSingle();
+
+    /// <summary>Reads a float64 (a float32 or an int format is converted), or null when the next value is nil.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public double? ReadNullableDouble() => buffer.ReadNullableDouble();
+
     /// <summary>Reads an array header and returns the element count. A count larger than the remaining data throws.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int ReadArrayHeader() => buffer.ReadArrayHeader();

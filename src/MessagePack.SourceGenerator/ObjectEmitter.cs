@@ -1123,7 +1123,7 @@ static class ObjectEmitter
             return;
         }
         writer.Line(member.DirectNullable
-            ? $"{MemberAccess(member, "result")} = buffer.TryReadNil() ? default({member.TypeName}) : buffer.{Reader(member.Direct)}();"
+            ? $"{MemberAccess(member, "result")} = buffer.{NullableReader(member.Direct)}();"
             : $"{MemberAccess(member, "result")} = buffer.{Reader(member.Direct)}();");
     }
 
@@ -1165,7 +1165,7 @@ static class ObjectEmitter
             writer.Line(member.Direct == DirectKind.None
                 ? $"f_{member.Id}.Deserialize(ref buffer, ref state, ref v_{member.Id});"
                 : member.DirectNullable
-                    ? $"v_{member.Id} = buffer.TryReadNil() ? default({member.TypeName}) : buffer.{Reader(member.Direct)}();"
+                    ? $"v_{member.Id} = buffer.{NullableReader(member.Direct)}();"
                     : $"v_{member.Id} = buffer.{Reader(member.Direct)}();");
         }
         if (TracksPresence(member))
@@ -1177,6 +1177,10 @@ static class ObjectEmitter
             writer.Line($"if (validateNull && v_{member.Id} is null) {{ ThrowNullValueForNonNullableMember(\"{member.Name}\"); }}");
         }
     }
+
+    // the nil-or-value reader of a Nullable<primitive> member (ReadBufferExtensions.ReadNullableInt32 and its siblings,
+    // one per DirectKind): the same result as `TryReadNil() ? null : ReadX()`, which is what this emitted before
+    static string NullableReader(DirectKind direct) => "ReadNullable" + Reader(direct).Substring("Read".Length);
 
     static string Reader(DirectKind direct) => direct switch
     {

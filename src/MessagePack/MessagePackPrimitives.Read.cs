@@ -70,7 +70,9 @@ public static partial class MessagePackPrimitives
     const uint R32I2 = 3 | (16u << 4) | (48u << 10);   // int16
     const uint R32I4 = 5 | (0u << 4) | (32u << 10);    // int32
 
-    static ReadOnlySpan<uint> Int32ReadTable => // indexed by code - 0xcc, 8 entries (cc..d3)
+    // the three read tables are internal: the nil-or-value readers in ReadBufferExtensions (ReadInt32OrNil and its
+    // siblings) decode through them as well
+    internal static ReadOnlySpan<uint> Int32ReadTable => // indexed by code - 0xcc, 8 entries (cc..d3)
     [
         R32U1, R32U2, R32U4, R32W8, R32I1, R32I2, R32I4, R32W8,
     ];
@@ -84,7 +86,7 @@ public static partial class MessagePackPrimitives
     const uint R64I4 = 5 | (32u << 4) | (32u << 10);   // int32
     const uint R64I8 = 9 | (0u << 4);                  // int64
 
-    static ReadOnlySpan<uint> Int64ReadTable => // indexed by code - 0xcc, 8 entries (cc..d3)
+    internal static ReadOnlySpan<uint> Int64ReadTable => // indexed by code - 0xcc, 8 entries (cc..d3)
     [
         R64U1, R64U2, R64U4, R64U8, R64I1, R64I2, R64I4, R64I8,
     ];
@@ -702,7 +704,7 @@ public static partial class MessagePackPrimitives
     const uint N16I2 = 3 | (0u << 4) | (48u << 10);    // int16
     const uint N16W_ = 0;                              // uint32/uint64/int32/int64: bridge
 
-    static ReadOnlySpan<uint> Narrow16ReadTable => // indexed by code - 0xcc, 8 entries (cc..d3)
+    internal static ReadOnlySpan<uint> Narrow16ReadTable => // indexed by code - 0xcc, 8 entries (cc..d3)
     [
         N16U1, N16U2, N16W_, N16W_, N16I1, N16I2, N16W_, N16W_,
     ];

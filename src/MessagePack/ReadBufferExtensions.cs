@@ -250,6 +250,70 @@ public static class ReadBufferExtensions
 
         #endregion
 
+        #region Nullable primitives
+
+        // Nil-or-value in one call: what a Nullable<primitive> member reads (the source generator emits these for its
+        // direct tier). Each is exactly `TryReadNil() ? null : ReadX()`: the same values, the same bytes consumed,
+        // the same exception for anything else (NullableReaderTests holds every one of them to that).
+        //
+        // Every reader here returns through ONE expression of the `hasValue ? value : default(T?)` form. An inlined
+        // method that returns Nullable<T> from several return points gets its result in one stack temp, written as a
+        // byte (HasValue) and the value and read back as one wider load; the two narrow stores cannot forward to it,
+        // and every call pays a store-forwarding stall (NullableReadBenchmark: 1.4-2.6x slower than the pair it
+        // replaced, with fewer instructions). The single expression keeps HasValue and the value in two registers.
+        //
+        // The decoding is in the ReadXOrNil helpers below the extension block, one per wire tier.
+
+        /// <summary>Reads an int32 from any msgpack int format, or null when the next value is nil.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int? ReadNullableInt32() => ReadInt32OrNil(ref buffer, out var value) ? value : default(int?);
+
+        /// <summary>Reads a uint32 from any msgpack int format, or null when the next value is nil.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint? ReadNullableUInt32() => ReadUInt32OrNil(ref buffer, out var value) ? value : default(uint?);
+
+        /// <summary>Reads an int64 from any msgpack int format, or null when the next value is nil.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public long? ReadNullableInt64() => ReadInt64OrNil(ref buffer, out var value) ? value : default(long?);
+
+        /// <summary>Reads a uint64 from any msgpack int format, or null when the next value is nil.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ulong? ReadNullableUInt64() => ReadUInt64OrNil(ref buffer, out var value) ? value : default(ulong?);
+
+        /// <summary>Reads an int16 from any msgpack int format, or null when the next value is nil.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public short? ReadNullableInt16() => ReadNarrow16OrNil(ref buffer, short.MinValue, short.MaxValue, out var value) ? (short)value : default(short?);
+
+        /// <summary>Reads a uint16 from any msgpack int format, or null when the next value is nil.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ushort? ReadNullableUInt16() => ReadNarrow16OrNil(ref buffer, ushort.MinValue, ushort.MaxValue, out var value) ? (ushort)value : default(ushort?);
+
+        /// <summary>Reads a byte from any msgpack int format, or null when the next value is nil.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public byte? ReadNullableByte() => ReadByteOrNil(ref buffer, out var value) ? value : default(byte?);
+
+        /// <summary>Reads an sbyte from any msgpack int format, or null when the next value is nil.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public sbyte? ReadNullableSByte() => ReadSByteOrNil(ref buffer, out var value) ? value : default(sbyte?);
+
+        /// <summary>Reads a boolean, or null when the next value is nil.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool? ReadNullableBoolean() => ReadBooleanOrNil(ref buffer, out var value) ? value : default(bool?);
+
+        /// <summary>Reads a char (a uint16 on the wire), or null when the next value is nil.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public char? ReadNullableChar() => ReadNarrow16OrNil(ref buffer, ushort.MinValue, ushort.MaxValue, out var value) ? (char)value : default(char?);
+
+        /// <summary>Reads a float32 (a float64 or an int format is converted), or null when the next value is nil.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float? ReadNullableSingle() => ReadSingleOrNil(ref buffer, out var value) ? value : default(float?);
+
+        /// <summary>Reads a float64 (a float32 or an int format is converted), or null when the next value is nil.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public double? ReadNullableDouble() => ReadDoubleOrNil(ref buffer, out var value) ? value : default(double?);
+
+        #endregion
+
         #region headers(array, map, string, bin), binary
 
         /// <summary>
@@ -653,6 +717,546 @@ public static class ReadBufferExtensions
 #endif
     {
         throw Unreadable("skip", buffer.GetUnreadSpan(), DecodeResult.InsufficientBuffer);
+    }
+
+    // ---- ReadXOrNil: nil-or-value through ONE window on the buffer -----------------------------------------------
+    // The decoding behind the ReadNullableX readers. Each returns true with the value or false for nil, consumed
+    // either way, and is a Read: anything else throws as ReadX does.
+    //
+    // `TryReadNil() ? null : ReadX()` opens the window twice and has ReadX report through (value, tokenSize,
+    // DecodeResult), which the inlined caller rebuilds and tests again: 86 instructions for one uint16-coded int?
+    // member. Here the code byte is loaded once and each case the wire is expected to carry is a branch of its own
+    // that advances and returns: the fixint, the nil, then the type's natural tier under the same window gate its
+    // TryReadX uses (so a short token near the end of the data, or in a small segment, stays on the fast path exactly
+    // as it does there). Nothing is passed through out parameters to a call.
+    //
+    // Whatever a helper does not take (a wider encoding than the natural tier, a value out of range, a wrong token,
+    // a window shorter than the gate) goes to ReadX itself, out of line, with nothing consumed, so those cases
+    // behave exactly as they always did. That call never has a nil to find: a nil is one byte, the current span is
+    // non-empty whenever bytes remain, so a helper has already taken it; with no bytes left ReadX reports the end of
+    // the data as the pair would.
+    //
+    // Measured against the pair (sandbox NullableReadBenchmark / NullableReaderPairBenchmark, a dense loop of nullable
+    // members): 14 to 27 instructions fewer per member, 16-25% of the loop; time 0.70 on fixint int32, 0.85-0.93
+    // elsewhere, parity on random byte? where mispredicts dominate. On the Answer graph (61 int? / bool? members):
+    // -7.5% instructions, about -5% time.
+
+    // int32: fixint, nil, cc..d3 through Int32ReadTable under the 5-byte gate (the nine-byte formats go to ReadInt32)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool ReadInt32OrNil<TReadBuffer>(ref TReadBuffer buffer, out int value)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        var span = buffer.GetUnreadSpan();
+        if (!span.IsEmpty)
+        {
+            ref byte s = ref MemoryMarshal.GetReference(span);
+            uint code = s;
+            if ((byte)(code + 32) <= 159) // fixint; the (byte) wrap is load-bearing, see TryReadInt32
+            {
+                buffer.Advance(1);
+                value = unchecked((sbyte)code);
+                return true;
+            }
+            if (code == MessagePackCode.Nil)
+            {
+                buffer.Advance(1);
+                value = 0;
+                return false;
+            }
+            uint format = code - MessagePackCode.UInt8;
+            if (format <= 7 && span.Length >= 5) // the unconditional 4-byte payload load stays inside the window
+            {
+                uint entry = Unsafe.Add(ref MemoryMarshal.GetReference(Int32ReadTable), (int)format);
+                int length = (int)(entry & 0xf);
+                if (length != 9)
+                {
+                    uint payload = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref s, 1)));
+                    uint selected = payload >> (int)((entry >> 4) & 0x1f);
+                    int extend = (int)(entry >> 10);
+                    long wide = ((long)selected << extend) >> extend;
+                    if (wide == (int)wide) // a uint32 above int.MaxValue does not fit: ReadInt32 reports it
+                    {
+                        buffer.Advance(length);
+                        value = (int)wide;
+                        return true;
+                    }
+                }
+            }
+        }
+        value = ReadInt32OutOfLine(ref buffer);
+        return true;
+    }
+
+    // uint32: the int32 tier with the unsigned range. Only the positive fixint is taken up front; a negative one is
+    // not cc..d3 and reaches ReadUInt32, which rejects it.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool ReadUInt32OrNil<TReadBuffer>(ref TReadBuffer buffer, out uint value)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        var span = buffer.GetUnreadSpan();
+        if (!span.IsEmpty)
+        {
+            ref byte s = ref MemoryMarshal.GetReference(span);
+            uint code = s;
+            if (code <= MessagePackCode.MaxFixInt)
+            {
+                buffer.Advance(1);
+                value = code;
+                return true;
+            }
+            if (code == MessagePackCode.Nil)
+            {
+                buffer.Advance(1);
+                value = 0;
+                return false;
+            }
+            uint format = code - MessagePackCode.UInt8;
+            if (format <= 7 && span.Length >= 5)
+            {
+                uint entry = Unsafe.Add(ref MemoryMarshal.GetReference(Int32ReadTable), (int)format);
+                int length = (int)(entry & 0xf);
+                if (length != 9)
+                {
+                    uint payload = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref s, 1)));
+                    uint selected = payload >> (int)((entry >> 4) & 0x1f);
+                    int extend = (int)(entry >> 10);
+                    long wide = ((long)selected << extend) >> extend;
+                    if ((ulong)wide <= uint.MaxValue) // a negative int8 / int16 / int32 does not fit
+                    {
+                        buffer.Advance(length);
+                        value = (uint)wide;
+                        return true;
+                    }
+                }
+            }
+        }
+        value = ReadUInt32OutOfLine(ref buffer);
+        return true;
+    }
+
+    // int64: fixint, nil, cc..d3 through Int64ReadTable under the 9-byte gate. A uint64 above long.MaxValue does not
+    // fit (the entry's flag marks cf: it has to decode non-negative).
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool ReadInt64OrNil<TReadBuffer>(ref TReadBuffer buffer, out long value)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        var span = buffer.GetUnreadSpan();
+        if (!span.IsEmpty)
+        {
+            ref byte s = ref MemoryMarshal.GetReference(span);
+            uint code = s;
+            if ((byte)(code + 32) <= 159) // fixint
+            {
+                buffer.Advance(1);
+                value = unchecked((sbyte)code);
+                return true;
+            }
+            if (code == MessagePackCode.Nil)
+            {
+                buffer.Advance(1);
+                value = 0;
+                return false;
+            }
+            uint format = code - MessagePackCode.UInt8;
+            if (format <= 7 && span.Length >= 9) // the unconditional 8-byte payload load stays inside the window
+            {
+                uint entry = Unsafe.Add(ref MemoryMarshal.GetReference(Int64ReadTable), (int)format);
+                ulong payload = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref s, 1)));
+                ulong selected = payload >> (int)((entry >> 4) & 0x3f);
+                int extend = (int)((entry >> 10) & 0x3f);
+                long wide = ((long)selected << extend) >> extend;
+                if (((entry >> 16) == 0) | (wide >= 0))
+                {
+                    buffer.Advance((int)(entry & 0xf));
+                    value = wide;
+                    return true;
+                }
+            }
+        }
+        value = ReadInt64OutOfLine(ref buffer);
+        return true;
+    }
+
+    // uint64: the int64 tier with the sign predicate flipped, as in TryReadUInt64 (cf is always valid, every other
+    // format has to decode non-negative)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool ReadUInt64OrNil<TReadBuffer>(ref TReadBuffer buffer, out ulong value)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        var span = buffer.GetUnreadSpan();
+        if (!span.IsEmpty)
+        {
+            ref byte s = ref MemoryMarshal.GetReference(span);
+            uint code = s;
+            if (code <= MessagePackCode.MaxFixInt)
+            {
+                buffer.Advance(1);
+                value = code;
+                return true;
+            }
+            if (code == MessagePackCode.Nil)
+            {
+                buffer.Advance(1);
+                value = 0;
+                return false;
+            }
+            uint format = code - MessagePackCode.UInt8;
+            if (format <= 7 && span.Length >= 9)
+            {
+                uint entry = Unsafe.Add(ref MemoryMarshal.GetReference(Int64ReadTable), (int)format);
+                ulong payload = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref s, 1)));
+                ulong selected = payload >> (int)((entry >> 4) & 0x3f);
+                int extend = (int)((entry >> 10) & 0x3f);
+                long wide = ((long)selected << extend) >> extend;
+                if (((entry >> 16) != 0) | (wide >= 0))
+                {
+                    buffer.Advance((int)(entry & 0xf));
+                    value = unchecked((ulong)wide);
+                    return true;
+                }
+            }
+        }
+        value = ReadUInt64OutOfLine(ref buffer);
+        return true;
+    }
+
+    // int16 / uint16 / char: the 16-bit natural tier of TryReadNarrow16Core (cc / cd / d0 / d1 through
+    // Narrow16ReadTable under the 3-byte gate; a zero entry is a wide encoding, decided by ReadX). min and max are
+    // constants at every call site and fold: min == 0 selects the positive fixint and the unsigned reader.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool ReadNarrow16OrNil<TReadBuffer>(ref TReadBuffer buffer, long min, long max, out int value)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        var span = buffer.GetUnreadSpan();
+        if (!span.IsEmpty)
+        {
+            ref byte s = ref MemoryMarshal.GetReference(span);
+            uint code = s;
+            if (min == 0 ? code <= MessagePackCode.MaxFixInt : (byte)(code + 32) <= 159)
+            {
+                buffer.Advance(1);
+                value = unchecked((sbyte)code);
+                return true;
+            }
+            if (code == MessagePackCode.Nil)
+            {
+                buffer.Advance(1);
+                value = 0;
+                return false;
+            }
+            uint format = code - MessagePackCode.UInt8;
+            if (format <= 7 && span.Length >= 3) // the unconditional 2-byte payload load stays inside the window
+            {
+                uint entry = Unsafe.Add(ref MemoryMarshal.GetReference(Narrow16ReadTable), (int)format);
+                if (entry != 0)
+                {
+                    uint payload = MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ushort>(ref Unsafe.Add(ref s, 1)));
+                    uint selected = payload >> (int)((entry >> 4) & 0x1f);
+                    int extend = (int)(entry >> 10);
+                    long wide = ((long)selected << extend) >> extend;
+                    if ((ulong)(wide - min) <= (ulong)(max - min))
+                    {
+                        buffer.Advance((int)(entry & 0xf));
+                        value = (int)wide;
+                        return true;
+                    }
+                }
+            }
+        }
+        value = min == 0 ? ReadUInt16OutOfLine(ref buffer) : ReadInt16OutOfLine(ref buffer);
+        return true;
+    }
+
+    // byte: its natural domain is the positive fixint and uint8, as in TryReadByte
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool ReadByteOrNil<TReadBuffer>(ref TReadBuffer buffer, out byte value)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        var span = buffer.GetUnreadSpan();
+        if (!span.IsEmpty)
+        {
+            ref byte s = ref MemoryMarshal.GetReference(span);
+            uint code = s;
+            if (code <= MessagePackCode.MaxFixInt)
+            {
+                buffer.Advance(1);
+                value = (byte)code;
+                return true;
+            }
+            if (code == MessagePackCode.Nil)
+            {
+                buffer.Advance(1);
+                value = 0;
+                return false;
+            }
+            if (code == MessagePackCode.UInt8 && span.Length >= 2)
+            {
+                value = Unsafe.Add(ref s, 1);
+                buffer.Advance(2);
+                return true;
+            }
+        }
+        value = ReadByteOutOfLine(ref buffer);
+        return true;
+    }
+
+    // sbyte: its natural domain is the fixint and int8, as in TryReadSByte
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool ReadSByteOrNil<TReadBuffer>(ref TReadBuffer buffer, out sbyte value)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        var span = buffer.GetUnreadSpan();
+        if (!span.IsEmpty)
+        {
+            ref byte s = ref MemoryMarshal.GetReference(span);
+            uint code = s;
+            if ((byte)(code + 32) <= 159) // fixint
+            {
+                buffer.Advance(1);
+                value = unchecked((sbyte)code);
+                return true;
+            }
+            if (code == MessagePackCode.Nil)
+            {
+                buffer.Advance(1);
+                value = 0;
+                return false;
+            }
+            if (code == MessagePackCode.Int8 && span.Length >= 2)
+            {
+                value = unchecked((sbyte)Unsafe.Add(ref s, 1));
+                buffer.Advance(2);
+                return true;
+            }
+        }
+        value = ReadSByteOutOfLine(ref buffer);
+        return true;
+    }
+
+    // boolean: the value comes from the biased compare without a branch on it, as in TryReadBoolean
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool ReadBooleanOrNil<TReadBuffer>(ref TReadBuffer buffer, out bool value)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        var span = buffer.GetUnreadSpan();
+        if (!span.IsEmpty)
+        {
+            uint code = span[0];
+            uint d = code - MessagePackCode.False;
+            if (d <= 1)
+            {
+                buffer.Advance(1);
+                value = d != 0;
+                return true;
+            }
+            if (code == MessagePackCode.Nil)
+            {
+                buffer.Advance(1);
+                value = false;
+                return false;
+            }
+        }
+        value = ReadBooleanOutOfLine(ref buffer);
+        return true;
+    }
+
+    // float32: ca is the only code a float-writing producer emits (TryReadSingle's bet); the conversions from a
+    // float64 or an int format are ReadSingle's
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool ReadSingleOrNil<TReadBuffer>(ref TReadBuffer buffer, out float value)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        var span = buffer.GetUnreadSpan();
+        if (!span.IsEmpty)
+        {
+            ref byte s = ref MemoryMarshal.GetReference(span);
+            uint code = s;
+            if (code == MessagePackCode.Float32 && span.Length >= 5)
+            {
+                value = BitConverter.UInt32BitsToSingle(MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref s, 1))));
+                buffer.Advance(5);
+                return true;
+            }
+            if (code == MessagePackCode.Nil)
+            {
+                buffer.Advance(1);
+                value = 0;
+                return false;
+            }
+        }
+        value = ReadSingleOutOfLine(ref buffer);
+        return true;
+    }
+
+    // float64: cb, the same bet as ReadSingleOrNil with the gate at 9
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool ReadDoubleOrNil<TReadBuffer>(ref TReadBuffer buffer, out double value)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        var span = buffer.GetUnreadSpan();
+        if (!span.IsEmpty)
+        {
+            ref byte s = ref MemoryMarshal.GetReference(span);
+            uint code = s;
+            if (code == MessagePackCode.Float64 && span.Length >= 9)
+            {
+                value = BitConverter.UInt64BitsToDouble(MessagePackEndian.FromBigEndian(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref s, 1))));
+                buffer.Advance(9);
+                return true;
+            }
+            if (code == MessagePackCode.Nil)
+            {
+                buffer.Advance(1);
+                value = 0;
+                return false;
+            }
+        }
+        value = ReadDoubleOutOfLine(ref buffer);
+        return true;
+    }
+
+    // ReadX kept out of line for the ReadXOrNil helpers: one call instead of its whole body inlined a second time
+    // into every member read. The result comes back in a register (an out parameter would pin the caller's local to
+    // the stack on the hot path as well).
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static int ReadInt32OutOfLine<TReadBuffer>(ref TReadBuffer buffer)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        return buffer.ReadInt32();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static uint ReadUInt32OutOfLine<TReadBuffer>(ref TReadBuffer buffer)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        return buffer.ReadUInt32();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static long ReadInt64OutOfLine<TReadBuffer>(ref TReadBuffer buffer)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        return buffer.ReadInt64();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static ulong ReadUInt64OutOfLine<TReadBuffer>(ref TReadBuffer buffer)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        return buffer.ReadUInt64();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static short ReadInt16OutOfLine<TReadBuffer>(ref TReadBuffer buffer)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        return buffer.ReadInt16();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static ushort ReadUInt16OutOfLine<TReadBuffer>(ref TReadBuffer buffer)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        return buffer.ReadUInt16();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static byte ReadByteOutOfLine<TReadBuffer>(ref TReadBuffer buffer)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        return buffer.ReadByte();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static sbyte ReadSByteOutOfLine<TReadBuffer>(ref TReadBuffer buffer)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        return buffer.ReadSByte();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static bool ReadBooleanOutOfLine<TReadBuffer>(ref TReadBuffer buffer)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        return buffer.ReadBoolean();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static float ReadSingleOutOfLine<TReadBuffer>(ref TReadBuffer buffer)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        return buffer.ReadSingle();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static double ReadDoubleOutOfLine<TReadBuffer>(ref TReadBuffer buffer)
+        where TReadBuffer : struct, IReadBuffer
+#if NET9_0_OR_GREATER
+        , allows ref struct
+#endif
+    {
+        return buffer.ReadDouble();
     }
 
     // Per-target slow retry loops over the dedicated narrow primitives (range failures arrive as TokenMismatch from the

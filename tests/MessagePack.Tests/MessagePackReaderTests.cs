@@ -233,6 +233,69 @@ public class MessagePackReaderTests
         Assert.True(typeof(IDisposable).IsAssignableFrom(typeof(MessagePackReader)));
     }
 
+    // every ReadNullableX returns the value, then null for the nil behind it (the readers themselves are checked
+    // against TryReadNil-or-ReadX in NullableReaderTests; this is the forwarding)
+    [Fact]
+    public void NullableTokens_ReadTheValueOrNil()
+    {
+        byte[] bytes;
+        using (var writer = new MessagePackWriter())
+        {
+            writer.WriteInt32(-70000);
+            writer.WriteNil();
+            writer.WriteUInt32(uint.MaxValue);
+            writer.WriteNil();
+            writer.WriteInt64(long.MinValue);
+            writer.WriteNil();
+            writer.WriteUInt64(ulong.MaxValue);
+            writer.WriteNil();
+            writer.WriteInt16(short.MinValue);
+            writer.WriteNil();
+            writer.WriteUInt16(ushort.MaxValue);
+            writer.WriteNil();
+            writer.WriteByte(200);
+            writer.WriteNil();
+            writer.WriteSByte(-100);
+            writer.WriteNil();
+            writer.WriteBoolean(true);
+            writer.WriteNil();
+            writer.WriteChar('あ');
+            writer.WriteNil();
+            writer.WriteSingle(1.5f);
+            writer.WriteNil();
+            writer.WriteDouble(Math.PI);
+            writer.WriteNil();
+            bytes = writer.ToArray();
+        }
+
+        using var reader = new MessagePackReader(bytes);
+        Assert.Equal(-70000, reader.ReadNullableInt32());
+        Assert.Null(reader.ReadNullableInt32());
+        Assert.Equal(uint.MaxValue, reader.ReadNullableUInt32());
+        Assert.Null(reader.ReadNullableUInt32());
+        Assert.Equal(long.MinValue, reader.ReadNullableInt64());
+        Assert.Null(reader.ReadNullableInt64());
+        Assert.Equal(ulong.MaxValue, reader.ReadNullableUInt64());
+        Assert.Null(reader.ReadNullableUInt64());
+        Assert.Equal(short.MinValue, reader.ReadNullableInt16());
+        Assert.Null(reader.ReadNullableInt16());
+        Assert.Equal(ushort.MaxValue, reader.ReadNullableUInt16());
+        Assert.Null(reader.ReadNullableUInt16());
+        Assert.Equal((byte)200, reader.ReadNullableByte());
+        Assert.Null(reader.ReadNullableByte());
+        Assert.Equal((sbyte)-100, reader.ReadNullableSByte());
+        Assert.Null(reader.ReadNullableSByte());
+        Assert.Equal(true, reader.ReadNullableBoolean());
+        Assert.Null(reader.ReadNullableBoolean());
+        Assert.Equal('あ', reader.ReadNullableChar());
+        Assert.Null(reader.ReadNullableChar());
+        Assert.Equal(1.5f, reader.ReadNullableSingle());
+        Assert.Null(reader.ReadNullableSingle());
+        Assert.Equal(Math.PI, reader.ReadNullableDouble());
+        Assert.Null(reader.ReadNullableDouble());
+        Assert.True(reader.End);
+    }
+
     // the header overloads that charge a DeserializeState are formatter-only, and the payload reads ReadRaw(int) and
     // ReadRaw(Span<byte>) are the reader's own
     [Fact]
