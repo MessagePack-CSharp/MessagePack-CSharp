@@ -70,3 +70,21 @@ jobs:
       - run: dotnet build tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj -c Release -r linux-x64
       - run: dotnet publish tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj -c Release -r linux-x64 -p:IlcTreatWarningsAsErrors=true
       - run: ./tests/MessagePack.Tests.NativeAot/bin/Release/net10.0/linux-x64/publish/MessagePack.Tests.NativeAot
+
+  # Trimmed and JIT-run (PublishTrimmed without PublishAot, the Blazor WebAssembly shape): the Default chain's run-time
+  # tiers are in play and the trimmer removes what only reflection reaches. MessagePack.Tests.Trimmed runs under the JIT
+  # in build-dotnet, where nothing is trimmed, so only the published executable shows it. The Native AOT job cannot
+  # stand in: its chain has no run-time tier, and MessagePack.AotCompatibilityTest roots every assembly. Trim warnings
+  # are not errors here, the test runner's own dependencies report some.
+  publish-trimmed:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-dotnet
+      - run: dotnet publish tests/MessagePack.Tests.Trimmed/MessagePack.Tests.Trimmed.csproj -c Release -r linux-x64
+      - run: ./tests/MessagePack.Tests.Trimmed/bin/Release/net10.0/linux-x64/publish/MessagePack.Tests.Trimmed

@@ -25,6 +25,7 @@
       "tests\\MessagePack.Tests.Net9\\MessagePack.Tests.Net9.csproj",
       "tests\\MessagePack.Tests.NetFx\\MessagePack.Tests.NetFx.csproj",
       "tests\\MessagePack.Tests.Robustness\\MessagePack.Tests.Robustness.csproj",
+      "tests\\MessagePack.Tests.Trimmed\\MessagePack.Tests.Trimmed.csproj",
       "tests\\MessagePack.Tests.V3CompatGenerated\\MessagePack.Tests.V3CompatGenerated.csproj",
       "tests\\MessagePack.Tests.V3Compat\\MessagePack.Tests.V3Compat.csproj",
       "tests\\MessagePack.Tests\\MessagePack.Tests.csproj",

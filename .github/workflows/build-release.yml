@@ -101,9 +101,25 @@ jobs:
       - run: dotnet publish tests/MessagePack.Tests.NativeAot/MessagePack.Tests.NativeAot.csproj -c Release -r linux-x64 -p:IlcTreatWarningsAsErrors=true
       - run: ./tests/MessagePack.Tests.NativeAot/bin/Release/net10.0/linux-x64/publish/MessagePack.Tests.NativeAot
 
+  # the trimmed, JIT-run tests from the same commit (see dotnet.yml)
+  publish-trimmed:
+    needs: [update-packagejson]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+          ref: ${{ needs.update-packagejson.outputs.sha }}
+      - uses: ./.github/actions/setup-dotnet
+      - run: dotnet publish tests/MessagePack.Tests.Trimmed/MessagePack.Tests.Trimmed.csproj -c Release -r linux-x64
+      - run: ./tests/MessagePack.Tests.Trimmed/bin/Release/net10.0/linux-x64/publish/MessagePack.Tests.Trimmed
+
   # create release and upload nuget: only after every check above passed on this commit
   create-release:
-    needs: [update-packagejson, build-dotnet, test-netfx, publish-aot]
+    needs: [update-packagejson, build-dotnet, test-netfx, publish-aot, publish-trimmed]
     uses: ./.github/workflows/_create-release.yaml
     permissions:
       contents: write

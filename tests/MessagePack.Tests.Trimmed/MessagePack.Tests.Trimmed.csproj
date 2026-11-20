@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+		<!-- The trimmed, JIT-run configuration (Blazor WebAssembly, a PublishTrimmed desktop app): dynamic code is
+		     available, so the Default chain's run-time tiers (GenericFormatterFactory, the reflection formatters)
+		     are in play, and the trimmer removes whatever only reflection reaches. Neither Native AOT project sees
+		     it: MessagePack.Tests.NativeAot runs the AOT chain, which has no run-time tier, and
+		     MessagePack.AotCompatibilityTest roots every assembly, so nothing is ever removed there.
+		     No source generator on purpose, so every type lands on the run-time tiers. The tests also run under
+		     the JIT (dotnet test / IDE), where they only check the known answers; publish with
+		     `dotnet publish -c Release` and run the produced exe for the trimmed verification.
+		     TrimMode is full, the strictest setting (Blazor's default, partial, trims MessagePack just the same,
+		     because MessagePack declares itself trimmable). -->
+		<PublishTrimmed>true</PublishTrimmed>
+		<TrimMode>full</TrimMode>
+		<RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<!-- One line per warning instead of a single collapsed IL2104 per assembly. -->
+		<TrimmerSingleWarn>false</TrimmerSingleWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- the source-generator-driven (reflection-free) xunit v4 packages, which survive trimming -->
+		<PackageReference Include="xunit.v3.aot" Version="4.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="Xunit" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+	</ItemGroup>
+
+</Project>
