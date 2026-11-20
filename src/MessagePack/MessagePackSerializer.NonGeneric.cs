@@ -11,7 +11,7 @@ namespace MessagePack;
 
 public static partial class MessagePackSerializer
 {
-    // Type-based entries close NonGenericEntry<T> over the runtime type. Three sources, in order: the entries generated
+    // Type-based entries close NonGenericEntry<T> over the runtime type. Three sources, in order: the creators generated
     // module initializers register alongside their factories (every generated type, harvested closure and
     // [MessagePackSerializable] root), the built-in scalar set in CreateBuiltInEntry, and MakeGenericType for anything
     // else. Only the last needs runtime code generation, so Native AOT stops there with an actionable exception instead
@@ -19,11 +19,26 @@ public static partial class MessagePackSerializer
     // RuntimeTypeHandle key: a value-type key takes the containers' comparer-null fast path.
     static readonly TypeKeyHashTable<NonGenericEntry> nonGenericEntries = new();
 
+    // What a module initializer leaves behind per registered type: the way to build its entry, not the entry. An entry
+    // is a generic class per T with a vtable of its own, and a runtime that materializes generic instantiations at run
+    // time pays for the whole class when the first instance is created: on IL2CPP, where every module initializer
+    // runs at startup, 2,141 registered types cost 15 MB of native memory before the first line of user code. Most
+    // applications never make a Type-based call for most of their types.
+    static readonly TypeKeyHashTable<Func<NonGenericEntry>> nonGenericEntryCreators = new();
+
     // reached through SourceGeneratedFormatterFactory's generic Register/RegisterHarvested, which generated module
     // initializers call for every closed type they serve
     internal static void RegisterNonGeneric<T>()
     {
-        nonGenericEntries.TryAdd(typeof(T), new NonGenericEntry<T>());
+        // an explicit delegate creation: a method group conversion would have the compiler cache the delegate in a
+        // static field of a generic class, one class per T again
+        nonGenericEntryCreators.TryAdd(typeof(T), new Func<NonGenericEntry>(CreateNonGenericEntry<T>));
+    }
+
+    // the static reference that keeps NonGenericEntry<T> in an AOT image for every registered T
+    static NonGenericEntry CreateNonGenericEntry<T>()
+    {
+        return new NonGenericEntry<T>();
     }
 
     /// <summary>
@@ -292,6 +307,10 @@ public static partial class MessagePackSerializer
         if (nonGenericEntries.TryGetValue(type, out var entry))
         {
             return entry;
+        }
+        if (nonGenericEntryCreators.TryGetValue(type, out var creator))
+        {
+            return nonGenericEntries.GetOrAdd(type, creator());
         }
         if (type.ContainsGenericParameters)
         {
