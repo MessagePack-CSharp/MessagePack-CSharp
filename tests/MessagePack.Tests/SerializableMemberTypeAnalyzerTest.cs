@@ -284,6 +284,31 @@ public class SerializableMemberTypeAnalyzerTest
         Assert.Empty(diagnostics);
     }
 
+    // an unrelated assembly attribute whose argument is an array must not break the harvest (AD0001)
+    [Fact]
+    public async Task AssemblyAttributeWithArrayArgument_StillReports()
+    {
+        var diagnostics = await RunAnalyzerAsync("""
+            using System;
+            using MessagePack;
+            [assembly: Tags("a", "b")]
+            [MessagePackObject]
+            public class Holder
+            {
+                [Key(0)] public Plain Value { get; set; }
+            }
+            public class Plain { }
+            [AttributeUsage(AttributeTargets.Assembly)]
+            public sealed class TagsAttribute : Attribute
+            {
+                public TagsAttribute(params string[] tags) { }
+            }
+            """);
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Equal(SerializableMemberTypeAnalyzer.DiagnosticId, diagnostic.Id);
+        Assert.Contains("Holder.Value", diagnostic.GetMessage());
+    }
+
     [Fact]
     public async Task MemberLevelFormatterOverride_Silent()
     {
