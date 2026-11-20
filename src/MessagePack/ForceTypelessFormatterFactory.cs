@@ -23,6 +23,7 @@ public sealed class ForceTypelessFormatterFactory : GenericFormatterFactoryBase
     {
     }
 
+    [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     protected override Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments)
     {
         typeArguments = [type];

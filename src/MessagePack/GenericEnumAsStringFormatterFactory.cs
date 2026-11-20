@@ -17,6 +17,7 @@ public sealed class GenericEnumAsStringFormatterFactory : GenericFormatterFactor
         this.ignoreCase = ignoreCase;
     }
 
+    [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     protected override Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments)
     {
         typeArguments = [type];
