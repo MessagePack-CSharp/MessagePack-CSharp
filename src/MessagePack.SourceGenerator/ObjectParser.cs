@@ -946,6 +946,7 @@ static class ObjectParser
                 {
                     privateHarvestedBuiltIns.Add(new HarvestedBuiltInModel(
                         ClosedTypeName: harvested.Value.ClosedTypeName,
+                        TypeHash: harvested.Value.TypeHash,
                         FormatterConstruction: $"new global::MessagePack.Generated.{harvested.Value.OpenFormatterName}<TWriteBuffer, TReadBuffer, {string.Join(", ", harvested.Value.TypeArguments.AsArray())}>()"));
                 }
             }
@@ -983,6 +984,7 @@ static class ObjectParser
 
         var model = new ObjectModel(
             FullTypeName: fullTypeName,
+            TypeHash: TypeHash.Of(type),
             FormatterName: formatterName,
             FormatterReference: formatterReference,
             IsValueType: type.IsValueType,
@@ -1269,6 +1271,7 @@ static class ObjectParser
                 {
                     builtIns.Add(enumTypeName, new HarvestedBuiltInModel(
                         ClosedTypeName: enumTypeName,
+                        TypeHash: TypeHash.Of(named),
                         FormatterConstruction: $"new global::MessagePack.Formatters.{variant}<TWriteBuffer, TReadBuffer, {enumTypeName}>()"));
                 }
             }
@@ -1298,6 +1301,7 @@ static class ObjectParser
             {
                 builtIns.Add(nullableTypeName, new HarvestedBuiltInModel(
                     ClosedTypeName: nullableTypeName,
+                    TypeHash: TypeHash.Of(named),
                     FormatterConstruction: $"new global::MessagePack.Formatters.NullableFormatter<TWriteBuffer, TReadBuffer, {named.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>()"));
             }
             return;
@@ -1310,6 +1314,7 @@ static class ObjectParser
             {
                 builtIns.Add(complexTypeName, new HarvestedBuiltInModel(
                     ClosedTypeName: complexTypeName,
+                    TypeHash: TypeHash.Of(named),
                     FormatterConstruction: $"new global::MessagePack.Formatters.ComplexFormatter<TWriteBuffer, TReadBuffer, {named.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>()"));
             }
             return;
@@ -1339,6 +1344,7 @@ static class ObjectParser
                 {
                     builtIns.Add(enumListName, new HarvestedBuiltInModel(
                         ClosedTypeName: enumListName,
+                        TypeHash: TypeHash.Of(named),
                         FormatterConstruction: $"new global::MessagePack.Formatters.EnumListFormatter<TWriteBuffer, TReadBuffer, {enumArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}, {enumUnderlying}>()"));
                 }
                 return;
@@ -1355,6 +1361,7 @@ static class ObjectParser
                     var arguments = FormatterTakesComparer(genericFormatter) ? "comparer: null" : "";
                     builtIns.Add(closedCollectionName, new HarvestedBuiltInModel(
                         ClosedTypeName: closedCollectionName,
+                        TypeHash: TypeHash.Of(named),
                         FormatterConstruction: $"new global::MessagePack.Formatters.{genericFormatter}<TWriteBuffer, TReadBuffer, {string.Join(", ", named.TypeArguments.Select(static a => a.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))}>({arguments})"));
                     // InterfaceLookupFormatter resolves IGrouping<K,V> from the resolver, and InterfaceGroupingFormatter
                     // IEnumerable<V>: the AOT chains serve those only when they are harvested here too
@@ -1389,6 +1396,7 @@ static class ObjectParser
         userGenerics.Add(closedTypeName, new HarvestedGenericModel(
             OpenTypeOf: StripTypeArguments(named.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)) + "<" + new string(',', named.TypeArguments.Length - 1) + ">",
             ClosedTypeName: closedTypeName,
+            TypeHash: TypeHash.Of(named),
             TypeArguments: new EquatableArray<string>([.. named.TypeArguments.Select(static a => a.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))]),
             OpenFormatterName: GeneratedOpenFormatterName(named.OriginalDefinition)));
 
@@ -1507,6 +1515,7 @@ static class ObjectParser
             {
                 builtIns.Add(closedTypeName, new HarvestedBuiltInModel(
                     ClosedTypeName: closedTypeName,
+                    TypeHash: TypeHash.Of(array),
                     FormatterConstruction: $"new global::MessagePack.Formatters.EnumArrayFormatter<TWriteBuffer, TReadBuffer, {enumElement.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}, {underlying}>()"));
             }
             return;
@@ -1522,6 +1531,7 @@ static class ObjectParser
         {
             builtIns.Add(closedTypeName, new HarvestedBuiltInModel(
                 ClosedTypeName: closedTypeName,
+                TypeHash: TypeHash.Of(array),
                 FormatterConstruction: $"new global::MessagePack.Formatters.{formatterName}<TWriteBuffer, TReadBuffer, {array.ElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>()"));
         }
     }
@@ -1996,7 +2006,7 @@ static class ObjectParser
         if (shape.Arguments.IsEmpty)
         {
             // a non-generic view (IList / IDictionary): nothing of its own to close
-            builtIns.Add(closedTypeName, new HarvestedBuiltInModel(closedTypeName, $"new global::MessagePack.Formatters.{shape.FormatterName}<TWriteBuffer, TReadBuffer, {closedTypeName}>()"));
+            builtIns.Add(closedTypeName, new HarvestedBuiltInModel(closedTypeName, TypeHash.Of(named), $"new global::MessagePack.Formatters.{shape.FormatterName}<TWriteBuffer, TReadBuffer, {closedTypeName}>()"));
             return;
         }
         EmitCollectionHarvest(named, compilation, userGenerics, builtIns, closedTypeName, shape.Arguments, shape.FormatterName, closureDepth);
@@ -2119,7 +2129,7 @@ static class ObjectParser
         var construction = $"new global::MessagePack.Formatters.{formatterName}<TWriteBuffer, TReadBuffer, {argumentNames}, {closedTypeName}>()";
         // register before recursing: a self-referential shape (class W : ICollection<W>)
         // must hit the ContainsKey guard on re-entry
-        builtIns.Add(closedTypeName, new HarvestedBuiltInModel(closedTypeName, construction));
+        builtIns.Add(closedTypeName, new HarvestedBuiltInModel(closedTypeName, TypeHash.Of(named), construction));
         foreach (var argument in arguments)
         {
             HarvestSerializedType(argument, compilation, userGenerics, builtIns, closureDepth + 1);

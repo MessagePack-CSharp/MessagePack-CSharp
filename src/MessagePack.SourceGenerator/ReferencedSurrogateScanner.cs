@@ -49,7 +49,7 @@ static class ReferencedSurrogateScanner
                 diagnostics.Add(new DiagnosticInfo(Diagnostics.SurrogateNotRegistered, $"'{pair.Value[0].Target.ToDisplayString()}' has surrogates in more than one referenced assembly ({assemblies}: {string.Join(", ", surrogateNames)}); none is adopted by this assembly's generated factory. Compose SurrogateFormatterFactory for the one to use into an explicit chain.", null));
                 continue;
             }
-            sites.Add(new SurrogateTargetSite(pair.Key, surrogateNames[0], Location: null));
+            sites.Add(new SurrogateTargetSite(pair.Key, TypeHash.Of(pair.Value[0].Target), surrogateNames[0], Location: null));
         }
         return new SurrogateParseResult(new EquatableArray<SurrogateTargetSite>([.. sites]), new EquatableArray<DiagnosticInfo>([.. diagnostics]));
     }

@@ -103,6 +103,7 @@ static class SurrogateParser
             }
             sites.Add(new SurrogateTargetSite(
                 TargetTypeName: target.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                TargetTypeHash: TypeHash.Of(target),
                 SurrogateTypeName: surrogateTypeName,
                 Location: typeLocation));
         }

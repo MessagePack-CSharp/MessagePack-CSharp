@@ -90,62 +90,64 @@ static class FactoryEmitter
         }
 
         writer.Line();
-        AppendGenericCreateFormatterSignature(writer);
-        using (writer.OpenScope())
+        // every type this factory serves, in precedence order (a type listed twice resolves to its first entry, and
+        // both entries share a bucket because they share a hash)
+        var entries = new List<(uint Hash, string[] Lines)>();
+        // type-level [MessagePackFormatter] first: on a type that also has a generated object formatter,
+        // the annotation wins (v3's AttributeFormatterResolver sat before its source-generated tier;
+        // here the same precedence is compiled in). The resolver initializes whatever this factory returns,
+        // so no Initialize here.
+        foreach (var model in orderedAttributes)
         {
-            // type-level [MessagePackFormatter] first: on a type that also has a generated object formatter,
-            // the annotation wins (v3's AttributeFormatterResolver sat before its source-generated tier;
-            // here the same precedence is compiled in). The resolver initializes whatever this factory returns,
-            // so no Initialize here.
-            foreach (var model in orderedAttributes)
+            if (model.Custom.FactoryNew is { } factoryNew)
             {
-                if (model.Custom.FactoryNew is { } factoryNew)
-                {
-                    writer.Line("#if NET9_0_OR_GREATER");
-                    writer.Line($"if (type == typeof({model.FullTypeName})) return ((global::MessagePack.MessagePackFormatterFactory){factoryNew}).CreateFormatter<TWriteBuffer, TReadBuffer>(type);"); // base-bound: see ObjectEmitter
-                    writer.Line("#else");
-                    writer.Line($"if (type == typeof({model.FullTypeName})) return {factoryNew}.CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), type);");
-                    writer.Line("#endif");
-                }
-                else
-                {
-                    writer.Line($"if (type == typeof({model.FullTypeName})) return {model.Custom.FormatterNew};");
-                }
+                entries.Add((model.TypeHash,
+                [
+                    "#if NET9_0_OR_GREATER",
+                    $"if (type == typeof({model.FullTypeName})) return ((global::MessagePack.MessagePackFormatterFactory){factoryNew}).CreateFormatter<TWriteBuffer, TReadBuffer>(type);", // base-bound: see ObjectEmitter
+                    "#else",
+                    $"if (type == typeof({model.FullTypeName})) return {factoryNew}.CreateFormatter(typeof(TWriteBuffer), typeof(TReadBuffer), type);",
+                    "#endif",
+                ]));
             }
-            // surrogate-declared targets (IMessagePackSurrogate implementations): before the harvested constructions,
-            // so a surrogate target that is also reachable as a collection-shaped member resolves through its surrogate
-            // deterministically
-            foreach (var surrogate in orderedSurrogates)
+            else
             {
-                writer.Line($"if (type == typeof({surrogate.TargetTypeName})) return new global::MessagePack.Formatters.SurrogateFormatter<TWriteBuffer, TReadBuffer, {surrogate.TargetTypeName}, {surrogate.SurrogateTypeName}>();");
+                entries.Add((model.TypeHash, [$"if (type == typeof({model.FullTypeName})) return {model.Custom.FormatterNew};"]));
             }
-            foreach (var model in ordered)
-            {
-                if (model.OpenFormatterTypeOf.Length == 0)
-                {
-                    writer.Line($"if (type == typeof({model.FullTypeName})) return new {model.FormatterReference}<TWriteBuffer, TReadBuffer>();");
-                }
-            }
-            foreach (var model in orderedUnions)
-            {
-                if (model.OpenFormatterTypeOf.Length == 0)
-                {
-                    writer.Line($"if (type == typeof({model.FullTypeName})) return new global::MessagePack.Generated.{model.FormatterName}<TWriteBuffer, TReadBuffer>();");
-                }
-            }
-            foreach (var instantiation in harvestedInstantiations)
-            {
-                writer.Line($"if (type == typeof({instantiation.ClosedTypeName})) return new {genericByOpen[instantiation.OpenTypeOf]}<TWriteBuffer, TReadBuffer, {string.Join(", ", instantiation.TypeArguments)}>();");
-            }
-            foreach (var builtIn in harvestedBuiltIns)
-            {
-                writer.Line($"if (type == typeof({builtIn.ClosedTypeName})) return {builtIn.FormatterConstruction};");
-            }
-            // instantiations of an open generic that the harvest never saw are not closed here: this factory stays
-            // static (what an explicit AOT composition expects); the registry closes them at run time in the chains
-            // that allow dynamic code, from the RegisterOpenGeneric entry below
-            writer.Line("return null;");
         }
+        // surrogate-declared targets (IMessagePackSurrogate implementations): before the harvested constructions,
+        // so a surrogate target that is also reachable as a collection-shaped member resolves through its surrogate
+        // deterministically
+        foreach (var surrogate in orderedSurrogates)
+        {
+            entries.Add((surrogate.TargetTypeHash, [$"if (type == typeof({surrogate.TargetTypeName})) return new global::MessagePack.Formatters.SurrogateFormatter<TWriteBuffer, TReadBuffer, {surrogate.TargetTypeName}, {surrogate.SurrogateTypeName}>();"]));
+        }
+        foreach (var model in ordered)
+        {
+            if (model.OpenFormatterTypeOf.Length == 0)
+            {
+                entries.Add((model.TypeHash, [$"if (type == typeof({model.FullTypeName})) return new {model.FormatterReference}<TWriteBuffer, TReadBuffer>();"]));
+            }
+        }
+        foreach (var model in orderedUnions)
+        {
+            if (model.OpenFormatterTypeOf.Length == 0)
+            {
+                entries.Add((model.TypeHash, [$"if (type == typeof({model.FullTypeName})) return new global::MessagePack.Generated.{model.FormatterName}<TWriteBuffer, TReadBuffer>();"]));
+            }
+        }
+        foreach (var instantiation in harvestedInstantiations)
+        {
+            entries.Add((instantiation.TypeHash, [$"if (type == typeof({instantiation.ClosedTypeName})) return new {genericByOpen[instantiation.OpenTypeOf]}<TWriteBuffer, TReadBuffer, {string.Join(", ", instantiation.TypeArguments)}>();"]));
+        }
+        foreach (var builtIn in harvestedBuiltIns)
+        {
+            entries.Add((builtIn.TypeHash, [$"if (type == typeof({builtIn.ClosedTypeName})) return {builtIn.FormatterConstruction};"]));
+        }
+        // instantiations of an open generic that the harvest never saw are not closed here: this factory stays
+        // static (what an explicit AOT composition expects); the registry closes them at run time in the chains
+        // that allow dynamic code, from the RegisterOpenGeneric entry below
+        EmitCreateFormatter(writer, entries);
 
         writer.Line();
         // the Type-based member (the base class's only abstract one): dispatch the built-in buffer pairs into the
@@ -218,6 +220,123 @@ static class FactoryEmitter
         return writer.ToStringAndReturn();
     }
 
+    // Below this many types the chain stays one method: splitting it would save less than the dispatch adds.
+    const int BucketingThreshold = 64;
+
+    // The mean number of types per bucket. What a lookup pays for besides its own type is the rest of its bucket (the
+    // runtime resolves a method's type references together), so buckets are small; the price is one more method per
+    // bucket, which the dispatch method references.
+    const int TypesPerBucket = 4;
+
+    /// <summary>
+    /// Emits the generic CreateFormatter over <paramref name="entries"/> (each an <c>if (type == typeof(X)) return ...;</c>
+    /// with the <see cref="TypeHash"/> of X), in the given order. A large factory dispatches through hash buckets
+    /// instead of one chain: IL2CPP initializes every type a method references when the method first runs, and the JIT
+    /// loads them to compile it, so one chain made the first lookup of any type pay for every formatter of the
+    /// assembly, once per buffer pair (2,141 types: 1.9 MB of native memory on IL2CPP per pair). A type missing from
+    /// its own bucket is looked for in all the others, which keeps the answer identical to the chain's whatever the
+    /// hash says; the registry only routes the types it was told about, so that walk is for a factory composed into a
+    /// chain by hand, where it costs what the chain cost.
+    /// </summary>
+    static void EmitCreateFormatter(CodeWriter writer, List<(uint Hash, string[] Lines)> entries)
+    {
+        AppendGenericCreateFormatterSignature(writer);
+        if (entries.Count < BucketingThreshold)
+        {
+            using (writer.OpenScope())
+            {
+                foreach (var (_, lines) in entries)
+                {
+                    foreach (var line in lines)
+                    {
+                        writer.Line(line);
+                    }
+                }
+                writer.Line("return null;");
+            }
+            return;
+        }
+
+        var bucketCount = (entries.Count + TypesPerBucket - 1) / TypesPerBucket;
+        var buckets = new List<string[]>?[bucketCount];
+        foreach (var (hash, lines) in entries)
+        {
+            (buckets[hash % (uint)bucketCount] ??= new List<string[]>()).Add(lines);
+        }
+
+        using (writer.OpenScope())
+        {
+            writer.Line("// the types are split into buckets by a hash of the type, so that a lookup touches the");
+            writer.Line("// formatters of one bucket instead of every formatter of the assembly");
+            writer.Line($"var bucket = (int)({TypeHash.RuntimeMethodName}(type) % (uint)MessagePackBucketCount);");
+            writer.Line("var formatter = MessagePackCreateFormatterInBucket<TWriteBuffer, TReadBuffer>(bucket, type);");
+            writer.Line("if (formatter != null) return formatter;");
+            writer.Line("// not in its bucket: a type this factory does not serve, which the other buckets confirm");
+            writer.Line("for (int i = 0; i < MessagePackBucketCount; i++)");
+            using (writer.OpenScope())
+            {
+                writer.Line("if (i == bucket) continue;");
+                writer.Line("formatter = MessagePackCreateFormatterInBucket<TWriteBuffer, TReadBuffer>(i, type);");
+                writer.Line("if (formatter != null) return formatter;");
+            }
+            writer.Line("return null;");
+        }
+
+        writer.Line();
+        writer.Line($"const int MessagePackBucketCount = {bucketCount};");
+        writer.Line();
+        writer.Line("static object? MessagePackCreateFormatterInBucket<TWriteBuffer, TReadBuffer>(int bucket, global::System.Type type)");
+        AppendBufferConstraints(writer);
+        using (writer.OpenScope())
+        {
+            writer.Line("switch (bucket)");
+            using (writer.OpenScope())
+            {
+                for (int i = 0; i < bucketCount; i++)
+                {
+                    if (buckets[i] is not null)
+                    {
+                        writer.Line($"case {i}: return MessagePackBucket{i}<TWriteBuffer, TReadBuffer>(type);");
+                    }
+                }
+            }
+            writer.Line("return null;");
+        }
+
+        for (int i = 0; i < bucketCount; i++)
+        {
+            if (buckets[i] is not { } bucket)
+            {
+                continue;
+            }
+            writer.Line();
+            writer.Line($"static object? MessagePackBucket{i}<TWriteBuffer, TReadBuffer>(global::System.Type type)");
+            AppendBufferConstraints(writer);
+            using (writer.OpenScope())
+            {
+                foreach (var lines in bucket)
+                {
+                    foreach (var line in lines)
+                    {
+                        writer.Line(line);
+                    }
+                }
+                writer.Line("return null;");
+            }
+        }
+
+        writer.Line();
+        TypeHash.EmitRuntimeMethod(writer);
+    }
+
+    // the constraints of the dispatch helpers: what the generic CreateFormatter has on either side of the TFM split
+    static void AppendBufferConstraints(CodeWriter writer)
+    {
+        writer.Indent();
+        ObjectEmitter.EmitBufferConstraints(writer, ObjectEmitter.Names.Qualified);
+        writer.Unindent();
+    }
+
     static void AppendGenericCreateFormatterSignature(CodeWriter writer)
     {
         writer.Line("// one method, two signatures: net9+ overrides the base virtual (constraints");
@@ -276,19 +395,16 @@ static class FactoryEmitter
 
         writer.Line($"public static readonly {model.FullTypeName} Instance = new {model.FullTypeName}();");
         writer.Line();
-        AppendGenericCreateFormatterSignature(writer);
-        using (writer.OpenScope())
+        var entries = new List<(uint Hash, string[] Lines)>();
+        foreach (var instantiation in instantiations)
         {
-            foreach (var instantiation in instantiations)
-            {
-                writer.Line($"if (type == typeof({instantiation.ClosedTypeName})) return new {genericByOpen[instantiation.OpenTypeOf]}<TWriteBuffer, TReadBuffer, {string.Join(", ", instantiation.TypeArguments)}>();");
-            }
-            foreach (var builtIn in model.HarvestedBuiltIns)
-            {
-                writer.Line($"if (type == typeof({builtIn.ClosedTypeName})) return {builtIn.FormatterConstruction};");
-            }
-            writer.Line("return null;");
+            entries.Add((instantiation.TypeHash, [$"if (type == typeof({instantiation.ClosedTypeName})) return new {genericByOpen[instantiation.OpenTypeOf]}<TWriteBuffer, TReadBuffer, {string.Join(", ", instantiation.TypeArguments)}>();"]));
         }
+        foreach (var builtIn in model.HarvestedBuiltIns)
+        {
+            entries.Add((builtIn.TypeHash, [$"if (type == typeof({builtIn.ClosedTypeName})) return {builtIn.FormatterConstruction};"]));
+        }
+        EmitCreateFormatter(writer, entries);
 
         writer.Line();
         BufferPairs.AppendCreateFormatterDispatch(writer);

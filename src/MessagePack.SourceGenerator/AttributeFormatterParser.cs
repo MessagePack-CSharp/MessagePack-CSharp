@@ -56,7 +56,7 @@ static class AttributeFormatterParser
         {
             return Empty(diagnostics);
         }
-        return new AttributeFormatterParseResult(new AttributeFormatterTypeModel(fullTypeName, custom!), new EquatableArray<DiagnosticInfo>([.. diagnostics]));
+        return new AttributeFormatterParseResult(new AttributeFormatterTypeModel(fullTypeName, TypeHash.Of(type), custom!), new EquatableArray<DiagnosticInfo>([.. diagnostics]));
     }
 
     static AttributeFormatterParseResult Empty(List<DiagnosticInfo> diagnostics) =>

@@ -203,6 +203,8 @@ public sealed record RequiredDefaultModel(string Name, string Expression);
 public sealed record HarvestedGenericModel(
     string OpenTypeOf,
     string ClosedTypeName,
+    // TypeHash.Of the closed type: the bucket key of the generated factory's dispatch
+    uint TypeHash,
     EquatableArray<string> TypeArguments,
     // the open generic formatter's name in MessagePack.Generated (the definition's sanitized name + "Formatter"), so a
     // closure the generated factory cannot name (a private type argument) can still be constructed where it can be
@@ -214,10 +216,15 @@ public sealed record HarvestedGenericModel(
 // each (v3's mpc generated enum formatters for the same reason)
 public sealed record HarvestedBuiltInModel(
     string ClosedTypeName,
+    // TypeHash.Of the closed type: the bucket key of the generated factory's dispatch
+    uint TypeHash,
     string FormatterConstruction);
 
 public sealed record ObjectModel(
     string FullTypeName,
+    // TypeHash.Of the type: the bucket key of the generated factory's dispatch (unused for an open generic definition,
+    // which the factory does not construct)
+    uint TypeHash,
     string FormatterName,
     string FormatterReference,
     bool IsValueType,
@@ -282,6 +289,8 @@ public sealed record TypeParseResult(
 /// </summary>
 public sealed record AttributeFormatterTypeModel(
     string FullTypeName,
+    // TypeHash.Of the type: the bucket key of the generated factory's dispatch
+    uint TypeHash,
     CustomFormatterModel Custom);
 
 public sealed record AttributeFormatterParseResult(
@@ -316,11 +325,14 @@ public sealed record SerializableParseResult(
 /// </summary>
 public sealed record SurrogateModel(
     string TargetTypeName,
+    // TypeHash.Of the target: the bucket key of the generated factory's dispatch
+    uint TargetTypeHash,
     string SurrogateTypeName);
 
 /// <summary>The location-carrying twin of <see cref="SurrogateModel"/>, collected separately for cross-type duplicate-target detection (MsgPack018).</summary>
 public sealed record SurrogateTargetSite(
     string TargetTypeName,
+    uint TargetTypeHash,
     string SurrogateTypeName,
     LocationInfo? Location);
 
@@ -336,6 +348,8 @@ public sealed record UnionCaseModel(
 
 public sealed record UnionModel(
     string FullTypeName,
+    // TypeHash.Of the type: the bucket key of the generated factory's dispatch (unused for an open generic definition)
+    uint TypeHash,
     string FormatterName,
     // a [Union]-pattern type (C# union declaration, or hand-written per the spec's union pattern): the formatter reads
     // the held case from Value/TryGetValue and rebuilds through the creation members,

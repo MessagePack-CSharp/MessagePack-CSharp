@@ -335,6 +335,7 @@ static class UnionParser
 
         var model = new UnionModel(
             FullTypeName: fullTypeName,
+            TypeHash: TypeHash.Of(type),
             FormatterName: formatterName,
             IsPatternUnion: isPatternUnion,
             IsStructRoot: isStructRoot,

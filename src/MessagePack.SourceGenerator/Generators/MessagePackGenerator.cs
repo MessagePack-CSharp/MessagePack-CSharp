@@ -258,7 +258,7 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
             .Select(static (model, _) => model!)
             .Collect();
         var surrogateModels = surrogateResults
-            .SelectMany(static (result, _) => result.Sites.AsArray().Select(static site => new SurrogateModel(site.TargetTypeName, site.SurrogateTypeName)))
+            .SelectMany(static (result, _) => result.Sites.AsArray().Select(static site => new SurrogateModel(site.TargetTypeName, site.TargetTypeHash, site.SurrogateTypeName)))
             .Collect();
 
         // surrogates referenced assemblies declare for types of yet another assembly are adopted here (see
@@ -280,7 +280,7 @@ public sealed class MessagePackGenerator : IIncrementalGenerator
             {
                 if (claimed.Add(site.TargetTypeName))
                 {
-                    merged.Add(new SurrogateModel(site.TargetTypeName, site.SurrogateTypeName));
+                    merged.Add(new SurrogateModel(site.TargetTypeName, site.TargetTypeHash, site.SurrogateTypeName));
                 }
             }
             return merged.ToImmutableArray();
