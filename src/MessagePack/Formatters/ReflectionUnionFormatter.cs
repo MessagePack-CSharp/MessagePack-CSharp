@@ -117,7 +117,11 @@ public sealed partial class ReflectionUnionFormatter<TWriteBuffer, TReadBuffer, 
     // attribute types count), v4 [UnionTag(caseType, tag)] with Tag/CaseType/CaseTypeParameter and v3 [Union(key, subType)]
     // with Key/SubType. The type-parameter form ([UnionTag("T", 0)] on a generic root) resolves against the closed
     // root's type arguments.
-    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; attributes applied in user code keep their properties rooted")]
+    // The DynamicDependency keeps [UnionTag]'s getters in a trimmed application (see ReflectionObjectFormatter's
+    // attribute reads). v3's [Union] lives in the MessagePack.Annotations shim, which this assembly cannot name: with
+    // its Key getter trimmed away the attribute reads as the migration alias below and the case is not declared.
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(UnionTagAttribute))]
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; the DynamicDependency keeps the getters of this library's attribute, which applying the attribute does not")]
     static List<(int Tag, Type CaseType)> ReadUnionCases(Type type)
     {
         var result = new List<(int, Type)>();

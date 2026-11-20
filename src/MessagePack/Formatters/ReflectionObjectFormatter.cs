@@ -664,8 +664,10 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     }
 
     // duck-typed like the [MessagePackObject] property reads: the attribute is matched by full name,
-    // so the System.Runtime.Serialization reference stays the user's
-    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; attributes applied in user code keep their properties rooted")]
+    // so the System.Runtime.Serialization reference stays the user's (the typeof below is trimmer metadata, not a read).
+    // Without it a trimmed [DataMember(Order = 1)] reads as Order -1 and the member is keyed by its name instead.
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(System.Runtime.Serialization.DataMemberAttribute))]
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; the DynamicDependency keeps the getters of this library's attribute, which applying the attribute does not")]
     static (int Order, string? Name) ReadDataMemberArguments(object attribute)
     {
         var type = attribute.GetType();
@@ -972,7 +974,14 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     static object? FindAttribute(object[] attributes, string fullName) =>
         AttributeFormatterActivator.FindAttribute(attributes, fullName);
 
-    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; attributes applied in user code keep their properties rooted")]
+    // The attribute reads here are duck-typed (GetProperty by name), so nothing references the getters statically and
+    // the trimmer removes them: applying an attribute keeps its constructor and the setters of its named arguments,
+    // not its getters. A property removed whole reads as "not set" ([Key] absent, a [DataMember] Order of -1), and one
+    // that survives through its setter alone throws from GetValue ("Property Get method was not found"), so each read
+    // carries a DynamicDependency on the attribute of this library it reads.
+    // The v3 [Union] of the MessagePack.Annotations shim is the one attribute that cannot be named from here.
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(MessagePackObjectAttribute))]
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; the DynamicDependency keeps the getters of this library's attribute, which applying the attribute does not")]
     static bool ReadBoolProperty(object? attribute, string propertyName)
     {
         return attribute is not null && attribute.GetType().GetProperty(propertyName)?.GetValue(attribute) is true;
@@ -980,14 +989,15 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
     // duck-typed like ReadBoolProperty: a v3 annotations assembly's attribute has no KeyNamingPolicy property and lands
     // on None
-    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; attributes applied in user code keep their properties rooted")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(MessagePackObjectAttribute))]
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; the DynamicDependency keeps the getters of this library's attribute, which applying the attribute does not")]
     static KeyNamingPolicy ReadKeyNamingPolicyProperty(object? attribute)
     {
         var value = attribute?.GetType().GetProperty("KeyNamingPolicy")?.GetValue(attribute);
         return value is null ? KeyNamingPolicy.None : (KeyNamingPolicy)Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; attributes applied in user code keep their properties rooted")]
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; the read goes through ReadKeyArguments, which keeps KeyAttribute's getters")]
     // the source generator's MsgPack021, enforced at runtime: an override declaring a different [Key] than the
     // declaration it overrides keys the same storage twice (v3's dynamic resolver wrote both slots, mpc kept one),
     // so the shape is refused in both tiers
@@ -1007,7 +1017,8 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; attributes applied in user code keep their properties rooted")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(KeyAttribute))]
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; the DynamicDependency keeps the getters of this library's attribute, which applying the attribute does not")]
     static (int? IntKey, string? StringKey) ReadKeyArguments(object keyAttribute)
     {
         var type = keyAttribute.GetType();

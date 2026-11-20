@@ -31,7 +31,10 @@ internal static class AttributeFormatterActivator
         return null;
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind the factory's RequiresUnreferencedCode acquisition; attributes applied in user code keep their properties rooted")]
+    // the DynamicDependency keeps FactoryType and Arguments in a trimmed application: applying the attribute keeps its
+    // constructor, not its getters (see ReflectionObjectFormatter's attribute reads)
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(MessagePackFormatterAttribute))]
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "attribute property reads are gated behind the factory's RequiresUnreferencedCode acquisition; the DynamicDependency keeps the getters of this library's attribute, which applying the attribute does not")]
     static object? ReadProperty(object attribute, string propertyName)
     {
         return attribute.GetType().GetProperty(propertyName)?.GetValue(attribute);
