@@ -27,6 +27,7 @@ internal sealed class TypelessNonGenericCollectionFormatterFactory : GenericForm
     }
 
     [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "a claim check for a tier gated by RequiresDynamicCode / RequiresUnreferencedCode at construction; a trimmed-away constructor or interface only means the type falls through to the chain behind")]
+    [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     protected override Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments)
     {
         typeArguments = [type];
