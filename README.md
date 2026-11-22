@@ -187,6 +187,7 @@ The expensive operations (formatter construction, reflection) are isolated in th
 | `options.WithResolver(resolver)` | `options with { Resolver = resolver }` |
 | `StandardResolver.Instance` | `MessagePackFormatterFactory.Default` |
 | `ContractlessStandardResolver` | `MessagePackFormatterFactory.Default.WithContractless()` |
+| `DynamicObjectResolver` built with `forceStringKey` (internal in v3, reached through reflection) | `MessagePackFormatterFactory.Default.WithMemberNameKeys()` writes annotated types as maps keyed by member name. Members follow the contractless rules, so the output matches v3 for common types but not in every case: with `AllowPrivate`, private members of base classes are serialized too, and overridden or `new`-shadowed members are ordered or keyed differently. |
 | `CompositeResolver.Create(a, b)` | `MessagePackFormatterFactory.Combine(a, b)` |
 | `TypelessContractlessStandardResolver` / `MessagePackSerializer.Typeless` | `MessagePackFormatterFactory.Default.WithTypeless(TypelessTypeLoader.LoadAnyType())` |
 | `TypelessObjectResolver` | The same `WithTypeless(...)` chain: v4 has no typeless resolver apart from it. |

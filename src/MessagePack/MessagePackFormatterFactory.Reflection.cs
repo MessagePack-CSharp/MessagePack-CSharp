@@ -19,6 +19,7 @@ public sealed class ReflectionFormatterFactory : GenericFormatterFactoryBase
 
     readonly bool annotatedOnly;
     readonly bool allowPrivate;
+    readonly bool forceMemberNameKeys;
 
     /// <summary>
     /// <paramref name="annotatedOnly"/> restricts the factory to annotated types; otherwise types without attributes are served too.
@@ -28,9 +29,29 @@ public sealed class ReflectionFormatterFactory : GenericFormatterFactoryBase
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
     public ReflectionFormatterFactory(bool annotatedOnly, bool allowPrivate = false)
+        : this(annotatedOnly, allowPrivate, forceMemberNameKeys: false)
+    {
+    }
+
+    /// <summary>
+    /// <paramref name="annotatedOnly"/> and <paramref name="allowPrivate"/> work as in the two-parameter constructor.
+    /// <paramref name="forceMemberNameKeys"/> writes annotated types (<c>[MessagePackObject]</c>, <c>[DataContract]</c>) as maps keyed
+    /// by member name, with the contractless tier's member selection, ordering and construction rules:
+    /// <c>[Key]</c>, <c>[DataMember(Name)]</c>, <c>KeyAsPropertyName</c>, <c>KeyNamingPolicy</c> and <c>EnumAsString</c> are ignored,
+    /// while <c>[IgnoreMember]</c>, <c>[IgnoreDataMember]</c>, <c>[NonSerialized]</c>, <c>[DataMember(Order)]</c> ordering and
+    /// <c>[MessagePackObject(AllowPrivate = true)]</c> are honored. Union roots and types with a type-level <c>[MessagePackFormatter]</c>
+    /// are left to the rest of the chain, so the factory can sit ahead of the source-generated tier
+    /// (see <see cref="MessagePackFormatterFactory.WithMemberNameKeys"/>). A forced type throws when its constructors do not bind
+    /// parameters by member name (and it has no parameterless one), and when it uses <c>AllowCircularReferences</c> or a
+    /// <c>MessagePackUnknownMembers</c> member.
+    /// </summary>
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+    public ReflectionFormatterFactory(bool annotatedOnly, bool allowPrivate, bool forceMemberNameKeys)
     {
         this.annotatedOnly = annotatedOnly;
         this.allowPrivate = allowPrivate;
+        this.forceMemberNameKeys = forceMemberNameKeys;
     }
 
     /// <inheritdoc/>
@@ -40,12 +61,20 @@ public sealed class ReflectionFormatterFactory : GenericFormatterFactoryBase
     protected override Type? GetOpenFactoryType(Type type, out Type[] typeArguments, out object?[]? constructorArguments)
     {
         typeArguments = [type];
-        constructorArguments = [allowPrivate];
+        constructorArguments = [allowPrivate, forceMemberNameKeys];
 
         // A [UnionTag]-annotated interface/abstract root (v3's [Union] attribute name is matched too) gets runtime
         // polymorphic dispatch, v3 DynamicUnionResolver's role, for assemblies the source generator never saw,
         // pre-built v3 DLLs included. Claimed before the interface/abstract decline below, and before the typeless
         // tail can wrap it (v3 kept the same order).
+        // A union root, abstract or concrete (a C# union or IUnion struct carries [MessagePackObject] too), has no keys
+        // to force: the formatter the rest of the chain gives it resolves each case through the chain, so the cases are
+        // still forced
+        if (forceMemberNameKeys && HasUnionAnnotation(type))
+        {
+            return null;
+        }
+
         if ((type.IsInterface || type.IsAbstract) && !type.ContainsGenericParameters && HasUnionAnnotation(type))
         {
             typeArguments = [type];
@@ -89,6 +118,11 @@ public sealed class ReflectionFormatterFactory : GenericFormatterFactoryBase
         // declaration and generates an object formatter for a derived [MessagePackObject] type
         if (AttributeFormatterActivator.FindAttribute(type.GetCustomAttributes(inherit: false), MessagePackAttributeNames.Formatter) is { } formatterAttribute)
         {
+            if (forceMemberNameKeys)
+            {
+                // the forced tier typically sits ahead of the source-generated one, which serves this attribute
+                return null;
+            }
             throw AttributeFormatterActivator.TypeLevelNotCompiled(formatterAttribute, type);
         }
 

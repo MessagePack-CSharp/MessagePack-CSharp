@@ -85,6 +85,7 @@ public abstract class MessagePackFormatterFactory
     // Every optional capability composes fluently instead, so the preset surface does not explode combinatorially:
     //   MessagePackFormatterFactory.Default.WithContractless()
     //   MessagePackFormatterFactory.Default.WithContractless(allowPrivate: true)
+    //   MessagePackFormatterFactory.Default.WithMemberNameKeys()                   (annotated types as member-name maps)
     //   MessagePackFormatterFactory.Default.WithTypeless(TypelessTypeLoader.LoadAnyType())   (v3's MessagePackSerializer.Typeless)
 
     /// <summary>
@@ -97,6 +98,29 @@ public abstract class MessagePackFormatterFactory
     {
         // the contractless tier is a catch-all, so it must sit last
         return Combine(this, new ReflectionFormatterFactory(annotatedOnly: false, allowPrivate));
+    }
+
+    /// <summary>
+    /// Puts a tier ahead of this chain that writes annotated types (<c>[MessagePackObject]</c>, <c>[DataContract]</c>) as maps keyed by
+    /// member name, ignoring <c>[Key]</c> and <c>[DataMember(Name)]</c>, so clients such as JavaScript can read them as plain objects.
+    /// Members are selected, ordered and constructed by the rules of the contractless tier (<see cref="WithContractless"/>), applied to
+    /// annotated types: the ignore attributes, <c>[DataMember(Order)]</c> ordering and <c>[MessagePackObject(AllowPrivate = true)]</c> are
+    /// honored, and a constructor must bind its parameters by member name. Every factory in this chain is outranked for annotated types,
+    /// except that union roots (whose cases are still forced) and types with a type-level <c>[MessagePackFormatter]</c> keep the formatter
+    /// the rest of the chain gives them. Types without attributes are left to the chain as well. To keep a custom factory in front,
+    /// compose <c>Combine(custom, Default.WithMemberNameKeys())</c>; a surrogate the source generator registers for an annotated target is
+    /// outranked. Types with <c>AllowCircularReferences</c> or a <c>MessagePackUnknownMembers</c> member are not supported and throw.
+    /// The output matches v3's internal <c>forceStringKey</c> mode for common types, but this is not a v3 wire-compatibility mode:
+    /// inherited, overridden and <c>new</c>-shadowed members, private members of base classes under AllowPrivate, constructor binding and
+    /// read validation follow v4's contractless rules.
+    /// <paramref name="allowPrivate"/> includes non-public members, accessors and constructors of every forced type.
+    /// </summary>
+    [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
+    public MessagePackFormatterFactory WithMemberNameKeys(bool allowPrivate = false)
+    {
+        // first, so it outranks the source-generated tier for annotated types
+        return Combine(new ReflectionFormatterFactory(annotatedOnly: true, allowPrivate, forceMemberNameKeys: true), this);
     }
 
     /// <summary>

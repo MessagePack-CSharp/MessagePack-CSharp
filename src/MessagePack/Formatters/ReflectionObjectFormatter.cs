@@ -75,6 +75,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 
     // not readonly: [MessagePackObject(AllowPrivate = true)] widens it in BuildMemberTable
     bool allowPrivate;
+    readonly bool forceMemberNameKeys;
 
     static readonly bool IsCallbackReceiver = typeof(IMessagePackSerializationCallbackReceiver).IsAssignableFrom(typeof(T));
 
@@ -116,8 +117,24 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
     public ReflectionObjectFormatter(bool allowPrivate)
+        : this(allowPrivate, forceMemberNameKeys: false)
+    {
+    }
+
+    /// <summary>
+    /// Creates a formatter that, with <paramref name="allowPrivate"/>, also includes non-public members, accessors and constructors.
+    /// With <paramref name="forceMemberNameKeys"/>, an annotated type (<c>[MessagePackObject]</c> or <c>[DataContract]</c>) is written
+    /// the way a type without attributes is: a map keyed by member name over all its members, ignoring <c>[Key]</c>, <c>[DataMember(Name)]</c>
+    /// and the type-level key options, while <c>[IgnoreMember]</c>, <c>[IgnoreDataMember]</c>, <c>[NonSerialized]</c>,
+    /// <c>[DataMember(Order)]</c> ordering and <c>[MessagePackObject(AllowPrivate = true)]</c> are still honored.
+    /// A constructor must then bind its parameters by member name; a type whose constructors bind only by position throws.
+    /// </summary>
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
+    public ReflectionObjectFormatter(bool allowPrivate, bool forceMemberNameKeys)
     {
         this.allowPrivate = allowPrivate;
+        this.forceMemberNameKeys = forceMemberNameKeys;
     }
 
     /// <inheritdoc/>
@@ -190,6 +207,11 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         }
     }
 
+    // the forced tier claims the type ahead of the generated formatter, so an unsupported feature must name the option
+    string ForcedModeHint => forceMemberNameKeys
+        ? " Member-name keys (WithMemberNameKeys / forceMemberNameKeys) do not support this type; compose a factory for it ahead of the forced tier."
+        : string.Empty;
+
     [UnconditionalSuppressMessage("Trimming", "IL2090", Justification = "reflection member discovery is gated behind ReflectionFormatterFactory's RequiresUnreferencedCode annotation; trimmed members are the documented risk the caller accepted")]
     [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "the allowPrivate hierarchy walk enumerates base types of T; same RequiresUnreferencedCode gate and documented trimming risk as the direct typeof(T) discovery")]
     void BuildMemberTable()
@@ -205,7 +227,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             // the envelope/back-reference wire and register-before-populate discipline live only in the
             // source-generated formatter; serving the type here would silently produce a different (untracked)
             // wire format
-            throw new NotSupportedException($"[MessagePackObject(AllowCircularReferences = true)] on '{typeof(T).FullName}' requires the source-generated formatter; the reflection tier does not serve circular-reference types.");
+            throw new NotSupportedException($"[MessagePackObject(AllowCircularReferences = true)] on '{typeof(T).FullName}' requires the source-generated formatter; the reflection tier does not serve circular-reference types.{ForcedModeHint}");
         }
 
         // Discovery enumerates v3's attributed-table order: every property across the hierarchy base-types-first,
@@ -236,7 +258,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 if (property.GetIndexParameters().Length != 0 ||
                     getMethod is null ||
                     (!allowPrivate && !getMethod.IsPublic) ||
-                    (objectAttribute is not null && property.Name.IndexOf('.') >= 0) ||
+                    (objectAttribute is not null && !forceMemberNameKeys && property.Name.IndexOf('.') >= 0) ||
                     !CanBeAMemberType(property.PropertyType))
                 {
                     continue;
@@ -321,11 +343,17 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
                 }
                 // capture/replay lives only in the source-generated formatter;
                 // serving the type here would silently drop the retention the member exists to provide
-                throw new NotSupportedException($"'{typeof(T).FullName}.{candidate.Member.Name}' declares a MessagePackUnknownMembers member, which requires the source-generated formatter; the reflection tier does not capture unknown members.");
+                throw new NotSupportedException($"'{typeof(T).FullName}.{candidate.Member.Name}' declares a MessagePackUnknownMembers member, which requires the source-generated formatter; the reflection tier does not capture unknown members.{ForcedModeHint}");
             }
         }
 
-        if (objectAttribute is not null)
+        if (forceMemberNameKeys)
+        {
+            // the attribute contract decides nothing but AllowPrivate (read above) and the ignore attributes, so annotated
+            // types take the contractless table too (v3's internal forceStringKey routed both through one branch)
+            BuildContractlessTable(perLevelCandidates);
+        }
+        else if (objectAttribute is not null)
         {
             // map-by-name mode follows the contractless enumeration (v3 routed KeyAsPropertyName through the same
             // branch); explicit [Key] the attributed one
@@ -1056,8 +1084,10 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
         IEnumerable<ConstructorInfo> candidates = attributed is not null
             ? [attributed]
             : typeof(T).GetConstructors(constructorFlags).OrderByDescending(c => c.GetParameters().Length);
+        var anyCandidate = false;
         foreach (var candidate in candidates)
         {
+            anyCandidate = true;
             var parameters = candidate.GetParameters();
             var slotIndices = new int[parameters.Length];
             var matched = true;
@@ -1126,6 +1156,14 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             throw new MessagePackSerializationException($"'{typeof(T).FullName}': every [SerializationConstructor] parameter must match a serialized member by [Key] name or member name (case-insensitive) and assignable type.");
         }
 
+        if (forceMemberNameKeys && anyCandidate)
+        {
+            // An annotated type whose constructor binds int-keyed members by position (valid for a struct in array
+            // mode) has no name match here. The fallbacks below would drop its getter-only members and write an
+            // empty map, so fail the way v3's forceStringKey did ("can't find matched constructor").
+            throw new MessagePackSerializationException($"'{typeof(T).FullName}': with member-name keys, a constructor's parameters must match members by name (case-insensitive), and no constructor of this type does.");
+        }
+
         // no constructor matched: structs always default-construct, classes fall back to a (possibly non-public)
         // parameterless constructor
         if (typeof(T).IsValueType)
@@ -1144,6 +1182,11 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
             {
                 mode = ConstructionMode.Populate;
             }
+        }
+        else if (forceMemberNameKeys)
+        {
+            // same silent loss as above: no usable constructor, so getter-only members would be dropped from the map
+            throw new MessagePackSerializationException($"'{typeof(T).FullName}': with member-name keys, the type needs a parameterless constructor or one whose parameters match members by name (case-insensitive), and it has neither.");
         }
         else
         {
@@ -2219,6 +2262,7 @@ public sealed partial class ReflectionObjectFormatter<TWriteBuffer, TReadBuffer,
 public sealed partial class ReflectionObjectFormatterFactory<T> : MessagePackFormatterFactory
 {
     readonly bool allowPrivate;
+    readonly bool forceMemberNameKeys;
 
     /// <summary>Creates a factory over the public members of <typeparamref name="T"/>.</summary>
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
@@ -2232,8 +2276,21 @@ public sealed partial class ReflectionObjectFormatterFactory<T> : MessagePackFor
     [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
     [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
     public ReflectionObjectFormatterFactory(bool allowPrivate)
+        : this(allowPrivate, forceMemberNameKeys: false)
+    {
+    }
+
+    /// <summary>
+    /// Creates a factory that, with <paramref name="allowPrivate"/>, also includes non-public members, accessors and constructors,
+    /// and with <paramref name="forceMemberNameKeys"/> writes annotated types as maps keyed by member name
+    /// (see <see cref="ReflectionObjectFormatter{TWriteBuffer, TReadBuffer, T}(bool, bool)"/>).
+    /// </summary>
+    [RequiresDynamicCode(MessagePackFormatterFactory.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(ReflectionFormatterFactory.RequiresUnreferencedCodeMessage)]
+    public ReflectionObjectFormatterFactory(bool allowPrivate, bool forceMemberNameKeys)
     {
         this.allowPrivate = allowPrivate;
+        this.forceMemberNameKeys = forceMemberNameKeys;
     }
 
     // One method, two signatures. net9+ overrides the base virtual (constraints inherited),
@@ -2251,7 +2308,7 @@ public sealed partial class ReflectionObjectFormatterFactory<T> : MessagePackFor
     {
         if (type == typeof(T))
         {
-            return new ReflectionObjectFormatter<TWriteBuffer, TReadBuffer, T>(allowPrivate);
+            return new ReflectionObjectFormatter<TWriteBuffer, TReadBuffer, T>(allowPrivate, forceMemberNameKeys);
         }
         return null;
     }
